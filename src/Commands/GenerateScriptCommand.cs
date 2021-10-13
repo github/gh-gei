@@ -12,6 +12,7 @@ namespace OctoshiftCLI.Commands
     public class GenerateScriptCommand : Command
     {
         private AdoApi _ado;
+        private bool _reposOnly = false;
 
         public GenerateScriptCommand() : base("generate-script")
         {
@@ -27,7 +28,7 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
-            var repoOnly = new Option<bool>("--repo-only")
+            var reposOnlyOption = new Option("--repos-only")
             {
                 IsRequired = false
             };
@@ -35,11 +36,12 @@ namespace OctoshiftCLI.Commands
             AddOption(githubOrgOption);
             AddOption(adoOrgOption);
             AddOption(outputOption);
+            AddOption(reposOnlyOption);
 
-            Handler = CommandHandler.Create<string, string, FileInfo>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output)
+        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly)
         {
             Console.WriteLine("Generating Script...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
@@ -53,6 +55,8 @@ namespace OctoshiftCLI.Commands
                 Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
                 return;
             }
+
+            _reposOnly = reposOnly;
 
             _ado = new AdoApi(adoToken);
 
@@ -69,7 +73,7 @@ namespace OctoshiftCLI.Commands
             else
             {
                 Console.WriteLine($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
-                // TODO: Check if the PAT has the proper permissiosn to retrieve list of ADO orgs, needs the All Orgs scope
+                // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
                 var userId = await _ado.GetUserId();
                 orgs = await _ado.GetOrganizations(userId);
             }
@@ -100,17 +104,20 @@ namespace OctoshiftCLI.Commands
                     }
                 }
 
-                var appId = await _ado.GetGithubAppId(org, githubOrg, teamProjects);
+                if (!_reposOnly)
+                {
+                    var appId = await _ado.GetGithubAppId(org, githubOrg, teamProjects);
 
-                if (string.IsNullOrWhiteSpace(appId))
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"WARNING: CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    appIds.Add(org, appId);
+                    if (string.IsNullOrWhiteSpace(appId))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"WARNING: CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        appIds.Add(org, appId);
+                    }
                 }
             }
 
@@ -152,7 +159,7 @@ namespace OctoshiftCLI.Commands
             {
                 content.AppendLine($"# =========== Organization: {adoOrg} ===========");
 
-                if (!appIds.ContainsKey(adoOrg))
+                if (!appIds.ContainsKey(adoOrg) && !_reposOnly)
                 {
                     content.AppendLine("# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
                 }
@@ -210,16 +217,22 @@ namespace OctoshiftCLI.Commands
 
         private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
         {
+            if (_reposOnly) return string.Empty;
+
             return $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
         }
 
         private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
         {
+            if (_reposOnly) return string.Empty;
+
             return $"./octoshift share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"";
         }
 
         private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
+            if (_reposOnly) return string.Empty;
+
             return $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
         }
 
@@ -230,6 +243,8 @@ namespace OctoshiftCLI.Commands
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg)
         {
+            if (_reposOnly) return string.Empty;
+
             var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\"";
             result += Environment.NewLine;
             result += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\"";
@@ -239,6 +254,8 @@ namespace OctoshiftCLI.Commands
 
         private string GithubRepoPermissionsScript(string adoTeamProject, string githubOrg, string githubRepo)
         {
+            if (_reposOnly) return string.Empty;
+
             var result = $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"";
             result += Environment.NewLine;
             result += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"";
@@ -248,11 +265,15 @@ namespace OctoshiftCLI.Commands
 
         private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId)
         {
+            if (_reposOnly) return string.Empty;
+
             return $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"";
         }
 
         private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, IEnumerable<string> githubRepos)
         {
+            if (_reposOnly) return string.Empty;
+
             var repoList = String.Join(",", githubRepos);
             return $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repos \"{repoList}\"";
         }
