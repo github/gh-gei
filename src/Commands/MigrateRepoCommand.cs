@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.Commands
@@ -68,9 +69,30 @@ namespace OctoshiftCLI.Commands
 
             _github = new GithubApi(githubToken);
 
+            var adoRepoUrl = $"https://dev.azure.com/{adoOrg}/_git/{adoRepo}";
+
             var githubOrgId = await _github.GetOrganizationId(githubOrg);
             var migrationSourceId = await _github.CreateMigrationSource(githubOrgId, adoToken);
+            var migrationId = await _github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
+            var migrationState = await _github.GetMigrationState(migrationId);
+
+            while (migrationState.Trim().ToUpper() == "IN_PROGRESS" || migrationState.Trim().ToUpper() == "QUEUED")
+            {
+                Console.WriteLine($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+                await Task.Delay(10000);
+            }
+
+            if (migrationState.Trim().ToUpper() == "FAILED")
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"ERROR: Migration Failed. Migration ID: {migrationId}");
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine($"Migration completed (ID: {migrationId})! State: {migrationState}");
+            }
         }
     }
 }

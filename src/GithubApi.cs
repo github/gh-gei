@@ -29,8 +29,7 @@ namespace OctoshiftCLI
         public async Task<string> CreateTeam(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
-            //var payload = $"{{ 'name': '{teamName}', 'privacy': 'closed' }}";
-            var payload = $"{{ \"name\": \"{teamName}\" }}";
+            var payload = $"{{ 'name': '{teamName}', 'privacy': 'closed' }}";
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             var response = await _client.PostAsync(url, body);
@@ -140,6 +139,87 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+        }
+
+        public async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"
+{'query':'mutation startRepositoryMigration(
+  $sourceId: ID!,
+  $ownerId: ID!,
+  $sourceRepositoryUrl: URI!,
+  $repositoryName: String!,
+  $continueOnError: Boolean!
+){
+ startRepositoryMigration(input: {
+ sourceId: $sourceId,
+ ownerId: $ownerId,
+ sourceRepositoryUrl: $sourceRepositoryUrl,
+ repositoryName: $repositoryName,
+ continueOnError: $continueOnError
+  }) {
+ repositoryMigration {
+ id
+ migrationSource {
+ id
+ name
+ type
+      }
+ sourceUrl
+ state
+ failureReason
+    }
+  }
+}
+','variables':{'sourceId':'MIGRATION_SOURCE_ID','ownerId':'GITHUB_ORG_ID','sourceRepositoryUrl':'ADO_REPO_URL','repositoryName':'GITHUB_REPO','continueOnError':true},'operationName':'startRepositoryMigration'}
+";
+
+            payload = payload.Replace("MIGRATION_SOURCE_ID", migrationSourceId);
+            payload = payload.Replace("GITHUB_ORG_ID", orgId);
+            payload = payload.Replace("ADO_REPO_URL", adoRepoUrl);
+            payload = payload.Replace("GITHUB_REPO", repo);
+
+            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, body);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
+        }
+
+        public async Task<string> GetMigrationState(string migrationId)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"
+{'query':'query(
+  $id: ID!
+){
+ node(id: $id ) {
+... on Migration {
+ id
+ sourceUrl
+ migrationSource {
+ name
+      }
+ state
+ failureReason
+    }
+  }
+}
+','variables':{'id':'MIGRATION_ID'}}
+";
+
+            payload = payload.Replace("MIGRATION_ID", migrationId);
+
+            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, body);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["node"]["state"];
         }
     }
 }
