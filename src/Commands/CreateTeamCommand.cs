@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Commands
             };
             var idpGroup = new Option<string>("--idp-group")
             {
-                IsRequired = true
+                IsRequired = false
             };
 
             AddOption(githubOrg);
@@ -56,9 +56,16 @@ namespace OctoshiftCLI.Commands
                 await _github.RemoveTeamMember(githubOrg, teamName, member);
             }
 
-            var idpGroup = await _github.GetIdpGroup(githubOrg, idpGroupName);
+            if (string.IsNullOrWhiteSpace(idpGroupName))
+            {
+                Console.WriteLine("No IdP Group provided, skipping the IdP linking step");
+            }
+            else
+            {
+                var idpGroup = await _github.GetIdpGroup(githubOrg, idpGroupName);
 
-            await _github.AddTeamSync(githubOrg, teamName, idpGroup.id, idpGroup.name, idpGroup.description);
+                await _github.AddTeamSync(githubOrg, teamName, idpGroup.id, idpGroup.name, idpGroup.description);
+            }
         }
     }
 }

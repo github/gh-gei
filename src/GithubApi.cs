@@ -29,7 +29,7 @@ namespace OctoshiftCLI
         public async Task<string> CreateTeam(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
-            var payload = $"{{ 'name': '{teamName}', 'privacy': 'closed' }}";
+            var payload = $"{{ \"name\": \"{teamName}\", \"privacy\": \"closed\" }}";
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             var response = await _client.PostAsync(url, body);

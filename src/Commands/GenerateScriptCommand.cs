@@ -32,16 +32,21 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
+            var skipIdpOption = new Option("--skip-idp")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrgOption);
             AddOption(adoOrgOption);
             AddOption(outputOption);
             AddOption(reposOnlyOption);
+            AddOption(skipIdpOption);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly)
+        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp)
         {
             Console.WriteLine("Generating Script...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
@@ -123,7 +128,7 @@ namespace OctoshiftCLI.Commands
 
             CheckForDuplicateRepoNames(repos);
 
-            GenerateScript(repos, pipelines, appIds, githubOrg, output);
+            GenerateScript(repos, pipelines, appIds, githubOrg, output, skipIdp);
         }
 
         private void CheckForDuplicateRepoNames(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos)
@@ -151,7 +156,8 @@ namespace OctoshiftCLI.Commands
                                           Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>> pipelines,
                                           Dictionary<string, string> appIds,
                                           string githubOrg,
-                                          FileInfo output)
+                                          FileInfo output,
+                                          bool skipIdp)
         {
             var content = new StringBuilder();
 
@@ -175,7 +181,7 @@ namespace OctoshiftCLI.Commands
                     }
                     else
                     {
-                        content.AppendLine(CreateGithubTeamsScript(adoTeamProject, githubOrg));
+                        content.AppendLine(CreateGithubTeamsScript(adoTeamProject, githubOrg, skipIdp));
 
                         if (appIds.ContainsKey(adoOrg))
                         {
@@ -241,13 +247,24 @@ namespace OctoshiftCLI.Commands
             return $"./octoshift migrate-repo --ado-repo-url \"{adoRepoUrl}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
         }
 
-        private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg)
+        private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
         {
             if (_reposOnly) return string.Empty;
 
-            var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\"";
+            var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"";
+
+            if (!skipIdp)
+            {
+                result += " --idp-group \"{adoTeamProject}-Maintainers\"";
+            }
             result += Environment.NewLine;
-            result += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\"";
+
+            result += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"";
+
+            if (!skipIdp)
+            {
+                result += " --idp-group \"{adoTeamProject}-Admins\"";
+            }
 
             return result;
         }

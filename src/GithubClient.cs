@@ -17,11 +17,8 @@ namespace OctoshiftCLI
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            //_httpClient.DefaultRequestHeaders.Add("user-agent", "octoshiftCLI");
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
 
-            //var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", githubToken)));
-            //var authToken = $"dylan-smith:{githubToken}";
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         }
 
