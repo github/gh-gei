@@ -7,7 +7,7 @@
         {
             "name": ".NET Core Launch",
             "type": "coreclr",
-            "request": "launch"
+            "request": "launch",
             "program": "${workspaceFolder}/src/bin/Debug/net5.0/octoshift.dll"
         }
 

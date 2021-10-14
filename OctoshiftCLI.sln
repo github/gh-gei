@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoshiftCLI", "OctoshiftCLI.csproj", "{506E3B32-092F-4EFC-AA1B-ECF3A5490C9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoshiftCLI", "OctoshiftCLI\OctoshiftCLI.csproj", "{506E3B32-092F-4EFC-AA1B-ECF3A5490C9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoshiftCLI.Tests", "OctoshiftCLI.Tests\OctoshiftCLI.Tests.csproj", "{DEAAB254-02C3-4A7B-814F-0555E852E5D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{506E3B32-092F-4EFC-AA1B-ECF3A5490C9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{506E3B32-092F-4EFC-AA1B-ECF3A5490C9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{506E3B32-092F-4EFC-AA1B-ECF3A5490C9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEAAB254-02C3-4A7B-814F-0555E852E5D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEAAB254-02C3-4A7B-814F-0555E852E5D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEAAB254-02C3-4A7B-814F-0555E852E5D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEAAB254-02C3-4A7B-814F-0555E852E5D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
