@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Commands
             _ado = new AdoApi(adoToken);
 
             var repoId = await _ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
-            await _ado.DisableRepo(adoOrg, adoTeamProject, adoRepo);
+            await _ado.DisableRepo(adoOrg, adoTeamProject, repoId);
         }
     }
 }
