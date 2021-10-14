@@ -14,12 +14,9 @@ namespace OctoshiftCLI.Tests.Commands
             Assert.Equal("share-service-connection", command.Name);
             Assert.Equal(3, command.Options.Count);
 
-            Assert.Equal("ado-org", command.Options[0].Name);
-            Assert.True(command.Options[0].IsRequired);
-            Assert.Equal("ado-team-project", command.Options[1].Name);
-            Assert.True(command.Options[1].IsRequired);
-            Assert.Equal("service-connection-id", command.Options[2].Name);
-            Assert.True(command.Options[2].IsRequired);
+            Helpers.VerifyCommandOption(command.Options, "ado-org", true);
+            Helpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            Helpers.VerifyCommandOption(command.Options, "service-connection-id", true);
         }
     }
 }

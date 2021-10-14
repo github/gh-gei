@@ -14,6 +14,13 @@ namespace OctoshiftCLI.Tests.Commands
             Assert.Equal("integrate-boards", command.Name);
             Assert.Equal(4, command.Options.Count);
 
+            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+
+
+
             Assert.Equal("ado-org", command.Options[0].Name);
             Assert.True(command.Options[0].IsRequired);
             Assert.Equal("ado-team-project", command.Options[1].Name);

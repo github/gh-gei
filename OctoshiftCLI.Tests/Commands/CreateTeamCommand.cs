@@ -14,12 +14,9 @@ namespace OctoshiftCLI.Tests.Commands
             Assert.Equal("create-team", command.Name);
             Assert.Equal(3, command.Options.Count);
 
-            Assert.Equal("github-org", command.Options[0].Name);
-            Assert.True(command.Options[0].IsRequired);
-            Assert.Equal("team-name", command.Options[1].Name);
-            Assert.True(command.Options[1].IsRequired);
-            Assert.Equal("idp-group", command.Options[2].Name);
-            Assert.False(command.Options[2].IsRequired);
+            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            Helpers.VerifyCommandOption(command.Options, "team-name", true);
+            Helpers.VerifyCommandOption(command.Options, "idp-group", false);
         }
     }
 }
