@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.Commands
                     return;
                 }
             }
-            Assert.True(false, name + " not found");
+            Assert.True(false, $"Option '{name}' not found");
         }
     }
 }
