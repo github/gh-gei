@@ -89,20 +89,8 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/graphql";
 
-            var payload = @"
-{'query':'query(
-  $login: String!
-){
-  organization(login: $login)
-  {
-    login
-    id
-    name
-  }
-}','variables':{'login':'GITHUB_ORG'}}'
-";
-
-            payload = payload.Replace("GITHUB_ORG", org);
+            // TODO: this is super ugly, need to find a graphql library to make this code nicer
+            var payload = $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
 
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
@@ -116,22 +104,11 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/graphql";
 
-            var payload = @"
-{'query':'mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!) {
-  createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type}) {
-    migrationSource {
-      id
-      name
-      url
-      type
-    }
-  }
-}
-','variables':{'name':'Azure DevOps','url':'https://dev.azure.com','ownerId':'GITHUB_ORG_ID','type':'AZURE_DEVOPS','accessToken':'ADO_PAT'},'operationName':'createMigrationSource'}
-";
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type}) { migrationSource { id, name, url, type } }";
+            var variables = $"{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\"}}";
 
-            payload = payload.Replace("GITHUB_ORG_ID", orgId);
-            payload = payload.Replace("ADO_PAT", adoToken);
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"createMigrationSource\"}}";
 
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
@@ -145,41 +122,11 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/graphql";
 
-            var payload = @"
-{'query':'mutation startRepositoryMigration(
-  $sourceId: ID!,
-  $ownerId: ID!,
-  $sourceRepositoryUrl: URI!,
-  $repositoryName: String!,
-  $continueOnError: Boolean!
-){
- startRepositoryMigration(input: {
- sourceId: $sourceId,
- ownerId: $ownerId,
- sourceRepositoryUrl: $sourceRepositoryUrl,
- repositoryName: $repositoryName,
- continueOnError: $continueOnError
-  }) {
- repositoryMigration {
- id
- migrationSource {
- id
- name
- type
-      }
- sourceUrl
- state
- failureReason
-    }
-  }
-}
-','variables':{'sourceId':'MIGRATION_SOURCE_ID','ownerId':'GITHUB_ORG_ID','sourceRepositoryUrl':'ADO_REPO_URL','repositoryName':'GITHUB_REPO','continueOnError':true},'operationName':'startRepositoryMigration'}
-";
+            var query = "mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!)";
+            var gql = "startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError }) { repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } }";
+            var variables = $"{{\"sourceId\":\"{migrationSourceId}\",\"ownerId\":\"{orgId}\",\"sourceRepositoryUrl\":\"{adoRepoUrl}\",\"repositoryName\":\"{repo}\",\"continueOnError\":true}}";
 
-            payload = payload.Replace("MIGRATION_SOURCE_ID", migrationSourceId);
-            payload = payload.Replace("GITHUB_ORG_ID", orgId);
-            payload = payload.Replace("ADO_REPO_URL", adoRepoUrl);
-            payload = payload.Replace("GITHUB_REPO", repo);
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"startRepositoryMigration\"}}";
 
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
@@ -193,26 +140,11 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/graphql";
 
-            var payload = @"
-{'query':'query(
-  $id: ID!
-){
- node(id: $id ) {
-... on Migration {
- id
- sourceUrl
- migrationSource {
- name
-      }
- state
- failureReason
-    }
-  }
-}
-','variables':{'id':'MIGRATION_ID'}}
-";
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
+            var variables = $"{{\"id\":\"{migrationId}\"}}";
 
-            payload = payload.Replace("MIGRATION_ID", migrationId);
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
 
             var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
@@ -220,6 +152,24 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
+        }
+
+        public async Task<string> GetMigrationFailureReason(string migrationId)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
+            var variables = $"{{\"id\":\"{migrationId}\"}}";
+
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
+
+            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, body);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["node"]["failureReason"];
         }
     }
 }

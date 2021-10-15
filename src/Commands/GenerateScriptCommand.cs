@@ -196,7 +196,7 @@ namespace OctoshiftCLI.Commands
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
                             content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
-                            content.AppendLine(MigrateRepoScript(githubOrg, adoRepoUrl, githubRepo));
+                            content.AppendLine(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
                             content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
 
@@ -242,9 +242,9 @@ namespace OctoshiftCLI.Commands
             return $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
         }
 
-        private string MigrateRepoScript(string githubOrg, string adoRepoUrl, string githubRepo)
+        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
         {
-            return $"./octoshift migrate-repo --ado-repo-url \"{adoRepoUrl}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
+            return $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
         }
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)

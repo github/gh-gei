@@ -69,7 +69,7 @@ namespace OctoshiftCLI.Commands
 
             _github = new GithubApi(githubToken);
 
-            var adoRepoUrl = $"https://dev.azure.com/{adoOrg}/_git/{adoRepo}";
+            var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
             var githubOrgId = await _github.GetOrganizationId(githubOrg);
             var migrationSourceId = await _github.CreateMigrationSource(githubOrgId, adoToken);
@@ -81,12 +81,15 @@ namespace OctoshiftCLI.Commands
             {
                 Console.WriteLine($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
+                migrationState = await _github.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"ERROR: Migration Failed. Migration ID: {migrationId}");
+                var failureReason = await _github.GetMigrationFailureReason(migrationId);
+                Console.WriteLine(failureReason);
                 Console.ResetColor();
             }
             else
@@ -94,5 +97,7 @@ namespace OctoshiftCLI.Commands
                 Console.WriteLine($"Migration completed (ID: {migrationId})! State: {migrationState}");
             }
         }
+
+        private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
     }
 }
