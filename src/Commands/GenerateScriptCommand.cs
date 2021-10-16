@@ -192,7 +192,6 @@ namespace OctoshiftCLI.Commands
                         {
                             content.AppendLine();
 
-                            var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
                             content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
