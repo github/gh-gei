@@ -51,7 +51,9 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
@@ -59,7 +61,9 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
@@ -76,6 +80,10 @@ namespace OctoshiftCLI.Commands
             var repoIds = await _ado.GetGithubRepoIds(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepoList);
 
             await _ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoIds);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully configured Boards<->GitHub integration");
+            Console.ResetColor();
         }
 
         private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos.Split(",").Select(x => x.Trim());

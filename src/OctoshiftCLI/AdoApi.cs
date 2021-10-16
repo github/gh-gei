@@ -55,9 +55,9 @@ namespace OctoshiftCLI
         {
             var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}&api-version=5.0-preview.1";
 
-            var response = await _client.GetAsync(url);
-            var data = JArray.Parse(response);
+            var data = await _client.GetWithPagingAsync(url);
 
+            // TODO: This will crash if this org doesn't exist, or the PAT doesn't have access to it
             return (string)data.Children().Single(x => ((string)x["accountName"]).ToUpper() == adoOrganization.ToUpper())["accountId"];
         }
 
