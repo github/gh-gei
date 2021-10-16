@@ -404,19 +404,8 @@ namespace OctoshiftCLI
         }
         private string BuildRepoString(IEnumerable<string> repoIds)
         {
-            var result = string.Empty;
-
-            foreach (var repo in repoIds)
-            {
-                result += $"\"{repo}\",";
-            }
-
-            if (result.Length > 0)
-            {
-                result = result.Substring(0, result.Length - 1);
-            }
-
-            return result;
+            var result = string.Join("\",\"", repoIds);
+            return $"\"{result}\"";
         }
 
         public async Task DisableRepo(string org, string teamProject, string repoId)
