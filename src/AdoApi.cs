@@ -129,7 +129,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
             payload = payload.Replace("ADO_ORGID", orgId);
 
-            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             var response = await _client.PostAsync(url, body);
             var data = JObject.Parse(response);
@@ -163,7 +163,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("GITHUB_HANDLE", githubHandle);
             payload = payload.Replace("ENDPOINT_NAME", endpointName);
 
-            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             var response = await _client.PostAsync(url, body);
             var data = JObject.Parse(response);
@@ -218,7 +218,7 @@ namespace OctoshiftCLI
             request = request.Replace("ADO_TEAM_PROJECT", adoTeamProject);
             request = request.Replace("ADO_PROJECT_ID", adoTeamProjectId);
 
-            var body = new StringContent(request, Encoding.UTF8, "application/json");
+            using var body = new StringContent(request, Encoding.UTF8, "application/json");
             await _client.PatchAsync(url, body);
         }
 
@@ -300,7 +300,7 @@ namespace OctoshiftCLI
                 payload.Add(prop.Name, prop.Value);
             }
 
-            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
             await _client.PutAsync(url, body);
         }
 
@@ -346,7 +346,7 @@ namespace OctoshiftCLI
             {
                 var repoPayload = payload.Replace("GITHUB_REPO", repo);
 
-                var body = new StringContent(repoPayload.ToString(), Encoding.UTF8, "application/json");
+                using var body = new StringContent(repoPayload.ToString(), Encoding.UTF8, "application/json");
 
                 var response = await _client.PostAsync(url, body);
                 var data = JObject.Parse(response);
@@ -398,7 +398,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGID", orgId);
             payload = payload.Replace("REPO_IDS", BuildRepoString(repoIds));
 
-            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             await _client.PostAsync(url, body);
         }
@@ -424,7 +424,7 @@ namespace OctoshiftCLI
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
             var payload = "{ \"isDisabled\": true }";
-            var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
             await _client.PatchAsync(url, body);
         }
     }
