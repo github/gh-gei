@@ -26,13 +26,10 @@ namespace OctoshiftCLI
 
             var data = JObject.Parse(response);
 
-            if (data.ContainsKey("coreAttributes") &&
-                data["coreAttributes"].Type == JTokenType.Object &&
-                ((JObject)data["coreAttributes"]).ContainsKey("PublicAlias") &&
-                data["coreAttributes"]["PublicAlias"].Type == JTokenType.Object &&
-                ((JObject)data["coreAttributes"]["PublicAlias"]).ContainsKey("value"))
+            var userId = (string)data.SelectToken("coreAttributes.PublicAlias.value");
+
+            if (!string.IsNullOrWhiteSpace(userId))
             {
-                var userId = (string)data["coreAttributes"]["PublicAlias"]["value"];
                 return userId;
             }
 
