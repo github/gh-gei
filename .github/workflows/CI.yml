@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Restore dependencies
+      run: dotnet restore src/OctoshiftCLI.sln
+    - name: Build
+      run: dotnet build src/OctoshiftCLI.sln --no-restore
+    - name: Test
+      run: dotnet test src/OctoshiftCLI.sln --no-build --verbosity normal
