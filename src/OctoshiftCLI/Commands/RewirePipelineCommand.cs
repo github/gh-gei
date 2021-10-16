@@ -60,7 +60,9 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
@@ -69,6 +71,10 @@ namespace OctoshiftCLI.Commands
             var adoPipelineId = await _ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var pipelineDetails = await _ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
             await _ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully rewired pipeline");
+            Console.ResetColor();
         }
     }
 }
