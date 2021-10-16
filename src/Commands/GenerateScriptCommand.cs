@@ -165,7 +165,9 @@ namespace OctoshiftCLI.Commands
             {
                 content.AppendLine($"# =========== Organization: {adoOrg} ===========");
 
-                if (!appIds.ContainsKey(adoOrg) && !_reposOnly)
+                var hasAppId = appIds.TryGetValue(adoOrg, out var appId);
+
+                if (!hasAppId && !_reposOnly)
                 {
                     content.AppendLine("# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
                 }
@@ -183,9 +185,9 @@ namespace OctoshiftCLI.Commands
                     {
                         content.AppendLine(CreateGithubTeamsScript(adoTeamProject, githubOrg, skipIdp));
 
-                        if (appIds.ContainsKey(adoOrg))
+                        if (hasAppId)
                         {
-                            content.AppendLine(ShareServiceConnectionScript(adoOrg, adoTeamProject, appIds[adoOrg]));
+                            content.AppendLine(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId));
                         }
 
                         foreach (var adoRepo in repos[adoOrg][adoTeamProject])
@@ -199,7 +201,7 @@ namespace OctoshiftCLI.Commands
                             content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
 
-                            if (appIds.TryGetValue(adoOrg, out var appId))
+                            if (hasAppId)
                             {
                                 foreach (var adoPipeline in pipelines[adoOrg][adoTeamProject][adoRepo])
                                 {
