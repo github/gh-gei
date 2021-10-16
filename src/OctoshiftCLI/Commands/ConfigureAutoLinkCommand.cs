@@ -48,13 +48,20 @@ namespace OctoshiftCLI
 
             if (string.IsNullOrWhiteSpace(githubToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
             _github = new GithubApi(githubToken);
 
+            // TODO: This crashes if autolink is already configured
             await _github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully configured autolink references");
+            Console.ResetColor();
         }
     }
 }
