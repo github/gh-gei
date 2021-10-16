@@ -42,7 +42,9 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
@@ -50,6 +52,10 @@ namespace OctoshiftCLI.Commands
 
             var repoId = await _ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
             await _ado.DisableRepo(adoOrg, adoTeamProject, repoId);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Repo successfully disabled");
+            Console.ResetColor();
         }
     }
 }
