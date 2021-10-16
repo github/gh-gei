@@ -339,10 +339,8 @@ namespace OctoshiftCLI
 
             var result = new List<string>();
 
-            foreach (var repo in githubRepos)
+            foreach (var repoPayload in githubRepos.Select(x => payload.Replace("GITHUB_REPO", x)))
             {
-                var repoPayload = payload.Replace("GITHUB_REPO", repo);
-
                 using var body = new StringContent(repoPayload.ToString(), Encoding.UTF8, "application/json");
 
                 var response = await _client.PostAsync(url, body);
