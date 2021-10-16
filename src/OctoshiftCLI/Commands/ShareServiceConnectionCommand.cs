@@ -42,14 +42,21 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
             _ado = new AdoApi(adoToken);
 
+            // TODO: If the service connection is already shared with this team project this will crash
             var adoTeamProjectId = await _ado.GetTeamProjectId(adoOrg, adoTeamProject);
             await _ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully shared service connection");
+            Console.ResetColor();
         }
     }
 }
