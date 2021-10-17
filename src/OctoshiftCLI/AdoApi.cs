@@ -411,6 +411,51 @@ namespace OctoshiftCLI
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
             await _client.PatchAsync(url, body);
         }
+
+        public async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
+        {
+            var url = $"https://vssps.dev.azure.com/{org}/_apis/identities?searchFilter=General&filterValue={groupName.Replace(" ", "%20")}&queryMembership=None&api-version=6.1-preview.1";
+
+            var identities = await _client.GetWithPagingAsync(url);
+
+            var result = identities.Single(x => ((string)x["properties"]["LocalScopeId"]["$value"]) == teamProjectId);
+            return (string)result["descriptor"];
+        }
+
+        public async Task LockRepo(string org, string teamProjectId, string repoId, string identityDescriptor)
+        {
+            var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
+
+            var url = $"https://dev.azure.com/{org}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+
+            var payload = @"
+{
+  ""token"": ""repoV2/TEAM_PROJECT_ID/REPO_ID"",
+  ""merge"": true,
+  ""accessControlEntries"": [
+    {
+      ""descriptor"": ""IDENTITY_DESCRIPTOR"",
+      ""allow"": 0,
+      ""deny"": 20284,
+      ""extendedInfo"": {
+        ""effectiveAllow"": 0,
+        ""effectiveDeny"": 20284,
+        ""inheritedAllow"": 0,
+        ""inheritedDeny"": 20284
+      }
+    }
+  ]
+}
+";
+
+            payload = payload.Replace("TEAM_PROJECT_ID", teamProjectId);
+            payload = payload.Replace("REPO_ID", repoId);
+            payload = payload.Replace("IDENTITY_DESCRIPTOR", identityDescriptor);
+
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            await _client.PostAsync(url, body);
+        }
     }
 
     public class AdoPipeline

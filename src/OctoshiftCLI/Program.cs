@@ -15,6 +15,7 @@ namespace OctoshiftCLI
             root.AddCommand(new IntegrateBoardsCommand());
             root.AddCommand(new ShareServiceConnectionCommand());
             root.AddCommand(new DisableRepoCommand());
+            root.AddCommand(new LockRepoCommand());
             root.AddCommand(new ConfigureAutoLinkCommand());
             root.AddCommand(new CreateTeamCommand());
             root.AddCommand(new AddTeamToRepoCommand());
