@@ -48,13 +48,19 @@ namespace OctoshiftCLI.Commands
 
             if (string.IsNullOrWhiteSpace(githubToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
             _github = new GithubApi(githubToken);
 
             await _github.AddTeamToRepo(githubOrg, githubRepo, team, role);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully added team to repo");
+            Console.ResetColor();
         }
     }
 }
