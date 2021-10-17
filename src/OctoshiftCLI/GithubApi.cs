@@ -79,7 +79,7 @@ namespace OctoshiftCLI
         public async Task AddTeamToRepo(string org, string repo, string teamName, string role)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
-            var payload = $"{{ 'permission':'{role}' }}";
+            var payload = $"{{ \"permission\":\"{role}\" }}";
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             await _client.PutAsync(url, body);
