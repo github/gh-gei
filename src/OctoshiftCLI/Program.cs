@@ -20,6 +20,8 @@ namespace OctoshiftCLI
             root.AddCommand(new CreateTeamCommand());
             root.AddCommand(new AddTeamToRepoCommand());
             root.AddCommand(new MigrateRepoCommand());
+            root.AddCommand(new GrantMigratorRoleCommand());
+            root.AddCommand(new RevokeMigratorRoleCommand());
 
             await root.InvokeAsync(args);
         }

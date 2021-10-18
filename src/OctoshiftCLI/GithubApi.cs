@@ -198,5 +198,54 @@ namespace OctoshiftCLI
 
             await _client.PatchAsync(url, body);
         }
+
+            public async Task<string> GrantMigratorRole(string org, string actor, string actorType)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var query = "mutation grantMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
+            var gql = "grantMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
+            var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
+
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"grantMigratorRole\"}}";
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            try 
+            {
+                var response = await _client.PostAsync(url, body);
+                var data = JObject.Parse(response);
+                
+                return (string)data["data"]["grantMigratorRole"]["success"];
+            } 
+            catch (HttpRequestException)
+            {
+                return "False";
+            }
+        }
+
+         public async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var query = "mutation revokeMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
+            var gql = "revokeMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
+            var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
+
+            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"revokeMigratorRole\"}}";
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            try 
+            {
+                var response = await _client.PostAsync(url, body);
+                var data = JObject.Parse(response);
+                
+                return (string)data["data"]["revokeMigratorRole"]["success"];
+            } 
+            catch (HttpRequestException)
+            {
+                return "False";
+            }
+
+        }
     }
 }
