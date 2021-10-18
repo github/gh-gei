@@ -217,7 +217,7 @@ namespace OctoshiftCLI
                 
                 return (string)data["data"]["grantMigratorRole"]["success"];
             } 
-            catch
+            catch (HttpRequestException)
             {
                 return "False";
             }
@@ -241,7 +241,7 @@ namespace OctoshiftCLI
                 
                 return (string)data["data"]["revokeMigratorRole"]["success"];
             } 
-            catch
+            catch (HttpRequestException)
             {
                 return "False";
             }

@@ -67,8 +67,6 @@ namespace OctoshiftCLI.Commands
             var githubOrgId = await _github.GetOrganizationId(githubOrg);
             var revokeMigratorRoleState = await _github.RevokeMigratorRole(githubOrgId, actor, actorType);
 
-            Console.WriteLine(revokeMigratorRoleState);
-
             if (revokeMigratorRoleState.Trim().ToUpper() == "TRUE")
             {
                 Console.ForegroundColor = ConsoleColor.Green;
