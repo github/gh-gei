@@ -45,7 +45,9 @@ namespace OctoshiftCLI.Commands
             
             if (string.IsNullOrWhiteSpace(githubToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
