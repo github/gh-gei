@@ -12,6 +12,8 @@ namespace OctoshiftCLI.Commands
 
         public GrantMigratorRoleCommand() : base("grant-migrator-role")
         {
+            Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
