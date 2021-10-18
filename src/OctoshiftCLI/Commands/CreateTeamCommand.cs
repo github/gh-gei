@@ -11,6 +11,8 @@ namespace OctoshiftCLI.Commands
 
         public CreateTeamCommand() : base("create-team")
         {
+            Description = "Creates a GitHub team and optionally links it to an IdP group.";
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -31,40 +33,52 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string teamName, string idpGroupName)
+        private async Task Invoke(string githubOrg, string teamName, string idpGroup)
         {
             Console.WriteLine("Creating GitHub team...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
             Console.WriteLine($"TEAM NAME: {teamName}");
-            Console.WriteLine($"IDP GROUP: {idpGroupName}");
+            Console.WriteLine($"IDP GROUP: {idpGroup}");
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
             if (string.IsNullOrWhiteSpace(githubToken))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                Console.ResetColor();
                 return;
             }
 
             _github = new GithubApi(githubToken);
 
             await _github.CreateTeam(githubOrg, teamName);
-            var members = await _github.GetTeamMembers(githubOrg, teamName);
 
-            foreach (var member in members)
-            {
-                await _github.RemoveTeamMember(githubOrg, teamName, member);
-            }
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully created team");
+            Console.ResetColor();
 
-            if (string.IsNullOrWhiteSpace(idpGroupName))
+            if (string.IsNullOrWhiteSpace(idpGroup))
             {
                 Console.WriteLine("No IdP Group provided, skipping the IdP linking step");
             }
             else
             {
-                var idpGroup = await _github.GetIdpGroup(githubOrg, idpGroupName);
+                var members = await _github.GetTeamMembers(githubOrg, teamName);
 
-                await _github.AddTeamSync(githubOrg, teamName, idpGroup.id, idpGroup.name, idpGroup.description);
+                foreach (var member in members)
+                {
+                    await _github.RemoveTeamMember(githubOrg, teamName, member);
+                }
+
+                var idpGroupId = await _github.GetIdpGroupId(githubOrg, idpGroup);
+                var teamSlug = await _github.GetTeamSlug(githubOrg, teamName);
+
+                await _github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Successfully linked team to Idp group");
+                Console.ResetColor();
             }
         }
     }

@@ -167,5 +167,36 @@ namespace OctoshiftCLI
 
             return (string)data["data"]["node"]["failureReason"];
         }
+
+        public async Task<int> GetIdpGroupId(string org, string groupName)
+        {
+            var url = $"https://api.github.com/orgs/{org}/external-groups";
+
+            // TODO: Need to implement paging
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
+        }
+
+        public async Task<string> GetTeamSlug(string org, string teamName)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams";
+
+            // TODO: Need to implement paging
+            var response = await _client.GetAsync(url);
+            var data = JArray.Parse(response);
+
+            return (string)data.Children().Single(x => ((string)x["name"]).ToUpper() == teamName.ToUpper())["slug"];
+        }
+
+        public async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
+            var payload = $"{{ \"group_id\": {groupId} }}";
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            await _client.PatchAsync(url, body);
+        }
     }
 }
