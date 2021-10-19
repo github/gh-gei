@@ -29,5 +29,7 @@ jobs:
       run: dotnet build src/OctoshiftCLI.sln --no-restore
     - name: Unit Test
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal
+    - name: Integration Test
+      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

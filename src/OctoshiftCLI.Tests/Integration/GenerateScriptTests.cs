@@ -1,4 +1,4 @@
-using System;
+using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests.Integration
         private async Task<string> GenerateOutputScript(string scenarioName, string additionalFlags)
         {
             var outputFilename = $"{System.IO.Path.GetTempPath()}{scenarioName}.sh";
-            System.IO.File.Delete(outputFilename);
+            File.Delete(outputFilename);
             var parameterString = $"generate-script --github-org GuacamoleResearch --ado-org OCLI --output {outputFilename} {additionalFlags}";
             var parameters = parameterString.Trim().Split(' ');
 
@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.Integration
         public async void Should_Fail_With_Invalid_Parameters()
         {
             var filename = await GenerateOutputScript("invalid-parameters", "--unsupport-parameter");
-            Assert.False(System.IO.File.Exists(filename));
+            Assert.False(File.Exists(filename));
         }
 
         [Fact]
