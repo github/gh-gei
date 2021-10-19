@@ -1,10 +1,9 @@
-using System;
 using System.CommandLine;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests
 {
     public class Helpers
     {
