@@ -10,7 +10,31 @@ We envision that these capabilities will eventually end up as part of GitHub pro
 
 OctoshiftCLI is a cross-platform .NET Core console application.  Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repos from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
 
-TODO - Add something on PATs and other setup
+### Command line
+```
+octoshift
+  Migrates Azure DevOps repos to GitHub
+Usage:
+  octoshift [options] [command]
+
+Options:
+  --version       Show version information
+  -?, -h, --help  Show help and usage information
+
+Commands:
+  generate-script
+  rewire-pipeline
+  integrate-boards
+  share-service-connection
+  disable-ado-repo
+  lock-ado-repo             Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.
+  configure-auto-link
+  create-team               Creates a GitHub team and optionally links it to an IdP group.
+  add-team-to-repo
+  migrate-repo
+```
+
+To actually generate a script, you'll need to set an `ADO_PAT` as an environment variable. Performing any of the commands that actually touch GitHub will need the `???` environment variable.
 
 ## Contributions
 

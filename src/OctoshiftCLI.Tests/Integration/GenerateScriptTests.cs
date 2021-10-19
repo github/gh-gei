@@ -9,15 +9,12 @@ namespace OctoshiftCLI.Tests.Integration
         #region Script generation and verification
         private async Task<string> GenerateOutputScript(string scenarioName, string additionalFlags)
         {
-            var outputFilename = (String.IsNullOrEmpty(scenarioName)) 
-                ? $"{System.IO.Path.GetTempPath()}{Guid.NewGuid()}.sh" 
-                : $"{System.IO.Path.GetTempPath()}{scenarioName}.sh";
-            
+            var outputFilename = $"{System.IO.Path.GetTempPath()}{scenarioName}.sh";
             System.IO.File.Delete(outputFilename);
             var parameterString = $"generate-script --github-org GuacamoleResearch --ado-org OCLI --output {outputFilename} {additionalFlags}";
             var parameters = parameterString.Trim().Split(' ');
-            await OctoshiftCLI.Program.Main(parameters);
 
+            await OctoshiftCLI.Program.Main(parameters);
             return outputFilename;
         }
 
@@ -31,6 +28,7 @@ namespace OctoshiftCLI.Tests.Integration
             var referenceFilePath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "../../../Integration/Reference", $"{scenarioName}.sh");
             var referenceFileContents = System.IO.File.ReadAllText(referenceFilePath);
             
+            //TODO: Should probably add some whitespace stripping to improve the validation
             Assert.Equal(referenceFileContents, outputContents);
         }    
         #endregion
