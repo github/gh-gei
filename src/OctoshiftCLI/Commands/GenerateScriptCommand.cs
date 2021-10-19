@@ -264,7 +264,7 @@ namespace OctoshiftCLI.Commands
 
             if (!skipIdp)
             {
-                result += " --idp-group \"{adoTeamProject}-Maintainers\"";
+                result += $" --idp-group \"{adoTeamProject}-Maintainers\"";
             }
             result += Environment.NewLine;
 
@@ -272,7 +272,7 @@ namespace OctoshiftCLI.Commands
 
             if (!skipIdp)
             {
-                result += " --idp-group \"{adoTeamProject}-Admins\"";
+                result += $" --idp-group \"{adoTeamProject}-Admins\"";
             }
 
             return result;
