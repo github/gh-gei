@@ -30,6 +30,8 @@ jobs:
     - name: Unit Test
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal
     - name: Integration Test
+      env: 
+        ADO_PAT: ${{ADO_PAT}}
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
