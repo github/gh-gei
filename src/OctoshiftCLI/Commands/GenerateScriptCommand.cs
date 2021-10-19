@@ -196,6 +196,7 @@ namespace OctoshiftCLI.Commands
 
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
+                            content.AppendLine(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
                             content.AppendLine(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
                             content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
                             content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
@@ -229,6 +230,13 @@ namespace OctoshiftCLI.Commands
             return $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
         }
 
+        private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
+        {
+            if (_reposOnly) return string.Empty;
+
+            return $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
+        }
+
         private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
         {
             if (_reposOnly) return string.Empty;
@@ -256,7 +264,7 @@ namespace OctoshiftCLI.Commands
 
             if (!skipIdp)
             {
-                result += " --idp-group \"{adoTeamProject}-Maintainers\"";
+                result += $" --idp-group \"{adoTeamProject}-Maintainers\"";
             }
             result += Environment.NewLine;
 
@@ -264,7 +272,7 @@ namespace OctoshiftCLI.Commands
 
             if (!skipIdp)
             {
-                result += " --idp-group \"{adoTeamProject}-Admins\"";
+                result += $" --idp-group \"{adoTeamProject}-Admins\"";
             }
 
             return result;
