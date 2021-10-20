@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.Commands
         {
             var command = new ConfigureAutoLinkCommand();
             Assert.NotNull(command);
-            Assert.Equal("configure-auto-link", command.Name);
+            Assert.Equal("configure-autolink", command.Name);
             Assert.Equal(4, command.Options.Count);
 
             Helpers.VerifyCommandOption(command.Options, "github-org", true);
