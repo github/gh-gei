@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI
 {
-    class Program
+    public class Program
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var root = new RootCommand("Migrates Azure DevOps repos to GitHub");
 
