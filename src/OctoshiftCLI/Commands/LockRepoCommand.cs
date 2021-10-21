@@ -58,7 +58,7 @@ namespace OctoshiftCLI.Commands
             await _ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Repo successfully disabled");
+            Console.WriteLine("Repo successfully locked");
             Console.ResetColor();
         }
     }
