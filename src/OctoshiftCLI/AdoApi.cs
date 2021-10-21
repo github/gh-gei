@@ -436,12 +436,12 @@ namespace OctoshiftCLI
     {
       ""descriptor"": ""IDENTITY_DESCRIPTOR"",
       ""allow"": 0,
-      ""deny"": 20284,
+      ""deny"": 56828,
       ""extendedInfo"": {
         ""effectiveAllow"": 0,
-        ""effectiveDeny"": 20284,
+        ""effectiveDeny"": 56828,
         ""inheritedAllow"": 0,
-        ""inheritedDeny"": 20284
+        ""inheritedDeny"": 56828
       }
     }
   ]
