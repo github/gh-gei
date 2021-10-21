@@ -97,10 +97,13 @@ namespace OctoshiftCLI
 
             ApplyRetryDelay();
             var response = await _httpClient.GetAsync(updatedUrl.Replace(" ", "%20"));
+
+            Console.WriteLine($"DEBUG: API Response from {updatedUrl.Replace(" ", "%20")}");
+            var responseData = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(responseData);
+
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
-
-            var responseData = await response.Content.ReadAsStringAsync();
 
             var data = (JArray)JObject.Parse(responseData)["value"];
 
