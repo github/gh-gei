@@ -17,5 +17,5 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Compress-Archive -Path ./dist/win-x64/octoshift.exe -DestinationPath ./dist/octoshift.win-x64.zip -Force
-tar -cvzf ./dist/octoshift.linux-x64.tar.gz ./dist/linux-x64/octoshift
-tar -cvzf ./dist/octoshift.osx-x64.tar.gz ./dist/osx-x64/octoshift
+tar -cvzf ./dist/octoshift.linux-x64.tar.gz -C ./dist/linux-x64 octoshift
+tar -cvzf ./dist/octoshift.osx-x64.tar.gz -C ./dist/osx-x64 octoshift
