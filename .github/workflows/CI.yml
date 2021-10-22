@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -35,3 +37,26 @@ jobs:
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
+
+  publish:
+    
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Build Artifacts
+      run: ./publish.ps1
+      shell: pwsh
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./dist/octoshift.win-x64.zip
+          ./dist/octoshift.linux-x64.tar.gz
+          ./dist/octoshift.osx-x64.tar.gz

@@ -9,7 +9,7 @@ namespace OctoshiftCLI
     {
         private GithubApi _github;
 
-        public ConfigureAutoLinkCommand() : base("configure-auto-link")
+        public ConfigureAutoLinkCommand() : base("configure-autolink")
         {
             var githubOrg = new Option<string>("--github-org")
             {
