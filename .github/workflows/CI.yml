@@ -52,6 +52,7 @@ jobs:
         dotnet-version: 5.0.x
     - name: Build Artifacts
       run: ./publish.ps1
+      shell: pwsh
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
