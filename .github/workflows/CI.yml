@@ -53,8 +53,8 @@ jobs:
       run: ./publish.ps1
     - name: Create Release
       uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./dist/octoshift.win-x64.zip
-            ./dist/octoshift.linux-x64.tar.gz
-            ./dist/octoshift.osx-x64.tar.gz
+      with:
+        files: |
+          ./dist/octoshift.win-x64.zip
+          ./dist/octoshift.linux-x64.tar.gz
+          ./dist/octoshift.osx-x64.tar.gz
