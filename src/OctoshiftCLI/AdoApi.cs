@@ -18,7 +18,7 @@ namespace OctoshiftCLI
             _client = new AdoClient(token);
         }
 
-        public async Task<string> GetUserId()
+        public virtual async Task<string> GetUserId()
         {
             var url = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
 
@@ -41,7 +41,7 @@ namespace OctoshiftCLI
         }
 
 
-        public async Task<List<string>> GetOrganizations(string userId)
+        public virtual async Task<List<string>> GetOrganizations(string userId)
         {
             var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
@@ -51,7 +51,7 @@ namespace OctoshiftCLI
                          .ToList();
         }
 
-        public async Task<string> GetOrganizationId(string userId, string adoOrganization)
+        public virtual async Task<string> GetOrganizationId(string userId, string adoOrganization)
         {
             var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}&api-version=5.0-preview.1";
 
@@ -61,14 +61,14 @@ namespace OctoshiftCLI
             return (string)data.Children().Single(x => ((string)x["accountName"]).ToUpper() == adoOrganization.ToUpper())["accountId"];
         }
 
-        public async Task<IEnumerable<string>> GetTeamProjects(string org)
+        public virtual async Task<IEnumerable<string>> GetTeamProjects(string org)
         {
             var url = $"https://dev.azure.com/{org}/_apis/projects?api-version=6.1-preview";
             var data = await _client.GetWithPagingAsync(url);
             return data.Select(x => (string)x["name"]).ToList();
         }
 
-        public async Task<IEnumerable<string>> GetRepos(string org, string teamProject)
+        public virtual async Task<IEnumerable<string>> GetRepos(string org, string teamProject)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
@@ -77,7 +77,7 @@ namespace OctoshiftCLI
                        .ToList();
         }
 
-        public async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
+        public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
         {
             foreach (var adoTeamProject in teamProjects)
             {
@@ -95,7 +95,7 @@ namespace OctoshiftCLI
             return null;
         }
 
-        public async Task<string> GetGithubHandle(string org, string orgId, string teamProject, string githubToken)
+        public virtual async Task<string> GetGithubHandle(string org, string orgId, string teamProject, string githubToken)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -134,7 +134,7 @@ namespace OctoshiftCLI
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
         }
 
-        public async Task<string> CreateEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
+        public virtual async Task<string> CreateEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
         {
             var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
@@ -168,28 +168,28 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public async Task<string> GetTeamProjectId(string org, string teamProject)
+        public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
         {
             var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
             return (string)JObject.Parse(response)["id"];
         }
 
-        public async Task<string> GetRepoId(string org, string teamProject, string repo)
+        public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
             var response = await _client.GetAsync(url);
             return (string)JObject.Parse(response)["id"];
         }
 
-        public async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
+        public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
             var response = await _client.GetWithPagingAsync(url);
             return response.Select(x => (string)x["name"]).ToList();
         }
 
-        public async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
+        public virtual async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
             var response = await _client.GetWithPagingAsync(url);
@@ -198,7 +198,7 @@ namespace OctoshiftCLI
             return (int)result["id"];
         }
 
-        public async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
+        public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {
             var url = $"https://dev.azure.com/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
@@ -219,7 +219,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-        public async Task<AdoPipeline> GetPipeline(string org, string teamProject, int pipelineId)
+        public virtual async Task<AdoPipeline> GetPipeline(string org, string teamProject, int pipelineId)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -246,7 +246,7 @@ namespace OctoshiftCLI
             return result;
         }
 
-        public async Task ChangePipelineRepo(AdoPipeline pipeline, string githubOrg, string githubRepo, string serviceConnectionId)
+        public virtual async Task ChangePipelineRepo(AdoPipeline pipeline, string githubOrg, string githubRepo, string serviceConnectionId)
         {
             var url = $"https://dev.azure.com/{pipeline.Org}/{pipeline.TeamProject}/_apis/build/definitions/{pipeline.Id}?api-version=6.0";
 
@@ -301,7 +301,7 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, body);
         }
 
-        public async Task<IEnumerable<string>> GetGithubRepoIds(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, IEnumerable<string> githubRepos)
+        public virtual async Task<IEnumerable<string>> GetGithubRepoIds(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, IEnumerable<string> githubRepos)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -352,7 +352,7 @@ namespace OctoshiftCLI
             return result;
         }
 
-        public async Task CreateBoardsGithubConnection(string org, string orgId, string teamProject, string endpointId, IEnumerable<string> repoIds)
+        public virtual async Task CreateBoardsGithubConnection(string org, string orgId, string teamProject, string endpointId, IEnumerable<string> repoIds)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -403,7 +403,7 @@ namespace OctoshiftCLI
             return $"\"{result}\"";
         }
 
-        public async Task DisableRepo(string org, string teamProject, string repoId)
+        public virtual async Task DisableRepo(string org, string teamProject, string repoId)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
@@ -412,7 +412,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-        public async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
+        public virtual async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
         {
             var url = $"https://vssps.dev.azure.com/{org}/_apis/identities?searchFilter=General&filterValue={groupName.Replace(" ", "%20")}&queryMembership=None&api-version=6.1-preview.1";
 
@@ -422,7 +422,7 @@ namespace OctoshiftCLI
             return (string)result["descriptor"];
         }
 
-        public async Task LockRepo(string org, string teamProjectId, string repoId, string identityDescriptor)
+        public virtual async Task LockRepo(string org, string teamProjectId, string repoId, string identityDescriptor)
         {
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
 
