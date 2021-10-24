@@ -7,6 +7,7 @@ namespace OctoshiftCLI.Tests
     {
         private readonly StringWriter stringWriter;
         private readonly TextWriter originalOutput;
+        private bool disposedValue;
 
         public ConsoleOutput()
         {
@@ -15,15 +16,27 @@ namespace OctoshiftCLI.Tests
             Console.SetOut(stringWriter);
         }
 
-        public string GetOuput()
+        public string GetOuput() => stringWriter.ToString();
+
+        protected virtual void Dispose(bool disposing)
         {
-            return stringWriter.ToString();
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Console.SetOut(originalOutput);
+                    stringWriter.Dispose();
+                }
+
+                disposedValue = true;
+            }
         }
 
         public void Dispose()
         {
-            Console.SetOut(originalOutput);
-            stringWriter.Dispose();
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

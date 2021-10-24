@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Commands
             await ShareServiceConnection(adoOrg, adoTeamProject, serviceConnectionId, AdoApiFactory.Create(adoToken));
         }
 
-        public async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId, AdoApi ado)
+        private async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId, AdoApi ado)
         {
             Console.WriteLine("Sharing Service Connection...");
             Console.WriteLine($"ADO ORG: {adoOrg}");

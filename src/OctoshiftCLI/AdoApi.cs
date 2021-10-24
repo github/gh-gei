@@ -9,14 +9,12 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI
 {
-    public class AdoApi
+    public class AdoApi : IDisposable
     {
         private readonly AdoClient _client;
+        private bool disposedValue;
 
-        public AdoApi(string token)
-        {
-            _client = new AdoClient(token);
-        }
+        public AdoApi(string token) => _client = new AdoClient(token);
 
         public virtual async Task<string> GetUserId()
         {
@@ -39,7 +37,6 @@ namespace OctoshiftCLI
 
             throw new InvalidDataException();
         }
-
 
         public virtual async Task<List<string>> GetOrganizations(string userId)
         {
@@ -72,13 +69,18 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
-            return data.Where(x => ((string)x["isDisabled"]).ToLower() == "false")
+            return data.Where(x => ((string)x["isDisabled"]).ToUpperInvariant() == "FALSE")
                        .Select(x => (string)x["name"])
                        .ToList();
         }
 
         public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
         {
+            if (teamProjects == null)
+            {
+                return null;
+            }
+
             foreach (var adoTeamProject in teamProjects)
             {
                 var url = $"https://dev.azure.com/{org}/{adoTeamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
@@ -194,7 +196,7 @@ namespace OctoshiftCLI
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
             var response = await _client.GetWithPagingAsync(url);
 
-            var result = response.Single(x => ((string)x["name"]).Trim().ToLower() == pipeline.Trim().ToLower());
+            var result = response.Single(x => ((string)x["name"]).Trim().ToUpper() == pipeline.Trim().ToUpper());
             return (int)result["id"];
         }
 
@@ -248,7 +250,7 @@ namespace OctoshiftCLI
 
         public virtual async Task ChangePipelineRepo(AdoPipeline pipeline, string githubOrg, string githubRepo, string serviceConnectionId)
         {
-            var url = $"https://dev.azure.com/{pipeline.Org}/{pipeline.TeamProject}/_apis/build/definitions/{pipeline.Id}?api-version=6.0";
+            var url = $"https://dev.azure.com/{pipeline?.Org}/{pipeline?.TeamProject}/_apis/build/definitions/{pipeline?.Id}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -280,9 +282,9 @@ namespace OctoshiftCLI
 
             newRepo = newRepo.Replace("GITHUB_ORG", githubOrg);
             newRepo = newRepo.Replace("GITHUB_REPO", githubRepo);
-            newRepo = newRepo.Replace("DEFAULT_BRANCH", pipeline.DefaultBranch);
-            newRepo = newRepo.Replace("CLEAN_FLAG", pipeline.Clean);
-            newRepo = newRepo.Replace("CHECKOUT_SUBMODULES_FLAG", pipeline.CheckoutSubmodules);
+            newRepo = newRepo.Replace("DEFAULT_BRANCH", pipeline?.DefaultBranch);
+            newRepo = newRepo.Replace("CLEAN_FLAG", pipeline?.Clean);
+            newRepo = newRepo.Replace("CHECKOUT_SUBMODULES_FLAG", pipeline?.CheckoutSubmodules);
             newRepo = newRepo.Replace("CONNECTED_SERVICE_ID", serviceConnectionId);
 
             var payload = new JObject();
@@ -414,7 +416,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
         {
-            var url = $"https://vssps.dev.azure.com/{org}/_apis/identities?searchFilter=General&filterValue={groupName.Replace(" ", "%20")}&queryMembership=None&api-version=6.1-preview.1";
+            var url = $"https://vssps.dev.azure.com/{org}/_apis/identities?searchFilter=General&filterValue={groupName?.Replace(" ", "%20")}&queryMembership=None&api-version=6.1-preview.1";
 
             var identities = await _client.GetWithPagingAsync(url);
 
@@ -455,6 +457,26 @@ namespace OctoshiftCLI
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             await _client.PostAsync(url, body);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _client.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 

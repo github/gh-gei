@@ -9,8 +9,6 @@ namespace OctoshiftCLI.Commands
 {
     public class IntegrateBoardsCommand : Command
     {
-        private AdoApi _ado;
-
         public IntegrateBoardsCommand() : base("integrate-boards")
         {
             var adoOrg = new Option<string>("--ado-org")
@@ -59,7 +57,7 @@ namespace OctoshiftCLI.Commands
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
-            if (string.IsNullOrWhiteSpace(adoToken))
+            if (string.IsNullOrWhiteSpace(githubToken))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
@@ -67,19 +65,19 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _ado = new AdoApi(adoToken);
+            using var ado = new AdoApi(adoToken);
 
             var githubRepoList = ParseRepoList(githubRepos);
 
-            var userId = await _ado.GetUserId();
-            var adoOrgId = await _ado.GetOrganizationId(userId, adoOrg);
-            var adoTeamProjectId = await _ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var githubHandle = await _ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
-            var endpointId = await _ado.CreateEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
+            var userId = await ado.GetUserId();
+            var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
+            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+            var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
+            var endpointId = await ado.CreateEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
 
-            var repoIds = await _ado.GetGithubRepoIds(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepoList);
+            var repoIds = await ado.GetGithubRepoIds(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepoList);
 
-            await _ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoIds);
+            await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoIds);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully configured Boards<->GitHub integration");

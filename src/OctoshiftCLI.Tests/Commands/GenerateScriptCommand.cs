@@ -1,4 +1,3 @@
-using System;
 using OctoshiftCLI.Commands;
 using Xunit;
 
@@ -7,18 +6,19 @@ namespace OctoshiftCLI.Tests.Commands
     public class GenerateScriptCommandTests
     {
         [Fact]
-        public void Should_Have_Options()
+        public void ShouldHaveOptions()
         {
             var command = new GenerateScriptCommand();
             Assert.NotNull(command);
             Assert.Equal("generate-script", command.Name);
             Assert.Equal(5, command.Options.Count);
 
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            // TODO: This looks wrong
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
 
 
             Assert.Equal("github-org", command.Options[0].Name);

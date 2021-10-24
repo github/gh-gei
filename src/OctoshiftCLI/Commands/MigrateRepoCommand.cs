@@ -1,15 +1,12 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.Commands
 {
     public class MigrateRepoCommand : Command
     {
-        private GithubApi _github;
-
         public MigrateRepoCommand() : base("migrate-repo")
         {
             var adoOrg = new Option<string>("--ado-org")
@@ -67,28 +64,28 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _github = new GithubApi(githubToken);
+            using var github = new GithubApi(githubToken);
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            var githubOrgId = await _github.GetOrganizationId(githubOrg);
-            var migrationSourceId = await _github.CreateMigrationSource(githubOrgId, adoToken);
-            var migrationId = await _github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
+            var githubOrgId = await github.GetOrganizationId(githubOrg);
+            var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken);
+            var migrationId = await github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
-            var migrationState = await _github.GetMigrationState(migrationId);
+            var migrationState = await github.GetMigrationState(migrationId);
 
-            while (migrationState.Trim().ToUpper() == "IN_PROGRESS" || migrationState.Trim().ToUpper() == "QUEUED")
+            while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 Console.WriteLine($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await _github.GetMigrationState(migrationId);
+                migrationState = await github.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"ERROR: Migration Failed. Migration ID: {migrationId}");
-                var failureReason = await _github.GetMigrationFailureReason(migrationId);
+                var failureReason = await github.GetMigrationFailureReason(migrationId);
                 Console.WriteLine(failureReason);
                 Console.ResetColor();
             }

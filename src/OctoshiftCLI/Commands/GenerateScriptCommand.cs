@@ -11,8 +11,7 @@ namespace OctoshiftCLI.Commands
 {
     public class GenerateScriptCommand : Command
     {
-        private AdoApi _ado;
-        private bool _reposOnly = false;
+        private bool _reposOnly;
 
         public GenerateScriptCommand() : base("generate-script")
         {
@@ -63,7 +62,7 @@ namespace OctoshiftCLI.Commands
 
             _reposOnly = reposOnly;
 
-            _ado = new AdoApi(adoToken);
+            using var ado = new AdoApi(adoToken);
 
             var orgs = new List<string>();
             var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>();
@@ -79,8 +78,8 @@ namespace OctoshiftCLI.Commands
             {
                 Console.WriteLine($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
                 // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
-                var userId = await _ado.GetUserId();
-                orgs = await _ado.GetOrganizations(userId);
+                var userId = await ado.GetUserId();
+                orgs = await ado.GetOrganizations(userId);
             }
 
             foreach (var org in orgs)
@@ -89,12 +88,12 @@ namespace OctoshiftCLI.Commands
                 repos.Add(org, new Dictionary<string, IEnumerable<string>>());
                 pipelines.Add(org, new Dictionary<string, Dictionary<string, IEnumerable<string>>>());
 
-                var teamProjects = await _ado.GetTeamProjects(org);
+                var teamProjects = await ado.GetTeamProjects(org);
 
                 foreach (var teamProject in teamProjects)
                 {
                     Console.WriteLine($"  Team Project: {teamProject}");
-                    var projectRepos = await _ado.GetRepos(org, teamProject);
+                    var projectRepos = await ado.GetRepos(org, teamProject);
                     repos[org].Add(teamProject, projectRepos);
 
                     pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
@@ -102,8 +101,8 @@ namespace OctoshiftCLI.Commands
                     foreach (var repo in projectRepos)
                     {
                         Console.WriteLine($"    Repo: {repo}");
-                        var repoId = await _ado.GetRepoId(org, teamProject, repo);
-                        var repoPipelines = await _ado.GetPipelines(org, teamProject, repoId);
+                        var repoId = await ado.GetRepoId(org, teamProject, repo);
+                        var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
 
                         pipelines[org][teamProject].Add(repo, repoPipelines);
                     }
@@ -111,7 +110,7 @@ namespace OctoshiftCLI.Commands
 
                 if (!_reposOnly)
                 {
-                    var appId = await _ado.GetGithubAppId(org, githubOrg, teamProjects);
+                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
 
                     if (string.IsNullOrWhiteSpace(appId))
                     {
@@ -149,8 +148,6 @@ namespace OctoshiftCLI.Commands
         }
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
-
-        private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
 
         private void GenerateScript(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos,
                                           Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>> pipelines,
@@ -225,30 +222,30 @@ namespace OctoshiftCLI.Commands
 
         private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
         {
-            if (_reposOnly) return string.Empty;
-
-            return $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
         }
 
         private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
         {
-            if (_reposOnly) return string.Empty;
-
-            return $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
         }
 
         private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
         {
-            if (_reposOnly) return string.Empty;
-
-            return $"./octoshift share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"";
         }
 
         private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
-            if (_reposOnly) return string.Empty;
-
-            return $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
         }
 
         private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
@@ -258,7 +255,10 @@ namespace OctoshiftCLI.Commands
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
         {
-            if (_reposOnly) return string.Empty;
+            if (_reposOnly)
+            {
+                return string.Empty;
+            }
 
             var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"";
 
@@ -280,7 +280,10 @@ namespace OctoshiftCLI.Commands
 
         private string GithubRepoPermissionsScript(string adoTeamProject, string githubOrg, string githubRepo)
         {
-            if (_reposOnly) return string.Empty;
+            if (_reposOnly)
+            {
+                return string.Empty;
+            }
 
             var result = $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"";
             result += Environment.NewLine;
@@ -291,16 +294,19 @@ namespace OctoshiftCLI.Commands
 
         private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId)
         {
-            if (_reposOnly) return string.Empty;
-
-            return $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"";
         }
 
         private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, IEnumerable<string> githubRepos)
         {
-            if (_reposOnly) return string.Empty;
+            if (_reposOnly)
+            {
+                return string.Empty;
+            }
 
-            var repoList = String.Join(",", githubRepos);
+            var repoList = string.Join(",", githubRepos);
             return $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repos \"{repoList}\"";
         }
     }

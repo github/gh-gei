@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -7,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI
 {
-    public class GithubApi
+    public class GithubApi : IDisposable
     {
         private readonly GithubClient _client;
+        private bool disposedValue;
 
         public GithubApi(string token)
         {
@@ -199,7 +201,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-            public async Task<string> GrantMigratorRole(string org, string actor, string actorType)
+        public async Task<string> GrantMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -210,20 +212,20 @@ namespace OctoshiftCLI
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"grantMigratorRole\"}}";
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            try 
+            try
             {
                 var response = await _client.PostAsync(url, body);
                 var data = JObject.Parse(response);
-                
+
                 return (string)data["data"]["grantMigratorRole"]["success"];
-            } 
+            }
             catch (HttpRequestException)
             {
                 return "False";
             }
         }
 
-         public async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
+        public async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -234,18 +236,37 @@ namespace OctoshiftCLI
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"revokeMigratorRole\"}}";
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            try 
+            try
             {
                 var response = await _client.PostAsync(url, body);
                 var data = JObject.Parse(response);
-                
+
                 return (string)data["data"]["revokeMigratorRole"]["success"];
-            } 
+            }
             catch (HttpRequestException)
             {
                 return "False";
             }
+        }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _client.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

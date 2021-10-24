@@ -1,4 +1,3 @@
-using System;
 using OctoshiftCLI.Commands;
 using Xunit;
 
@@ -7,17 +6,18 @@ namespace OctoshiftCLI.Tests.Commands
     public class IntegrateBoardsCommandTests
     {
         [Fact]
-        public void Should_Have_Options()
+        public void ShouldHaveOptions()
         {
             var command = new IntegrateBoardsCommand();
             Assert.NotNull(command);
             Assert.Equal("integrate-boards", command.Name);
             Assert.Equal(4, command.Options.Count);
 
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
-            Helpers.VerifyCommandOption(command.Options, "github-org", true);
+            // TODO: This looks wrong
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
 
 
 
