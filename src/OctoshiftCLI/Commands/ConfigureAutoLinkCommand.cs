@@ -7,8 +7,6 @@ namespace OctoshiftCLI
 {
     public class ConfigureAutoLinkCommand : Command
     {
-        private GithubApi _github;
-
         public ConfigureAutoLinkCommand() : base("configure-autolink")
         {
             var githubOrg = new Option<string>("--github-org")
@@ -54,10 +52,10 @@ namespace OctoshiftCLI
                 return;
             }
 
-            _github = new GithubApi(githubToken);
+            using var github = new GithubApi(githubToken);
 
             // TODO: This crashes if autolink is already configured
-            await _github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
+            await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully configured autolink references");

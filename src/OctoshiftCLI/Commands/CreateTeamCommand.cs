@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class CreateTeamCommand : Command
     {
-        private GithubApi _github;
-
         public CreateTeamCommand() : base("create-team")
         {
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
@@ -50,9 +48,9 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _github = new GithubApi(githubToken);
+            using var github = new GithubApi(githubToken);
 
-            await _github.CreateTeam(githubOrg, teamName);
+            await github.CreateTeam(githubOrg, teamName);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully created team");
@@ -64,17 +62,17 @@ namespace OctoshiftCLI.Commands
             }
             else
             {
-                var members = await _github.GetTeamMembers(githubOrg, teamName);
+                var members = await github.GetTeamMembers(githubOrg, teamName);
 
                 foreach (var member in members)
                 {
-                    await _github.RemoveTeamMember(githubOrg, teamName, member);
+                    await github.RemoveTeamMember(githubOrg, teamName, member);
                 }
 
-                var idpGroupId = await _github.GetIdpGroupId(githubOrg, idpGroup);
-                var teamSlug = await _github.GetTeamSlug(githubOrg, teamName);
+                var idpGroupId = await github.GetIdpGroupId(githubOrg, idpGroup);
+                var teamSlug = await github.GetTeamSlug(githubOrg, teamName);
 
-                await _github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+                await github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Successfully linked team to Idp group");

@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class LockRepoCommand : Command
     {
-        private AdoApi _ado;
-
         public LockRepoCommand() : base("lock-ado-repo")
         {
             Description = "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.";
@@ -50,12 +48,12 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _ado = new AdoApi(adoToken);
+            using var ado = new AdoApi(adoToken);
 
-            var teamProjectId = await _ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var repoId = await _ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
-            var identityDescriptor = await _ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
-            await _ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
+            var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+            var identityDescriptor = await ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
+            await ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Repo successfully locked");

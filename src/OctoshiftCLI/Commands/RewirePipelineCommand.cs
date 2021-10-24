@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class RewirePipelineCommand : Command
     {
-        private AdoApi _ado;
-
         public RewirePipelineCommand() : base("rewire-pipeline")
         {
             var adoOrg = new Option<string>("--ado-org")
@@ -66,11 +64,11 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _ado = new AdoApi(adoToken);
+            using var ado = new AdoApi(adoToken);
 
-            var adoPipelineId = await _ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var pipelineDetails = await _ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
-            await _ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
+            var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
+            var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
+            await ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully rewired pipeline");

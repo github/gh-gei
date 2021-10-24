@@ -9,16 +9,16 @@ namespace OctoshiftCLI.Tests.Commands
     public class ShareServiceConnectionCommandTests
     {
         [Fact]
-        public void Should_Have_Options()
+        public void ShouldHaveOptions()
         {
             var command = new ShareServiceConnectionCommand();
             Assert.NotNull(command);
             Assert.Equal("share-service-connection", command.Name);
             Assert.Equal(3, command.Options.Count);
 
-            Helpers.VerifyCommandOption(command.Options, "ado-org", true);
-            Helpers.VerifyCommandOption(command.Options, "ado-team-project", true);
-            Helpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
         }
 
         [Fact]
@@ -29,7 +29,7 @@ namespace OctoshiftCLI.Tests.Commands
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
             var adoToken = Guid.NewGuid().ToString();
-            
+
             var mockAdo = new Mock<AdoApi>(string.Empty);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
@@ -46,14 +46,14 @@ namespace OctoshiftCLI.Tests.Commands
         public async Task MissingADOPat()
         {
             // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            AdoApiFactory.Create = token => throw new Exception();
+            AdoApiFactory.Create = token => throw new InvalidOperationException();
             Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
 
             var command = new ShareServiceConnectionCommand();
 
             using var console = new ConsoleOutput();
             await command.Invoke("foo", "foo", "foo");
-            Assert.Contains("ERROR: NO ADO_PAT FOUND", console.GetOuput().ToUpper());
+            Assert.Contains("ERROR: NO ADO_PAT FOUND", console.GetOuput(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }
