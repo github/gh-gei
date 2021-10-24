@@ -51,9 +51,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             var command = new AddTeamToRepoCommand();
 
-            using var console = new ConsoleOutput();
             await command.Invoke("foo", "foo", "foo", "foo");
-            Assert.Contains("ERROR: NO GH_PAT FOUND", console.GetOuput(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

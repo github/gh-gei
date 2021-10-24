@@ -13,10 +13,7 @@ namespace OctoshiftCLI
         private readonly GithubClient _client;
         private bool disposedValue;
 
-        public GithubApi(string token)
-        {
-            _client = new GithubClient(token);
-        }
+        public GithubApi(string token) => _client = new GithubClient(token);
 
         public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
         {
