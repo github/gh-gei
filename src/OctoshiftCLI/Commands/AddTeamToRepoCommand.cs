@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class AddTeamToRepoCommand : Command
     {
-        private GithubApi _github;
-
         public AddTeamToRepoCommand() : base("add-team-to-repo")
         {
             var githubOrg = new Option<string>("--github-org")
@@ -54,9 +52,9 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _github = new GithubApi(githubToken);
+            using var github = new GithubApi(githubToken);
 
-            await _github.AddTeamToRepo(githubOrg, githubRepo, team, role);
+            await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully added team to repo");

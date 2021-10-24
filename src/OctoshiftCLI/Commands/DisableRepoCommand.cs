@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class DisableRepoCommand : Command
     {
-        private AdoApi _ado;
-
         public DisableRepoCommand() : base("disable-ado-repo")
         {
             var adoOrg = new Option<string>("--ado-org")
@@ -48,10 +46,10 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _ado = new AdoApi(adoToken);
+            using var ado = new AdoApi(adoToken);
 
-            var repoId = await _ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
-            await _ado.DisableRepo(adoOrg, adoTeamProject, repoId);
+            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+            await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Repo successfully disabled");

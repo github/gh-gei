@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI
 {
-    public class AdoClient
+    public class AdoClient : IDisposable
     {
         private readonly string _adoToken;
         private readonly HttpClient _httpClient;
-        private double _retryDelay = 0.0;
+        private double _retryDelay;
+        private bool disposedValue;
 
         public AdoClient(string adoToken)
         {
@@ -28,7 +29,7 @@ namespace OctoshiftCLI
         public async Task<string> GetAsync(string url)
         {
             ApplyRetryDelay();
-            var response = await _httpClient.GetAsync(url.Replace(" ", "%20"));
+            var response = await _httpClient.GetAsync(url?.Replace(" ", "%20"));
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
@@ -38,7 +39,7 @@ namespace OctoshiftCLI
         public async Task<string> PostAsync(string url, HttpContent body)
         {
             ApplyRetryDelay();
-            var response = await _httpClient.PostAsync(url.Replace(" ", "%20"), body);
+            var response = await _httpClient.PostAsync(url?.Replace(" ", "%20"), body);
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
@@ -48,7 +49,7 @@ namespace OctoshiftCLI
         public async Task<string> PutAsync(string url, HttpContent body)
         {
             ApplyRetryDelay();
-            var response = await _httpClient.PutAsync(url.Replace(" ", "%20"), body);
+            var response = await _httpClient.PutAsync(url?.Replace(" ", "%20"), body);
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
@@ -58,7 +59,7 @@ namespace OctoshiftCLI
         public async Task<string> PatchAsync(string url, HttpContent body)
         {
             ApplyRetryDelay();
-            var response = await _httpClient.PatchAsync(url.Replace(" ", "%20"), body);
+            var response = await _httpClient.PatchAsync(url?.Replace(" ", "%20"), body);
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
@@ -79,6 +80,11 @@ namespace OctoshiftCLI
 
         public async Task<JArray> GetWithPagingAsync(string url, string continuationToken)
         {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
             var updatedUrl = url;
 
             if (!string.IsNullOrWhiteSpace(continuationToken))
@@ -124,6 +130,26 @@ namespace OctoshiftCLI
             {
                 _retryDelay = response.Headers.RetryAfter.Delta.Value.TotalMilliseconds;
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _httpClient.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

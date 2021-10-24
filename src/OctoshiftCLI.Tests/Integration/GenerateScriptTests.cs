@@ -27,10 +27,10 @@ namespace OctoshiftCLI.Tests.Integration
 
             var referenceFilePath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "../../../Integration/Reference", $"{scenarioName}.sh");
             var referenceFileContents = System.IO.File.ReadAllText(referenceFilePath);
-            
+
             //TODO: Should probably add some whitespace stripping to improve the validation
             Assert.Equal(referenceFileContents, outputContents);
-        }    
+        }
         #endregion
 
         [Fact]

@@ -1,14 +1,11 @@
 using System.CommandLine;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
 {
-    public class Helpers
+    public static class TestHelpers
     {
         #region  Constructor, Member variables and misc. helpers
         private static GithubClient _client;
@@ -40,7 +37,7 @@ namespace OctoshiftCLI.Tests
         public static void VerifyCommandOption(IReadOnlyList<Option> options, string name, bool required)
         {
             var option = options.Single(x => x.Name == name);
-            
+
             Assert.Equal(required, option.IsRequired);
         }
         #endregion

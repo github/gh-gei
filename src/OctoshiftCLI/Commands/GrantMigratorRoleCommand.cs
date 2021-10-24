@@ -1,15 +1,12 @@
 using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.Commands
 {
     public class GrantMigratorRoleCommand : Command
     {
-        private GithubApi _github;
-
         public GrantMigratorRoleCommand() : base("grant-migrator-role")
         {
             Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
@@ -26,7 +23,7 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
-            
+
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
@@ -44,7 +41,7 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"ACTOR TYPE: {actorType}");
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-            
+
             if (string.IsNullOrWhiteSpace(githubToken))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -53,11 +50,11 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            if(actorType == "TEAM" || actorType == "USER")
+            if (actorType is "TEAM" or "USER")
             {
-               Console.WriteLine("Actor type is valid...");
-            } 
-            else 
+                Console.WriteLine("Actor type is valid...");
+            }
+            else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERROR: Actor type must be either TEAM or USER.");
@@ -65,10 +62,10 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _github = new GithubApi(githubToken);
+            using var github = new GithubApi(githubToken);
 
-            var githubOrgId = await _github.GetOrganizationId(githubOrg);
-            var grantMigratorRoleState = await _github.GrantMigratorRole(githubOrgId, actor, actorType);
+            var githubOrgId = await github.GetOrganizationId(githubOrg);
+            var grantMigratorRoleState = await github.GrantMigratorRole(githubOrgId, actor, actorType);
 
             Console.WriteLine(grantMigratorRoleState);
 

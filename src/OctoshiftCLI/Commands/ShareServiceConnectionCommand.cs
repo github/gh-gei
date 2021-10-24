@@ -7,8 +7,6 @@ namespace OctoshiftCLI.Commands
 {
     public class ShareServiceConnectionCommand : Command
     {
-        private AdoApi _ado;
-
         public ShareServiceConnectionCommand() : base("share-service-connection")
         {
             var adoOrg = new Option<string>("--ado-org")
@@ -31,13 +29,8 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId)
         {
-            Console.WriteLine("Sharing Service Connection...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
-
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
 
             if (string.IsNullOrWhiteSpace(adoToken))
@@ -48,11 +41,19 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            _ado = new AdoApi(adoToken);
+            await ShareServiceConnection(adoOrg, adoTeamProject, serviceConnectionId, AdoApiFactory.Create(adoToken));
+        }
 
+        private async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId, AdoApi ado)
+        {
+            Console.WriteLine("Sharing Service Connection...");
+            Console.WriteLine($"ADO ORG: {adoOrg}");
+            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+
+            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash
-            var adoTeamProjectId = await _ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            await _ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully shared service connection");
