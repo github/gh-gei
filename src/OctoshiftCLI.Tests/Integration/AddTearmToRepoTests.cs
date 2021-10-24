@@ -9,16 +9,16 @@ namespace OctoshiftCLI.Tests.Integration
         public async Task CreateAndAddTeam()
         {
             // Arrange - create team before adding
-            var targetTeam = Helpers.GetTargetName("team");
-            var parameterString = $"create-team --github-org {Helpers.TargetOrg} --team-name {targetTeam}";
+            var targetTeam = TestHelpers.GetTargetName("team");
+            var parameterString = $"create-team --github-org {TestHelpers.TargetOrg} --team-name {targetTeam}";
             var parameters = parameterString.Trim().Split(' ');
             await OctoshiftCLI.Program.Main(parameters);
 
-            var exists = await Helpers.TeamExists(Helpers.TargetOrg, targetTeam);
+            var exists = await TestHelpers.TeamExists(TestHelpers.TargetOrg, targetTeam);
             Assert.True(exists, "Failed to create team (arrange) before add test");
 
             // Act - add team to repo
-            parameterString = "add-team-to-repo --github-org {Helpers.TargetOrg} --github-repo tmp --team CreateAddTeam --role maintainer";
+            parameterString = $"add-team-to-repo --github-org {TestHelpers.TargetOrg} --github-repo tmp --team CreateAddTeam --role maintainer";
             parameters = parameterString.Trim().Split(' ');
             await OctoshiftCLI.Program.Main(parameters);
 
@@ -26,8 +26,8 @@ namespace OctoshiftCLI.Tests.Integration
             //TODO: Verify team is a maintainer in the repo
 
             // Cleanup
-            await Helpers.DeleteTeam(Helpers.TargetOrg, targetTeam);
-            exists = await Helpers.TeamExists(Helpers.TargetOrg, targetTeam);
+            await TestHelpers.DeleteTeam(TestHelpers.TargetOrg, targetTeam);
+            exists = await TestHelpers.TeamExists(TestHelpers.TargetOrg, targetTeam);
             Assert.False(exists, "Unable to delete team as part of cleanup");
         }
     }

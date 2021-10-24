@@ -1,5 +1,7 @@
+using System;
 using System.CommandLine;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Linq;
 using Xunit;
 
@@ -11,7 +13,7 @@ namespace OctoshiftCLI.Tests
         private static GithubClient _client;
         private const string TARGET_PREFIX = "OCLI-Int";
 
-        static Helpers()
+        static TestHelpers()
         {
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _client = new GithubClient(githubToken);
