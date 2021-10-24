@@ -21,14 +21,14 @@ namespace OctoshiftCLI.Tests
             _client = new GithubClient(githubToken);
         }
 
-        internal static string TargetName(string targetType)
+        internal static string GetTargetName(string targetType)
         {
             return $"{TARGET_PREFIX}-{targetType}-{DateTime.UtcNow.ToString("yyMMdd-HHmmss")}";
         }
 
-        internal static string TargetOrg()
+        internal static string TargetOrg
         {
-            return TEST_GITHUB_ORG;
+            get => TEST_GITHUB_ORG;
         }
         #endregion
 
