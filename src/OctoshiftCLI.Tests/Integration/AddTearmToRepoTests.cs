@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Integration
     public class AddTeamToRepoTests
     {
         [Fact]
-        public async Task CreateAndAddTeam()
+        public async Task ShouldAddTeam()
         {
             // Arrange - create team before adding
             var targetTeam = TestHelpers.GetTargetName("team");

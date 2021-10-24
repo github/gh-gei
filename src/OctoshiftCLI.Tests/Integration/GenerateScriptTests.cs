@@ -34,26 +34,26 @@ namespace OctoshiftCLI.Tests.Integration
         #endregion
 
         [Fact]
-        public async void WithInvalidParameters_ShouldFailToGenerateScript()
+        public async void ShouldFailToGenerateWithInvalidParameters()
         {
             var filename = await GenerateOutputScript("invalid-parameters", "--unsupport-parameter");
             Assert.False(File.Exists(filename));
         }
 
         [Fact]
-        public async void WithDefaultParams_ShouldGenerateDefaultScript()
+        public async void ShouldGenerateDefaultScript()
         {
             await VerifyOutputScript("default-parameters", "");
         }
 
         [Fact]
-        public async void WithReposOnly_ShouldGenerateRepoMigrationScript()
+        public async void ShouldGenerateScriptsWithReposOnly()
         {
             await VerifyOutputScript("repos-only", "--repos-only");
         }
 
         [Fact]
-        public async void WithSkipIdp_ShouldGenerateWithoutIdp()
+        public async void ShouldGenerateScriptWithoutIdp()
         {
             await VerifyOutputScript("skip-idp", "--skip-idp");
         }
