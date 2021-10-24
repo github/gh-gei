@@ -51,9 +51,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             var command = new ShareServiceConnectionCommand();
 
-            using var console = new ConsoleOutput();
             await command.Invoke("foo", "foo", "foo");
-            Assert.Contains("ERROR: NO ADO_PAT FOUND", console.GetOuput(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

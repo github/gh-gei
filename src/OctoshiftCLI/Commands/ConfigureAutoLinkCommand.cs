@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI
+namespace OctoshiftCLI.Commands
 {
     public class ConfigureAutoLinkCommand : Command
     {
@@ -34,7 +34,7 @@ namespace OctoshiftCLI
             Handler = CommandHandler.Create<string, string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
+        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
             Console.WriteLine("Configuring Autolink Reference...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
@@ -52,7 +52,7 @@ namespace OctoshiftCLI
                 return;
             }
 
-            using var github = new GithubApi(githubToken);
+            using var github = GithubApiFactory.Create(githubToken);
 
             // TODO: This crashes if autolink is already configured
             await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
