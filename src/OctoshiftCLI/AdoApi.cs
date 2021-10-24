@@ -282,9 +282,9 @@ namespace OctoshiftCLI
 
             newRepo = newRepo.Replace("GITHUB_ORG", githubOrg);
             newRepo = newRepo.Replace("GITHUB_REPO", githubRepo);
-            newRepo = newRepo.Replace("DEFAULT_BRANCH", pipeline.DefaultBranch);
-            newRepo = newRepo.Replace("CLEAN_FLAG", pipeline.Clean);
-            newRepo = newRepo.Replace("CHECKOUT_SUBMODULES_FLAG", pipeline.CheckoutSubmodules);
+            newRepo = newRepo.Replace("DEFAULT_BRANCH", pipeline?.DefaultBranch);
+            newRepo = newRepo.Replace("CLEAN_FLAG", pipeline?.Clean);
+            newRepo = newRepo.Replace("CHECKOUT_SUBMODULES_FLAG", pipeline?.CheckoutSubmodules);
             newRepo = newRepo.Replace("CONNECTED_SERVICE_ID", serviceConnectionId);
 
             var payload = new JObject();
