@@ -11,10 +11,11 @@ namespace OctoshiftCLI.Tests.Integration
             // Arrange
             var targetRepo = TestHelpers.GetTargetName("empty-repo");
 
-            var parameterString = $"migrate-repo --ado-org {TestHelpers.SourceOrg} --ado-team-project \"int-git\" --ado-repo \"git-empty\" --github-org {TestHelpers.TargetOrg} --github-repo {targetRepo}";
-            var parameters = parameterString.Trim().Split(' ');
             //TODO: Perform the migration (uncomment below) then reverse polarity of the test
             // need Octoshift enabled on GuacamoleResearch before continuine (or move to a different GH org)
+
+            // var parameterString = $"migrate-repo --ado-org {TestHelpers.SourceOrg} --ado-team-project \"int-git\" --ado-repo \"git-empty\" --github-org {TestHelpers.TargetOrg} --github-repo {targetRepo}";
+            // var parameters = parameterString.Trim().Split(' ');
             // await OctoshiftCLI.Program.Main(parameters);
 
             // Act
@@ -33,11 +34,11 @@ namespace OctoshiftCLI.Tests.Integration
             // Arrange
             var targetRepo = TestHelpers.GetTargetName("repo");
 
-            // Arrange
-            var parameterString = $"migrate-repo --ado-org {TestHelpers.SourceOrg} --ado-team-project \"int-git\" --ado-repo \"int-git1\" --github-org {TestHelpers.TargetOrg} --github-repo {targetRepo}";
-            var parameters = parameterString.Trim().Split(' ');
             //TODO: Perform the migration (uncomment below) then reverse polarity of the test
             // need Octoshift enabled on GuacamoleResearch before continuine (or move to a different GH org)
+
+            // var parameterString = $"migrate-repo --ado-org {TestHelpers.SourceOrg} --ado-team-project \"int-git\" --ado-repo \"int-git1\" --github-org {TestHelpers.TargetOrg} --github-repo {targetRepo}";
+            // var parameters = parameterString.Trim().Split(' ');
             // await OctoshiftCLI.Program.Main(parameters);
 
             // Act

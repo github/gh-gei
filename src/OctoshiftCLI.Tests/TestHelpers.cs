@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests
     public static class TestHelpers
     {
         #region  Constructor, Member variables and misc. helpers
-        private static GithubClient _client = new GithubClient(Environment.GetEnvironmentVariable("GH_PAT"));
+        private static readonly GithubClient _client = new GithubClient(Environment.GetEnvironmentVariable("GH_PAT"));
         private const string TARGET_PREFIX = "OCLI-Int";
 
         internal static string GetTargetName(string targetType)
@@ -43,7 +43,7 @@ namespace OctoshiftCLI.Tests
         {
             try
             {
-                var entity = await _client.GetAsync(url);
+                await _client.GetAsync(url);
             } 
             catch (Exception ex)
             {
