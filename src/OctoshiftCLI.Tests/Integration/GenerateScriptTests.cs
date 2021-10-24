@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Integration
 {
     public class GenerateScriptTests
     {
-        #region Script generation and verification
+        #region Script generation and verification helpers
         private async Task<string> GenerateOutputScript(string scenarioName, string additionalFlags)
         {
             var outputFilename = $"{System.IO.Path.GetTempPath()}{scenarioName}.sh";

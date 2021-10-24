@@ -1,56 +1,57 @@
-using System;
-using System.Diagnostics;
-using OctoshiftCLI;
-using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Integration
 {
-    public class CreateTeamTests : IntegrationTestBase
+    public class CreateTeamTests
     {
-        protected override string GitHubApiUrl()
-        {
-            return "https://api.github.com/orgs/{orgName}/teams/{name}";
-        }
-
-
         [Fact]
-        public async Task WithTeamWithoutIdp_ShouldMigrate()
+        public async Task CreateTeamWithoutIdp_ShouldMigrate()
         {
-            await this.Delete("GuacamoleResearch", "int-git-Maintainers");
-            // Verify the team doesn't exist before creating
-            var exists = await this.Exists("GuacamoleResearch", "int-git-Maintainers");
-            Assert.False(exists, "Unable to delete team as part of 'Arrange'");
+            // Arrange
+            var targetTeam = Helpers.TargetName("no-idp-team");
 
-            var parameterString = "create-team --github-org GuacamoleResearch --team-name int-git-Maintainers";
+            var parameterString = $"create-team --github-org {Helpers.TargetOrg()} --team-name {targetTeam}";
             var parameters = parameterString.Trim().Split(' ');
+
+            // Act
             await OctoshiftCLI.Program.Main(parameters);
 
-            exists = await this.Exists("GuacamoleResearch", "int-git-Maintainers");
+            // Assert
+            var exists = await Helpers.TeamExists(Helpers.TargetOrg(), targetTeam);
             Assert.True(exists);
 
             //TODO: Assert membership count
+
+            // Cleanup
+            await Helpers.DeleteTeam(Helpers.TargetOrg(), targetTeam);
+            exists = await Helpers.TeamExists(Helpers.TargetOrg(), targetTeam);
+            Assert.False(exists, "Failed to cleanup test team");
         }
 
         [Fact]
-        public async Task WithTeamAndIdp_ShouldMigrate()
+        public async Task CreateTeamWithIdp_ShouldMigrate()
         {
-            await this.Delete("GuacamoleResearch", "int-git-Admins");
-            // Verify the team doesn't exist before creating
-            var exists = await this.Exists("GuacamoleResearch", "int-git-Admins");
-            Assert.False(exists, "Unable to delete team as part of 'Arrange'");
+            // Arrange
+            var targetTeam = Helpers.TargetName("with-idp-team");
+            var targetIdp = Helpers.TargetName("idp-group");
 
-            var parameterString = "create-team --github-org GuacamoleResearch --team-name int-git-Admins --idp-group int-git-Admins";
+            var parameterString = $"create-team --github-org {Helpers.TargetOrg()} --team-name {targetTeam} --idp-group {targetIdp}";
             var parameters = parameterString.Trim().Split(' ');
+
+            // Act
             await OctoshiftCLI.Program.Main(parameters);
 
-            exists = await this.Exists("GuacamoleResearch", "int-git-Admins");
+            // Assert
+            var exists = await Helpers.TeamExists(Helpers.TargetOrg(), targetTeam);
             Assert.True(exists);
 
             //TODO: Assert membership count == 0
+
+            // Cleanup
+            await Helpers.DeleteTeam(Helpers.TargetOrg(), targetTeam);
+            exists = await Helpers.TeamExists(Helpers.TargetOrg(), targetTeam);
+            Assert.False(exists, "Failed to cleanup test team");
         }
-
-
     }
 }

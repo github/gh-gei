@@ -7,43 +7,53 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Integration
 {
-    public class MigrateRepoTests: IntegrationTestBase
+    public class MigrateRepoTests
     {
-        protected override string GitHubApiUrl()
-        {
-            return "https://api.github.com/repos/{orgName}/{name}";
-        }
-
         [Fact]
         public async Task WithEmptyRepo_ShouldMigrate()
         {
-            await this.Delete("GuacamoleResearch", "git-empty");
+            // Arrange
+            var targetRepo = Helpers.TargetName("empty-repo");
 
-            var parameterString = "migrate-repo --ado-org \"OCLI\" --ado-team-project \"int-git\" --ado-repo \"git-empty\" --github-org \"GuacamoleResearch\" --github-repo \"git-empty\"";
+            var parameterString = $"migrate-repo --ado-org \"OCLI\" --ado-team-project \"int-git\" --ado-repo \"git-empty\" --github-org {Helpers.TargetOrg()} --github-repo {targetRepo}";
             var parameters = parameterString.Trim().Split(' ');
             //TODO: Perform the migration (uncomment below) then reverse polarity of the test
             // need Octoshift enabled on GuacamoleResearch before continuine (or move to a different GH org)
             // await OctoshiftCLI.Program.Main(parameters);
 
-            var exists = await this.Exists("GuacamoleResearch", "git-empty");
+            // Act
+            var exists = await Helpers.RepoExists(Helpers.TargetOrg(), targetRepo);
+
+            // Assert
             Assert.False(exists);
+
+            // Cleanup
+            await Helpers.DeleteRepo(Helpers.TargetOrg(), targetRepo);
         }
 
         [Fact]
         public async Task WithPopoulatedRepo_ShouldIncludeHistory()
         {
-            await this.Delete("GuacamoleResearch", "int-git1");
+            // Arrange
+            var targetRepo = Helpers.TargetName("repo");
 
-            var parameterString = "migrate-repo --ado-org \"OCLI\" --ado-team-project \"int-git\" --ado-repo \"int-git1\" --github-org \"GuacamoleResearch\" --github-repo \"int-git1\"";
+            // Arrange
+            var parameterString = $"migrate-repo --ado-org \"OCLI\" --ado-team-project \"int-git\" --ado-repo \"int-git1\" --github-org {Helpers.TargetOrg()} --github-repo {targetRepo}";
             var parameters = parameterString.Trim().Split(' ');
             //TODO: Perform the migration (uncomment below) then reverse polarity of the test
             // need Octoshift enabled on GuacamoleResearch before continuine (or move to a different GH org)
             // await OctoshiftCLI.Program.Main(parameters);
 
-            var exists = await this.Exists("GuacamoleResearch", "int-git1");
+            // Act
+            var exists = await Helpers.RepoExists(Helpers.TargetOrg(), "int-git1");
+
+            // Assert
             Assert.False(exists);
 
             //TODO: Add verification of file history
+
+            // Cleanup
+            await Helpers.DeleteRepo(Helpers.TargetOrg(), targetRepo);
         }
     }
 }
