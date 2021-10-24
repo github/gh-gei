@@ -10,14 +10,8 @@ namespace OctoshiftCLI.Tests
     public static class TestHelpers
     {
         #region  Constructor, Member variables and misc. helpers
-        private static GithubClient _client;
+        private static GithubClient _client = new GithubClient(Environment.GetEnvironmentVariable("GH_PAT"));
         private const string TARGET_PREFIX = "OCLI-Int";
-
-        static TestHelpers()
-        {
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-            _client = new GithubClient(githubToken);
-        }
 
         internal static string GetTargetName(string targetType)
         {
