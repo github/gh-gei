@@ -18,7 +18,7 @@ namespace OctoshiftCLI
             _client = new GithubClient(token);
         }
 
-        public async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
+        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
         {
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
@@ -28,7 +28,7 @@ namespace OctoshiftCLI
             await _client.PostAsync(url, body);
         }
 
-        public async Task<string> CreateTeam(string org, string teamName)
+        public virtual async Task<string> CreateTeam(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
             var payload = $"{{ \"name\": \"{teamName}\", \"privacy\": \"closed\" }}";
@@ -40,7 +40,7 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
+        public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members";
 
@@ -50,14 +50,14 @@ namespace OctoshiftCLI
             return data.Children().Select(x => (string)x["login"]).ToList();
         }
 
-        public async Task RemoveTeamMember(string org, string teamName, string member)
+        public virtual async Task RemoveTeamMember(string org, string teamName, string member)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/memberships/{member}";
 
             await _client.DeleteAsync(url);
         }
 
-        public async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
+        public virtual async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
         {
             var url = $"https://api.github.com/orgs/{org}/team-sync/groups";
 
@@ -69,7 +69,7 @@ namespace OctoshiftCLI
                                  .Single(x => x.name.ToLower() == idpGroupName.ToLower());
         }
 
-        public async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
+        public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
             var payload = $"{{ 'groups': [{{ 'group_id':'{groupId}', 'group_name':'{groupName}','group_description':'{groupDesc}' }}] }}";
@@ -78,7 +78,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-        public async Task AddTeamToRepo(string org, string repo, string teamName, string role)
+        public virtual async Task AddTeamToRepo(string org, string repo, string teamName, string role)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
             var payload = $"{{ \"permission\":\"{role}\" }}";
@@ -87,7 +87,7 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, body);
         }
 
-        public async Task<string> GetOrganizationId(string org)
+        public virtual async Task<string> GetOrganizationId(string org)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -102,7 +102,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public async Task<string> CreateMigrationSource(string orgId, string adoToken)
+        public virtual async Task<string> CreateMigrationSource(string orgId, string adoToken)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -119,7 +119,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo)
+        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -136,7 +136,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
-        public async Task<string> GetMigrationState(string migrationId)
+        public virtual async Task<string> GetMigrationState(string migrationId)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -153,7 +153,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["state"];
         }
 
-        public async Task<string> GetMigrationFailureReason(string migrationId)
+        public virtual async Task<string> GetMigrationFailureReason(string migrationId)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -170,7 +170,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["failureReason"];
         }
 
-        public async Task<int> GetIdpGroupId(string org, string groupName)
+        public virtual async Task<int> GetIdpGroupId(string org, string groupName)
         {
             var url = $"https://api.github.com/orgs/{org}/external-groups";
 
@@ -181,7 +181,7 @@ namespace OctoshiftCLI
             return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
         }
 
-        public async Task<string> GetTeamSlug(string org, string teamName)
+        public virtual async Task<string> GetTeamSlug(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
 
@@ -192,7 +192,7 @@ namespace OctoshiftCLI
             return (string)data.Children().Single(x => ((string)x["name"]).ToUpper() == teamName.ToUpper())["slug"];
         }
 
-        public async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
+        public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = $"{{ \"group_id\": {groupId} }}";
@@ -201,7 +201,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-        public async Task<string> GrantMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<string> GrantMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -225,7 +225,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
