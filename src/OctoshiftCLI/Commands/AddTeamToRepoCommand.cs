@@ -34,14 +34,8 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string githubRepo, string team, string role)
+        public async Task Invoke(string githubOrg, string githubRepo, string team, string role)
         {
-            Console.WriteLine("Adding team to repo...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"TEAM: {team}");
-            Console.WriteLine($"ROLE: {role}");
-
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
             if (string.IsNullOrWhiteSpace(githubToken))
@@ -52,7 +46,17 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var github = new GithubApi(githubToken);
+            using var github = GithubApiFactory.Create(githubToken);
+            await AddTeamToRepo(githubOrg, githubRepo, team, role, github);
+        }
+
+        private async Task AddTeamToRepo(string githubOrg, string githubRepo, string team, string role, GithubApi github)
+        {
+            Console.WriteLine("Adding team to repo...");
+            Console.WriteLine($"GITHUB ORG: {githubOrg}");
+            Console.WriteLine($"GITHUB REPO: {githubRepo}");
+            Console.WriteLine($"TEAM: {team}");
+            Console.WriteLine($"ROLE: {role}");
 
             await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
 
