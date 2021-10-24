@@ -843,6 +843,28 @@ dotnet_diagnostic.CA5402.severity = warning
 # CA5403: Do not hard-code certificate
 dotnet_diagnostic.CA5403.severity = warning
 
+# CA1507: Use nameof to express symbol names
+dotnet_diagnostic.CA1507.severity = warning
+
+# CA1824: Mark assemblies with NeutralResourcesLanguageAttribute
+dotnet_diagnostic.CA1824.severity = warning
+
+# CA1825: Avoid zero-length array allocations
+dotnet_diagnostic.CA1825.severity = warning
+
+# CA2016: Forward the 'CancellationToken' parameter to methods that take one
+dotnet_diagnostic.CA2016.severity = warning
+
+# IDE0051: Remove unused private members
+dotnet_diagnostic.IDE0051.severity = warning
+
+# CA1036: Override methods on comparable types
+dotnet_diagnostic.CA1036.severity = warning
+
+# CA1051: Do not declare visible instance fields
+dotnet_diagnostic.CA1051.severity = warning
+
+
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
@@ -1050,23 +1072,4 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-# CA1507: Use nameof to express symbol names
-dotnet_diagnostic.CA1507.severity = warning
 
-# CA1824: Mark assemblies with NeutralResourcesLanguageAttribute
-dotnet_diagnostic.CA1824.severity = warning
-
-# CA1825: Avoid zero-length array allocations
-dotnet_diagnostic.CA1825.severity = warning
-
-# CA2016: Forward the 'CancellationToken' parameter to methods that take one
-dotnet_diagnostic.CA2016.severity = warning
-
-# IDE0051: Remove unused private members
-dotnet_diagnostic.IDE0051.severity = warning
-
-# CA1036: Override methods on comparable types
-dotnet_diagnostic.CA1036.severity = warning
-
-# CA1051: Do not declare visible instance fields
-dotnet_diagnostic.CA1051.severity = warning
