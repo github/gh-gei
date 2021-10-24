@@ -1,5 +1,7 @@
+using System;
 using System.CommandLine;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Linq;
 using Xunit;
 
@@ -7,60 +9,84 @@ namespace OctoshiftCLI.Tests
 {
     public static class TestHelpers
     {
+        #region  Constructor, Member variables and misc. helpers
+        private static readonly GithubClient _client = new GithubClient(Environment.GetEnvironmentVariable("GH_PAT"));
+        private const string TARGET_PREFIX = "OCLI-Int";
+
+        internal static string GetTargetName(string targetType)
+        {
+            return $"{TARGET_PREFIX}-{targetType}-{DateTime.UtcNow.ToString("yyMMdd-HHmmss")}";
+        }
+
+        internal static string TargetOrg
+        {
+            get => "GuacamoleResearch";
+        }
+
+        internal static string SourceOrg
+        {
+            get => "OCLI";
+        }
+        #endregion
+
+        #region Command Helpers
         public static void VerifyCommandOption(IReadOnlyList<Option> options, string name, bool required)
         {
             var option = options.Single(x => x.Name == name);
 
             Assert.Equal(required, option.IsRequired);
         }
+        #endregion
 
-        //TODO: Complete in support of integration tests
-        // // NOTE: The following method is derived from: https://jackma.com/2019/04/20/execute-a-bash-script-via-c-net-core/
-        // public static Task<int> Bash(string cwd, string cmd)
-        // {
-        //     var source = new TaskCompletionSource<int>();
-        //     var escapedArgs = cmd.Replace("\"", "\\\"");
-        //     var process = new Process
-        //     {
-        //         StartInfo = new ProcessStartInfo
-        //         {
-        //             FileName = "bash",
-        //             Arguments = $"-c \"{escapedArgs}\"",
-        //             RedirectStandardOutput = true,
-        //             RedirectStandardError = true,
-        //             WorkingDirectory = cwd,
-        //             UseShellExecute = false,
-        //             CreateNoWindow = true
-        //         },
-        //         EnableRaisingEvents = true
-        //     };
+        #region REST API Wrappers
+        private static async Task<bool> Exists(string url)
+        {
+            try
+            {
+                await _client.GetAsync(url);
+            } 
+            catch (Exception ex)
+            {
+                return (ex.Message.Contains("404")) ? false : throw(ex);
+            } 
 
-        //     process.Exited += (sender, args) =>
-        //     {
-        //         Debug.WriteLine(process.StandardOutput.ReadToEnd());
-        //         Console.WriteLine(process.StandardError.ReadToEnd());
-        //         if (process.ExitCode == 0)
-        //         {
-        //             source.SetResult(0);
-        //         }
-        //         else
-        //         {
-        //             source.SetException(new Exception($"Command `{cmd}` failed with exit code `{process.ExitCode}`"));
-        //         }
+            return true;
+        }
+        
+        private static async Task<bool> Delete(string url)
+        {
+            try
+            {
+                await _client.DeleteAsync(url);
+            } 
+            catch (Exception ex)
+            {
+                return (ex.Message.Contains("404")) ? false : throw(ex);
+            } 
 
-        //         process.Dispose();
-        //     };
+            return true;
+        }
 
-        //     try
-        //     {
-        //         process.Start();
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Console.WriteLine($"Command {cmd} failed with {e.Message}");
-        //     }
+        internal static async Task<bool> DeleteTeam(string orgName, string teamName)
+        {
+            return await Delete($"https://api.github.com/orgs/{orgName}/teams/{teamName}");
+        }
 
-        //     return source.Task;
-        // }
+        internal static async Task<bool> TeamExists(string orgName, string teamName)
+        {
+            return await Exists($"https://api.github.com/orgs/{orgName}/teams/{teamName}");
+        }
+
+        internal static async Task<bool> DeleteRepo(string orgName, string repoName)
+        {
+            return await Delete($"https://api.github.com/repos/{orgName}/{repoName}");
+        }
+
+        internal static async Task<bool> RepoExists(string orgName, string repoName)
+        {
+            return await Exists($"https://api.github.com/repos/{orgName}/{repoName}");
+        }
+
+        #endregion
     }
 }

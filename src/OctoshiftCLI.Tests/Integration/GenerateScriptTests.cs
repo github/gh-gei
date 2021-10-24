@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Integration
 {
     public class GenerateScriptTests
     {
-        #region Script generation and verification
+        #region Script generation and verification helpers
         private async Task<string> GenerateOutputScript(string scenarioName, string additionalFlags)
         {
             var outputFilename = $"{System.IO.Path.GetTempPath()}{scenarioName}.sh";
@@ -34,19 +34,28 @@ namespace OctoshiftCLI.Tests.Integration
         #endregion
 
         [Fact]
-        public async void ShouldFailWithInvalidParameters()
+        public async void ShouldFailToGenerateWithInvalidParameters()
         {
             var filename = await GenerateOutputScript("invalid-parameters", "--unsupport-parameter");
             Assert.False(File.Exists(filename));
         }
 
         [Fact]
-        public async void ShouldGenerateWithDefaultParameters() => await VerifyOutputScript("default-parameters", "");
+        public async void ShouldGenerateDefaultScript()
+        {
+            await VerifyOutputScript("default-parameters", "");
+        }
 
         [Fact]
-        public async void ShouldGenerateWithReposOnly() => await VerifyOutputScript("repos-only", "--repos-only");
+        public async void ShouldGenerateScriptsWithReposOnly()
+        {
+            await VerifyOutputScript("repos-only", "--repos-only");
+        }
 
         [Fact]
-        public async void ShouldGenerateWithSkipIdp() => await VerifyOutputScript("skip-idp", "--skip-idp");
+        public async void ShouldGenerateScriptWithoutIdp()
+        {
+            await VerifyOutputScript("skip-idp", "--skip-idp");
+        }
     }
 }
