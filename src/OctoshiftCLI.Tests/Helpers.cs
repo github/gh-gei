@@ -12,7 +12,6 @@ namespace OctoshiftCLI.Tests
     {
         #region  Constructor, Member variables and misc. helpers
         private static GithubClient _client;
-        private const string TEST_GITHUB_ORG = "GuacamoleResearch";
         private const string TARGET_PREFIX = "OCLI-Int";
 
         static Helpers()
@@ -28,7 +27,12 @@ namespace OctoshiftCLI.Tests
 
         internal static string TargetOrg
         {
-            get => TEST_GITHUB_ORG;
+            get => "GuacamoleResearch";
+        }
+
+        internal static string SourceOrg
+        {
+            get => "OCLI";
         }
         #endregion
 
