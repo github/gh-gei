@@ -39,7 +39,7 @@ namespace OctoshiftCLI
         public async Task<string> PostAsync(string url, HttpContent body)
         {
             ApplyRetryDelay();
-            var response = await _httpClient.PostAsync(url?.Replace(" ", "%20"), body);
+            var response = await _httpClient.PostAsync(url.Replace(" ", "%20"), body);
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
