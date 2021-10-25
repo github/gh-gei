@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string, string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId)
         {
             Console.WriteLine($"Rewiring Pipeline to GitHub repo...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
@@ -64,7 +64,7 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var ado = new AdoApi(adoToken);
+            using var ado = AdoApiFactory.Create(adoToken);
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
