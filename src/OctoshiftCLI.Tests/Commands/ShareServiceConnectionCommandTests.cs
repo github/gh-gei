@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Commands
 {
+    [Collection("Sequential")]
     public class ShareServiceConnectionCommandTests
     {
         [Fact]
