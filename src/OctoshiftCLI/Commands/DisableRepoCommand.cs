@@ -29,7 +29,7 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
         {
             Console.WriteLine("Disabling repo...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
@@ -46,7 +46,7 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var ado = new AdoApi(adoToken);
+            using var ado = AdoApiFactory.Create(adoToken);
 
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
             await ado.DisableRepo(adoOrg, adoTeamProject, repoId);

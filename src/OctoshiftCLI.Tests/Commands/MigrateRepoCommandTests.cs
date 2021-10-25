@@ -3,6 +3,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Commands
 {
+    [Collection("Sequential")]
     public class MigrateRepoCommandTests
     {
         [Fact]
