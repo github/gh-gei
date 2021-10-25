@@ -37,14 +37,8 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos)
         {
-            Console.WriteLine("Integrating Azure Boards...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPOS: {githubRepos}");
-
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
 
             if (string.IsNullOrWhiteSpace(adoToken))
@@ -65,7 +59,18 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var ado = new AdoApi(adoToken);
+            using var ado = AdoApiFactory.Create(adoToken);
+
+            await IntegrateBoards(adoOrg, adoTeamProject, githubOrg, githubRepos, ado, githubToken);
+        }
+
+        private async Task IntegrateBoards(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos, AdoApi ado, string githubToken)
+        {
+            Console.WriteLine("Integrating Azure Boards...");
+            Console.WriteLine($"ADO ORG: {adoOrg}");
+            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            Console.WriteLine($"GITHUB ORG: {githubOrg}");
+            Console.WriteLine($"GITHUB REPOS: {githubRepos}");
 
             var githubRepoList = ParseRepoList(githubRepos);
 
