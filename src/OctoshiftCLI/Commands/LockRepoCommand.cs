@@ -31,13 +31,8 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
         {
-            Console.WriteLine("Locking repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO REPO: {adoRepo}");
-
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
 
             if (string.IsNullOrWhiteSpace(adoToken))
@@ -48,7 +43,17 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var ado = new AdoApi(adoToken);
+            using var ado = AdoApiFactory.Create(adoToken);
+
+            await LockRepo(adoOrg, adoTeamProject, adoRepo, ado);
+        }
+
+        private async Task LockRepo(string adoOrg, string adoTeamProject, string adoRepo, AdoApi ado)
+        {
+            Console.WriteLine("Locking repo...");
+            Console.WriteLine($"ADO ORG: {adoOrg}");
+            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            Console.WriteLine($"ADO REPO: {adoRepo}");
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
