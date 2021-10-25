@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task MissingADOPat()
+        public async Task MissingGithubPat()
         {
             // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
             GithubApiFactory.Create = token => throw new InvalidOperationException();
