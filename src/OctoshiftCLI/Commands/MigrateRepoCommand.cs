@@ -39,15 +39,8 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
         {
-            Console.WriteLine("Migrating Repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO REPO: {adoRepo}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
 
             if (string.IsNullOrWhiteSpace(adoToken))
@@ -64,7 +57,19 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var github = new GithubApi(githubToken);
+            using var github = GithubApiFactory.Create(githubToken);
+
+            await MigrateRepo(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, adoToken, github);
+        }
+
+        private async Task MigrateRepo(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, string adoToken, GithubApi github)
+        {
+            Console.WriteLine("Migrating Repo...");
+            Console.WriteLine($"ADO ORG: {adoOrg}");
+            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            Console.WriteLine($"ADO REPO: {adoRepo}");
+            Console.WriteLine($"GITHUB ORG: {githubOrg}");
+            Console.WriteLine($"GITHUB REPO: {githubRepo}");
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
