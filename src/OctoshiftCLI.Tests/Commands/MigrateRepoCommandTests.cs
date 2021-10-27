@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.Commands
         {
             // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
             GithubApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
+            Environment.SetEnvironmentVariable("GH_PAT", string.Empty);
 
             var command = new MigrateRepoCommand();
 
