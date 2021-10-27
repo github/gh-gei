@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.Commands
             AdoApiFactory.Create = token => throw new InvalidOperationException();
             Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
 
-            var command = new DisableRepoCommand();
+            var command = new LockRepoCommand();
 
             await command.Invoke("foo", "foo", "foo");
         }
