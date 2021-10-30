@@ -1,16 +1,25 @@
-dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true
+$AssemblyVersion = "0.0"
+
+if ((Test-Path env:CLI_VERSION) -And $env:CLI_VERSION.StartsWith("refs/tags/v"))
+{
+    $AssemblyVersion = $env:CLI_VERSION.Substring(11)
+}
+
+Write-Output "version: $AssemblyVersion"
+
+dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish src/OctoshiftCLI/OctoshiftCLI.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
