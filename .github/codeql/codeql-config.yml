@@ -1,0 +1,5 @@
+name: "CodeQL code scanning custom configuration"
+disable-default-queries: true
+queries:
+  - name: Use the custom query suite file from this repo
+    uses: ./.github/codeql/csharp-custom-queries.qls
