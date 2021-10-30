@@ -78,7 +78,7 @@ jobs:
       shell: pwsh
       run: |
         $TAG_NAME = "${{ github.ref }}".Substring(10)
-        Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md -Append
+        Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
     - name: Commit Archived Release Notes
       uses: stefanzweifel/git-auto-commit-action@v4
