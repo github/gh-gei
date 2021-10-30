@@ -41,6 +41,7 @@ jobs:
       if: always()
       with:
         files: "**/*-tests.xml"
+        check_name: "Test Results"
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
 
