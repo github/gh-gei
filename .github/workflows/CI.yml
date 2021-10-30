@@ -85,3 +85,4 @@ jobs:
       with:
         commit_message: Automated commit of archived release notes
         file_pattern: RELEASENOTES.md releasenotes/*.md
+        branch: main
