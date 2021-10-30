@@ -1,8 +1,8 @@
 using System;
-using System.CommandLine;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.CommandLine;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -44,25 +44,25 @@ namespace OctoshiftCLI.Tests
             try
             {
                 await _client.GetAsync(url);
-            } 
+            }
             catch (Exception ex)
             {
-                return (ex.Message.Contains("404")) ? false : throw(ex);
-            } 
+                return (ex.Message.Contains("404")) ? false : throw (ex);
+            }
 
             return true;
         }
-        
+
         private static async Task<bool> Delete(string url)
         {
             try
             {
                 await _client.DeleteAsync(url);
-            } 
+            }
             catch (Exception ex)
             {
-                return (ex.Message.Contains("404")) ? false : throw(ex);
-            } 
+                return (ex.Message.Contains("404")) ? false : throw (ex);
+            }
 
             return true;
         }
