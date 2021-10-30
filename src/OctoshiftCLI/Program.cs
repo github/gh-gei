@@ -1,6 +1,6 @@
-﻿using OctoshiftCLI.Commands;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI
 {
