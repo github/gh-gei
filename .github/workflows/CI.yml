@@ -64,6 +64,8 @@ jobs:
     - name: Build Artifacts
       run: ./publish.ps1
       shell: pwsh
+      env:
+        CLI_VERSION: ${{ github.ref }}
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
