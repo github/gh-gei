@@ -28,7 +28,7 @@ jobs:
     - name: dotnet format
       run: |
         dotnet tool install -g dotnet-format
-        dotnet format src/ --check
+        dotnet format src/OctoshiftCLI.sln --check
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
     - name: Build
