@@ -1,0 +1,1 @@
+- Adding automated release notes to the publishing process
