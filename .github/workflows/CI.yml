@@ -61,6 +61,7 @@ jobs:
       with:
         token: ${{ secrets.RELEASE_NOTES_PAT }}
     - name: Validate tag on main
+      shell: pwsh
       run: |
         $mainsha = $(git show-ref refs/heads/main --hash)
         $tagsha = $(git show-ref ${{ github.ref }} --hash)
