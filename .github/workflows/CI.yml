@@ -25,6 +25,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+    - name: dotnet format
+      run: |
+        dotnet tool install -g dotnet-format
+        dotnet format src/ --check
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
     - name: Build
