@@ -30,12 +30,17 @@ jobs:
     - name: Build
       run: dotnet build src/OctoshiftCLI.sln --no-restore /p:TreatWarningsAsErrors=true
     - name: Unit Test
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal
+      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml"
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal
+      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: "**/*-tests.xml"
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
 
