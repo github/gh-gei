@@ -67,7 +67,7 @@ jobs:
         $tagsha = $(git show-ref ${{ github.ref }} --hash)
 
         if ($mainsha -ne $tagsha) {
-          Write-Error "tag must match HEAD of main`ntag ${{ github.ref }}: $tagsha`nmain: $tagsha"
+          Write-Error "tag must match HEAD of main`ntag ${{ github.ref }}: $tagsha`nmain: $mainsha"
           exit 1
         }
     - name: Setup .NET
