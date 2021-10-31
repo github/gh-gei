@@ -64,11 +64,12 @@ jobs:
     - name: Validate tag on main
       shell: pwsh
       run: |
+        git checkout main
         $mainsha = $(git show-ref refs/heads/main --hash)
         $tagsha = $(git show-ref ${{ github.ref }} --hash)
 
         if ($mainsha -ne $tagsha) {
-          Write-Error "tag must match HEAD of main`ntag ${{ github.ref }}: $tagsha`nmain: $mainsha"
+          Write-Error "tag must match HEAD of main`n${{ github.ref }}: $tagsha`nrefs/heads/main: $mainsha"
           exit 1
         }
     - name: Setup .NET
