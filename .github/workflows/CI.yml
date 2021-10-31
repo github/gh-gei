@@ -68,8 +68,11 @@ jobs:
         $mainsha = $(git show-ref refs/heads/main --hash)
         $tagsha = $(git show-ref ${{ github.ref }} --hash)
 
+        Write-Output "refs/heads/main: $mainsha"
+        Write-Output "${{ github.ref }}: $tagsha"
+
         if ($mainsha -ne $tagsha) {
-          Write-Error "tag must match HEAD of main`n${{ github.ref }}: $tagsha`nrefs/heads/main: $mainsha"
+          Write-Error "tag must match HEAD of main"
           exit 1
         }
     - name: Setup .NET
@@ -98,6 +101,6 @@ jobs:
     - name: Commit Archived Release Notes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: Automated commit of archived release notes
+        commit_message: Automated commit of archived release notes [skip ci]
         file_pattern: RELEASENOTES.md releasenotes/*.md
         branch: main
