@@ -84,20 +84,20 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, body);
         }
 
-        public virtual async Task<string> GetOrganizationId(string org)
-        {
-            var url = $"https://api.github.com/graphql";
+public virtual async Task<string> GetOrganizationId(string org)
+{
+    var url = $"https://api.github.com/graphql";
 
-            // TODO: this is super ugly, need to find a graphql library to make this code nicer
-            var payload = $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
+    // TODO: this is super ugly, need to find a graphql library to make this code nicer
+    var payload = $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+    using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
-            var data = JObject.Parse(response);
+    var response = await _client.PostAsync(url, body);
+    var data = JObject.Parse(response);
 
-            return (string)data["data"]["organization"]["id"];
-        }
+    return (string)data["data"]["organization"]["id"];
+}
 
         public virtual async Task<string> CreateMigrationSource(string orgId, string adoToken)
         {

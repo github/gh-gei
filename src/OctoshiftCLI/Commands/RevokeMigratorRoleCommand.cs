@@ -31,13 +31,13 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string actor, string actorType)
+        public async Task Invoke(string githubOrg, string actor, string actorType)
         {
             Console.WriteLine("Granting migrator role ...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
             Console.WriteLine($"ACTOR: {actor}");
 
-            actorType = actorType.ToUpper();
+            actorType = actorType?.ToUpper();
             Console.WriteLine($"ACTOR TYPE: {actorType}");
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
