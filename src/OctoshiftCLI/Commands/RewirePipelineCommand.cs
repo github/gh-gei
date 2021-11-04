@@ -54,17 +54,7 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"GITHUB REPO: {githubRepo}");
             Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
+            using var ado = AdoApiFactory.Create();
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);

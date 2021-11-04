@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
@@ -30,29 +29,15 @@ namespace OctoshiftCLI.Tests.Commands
             var githubRepo = "foo-repo";
             var team = "foo-team";
             var role = "maintain";
-            var githubToken = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(string.Empty);
+            var mockGithub = new Mock<GithubApi>(null);
 
-            Environment.SetEnvironmentVariable("GH_PAT", githubToken);
-            GithubApiFactory.Create = token => token == githubToken ? mockGithub.Object : null;
+            GithubApiFactory.Create = () => mockGithub.Object;
 
             var command = new AddTeamToRepoCommand();
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
-        }
-
-        [Fact]
-        public async Task MissingGithubPat()
-        {
-            // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            GithubApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("GH_PAT", string.Empty);
-
-            var command = new AddTeamToRepoCommand();
-
-            await command.Invoke("foo", "foo", "foo", "foo");
         }
     }
 }

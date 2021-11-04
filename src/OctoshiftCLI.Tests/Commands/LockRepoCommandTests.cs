@@ -28,35 +28,21 @@ namespace OctoshiftCLI.Tests.Commands
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";
             var adoRepo = "foo-repo";
-            var adoToken = Guid.NewGuid().ToString();
             var repoId = Guid.NewGuid().ToString();
             var identityDescriptor = "foo-id";
             var teamProjectId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(string.Empty);
+            var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
 
-            Environment.SetEnvironmentVariable("ADO_PAT", adoToken);
-            AdoApiFactory.Create = token => token == adoToken ? mockAdo.Object : null;
+            AdoApiFactory.Create = () => mockAdo.Object;
 
             var command = new LockRepoCommand();
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor));
-        }
-
-        [Fact]
-        public async Task MissingADOPat()
-        {
-            // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            AdoApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
-
-            var command = new LockRepoCommand();
-
-            await command.Invoke("foo", "foo", "foo");
         }
     }
 }

@@ -40,14 +40,7 @@ namespace OctoshiftCLI.Commands
             actorType = actorType.ToUpper();
             Console.WriteLine($"ACTOR TYPE: {actorType}");
 
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             actorType = actorType.ToUpper();
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                return;
-            }
 
             if (actorType is "TEAM" or "USER")
             {
@@ -61,7 +54,7 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            using var github = new GithubApi(githubToken);
+            using var github = GithubApiFactory.Create();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var revokeMigratorRoleState = await github.RevokeMigratorRole(githubOrgId, actor, actorType);

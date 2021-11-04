@@ -33,27 +33,12 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
-
-            await LockRepo(adoOrg, adoTeamProject, adoRepo, ado);
-        }
-
-        private async Task LockRepo(string adoOrg, string adoTeamProject, string adoRepo, AdoApi ado)
-        {
             Console.WriteLine("Locking repo...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
             Console.WriteLine($"ADO REPO: {adoRepo}");
+
+            using var ado = AdoApiFactory.Create();
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);

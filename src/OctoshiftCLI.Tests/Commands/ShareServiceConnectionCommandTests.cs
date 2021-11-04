@@ -29,30 +29,16 @@ namespace OctoshiftCLI.Tests.Commands
             var adoTeamProject = "BlahTeamProject";
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
-            var adoToken = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(string.Empty);
+            var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            Environment.SetEnvironmentVariable("ADO_PAT", adoToken);
-            AdoApiFactory.Create = token => token == adoToken ? mockAdo.Object : null;
+            AdoApiFactory.Create = () => mockAdo.Object;
 
             var command = new ShareServiceConnectionCommand();
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
-        }
-
-        [Fact]
-        public async Task MissingADOPat()
-        {
-            // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            AdoApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
-
-            var command = new ShareServiceConnectionCommand();
-
-            await command.Invoke("foo", "foo", "foo");
         }
     }
 }

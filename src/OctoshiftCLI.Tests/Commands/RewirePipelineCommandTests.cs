@@ -34,33 +34,19 @@ namespace OctoshiftCLI.Tests.Commands
             var githubOrg = "foo-gh-org";
             var githubRepo = "foo-repo";
             var serviceConnectionId = Guid.NewGuid().ToString();
-            var adoToken = Guid.NewGuid().ToString();
             var pipelineId = 1234;
             var pipeline = new AdoPipeline();
 
-            var mockAdo = new Mock<AdoApi>(string.Empty);
+            var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns(pipeline);
 
-            Environment.SetEnvironmentVariable("ADO_PAT", adoToken);
-            AdoApiFactory.Create = token => token == adoToken ? mockAdo.Object : null;
+            AdoApiFactory.Create = () => mockAdo.Object;
 
             var command = new RewirePipelineCommand();
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId));
-        }
-
-        [Fact]
-        public async Task MissingADOPat()
-        {
-            // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            AdoApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
-
-            var command = new DisableRepoCommand();
-
-            await command.Invoke("foo", "foo", "foo");
         }
     }
 }

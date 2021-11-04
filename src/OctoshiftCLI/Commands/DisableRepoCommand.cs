@@ -36,17 +36,7 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
             Console.WriteLine($"ADO REPO: {adoRepo}");
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
+            using var ado = AdoApiFactory.Create();
 
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
             await ado.DisableRepo(adoOrg, adoTeamProject, repoId);

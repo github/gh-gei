@@ -42,17 +42,7 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
 
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var github = GithubApiFactory.Create(githubToken);
+            using var github = GithubApiFactory.Create();
 
             // TODO: This crashes if autolink is already configured
             await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);

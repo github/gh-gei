@@ -31,26 +31,12 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
-            await ShareServiceConnection(adoOrg, adoTeamProject, serviceConnectionId, ado);
-        }
-
-        private async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId, AdoApi ado)
-        {
             Console.WriteLine("Sharing Service Connection...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
             Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+
+            using var ado = AdoApiFactory.Create();
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash

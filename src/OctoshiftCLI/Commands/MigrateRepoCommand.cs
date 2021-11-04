@@ -41,29 +41,6 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                return;
-            }
-
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                return;
-            }
-
-            using var github = GithubApiFactory.Create(githubToken);
-
-            await MigrateRepo(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, adoToken, github);
-        }
-
-        private async Task MigrateRepo(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, string adoToken, GithubApi github)
-        {
             Console.WriteLine("Migrating Repo...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
@@ -72,6 +49,9 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"GITHUB REPO: {githubRepo}");
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
+
+            using var github = GithubApiFactory.Create();
+            var adoToken = AdoApiFactory.GetAdoToken();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken);

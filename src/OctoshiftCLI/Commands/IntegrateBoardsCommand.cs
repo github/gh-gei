@@ -39,33 +39,6 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
-
-            await IntegrateBoards(adoOrg, adoTeamProject, githubOrg, githubRepos, ado, githubToken);
-        }
-
-        private async Task IntegrateBoards(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos, AdoApi ado, string githubToken)
-        {
             Console.WriteLine("Integrating Azure Boards...");
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
@@ -73,6 +46,9 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"GITHUB REPOS: {githubRepos}");
 
             var githubRepoList = ParseRepoList(githubRepos);
+
+            using var ado = AdoApiFactory.Create();
+            var githubToken = GithubApiFactory.GetGithubToken();
 
             var userId = await ado.GetUserId();
             var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
@@ -89,6 +65,6 @@ namespace OctoshiftCLI.Commands
             Console.ResetColor();
         }
 
-        private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos.Split(",").Select(x => x.Trim());
+        private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos?.Split(",").Select(x => x.Trim());
     }
 }

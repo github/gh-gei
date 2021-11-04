@@ -36,27 +36,13 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string githubOrg, string githubRepo, string team, string role)
         {
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var github = GithubApiFactory.Create(githubToken);
-            await AddTeamToRepo(githubOrg, githubRepo, team, role, github);
-        }
-
-        private async Task AddTeamToRepo(string githubOrg, string githubRepo, string team, string role, GithubApi github)
-        {
             Console.WriteLine("Adding team to repo...");
             Console.WriteLine($"GITHUB ORG: {githubOrg}");
             Console.WriteLine($"GITHUB REPO: {githubRepo}");
             Console.WriteLine($"TEAM: {team}");
             Console.WriteLine($"ROLE: {role}");
+
+            using var github = GithubApiFactory.Create();
 
             await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
 

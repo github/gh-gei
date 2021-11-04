@@ -52,17 +52,9 @@ namespace OctoshiftCLI.Commands
             Console.WriteLine($"ADO ORG: {adoOrg}");
             Console.WriteLine($"OUTPUT: {output}");
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                return;
-            }
-
             _reposOnly = reposOnly;
 
-            using var ado = new AdoApi(adoToken);
+            using var ado = AdoApiFactory.Create();
 
             var orgs = new List<string>();
             var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>();
