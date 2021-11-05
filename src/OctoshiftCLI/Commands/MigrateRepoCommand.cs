@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Commands
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
-                _log.LogError($"ERROR: Migration Failed. Migration ID: {migrationId}");
+                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
                 var failureReason = await github.GetMigrationFailureReason(migrationId);
                 _log.LogError(failureReason);
             }

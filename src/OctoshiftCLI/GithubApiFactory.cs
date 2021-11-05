@@ -21,7 +21,7 @@ namespace OctoshiftCLI
             }
 
             var adoToken = GetGithubToken();
-            var client = new GithubClient(adoToken);
+            var client = new GithubClient(_log, adoToken);
             _api = new GithubApi(client);
 
             return _api;
@@ -38,7 +38,7 @@ namespace OctoshiftCLI
 
             if (string.IsNullOrWhiteSpace(githubToken))
             {
-                _log.LogError("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
+                _log.LogError("NO GH_PAT FOUND IN ENV VARS, exiting...");
                 return null;
             }
 

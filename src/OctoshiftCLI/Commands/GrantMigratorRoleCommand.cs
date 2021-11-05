@@ -59,7 +59,7 @@ namespace OctoshiftCLI.Commands
             }
             else
             {
-                _log.LogError("ERROR: Actor type must be either TEAM or USER.");
+                _log.LogError("Actor type must be either TEAM or USER.");
                 return;
             }
 
@@ -72,11 +72,11 @@ namespace OctoshiftCLI.Commands
 
             if (grantMigratorRoleState?.Trim().ToUpper() == "TRUE")
             {
-                _log.LogSuccess($"SUCCESS: Migrator role successfully set for the {actorType} \"{actor}\"");
+                _log.LogSuccess($"Migrator role successfully set for the {actorType} \"{actor}\"");
             }
             else
             {
-                _log.LogError($"ERROR: Migrator role couldn't be set for the {actorType} \"{actor}\"");
+                _log.LogError($"Migrator role couldn't be set for the {actorType} \"{actor}\"");
             }
         }
     }

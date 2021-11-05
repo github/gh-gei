@@ -21,7 +21,7 @@ namespace OctoshiftCLI
             }
 
             var adoToken = GetAdoToken();
-            var client = new AdoClient(adoToken);
+            var client = new AdoClient(_log, adoToken);
             _api = new AdoApi(client);
 
             return _api;
@@ -38,7 +38,7 @@ namespace OctoshiftCLI
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {
-                _log.LogError("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
+                _log.LogError("NO ADO_PAT FOUND IN ENV VARS, exiting...");
                 return null;
             }
 

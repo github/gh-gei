@@ -118,7 +118,7 @@ namespace OctoshiftCLI.Commands
 
                     if (string.IsNullOrWhiteSpace(appId))
                     {
-                        _log.LogWarning($"WARNING: CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
+                        _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
                     }
                     else
                     {
@@ -143,7 +143,7 @@ namespace OctoshiftCLI.Commands
 
             foreach (var duplicate in duplicateRepoNames)
             {
-                _log.LogWarning($"WARNING: DUPLICATE REPO NAME: {duplicate}");
+                _log.LogWarning($"DUPLICATE REPO NAME: {duplicate}");
             }
         }
 
@@ -224,33 +224,33 @@ namespace OctoshiftCLI.Commands
         {
             return _reposOnly
                 ? string.Empty
-                : $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
+                : $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"";
+                : $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./octoshift share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"";
+                : $"./octoshift share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
+                : $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
         {
-            return $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
+            return $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
@@ -260,7 +260,7 @@ namespace OctoshiftCLI.Commands
                 return string.Empty;
             }
 
-            var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"";
+            var result = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
             if (!skipIdp)
             {
@@ -268,7 +268,7 @@ namespace OctoshiftCLI.Commands
             }
             result += Environment.NewLine;
 
-            result += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"";
+            result += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
             if (!skipIdp)
             {
@@ -285,9 +285,9 @@ namespace OctoshiftCLI.Commands
                 return string.Empty;
             }
 
-            var result = $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"";
+            var result = $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}";
             result += Environment.NewLine;
-            result += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"";
+            result += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
             return result;
         }
@@ -296,7 +296,7 @@ namespace OctoshiftCLI.Commands
         {
             return _reposOnly
                 ? string.Empty
-                : $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"";
+                : $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, IEnumerable<string> githubRepos)
@@ -307,7 +307,7 @@ namespace OctoshiftCLI.Commands
             }
 
             var repoList = string.Join(",", githubRepos);
-            return $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repos \"{repoList}\"";
+            return $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repos \"{repoList}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
     }
 }

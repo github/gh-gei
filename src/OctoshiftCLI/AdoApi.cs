@@ -32,7 +32,7 @@ namespace OctoshiftCLI
             }
 
             // TODO: Throw an exception instead
-            Console.WriteLine("ERROR: Unexpected response when retrieving User ID");
+            Console.WriteLine("Unexpected response when retrieving User ID");
             Console.WriteLine(response);
 
             throw new InvalidDataException();
