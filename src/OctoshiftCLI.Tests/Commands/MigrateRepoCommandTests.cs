@@ -48,7 +48,7 @@ namespace OctoshiftCLI.Tests.Commands
             using var adoFactory = new AdoApiFactory(adoToken);
             using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new MigrateRepoCommand(new OctoLogger(), adoFactory, githubFactory);
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));

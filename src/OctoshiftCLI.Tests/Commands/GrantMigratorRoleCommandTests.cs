@@ -36,7 +36,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand(new OctoLogger(), githubFactory);
+            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, githubFactory);
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.GrantMigratorRole(githubOrgId, actor, actorType));
@@ -47,7 +47,7 @@ namespace OctoshiftCLI.Tests.Commands
         {
             using var githubFactory = new GithubApiFactory(api: null);
 
-            var command = new GrantMigratorRoleCommand(new OctoLogger(), githubFactory);
+            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, githubFactory);
 
             await command.Invoke("foo", "foo", "foo");
         }

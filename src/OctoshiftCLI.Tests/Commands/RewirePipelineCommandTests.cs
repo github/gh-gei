@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new RewirePipelineCommand(new OctoLogger(), adoFactory);
+            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId));

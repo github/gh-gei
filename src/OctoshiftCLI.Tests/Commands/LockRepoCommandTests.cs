@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new LockRepoCommand(new OctoLogger(), adoFactory);
+            var command = new LockRepoCommand(new Mock<OctoLogger>().Object, adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor));

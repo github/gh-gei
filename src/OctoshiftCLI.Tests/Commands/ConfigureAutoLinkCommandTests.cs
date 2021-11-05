@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new OctoLogger(), githubFactory);
+            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, githubFactory);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject));

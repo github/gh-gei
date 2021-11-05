@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.Commands
             using var adoFactory = new AdoApiFactory(mockAdo.Object);
             using var githubFactory = new GithubApiFactory(githubToken);
 
-            var command = new IntegrateBoardsCommand(new OctoLogger(), adoFactory, githubFactory);
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepos);
 
             mockAdo.Verify(x => x.CreateBoardsGithubConnection(adoOrg, orgId, adoTeamProject, endpointId, repoIds));
