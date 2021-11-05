@@ -38,6 +38,10 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
@@ -45,12 +49,15 @@ namespace OctoshiftCLI.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(serviceConnectionId);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");

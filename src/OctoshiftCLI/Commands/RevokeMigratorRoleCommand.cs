@@ -27,16 +27,23 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string actor, string actorType)
+        private async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Granting migrator role ...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ACTOR: {actor}");

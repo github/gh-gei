@@ -14,12 +14,13 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new AddTeamToRepoCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("add-team-to-repo", command.Name);
-            Assert.Equal(4, command.Options.Count);
+            Assert.Equal(5, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "team", true);
             TestHelpers.VerifyCommandOption(command.Options, "role", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

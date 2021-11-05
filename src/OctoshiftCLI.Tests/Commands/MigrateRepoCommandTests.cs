@@ -15,13 +15,14 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new MigrateRepoCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("migrate-repo", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.Equal(6, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

@@ -35,17 +35,24 @@ namespace OctoshiftCLI.Commands
                 IsRequired = true,
                 Description = "Comma separated list of github repo names"
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(githubOrg);
             AddOption(githubRepos);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Integrating Azure Boards...");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");

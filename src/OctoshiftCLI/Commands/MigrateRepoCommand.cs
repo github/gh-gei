@@ -36,18 +36,25 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Migrating Repo...");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");

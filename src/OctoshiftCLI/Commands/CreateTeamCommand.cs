@@ -28,16 +28,23 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrg);
             AddOption(teamName);
             AddOption(idpGroup);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string teamName, string idpGroup)
+        public async Task Invoke(string githubOrg, string teamName, string idpGroup, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Creating GitHub team...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"TEAM NAME: {teamName}");

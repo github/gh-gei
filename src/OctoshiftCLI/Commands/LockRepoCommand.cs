@@ -28,16 +28,23 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(adoRepo);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Locking repo...");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");

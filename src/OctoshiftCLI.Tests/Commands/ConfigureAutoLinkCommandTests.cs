@@ -14,12 +14,13 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new ConfigureAutoLinkCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("configure-autolink", command.Name);
-            Assert.Equal(4, command.Options.Count);
+            Assert.Equal(5, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

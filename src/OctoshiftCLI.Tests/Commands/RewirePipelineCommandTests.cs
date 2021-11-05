@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new RewirePipelineCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("rewire-pipeline", command.Name);
-            Assert.Equal(6, command.Options.Count);
+            Assert.Equal(7, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
@@ -23,6 +23,7 @@ namespace OctoshiftCLI.Tests.Commands
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

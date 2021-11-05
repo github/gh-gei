@@ -40,18 +40,25 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrgOption);
             AddOption(adoOrgOption);
             AddOption(outputOption);
             AddOption(reposOnlyOption);
             AddOption(skipIdpOption);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp)
+        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Generating Script...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ADO ORG: {adoOrg}");

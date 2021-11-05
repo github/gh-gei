@@ -15,11 +15,12 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new GrantMigratorRoleCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("grant-migrator-role", command.Name);
-            Assert.Equal(3, command.Options.Count);
+            Assert.Equal(4, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "actor", true);
             TestHelpers.VerifyCommandOption(command.Options, "actor-type", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

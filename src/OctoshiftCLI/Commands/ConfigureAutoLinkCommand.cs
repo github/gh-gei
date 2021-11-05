@@ -30,17 +30,24 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(adoOrg);
             AddOption(adoTeamProject);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
+        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
             _log.LogInformation("Configuring Autolink Reference...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
