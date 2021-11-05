@@ -12,14 +12,15 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new ShareServiceConnectionCommand();
+            var command = new ShareServiceConnectionCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("share-service-connection", command.Name);
-            Assert.Equal(3, command.Options.Count);
+            Assert.Equal(4, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
             TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
@@ -29,30 +30,16 @@ namespace OctoshiftCLI.Tests.Commands
             var adoTeamProject = "BlahTeamProject";
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
-            var adoToken = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(string.Empty);
+            var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            Environment.SetEnvironmentVariable("ADO_PAT", adoToken);
-            AdoApiFactory.Create = token => token == adoToken ? mockAdo.Object : null;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new ShareServiceConnectionCommand();
+            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
-        }
-
-        [Fact]
-        public async Task MissingADOPat()
-        {
-            // When there's no PAT it should never call the factory, forcing it to throw an exception gives us an easy way to test this
-            AdoApiFactory.Create = token => throw new InvalidOperationException();
-            Environment.SetEnvironmentVariable("ADO_PAT", string.Empty);
-
-            var command = new ShareServiceConnectionCommand();
-
-            await command.Invoke("foo", "foo", "foo");
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class LockRepoCommand : Command
     {
-        public LockRepoCommand() : base("lock-ado-repo")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public LockRepoCommand(OctoLogger log, AdoApiFactory adoFactory) : base("lock-ado-repo")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             Description = "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.";
 
             var adoOrg = new Option<string>("--ado-org")
@@ -23,46 +28,36 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(adoRepo);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, bool verbose = false)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            _log.Verbose = verbose;
 
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
+            _log.LogInformation("Locking repo...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"ADO REPO: {adoRepo}");
 
-            using var ado = AdoApiFactory.Create(adoToken);
-
-            await LockRepo(adoOrg, adoTeamProject, adoRepo, ado);
-        }
-
-        private async Task LockRepo(string adoOrg, string adoTeamProject, string adoRepo, AdoApi ado)
-        {
-            Console.WriteLine("Locking repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO REPO: {adoRepo}");
+            using var ado = _adoFactory.Create();
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
             var identityDescriptor = await ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
             await ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Repo successfully locked");
-            Console.ResetColor();
+            _log.LogSuccess("Repo successfully locked");
         }
     }
 }

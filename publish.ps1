@@ -25,6 +25,6 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Compress-Archive -Path ./dist/win-x64/octoshift.exe -DestinationPath ./dist/octoshift.win-x64.zip -Force
-tar -cvzf ./dist/octoshift.linux-x64.tar.gz -C ./dist/linux-x64 octoshift
-tar -cvzf ./dist/octoshift.osx-x64.tar.gz -C ./dist/osx-x64 octoshift
+Compress-Archive -Path ./dist/win-x64/octoshift.exe -DestinationPath ./dist/octoshift.$AssemblyVersion.win-x64.zip -Force
+tar -cvzf ./dist/octoshift.$AssemblyVersion.linux-x64.tar.gz -C ./dist/linux-x64 octoshift
+tar -cvzf ./dist/octoshift.$AssemblyVersion.osx-x64.tar.gz -C ./dist/osx-x64 octoshift

@@ -89,9 +89,9 @@ jobs:
       with:
         body_path: ./RELEASENOTES.md
         files: |
-          ./dist/octoshift.win-x64.zip
-          ./dist/octoshift.linux-x64.tar.gz
-          ./dist/octoshift.osx-x64.tar.gz
+          ./dist/octoshift.*.win-x64.zip
+          ./dist/octoshift.*.linux-x64.tar.gz
+          ./dist/octoshift.*.osx-x64.tar.gz
     - name: Archive Release Notes
       shell: pwsh
       run: |

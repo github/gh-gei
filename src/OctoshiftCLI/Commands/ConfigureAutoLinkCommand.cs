@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class ConfigureAutoLinkCommand : Command
     {
-        public ConfigureAutoLinkCommand() : base("configure-autolink")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubFactory) : base("configure-autolink")
         {
+            _log = log;
+            _githubFactory = githubFactory;
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -25,41 +30,36 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(adoOrg);
             AddOption(adoTeamProject);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
+        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, bool verbose = false)
         {
-            Console.WriteLine("Configuring Autolink Reference...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.Verbose = verbose;
 
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            _log.LogInformation("Configuring Autolink Reference...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
 
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var github = GithubApiFactory.Create(githubToken);
+            using var github = _githubFactory.Create();
 
             // TODO: This crashes if autolink is already configured
             await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully configured autolink references");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully configured autolink references");
         }
     }
 }

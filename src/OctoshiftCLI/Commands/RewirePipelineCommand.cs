@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class RewirePipelineCommand : Command
     {
-        public RewirePipelineCommand() : base("rewire-pipeline")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoFactory) : base("rewire-pipeline")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -33,6 +38,10 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
@@ -40,39 +49,30 @@ namespace OctoshiftCLI.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(serviceConnectionId);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, bool verbose = false)
         {
-            Console.WriteLine($"Rewiring Pipeline to GitHub repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO PIPELINE: {adoPipeline}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+            _log.Verbose = verbose;
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"ADO PIPELINE: {adoPipeline}");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
-
-            using var ado = AdoApiFactory.Create(adoToken);
+            using var ado = _adoFactory.Create();
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
             await ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully rewired pipeline");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully rewired pipeline");
         }
     }
 }
