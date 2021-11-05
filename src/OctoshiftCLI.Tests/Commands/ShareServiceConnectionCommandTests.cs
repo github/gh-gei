@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new ShareServiceConnectionCommand();
+            var command = new ShareServiceConnectionCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("share-service-connection", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -33,9 +33,9 @@ namespace OctoshiftCLI.Tests.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            AdoApiFactory.Create = () => mockAdo.Object;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new ShareServiceConnectionCommand();
+            var command = new ShareServiceConnectionCommand(new OctoLogger(), adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));

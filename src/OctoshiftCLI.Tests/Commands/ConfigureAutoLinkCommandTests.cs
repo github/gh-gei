@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new ConfigureAutoLinkCommand();
+            var command = new ConfigureAutoLinkCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("configure-autolink", command.Name);
             Assert.Equal(4, command.Options.Count);
@@ -32,9 +32,9 @@ namespace OctoshiftCLI.Tests.Commands
 
             var mockGithub = new Mock<GithubApi>(null);
 
-            GithubApiFactory.Create = () => mockGithub.Object;
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand();
+            var command = new ConfigureAutoLinkCommand(new OctoLogger(), githubFactory);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject));

@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class AddTeamToRepoCommand : Command
     {
-        public AddTeamToRepoCommand() : base("add-team-to-repo")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("add-team-to-repo")
         {
+            _log = log;
+            _githubFactory = githubFactory;
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -36,19 +41,17 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string githubOrg, string githubRepo, string team, string role)
         {
-            Console.WriteLine("Adding team to repo...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"TEAM: {team}");
-            Console.WriteLine($"ROLE: {role}");
+            _log.LogInformation("Adding team to repo...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"TEAM: {team}");
+            _log.LogInformation($"ROLE: {role}");
 
-            using var github = GithubApiFactory.Create();
+            using var github = _githubFactory.Create();
 
             await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully added team to repo");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully added team to repo");
         }
     }
 }

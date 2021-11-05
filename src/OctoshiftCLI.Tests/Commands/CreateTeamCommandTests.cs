@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new CreateTeamCommand();
+            var command = new CreateTeamCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("create-team", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -37,9 +37,9 @@ namespace OctoshiftCLI.Tests.Commands
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
 
-            GithubApiFactory.Create = () => mockGithub.Object;
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new CreateTeamCommand();
+            var command = new CreateTeamCommand(new OctoLogger(), githubFactory);
             await command.Invoke(githubOrg, teamName, idpGroup);
 
             mockGithub.Verify(x => x.CreateTeam(githubOrg, teamName));

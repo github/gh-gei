@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new RewirePipelineCommand();
+            var command = new RewirePipelineCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("rewire-pipeline", command.Name);
             Assert.Equal(6, command.Options.Count);
@@ -41,9 +41,9 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns(pipeline);
 
-            AdoApiFactory.Create = () => mockAdo.Object;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new RewirePipelineCommand();
+            var command = new RewirePipelineCommand(new OctoLogger(), adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId));

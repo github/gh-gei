@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class RewirePipelineCommand : Command
     {
-        public RewirePipelineCommand() : base("rewire-pipeline")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoFactory) : base("rewire-pipeline")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -46,23 +51,21 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId)
         {
-            Console.WriteLine($"Rewiring Pipeline to GitHub repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO PIPELINE: {adoPipeline}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+            _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"ADO PIPELINE: {adoPipeline}");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = AdoApiFactory.Create();
+            using var ado = _adoFactory.Create();
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
             await ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully rewired pipeline");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully rewired pipeline");
         }
     }
 }

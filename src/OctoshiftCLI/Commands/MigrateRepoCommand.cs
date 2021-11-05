@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,16 @@ namespace OctoshiftCLI.Commands
 {
     public class MigrateRepoCommand : Command
     {
-        public MigrateRepoCommand() : base("migrate-repo")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+        private readonly GithubApiFactory _githubFactory;
+
+        public MigrateRepoCommand(OctoLogger log, AdoApiFactory adoFactory, GithubApiFactory githubFactory) : base("migrate-repo")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+            _githubFactory = githubFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -41,17 +48,17 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
         {
-            Console.WriteLine("Migrating Repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO REPO: {adoRepo}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation("Migrating Repo...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"ADO REPO: {adoRepo}");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            using var github = GithubApiFactory.Create();
-            var adoToken = AdoApiFactory.GetAdoToken();
+            using var github = _githubFactory.Create();
+            var adoToken = _adoFactory.GetAdoToken();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken);
@@ -61,22 +68,20 @@ namespace OctoshiftCLI.Commands
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
-                Console.WriteLine($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
                 migrationState = await github.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"ERROR: Migration Failed. Migration ID: {migrationId}");
+                _log.LogError($"ERROR: Migration Failed. Migration ID: {migrationId}");
                 var failureReason = await github.GetMigrationFailureReason(migrationId);
-                Console.WriteLine(failureReason);
-                Console.ResetColor();
+                _log.LogError(failureReason);
             }
             else
             {
-                Console.WriteLine($"Migration completed (ID: {migrationId})! State: {migrationState}");
+                _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
             }
         }
 

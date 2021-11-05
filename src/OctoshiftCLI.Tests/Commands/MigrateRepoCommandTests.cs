@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new MigrateRepoCommand();
+            var command = new MigrateRepoCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("migrate-repo", command.Name);
             Assert.Equal(5, command.Options.Count);
@@ -44,10 +44,10 @@ namespace OctoshiftCLI.Tests.Commands
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            GithubApiFactory.Create = () => mockGithub.Object;
-            AdoApiFactory.GetAdoToken = () => adoToken;
+            using var adoFactory = new AdoApiFactory(adoToken);
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new MigrateRepoCommand();
+            var command = new MigrateRepoCommand(new OctoLogger(), adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));

@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new IntegrateBoardsCommand();
+            var command = new IntegrateBoardsCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("integrate-boards", command.Name);
             Assert.Equal(4, command.Options.Count);
@@ -48,10 +48,10 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.CreateEndpoint(adoOrg, teamProjectId, githubToken, githubHandle).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetGithubRepoIds(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubReposList).Result).Returns(repoIds);
 
-            AdoApiFactory.Create = () => mockAdo.Object;
-            GithubApiFactory.GetGithubToken = () => githubToken;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
+            using var githubFactory = new GithubApiFactory(githubToken);
 
-            var command = new IntegrateBoardsCommand();
+            var command = new IntegrateBoardsCommand(new OctoLogger(), adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepos);
 
             mockAdo.Verify(x => x.CreateBoardsGithubConnection(adoOrg, orgId, adoTeamProject, endpointId, repoIds));

@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new GenerateScriptCommand();
+            var command = new GenerateScriptCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("generate-script", command.Name);
             Assert.Equal(5, command.Options.Count);

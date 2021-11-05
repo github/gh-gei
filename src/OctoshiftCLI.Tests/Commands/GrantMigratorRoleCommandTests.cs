@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new GrantMigratorRoleCommand();
+            var command = new GrantMigratorRoleCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("grant-migrator-role", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -33,9 +33,9 @@ namespace OctoshiftCLI.Tests.Commands
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            GithubApiFactory.Create = () => mockGithub.Object;
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand();
+            var command = new GrantMigratorRoleCommand(new OctoLogger(), githubFactory);
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.GrantMigratorRole(githubOrgId, actor, actorType));
@@ -44,9 +44,9 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public async Task InvalidActorType()
         {
-            GithubApiFactory.Create = () => throw new InvalidOperationException();
+            using var githubFactory = new GithubApiFactory(api: null);
 
-            var command = new GrantMigratorRoleCommand();
+            var command = new GrantMigratorRoleCommand(new OctoLogger(), githubFactory);
 
             await command.Invoke("foo", "foo", "foo");
         }

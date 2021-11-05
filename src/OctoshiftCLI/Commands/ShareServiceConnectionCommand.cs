@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class ShareServiceConnectionCommand : Command
     {
-        public ShareServiceConnectionCommand() : base("share-service-connection")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -31,20 +36,18 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId)
         {
-            Console.WriteLine("Sharing Service Connection...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+            _log.LogInformation("Sharing Service Connection...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = AdoApiFactory.Create();
+            using var ado = _adoFactory.Create();
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash
             await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully shared service connection");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully shared service connection");
         }
     }
 }

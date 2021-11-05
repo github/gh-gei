@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new LockRepoCommand();
+            var command = new LockRepoCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("lock-ado-repo", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -37,9 +37,9 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
 
-            AdoApiFactory.Create = () => mockAdo.Object;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new LockRepoCommand();
+            var command = new LockRepoCommand(new OctoLogger(), adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor));

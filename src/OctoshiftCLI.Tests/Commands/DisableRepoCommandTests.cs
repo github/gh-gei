@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new DisableRepoCommand();
+            var command = new DisableRepoCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("disable-ado-repo", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -33,9 +33,9 @@ namespace OctoshiftCLI.Tests.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
 
-            AdoApiFactory.Create = () => mockAdo.Object;
+            using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new DisableRepoCommand();
+            var command = new DisableRepoCommand(new OctoLogger(), adoFactory);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId));

@@ -12,7 +12,13 @@ namespace OctoshiftCLI
     {
         public static async Task Main(string[] args)
         {
-            var serviceProvider = new ServiceCollection().AddCommands().BuildServiceProvider();
+            var serviceProvider = new ServiceCollection()
+                                    .AddCommands()
+                                    .AddSingleton<OctoLogger>()
+                                    .AddSingleton<AdoApiFactory>()
+                                    .AddSingleton<GithubApiFactory>()
+                                    .BuildServiceProvider();
+
             var parser = BuildParser(serviceProvider);
 
             await parser.InvokeAsync(args);

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
@@ -9,8 +8,16 @@ namespace OctoshiftCLI.Commands
 {
     public class IntegrateBoardsCommand : Command
     {
-        public IntegrateBoardsCommand() : base("integrate-boards")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+        private readonly GithubApiFactory _githubFactory;
+
+        public IntegrateBoardsCommand(OctoLogger log, AdoApiFactory adoFactory, GithubApiFactory githubFactory) : base("integrate-boards")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+            _githubFactory = githubFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -39,16 +46,16 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos)
         {
-            Console.WriteLine("Integrating Azure Boards...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPOS: {githubRepos}");
+            _log.LogInformation("Integrating Azure Boards...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPOS: {githubRepos}");
 
             var githubRepoList = ParseRepoList(githubRepos);
 
-            using var ado = AdoApiFactory.Create();
-            var githubToken = GithubApiFactory.GetGithubToken();
+            using var ado = _adoFactory.Create();
+            var githubToken = _githubFactory.GetGithubToken();
 
             var userId = await ado.GetUserId();
             var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
@@ -60,9 +67,7 @@ namespace OctoshiftCLI.Commands
 
             await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoIds);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully configured Boards<->GitHub integration");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully configured Boards<->GitHub integration");
         }
 
         private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos?.Split(",").Select(x => x.Trim());

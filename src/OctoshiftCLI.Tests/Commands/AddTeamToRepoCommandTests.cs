@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void ShouldHaveOptions()
         {
-            var command = new AddTeamToRepoCommand();
+            var command = new AddTeamToRepoCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("add-team-to-repo", command.Name);
             Assert.Equal(4, command.Options.Count);
@@ -32,9 +32,8 @@ namespace OctoshiftCLI.Tests.Commands
 
             var mockGithub = new Mock<GithubApi>(null);
 
-            GithubApiFactory.Create = () => mockGithub.Object;
-
-            var command = new AddTeamToRepoCommand();
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
+            var command = new AddTeamToRepoCommand(new OctoLogger(), githubFactory);
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));

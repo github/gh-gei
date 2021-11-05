@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class DisableRepoCommand : Command
     {
-        public DisableRepoCommand() : base("disable-ado-repo")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public DisableRepoCommand(OctoLogger log, AdoApiFactory adoFactory) : base("disable-ado-repo")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -31,19 +36,17 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo)
         {
-            Console.WriteLine("Disabling repo...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"ADO REPO: {adoRepo}");
+            _log.LogInformation("Disabling repo...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"ADO REPO: {adoRepo}");
 
-            using var ado = AdoApiFactory.Create();
+            using var ado = _adoFactory.Create();
 
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
             await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Repo successfully disabled");
-            Console.ResetColor();
+            _log.LogSuccess("Repo successfully disabled");
         }
     }
 }

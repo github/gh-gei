@@ -1,4 +1,3 @@
-using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -7,8 +6,13 @@ namespace OctoshiftCLI.Commands
 {
     public class RevokeMigratorRoleCommand : Command
     {
-        public RevokeMigratorRoleCommand() : base("revoke-migrator-role")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public RevokeMigratorRoleCommand(OctoLogger log, GithubApiFactory githubFactory) : base("revoke-migrator-role")
         {
+            _log = log;
+            _githubFactory = githubFactory;
             Description = "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.";
 
             var githubOrg = new Option<string>("--github-org")
@@ -33,43 +37,37 @@ namespace OctoshiftCLI.Commands
 
         private async Task Invoke(string githubOrg, string actor, string actorType)
         {
-            Console.WriteLine("Granting migrator role ...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"ACTOR: {actor}");
+            _log.LogInformation("Granting migrator role ...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"ACTOR: {actor}");
 
             actorType = actorType.ToUpper();
-            Console.WriteLine($"ACTOR TYPE: {actorType}");
+            _log.LogInformation($"ACTOR TYPE: {actorType}");
 
             actorType = actorType.ToUpper();
 
             if (actorType is "TEAM" or "USER")
             {
-                Console.WriteLine("Actor type is valid...");
+                _log.LogInformation("Actor type is valid...");
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: Actor type must be either TEAM or USER.");
-                Console.ResetColor();
+                _log.LogError("ERROR: Actor type must be either TEAM or USER.");
                 return;
             }
 
-            using var github = GithubApiFactory.Create();
+            using var github = _githubFactory.Create();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var revokeMigratorRoleState = await github.RevokeMigratorRole(githubOrgId, actor, actorType);
 
             if (revokeMigratorRoleState.Trim().ToUpper() == "TRUE")
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"SUCCESS: Migrator role successfully revoked for the {actorType} \"{actor}\"");
-                Console.ResetColor();
+                _log.LogSuccess($"SUCCESS: Migrator role successfully revoked for the {actorType} \"{actor}\"");
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"ERROR: Migrator role couldn't be revoked for the {actorType} \"{actor}\"");
-                Console.ResetColor();
+                _log.LogError($"ERROR: Migrator role couldn't be revoked for the {actorType} \"{actor}\"");
             }
         }
     }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class ConfigureAutoLinkCommand : Command
     {
-        public ConfigureAutoLinkCommand() : base("configure-autolink")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubFactory) : base("configure-autolink")
         {
+            _log = log;
+            _githubFactory = githubFactory;
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -36,20 +41,18 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
-            Console.WriteLine("Configuring Autolink Reference...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation("Configuring Autolink Reference...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
 
-            using var github = GithubApiFactory.Create();
+            using var github = _githubFactory.Create();
 
             // TODO: This crashes if autolink is already configured
             await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully configured autolink references");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully configured autolink references");
         }
     }
 }

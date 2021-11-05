@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class CreateTeamCommand : Command
     {
-        public CreateTeamCommand() : base("create-team")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public CreateTeamCommand(OctoLogger log, GithubApiFactory githubFactory) : base("create-team")
         {
+            _log = log;
+            _githubFactory = githubFactory;
+
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
 
             var githubOrg = new Option<string>("--github-org")
@@ -33,22 +38,20 @@ namespace OctoshiftCLI.Commands
 
         public async Task Invoke(string githubOrg, string teamName, string idpGroup)
         {
-            Console.WriteLine("Creating GitHub team...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"TEAM NAME: {teamName}");
-            Console.WriteLine($"IDP GROUP: {idpGroup}");
+            _log.LogInformation("Creating GitHub team...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"TEAM NAME: {teamName}");
+            _log.LogInformation($"IDP GROUP: {idpGroup}");
 
-            using var github = GithubApiFactory.Create();
+            using var github = _githubFactory.Create();
 
             await github.CreateTeam(githubOrg, teamName);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully created team");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully created team");
 
             if (string.IsNullOrWhiteSpace(idpGroup))
             {
-                Console.WriteLine("No IdP Group provided, skipping the IdP linking step");
+                _log.LogInformation("No IdP Group provided, skipping the IdP linking step");
             }
             else
             {
@@ -64,9 +67,7 @@ namespace OctoshiftCLI.Commands
 
                 await github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Successfully linked team to Idp group");
-                Console.ResetColor();
+                _log.LogSuccess("Successfully linked team to Idp group");
             }
         }
     }

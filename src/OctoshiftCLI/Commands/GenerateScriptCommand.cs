@@ -12,9 +12,14 @@ namespace OctoshiftCLI.Commands
     public class GenerateScriptCommand : Command
     {
         private bool _reposOnly;
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
 
-        public GenerateScriptCommand() : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoFactory) : base("generate-script")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var githubOrgOption = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -47,14 +52,14 @@ namespace OctoshiftCLI.Commands
 
         private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp)
         {
-            Console.WriteLine("Generating Script...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"OUTPUT: {output}");
+            _log.LogInformation("Generating Script...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"OUTPUT: {output}");
 
             _reposOnly = reposOnly;
 
-            using var ado = AdoApiFactory.Create();
+            using var ado = _adoFactory.Create();
 
             var orgs = new List<string>();
             var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>();
@@ -63,12 +68,12 @@ namespace OctoshiftCLI.Commands
 
             if (!string.IsNullOrWhiteSpace(adoOrg))
             {
-                Console.WriteLine($"ADO Org provided, only processing repos for {adoOrg}");
+                _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
                 orgs.Add(adoOrg);
             }
             else
             {
-                Console.WriteLine($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
+                _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
                 // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
                 var userId = await ado.GetUserId();
                 orgs = await ado.GetOrganizations(userId);
@@ -76,7 +81,7 @@ namespace OctoshiftCLI.Commands
 
             foreach (var org in orgs)
             {
-                Console.WriteLine($"ADO ORG: {org}");
+                _log.LogInformation($"ADO ORG: {org}");
                 repos.Add(org, new Dictionary<string, IEnumerable<string>>());
                 pipelines.Add(org, new Dictionary<string, Dictionary<string, IEnumerable<string>>>());
 
@@ -84,7 +89,7 @@ namespace OctoshiftCLI.Commands
 
                 foreach (var teamProject in teamProjects)
                 {
-                    Console.WriteLine($"  Team Project: {teamProject}");
+                    _log.LogInformation($"  Team Project: {teamProject}");
                     var projectRepos = await ado.GetRepos(org, teamProject);
                     repos[org].Add(teamProject, projectRepos);
 
@@ -92,7 +97,7 @@ namespace OctoshiftCLI.Commands
 
                     foreach (var repo in projectRepos)
                     {
-                        Console.WriteLine($"    Repo: {repo}");
+                        _log.LogInformation($"    Repo: {repo}");
                         var repoId = await ado.GetRepoId(org, teamProject, repo);
                         var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
 
@@ -106,9 +111,7 @@ namespace OctoshiftCLI.Commands
 
                     if (string.IsNullOrWhiteSpace(appId))
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"WARNING: CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
-                        Console.ResetColor();
+                        _log.LogWarning($"WARNING: CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
                     }
                     else
                     {
@@ -133,9 +136,7 @@ namespace OctoshiftCLI.Commands
 
             foreach (var duplicate in duplicateRepoNames)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"WARNING: DUPLICATE REPO NAME: {duplicate}");
-                Console.ResetColor();
+                _log.LogWarning($"WARNING: DUPLICATE REPO NAME: {duplicate}");
             }
         }
 
