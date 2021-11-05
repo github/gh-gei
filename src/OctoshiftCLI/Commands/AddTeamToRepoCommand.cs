@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class AddTeamToRepoCommand : Command
     {
-        public AddTeamToRepoCommand() : base("add-team-to-repo")
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubFactory;
+
+        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("add-team-to-repo")
         {
+            _log = log;
+            _githubFactory = githubFactory;
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -25,44 +30,35 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(team);
             AddOption(role);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role)
+        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, bool verbose = false)
         {
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            _log.Verbose = verbose;
 
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO GH_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
+            _log.LogInformation("Adding team to repo...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"TEAM: {team}");
+            _log.LogInformation($"ROLE: {role}");
 
-            using var github = GithubApiFactory.Create(githubToken);
-            await AddTeamToRepo(githubOrg, githubRepo, team, role, github);
-        }
-
-        private async Task AddTeamToRepo(string githubOrg, string githubRepo, string team, string role, GithubApi github)
-        {
-            Console.WriteLine("Adding team to repo...");
-            Console.WriteLine($"GITHUB ORG: {githubOrg}");
-            Console.WriteLine($"GITHUB REPO: {githubRepo}");
-            Console.WriteLine($"TEAM: {team}");
-            Console.WriteLine($"ROLE: {role}");
+            using var github = _githubFactory.Create();
 
             await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully added team to repo");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully added team to repo");
         }
     }
 }

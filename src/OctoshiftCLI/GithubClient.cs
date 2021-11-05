@@ -8,10 +8,12 @@ namespace OctoshiftCLI
     public class GithubClient : IDisposable
     {
         private readonly HttpClient _httpClient;
+        private readonly OctoLogger _log;
         private bool disposedValue;
 
-        public GithubClient(string githubToken)
+        public GithubClient(OctoLogger log, string githubToken)
         {
+            _log = log;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
@@ -22,42 +24,70 @@ namespace OctoshiftCLI
 
         public async Task<string> GetAsync(string url)
         {
-            var response = await _httpClient.GetAsync(url?.Replace(" ", "%20"));
+            url = url?.Replace(" ", "%20");
+
+            _log.LogVerbose($"HTTP GET: {url}");
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PostAsync(string url, HttpContent body)
         {
-            var response = await _httpClient.PostAsync(url?.Replace(" ", "%20"), body);
+            url = url?.Replace(" ", "%20");
+
+            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PostAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PutAsync(string url, HttpContent body)
         {
-            var response = await _httpClient.PutAsync(url?.Replace(" ", "%20"), body);
+            url = url?.Replace(" ", "%20");
+
+            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PutAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PatchAsync(string url, HttpContent body)
         {
-            var response = await _httpClient.PatchAsync(url?.Replace(" ", "%20"), body);
+            url = url?.Replace(" ", "%20");
+
+            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PatchAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> DeleteAsync(string url)
         {
-            var response = await _httpClient.DeleteAsync(url?.Replace(" ", "%20"));
+            url = url?.Replace(" ", "%20");
+
+            _log.LogVerbose($"HTTP GET: {url}");
+            var response = await _httpClient.DeleteAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         protected virtual void Dispose(bool disposing)

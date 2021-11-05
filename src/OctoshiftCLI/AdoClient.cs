@@ -13,11 +13,13 @@ namespace OctoshiftCLI
     {
         private readonly string _adoToken;
         private readonly HttpClient _httpClient;
+        private readonly OctoLogger _log;
         private double _retryDelay;
         private bool disposedValue;
 
-        public AdoClient(string adoToken)
+        public AdoClient(OctoLogger log, string adoToken)
         {
+            _log = log;
             _adoToken = adoToken;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
@@ -28,49 +30,72 @@ namespace OctoshiftCLI
 
         public async Task<string> GetAsync(string url)
         {
+            url = url?.Replace(" ", "%20");
+
             ApplyRetryDelay();
-            var response = await _httpClient.GetAsync(url?.Replace(" ", "%20"));
+            _log.LogVerbose($"HTTP GET: {url}");
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PostAsync(string url, HttpContent body)
         {
+            url = url?.Replace(" ", "%20");
+
             ApplyRetryDelay();
-            var response = await _httpClient.PostAsync(url?.Replace(" ", "%20"), body);
+            _log.LogVerbose($"HTTP POST: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PostAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PutAsync(string url, HttpContent body)
         {
+            url = url?.Replace(" ", "%20");
+
             ApplyRetryDelay();
-            var response = await _httpClient.PutAsync(url?.Replace(" ", "%20"), body);
+            _log.LogVerbose($"HTTP PUT: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PutAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         public async Task<string> PatchAsync(string url, HttpContent body)
         {
+            url = url?.Replace(" ", "%20");
+
             ApplyRetryDelay();
-            var response = await _httpClient.PatchAsync(url?.Replace(" ", "%20"), body);
+            _log.LogVerbose($"HTTP PATCH: {url}");
+            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
+            var response = await _httpClient.PatchAsync(url, body);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
-            return await response.Content.ReadAsStringAsync();
+            return content;
         }
 
         private void ApplyRetryDelay()
         {
             if (_retryDelay > 0.0)
             {
-                Console.WriteLine($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
+                _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
                 Thread.Sleep((int)_retryDelay);
                 _retryDelay = 0.0;
             }
@@ -85,7 +110,7 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(url));
             }
 
-            var updatedUrl = url;
+            var updatedUrl = url.Replace(" ", "%20");
 
             if (!string.IsNullOrWhiteSpace(continuationToken))
             {
@@ -102,13 +127,14 @@ namespace OctoshiftCLI
             }
 
             ApplyRetryDelay();
-            var response = await _httpClient.GetAsync(updatedUrl.Replace(" ", "%20"));
+            _log.LogVerbose($"HTTP GET: {url}");
+            var response = await _httpClient.GetAsync(updatedUrl);
+            var content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
-            var responseData = await response.Content.ReadAsStringAsync();
-
-            var data = (JArray)JObject.Parse(responseData)["value"];
+            var data = (JArray)JObject.Parse(content)["value"];
 
             if (response.Headers.Contains("x-ms-continuationtoken"))
             {

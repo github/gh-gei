@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,8 +6,14 @@ namespace OctoshiftCLI.Commands
 {
     public class ShareServiceConnectionCommand : Command
     {
-        public ShareServiceConnectionCommand() : base("share-service-connection")
+        private readonly OctoLogger _log;
+        private readonly AdoApiFactory _adoFactory;
+
+        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
         {
+            _log = log;
+            _adoFactory = adoFactory;
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -21,44 +26,35 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
+            var verbose = new Option("--verbose")
+            {
+                IsRequired = false
+            };
 
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(serviceConnectionId);
+            AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId, bool verbose = false)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            _log.Verbose = verbose;
 
-            if (string.IsNullOrWhiteSpace(adoToken))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERROR: NO ADO_PAT FOUND IN ENV VARS, exiting...");
-                Console.ResetColor();
-                return;
-            }
+            _log.LogInformation("Sharing Service Connection...");
+            _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = AdoApiFactory.Create(adoToken);
-            await ShareServiceConnection(adoOrg, adoTeamProject, serviceConnectionId, ado);
-        }
-
-        private async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId, AdoApi ado)
-        {
-            Console.WriteLine("Sharing Service Connection...");
-            Console.WriteLine($"ADO ORG: {adoOrg}");
-            Console.WriteLine($"ADO TEAM PROJECT: {adoTeamProject}");
-            Console.WriteLine($"SERVICE CONNECTION ID: {serviceConnectionId}");
+            using var ado = _adoFactory.Create();
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash
             await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully shared service connection");
-            Console.ResetColor();
+            _log.LogSuccess("Successfully shared service connection");
         }
     }
 }
