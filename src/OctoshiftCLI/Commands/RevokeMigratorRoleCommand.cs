@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -48,7 +48,7 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ACTOR: {actor}");
 
-            actorType = actorType.ToUpper();
+            actorType = actorType?.ToUpper();
             _log.LogInformation($"ACTOR TYPE: {actorType}");
 
             actorType = actorType.ToUpper();
@@ -68,7 +68,7 @@ namespace OctoshiftCLI.Commands
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var revokeMigratorRoleState = await github.RevokeMigratorRole(githubOrgId, actor, actorType);
 
-            if (revokeMigratorRoleState.Trim().ToUpper() == "TRUE")
+            if (revokeMigratorRoleState?.Trim().ToUpper() == "TRUE")
             {
                 _log.LogSuccess($"Migrator role successfully revoked for the {actorType} \"{actor}\"");
             }
