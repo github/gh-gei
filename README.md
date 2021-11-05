@@ -40,6 +40,7 @@ Commands:
 
 To actually generate a script, you'll need to set an `ADO_PAT` as an environment variable. Performing any of the commands that actually touch GitHub will need the `???` environment variable.
 
+foo
 ## Contributions
 
 Bring it on! This is a tool built and maintained within GitHub.  Of all developers in the world, Hubbers know the rules and best practices for InnerSource and contributing.
