@@ -3,7 +3,6 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Commands
 {
-    [Collection("Sequential")]
     public class GenerateScriptCommandTests
     {
         [Fact]
