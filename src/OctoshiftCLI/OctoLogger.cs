@@ -38,34 +38,34 @@ namespace OctoshiftCLI
 
         private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
 
-        public void LogInformation(string msg) => Log(msg, LogLevel.INFO);
+        public virtual void LogInformation(string msg) => Log(msg, LogLevel.INFO);
 
-        public void LogWarning(string msg)
+        public virtual void LogWarning(string msg)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Log(msg, LogLevel.WARNING);
             Console.ResetColor();
         }
 
-        public void LogError(string msg)
+        public virtual void LogError(string msg)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Log(msg, LogLevel.ERROR);
             Console.ResetColor();
         }
 
-        public void LogError(string msg, Exception ex)
+        public virtual void LogError(string msg, Exception ex)
         {
             // TODO: include details from the exception in the logs
             throw new NotImplementedException();
         }
 
-        public void LogError(Exception ex)
+        public virtual void LogError(Exception ex)
         {
             throw new NotImplementedException();
         }
 
-        public void LogVerbose(string msg)
+        public virtual void LogVerbose(string msg)
         {
             if (Verbose)
             {
@@ -79,7 +79,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public void LogSuccess(string msg)
+        public virtual void LogSuccess(string msg)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Log(msg, LogLevel.SUCCESS);

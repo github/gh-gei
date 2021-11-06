@@ -28,7 +28,7 @@ namespace OctoshiftCLI
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         }
 
-        public async Task<string> GetAsync(string url)
+        public virtual async Task<string> GetAsync(string url)
         {
             url = url?.Replace(" ", "%20");
 
@@ -43,7 +43,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PostAsync(string url, HttpContent body)
+        public virtual async Task<string> PostAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
@@ -59,7 +59,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PutAsync(string url, HttpContent body)
+        public virtual async Task<string> PutAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
@@ -75,7 +75,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PatchAsync(string url, HttpContent body)
+        public virtual async Task<string> PatchAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
@@ -101,9 +101,9 @@ namespace OctoshiftCLI
             }
         }
 
-        public async Task<JArray> GetWithPagingAsync(string url) => await GetWithPagingAsync(url, string.Empty);
+        public virtual async Task<JArray> GetWithPagingAsync(string url) => await GetWithPagingAsync(url, string.Empty);
 
-        public async Task<JArray> GetWithPagingAsync(string url, string continuationToken)
+        public virtual async Task<JArray> GetWithPagingAsync(string url, string continuationToken)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -171,7 +171,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
