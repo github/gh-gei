@@ -39,7 +39,7 @@ When the CLI is executed the flow of execution is:
 
 3. AdoApi/GithubApi - (and eventually classes for Bitbucket/GitLab/etc) is a bunch of small functions that wrap ADO/GitHub API's (one function per API). They encapsulate the details about the endpoint URL, the request payload, and how to parse the response.
 
-4. AdoClient/GithubClient - A wrapper over HttpClient that implements some helper code that is not specific to any single API. E.g. paging through results, setting authorization headers, handling throttling/retries, etc.
+4. AdoClient/GithubClient - A wrapper over HttpClient that implements some helper logic that is not specific to any single API. E.g. paging through results, setting authorization headers, handling throttling/retries, etc.
 
 ## Testing
 For unit testing we use XUnit.Net and Moq.
