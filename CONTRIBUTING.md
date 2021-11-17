@@ -71,5 +71,5 @@ Only repo maintainers can publish a release. The process is kicked off by pushin
 This will trigger an Actions workflow that results in a new release being published. It performs these steps:
 - Validates that the SHA referenced by the tag is in the history of the `main` branch
 - Runs `publish.ps1` to build self-contained binaries for each platform. This script also embeds the version number (extracted from the tag) into each binary.
-- Creates a release in this repo with the 3 self-contained binaries, uses the contents of `RELEASENOTES.md` as the release description.
+- Creates a release in this repo with the self-contained binaries, uses the contents of `RELEASENOTES.md` as the release description.
 - Moves the contents of `RELEASENOTES.md` to a version specific file under the releasenotes folder, then empties out `RELEASENOTES.md` and commits the 2 files
