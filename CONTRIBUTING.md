@@ -33,7 +33,7 @@ When the CLI is executed the flow of execution is:
 
 ![Code Layers](images/CodeLayers.png)
 
-1. Program.cs - sets up the few plumbing aspects. It uses System.CommandLine library to parse the command-line args and invoke the appropriate command class. It also sets up dependency injection.
+1. Program.cs - sets up some plumbing/infrastructure. It uses System.CommandLine library to parse the command-line args and invoke the appropriate command class. It also sets up dependency injection.
 
 2. Commands - For every command the CLI supports there is a XXXCommand class. This class is responsible for defining the various options/args supported by that command, and most of the implementation logic.
 
