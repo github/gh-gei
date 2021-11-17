@@ -3,7 +3,7 @@ We encourage anybody to contribute to this project. Whether that is submitting b
 Here's some helpful notes on how to contribute to this project, including details on how to get started working the codebase.
 
 ## How to submit a bug or request a feature
-If you think you've found a bug or have a great idea for new functionality please create an Issue in this repo. We have Issue Tempaltes for both Bugs and Feature Requests.
+If you think you've found a bug or have a great idea for new functionality please create an Issue in this repo. We have Issue Templates for both Bugs and Feature Requests.
 
 ## How to provide feedback or ask for help
 Use the Discussions tab in this repo for more general feedback or any questions/comments on this tooling.
