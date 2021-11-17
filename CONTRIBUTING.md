@@ -6,10 +6,10 @@ Here's some helpful notes on how to contribute to this project, including detail
 If you think you've found a bug or have a great idea for new functionality please create an Issue in this repo. We have Issue Templates for both Bugs and Feature Requests.
 
 ## How to provide feedback or ask for help
-Use the Discussions tab in this repo for more general feedback or any questions/comments on this tooling.
+Use the [Discussions](https://github.com/github/OctoshiftCLI/discussions) tab in this repo for more general feedback or any questions/comments on this tooling.
 
 ## Product Backlog
-All work being done the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/OctoshiftCLI/issues/101)
+All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/OctoshiftCLI/issues/101)
 
 ## Submitting a Pull Request
 Before submitting a Pull Request please first open an issue to get feedback on the change you intend to submit. There's no worse feeling than submitting a PR after alot of effort only to learn that the maintainers don't want to add that feature to the product (or have very different ideas on how it should be designed).
