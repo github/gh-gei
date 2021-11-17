@@ -46,7 +46,7 @@ For unit testing we use XUnit.Net and Moq.
 
 Pretty much all code should be covered by unit tests. Any new code should come with appropriate unit tests in the same PR.
 
-In addition there are a small number of End-to-End integration tests (still a work in progress), that will run through actual migrations against ADO/GitHub.
+In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub.
 
 All tests must run and pass on every PR.
 
