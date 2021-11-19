@@ -36,6 +36,7 @@ jobs:
     - name: Unit Test
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml"
     - name: Integration Test
+      if: false
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
