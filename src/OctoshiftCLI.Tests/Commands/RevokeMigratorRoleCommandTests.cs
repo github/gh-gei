@@ -29,7 +29,6 @@ namespace OctoshiftCLI.Tests.Commands
             var actor = "foo-actor";
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
-            var githubToken = Guid.NewGuid().ToString();
 
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
