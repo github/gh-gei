@@ -45,7 +45,6 @@ jobs:
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
-        - name: Test
 
     - name: Copy Coverage To Predictable Location
       run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
