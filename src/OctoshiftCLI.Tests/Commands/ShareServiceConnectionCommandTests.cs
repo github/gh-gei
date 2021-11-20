@@ -1,44 +1,41 @@
-using System;
-using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.Commands;
+
+public class ShareServiceConnectionCommandTests
 {
-    public class ShareServiceConnectionCommandTests
+    [Fact]
+    public void ShouldHaveOptions()
     {
-        [Fact]
-        public void ShouldHaveOptions()
-        {
-            var command = new ShareServiceConnectionCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("share-service-connection", command.Name);
-            Assert.Equal(4, command.Options.Count);
+        var command = new ShareServiceConnectionCommand(null, null);
+        Assert.NotNull(command);
+        Assert.Equal("share-service-connection", command.Name);
+        Assert.Equal(4, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
-        }
+        TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+        TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+        TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+        TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+    }
 
-        [Fact]
-        public async Task HappyPath()
-        {
-            var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
-            var serviceConnectionId = Guid.NewGuid().ToString();
-            var teamProjectId = Guid.NewGuid().ToString();
+    [Fact]
+    public async Task HappyPath()
+    {
+        var adoOrg = "FooOrg";
+        var adoTeamProject = "BlahTeamProject";
+        var serviceConnectionId = Guid.NewGuid().ToString();
+        var teamProjectId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
-            mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
+        var mockAdo = new Mock<AdoApi>(null);
+        mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
+        using var adoFactory = new AdoApiFactory(mockAdo.Object);
 
-            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, adoFactory);
-            await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
+        var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, adoFactory);
+        await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
-            mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
-        }
+        mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
     }
 }

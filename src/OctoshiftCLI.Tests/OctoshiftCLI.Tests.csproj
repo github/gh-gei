@@ -6,6 +6,8 @@
     <IsPackable>false</IsPackable>
 
     <LangVersion>10</LangVersion>
+
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

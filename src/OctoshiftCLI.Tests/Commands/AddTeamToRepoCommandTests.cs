@@ -1,42 +1,40 @@
-using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.Commands;
+
+public class AddTeamToRepoCommandTests
 {
-    public class AddTeamToRepoCommandTests
+    [Fact]
+    public void ShouldHaveOptions()
     {
-        [Fact]
-        public void ShouldHaveOptions()
-        {
-            var command = new AddTeamToRepoCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("add-team-to-repo", command.Name);
-            Assert.Equal(5, command.Options.Count);
+        var command = new AddTeamToRepoCommand(null, null);
+        Assert.NotNull(command);
+        Assert.Equal("add-team-to-repo", command.Name);
+        Assert.Equal(5, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(command.Options, "team", true);
-            TestHelpers.VerifyCommandOption(command.Options, "role", true);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
-        }
+        TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+        TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+        TestHelpers.VerifyCommandOption(command.Options, "team", true);
+        TestHelpers.VerifyCommandOption(command.Options, "role", true);
+        TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+    }
 
-        [Fact]
-        public async Task HappyPath()
-        {
-            var githubOrg = "foo-org";
-            var githubRepo = "foo-repo";
-            var team = "foo-team";
-            var role = "maintain";
+    [Fact]
+    public async Task HappyPath()
+    {
+        var githubOrg = "foo-org";
+        var githubRepo = "foo-repo";
+        var team = "foo-team";
+        var role = "maintain";
 
-            var mockGithub = new Mock<GithubApi>(null);
+        var mockGithub = new Mock<GithubApi>(null);
 
-            using var githubFactory = new GithubApiFactory(mockGithub.Object);
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, githubFactory);
-            await command.Invoke(githubOrg, githubRepo, team, role);
+        using var githubFactory = new GithubApiFactory(mockGithub.Object);
+        var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, githubFactory);
+        await command.Invoke(githubOrg, githubRepo, team, role);
 
-            mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
-        }
+        mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
     }
 }

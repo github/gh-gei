@@ -1,60 +1,58 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.Commands;
+
+public class ShareServiceConnectionCommand : Command
 {
-    public class ShareServiceConnectionCommand : Command
+    private readonly OctoLogger _log;
+    private readonly AdoApiFactory _adoFactory;
+
+    public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        _log = log;
+        _adoFactory = adoFactory;
 
-        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
+        var adoOrg = new Option<string>("--ado-org")
         {
-            _log = log;
-            _adoFactory = adoFactory;
-
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var serviceConnectionId = new Option<string>("--service-connection-id")
-            {
-                IsRequired = true
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(serviceConnectionId);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
-        }
-
-        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId, bool verbose = false)
+            IsRequired = true
+        };
+        var adoTeamProject = new Option<string>("--ado-team-project")
         {
-            _log.Verbose = verbose;
+            IsRequired = true
+        };
+        var serviceConnectionId = new Option<string>("--service-connection-id")
+        {
+            IsRequired = true
+        };
+        var verbose = new Option("--verbose")
+        {
+            IsRequired = false
+        };
 
-            _log.LogInformation("Sharing Service Connection...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
+        AddOption(adoOrg);
+        AddOption(adoTeamProject);
+        AddOption(serviceConnectionId);
+        AddOption(verbose);
 
-            using var ado = _adoFactory.Create();
+        Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+    }
 
-            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            // TODO: If the service connection is already shared with this team project this will crash
-            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+    public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId, bool verbose = false)
+    {
+        _log.Verbose = verbose;
 
-            _log.LogSuccess("Successfully shared service connection");
-        }
+        _log.LogInformation("Sharing Service Connection...");
+        _log.LogInformation($"ADO ORG: {adoOrg}");
+        _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+        _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
+
+        using var ado = _adoFactory.Create();
+
+        var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+        // TODO: If the service connection is already shared with this team project this will crash
+        await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+
+        _log.LogSuccess("Successfully shared service connection");
     }
 }

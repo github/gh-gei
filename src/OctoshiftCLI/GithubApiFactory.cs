@@ -1,69 +1,66 @@
-﻿using System;
+﻿namespace OctoshiftCLI;
 
-namespace OctoshiftCLI
+public class GithubApiFactory : IDisposable
 {
-    public class GithubApiFactory : IDisposable
+    private GithubApi _api;
+    private string _token;
+    private readonly OctoLogger _log;
+    private bool disposedValue;
+
+    public GithubApiFactory(OctoLogger log) => _log = log;
+    public GithubApiFactory(GithubApi api) => _api = api;
+    public GithubApiFactory(string token) => _token = token;
+
+    public GithubApi Create()
     {
-        private GithubApi _api;
-        private string _token;
-        private readonly OctoLogger _log;
-        private bool disposedValue;
-
-        public GithubApiFactory(OctoLogger log) => _log = log;
-        public GithubApiFactory(GithubApi api) => _api = api;
-        public GithubApiFactory(string token) => _token = token;
-
-        public GithubApi Create()
+        if (_api != null)
         {
-            if (_api != null)
-            {
-                return _api;
-            }
-
-            var adoToken = GetGithubToken();
-            var client = new GithubClient(_log, adoToken);
-            _api = new GithubApi(client);
-
             return _api;
         }
 
-        public string GetGithubToken()
+        var adoToken = GetGithubToken();
+        var client = new GithubClient(_log, adoToken);
+        _api = new GithubApi(client);
+
+        return _api;
+    }
+
+    public string GetGithubToken()
+    {
+        if (!string.IsNullOrWhiteSpace(_token))
         {
-            if (!string.IsNullOrWhiteSpace(_token))
-            {
-                return _token;
-            }
-
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
-            if (string.IsNullOrWhiteSpace(githubToken))
-            {
-                _log.LogError("NO GH_PAT FOUND IN ENV VARS, exiting...");
-                return null;
-            }
-
-            _token = githubToken;
             return _token;
         }
 
-        protected virtual void Dispose(bool disposing)
+        var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+
+        if (string.IsNullOrWhiteSpace(githubToken))
         {
-            if (!disposedValue)
+            _log.LogError("NO GH_PAT FOUND IN ENV VARS, exiting...");
+            return null;
+        }
+
+        _token = githubToken;
+        return _token;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
             {
-                if (disposing)
-                {
-                    _api?.Dispose();
-                }
-
-                disposedValue = true;
+                _api?.Dispose();
             }
-        }
 
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            disposedValue = true;
         }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

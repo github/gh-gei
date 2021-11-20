@@ -1,64 +1,62 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.Commands;
+
+public class AddTeamToRepoCommand : Command
 {
-    public class AddTeamToRepoCommand : Command
+    private readonly OctoLogger _log;
+    private readonly GithubApiFactory _githubFactory;
+
+    public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("add-team-to-repo")
     {
-        private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        _log = log;
+        _githubFactory = githubFactory;
 
-        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("add-team-to-repo")
+        var githubOrg = new Option<string>("--github-org")
         {
-            _log = log;
-            _githubFactory = githubFactory;
-
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var team = new Option<string>("--team")
-            {
-                IsRequired = true
-            };
-            var role = new Option<string>("--role")
-            {
-                IsRequired = true
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(team);
-            AddOption(role);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
-        }
-
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, bool verbose = false)
+            IsRequired = true
+        };
+        var githubRepo = new Option<string>("--github-repo")
         {
-            _log.Verbose = verbose;
+            IsRequired = true
+        };
+        var team = new Option<string>("--team")
+        {
+            IsRequired = true
+        };
+        var role = new Option<string>("--role")
+        {
+            IsRequired = true
+        };
+        var verbose = new Option("--verbose")
+        {
+            IsRequired = false
+        };
 
-            _log.LogInformation("Adding team to repo...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"TEAM: {team}");
-            _log.LogInformation($"ROLE: {role}");
+        AddOption(githubOrg);
+        AddOption(githubRepo);
+        AddOption(team);
+        AddOption(role);
+        AddOption(verbose);
 
-            using var github = _githubFactory.Create();
+        Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+    }
 
-            await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
+    public async Task Invoke(string githubOrg, string githubRepo, string team, string role, bool verbose = false)
+    {
+        _log.Verbose = verbose;
 
-            _log.LogSuccess("Successfully added team to repo");
-        }
+        _log.LogInformation("Adding team to repo...");
+        _log.LogInformation($"GITHUB ORG: {githubOrg}");
+        _log.LogInformation($"GITHUB REPO: {githubRepo}");
+        _log.LogInformation($"TEAM: {team}");
+        _log.LogInformation($"ROLE: {role}");
+
+        using var github = _githubFactory.Create();
+
+        await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
+
+        _log.LogSuccess("Successfully added team to repo");
     }
 }
