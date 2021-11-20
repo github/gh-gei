@@ -45,7 +45,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
             mockAdo.Setup(x => x.GetGithubHandle(adoOrg, orgId, adoTeamProject, githubToken).Result).Returns(githubHandle);
-            mockAdo.Setup(x => x.CreateEndpoint(adoOrg, teamProjectId, githubToken, githubHandle).Result).Returns(endpointId);
+            mockAdo.Setup(x => x.CreateBoardsEndpoint(adoOrg, teamProjectId, githubToken, githubHandle).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetGithubRepoIds(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubReposList).Result).Returns(repoIds);
 
             using var adoFactory = new AdoApiFactory(mockAdo.Object);

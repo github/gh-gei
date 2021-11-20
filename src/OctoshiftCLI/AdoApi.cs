@@ -136,7 +136,7 @@ namespace OctoshiftCLI
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
         }
 
-        public virtual async Task<string> CreateEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
+        public virtual async Task<string> CreateBoardsEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
         {
             var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
