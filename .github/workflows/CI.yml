@@ -64,7 +64,6 @@ jobs:
       with:
         recreate: true
         path: code-coverage-results.md
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
