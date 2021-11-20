@@ -27,9 +27,7 @@ jobs:
         dotnet-version: 6.0.x
         include-prerelease: true
     - name: dotnet format
-      run: |
-        dotnet tool install -g dotnet-format
-        dotnet-format src/OctoshiftCLI.sln --check
+      run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
     - name: Build
