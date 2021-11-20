@@ -24,11 +24,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
     - name: dotnet format
-      run: |
-        dotnet tool install -g dotnet-format
-        dotnet format src/OctoshiftCLI.sln --check
+      run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
     - name: Build
@@ -79,7 +77,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
     - name: Build Artifacts
       run: ./publish.ps1
       shell: pwsh
