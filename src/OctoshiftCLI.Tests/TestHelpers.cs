@@ -48,7 +48,12 @@ namespace OctoshiftCLI.Tests
             }
             catch (Exception ex)
             {
-                return ex.Message.Contains("404") ? false : throw ex;
+                if (ex.Message.Contains("404"))
+                {
+                    return false;
+                }
+
+                throw;
             }
 
             return true;
@@ -62,7 +67,12 @@ namespace OctoshiftCLI.Tests
             }
             catch (Exception ex)
             {
-                return ex.Message.Contains("404") ? false : throw ex;
+                if (ex.Message.Contains("404"))
+                {
+                    return false;
+                }
+
+                throw;
             }
 
             return true;
