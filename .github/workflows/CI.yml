@@ -16,31 +16,55 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
         languages: 'csharp'
         config-file: ./.github/codeql/codeql-config.yml
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
+
     - name: dotnet format
-      run: |
-        dotnet tool install -g dotnet-format
-        dotnet format src/OctoshiftCLI.sln --check
+      run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
+
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
+
     - name: Build
       run: dotnet build src/OctoshiftCLI.sln --no-restore /p:TreatWarningsAsErrors=true
+
     - name: Unit Test
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml"
+      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
+
     - name: Integration Test
       if: false
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Copy Coverage To Predictable Location
+      run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
+
+    - name: Code Coverage Summary Report
+      uses: irongut/CodeCoverageSummary@v1.1.0
+      with:
+        filename: coverage/coverage.cobertura.xml
+        badge: true
+        format: 'markdown'
+        output: 'both'
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md
+
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
       if: always()
@@ -62,6 +86,7 @@ jobs:
       with:
         token: ${{ secrets.RELEASE_NOTES_PAT }}
         fetch-depth: 0
+
     - name: Validate tag on main
       shell: pwsh
       run: |
@@ -76,15 +101,18 @@ jobs:
           Write-Error "tag must match HEAD of main"
           exit 1
         }
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
+
     - name: Build Artifacts
       run: ./publish.ps1
       shell: pwsh
       env:
         CLI_VERSION: ${{ github.ref }}
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
@@ -93,12 +121,14 @@ jobs:
           ./dist/octoshift.*.win-x64.zip
           ./dist/octoshift.*.linux-x64.tar.gz
           ./dist/octoshift.*.osx-x64.tar.gz
+
     - name: Archive Release Notes
       shell: pwsh
       run: |
         $TAG_NAME = "${{ github.ref }}".Substring(10)
         Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
+        
     - name: Commit Archived Release Notes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
