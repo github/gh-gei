@@ -1,4 +1,9 @@
-We encourage anybody to contribute to this project. Whether that is submitting bug reports or feature requests, providing feedback in Discussions, or actually writing and contributing code.
+## Contributing
+Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
+
+Contributions to this project are [released](https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license) to the public under the [project's open source license](LICENSE.md).
+
+Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
 
 Here's some helpful notes on how to contribute to this project, including details on how to get started working the codebase.
 
@@ -12,9 +17,9 @@ Use the [Discussions](https://github.com/github/OctoshiftCLI/discussions) tab in
 All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/OctoshiftCLI/issues/101).
 
 ## Submitting a Pull Request
-Before submitting a Pull Request please first open an issue to get feedback on the change you intend to submit. There's no worse feeling than submitting a PR after alot of effort only to learn that the maintainers don't intend to add that feature to the product (or have very different ideas on how it should be designed).
+Before submitting a Pull Request please first open an issue to get feedback on the change you intend to submit.
 
-When creating a PR the template will prompt you to confirm that you have done various required steps (or at least considered them and determined they are not necessary on this PR):
+When creating a PR the template will prompt you to confirm that you have done a few required steps (or at least considered them and determined they are not necessary on this PR):
 
 1. Most code should include unit tests (and sometimes e2e tests). New features should include new tests in the same PR. And changes to existing behaviour should update the relevant tests.
 
