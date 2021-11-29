@@ -16,6 +16,8 @@ namespace OctoshiftCLI.Commands
             _adoFactory = adoFactory;
             _githubFactory = githubFactory;
 
+            Description = "Invokes the GitHub API's to migrate the repo and all PR data";
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true

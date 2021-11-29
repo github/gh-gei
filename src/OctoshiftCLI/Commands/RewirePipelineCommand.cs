@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _adoFactory = adoFactory;
 
+            Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
