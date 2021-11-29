@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _githubFactory = githubFactory;
 
+            Description = "Adds a team to a repo with a specific role/permission";
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true

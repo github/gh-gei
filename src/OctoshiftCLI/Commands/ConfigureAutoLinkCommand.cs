@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _githubFactory = githubFactory;
 
+            Description = "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub";
+
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true

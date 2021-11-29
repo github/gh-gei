@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _adoFactory = adoFactory;
 
+            Description = "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines.";
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true

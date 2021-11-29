@@ -1,1 +1,1 @@
-
+- Added descriptions to all commands in the built-in CLI help
