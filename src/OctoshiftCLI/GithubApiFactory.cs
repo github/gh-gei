@@ -20,8 +20,8 @@ namespace OctoshiftCLI
                 return _api;
             }
 
-            var adoToken = GetGithubToken();
-            var client = new GithubClient(_log, adoToken);
+            var githubToken = GetGithubToken();
+            var client = new GithubClient(_log, githubToken);
             _api = new GithubApi(client);
 
             return _api;

@@ -32,10 +32,9 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = true
             };
-            var githubRepos = new Option<string>("--github-repos")
+            var githubRepo = new Option<string>("--github-repo")
             {
-                IsRequired = true,
-                Description = "Comma separated list of github repo names"
+                IsRequired = true
             };
             var verbose = new Option("--verbose")
             {
@@ -45,13 +44,13 @@ namespace OctoshiftCLI.Commands
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(githubOrg);
-            AddOption(githubRepos);
+            AddOption(githubRepo);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepos, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -59,9 +58,7 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPOS: {githubRepos}");
-
-            var githubRepoList = ParseRepoList(githubRepos);
+            _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
             using var ado = _adoFactory.Create();
             var githubToken = _githubFactory.GetGithubToken();
@@ -70,15 +67,35 @@ namespace OctoshiftCLI.Commands
             var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
-            var endpointId = await ado.CreateEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
 
-            var repoIds = await ado.GetGithubRepoIds(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepoList);
+            var boardsConnection = await ado.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
 
-            await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoIds);
+            if (boardsConnection == default)
+            {
+                var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
+                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
+                await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
+                _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+            }
+            else
+            {
+                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, boardsConnection.endpointId, githubOrg, githubRepo);
 
-            _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+                if (boardsConnection.repoIds.Any(x => x == repoId))
+                {
+                    _log.LogWarning($"This repo is already configured in the Boards integration (Repo ID: {repoId})");
+                }
+                else
+                {
+                    var repos = new List<string>(boardsConnection.repoIds)
+                    {
+                        repoId
+                    };
+
+                    await ado.AddRepoToBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
+                    _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+                }
+            }
         }
-
-        private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos?.Split(",").Select(x => x.Trim());
     }
 }

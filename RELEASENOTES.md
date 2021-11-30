@@ -1,1 +1,2 @@
 - Added descriptions to all commands in the built-in CLI help
+- integrate-boards command now expects a single call per repo (instead of single call per team project with a list of repos). This will enable splitting a single team project into multiple batches for migration purposes. If no Boards-GitHub connection exists it will create it, otherwise it will add the repo to the existing connection. It assumes either 0 or 1 boards connection exists per team project (multiple connections in a single team project has not been tested).

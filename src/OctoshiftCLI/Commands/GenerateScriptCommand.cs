@@ -200,6 +200,7 @@ namespace OctoshiftCLI.Commands
                             content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
                             content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
+                            content.AppendLine(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo));
 
                             if (hasAppId)
                             {
@@ -209,9 +210,6 @@ namespace OctoshiftCLI.Commands
                                 }
                             }
                         }
-
-                        content.AppendLine();
-                        content.AppendLine(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, repos[adoOrg][adoTeamProject].Select(x => GetGithubRepoName(adoTeamProject, x)).ToList()));
                     }
                 }
 
@@ -301,15 +299,11 @@ namespace OctoshiftCLI.Commands
                 : $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
-        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, IEnumerable<string> githubRepos)
+        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo)
         {
-            if (_reposOnly)
-            {
-                return string.Empty;
-            }
-
-            var repoList = string.Join(",", githubRepos);
-            return $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repos \"{repoList}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            return _reposOnly
+                ? string.Empty
+                : $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
     }
 }

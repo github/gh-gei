@@ -136,7 +136,52 @@ namespace OctoshiftCLI
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
         }
 
-        public virtual async Task<string> CreateEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
+        public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string orgId, string teamProject)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = @"
+{
+	""contributionIds"": [""ms.vss-work-web.azure-boards-external-connection-data-provider""],
+	""dataProviderContext"": {
+		""properties"": {
+			""includeInvalidConnections"": false,
+			""sourcePage"": {
+				""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/work-team"",
+				""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+				""routeValues"": {
+					""project"": ""ADO_TEAMPROJECT"",
+					""adminPivot"": ""work-team"",
+					""controller"": ""ContributedPage"",
+					""action"": ""Execute"",
+					""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+				}
+			}
+		}
+	}
+}";
+            payload = payload.Replace("ADO_ORGANIZATION", org);
+            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
+            payload = payload.Replace("ADO_ORGID", orgId);
+
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, body);
+            var data = JObject.Parse(response);
+
+            var connection = data["dataProviders"]["ms.vss-work-web.azure-boards-external-connection-data-provider"]["externalConnections"].FirstOrDefault();
+
+            if (connection == default(JToken))
+            {
+                return default;
+            }
+
+            var repos = connection["externalGitRepos"].Select(x => (string)x["id"]).ToList();
+
+            return ((string)connection["id"], (string)connection["serviceEndpoint"]["id"], (string)connection["name"], repos);
+        }
+
+        public virtual async Task<string> CreateBoardsGithubEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
         {
             var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
@@ -168,6 +213,54 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return (string)data["id"];
+        }
+
+        public virtual async Task AddRepoToBoardsGithubConnection(string org, string orgId, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = @"
+{
+	""contributionIds"": [""ms.vss-work-web.azure-boards-save-external-connection-data-provider""],
+	""dataProviderContext"": {
+		""properties"": {
+			""externalConnection"": {
+				""serviceEndpointId"": ""ENDPOINT_ID"",
+				""connectionName"": ""CONNECTION_NAME"",
+				""connectionId"": ""CONNECTION_ID"",
+				""operation"": 1,
+                ""externalRepositoryExternalIds"": [
+                    REPO_IDS
+                ],
+				""providerKey"": ""github.com"",
+				""isGitHubApp"": false
+			},
+			""sourcePage"": {
+				""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration"",
+				""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+				""routeValues"": {
+					""project"": ""ADO_TEAMPROJECT"",
+					""adminPivot"": ""boards-external-integration"",
+					""controller"": ""ContributedPage"",
+					""action"": ""Execute"",
+					""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+				}
+			}
+		}
+	}
+}";
+
+            payload = payload.Replace("ENDPOINT_ID", endpointId);
+            payload = payload.Replace("CONNECTION_NAME", connectionName);
+            payload = payload.Replace("CONNECTION_ID", connectionId);
+            payload = payload.Replace("ADO_ORGANIZATION", org);
+            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
+            payload = payload.Replace("ADO_ORGID", orgId);
+            payload = payload.Replace("REPO_IDS", BuildRepoString(repoIds));
+
+            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+
+            await _client.PostAsync(url, body);
         }
 
         public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
@@ -303,7 +396,7 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, body);
         }
 
-        public virtual async Task<IEnumerable<string>> GetGithubRepoIds(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, IEnumerable<string> githubRepos)
+        public virtual async Task<string> GetBoardsGithubRepoId(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -338,23 +431,17 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGANIZATION", org);
             payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
             payload = payload.Replace("ADO_ORGID", orgId);
+            payload = payload.Replace("GITHUB_REPO", githubRepo);
 
-            var result = new List<string>();
+            using var body = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            foreach (var repoPayload in githubRepos.Select(x => payload.Replace("GITHUB_REPO", x)))
-            {
-                using var body = new StringContent(repoPayload.ToString(), Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync(url, body);
+            var data = JObject.Parse(response);
 
-                var response = await _client.PostAsync(url, body);
-                var data = JObject.Parse(response);
-
-                result.Add((string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"]);
-            }
-
-            return result;
+            return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
         }
 
-        public virtual async Task CreateBoardsGithubConnection(string org, string orgId, string teamProject, string endpointId, IEnumerable<string> repoIds)
+        public virtual async Task CreateBoardsGithubConnection(string org, string orgId, string teamProject, string endpointId, string repoId)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -369,7 +456,7 @@ namespace OctoshiftCLI
                 ""serviceEndpointId"": ""ENDPOINT_ID"",
                 ""operation"": 0,
                 ""externalRepositoryExternalIds"": [
-                    REPO_IDS
+                    ""REPO_ID""
                 ],
                 ""providerKey"": ""github.com"",
                 ""isGitHubApp"": false
@@ -393,12 +480,13 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGANIZATION", org);
             payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
             payload = payload.Replace("ADO_ORGID", orgId);
-            payload = payload.Replace("REPO_IDS", BuildRepoString(repoIds));
+            payload = payload.Replace("REPO_ID", repoId);
 
             using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             await _client.PostAsync(url, body);
         }
+
         private string BuildRepoString(IEnumerable<string> repoIds)
         {
             var result = string.Join("\",\"", repoIds);
