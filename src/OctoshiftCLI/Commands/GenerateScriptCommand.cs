@@ -20,6 +20,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _adoFactory = adoFactory;
 
+            Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
+
             var githubOrgOption = new Option<string>("--github-org")
             {
                 IsRequired = true

@@ -18,6 +18,8 @@ namespace OctoshiftCLI.Commands
             _adoFactory = adoFactory;
             _githubFactory = githubFactory;
 
+            Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true

@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Commands
             _log = log;
             _adoFactory = adoFactory;
 
+            Description = "Disables the repo in Azure DevOps. This makes the repo non-readable for all.";
+
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
