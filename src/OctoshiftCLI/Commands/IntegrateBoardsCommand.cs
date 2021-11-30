@@ -66,27 +66,35 @@ namespace OctoshiftCLI.Commands
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
 
-            var endpointId = await ado.GetBoardsGithubConnection(adoOrg, adoTeamProject, githubOrg);
+            var boardsConnection = await ado.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
 
-            if (string.IsNullOrWhitespace(endpointId))
+            //if (string.IsNullOrWhiteSpace(boardsConnection.endpointId))
+            if (boardsConnection == default)
             {
-                endpointId = await ado.CreateBoardsEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
-            }
-
-            var repoId = await ado.GetGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
-            var existingBoardsRepos = await ado.GetBoardsRepos(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
-
-            if (existingBoardsRepos.Any(x => x == repoId))
-            {
-                _log.LogWarning($"This repo is already configured in the Boards integration (Repo ID: {repoId}");
+                var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
+                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
+                await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
+                _log.LogSuccess("Successfully configured Boards<->GitHub integration");
             }
             else
             {
-                await ado.AddRepoToBoardsConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
-                _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, boardsConnection.endpointId, githubOrg, githubRepo);
+
+                if (boardsConnection.repoIds.Any(x => x == repoId))
+                {
+                    _log.LogWarning($"This repo is already configured in the Boards integration (Repo ID: {repoId})");
+                }
+                else
+                {
+                    var repos = new List<string>(boardsConnection.repoIds)
+                    {
+                        repoId
+                    };
+
+                    await ado.AddRepoToBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
+                    _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+                }
             }
         }
-
-        private IEnumerable<string> ParseRepoList(string githubRepos) => githubRepos?.Split(",").Select(x => x.Trim());
     }
 }
