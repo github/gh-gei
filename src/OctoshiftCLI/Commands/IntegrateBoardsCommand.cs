@@ -68,7 +68,6 @@ namespace OctoshiftCLI.Commands
 
             var boardsConnection = await ado.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
 
-            //if (string.IsNullOrWhiteSpace(boardsConnection.endpointId))
             if (boardsConnection == default)
             {
                 var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
