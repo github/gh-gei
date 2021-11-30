@@ -36,10 +36,8 @@ namespace OctoshiftCLI.Tests.Commands
             var orgId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
             var githubHandle = "foo-handle";
-            var connectionId = Guid.NewGuid().ToString();
             var endpointId = Guid.NewGuid().ToString();
             var newRepoId = Guid.NewGuid().ToString();
-            var repoIds = new List<string>() { "12", "34" };
             var githubToken = Guid.NewGuid().ToString();
 
             var mockAdo = new Mock<AdoApi>(null);
