@@ -30,7 +30,8 @@ namespace OctoshiftCLI.Commands
             };
             var role = new Option<string>("--role")
             {
-                IsRequired = true
+                IsRequired = true,
+                Description = "The only valid values are: pull, push, admin, maintain, triage. For more details see https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions, custom repository roles are not currently supported."
             };
             var verbose = new Option("--verbose")
             {
@@ -40,7 +41,7 @@ namespace OctoshiftCLI.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(team);
-            AddOption(role);
+            AddOption(role.FromAmong("pull", "push", "admin", "maintain", "triage"));
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);

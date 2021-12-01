@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
@@ -37,6 +38,27 @@ namespace OctoshiftCLI.Tests.Commands
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
+        }
+
+        [Fact]
+        public async Task InvalidRole()
+        {
+            var githubOrg = "foo-org";
+            var githubRepo = "foo-repo";
+            var team = "foo-team";
+            var role = "read";  // read is not a valid role
+
+            var mockGithub = new Mock<GithubApi>(null);
+
+            using var githubFactory = new GithubApiFactory(mockGithub.Object);
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, githubFactory);
+
+            var root = new RootCommand();
+            root.AddCommand(command);
+            var args = new string[] { "add-team-to-repo", "--github-org", githubOrg, "--github-repo", githubRepo, "--team", team, "--role", role };
+            await root.InvokeAsync(args);
+
+            mockGithub.Verify(x => x.AddTeamToRepo(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
     }
 }
