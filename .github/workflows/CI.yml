@@ -12,12 +12,17 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner-os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.runner-os }}
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Initialize CodeQL
+      if: matrix.runner-os == ubuntu-latest
       uses: github/codeql-action/init@v1
       with:
         languages: 'csharp'
@@ -60,14 +65,14 @@ jobs:
 
     - name: Add Coverage PR Comment
       uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && matrix.runner-os == ubuntu-latest
       with:
         recreate: true
         path: code-coverage-results.md
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
-      if: always()
+      if: matrix.runner-os == ubuntu-latest
       with:
         files: "**/*-tests.xml"
         check_name: "Test Results"
