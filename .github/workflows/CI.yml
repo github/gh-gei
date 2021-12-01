@@ -77,8 +77,10 @@ jobs:
       with:
         files: "**/*-tests.xml"
         check_name: "Test Results"
+    
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
+      if: matrix.runner-os == 'ubuntu-latest'
 
   publish:
     
