@@ -57,6 +57,7 @@ jobs:
 
     - name: Code Coverage Summary Report
       uses: irongut/CodeCoverageSummary@v1.1.0
+      if: matrix.runner-os == 'ubuntu-latest'
       with:
         filename: coverage/coverage.cobertura.xml
         badge: true
