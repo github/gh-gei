@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Commands
             Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool>(Invoke);
         }
 
-        private async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool verbose = false)
+        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -131,7 +131,8 @@ namespace OctoshiftCLI.Commands
 
             CheckForDuplicateRepoNames(repos);
 
-            GenerateScript(repos, pipelines, appIds, githubOrg, output, skipIdp);
+            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp);
+            File.WriteAllText(output?.FullName, script);
         }
 
         private void CheckForDuplicateRepoNames(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos)
@@ -151,20 +152,25 @@ namespace OctoshiftCLI.Commands
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
 
-        private void GenerateScript(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos,
+        public string GenerateScript(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos,
                                           Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>> pipelines,
                                           Dictionary<string, string> appIds,
                                           string githubOrg,
-                                          FileInfo output,
                                           bool skipIdp)
         {
+            if (repos == null)
+            {
+                return string.Empty;
+            }
+
             var content = new StringBuilder();
 
             foreach (var adoOrg in repos.Keys)
             {
                 content.AppendLine($"# =========== Organization: {adoOrg} ===========");
 
-                var hasAppId = appIds.TryGetValue(adoOrg, out var appId);
+                var appId = string.Empty;
+                var hasAppId = appIds != null && appIds.TryGetValue(adoOrg, out appId);
 
                 if (!hasAppId && !_reposOnly)
                 {
@@ -202,7 +208,7 @@ namespace OctoshiftCLI.Commands
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
                             content.AppendLine(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo));
 
-                            if (hasAppId)
+                            if (hasAppId && pipelines != null)
                             {
                                 foreach (var adoPipeline in pipelines[adoOrg][adoTeamProject][adoRepo])
                                 {
@@ -217,7 +223,7 @@ namespace OctoshiftCLI.Commands
                 content.AppendLine();
             }
 
-            File.WriteAllText(output.FullName, content.ToString());
+            return content.ToString();
         }
 
         private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
