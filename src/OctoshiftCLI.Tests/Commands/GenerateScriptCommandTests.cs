@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using Xunit;
@@ -28,7 +26,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task NoData()
+        public void NoData()
         {
             var githubOrg = "foo-gh-org";
 
