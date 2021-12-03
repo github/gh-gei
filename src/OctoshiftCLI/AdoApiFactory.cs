@@ -34,7 +34,7 @@ namespace OctoshiftCLI
                 return _token;
             }
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            var adoToken = Env.AdoPersonalAcessToken;
 
             if (string.IsNullOrWhiteSpace(adoToken))
             {

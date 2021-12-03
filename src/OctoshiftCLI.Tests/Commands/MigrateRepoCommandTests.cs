@@ -37,10 +37,12 @@ namespace OctoshiftCLI.Tests.Commands
             var githubOrgId = Guid.NewGuid().ToString();
             var migrationSourceId = Guid.NewGuid().ToString();
             var migrationId = Guid.NewGuid().ToString();
+            var githubPat = Guid.NewGuid().ToString();
+            Environment.SetEnvironmentVariable("GH_PAT", githubPat);
 
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateMigrationSource(githubOrgId, adoToken).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateMigrationSource(githubOrgId, adoToken, githubPat).Result).Returns(migrationSourceId);
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 

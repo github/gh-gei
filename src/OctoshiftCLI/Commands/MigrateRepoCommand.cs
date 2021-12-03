@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -68,9 +69,9 @@ namespace OctoshiftCLI.Commands
 
             using var github = _githubFactory.Create();
             var adoToken = _adoFactory.GetAdoToken();
-
+            var githubPat = Env.GitHubPersonalAcessToken;
             var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken);
+            var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken, githubPat);
             var migrationId = await github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await github.GetMigrationState(migrationId);
