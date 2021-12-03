@@ -34,7 +34,7 @@ namespace OctoshiftCLI
                 return _token;
             }
 
-            var githubToken = Env.GitHubPersonalAcessToken;
+            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
             if (string.IsNullOrWhiteSpace(githubToken))
             {
