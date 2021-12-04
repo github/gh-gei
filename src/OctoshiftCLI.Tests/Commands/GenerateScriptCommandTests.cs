@@ -164,6 +164,59 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
+        public void SingleRepoTwoPipelinesNoServiceConnection()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+            var pipelineOne = "CICD";
+            var pipelineTwo = "Publish";
+
+            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var pipelines = new Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>>
+            {
+                { adoOrg, new Dictionary<string, Dictionary<string, IEnumerable<string>>>() }
+            };
+
+            pipelines[adoOrg].Add(adoTeamProject, new Dictionary<string, IEnumerable<string>>());
+            pipelines[adoOrg][adoTeamProject].Add(repo, new List<string>() { pipelineOne, pipelineTwo });
+
+            var appIds = new Dictionary<string, string>();
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
+
+            Assert.Equal(expected, script);
+        }
+
+        [Fact]
         public void SingleRepoReposOnly()
         {
             var githubOrg = "foo-gh-org";
