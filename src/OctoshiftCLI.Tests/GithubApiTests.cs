@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task CreateMigrationSourceReturnsNewMigrationSourceId()
         {
+            // Arrange
             const string url = "https://api.github.com/graphql";
             const string orgId = "ORG_ID";
             const string adoToken = "ADO_TOKEN";
@@ -18,20 +19,22 @@ namespace OctoshiftCLI.Tests
             const string payload =
                 "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!) " +
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                ",\"variables\":{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"ORG_ID\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"ADO_TOKEN\", \"githubPat\":\"GITHUB_PAT\"},\"operationName\":\"createMigrationSource\"}";
+                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
             using var body = new StringContent(payload, Encoding.UTF8, "application/json");
-            const string result = "{\"data\":{\"createMigrationSource\":{\"migrationSource\": {\"id\":\"MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm\",\"name\":\"Azure Devops Source\",\"url\":\"https://dev.azure.com\",\"type\":\"AZURE_DEVOPS\"}}}}";
+            const string migrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
+            const string result = $"{{\"data\":{{\"createMigrationSource\":{{\"migrationSource\": {{\"id\":\"{migrationSourceId}\",\"name\":\"Azure Devops Source\",\"url\":\"https://dev.azure.com\",\"type\":\"AZURE_DEVOPS\"}}}}}}}}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
                 .ReturnsAsync(result);
 
+            // Act
             using var githubApi = new GithubApi(githubClientMock.Object);
             var id = await githubApi.CreateMigrationSource(orgId, adoToken, githubPat);
 
-            githubClientMock.Verify(m => m.PostAsync(url, It.IsAny<StringContent>()));
-            Assert.Equal("MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm", id);
+            // Assert
+            Assert.Equal(migrationSourceId, id);
         }
     }
 }

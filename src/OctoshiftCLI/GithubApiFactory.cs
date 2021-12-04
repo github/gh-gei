@@ -27,7 +27,7 @@ namespace OctoshiftCLI
             return _api;
         }
 
-        public string GetGithubToken()
+        public virtual string GetGithubToken()
         {
             if (!string.IsNullOrWhiteSpace(_token))
             {
