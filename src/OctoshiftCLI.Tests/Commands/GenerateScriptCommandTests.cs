@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Moq;
 using OctoshiftCLI.Commands;
 using Xunit;
@@ -136,6 +137,77 @@ namespace OctoshiftCLI.Tests.Commands
             expected += $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{pipelineOne}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --service-connection-id \"{appId}\"";
             expected += Environment.NewLine;
             expected += $"./octoshift rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{pipelineTwo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --service-connection-id \"{appId}\"";
+
+            Assert.Equal(expected, script);
+        }
+
+        [Fact]
+        public void SingleRepoReposOnly()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            // The way reposOnly is implemented is kind of hacky, this will change when we refactor all the options in issue #21
+            // for now going to leave it as is and use reflection to force the test to work
+            var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+            reposOnlyField.SetValue(command, true);
+
+            var script = command.GenerateScript(repos, null, null, githubOrg, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
+
+            Assert.Equal(expected, script);
+        }
+
+        [Fact]
+        public void SingleRepoSkipIdp()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, null, null, githubOrg, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"";
+            expected += Environment.NewLine;
+            expected += $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
 
             Assert.Equal(expected, script);
         }
