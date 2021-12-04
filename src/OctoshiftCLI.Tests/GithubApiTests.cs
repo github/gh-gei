@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
             const string migrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            const string result = $"{{\"data\":{{\"createMigrationSource\":{{\"migrationSource\": {{\"id\":\"{migrationSourceId}\",\"name\":\"Azure Devops Source\",\"url\":\"https://dev.azure.com\",\"type\":\"AZURE_DEVOPS\"}}}}}}}}";
+            var result = $"{{\"data\":{{\"createMigrationSource\":{{\"migrationSource\": {{\"id\":\"{migrationSourceId}\",\"name\":\"Azure Devops Source\",\"url\":\"https://dev.azure.com\",\"type\":\"AZURE_DEVOPS\"}}}}}}}}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
