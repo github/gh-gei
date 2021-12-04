@@ -79,6 +79,28 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
+        public void SkipTeamProjectWithNoRepos()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+
+            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>());
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, null, null, githubOrg, false);
+
+            script = TrimNonExecutableLines(script);
+
+            Assert.Equal(string.Empty, script);
+        }
+
+        [Fact]
         public void SingleRepoTwoPipelines()
         {
             var githubOrg = "foo-gh-org";
