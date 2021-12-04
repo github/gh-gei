@@ -16,11 +16,10 @@ namespace OctoshiftCLI.Tests
             const string orgId = "ORG_ID";
             const string adoToken = "ADO_TOKEN";
             const string githubPat = "GITHUB_PAT";
-            const string payload =
+            var payload =
                 "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!) " +
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
-            using var body = new StringContent(payload, Encoding.UTF8, "application/json");
             const string migrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
             const string result = $"{{\"data\":{{\"createMigrationSource\":{{\"migrationSource\": {{\"id\":\"{migrationSourceId}\",\"name\":\"Azure Devops Source\",\"url\":\"https://dev.azure.com\",\"type\":\"AZURE_DEVOPS\"}}}}}}}}";
 
