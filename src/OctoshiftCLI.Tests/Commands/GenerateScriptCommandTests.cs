@@ -321,6 +321,61 @@ namespace OctoshiftCLI.Tests.Commands
             Assert.Contains(result, x => x == org1);
         }
 
+        [Fact]
+        public async Task GetReposTwoReposTwoTeamProjects()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var repo1 = "foo-repo1";
+            var repo2 = "foo-repo2";
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
+            mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
+            mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetRepos(mockAdo.Object, orgs);
+
+            Assert.Single(result[org][teamProject1]);
+            Assert.Single(result[org][teamProject2]);
+            Assert.Contains(result[org][teamProject1], x => x == repo1);
+            Assert.Contains(result[org][teamProject2], x => x == repo2);
+        }
+
+        [Fact]
+        public async Task GetPipelinesOneRepoTwoPipelines()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var teamProject = "foo-tp";
+            var teamProjects = new List<string>() { teamProject };
+            var repo = "foo-repo";
+            var repoId = Guid.NewGuid().ToString();
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
+            var pipeline1 = "foo-pipeline-1";
+            var pipeline2 = "foo-pipeline-2";
+
+            repos.Add(org, new Dictionary<string, IEnumerable<string>>());
+            repos[org].Add(teamProject, new List<string>() { repo });
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetRepoId(org, teamProject, repo).Result).Returns(repoId);
+            mockAdo.Setup(x => x.GetPipelines(org, teamProject, repoId).Result).Returns(new List<string>() { pipeline1, pipeline2 });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetPipelines(mockAdo.Object, repos);
+
+            Assert.Equal(2, result[org][teamProject][repo].Count());
+            Assert.Contains(result[org][teamProject][repo], x => x == pipeline1);
+            Assert.Contains(result[org][teamProject][repo], x => x == pipeline2);
+        }
+
         private string TrimNonExecutableLines(string script)
         {
             var lines = script.Split(new string[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
