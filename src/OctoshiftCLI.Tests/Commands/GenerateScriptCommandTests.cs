@@ -352,7 +352,6 @@ namespace OctoshiftCLI.Tests.Commands
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
-            var teamProjects = new List<string>() { teamProject };
             var repo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
             var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
