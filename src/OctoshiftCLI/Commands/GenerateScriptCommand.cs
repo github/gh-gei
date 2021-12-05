@@ -175,14 +175,14 @@ namespace OctoshiftCLI.Commands
         {
             var orgs = new List<string>();
 
-            if (ado != null)
+            if (!string.IsNullOrWhiteSpace(adoOrg))
             {
-                if (!string.IsNullOrWhiteSpace(adoOrg))
-                {
-                    _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
-                    orgs.Add(adoOrg);
-                }
-                else
+                _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
+                orgs.Add(adoOrg);
+            }
+            else
+            {
+                if (ado != null)
                 {
                     _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
                     // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
