@@ -70,10 +70,104 @@ namespace OctoshiftCLI.Commands
 
             using var ado = _adoFactory.Create();
 
-            var orgs = new List<string>();
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>();
-            var pipelines = new Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>>();
+            var orgs = await GetOrgs(ado, adoOrg);
+            var repos = await GetRepos(ado, orgs);
+            var pipelines = await GetPipelines(ado, repos);
+            var appIds = await GetAppIds(ado, orgs, githubOrg);
+
+            CheckForDuplicateRepoNames(repos);
+
+            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp);
+
+            if (output != null)
+            {
+                File.WriteAllText(output.FullName, script);
+            }
+        }
+
+        public async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string githubOrg)
+        {
             var appIds = new Dictionary<string, string>();
+
+            if (orgs != null)
+            {
+                foreach (var org in orgs)
+                {
+                    if (!_reposOnly)
+                    {
+                        var teamProjects = await ado.GetTeamProjects(org);
+                        var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
+
+                        if (string.IsNullOrWhiteSpace(appId))
+                        {
+                            _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
+                        }
+                        else
+                        {
+                            appIds.Add(org, appId);
+                        }
+                    }
+                }
+            }
+
+            return appIds;
+        }
+
+        public async Task<IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>> GetPipelines(AdoApi ado, IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        {
+            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
+
+            foreach (var org in repos.Keys)
+            {
+                pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
+
+                foreach (var teamProject in repos[org].Keys)
+                {
+                    pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
+
+                    foreach (var repo in repos[org][teamProject])
+                    {
+                        var repoId = await ado.GetRepoId(org, teamProject, repo);
+                        var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
+
+                        pipelines[org][teamProject].Add(repo, repoPipelines);
+                    }
+                }
+            }
+
+            return pipelines;
+        }
+
+        public async Task<IDictionary<string, IDictionary<string, IEnumerable<string>>>> GetRepos(AdoApi ado, IEnumerable<string> orgs)
+        {
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
+
+            foreach (var org in orgs)
+            {
+                _log.LogInformation($"ADO ORG: {org}");
+                repos.Add(org, new Dictionary<string, IEnumerable<string>>());
+
+                var teamProjects = await ado.GetTeamProjects(org);
+
+                foreach (var teamProject in teamProjects)
+                {
+                    _log.LogInformation($"  Team Project: {teamProject}");
+                    var projectRepos = await ado.GetRepos(org, teamProject);
+                    repos[org].Add(teamProject, projectRepos);
+
+                    foreach (var repo in projectRepos)
+                    {
+                        _log.LogInformation($"    Repo: {repo}");
+                    }
+                }
+            }
+
+            return repos;
+        }
+
+        public async Task<IEnumerable<string>> GetOrgs(AdoApi ado, string adoOrg)
+        {
+            var orgs = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(adoOrg))
             {
@@ -88,54 +182,10 @@ namespace OctoshiftCLI.Commands
                 orgs = await ado.GetOrganizations(userId);
             }
 
-            foreach (var org in orgs)
-            {
-                _log.LogInformation($"ADO ORG: {org}");
-                repos.Add(org, new Dictionary<string, IEnumerable<string>>());
-                pipelines.Add(org, new Dictionary<string, Dictionary<string, IEnumerable<string>>>());
-
-                var teamProjects = await ado.GetTeamProjects(org);
-
-                foreach (var teamProject in teamProjects)
-                {
-                    _log.LogInformation($"  Team Project: {teamProject}");
-                    var projectRepos = await ado.GetRepos(org, teamProject);
-                    repos[org].Add(teamProject, projectRepos);
-
-                    pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
-
-                    foreach (var repo in projectRepos)
-                    {
-                        _log.LogInformation($"    Repo: {repo}");
-                        var repoId = await ado.GetRepoId(org, teamProject, repo);
-                        var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
-
-                        pipelines[org][teamProject].Add(repo, repoPipelines);
-                    }
-                }
-
-                if (!_reposOnly)
-                {
-                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
-
-                    if (string.IsNullOrWhiteSpace(appId))
-                    {
-                        _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
-                    }
-                    else
-                    {
-                        appIds.Add(org, appId);
-                    }
-                }
-            }
-
-            CheckForDuplicateRepoNames(repos);
-
-            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp);
-            File.WriteAllText(output?.FullName, script);
+            return orgs;
         }
 
-        private void CheckForDuplicateRepoNames(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos)
+        private void CheckForDuplicateRepoNames(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
         {
             var duplicateRepoNames = repos.SelectMany(x => x.Value)
                                           .SelectMany(x => x.Value.Select(y => GetGithubRepoName(x.Key, y)))
@@ -152,9 +202,9 @@ namespace OctoshiftCLI.Commands
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
 
-        public string GenerateScript(Dictionary<string, Dictionary<string, IEnumerable<string>>> repos,
-                                          Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>> pipelines,
-                                          Dictionary<string, string> appIds,
+        public string GenerateScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
+                                          IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
+                                          IDictionary<string, string> appIds,
                                           string githubOrg,
                                           bool skipIdp)
         {

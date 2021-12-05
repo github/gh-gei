@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using Xunit;
@@ -45,7 +46,7 @@ namespace OctoshiftCLI.Tests.Commands
             var adoTeamProject = "foo-team-project";
             var repo = "foo-repo";
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
@@ -85,7 +86,7 @@ namespace OctoshiftCLI.Tests.Commands
             var adoOrg = "foo-ado-org";
             var adoTeamProject = "foo-team-project";
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
@@ -111,16 +112,16 @@ namespace OctoshiftCLI.Tests.Commands
             var pipelineTwo = "Publish";
             var appId = Guid.NewGuid().ToString();
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var pipelines = new Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>>
+            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>
             {
-                { adoOrg, new Dictionary<string, Dictionary<string, IEnumerable<string>>>() }
+                { adoOrg, new Dictionary<string, IDictionary<string, IEnumerable<string>>>() }
             };
 
             pipelines[adoOrg].Add(adoTeamProject, new Dictionary<string, IEnumerable<string>>());
@@ -173,16 +174,16 @@ namespace OctoshiftCLI.Tests.Commands
             var pipelineOne = "CICD";
             var pipelineTwo = "Publish";
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var pipelines = new Dictionary<string, Dictionary<string, Dictionary<string, IEnumerable<string>>>>
+            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>
             {
-                { adoOrg, new Dictionary<string, Dictionary<string, IEnumerable<string>>>() }
+                { adoOrg, new Dictionary<string, IDictionary<string, IEnumerable<string>>>() }
             };
 
             pipelines[adoOrg].Add(adoTeamProject, new Dictionary<string, IEnumerable<string>>());
@@ -224,7 +225,7 @@ namespace OctoshiftCLI.Tests.Commands
             var adoTeamProject = "foo-team-project";
             var repo = "foo-repo";
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
@@ -254,7 +255,7 @@ namespace OctoshiftCLI.Tests.Commands
             var adoTeamProject = "foo-team-project";
             var repo = "foo-repo";
 
-            var repos = new Dictionary<string, Dictionary<string, IEnumerable<string>>>
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
             {
                 { adoOrg, new Dictionary<string, IEnumerable<string>>() }
             };
@@ -285,6 +286,40 @@ namespace OctoshiftCLI.Tests.Commands
             expected += $"./octoshift integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
 
             Assert.Equal(expected, script);
+        }
+
+        [Fact]
+        public async Task GetOrgs_AllOrgs()
+        {
+            var userId = "foo-user";
+            var org1 = "foo-1";
+            var org2 = "foo-2";
+            var orgs = new List<string>() { org1, org2 };
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
+            mockAdo.Setup(x => x.GetOrganizations(userId).Result).Returns(orgs);
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetOrgs(mockAdo.Object, null);
+
+            Assert.Equal(2, result.Count());
+            Assert.Contains(result, x => x == org1);
+            Assert.Contains(result, x => x == org2);
+        }
+
+        [Fact]
+        public async Task GetOrgs_OrgProvided()
+        {
+            var org1 = "foo-1";
+            var orgs = new List<string>() { org1 };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetOrgs(null, org1);
+
+            Assert.Single(result);
+            Assert.Contains(result, x => x == org1);
         }
 
         private string TrimNonExecutableLines(string script)
