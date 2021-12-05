@@ -351,7 +351,6 @@ namespace OctoshiftCLI.Tests.Commands
         public async Task GetPipelinesOneRepoTwoPipelines()
         {
             var org = "foo-org";
-            var orgs = new List<string>() { org };
             var teamProject = "foo-tp";
             var teamProjects = new List<string>() { teamProject };
             var repo = "foo-repo";
