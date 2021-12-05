@@ -89,7 +89,7 @@ namespace OctoshiftCLI.Commands
         {
             var appIds = new Dictionary<string, string>();
 
-            if (orgs != null)
+            if (orgs != null && ado != null)
             {
                 foreach (var org in orgs)
                 {
@@ -117,20 +117,23 @@ namespace OctoshiftCLI.Commands
         {
             var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
 
-            foreach (var org in repos.Keys)
+            if (repos != null && ado != null)
             {
-                pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
-
-                foreach (var teamProject in repos[org].Keys)
+                foreach (var org in repos.Keys)
                 {
-                    pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
+                    pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
 
-                    foreach (var repo in repos[org][teamProject])
+                    foreach (var teamProject in repos[org].Keys)
                     {
-                        var repoId = await ado.GetRepoId(org, teamProject, repo);
-                        var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
+                        pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
 
-                        pipelines[org][teamProject].Add(repo, repoPipelines);
+                        foreach (var repo in repos[org][teamProject])
+                        {
+                            var repoId = await ado.GetRepoId(org, teamProject, repo);
+                            var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
+
+                            pipelines[org][teamProject].Add(repo, repoPipelines);
+                        }
                     }
                 }
             }
@@ -142,22 +145,25 @@ namespace OctoshiftCLI.Commands
         {
             var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
 
-            foreach (var org in orgs)
+            if (orgs != null && ado != null)
             {
-                _log.LogInformation($"ADO ORG: {org}");
-                repos.Add(org, new Dictionary<string, IEnumerable<string>>());
-
-                var teamProjects = await ado.GetTeamProjects(org);
-
-                foreach (var teamProject in teamProjects)
+                foreach (var org in orgs)
                 {
-                    _log.LogInformation($"  Team Project: {teamProject}");
-                    var projectRepos = await ado.GetRepos(org, teamProject);
-                    repos[org].Add(teamProject, projectRepos);
+                    _log.LogInformation($"ADO ORG: {org}");
+                    repos.Add(org, new Dictionary<string, IEnumerable<string>>());
 
-                    foreach (var repo in projectRepos)
+                    var teamProjects = await ado.GetTeamProjects(org);
+
+                    foreach (var teamProject in teamProjects)
                     {
-                        _log.LogInformation($"    Repo: {repo}");
+                        _log.LogInformation($"  Team Project: {teamProject}");
+                        var projectRepos = await ado.GetRepos(org, teamProject);
+                        repos[org].Add(teamProject, projectRepos);
+
+                        foreach (var repo in projectRepos)
+                        {
+                            _log.LogInformation($"    Repo: {repo}");
+                        }
                     }
                 }
             }
@@ -169,17 +175,20 @@ namespace OctoshiftCLI.Commands
         {
             var orgs = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(adoOrg))
+            if (ado != null)
             {
-                _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
-                orgs.Add(adoOrg);
-            }
-            else
-            {
-                _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
-                // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
-                var userId = await ado.GetUserId();
-                orgs = await ado.GetOrganizations(userId);
+                if (!string.IsNullOrWhiteSpace(adoOrg))
+                {
+                    _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
+                    orgs.Add(adoOrg);
+                }
+                else
+                {
+                    _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
+                    // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
+                    var userId = await ado.GetUserId();
+                    orgs = await ado.GetOrganizations(userId);
+                }
             }
 
             return orgs;
