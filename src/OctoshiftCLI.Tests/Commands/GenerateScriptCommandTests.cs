@@ -313,7 +313,6 @@ namespace OctoshiftCLI.Tests.Commands
         public async Task GetOrgsOrgProvided()
         {
             var org1 = "foo-1";
-            var orgs = new List<string>() { org1 };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
             var result = await command.GetOrgs(null, org1);
