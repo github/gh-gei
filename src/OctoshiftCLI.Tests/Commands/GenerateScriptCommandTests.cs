@@ -289,7 +289,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetOrgs_AllOrgs()
+        public async Task GetOrgsAllOrgs()
         {
             var userId = "foo-user";
             var org1 = "foo-1";
@@ -310,7 +310,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetOrgs_OrgProvided()
+        public async Task GetOrgsOrgProvided()
         {
             var org1 = "foo-1";
             var orgs = new List<string>() { org1 };
