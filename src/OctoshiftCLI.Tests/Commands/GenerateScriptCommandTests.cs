@@ -376,6 +376,28 @@ namespace OctoshiftCLI.Tests.Commands
             Assert.Contains(result[org][teamProject][repo], x => x == pipeline2);
         }
 
+        [Fact]
+        public async Task GetAppIdsServiceConnectExists()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var githubOrg = "foo-gh-org";
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var appId = Guid.NewGuid().ToString();
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
+            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
+
+            Assert.Equal(appId, result[org]);
+        }
+
         private string TrimNonExecutableLines(string script)
         {
             var lines = script.Split(new string[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
