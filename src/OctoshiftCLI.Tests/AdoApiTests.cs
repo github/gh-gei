@@ -78,5 +78,50 @@ namespace OctoshiftCLI.Tests
 
             Assert.Equal("blah", result);
         }
+
+        [Fact]
+        public async void GetTeamProjectsTwoProjects()
+        {
+            var adoOrg = "foo-org";
+            var teamProject1 = "foo-tp";
+            var teamProject2 = "foo-tp2";
+            var endpoint = $"https://dev.azure.com/{adoOrg}/_apis/projects?api-version=6.1-preview";
+            var json = "[{somethingElse: false, name: '" + teamProject1 + "'}, {id: 'sfasfasdf', name: '" + teamProject2 + "'}]";
+            var response = JArray.Parse(json);
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetTeamProjects(adoOrg);
+
+            Assert.Equal(2, result.Count());
+            Assert.Contains(result, x => x == teamProject1);
+            Assert.Contains(result, x => x == teamProject2);
+        }
+
+        [Fact]
+        public async void GetReposThreeReposOneDisabled()
+        {
+            var adoOrg = "foo-org";
+            var teamProject = "foo-tp";
+            var repo1 = "foo-repo";
+            var repo2 = "foo-repo2";
+            var endpoint = $"https://dev.azure.com/{adoOrg}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
+            var json = "[{isDisabled: 'true', name: 'testing'}, {isDisabled: false, name: '" + repo1 + "'}, {isDisabled: 'FALSE', name: '" + repo2 + "'}]";
+            var response = JArray.Parse(json);
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetRepos(adoOrg, teamProject);
+
+            Assert.Equal(2, result.Count());
+            Assert.Contains(result, x => x == repo1);
+            Assert.Contains(result, x => x == repo2);
+        }
     }
 }
