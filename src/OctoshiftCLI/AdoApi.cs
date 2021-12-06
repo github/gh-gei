@@ -38,7 +38,7 @@ namespace OctoshiftCLI
             throw new InvalidDataException();
         }
 
-        public virtual async Task<List<string>> GetOrganizations(string userId)
+        public virtual async Task<IEnumerable<string>> GetOrganizations(string userId)
         {
             var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
