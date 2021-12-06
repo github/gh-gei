@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -122,6 +124,54 @@ namespace OctoshiftCLI.Tests
             Assert.Equal(2, result.Count());
             Assert.Contains(result, x => x == repo1);
             Assert.Contains(result, x => x == repo2);
+        }
+
+        [Fact]
+        public async void GetGithubAppIdTwoProjects()
+        {
+            var adoOrg = "foo-org";
+            var githubOrg = "foo-gh-org";
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var appId = Guid.NewGuid().ToString();
+            
+            var json = "[{type: 'GitHub', name: '" + githubOrg + "', id: '" + appId + "'}]";
+            var response = JArray.Parse(json);
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
+
+            Assert.Equal(appId, result);
+        }
+
+        [Fact]
+        public async void GetGithubAppIdTwoProjectsNoMatch()
+        {
+            var adoOrg = "foo-org";
+            var githubOrg = "foo-gh-org";
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var appId = Guid.NewGuid().ToString();
+
+            var json = "[{type: 'GitHub', name: 'wrongOrg', id: '" + appId + "'}]";
+            var response = JArray.Parse(json);
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
+
+            Assert.Null(result);
         }
     }
 }
