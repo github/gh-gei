@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetUserIdInvalidResponse()
+        public async void GetUserId_InvalidResponse()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
