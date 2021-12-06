@@ -212,5 +212,46 @@ namespace OctoshiftCLI.Tests
 
             Assert.Equal("FOO-LOGIN", result);
         }
+
+        [Fact]
+        public async void GetBoardsGithubConnection()
+        {
+            var endpoint = $"https://dev.azure.com/FOO-ORG/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var payload = @"
+{
+	""contributionIds"": [""ms.vss-work-web.azure-boards-external-connection-data-provider""],
+	""dataProviderContext"": {
+		""properties"": {
+			""includeInvalidConnections"": false,
+			""sourcePage"": {
+				""url"": ""https://dev.azure.com/FOO-ORG/FOO-TEAMPROJECT/_settings/work-team"",
+				""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+				""routeValues"": {
+					""project"": ""FOO-TEAMPROJECT"",
+					""adminPivot"": ""work-team"",
+					""controller"": ""ContributedPage"",
+					""action"": ""Execute"",
+					""serviceHost"": ""FOO-ORGID (FOO-ORG)""
+				}
+			}
+		}
+	}
+}";
+            var json = "{ \"dataProviders\": { \"ms.vss-work-web.azure-boards-external-connection-data-provider\": { \"externalConnections\": [ { id: 'foo-id', serviceEndpoint: { id: 'foo-endpoint-id' }, name: 'foo-name', externalGitRepos: [ { id: 'repo-1' }, { id: 'repo-2' } ] }, { thisIsIgnored: true } ]  } } }";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)).Result).Returns(json);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var (connectionId, endpointId, connectionName, repoIds) = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT");
+
+            Assert.Equal("foo-id", connectionId);
+            Assert.Equal("foo-endpoint-id", endpointId);
+            Assert.Equal("foo-name", connectionName);
+            Assert.Equal(2, repoIds.Count());
+            Assert.Contains(repoIds, x => x == "repo-1");
+            Assert.Contains(repoIds, x => x == "repo-2");
+        }
     }
 }
