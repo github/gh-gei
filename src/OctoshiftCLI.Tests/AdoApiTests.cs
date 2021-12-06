@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -56,6 +57,26 @@ namespace OctoshiftCLI.Tests
             Assert.Equal(2, result.Count());
             Assert.Contains(result, x => x == "foo");
             Assert.Contains(result, x => x == "foo2");
+        }
+
+        [Fact]
+        public async void GetOrganizationId()
+        {
+            var userId = "foo";
+            var adoOrg = "foo-org";
+            var orgId = "blah";
+            var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}&api-version=5.0-preview.1";
+            var accountsJson = "[{accountId: '" + orgId + "', accountName: '" + adoOrg + "'}, {accountName: 'foo2', accountId: 'asdf'}]";
+            var response = JArray.Parse(accountsJson);
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetOrganizationId(userId, adoOrg);
+
+            Assert.Equal("blah", result);
         }
     }
 }
