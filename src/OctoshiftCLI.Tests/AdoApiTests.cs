@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -135,7 +136,7 @@ namespace OctoshiftCLI.Tests
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
-            
+
             var json = "[{type: 'GitHub', name: '" + githubOrg + "', id: '" + appId + "'}]";
             var response = JArray.Parse(json);
 
@@ -172,6 +173,44 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
 
             Assert.Null(result);
+        }
+
+        [Fact]
+        public async void GetGithubHandle()
+        {
+            var endpoint = $"https://dev.azure.com/FOO-ORG/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var payload = @"
+{
+    ""contributionIds"": [
+        ""ms.vss-work-web.github-user-data-provider""
+    ],
+    ""dataProviderContext"": {
+        ""properties"": {
+            ""accessToken"": ""FOO-TOKEN"",
+            ""sourcePage"": {
+                ""url"": ""https://dev.azure.com/FOO-ORG/FOO-TEAMPROJECT/_settings/boards-external-integration#"",
+                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+                ""routeValues"": {
+                    ""project"": ""FOO-TEAMPROJECT"",
+                    ""adminPivot"": ""boards-external-integration"",
+                    ""controller"": ""ContributedPage"",
+                    ""action"": ""Execute"",
+                    ""serviceHost"": ""FOO-ORGID (FOO-ORG)""
+                }
+            }
+        }
+    }
+}";
+            var json = "{ \"dataProviders\": { \"ms.vss-work-web.github-user-data-provider\": { \"login\": 'FOO-LOGIN' } } }";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)).Result).Returns(json);
+
+            using var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetGithubHandle("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT", "FOO-TOKEN");
+
+            Assert.Equal("FOO-LOGIN", result);
         }
     }
 }
