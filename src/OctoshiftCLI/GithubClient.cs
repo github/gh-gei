@@ -35,7 +35,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PostAsync(string url, HttpContent body)
+        public virtual async Task<string> PostAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
