@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class GenerateScriptCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new GenerateScriptCommand(null, null);
             Assert.NotNull(command);

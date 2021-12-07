@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class ShareServiceConnectionCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new ShareServiceConnectionCommand(null, null);
             Assert.NotNull(command);
@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task HappyPath()
+        public async Task Happy_Path()
         {
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";

@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Integration
     public class MigrateRepoTests
     {
         [Fact]
-        public async Task ShouldMirateWithEmptyRepo()
+        public async Task Should_Mirate_With_Empty_Repo()
         {
             // Arrange
             var targetRepo = TestHelpers.GetTargetName("empty-repo");
@@ -29,7 +29,7 @@ namespace OctoshiftCLI.Tests.Integration
         }
 
         [Fact]
-        public async Task ShouldIncludeHistoryWithPopulatedRepo()
+        public async Task Should_Include_History_With_Populated_Repo()
         {
             // Arrange
             var targetRepo = TestHelpers.GetTargetName("repo");
