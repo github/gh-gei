@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class GrantMigratorRoleCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new GrantMigratorRoleCommand(null, null);
             Assert.NotNull(command);
@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task HappyPath()
+        public async Task Happy_Path()
         {
             var githubOrg = "FooOrg";
             var actor = "foo-actor";
@@ -42,7 +42,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task InvalidActorType()
+        public async Task Invalid_Actor_Type()
         {
             using var githubFactory = new GithubApiFactory(api: null);
 

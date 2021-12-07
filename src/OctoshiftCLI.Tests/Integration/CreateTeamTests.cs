@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Integration
     public class CreateTeamTests
     {
         [Fact]
-        public async Task ShouldMigrateWithoutIdp()
+        public async Task Should_Migrate_Without_Idp()
         {
             // Arrange
             var targetTeam = TestHelpers.GetTargetName("no-idp-team");
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.Integration
         }
 
         [Fact]
-        public async Task ShouldMigrateWithIdp()
+        public async Task Should_Migrate_With_Idp()
         {
             // Arrange
             var targetTeam = TestHelpers.GetTargetName("with-idp-team");

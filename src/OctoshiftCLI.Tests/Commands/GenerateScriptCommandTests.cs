@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class GenerateScriptCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new GenerateScriptCommand(null, null);
             Assert.NotNull(command);
@@ -28,7 +28,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void NoData()
+        public void No_Data()
         {
             var githubOrg = "foo-gh-org";
 
@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SingleRepo()
+        public void Single_Repo()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -80,7 +80,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SkipTeamProjectWithNoRepos()
+        public void Skip_Team_Project_With_No_Repos()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -102,7 +102,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SingleRepoTwoPipelines()
+        public void Single_Repo_Two_Pipelines()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -165,7 +165,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SingleRepoTwoPipelinesNoServiceConnection()
+        public void Single_Repo_Two_Pipelines_No_Service_Connection()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -218,7 +218,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SingleRepoReposOnly()
+        public void Single_Repo_Repos_Only()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -248,7 +248,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public void SingleRepoSkipIdp()
+        public void Single_Repo_Skip_Idp()
         {
             var githubOrg = "foo-gh-org";
             var adoOrg = "foo-ado-org";
@@ -289,7 +289,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetOrgsAllOrgs()
+        public async Task GetOrgs_All_Orgs()
         {
             var userId = "foo-user";
             var org1 = "foo-1";
@@ -310,7 +310,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetOrgsOrgProvided()
+        public async Task GetOrgs_Org_Provided()
         {
             var org1 = "foo-1";
 
@@ -322,7 +322,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetReposTwoReposTwoTeamProjects()
+        public async Task GetRepos_Two_Repos_Two_Team_Projects()
         {
             var org = "foo-org";
             var orgs = new List<string>() { org };
@@ -348,7 +348,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetPipelinesOneRepoTwoPipelines()
+        public async Task GetPipelines_One_Repo_Two_Pipelines()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -375,7 +375,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task GetAppIdsServiceConnectExists()
+        public async Task GetAppIds_Service_Connect_Exists()
         {
             var org = "foo-org";
             var orgs = new List<string>() { org };

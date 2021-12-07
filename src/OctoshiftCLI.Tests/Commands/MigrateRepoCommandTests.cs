@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class MigrateRepoCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new MigrateRepoCommand(null, null, null);
             Assert.NotNull(command);
@@ -25,7 +25,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task HappyPath()
+        public async Task Happy_Path()
         {
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";

@@ -8,7 +8,7 @@ namespace OctoshiftCLI.Tests
     public class GithubApiTests
     {
         [Fact]
-        public async Task CreateMigrationSourceReturnsNewMigrationSourceId()
+        public async Task Create_Migration_Source_Returns_New_Migration_Source_Id()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";

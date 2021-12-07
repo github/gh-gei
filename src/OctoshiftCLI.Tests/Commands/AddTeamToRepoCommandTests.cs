@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class AddTeamToRepoCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new AddTeamToRepoCommand(null, null);
             Assert.NotNull(command);
@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task HappyPath()
+        public async Task Happy_Path()
         {
             var githubOrg = "foo-org";
             var githubRepo = "foo-repo";
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task InvalidRole()
+        public async Task Invalid_Role()
         {
             var githubOrg = "foo-org";
             var githubRepo = "foo-repo";

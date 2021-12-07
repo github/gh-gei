@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.Commands
     public class IntegrateBoardsCommandTests
     {
         [Fact]
-        public void ShouldHaveOptions()
+        public void Should_Have_Options()
         {
             var command = new IntegrateBoardsCommand(null, null, null);
             Assert.NotNull(command);
@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task NoExistingConnection()
+        public async Task No_Existing_Connection()
         {
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";
@@ -59,7 +59,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task AddRepoToExistingConnection()
+        public async Task Add_Repo_To_Existing_Connection()
         {
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";
@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests.Commands
         }
 
         [Fact]
-        public async Task RepoAlreadyIntegrated()
+        public async Task Repo_Already_Integrated()
         {
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";

@@ -7,7 +7,7 @@ namespace OctoshiftCLI.Tests
     public class AdoApiTests
     {
         [Fact]
-        public async void GetUserIdTest()
+        public async void Get_User_Id_Test()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetUserIdInvalidResponse()
+        public async void Get_User_Id_Invalid_Response()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
