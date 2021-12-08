@@ -5,7 +5,7 @@
 
 The OctoshiftCLI wraps the GitHub Enterprise Importer (GEI, formerly Octoshift) APIs to simplify migrations to GitHub Enterprise.  The current version targets migrations from Azure DevOps to GitHub Enterprise Cloud (with or without EMUs).  @
 
-This version of the OctoshiftCLI is informally maintained by GitHub. However, **THIS CLI IS NOT A SUPPORTED GITHUB PRODUCT!**  Customers leveraging these tools must understand that any support must come through a paid GitHub Expert Services engagement.
+This version of the OctoshiftCLI is informally maintained by GitHub. However, **This CLI is NOT a supported GitHub product!**  Customers leveraging these tools must understand that any support must come through a paid GitHub Expert Services engagement.
 
 We envision that these capabilities will eventually end up as part of GitHub product.
 
