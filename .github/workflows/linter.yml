@@ -15,8 +15,8 @@ name: Lint Code Base
 # Start the job on all push #
 #############################
 on:
-  push:
-    branches-ignore: [master, main]
+  pull_request:
+    branches: [master, main]
 
 ###############
 # Set the Job #
@@ -51,3 +51,4 @@ jobs:
           # Change to 'master' if your main branch differs
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_JSCPD: false
