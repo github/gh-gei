@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # =========== Organization: OCLI ===========
 # No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos
 

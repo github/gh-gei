@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # =========== Organization: OCLI ===========
 
 # === Team Project: OCLI/int-tfvc ===

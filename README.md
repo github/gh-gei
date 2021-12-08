@@ -11,14 +11,14 @@ We envision that these capabilities will eventually end up as part of GitHub pro
 
 ## Demo Video
 
-https://www.youtube.com/watch?v=AtFB-U1Og4c
+- [OctoshiftCLI Demo](https://www.youtube.com/watch?v=AtFB-U1Og4c)
 
 ## Usage
 
 OctoshiftCLI is a cross-platform .NET Core console application.  Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repos from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
 
-### Command line
-```
+### Command-line
+```bash
 octoshift
   Migrates Azure DevOps repos to GitHub
 Usage:
