@@ -198,7 +198,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, body);
         }
 
-        public virtual async Task<string> GrantMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -214,15 +214,15 @@ namespace OctoshiftCLI
                 var response = await _client.PostAsync(url, body);
                 var data = JObject.Parse(response);
 
-                return (string)data["data"]["grantMigratorRole"]["success"];
+                return (bool)data["data"]["grantMigratorRole"]["success"];
             }
             catch (HttpRequestException)
             {
-                return "False";
+                return false;
             }
         }
 
-        public virtual async Task<string> RevokeMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<bool> RevokeMigratorRole(string org, string actor, string actorType)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -238,11 +238,11 @@ namespace OctoshiftCLI
                 var response = await _client.PostAsync(url, body);
                 var data = JObject.Parse(response);
 
-                return (string)data["data"]["revokeMigratorRole"]["success"];
+                return (bool)data["data"]["revokeMigratorRole"]["success"];
             }
             catch (HttpRequestException)
             {
-                return "False";
+                return false;
             }
         }
 

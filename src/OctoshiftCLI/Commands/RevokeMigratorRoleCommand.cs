@@ -66,9 +66,9 @@ namespace OctoshiftCLI.Commands
             using var github = _githubFactory.Create();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var revokeMigratorRoleState = await github.RevokeMigratorRole(githubOrgId, actor, actorType);
+            var success = await github.RevokeMigratorRole(githubOrgId, actor, actorType);
 
-            if (revokeMigratorRoleState?.Trim().ToUpper() == "TRUE")
+            if (success)
             {
                 _log.LogSuccess($"Migrator role successfully revoked for the {actorType} \"{actor}\"");
             }

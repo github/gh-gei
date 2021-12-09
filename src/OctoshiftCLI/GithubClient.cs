@@ -22,7 +22,7 @@ namespace OctoshiftCLI
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         }
 
-        public async Task<string> GetAsync(string url)
+        public virtual async Task<string> GetAsync(string url)
         {
             url = url?.Replace(" ", "%20");
 
@@ -49,7 +49,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PutAsync(string url, HttpContent body)
+        public virtual async Task<string> PutAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
@@ -63,7 +63,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> PatchAsync(string url, HttpContent body)
+        public virtual async Task<string> PatchAsync(string url, HttpContent body)
         {
             url = url?.Replace(" ", "%20");
 
@@ -77,7 +77,7 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public async Task<string> DeleteAsync(string url)
+        public virtual async Task<string> DeleteAsync(string url)
         {
             url = url?.Replace(" ", "%20");
 
