@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests
     public class GithubApiTests
     {
         [Fact]
-        public async Task AddAutoLink_Calls_Right_Endpoint_With_Payload()
+        public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -19,7 +19,8 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
-            var payload = $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
+            var payload =
+                $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
 
@@ -46,7 +47,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -93,7 +94,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RemoveTeamMember_Calls_Right_Endpoint()
+        public async Task RemoveTeamMember_Calls_The_Right_Endpoint()
         {
             // Arrange
             const string org = "ORG";
@@ -155,7 +156,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task AddTeamSync_Calls_The_Right_Endpoint()
+        public async Task AddTeamSync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -165,31 +166,20 @@ namespace OctoshiftCLI.Tests
             const string groupDesc = "GROUP_DESC";
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
-            var payload = $@"
-            {{ 
-                ""groups"": [
-                    {{ 
-                        ""group_id"": ""{groupId}"",
-                        ""group_name"": ""{groupName}"",
-                        ""group_description"": ""{groupDesc}"" 
-                    }}
-                ] 
-            }}";
+            var payload = $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
-            githubClientMock
-                .Setup(m => m.PatchAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)));
 
             // Act
             using var githubApi = new GithubApi(githubClientMock.Object);
             await githubApi.AddTeamSync(org, teamName, groupId, groupName, groupDesc);
 
             // Assert
-            githubClientMock.Verify(m => m.PatchAsync(url, It.IsAny<StringContent>()));
+            githubClientMock.Verify(m => m.PatchAsync(url, payload));
         }
 
         [Fact]
-        public async Task AddTeamToRepo_Calls_The_Right_Endpoint()
+        public async Task AddTeamToRepo_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -201,15 +191,13 @@ namespace OctoshiftCLI.Tests
             var payload = $"{{ \"permission\":\"{role}\" }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
-            githubClientMock
-                .Setup(m => m.PutAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)));
 
             // Act
             using var githubApi = new GithubApi(githubClientMock.Object);
             await githubApi.AddTeamToRepo(org, repo, teamName, role);
 
             // Assert
-            githubClientMock.Verify(m => m.PutAsync(url, It.IsAny<StringContent>()));
+            githubClientMock.Verify(m => m.PutAsync(url, payload));
         }
 
         [Fact]
@@ -237,7 +225,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -277,7 +265,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -326,7 +314,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -366,7 +354,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -405,7 +393,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -495,7 +483,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task AddEmuGroupToTeam_Calls_The_Right_Endpoint()
+        public async Task AddEmuGroupToTeam_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -506,15 +494,13 @@ namespace OctoshiftCLI.Tests
             var payload = $"{{ \"group_id\": {groupId} }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
-            githubClientMock
-                .Setup(m => m.PatchAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)));
 
             // Act
             using var githubApi = new GithubApi(githubClientMock.Object);
             await githubApi.AddEmuGroupToTeam(org, teamSlug, groupId);
 
             // Assert
-            githubClientMock.Verify(m => m.PatchAsync(url, It.IsAny<StringContent>()));
+            githubClientMock.Verify(m => m.PatchAsync(url, payload));
         }
 
         [Fact]
@@ -543,7 +529,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -571,7 +557,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -581,7 +567,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualSuccessState.Should().BeFalse();
         }
-
+        
         [Fact]
         public async Task RevokeMigratorRole_Returns_True_On_Success()
         {
@@ -608,7 +594,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .ReturnsAsync(response);
 
             // Act
@@ -636,7 +622,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
+                .Setup(m => m.PostAsync(url, payload))
                 .Throws<HttpRequestException>();
 
             // Act

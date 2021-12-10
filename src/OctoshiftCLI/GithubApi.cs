@@ -28,9 +28,8 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
             var payload = $"{{ \"name\": \"{teamName}\", \"privacy\": \"closed\" }}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["id"];
@@ -68,19 +67,17 @@ namespace OctoshiftCLI
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
-            var payload = $"{{ 'groups': [{{ 'group_id':'{groupId}', 'group_name':'{groupName}','group_description':'{groupDesc}' }}] }}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            var payload = $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
 
-            await _client.PatchAsync(url, body);
+            await _client.PatchAsync(url, payload);
         }
 
         public virtual async Task AddTeamToRepo(string org, string repo, string teamName, string role)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
             var payload = $"{{ \"permission\":\"{role}\" }}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            await _client.PutAsync(url, body);
+            await _client.PutAsync(url, payload);
         }
 
         public virtual async Task<string> GetOrganizationId(string org)
@@ -90,9 +87,7 @@ namespace OctoshiftCLI
             // TODO: this is super ugly, need to find a graphql library to make this code nicer
             var payload = $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["organization"]["id"];
@@ -107,9 +102,8 @@ namespace OctoshiftCLI
             var variables = $"{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"createMigrationSource\"}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
@@ -124,9 +118,8 @@ namespace OctoshiftCLI
             var variables = $"{{\"sourceId\":\"{migrationSourceId}\",\"ownerId\":\"{orgId}\",\"sourceRepositoryUrl\":\"{adoRepoUrl}\",\"repositoryName\":\"{repo}\",\"continueOnError\":true}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"startRepositoryMigration\"}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
@@ -141,9 +134,8 @@ namespace OctoshiftCLI
             var variables = $"{{\"id\":\"{migrationId}\"}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
@@ -158,9 +150,8 @@ namespace OctoshiftCLI
             var variables = $"{{\"id\":\"{migrationId}\"}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["failureReason"];
@@ -192,9 +183,8 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = $"{{ \"group_id\": {groupId} }}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            await _client.PatchAsync(url, body);
+            await _client.PatchAsync(url, payload);
         }
 
         public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)
@@ -206,11 +196,10 @@ namespace OctoshiftCLI
             var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"grantMigratorRole\"}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await _client.PostAsync(url, body);
+                var response = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(response);
 
                 return (bool)data["data"]["grantMigratorRole"]["success"];
@@ -230,11 +219,10 @@ namespace OctoshiftCLI
             var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
 
             var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"revokeMigratorRole\"}}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await _client.PostAsync(url, body);
+                var response = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(response);
 
                 return (bool)data["data"]["revokeMigratorRole"]["success"];
