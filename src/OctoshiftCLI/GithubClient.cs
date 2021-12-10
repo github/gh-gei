@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI
@@ -35,13 +36,14 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public virtual async Task<string> PostAsync(string url, HttpContent body)
+        public virtual async Task<string> PostAsync(string url, string body)
         {
             url = url?.Replace(" ", "%20");
 
             _log.LogVerbose($"HTTP GET: {url}");
-            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
-            var response = await _httpClient.PostAsync(url, body);
+            _log.LogVerbose($"HTTP BODY: {body}");
+            using var payload = new StringContent(body, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(url, payload);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
@@ -49,13 +51,14 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public virtual async Task<string> PutAsync(string url, HttpContent body)
+        public virtual async Task<string> PutAsync(string url, string body)
         {
             url = url?.Replace(" ", "%20");
 
             _log.LogVerbose($"HTTP GET: {url}");
-            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
-            var response = await _httpClient.PutAsync(url, body);
+            _log.LogVerbose($"HTTP BODY: {body}");
+            using var payload = new StringContent(body, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync(url, payload);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
@@ -63,13 +66,14 @@ namespace OctoshiftCLI
             return content;
         }
 
-        public virtual async Task<string> PatchAsync(string url, HttpContent body)
+        public virtual async Task<string> PatchAsync(string url, string body)
         {
             url = url?.Replace(" ", "%20");
 
             _log.LogVerbose($"HTTP GET: {url}");
-            _log.LogVerbose($"HTTP BODY: {await body?.ReadAsStringAsync()}");
-            var response = await _httpClient.PatchAsync(url, body);
+            _log.LogVerbose($"HTTP BODY: {body}");
+            using var payload = new StringContent(body, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PatchAsync(url, payload);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();

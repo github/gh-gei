@@ -20,9 +20,8 @@ namespace OctoshiftCLI
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var payload = $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
 
-            await _client.PostAsync(url, body);
+            await _client.PostAsync(url, payload);
         }
 
         public virtual async Task<string> CreateTeam(string org, string teamName)

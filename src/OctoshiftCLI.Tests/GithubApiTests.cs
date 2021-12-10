@@ -18,24 +18,17 @@ namespace OctoshiftCLI.Tests
             const string adoTeamProject = "ADO_TEAM_PROJECT";
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
-            var payload = $@"
-            {{ 
-                ""key_prefix"": ""AB#"", 
-                ""url_template"": ""https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num11>/"" 
-            }}";
+
+            var payload = $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
-            githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<StringContent>(x => x.ReadAsStringAsync().Result == payload)))
-                .ReturnsAsync("done");
 
             // Act
             using var githubApi = new GithubApi(githubClientMock.Object);
             await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
 
             // Assert
-            githubClientMock.Verify(m => m.PostAsync(It.Is<string>(s => s == url), It.IsAny<StringContent>()),
-                Times.Once);
+            githubClientMock.Verify(m => m.PostAsync(url, payload), Times.Once);
         }
 
         [Fact]
