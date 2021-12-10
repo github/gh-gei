@@ -72,8 +72,8 @@ namespace OctoshiftCLI.Commands
 
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs);
-            var pipelines = await GetPipelines(ado, repos);
-            var appIds = await GetAppIds(ado, orgs, githubOrg);
+            var pipelines = _reposOnly ? null : await GetPipelines(ado, repos);
+            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, githubOrg);
 
             CheckForDuplicateRepoNames(repos);
 
@@ -93,19 +93,16 @@ namespace OctoshiftCLI.Commands
             {
                 foreach (var org in orgs)
                 {
-                    if (!_reposOnly)
-                    {
-                        var teamProjects = await ado.GetTeamProjects(org);
-                        var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
+                    var teamProjects = await ado.GetTeamProjects(org);
+                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
 
-                        if (string.IsNullOrWhiteSpace(appId))
-                        {
-                            _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
-                        }
-                        else
-                        {
-                            appIds.Add(org, appId);
-                        }
+                    if (string.IsNullOrWhiteSpace(appId))
+                    {
+                        _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
+                    }
+                    else
+                    {
+                        appIds.Add(org, appId);
                     }
                 }
             }
