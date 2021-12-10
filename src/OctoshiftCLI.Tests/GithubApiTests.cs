@@ -166,7 +166,8 @@ namespace OctoshiftCLI.Tests
             const string groupDesc = "GROUP_DESC";
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
-            var payload = $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
+            var payload =
+                $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
 
             var githubClientMock = new Mock<GithubClient>(null, null);
 
@@ -567,7 +568,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualSuccessState.Should().BeFalse();
         }
-        
+
         [Fact]
         public async Task RevokeMigratorRole_Returns_True_On_Success()
         {
