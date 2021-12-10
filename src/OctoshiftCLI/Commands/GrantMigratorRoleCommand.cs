@@ -1,4 +1,3 @@
-using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -66,11 +65,9 @@ namespace OctoshiftCLI.Commands
             using var github = _githubFactory.Create();
 
             var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var grantMigratorRoleState = await github.GrantMigratorRole(githubOrgId, actor, actorType);
+            var success = await github.GrantMigratorRole(githubOrgId, actor, actorType);
 
-            Console.WriteLine(grantMigratorRoleState);
-
-            if (grantMigratorRoleState?.Trim().ToUpper() == "TRUE")
+            if (success)
             {
                 _log.LogSuccess($"Migrator role successfully set for the {actorType} \"{actor}\"");
             }
