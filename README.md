@@ -96,6 +96,7 @@ You will need to include these additional scopes for your Azure DevOps personal 
 * `Service Connection (Read)`
 * `Build (Read & execute)`
 * `Security (Manage)`
+* `Code (Read, write, and manage)`
 
 #### I want to do the above and also re-connect Azure Pipelines & Boards to the newly migrated repository on GitHub
 If you want to re-connect an Azure Pipline or Board to the migrated repo then you'll need your ADO personal access token to be `full access`.
