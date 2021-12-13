@@ -24,7 +24,7 @@ Check out the below videos for getting quickly getting started with the GEI-CLI.
 
 ## Usage
 
-GEI-CLI is a cross-platform .NET Core console application.  Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repos from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
+GEI-CLI is a cross-platform .NET Core console application.  Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
 
 ### Command line
 ```
@@ -58,7 +58,7 @@ Covering running a migration from **Azure DevOps** to **GitHub.com**.
 
 #### Download and Configure the GH-GEI command-line Tool
 
-Navigate to the `Releases` for this repo and grab the latest release for your local operating system.
+Navigate to the `Releases` for this repository and grab the latest release for your local operating system.
 ![Releases](https://user-images.githubusercontent.com/29484535/145065021-35f37a00-1a25-42a4-804d-11fd9f8cc811.png)
 Once you have downloaded the `Release`, you need to extract it to your local machine.
 **Note** you will want to place the `octoshift` executable somewhere easy to reference or add to your path.
@@ -84,7 +84,7 @@ Create a GitHub and Azure DevOps personal access tokens with the scope defined i
 * add-team-to-repo
 * configure-autolink
 
-#### I want to do the above and also lock & disable the repo being migrated from Azure DevOps
+#### I want to do the above and also lock & disable the repository being migrated from Azure DevOps
 In order to use the following pre & post migration commands:
 
 * lock-ado-repo
@@ -97,10 +97,10 @@ You will need to include these additional scopes for your Azure DevOps personal 
 * `Build (Read & execute)`
 * `Security (Manage)`
 
-#### I want to do the above and also re-connect Azure Pipelines & Boards to the newly migrated repo on GitHub
+#### I want to do the above and also re-connect Azure Pipelines & Boards to the newly migrated repository on GitHub
 If you want to re-connect an Azure Pipline or Board to the migrated repo then you'll need your ADO personal access token to be `full access`.
 
-{TODO insert picture of full access}
+![image](https://user-images.githubusercontent.com/40493721/145903240-6a6d04cd-ba03-47f4-84aa-6af741a8ddd6.png)
 
 At this point, you can now begin to run and test the import process.
 
