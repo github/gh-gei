@@ -136,15 +136,16 @@ public sealed class GithubClientTests : IDisposable
             .ReturnsAsync(httpResponse);
 
         // Act
-        var func = () =>
-        {
-            using var httpClient = new HttpClient(handlerMock.Object);
-            using var githubClient = new GithubClient(_loggerMock.Object, httpClient);
-            return githubClient.GetAsync("http://example.com");
-        };
-
         // Assert
-        await func.Should().ThrowExactlyAsync<HttpRequestException>();
+        await FluentActions
+            .Invoking(() =>
+            {
+                using var httpClient = new HttpClient(handlerMock.Object);
+                using var githubClient = new GithubClient(_loggerMock.Object, httpClient);
+                return githubClient.GetAsync("http://example.com");
+            })
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
     }
 
     [Fact]
@@ -246,15 +247,16 @@ public sealed class GithubClientTests : IDisposable
         var loggerMock = new Mock<OctoLogger>();
 
         // Act
-        var func = () =>
-        {
-            using var httpClient = new HttpClient(handlerMock.Object);
-            using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-            return githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
-        };
-
         // Assert
-        await func.Should().ThrowExactlyAsync<HttpRequestException>();
+        await FluentActions
+            .Invoking(() =>
+            {
+                using var httpClient = new HttpClient(handlerMock.Object);
+                using var githubClient = new GithubClient(loggerMock.Object, httpClient);
+                return githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            })
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
     }
 
     [Fact]
@@ -356,15 +358,16 @@ public sealed class GithubClientTests : IDisposable
         var loggerMock = new Mock<OctoLogger>();
 
         // Act
-        var func = () =>
-        {
-            using var httpClient = new HttpClient(handlerMock.Object);
-            using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-            return githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
-        };
-
         // Assert
-        await func.Should().ThrowExactlyAsync<HttpRequestException>();
+        await FluentActions
+            .Invoking(() =>
+            {
+                using var httpClient = new HttpClient(handlerMock.Object);
+                using var githubClient = new GithubClient(loggerMock.Object, httpClient);
+                return githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            })
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
     }
 
     [Fact]
@@ -466,15 +469,16 @@ public sealed class GithubClientTests : IDisposable
         var loggerMock = new Mock<OctoLogger>();
 
         // Act
-        var func = () =>
-        {
-            using var httpClient = new HttpClient(handlerMock.Object);
-            using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-            return githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
-        };
-
         // Assert
-        await func.Should().ThrowExactlyAsync<HttpRequestException>();
+        await FluentActions
+            .Invoking(() =>
+            {
+                using var httpClient = new HttpClient(handlerMock.Object);
+                using var githubClient = new GithubClient(loggerMock.Object, httpClient);
+                return githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            })
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
     }
 
     [Fact]
@@ -558,14 +562,15 @@ public sealed class GithubClientTests : IDisposable
         var loggerMock = new Mock<OctoLogger>();
 
         // Act
-        var func = () =>
-        {
-            using var httpClient = new HttpClient(handlerMock.Object);
-            using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-            return githubClient.DeleteAsync("http://example.com");
-        };
-
         // Assert
-        await func.Should().ThrowExactlyAsync<HttpRequestException>();
+        await FluentActions
+            .Invoking(() =>
+            {
+                using var httpClient = new HttpClient(handlerMock.Object);
+                using var githubClient = new GithubClient(loggerMock.Object, httpClient);
+                return githubClient.DeleteAsync("http://example.com");
+            })
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
     }
 }
