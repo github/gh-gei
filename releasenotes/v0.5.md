@@ -1,0 +1,1 @@
+- generate-script with the --repos-only option no longer requires the Build scope on the ADO PAT
