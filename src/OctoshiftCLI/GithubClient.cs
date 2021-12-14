@@ -23,6 +23,12 @@ namespace OctoshiftCLI
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         }
 
+        public GithubClient(OctoLogger log, HttpClient httpClient)
+        {
+            _log = log;
+            _httpClient = httpClient;
+        }
+
         public virtual async Task<string> GetAsync(string url)
         {
             url = url?.Replace(" ", "%20");
@@ -40,7 +46,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP POST: {url}");
             _log.LogVerbose($"HTTP BODY: {body}");
             using var payload = new StringContent(body, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, payload);
@@ -55,7 +61,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP PUT: {url}");
             _log.LogVerbose($"HTTP BODY: {body}");
             using var payload = new StringContent(body, Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync(url, payload);
@@ -70,7 +76,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP PATCH: {url}");
             _log.LogVerbose($"HTTP BODY: {body}");
             using var payload = new StringContent(body, Encoding.UTF8, "application/json");
             var response = await _httpClient.PatchAsync(url, payload);
@@ -85,7 +91,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP DELETE: {url}");
             var response = await _httpClient.DeleteAsync(url);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
