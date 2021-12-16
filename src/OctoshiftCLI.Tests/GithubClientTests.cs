@@ -18,11 +18,14 @@ namespace OctoshiftCLI.Tests
         private readonly HttpClient _httpClientForGet;
         private readonly HttpClient _httpClientForPost;
         private readonly HttpResponseMessage _httpResponse;
+        private readonly object _rawRequestBody;
+        private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
-        private const string EXPECTED_REQUEST_BODY = "REQUEST_BODY";
 
         public GithubClientTests()
         {
+            _rawRequestBody = new { id = "ID" };
+
             _httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
@@ -40,7 +43,8 @@ namespace OctoshiftCLI.Tests
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x => x.Content.ReadAsStringAsync().Result == EXPECTED_REQUEST_BODY),
+                    ItExpr.Is<HttpRequestMessage>(x =>
+                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(_httpResponse);
 
@@ -155,7 +159,7 @@ namespace OctoshiftCLI.Tests
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
             // Act
-            var actualContent = await githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            var actualContent = await githubClient.PostAsync("http://example.com", _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -171,7 +175,7 @@ namespace OctoshiftCLI.Tests
             const string expectedUrl = "http://example.com/param%20with%20space";
 
             // Act
-            await githubClient.PostAsync(actualUrl, EXPECTED_REQUEST_BODY);
+            await githubClient.PostAsync(actualUrl, _rawRequestBody);
 
             // Assert
             _handlerMockWithRequestBodyMatcher.Protected().Verify(
@@ -191,7 +195,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"HTTP POST: {url}";
 
             // Act
-            await githubClient.PostAsync(url, EXPECTED_REQUEST_BODY);
+            await githubClient.PostAsync(url, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -204,10 +208,10 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
-            var expectedLogMessage = $"HTTP BODY: {EXPECTED_REQUEST_BODY}";
+            var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
             // Act
-            await githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PostAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -223,7 +227,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
-            await githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PostAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -240,7 +244,8 @@ namespace OctoshiftCLI.Tests
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x => x.Content.ReadAsStringAsync().Result == EXPECTED_REQUEST_BODY),
+                    ItExpr.Is<HttpRequestMessage>(x =>
+                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
@@ -253,7 +258,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-                    return githubClient.PostAsync("http://example.com", EXPECTED_REQUEST_BODY);
+                    return githubClient.PostAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -266,7 +271,7 @@ namespace OctoshiftCLI.Tests
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
             // Act
-            var actualContent = await githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            var actualContent = await githubClient.PutAsync("http://example.com", _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -282,7 +287,7 @@ namespace OctoshiftCLI.Tests
             const string expectedUrl = "http://example.com/param%20with%20space";
 
             // Act
-            await githubClient.PutAsync(actualUrl, EXPECTED_REQUEST_BODY);
+            await githubClient.PutAsync(actualUrl, _rawRequestBody);
 
             // Assert
             _handlerMockWithRequestBodyMatcher.Protected().Verify(
@@ -302,7 +307,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"HTTP PUT: {url}";
 
             // Act
-            await githubClient.PutAsync(url, EXPECTED_REQUEST_BODY);
+            await githubClient.PutAsync(url, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -315,10 +320,10 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
-            var expectedLogMessage = $"HTTP BODY: {EXPECTED_REQUEST_BODY}";
+            var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
             // Act
-            await githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PutAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -334,7 +339,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
-            await githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PutAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -351,7 +356,8 @@ namespace OctoshiftCLI.Tests
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x => x.Content.ReadAsStringAsync().Result == EXPECTED_REQUEST_BODY),
+                    ItExpr.Is<HttpRequestMessage>(x =>
+                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
@@ -364,7 +370,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-                    return githubClient.PutAsync("http://example.com", EXPECTED_REQUEST_BODY);
+                    return githubClient.PutAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -377,7 +383,7 @@ namespace OctoshiftCLI.Tests
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
             // Act
-            var actualContent = await githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            var actualContent = await githubClient.PatchAsync("http://example.com", _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -393,7 +399,7 @@ namespace OctoshiftCLI.Tests
             const string expectedUrl = "http://example.com/param%20with%20space";
 
             // Act
-            await githubClient.PatchAsync(actualUrl, EXPECTED_REQUEST_BODY);
+            await githubClient.PatchAsync(actualUrl, _rawRequestBody);
 
             // Assert
             _handlerMockWithRequestBodyMatcher.Protected().Verify(
@@ -413,7 +419,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"HTTP PATCH: {url}";
 
             // Act
-            await githubClient.PatchAsync(url, EXPECTED_REQUEST_BODY);
+            await githubClient.PatchAsync(url, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -426,10 +432,10 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var githubClient = new GithubClient(_loggerMock.Object, _httpClientForPost);
 
-            var expectedLogMessage = $"HTTP BODY: {EXPECTED_REQUEST_BODY}";
+            var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
             // Act
-            await githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PatchAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -445,7 +451,7 @@ namespace OctoshiftCLI.Tests
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
-            await githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
+            await githubClient.PatchAsync("http://example.com", _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m =>
@@ -462,7 +468,8 @@ namespace OctoshiftCLI.Tests
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x => x.Content.ReadAsStringAsync().Result == EXPECTED_REQUEST_BODY),
+                    ItExpr.Is<HttpRequestMessage>(x =>
+                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
@@ -475,7 +482,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     using var githubClient = new GithubClient(loggerMock.Object, httpClient);
-                    return githubClient.PatchAsync("http://example.com", EXPECTED_REQUEST_BODY);
+                    return githubClient.PatchAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();

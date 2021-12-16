@@ -26,7 +26,7 @@ namespace OctoshiftCLI
         public virtual async Task<string> CreateTeam(string org, string teamName)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
-            var payload = $"{{ \"name\": \"{teamName}\", \"privacy\": \"closed\" }}";
+            var payload = new { name = teamName, privacy = "closed" };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -66,7 +66,13 @@ namespace OctoshiftCLI
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
-            var payload = $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
+            var payload = new
+            {
+                groups = new[]
+                {
+                    new { group_id = groupId, group_name = groupName, group_description = groupDesc }
+                }
+            };
 
             await _client.PatchAsync(url, payload);
         }
@@ -74,7 +80,7 @@ namespace OctoshiftCLI
         public virtual async Task AddTeamToRepo(string org, string repo, string teamName, string role)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
-            var payload = $"{{ \"permission\":\"{role}\" }}";
+            var payload = new { permission = role };
 
             await _client.PutAsync(url, payload);
         }
@@ -83,8 +89,12 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/graphql";
 
-            // TODO: this is super ugly, need to find a graphql library to make this code nicer
-            var payload = $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
+            var payload = new
+            {
+                // TODO: this is super ugly, need to find a graphql library to make this code nicer
+                query = "query($login: String!) {organization(login: $login) { login, id, name } }",
+                variables = new { login = org }
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -98,9 +108,21 @@ namespace OctoshiftCLI
 
             var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!)";
             var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
-            var variables = $"{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"createMigrationSource\"}}";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    name = "Azure DevOps Source",
+                    url = "https://dev.azure.com",
+                    ownerId = orgId,
+                    type = "AZURE_DEVOPS",
+                    accessToken = adoToken,
+                    githubPat
+                },
+                operationName = "createMigrationSource"
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -114,9 +136,20 @@ namespace OctoshiftCLI
 
             var query = "mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!)";
             var gql = "startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError }) { repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } }";
-            var variables = $"{{\"sourceId\":\"{migrationSourceId}\",\"ownerId\":\"{orgId}\",\"sourceRepositoryUrl\":\"{adoRepoUrl}\",\"repositoryName\":\"{repo}\",\"continueOnError\":true}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"startRepositoryMigration\"}}";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    sourceId = migrationSourceId,
+                    ownerId = orgId,
+                    sourceRepositoryUrl = adoRepoUrl,
+                    repositoryName = repo,
+                    continueOnError = true
+                },
+                operationName = "startRepositoryMigration"
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -130,9 +163,8 @@ namespace OctoshiftCLI
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
-            var variables = $"{{\"id\":\"{migrationId}\"}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -146,9 +178,8 @@ namespace OctoshiftCLI
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
-            var variables = $"{{\"id\":\"{migrationId}\"}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables}}}";
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -181,7 +212,7 @@ namespace OctoshiftCLI
         public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
-            var payload = $"{{ \"group_id\": {groupId} }}";
+            var payload = new { group_id = groupId };
 
             await _client.PatchAsync(url, payload);
         }
@@ -192,9 +223,13 @@ namespace OctoshiftCLI
 
             var query = "mutation grantMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
             var gql = "grantMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
-            var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"grantMigratorRole\"}}";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { organizationId = org, actor, actor_type = actorType },
+                operationName = "grantMigratorRole"
+            };
 
             try
             {
@@ -215,9 +250,13 @@ namespace OctoshiftCLI
 
             var query = "mutation revokeMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
             var gql = "revokeMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
-            var variables = $"{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}";
 
-            var payload = $"{{\"query\":\"{query} {{ {gql} }}\",\"variables\":{variables},\"operationName\":\"revokeMigratorRole\"}}";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { organizationId = org, actor, actor_type = actorType },
+                operationName = "revokeMigratorRole"
+            };
 
             try
             {
