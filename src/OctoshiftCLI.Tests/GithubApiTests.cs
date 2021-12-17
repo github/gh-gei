@@ -20,8 +20,11 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
-            var payload =
-                $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
+            var payload = new
+            {
+                key_prefix = "AB#",
+                url_template = "https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+            };
 
             var githubClientMock = new Mock<GithubClient>(null, "");
 
@@ -30,7 +33,7 @@ namespace OctoshiftCLI.Tests
             await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
 
             // Assert
-            githubClientMock.Verify(m => m.PostAsync(url, payload), Times.Once);
+            githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]

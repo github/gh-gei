@@ -18,7 +18,11 @@ namespace OctoshiftCLI
         {
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
-            var payload = $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
+            var payload = new
+            {
+                key_prefix = "AB#",
+                url_template = "https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+            };
 
             await _client.PostAsync(url, payload);
         }
