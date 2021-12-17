@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -19,8 +20,11 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
-            var payload =
-                $"{{ \"key_prefix\": \"AB#\", \"url_template\": \"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/\" }}";
+            var payload = new
+            {
+                key_prefix = "AB#",
+                url_template = "https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+            };
 
             var githubClientMock = new Mock<GithubClient>(null, "");
 
@@ -29,7 +33,7 @@ namespace OctoshiftCLI.Tests
             await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
 
             // Assert
-            githubClientMock.Verify(m => m.PostAsync(url, payload), Times.Once);
+            githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
@@ -40,14 +44,14 @@ namespace OctoshiftCLI.Tests
             const string teamName = "TEAM_NAME";
 
             var url = $"https://api.github.com/orgs/{org}/teams";
-            var payload = $"{{ \"name\": \"{teamName}\", \"privacy\": \"closed\" }}";
+            var payload = new { name = teamName, privacy = "closed" };
 
             const string teamId = "TEAM_ID";
             var response = $"{{\"id\": \"{teamId}\"}}";
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
 
             // Act
@@ -166,8 +170,10 @@ namespace OctoshiftCLI.Tests
             const string groupDesc = "GROUP_DESC";
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
-            var payload =
-                $"{{ \"groups\": [{{ \"group_id\":\"{groupId}\", \"group_name\":\"{groupName}\", \"group_description\":\"{groupDesc}\" }}] }}";
+            var payload = new
+            {
+                groups = new[] { new { group_id = groupId, group_name = groupName, group_description = groupDesc } }
+            };
 
             var githubClientMock = new Mock<GithubClient>(null, "");
 
@@ -176,7 +182,7 @@ namespace OctoshiftCLI.Tests
             await githubApi.AddTeamSync(org, teamName, groupId, groupName, groupDesc);
 
             // Assert
-            githubClientMock.Verify(m => m.PatchAsync(url, payload));
+            githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
@@ -189,7 +195,7 @@ namespace OctoshiftCLI.Tests
             const string role = "ROLE";
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
-            var payload = $"{{ \"permission\":\"{role}\" }}";
+            var payload = new { permission = role };
 
             var githubClientMock = new Mock<GithubClient>(null, "");
 
@@ -198,7 +204,7 @@ namespace OctoshiftCLI.Tests
             await githubApi.AddTeamToRepo(org, repo, teamName, role);
 
             // Assert
-            githubClientMock.Verify(m => m.PutAsync(url, payload));
+            githubClientMock.Verify(m => m.PutAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
@@ -210,7 +216,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/graphql";
             var payload =
-                $"{{\"query\":\"query($login: String!){{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
+                $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{org}\"}}}}";
             var response = $@"
             {{
                 ""data"": 
@@ -226,7 +232,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -248,7 +254,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!) " +
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\", \"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
+                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\",\"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
             var response = $@"
             {{
@@ -266,7 +272,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -315,7 +321,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -355,7 +361,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -394,7 +400,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -492,7 +498,7 @@ namespace OctoshiftCLI.Tests
             const int groupId = 1;
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
-            var payload = $"{{ \"group_id\": {groupId} }}";
+            var payload = new { group_id = groupId };
 
             var githubClientMock = new Mock<GithubClient>(null, "");
 
@@ -501,7 +507,7 @@ namespace OctoshiftCLI.Tests
             await githubApi.AddEmuGroupToTeam(org, teamSlug, groupId);
 
             // Assert
-            githubClientMock.Verify(m => m.PatchAsync(url, payload));
+            githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
@@ -516,7 +522,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation grantMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! ) " +
                 "{ grantMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success } }\"" +
-                $",\"variables\":{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}," +
+                $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"grantMigratorRole\"}";
             const bool expectedSuccessState = true;
             var response = $@"
@@ -530,7 +536,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -553,12 +559,12 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation grantMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! ) " +
                 "{ grantMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success } }\"" +
-                $",\"variables\":{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}," +
+                $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"grantMigratorRole\"}";
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -581,7 +587,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation revokeMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! ) " +
                 "{ revokeMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success } }\"" +
-                $",\"variables\":{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}," +
+                $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"revokeMigratorRole\"}";
             const bool expectedSuccessState = true;
             var response = $@"
@@ -595,7 +601,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
 
             // Act
@@ -618,12 +624,12 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation revokeMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! ) " +
                 "{ revokeMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success } }\"" +
-                $",\"variables\":{{\"organizationId\":\"{org}\", \"actor\":\"{actor}\", \"actor_type\":\"{actorType}\"}}," +
+                $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"revokeMigratorRole\"}";
 
             var githubClientMock = new Mock<GithubClient>(null, "");
             githubClientMock
-                .Setup(m => m.PostAsync(url, payload))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
 
             // Act
