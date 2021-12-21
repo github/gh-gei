@@ -1,0 +1,15 @@
+mutation grantMigratorRole(
+    $organizationId: ID!
+    $actor: String!
+    $actor_type: ActorType!
+) {
+    grantMigratorRole(
+        input: {
+            organizationId: $organizationId
+            actor: $actor
+            actorType: $actor_type
+        }
+    ) {
+        success
+    }
+}

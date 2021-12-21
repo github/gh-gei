@@ -1,0 +1,29 @@
+mutation startRepositoryMigration(
+    $sourceId: ID!
+    $ownerId: ID!
+    $sourceRepositoryUrl: URI!
+    $repositoryName: String!
+    $continueOnError: Boolean!
+) {
+    startRepositoryMigration(
+        input: {
+            sourceId: $sourceId
+            ownerId: $ownerId
+            sourceRepositoryUrl: $sourceRepositoryUrl
+            repositoryName: $repositoryName
+            continueOnError: $continueOnError
+        }
+    ) {
+        repositoryMigration {
+            id
+            migrationSource {
+                id
+                name
+                type
+            }
+            sourceUrl
+            state
+            failureReason
+        }
+    }
+}

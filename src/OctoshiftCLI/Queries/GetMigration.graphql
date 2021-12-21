@@ -1,0 +1,13 @@
+query getMigration($id: ID!) {
+    node(id: $id) {
+        ... on Migration {
+            id
+            sourceUrl
+            migrationSource {
+                name
+            }
+            state
+            failureReason
+        }
+    }
+}

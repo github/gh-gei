@@ -1,0 +1,26 @@
+mutation createMigrationSource(
+    $name: String!
+    $url: String!
+    $ownerId: ID!
+    $accessToken: String!
+    $type: MigrationSourceType!
+    $githubPat: String!
+) {
+    createMigrationSource(
+        input: {
+            name: $name
+            url: $url
+            ownerId: $ownerId
+            accessToken: $accessToken
+            type: $type
+            githubPat: $githubPat
+        }
+    ) {
+        migrationSource {
+            id
+            name
+            url
+            type
+        }
+    }
+}
