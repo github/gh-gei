@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class CreateTeamCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly GithubApi _githubApi;
 
-        public CreateTeamCommand(OctoLogger log, GithubApiFactory githubFactory) : base("create-team")
+        public CreateTeamCommand(OctoLogger log, GithubApi githubApi) : base("create-team")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _githubApi = githubApi;
 
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
 
@@ -50,9 +50,7 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"TEAM NAME: {teamName}");
             _log.LogInformation($"IDP GROUP: {idpGroup}");
 
-            using var github = _githubFactory.Create();
-
-            await github.CreateTeam(githubOrg, teamName);
+            await _githubApi.CreateTeam(githubOrg, teamName);
 
             _log.LogSuccess("Successfully created team");
 
@@ -62,17 +60,17 @@ namespace OctoshiftCLI.Commands
             }
             else
             {
-                var members = await github.GetTeamMembers(githubOrg, teamName);
+                var members = await _githubApi.GetTeamMembers(githubOrg, teamName);
 
                 foreach (var member in members)
                 {
-                    await github.RemoveTeamMember(githubOrg, teamName, member);
+                    await _githubApi.RemoveTeamMember(githubOrg, teamName, member);
                 }
 
-                var idpGroupId = await github.GetIdpGroupId(githubOrg, idpGroup);
-                var teamSlug = await github.GetTeamSlug(githubOrg, teamName);
+                var idpGroupId = await _githubApi.GetIdpGroupId(githubOrg, idpGroup);
+                var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
 
-                await github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+                await _githubApi.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
                 _log.LogSuccess("Successfully linked team to Idp group");
             }

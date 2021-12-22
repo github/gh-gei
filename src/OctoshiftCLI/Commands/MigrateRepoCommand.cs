@@ -8,13 +8,19 @@ namespace OctoshiftCLI.Commands
     {
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoFactory;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly GithubApi _githubApi;
+        private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(OctoLogger log, AdoApiFactory adoFactory, GithubApiFactory githubFactory) : base("migrate-repo")
+        public MigrateRepoCommand(
+            OctoLogger log,
+            AdoApiFactory adoFactory,
+            GithubApi githubApi,
+            EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
             _adoFactory = adoFactory;
-            _githubFactory = githubFactory;
+            _githubApi = githubApi;
+            _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
 
@@ -66,9 +72,9 @@ namespace OctoshiftCLI.Commands
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            using var github = _githubFactory.Create();
+            var github = _githubApi;
             var adoToken = _adoFactory.GetAdoToken();
-            var githubPat = _githubFactory.GetGithubToken();
+            var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubOrgId = await github.GetOrganizationId(githubOrg);
             var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken, githubPat);
             var migrationId = await github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);

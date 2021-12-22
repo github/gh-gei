@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class ConfigureAutoLinkCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly GithubApi _githubApi;
 
-        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubFactory) : base("configure-autolink")
+        public ConfigureAutoLinkCommand(OctoLogger log, GithubApi githubApi) : base("configure-autolink")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _githubApi = githubApi;
 
             Description = "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub";
 
@@ -56,10 +56,8 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
 
-            using var github = _githubFactory.Create();
-
             // TODO: This crashes if autolink is already configured
-            await github.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
+            await _githubApi.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             _log.LogSuccess("Successfully configured autolink references");
         }

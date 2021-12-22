@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class AddTeamToRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly GithubApi _githubApi;
 
-        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("add-team-to-repo")
+        public AddTeamToRepoCommand(OctoLogger log, GithubApi githubApi) : base("add-team-to-repo")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _githubApi = githubApi;
 
             Description = "Adds a team to a repo with a specific role/permission";
 
@@ -57,9 +57,7 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"TEAM: {team}");
             _log.LogInformation($"ROLE: {role}");
 
-            using var github = _githubFactory.Create();
-
-            await github.AddTeamToRepo(githubOrg, githubRepo, team, role);
+            await _githubApi.AddTeamToRepo(githubOrg, githubRepo, team, role);
 
             _log.LogSuccess("Successfully added team to repo");
         }
