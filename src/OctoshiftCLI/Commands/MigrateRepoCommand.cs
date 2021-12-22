@@ -72,26 +72,25 @@ namespace OctoshiftCLI.Commands
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            var github = _githubApi;
             var adoToken = _adoFactory.GetAdoToken();
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken, githubPat);
-            var migrationId = await github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
+            var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
+            var migrationSourceId = await _githubApi.CreateMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
-            var migrationState = await github.GetMigrationState(migrationId);
+            var migrationState = await _githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await github.GetMigrationState(migrationId);
+                migrationState = await _githubApi.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                var failureReason = await github.GetMigrationFailureReason(migrationId);
+                var failureReason = await _githubApi.GetMigrationFailureReason(migrationId);
                 _log.LogError(failureReason);
             }
             else
