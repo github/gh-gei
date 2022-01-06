@@ -416,5 +416,25 @@ namespace OctoshiftCLI.Tests
             Assert.Contains(pipeline1, result);
             Assert.Contains(pipeline2, result);
         }
+
+        [Fact]
+        public async void GetPipelineId()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var pipeline = "foo-pipe";
+            var pipelineId = 36383;
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var response = $"[ {{id: '123', name: 'wrong'}}, {{ id: '{pipelineId}', name: '{pipeline.ToUpper()}'}} ]";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+
+            Assert.Equal(pipelineId, result);
+        }
     }
 }
