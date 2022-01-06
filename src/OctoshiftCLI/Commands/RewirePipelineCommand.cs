@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class RewirePipelineCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly AdoApi _adoApi;
 
-        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoFactory) : base("rewire-pipeline")
+        public RewirePipelineCommand(OctoLogger log, AdoApi adoApi) : base("rewire-pipeline")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _adoApi = adoApi;
 
             Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
 
@@ -68,11 +68,9 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
             _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = _adoFactory.Create();
-
-            var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var pipelineDetails = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
-            await ado.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
+            var adoPipelineId = await _adoApi.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
+            var pipelineDetails = await _adoApi.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
+            await _adoApi.ChangePipelineRepo(pipelineDetails, githubOrg, githubRepo, serviceConnectionId);
 
             _log.LogSuccess("Successfully rewired pipeline");
         }

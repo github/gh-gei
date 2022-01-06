@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class DisableRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly AdoApi _adoApi;
 
-        public DisableRepoCommand(OctoLogger log, AdoApiFactory adoFactory) : base("disable-ado-repo")
+        public DisableRepoCommand(OctoLogger log, AdoApi adoApi) : base("disable-ado-repo")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _adoApi = adoApi;
 
             Description = "Disables the repo in Azure DevOps. This makes the repo non-readable for all.";
 
@@ -50,10 +50,8 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"ADO REPO: {adoRepo}");
 
-            using var ado = _adoFactory.Create();
-
-            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
-            await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
+            var repoId = await _adoApi.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+            await _adoApi.DisableRepo(adoOrg, adoTeamProject, repoId);
 
             _log.LogSuccess("Repo successfully disabled");
         }

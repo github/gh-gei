@@ -7,12 +7,12 @@ namespace OctoshiftCLI.Commands
     public class ShareServiceConnectionCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly AdoApi _adoApi;
 
-        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
+        public ShareServiceConnectionCommand(OctoLogger log, AdoApi adoApi) : base("share-service-connection")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _adoApi = adoApi;
 
             Description = "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines.";
 
@@ -50,11 +50,9 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = _adoFactory.Create();
-
-            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+            var adoTeamProjectId = await _adoApi.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash
-            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+            await _adoApi.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
             _log.LogSuccess("Successfully shared service connection");
         }

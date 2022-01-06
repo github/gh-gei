@@ -13,12 +13,12 @@ namespace OctoshiftCLI.Commands
     {
         private bool _reposOnly;
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly AdoApi _adoApi;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApi adoApi) : base("generate-script")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _adoApi = adoApi;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -68,12 +68,10 @@ namespace OctoshiftCLI.Commands
 
             _reposOnly = reposOnly;
 
-            using var ado = _adoFactory.Create();
-
-            var orgs = await GetOrgs(ado, adoOrg);
-            var repos = await GetRepos(ado, orgs);
-            var pipelines = _reposOnly ? null : await GetPipelines(ado, repos);
-            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, githubOrg);
+            var orgs = await GetOrgs(_adoApi, adoOrg);
+            var repos = await GetRepos(_adoApi, orgs);
+            var pipelines = _reposOnly ? null : await GetPipelines(_adoApi, repos);
+            var appIds = _reposOnly ? null : await GetAppIds(_adoApi, orgs, githubOrg);
 
             CheckForDuplicateRepoNames(repos);
 

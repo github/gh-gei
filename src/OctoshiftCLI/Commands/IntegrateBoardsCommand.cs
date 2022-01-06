@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
@@ -9,16 +10,16 @@ namespace OctoshiftCLI.Commands
     public class IntegrateBoardsCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly AdoApi _adoApi;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public IntegrateBoardsCommand(
             OctoLogger log,
-            AdoApiFactory adoFactory,
+            AdoApi adoApi,
             EnvironmentVariableProvider environmentVariableProvider) : base("integrate-boards")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _adoApi = adoApi;
             _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
@@ -63,26 +64,25 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
-            using var ado = _adoFactory.Create();
             var githubToken = _environmentVariableProvider.GithubPersonalAccessToken();
 
-            var userId = await ado.GetUserId();
-            var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
-            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
+            var userId = await _adoApi.GetUserId();
+            var adoOrgId = await _adoApi.GetOrganizationId(userId, adoOrg);
+            var adoTeamProjectId = await _adoApi.GetTeamProjectId(adoOrg, adoTeamProject);
+            var githubHandle = await _adoApi.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
 
-            var boardsConnection = await ado.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
+            var boardsConnection = await _adoApi.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
 
             if (boardsConnection == default)
             {
-                var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle);
-                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
-                await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
+                var endpointId = await _adoApi.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle, Guid.NewGuid().ToString());
+                var repoId = await _adoApi.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
+                await _adoApi.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
                 _log.LogSuccess("Successfully configured Boards<->GitHub integration");
             }
             else
             {
-                var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, boardsConnection.endpointId, githubOrg, githubRepo);
+                var repoId = await _adoApi.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, boardsConnection.endpointId, githubOrg, githubRepo);
 
                 if (boardsConnection.repoIds.Any(x => x == repoId))
                 {
@@ -95,7 +95,7 @@ namespace OctoshiftCLI.Commands
                         repoId
                     };
 
-                    await ado.AddRepoToBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
+                    await _adoApi.AddRepoToBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
                     _log.LogSuccess("Successfully configured Boards<->GitHub integration");
                 }
             }

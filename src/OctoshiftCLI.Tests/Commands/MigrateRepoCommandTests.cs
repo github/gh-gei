@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new MigrateRepoCommand(null, null, null, null);
+            var command = new MigrateRepoCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("migrate-repo", command.Name);
             Assert.Equal(6, command.Options.Count);
@@ -49,11 +49,11 @@ namespace OctoshiftCLI.Tests.Commands
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);
+            environmentVariableProviderMock
+                .Setup(m => m.AdoPersonalAccessToken())
+                .Returns(adoToken);
 
-            using var adoFactory = new AdoApiFactory(adoToken);
-
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, adoFactory, mockGithub.Object,
-                environmentVariableProviderMock.Object);
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithub.Object, environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));

@@ -1,8 +1,10 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
@@ -17,9 +19,9 @@ namespace OctoshiftCLI
             serviceCollection
                 .AddCommands()
                 .AddSingleton<OctoLogger>()
-                .AddSingleton<AdoApiFactory>()
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApi>()
+                .AddSingleton<AdoApi>()
                 .AddHttpClient<GithubClient>((sp, client) =>
                 {
                     client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
@@ -27,6 +29,15 @@ namespace OctoshiftCLI
                     client.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
                     var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubPersonalAccessToken();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
+                });
+
+            serviceCollection.AddHttpClient<AdoClient>((sp, client) =>
+                {
+                    client.DefaultRequestHeaders.Add("accept", "application/json");
+
+                    var adoToken = sp.GetRequiredService<EnvironmentVariableProvider>().AdoPersonalAccessToken();
+                    var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", adoToken)));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
                 });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

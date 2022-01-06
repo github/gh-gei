@@ -7,18 +7,15 @@ namespace OctoshiftCLI.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
         private readonly GithubApi _githubApi;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public MigrateRepoCommand(
             OctoLogger log,
-            AdoApiFactory adoFactory,
             GithubApi githubApi,
             EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _adoFactory = adoFactory;
             _githubApi = githubApi;
             _environmentVariableProvider = environmentVariableProvider;
 
@@ -72,7 +69,7 @@ namespace OctoshiftCLI.Commands
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            var adoToken = _adoFactory.GetAdoToken();
+            var adoToken = _environmentVariableProvider.AdoPersonalAccessToken();
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await _githubApi.CreateMigrationSource(githubOrgId, adoToken, githubPat);
