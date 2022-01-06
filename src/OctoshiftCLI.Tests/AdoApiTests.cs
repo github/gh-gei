@@ -560,5 +560,182 @@ namespace OctoshiftCLI.Tests
 
             mockClient.Verify(m => m.PutAsync(endpoint, JObject.Parse(newJson).ToString()));
         }
+
+        [Fact]
+        public async void GetBoardsGithubRepoId()
+        {
+            var orgName = "FOO-ORG";
+            var orgId = Guid.NewGuid().ToString();
+            var teamProject = "foo-tp";
+            var teamProjectId = Guid.NewGuid().ToString();
+            var endpointId = Guid.NewGuid().ToString();
+            var githubOrg = "foo-github-org";
+            var githubRepo = "foo-repo";
+
+            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = $@"
+{{
+    ""contributionIds"": [
+        ""ms.vss-work-web.github-user-repository-data-provider""
+    ],
+    ""dataProviderContext"": {{
+        ""properties"": {{
+            ""projectId"": ""{teamProjectId}"",
+            ""repoWithOwnerName"": ""{githubOrg}/{githubRepo}"",
+            ""serviceEndpointId"": ""{endpointId}"",
+            ""sourcePage"": {{
+                ""url"": ""https://dev.azure.com/{orgName}/{teamProject}/_settings/boards-external-integration#"",
+                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+                ""routeValues"": {{
+                    ""project"": ""{teamProject}"",
+                    ""adminPivot"": ""boards-external-integration"",
+                    ""controller"": ""ContributedPage"",
+                    ""action"": ""Execute"",
+                    ""serviceHost"": ""{orgId} ({orgName})""
+                }}
+            }}
+        }}
+    }}
+}}";
+
+            var repoId = Guid.NewGuid().ToString();
+            var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetBoardsGithubRepoId(orgName, orgId, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
+
+            Assert.Equal(repoId, result);
+        }
+
+        [Fact]
+        public async void CreateBoardsGithubConnection()
+        {
+            var orgName = "FOO-ORG";
+            var orgId = Guid.NewGuid().ToString();
+            var teamProject = "foo-tp";
+            var endpointId = Guid.NewGuid().ToString();
+            var repoId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = $@"
+{{
+    ""contributionIds"": [
+        ""ms.vss-work-web.azure-boards-save-external-connection-data-provider""
+    ],
+    ""dataProviderContext"": {{
+        ""properties"": {{
+            ""externalConnection"": {{
+                ""serviceEndpointId"": ""{endpointId}"",
+                ""operation"": 0,
+                ""externalRepositoryExternalIds"": [
+                    ""{repoId}""
+                ],
+                ""providerKey"": ""github.com"",
+                ""isGitHubApp"": false
+            }},
+            ""sourcePage"": {{
+                ""url"": ""https://dev.azure.com/{orgName}/{teamProject}/_settings/boards-external-integration#"",
+                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
+                ""routeValues"": {{
+                    ""project"": ""{teamProject}"",
+                    ""adminPivot"": ""boards-external-integration"",
+                    ""controller"": ""ContributedPage"",
+                    ""action"": ""Execute"",
+                    ""serviceHost"": ""{orgId} ({orgName})""
+                }}
+            }}
+        }}
+    }}
+}}";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            var sut = new AdoApi(mockClient.Object);
+            await sut.CreateBoardsGithubConnection(orgName, orgId, teamProject, endpointId, repoId);
+
+            mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
+        }
+
+        [Fact]
+        public async void DisableRepo()
+        {
+            var orgName = "foo-org";
+            var teamProject = "foo-tp";
+            var repoId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{orgName}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            var sut = new AdoApi(mockClient.Object);
+            await sut.DisableRepo(orgName, teamProject, repoId);
+
+            var expectedPayload = @"{ ""isDisabled"": true }";
+
+            mockClient.Verify(m => m.PatchAsync(endpoint, expectedPayload).Result);
+        }
+
+        [Fact]
+        public async void GetIdentityDescriptor()
+        {
+            var orgName = "foo-org";
+            var teamProjectId = Guid.NewGuid().ToString();
+            var groupName = "foo-group";
+            var identityDescriptor = "foo-id";
+
+            var endpoint = $"https://vssps.dev.azure.com/{orgName}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
+            var response = $@"[{{ properties: {{ LocalScopeId: {{ $value: ""wrong"" }} }}, descriptor: ""blah"" }}, {{ descriptor: ""{identityDescriptor}"", properties: {{ LocalScopeId: {{ $value: ""{teamProjectId}"" }} }} }}]";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetIdentityDescriptor(orgName, teamProjectId, groupName);
+
+            Assert.Equal(identityDescriptor, result);
+        }
+
+        [Fact]
+        public async void LockRepo()
+        {
+            var orgName = "FOO-ORG";
+            var teamProjectId = Guid.NewGuid().ToString();
+            var repoId = Guid.NewGuid().ToString();
+            var identityDescriptor = "foo-id";
+            var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
+
+            var endpoint = $"https://dev.azure.com/{orgName}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+
+            var payload = $@"
+{{
+  ""token"": ""repoV2/{teamProjectId}/{repoId}"",
+  ""merge"": true,
+  ""accessControlEntries"": [
+    {{
+      ""descriptor"": ""{identityDescriptor}"",
+      ""allow"": 0,
+      ""deny"": 56828,
+      ""extendedInfo"": {{
+        ""effectiveAllow"": 0,
+        ""effectiveDeny"": 56828,
+        ""inheritedAllow"": 0,
+        ""inheritedDeny"": 56828
+      }}
+    }}
+  ]
+}}
+";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            var sut = new AdoApi(mockClient.Object);
+            await sut.LockRepo(orgName, teamProjectId, repoId, identityDescriptor);
+
+            mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
+        }
     }
 }
