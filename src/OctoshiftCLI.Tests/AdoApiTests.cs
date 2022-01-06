@@ -435,5 +435,130 @@ namespace OctoshiftCLI.Tests
 
             Assert.Equal(pipelineId, result);
         }
+
+        [Fact]
+        public async void ShareServiceConnection()
+        {
+            var org = "FOO-ORG";
+            var teamProject = "foo-teamproject";
+            var teamProjectId = Guid.NewGuid().ToString();
+            var serviceConnectionId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{org}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+
+            var payload = $@"
+[{{
+    ""name"": ""{org}-{teamProject}"",
+	""projectReference"": {{
+        ""id"": ""{teamProjectId}"",
+		""name"": ""{teamProject}""
+    }}
+}}]";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            var sut = new AdoApi(mockClient.Object);
+            await sut.ShareServiceConnection(org, teamProject, teamProjectId, serviceConnectionId);
+
+            mockClient.Verify(m => m.PatchAsync(endpoint, payload));
+        }
+
+        [Fact]
+        public async void GetPipeline()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var pipelineId = 826263;
+            var defaultBranch = "refs/heads/foo-branch";
+            var clean = "True";
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var response = $"{{ repository: {{ defaultBranch: '{defaultBranch}', clean: '{clean}', checkoutSubmodules: null }} }}";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetPipeline(org, teamProject, pipelineId);
+
+            Assert.Equal("foo-branch", result.DefaultBranch);
+            Assert.Equal("true", result.Clean);
+            Assert.Equal("null", result.CheckoutSubmodules);
+        }
+
+        [Fact]
+        public async void ChangePipelineRepo()
+        {
+            var org = "foo-org";
+            var githubOrg = "foo-org";
+            var githubRepo = "foo-repo";
+            var teamProject = "foo-tp";
+            var serviceConnectionId = Guid.NewGuid().ToString();
+            var defaultBranch = "foo-branch";
+
+            var pipeline = new AdoPipeline
+            {
+                Id = 123,
+                Org = org,
+                TeamProject = teamProject,
+                DefaultBranch = defaultBranch,
+                Clean = "true",
+                CheckoutSubmodules = "false",
+            };
+
+            var oldJson = $@"
+{{
+    ""something"": ""foo"",
+    ""somethingElse"": {{
+        ""blah"": ""foo"",
+        ""repository"": ""blah""
+    }},
+    ""repository"": {{
+        ""testing"": true,
+        ""moreTesting"": null
+    }},
+    ""oneLastThing"": false
+}}";
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipeline.Id}?api-version=6.0";
+
+            var newJson = $@"{{
+  ""something"": ""foo"",
+  ""somethingElse"": {{
+    ""blah"": ""foo"",
+    ""repository"": ""blah""
+  }},
+  ""repository"": {{
+    ""properties"": {{
+      ""apiUrl"": ""https://api.github.com/repos/{githubOrg}/{githubRepo}"",
+      ""branchesUrl"": ""https://api.github.com/repos/{githubOrg}/{githubRepo}/branches"",
+      ""cloneUrl"": ""https://github.com/{githubOrg}/{githubRepo}.git"",
+      ""connectedServiceId"": ""{serviceConnectionId}"",
+      ""defaultBranch"": ""{defaultBranch}"",
+      ""fullName"": ""{githubOrg}/{githubRepo}"",
+      ""manageUrl"": ""https://github.com/{githubOrg}/{githubRepo}"",
+      ""orgName"": ""{githubOrg}"",
+      ""refsUrl"": ""https://api.github.com/repos/{githubOrg}/{githubRepo}/git/refs"",
+      ""safeRepository"": ""{githubOrg}/{githubRepo}"",
+      ""shortName"": ""{githubRepo}"",
+      ""reportBuildStatus"": ""true""
+    }},
+    ""id"": ""{githubOrg}/{githubRepo}"",
+    ""type"": ""GitHub"",
+    ""name"": ""{githubOrg}/{githubRepo}"",
+    ""url"": ""https://github.com/{githubOrg}/{githubRepo}.git"",
+    ""defaultBranch"": ""{defaultBranch}"",
+    ""clean"": true,
+    ""checkoutSubmodules"": false
+  }},
+  ""oneLastThing"": false
+}}";
+
+            var mockClient = new Mock<AdoClient>(null, null);
+            mockClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson);
+            var sut = new AdoApi(mockClient.Object);
+            await sut.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId);
+
+            mockClient.Verify(m => m.PutAsync(endpoint, JObject.Parse(newJson).ToString()));
+        }
     }
 }
