@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Headers;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
@@ -62,7 +59,7 @@ namespace OctoshiftCLI
             GC.SuppressFinalize(this);
         }
 
-        private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
+        private async Task<string> SendAsync(HttpMethod httpMethod, string url, object? body = null)
         {
             url = url?.Replace(" ", "%20");
 
