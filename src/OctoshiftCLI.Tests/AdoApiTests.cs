@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -11,7 +12,7 @@ namespace OctoshiftCLI.Tests
     public class AdoApiTests
     {
         [Fact]
-        public async void GetUserId_Test()
+        public async Task GetUserId_Test()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
@@ -28,7 +29,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetUserId_InvalidResponse()
+        public async Task GetUserId_InvalidResponse()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
@@ -43,7 +44,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetOrganizations()
+        public async Task GetOrganizations()
         {
             var userId = "foo";
             var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
@@ -62,7 +63,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetOrganizationId()
+        public async Task GetOrganizationId()
         {
             var userId = "foo";
             var adoOrg = "foo-org";
@@ -82,7 +83,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetTeamProjects_TwoProjects()
+        public async Task GetTeamProjects_TwoProjects()
         {
             var adoOrg = "foo-org";
             var teamProject1 = "foo-tp";
@@ -104,7 +105,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetRepos_ThreeReposOneDisabled()
+        public async Task GetRepos_ThreeReposOneDisabled()
         {
             var adoOrg = "foo-org";
             var teamProject = "foo-tp";
@@ -127,7 +128,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetGithubAppId_TwoProjects()
+        public async Task GetGithubAppId_TwoProjects()
         {
             var adoOrg = "foo-org";
             var githubOrg = "foo-gh-org";
@@ -151,7 +152,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetGithubAppId_TwoProjectsNoMatch()
+        public async Task GetGithubAppId_TwoProjectsNoMatch()
         {
             var adoOrg = "foo-org";
             var githubOrg = "foo-gh-org";
@@ -175,7 +176,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetGithubHandle()
+        public async Task GetGithubHandle()
         {
             var endpoint = $"https://dev.azure.com/FOO-ORG/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
             var payload = @"
@@ -213,7 +214,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetBoardsGithubConnection()
+        public async Task GetBoardsGithubConnection()
         {
             var teamProject = "FOO-TEAMPROJECT";
             var orgId = "FOO-ORGID";
@@ -264,7 +265,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void CreateBoardsGithubEndpoint()
+        public async Task CreateBoardsGithubEndpoint()
         {
             var orgName = "FOO-ORG";
             var teamProjectId = Guid.NewGuid().ToString();
@@ -303,7 +304,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void AddRepoToBoardsGithubConnection()
+        public async Task AddRepoToBoardsGithubConnection()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -348,14 +349,14 @@ namespace OctoshiftCLI.Tests
 }}";
 
             var mockClient = new Mock<AdoClient>(null, null);
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             await sut.AddRepoToBoardsGithubConnection(orgName, orgId, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
 
             mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
         }
 
         [Fact]
-        public async void GetTeamProjectId()
+        public async Task GetTeamProjectId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -367,14 +368,14 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetTeamProjectId(org, teamProject);
 
             Assert.Equal(teamProjectId, result);
         }
 
         [Fact]
-        public async void GetRepoId()
+        public async Task GetRepoId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -387,14 +388,14 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetRepoId(org, teamProject, repo);
 
             Assert.Equal(repoId, result);
         }
 
         [Fact]
-        public async void GetPipelines()
+        public async Task GetPipelines()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -408,7 +409,7 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipelines(org, teamProject, repoId);
 
             Assert.Equal(2, result.Count());
@@ -417,7 +418,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetPipelineId()
+        public async Task GetPipelineId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -430,14 +431,14 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipelineId(org, teamProject, pipeline);
 
             Assert.Equal(pipelineId, result);
         }
 
         [Fact]
-        public async void ShareServiceConnection()
+        public async Task ShareServiceConnection()
         {
             var org = "FOO-ORG";
             var teamProject = "foo-teamproject";
@@ -456,14 +457,14 @@ namespace OctoshiftCLI.Tests
 }}]";
 
             var mockClient = new Mock<AdoClient>(null, null);
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             await sut.ShareServiceConnection(org, teamProject, teamProjectId, serviceConnectionId);
 
             mockClient.Verify(m => m.PatchAsync(endpoint, payload));
         }
 
         [Fact]
-        public async void GetPipeline()
+        public async Task GetPipeline()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -477,7 +478,7 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipeline(org, teamProject, pipelineId);
 
             Assert.Equal("foo-branch", result.DefaultBranch);
@@ -486,7 +487,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void ChangePipelineRepo()
+        public async Task ChangePipelineRepo()
         {
             var org = "foo-org";
             var githubOrg = "foo-org";
@@ -555,14 +556,14 @@ namespace OctoshiftCLI.Tests
 
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson);
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             await sut.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockClient.Verify(m => m.PutAsync(endpoint, JObject.Parse(newJson).ToString()));
         }
 
         [Fact]
-        public async void GetBoardsGithubRepoId()
+        public async Task GetBoardsGithubRepoId()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -605,14 +606,14 @@ namespace OctoshiftCLI.Tests
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
 
-            var sut = new AdoApi(mockClient.Object);
+            using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetBoardsGithubRepoId(orgName, orgId, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
 
             Assert.Equal(repoId, result);
         }
 
         [Fact]
-        public async void CreateBoardsGithubConnection()
+        public async Task CreateBoardsGithubConnection()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -662,14 +663,14 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void DisableRepo()
+        public async Task DisableRepo()
         {
             var orgName = "foo-org";
             var teamProject = "foo-tp";
             var repoId = Guid.NewGuid().ToString();
 
             var endpoint = $"https://dev.azure.com/{orgName}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
-            
+
             var mockClient = new Mock<AdoClient>(null, null);
             using var sut = new AdoApi(mockClient.Object);
             await sut.DisableRepo(orgName, teamProject, repoId);
@@ -680,7 +681,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void GetIdentityDescriptor()
+        public async Task GetIdentityDescriptor()
         {
             var orgName = "foo-org";
             var teamProjectId = Guid.NewGuid().ToString();
@@ -701,7 +702,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async void LockRepo()
+        public async Task LockRepo()
         {
             var orgName = "FOO-ORG";
             var teamProjectId = Guid.NewGuid().ToString();
