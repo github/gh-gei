@@ -1,12 +1,10 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.ado2gh.Commands;
+using OctoshiftCLI.gei.Commands;
 
-namespace OctoshiftCLI.ado2gh
+namespace OctoshiftCLI.gei
 {
     public static class Program
     {
