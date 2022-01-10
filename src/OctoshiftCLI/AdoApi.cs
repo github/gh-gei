@@ -38,7 +38,7 @@ namespace OctoshiftCLI
             throw new InvalidDataException();
         }
 
-        public virtual async Task<List<string>> GetOrganizations(string userId)
+        public virtual async Task<IEnumerable<string>> GetOrganizations(string userId)
         {
             var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
@@ -128,9 +128,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
             payload = payload.Replace("ADO_ORGID", orgId);
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
@@ -164,9 +162,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
             payload = payload.Replace("ADO_ORGID", orgId);
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             var connection = data["dataProviders"]["ms.vss-work-web.azure-boards-external-connection-data-provider"]["externalConnections"].FirstOrDefault();
@@ -181,11 +177,9 @@ namespace OctoshiftCLI
             return ((string)connection["id"], (string)connection["serviceEndpoint"]["id"], (string)connection["name"], repos);
         }
 
-        public virtual async Task<string> CreateBoardsGithubEndpoint(string org, string teamProjectId, string githubToken, string githubHandle)
+        public virtual async Task<string> CreateBoardsGithubEndpoint(string org, string teamProjectId, string githubToken, string githubHandle, string endpointName)
         {
             var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
-
-            var endpointName = Guid.NewGuid().ToString();
 
             var payload = @"
 {
@@ -207,9 +201,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("GITHUB_HANDLE", githubHandle);
             payload = payload.Replace("ENDPOINT_NAME", endpointName);
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["id"];
@@ -258,9 +250,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGID", orgId);
             payload = payload.Replace("REPO_IDS", BuildRepoString(repoIds));
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            await _client.PostAsync(url, body);
+            await _client.PostAsync(url, payload);
         }
 
         public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
@@ -297,7 +287,7 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
-            var request = @"
+            var payload = @"
 [{
     ""name"": ""ADO_ORGANIZATION-ADO_TEAM_PROJECT"",
 	""projectReference"": {
@@ -306,12 +296,11 @@ namespace OctoshiftCLI
     }
 }]";
 
-            request = request.Replace("ADO_ORGANIZATION", adoOrg);
-            request = request.Replace("ADO_TEAM_PROJECT", adoTeamProject);
-            request = request.Replace("ADO_PROJECT_ID", adoTeamProjectId);
+            payload = payload.Replace("ADO_ORGANIZATION", adoOrg);
+            payload = payload.Replace("ADO_TEAM_PROJECT", adoTeamProject);
+            payload = payload.Replace("ADO_PROJECT_ID", adoTeamProjectId);
 
-            using var body = new StringContent(request, Encoding.UTF8, "application/json");
-            await _client.PatchAsync(url, body);
+            await _client.PatchAsync(url, payload);
         }
 
         public virtual async Task<AdoPipeline> GetPipeline(string org, string teamProject, int pipelineId)
@@ -392,8 +381,7 @@ namespace OctoshiftCLI
                 payload.Add(prop.Name, prop.Value);
             }
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-            await _client.PutAsync(url, body);
+            await _client.PutAsync(url, payload.ToString());
         }
 
         public virtual async Task<string> GetBoardsGithubRepoId(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
@@ -433,9 +421,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGID", orgId);
             payload = payload.Replace("GITHUB_REPO", githubRepo);
 
-            using var body = new StringContent(payload, Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync(url, body);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
@@ -482,9 +468,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("ADO_ORGID", orgId);
             payload = payload.Replace("REPO_ID", repoId);
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            await _client.PostAsync(url, body);
+            await _client.PostAsync(url, payload);
         }
 
         private string BuildRepoString(IEnumerable<string> repoIds)
@@ -498,8 +482,7 @@ namespace OctoshiftCLI
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
             var payload = "{ \"isDisabled\": true }";
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-            await _client.PatchAsync(url, body);
+            await _client.PatchAsync(url, payload);
         }
 
         public virtual async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
@@ -542,9 +525,7 @@ namespace OctoshiftCLI
             payload = payload.Replace("REPO_ID", repoId);
             payload = payload.Replace("IDENTITY_DESCRIPTOR", identityDescriptor);
 
-            using var body = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
-
-            await _client.PostAsync(url, body);
+            await _client.PostAsync(url, payload);
         }
 
         protected virtual void Dispose(bool disposing)
