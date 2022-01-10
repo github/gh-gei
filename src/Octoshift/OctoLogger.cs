@@ -1,4 +1,7 @@
-﻿namespace OctoshiftCLI
+﻿using System;
+using System.IO;
+
+namespace OctoshiftCLI
 {
     internal static class LogLevel
     {

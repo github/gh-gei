@@ -1,4 +1,6 @@
-﻿namespace OctoshiftCLI
+﻿using System;
+
+namespace OctoshiftCLI
 {
     public class GithubApiFactory : IDisposable
     {
