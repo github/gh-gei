@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,12 +13,31 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
+        private readonly EnvironmentVariableProvider _env;
+        private bool _httpClientInitialized;
         private double _retryDelay;
 
-        public AdoClient(OctoLogger log, HttpClient httpClient)
+        public AdoClient(OctoLogger log, HttpClient httpClient, EnvironmentVariableProvider env)
         {
             _log = log;
             _httpClient = httpClient;
+            _env = env;
+        }
+
+        public HttpClient GetHttpClient()
+        {
+            if (!_httpClientInitialized)
+            {
+                _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+
+                var adoToken = _env.AdoPersonalAccessToken();
+                var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", adoToken)));
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+
+                _httpClientInitialized = true;
+            }
+
+            return _httpClient;
         }
 
         public virtual async Task<string> GetAsync(string url)

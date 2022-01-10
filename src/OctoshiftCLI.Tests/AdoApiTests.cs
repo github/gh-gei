@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests
             var userId = "foo";
             var userJson = "{ coreAttributes: { PublicAlias: { value: \"" + userId + "\" }}}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson);
 
@@ -34,7 +34,7 @@ namespace OctoshiftCLI.Tests
             var userId = "foo";
             var userJson = "{ invalid: { PublicAlias: { value: \"" + userId + "\" }}}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson);
 
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
             var accountsJson = "[{accountId: 'blah', AccountName: 'foo'}, {AccountName: 'foo2'}]";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(accountsJson);
 
@@ -71,7 +71,7 @@ namespace OctoshiftCLI.Tests
             var accountsJson = "[{accountId: '" + orgId + "', accountName: '" + adoOrg + "'}, {accountName: 'foo2', accountId: 'asdf'}]";
             var response = JArray.Parse(accountsJson);
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
@@ -91,7 +91,7 @@ namespace OctoshiftCLI.Tests
             var json = "[{somethingElse: false, name: '" + teamProject1 + "'}, {id: 'sfasfasdf', name: '" + teamProject2 + "'}]";
             var response = JArray.Parse(json);
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests
             var json = "[{isDisabled: 'true', name: 'testing'}, {isDisabled: false, name: '" + repo1 + "'}, {isDisabled: 'FALSE', name: '" + repo2 + "'}]";
             var response = JArray.Parse(json);
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
@@ -139,7 +139,7 @@ namespace OctoshiftCLI.Tests
             var json = "[{type: 'GitHub', name: '" + githubOrg + "', id: '" + appId + "'}]";
             var response = JArray.Parse(json);
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
@@ -163,7 +163,7 @@ namespace OctoshiftCLI.Tests
             var json = "[{type: 'GitHub', name: 'wrongOrg', id: '" + appId + "'}]";
             var response = JArray.Parse(json);
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
@@ -202,7 +202,7 @@ namespace OctoshiftCLI.Tests
 }";
             var json = "{ \"dataProviders\": { \"ms.vss-work-web.github-user-data-provider\": { \"login\": 'FOO-LOGIN' } } }";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
 
@@ -248,7 +248,7 @@ namespace OctoshiftCLI.Tests
 
             var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.azure-boards-external-connection-data-provider\": {{ \"externalConnections\": [ {{ id: '{connectionId}', serviceEndpoint: {{ id: '{endpointId}' }}, name: '{connectionName}', externalGitRepos: [ {{ id: '{repo1}' }}, {{ id: '{repo2}' }} ] }}, {{ thisIsIgnored: true }} ]  }} }} }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
 
@@ -293,7 +293,7 @@ namespace OctoshiftCLI.Tests
             var resultId = "foo-id";
             var json = $"{{id: '{resultId}', name: 'something'}}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
@@ -347,7 +347,7 @@ namespace OctoshiftCLI.Tests
 	}}
 }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.AddRepoToBoardsGithubConnection(orgName, orgId, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
 
@@ -364,7 +364,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://dev.azure.com/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
             var response = $"{{id: '{teamProjectId}'}}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
@@ -384,7 +384,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
             var response = $"{{id: '{repoId}'}}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
@@ -405,7 +405,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
             var response = $"[{{id: 'whatever', name: '{pipeline1}'}}, {{name: '{pipeline2}'}}]";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
             var sut = new AdoApi(mockClient.Object);
@@ -427,7 +427,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
             var response = $"[ {{id: '123', name: 'wrong'}}, {{ id: '{pipelineId}', name: '{pipeline.ToUpper()}'}} ]";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
             var sut = new AdoApi(mockClient.Object);
@@ -455,7 +455,7 @@ namespace OctoshiftCLI.Tests
     }}
 }}]";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.ShareServiceConnection(org, teamProject, teamProjectId, serviceConnectionId);
 
@@ -474,7 +474,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
             var response = $"{{ repository: {{ defaultBranch: '{defaultBranch}', clean: '{clean}', checkoutSubmodules: null }} }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
@@ -553,7 +553,7 @@ namespace OctoshiftCLI.Tests
   ""oneLastThing"": false
 }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson);
             var sut = new AdoApi(mockClient.Object);
             await sut.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId);
@@ -602,7 +602,7 @@ namespace OctoshiftCLI.Tests
             var repoId = Guid.NewGuid().ToString();
             var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
@@ -653,7 +653,7 @@ namespace OctoshiftCLI.Tests
     }}
 }}";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             var sut = new AdoApi(mockClient.Object);
             await sut.CreateBoardsGithubConnection(orgName, orgId, teamProject, endpointId, repoId);
@@ -670,7 +670,7 @@ namespace OctoshiftCLI.Tests
 
             var endpoint = $"https://dev.azure.com/{orgName}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.DisableRepo(orgName, teamProject, repoId);
 
@@ -690,7 +690,7 @@ namespace OctoshiftCLI.Tests
             var endpoint = $"https://vssps.dev.azure.com/{orgName}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
             var response = $@"[{{ properties: {{ LocalScopeId: {{ $value: ""wrong"" }} }}, descriptor: ""blah"" }}, {{ descriptor: ""{identityDescriptor}"", properties: {{ LocalScopeId: {{ $value: ""{teamProjectId}"" }} }} }}]";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
 
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
@@ -731,7 +731,7 @@ namespace OctoshiftCLI.Tests
 }}
 ";
 
-            var mockClient = new Mock<AdoClient>(null, null);
+            var mockClient = new Mock<AdoClient>(null, null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.LockRepo(orgName, teamProjectId, repoId, identityDescriptor);
 
