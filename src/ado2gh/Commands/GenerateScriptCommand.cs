@@ -184,7 +184,7 @@ namespace OctoshiftCLI.Commands
                     _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
                     // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
                     var userId = await ado.GetUserId();
-                    orgs = await ado.GetOrganizations(userId);
+                    orgs = (await ado.GetOrganizations(userId)).ToList();
                 }
             }
 
