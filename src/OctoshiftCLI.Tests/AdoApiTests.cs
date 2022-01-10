@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -12,7 +13,7 @@ namespace OctoshiftCLI.Tests
     public class AdoApiTests
     {
         [Fact]
-        public async Task GetUserId_Test()
+        public async Task GetUserId_Should_Return_UserId()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
@@ -25,11 +26,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetUserId();
 
-            Assert.Equal(userId, result);
+            result.Should().Be(userId);
         }
 
         [Fact]
-        public async Task GetUserId_InvalidResponse()
+        public async Task GetUserId_Invalid_Json_Should_Throw_InvalidDataException()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userId = "foo";
@@ -44,7 +45,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetOrganizations()
+        public async Task GetOrganizations_Should_Return_All_Orgs()
         {
             var userId = "foo";
             var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
@@ -57,13 +58,12 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetOrganizations(userId);
 
-            Assert.Equal(2, result.Count());
-            Assert.Contains(result, x => x == "foo");
-            Assert.Contains(result, x => x == "foo2");
+            result.Count().Should().Be(2);
+            result.Should().Contain(new[] { "foo", "foo2" });
         }
 
         [Fact]
-        public async Task GetOrganizationId()
+        public async Task GetOrganizationId_Should_Return_OrgId()
         {
             var userId = "foo";
             var adoOrg = "foo-org";
@@ -79,11 +79,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetOrganizationId(userId, adoOrg);
 
-            Assert.Equal("blah", result);
+            result.Should().Be(orgId);
         }
 
         [Fact]
-        public async Task GetTeamProjects_TwoProjects()
+        public async Task GetTeamProjects_Should_Return_All_Team_Projects()
         {
             var adoOrg = "foo-org";
             var teamProject1 = "foo-tp";
@@ -99,13 +99,12 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetTeamProjects(adoOrg);
 
-            Assert.Equal(2, result.Count());
-            Assert.Contains(result, x => x == teamProject1);
-            Assert.Contains(result, x => x == teamProject2);
+            result.Count().Should().Be(2);
+            result.Should().Contain(new[] { teamProject1, teamProject2 });
         }
 
         [Fact]
-        public async Task GetRepos_ThreeReposOneDisabled()
+        public async Task GetRepos_Should_Not_Return_Disabled_Repos()
         {
             var adoOrg = "foo-org";
             var teamProject = "foo-tp";
@@ -122,13 +121,12 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetRepos(adoOrg, teamProject);
 
-            Assert.Equal(2, result.Count());
-            Assert.Contains(result, x => x == repo1);
-            Assert.Contains(result, x => x == repo2);
+            result.Count().Should().Be(2);
+            result.Should().Contain(new[] { repo1, repo2 });
         }
 
         [Fact]
-        public async Task GetGithubAppId_TwoProjects()
+        public async Task GetGithubAppId_Should_Skip_Team_Projects_With_No_Endpoints()
         {
             var adoOrg = "foo-org";
             var githubOrg = "foo-gh-org";
@@ -148,11 +146,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
 
-            Assert.Equal(appId, result);
+            result.Should().Be(appId);
         }
 
         [Fact]
-        public async Task GetGithubAppId_TwoProjectsNoMatch()
+        public async Task GetGithubAppId_Should_Return_Null_When_No_Team_Projects_Have_Endpoint()
         {
             var adoOrg = "foo-org";
             var githubOrg = "foo-gh-org";
@@ -172,12 +170,13 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
 
-            Assert.Null(result);
+            result.Should().BeNull();
         }
 
         [Fact]
-        public async Task GetGithubHandle()
+        public async Task GetGithubHandle_Should_Return_Handle()
         {
+            var handle = "FOO-LOGIN";
             var endpoint = $"https://dev.azure.com/FOO-ORG/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
             var payload = @"
 {
@@ -201,7 +200,7 @@ namespace OctoshiftCLI.Tests
         }
     }
 }";
-            var json = "{ \"dataProviders\": { \"ms.vss-work-web.github-user-data-provider\": { \"login\": 'FOO-LOGIN' } } }";
+            var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.github-user-data-provider\": {{ \"login\": '{handle}' }} }} }}";
 
             var mockClient = new Mock<AdoClient>(null, null);
 
@@ -210,11 +209,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetGithubHandle("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT", "FOO-TOKEN");
 
-            Assert.Equal("FOO-LOGIN", result);
+            result.Should().Be(handle);
         }
 
         [Fact]
-        public async Task GetBoardsGithubConnection()
+        public async Task GetBoardsGithubConnection_Should_Return_Connection_With_All_Repos()
         {
             var teamProject = "FOO-TEAMPROJECT";
             var orgId = "FOO-ORGID";
@@ -256,16 +255,15 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT");
 
-            Assert.Equal(connectionId, result.connectionId);
-            Assert.Equal(endpointId, result.endpointId);
-            Assert.Equal(connectionName, result.connectionName);
-            Assert.Equal(2, result.repoIds.Count());
-            Assert.Contains(result.repoIds, x => x == "repo-1");
-            Assert.Contains(result.repoIds, x => x == "repo-2");
+            result.connectionId.Should().Be(connectionId);
+            result.endpointId.Should().Be(endpointId);
+            result.connectionName.Should().Be(connectionName);
+            result.repoIds.Count().Should().Be(2);
+            result.repoIds.Should().Contain(new[] { repo1, repo2 });
         }
 
         [Fact]
-        public async Task CreateBoardsGithubEndpoint()
+        public async Task CreateBoardsGithubEndpoint_Should_Return_EndpointId()
         {
             var orgName = "FOO-ORG";
             var teamProjectId = Guid.NewGuid().ToString();
@@ -291,8 +289,8 @@ namespace OctoshiftCLI.Tests
     ""name"": ""{endpointName}""
 }}";
 
-            var resultId = "foo-id";
-            var json = $"{{id: '{resultId}', name: 'something'}}";
+            var endpointId = "foo-id";
+            var json = $"{{id: '{endpointId}', name: 'something'}}";
 
             var mockClient = new Mock<AdoClient>(null, null);
             mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
@@ -300,11 +298,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.CreateBoardsGithubEndpoint(orgName, teamProjectId, githubToken, githubHandle, endpointName);
 
-            Assert.Equal(resultId, result);
+            result.Should().Be(endpointId);
         }
 
         [Fact]
-        public async Task AddRepoToBoardsGithubConnection()
+        public async Task AddRepoToBoardsGithubConnection_Should_Send_Correct_Payload()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -356,7 +354,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetTeamProjectId()
+        public async Task GetTeamProjectId_Should_Return_TeamProjectId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -371,11 +369,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetTeamProjectId(org, teamProject);
 
-            Assert.Equal(teamProjectId, result);
+            result.Should().Be(teamProjectId);
         }
 
         [Fact]
-        public async Task GetRepoId()
+        public async Task GetRepoId_Should_Return_RepoId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -391,11 +389,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetRepoId(org, teamProject, repo);
 
-            Assert.Equal(repoId, result);
+            result.Should().Be(repoId);
         }
 
         [Fact]
-        public async Task GetPipelines()
+        public async Task GetPipelines_Should_Return_All_Pipelines()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -412,13 +410,12 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipelines(org, teamProject, repoId);
 
-            Assert.Equal(2, result.Count());
-            Assert.Contains(pipeline1, result);
-            Assert.Contains(pipeline2, result);
+            result.Count().Should().Be(2);
+            result.Should().Contain(new[] { pipeline1, pipeline2 });
         }
 
         [Fact]
-        public async Task GetPipelineId()
+        public async Task GetPipelineId_Should_Return_PipelineId()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
@@ -434,11 +431,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipelineId(org, teamProject, pipeline);
 
-            Assert.Equal(pipelineId, result);
+            result.Should().Be(pipelineId);
         }
 
         [Fact]
-        public async Task ShareServiceConnection()
+        public async Task ShareServiceConnection_Should_Send_Correct_Payload()
         {
             var org = "FOO-ORG";
             var teamProject = "foo-teamproject";
@@ -464,12 +461,13 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetPipeline()
+        public async Task GetPipeline_Should_Return_Pipeline()
         {
             var org = "foo-org";
             var teamProject = "foo-tp";
             var pipelineId = 826263;
-            var defaultBranch = "refs/heads/foo-branch";
+            var branchName = "foo-branch";
+            var defaultBranch = $"refs/heads/{branchName}";
             var clean = "True";
 
             var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
@@ -481,13 +479,13 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetPipeline(org, teamProject, pipelineId);
 
-            Assert.Equal("foo-branch", result.DefaultBranch);
-            Assert.Equal("true", result.Clean);
-            Assert.Equal("null", result.CheckoutSubmodules);
+            result.DefaultBranch.Should().Be(branchName);
+            result.Clean.Should().Be("true");
+            result.CheckoutSubmodules.Should().Be("null");
         }
 
         [Fact]
-        public async Task ChangePipelineRepo()
+        public async Task ChangePipelineRepo_Should_Send_Correct_Payload()
         {
             var org = "foo-org";
             var githubOrg = "foo-org";
@@ -563,7 +561,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetBoardsGithubRepoId()
+        public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -609,11 +607,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetBoardsGithubRepoId(orgName, orgId, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
 
-            Assert.Equal(repoId, result);
+            result.Should().Be(repoId);
         }
 
         [Fact]
-        public async Task CreateBoardsGithubConnection()
+        public async Task CreateBoardsGithubConnection_Should_Send_Correct_Payload()
         {
             var orgName = "FOO-ORG";
             var orgId = Guid.NewGuid().ToString();
@@ -663,7 +661,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task DisableRepo()
+        public async Task DisableRepo_Should_Send_Correct_Payload()
         {
             var orgName = "foo-org";
             var teamProject = "foo-tp";
@@ -681,7 +679,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetIdentityDescriptor()
+        public async Task GetIdentityDescriptor_Should_Return_IdentityDescriptor()
         {
             var orgName = "foo-org";
             var teamProjectId = Guid.NewGuid().ToString();
@@ -698,11 +696,11 @@ namespace OctoshiftCLI.Tests
             using var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetIdentityDescriptor(orgName, teamProjectId, groupName);
 
-            Assert.Equal(identityDescriptor, result);
+            result.Should().Be(identityDescriptor);
         }
 
         [Fact]
-        public async Task LockRepo()
+        public async Task LockRepo_Should_Send_Correct_Payload()
         {
             var orgName = "FOO-ORG";
             var teamProjectId = Guid.NewGuid().ToString();
