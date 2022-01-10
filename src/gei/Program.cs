@@ -26,7 +26,7 @@ namespace OctoshiftCLI.gei
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Migrates Azure DevOps repos to GitHub");
+            var root = new RootCommand("CLI for Github Enterprise Importer");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())

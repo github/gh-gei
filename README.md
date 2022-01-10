@@ -13,6 +13,7 @@ This version of the GEI-CLI is informally maintained by GitHub. However, this is
 GEI-CLI is continuing to expand what it can support. However, it supports the following scenarios at present:
 
 * Azure DevOps -> GitHub Enterprise Cloud migrations
+* GitHub Enterprise Cloud -> GitHub Enterprise Cloud migrations
 
 Learn more about what exactly is migrated and any limitations in the [GEI documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer/about-github-enterprise-importer). 
 
@@ -28,10 +29,10 @@ GEI-CLI is a cross-platform .NET Core console application.  Execute the executab
 
 ### Command line
 ```
-octoshift
+ado2gh
   Migrates Azure DevOps repos to GitHub
 Usage:
-  octoshift [options] [command]
+  ado2gh [options] [command]
 
 Options:
   --version       Show version information
@@ -58,7 +59,7 @@ Covering running a migration from **Azure DevOps** to **GitHub.com**.
 
 #### Download and Configure the GH-GEI command-line Tool
 
-Navigate to the `Releases` for this repository and grab the latest release for your local operating system.
+Navigate to the `Releases` for this repository and grab the latest release for your local operating system. Note: ado2gh is for Azure DevOps -> GitHub migrations, gei is for GitHub -> GitHub migrations.
 ![Releases](https://user-images.githubusercontent.com/29484535/145065021-35f37a00-1a25-42a4-804d-11fd9f8cc811.png)
 Once you have downloaded the `Release`, you need to extract it to your local machine.
 **Note** you will want to place the `octoshift` executable somewhere easy to reference or add to your path.

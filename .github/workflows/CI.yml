@@ -129,6 +129,9 @@ jobs:
           ./dist/ado2gh.*.win-x64.zip
           ./dist/ado2gh.*.linux-x64.tar.gz
           ./dist/ado2gh.*.osx-x64.tar.gz
+          ./dist/gei.*.win-x64.zip
+          ./dist/gei.*.linux-x64.tar.gz
+          ./dist/gei.*.osx-x64.tar.gz
 
     - name: Archive Release Notes
       shell: pwsh
