@@ -46,7 +46,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
             mockAdo.Setup(x => x.GetGithubHandle(adoOrg, orgId, adoTeamProject, githubToken).Result).Returns(githubHandle);
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns(() => default);
-            mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle).Result).Returns(endpointId);
+            mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
             using var adoFactory = new AdoApiFactory(mockAdo.Object);
@@ -90,7 +90,7 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
-            mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(adoOrg, orgId, adoTeamProject, connectionId, connectionName, endpointId, Moq.It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
                                                                                                                                                                                x.Contains(repoIds[1]) &&
                                                                                                                                                                                x.Contains(newRepoId))));
@@ -128,7 +128,7 @@ namespace OctoshiftCLI.Tests.Commands
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory, githubFactory);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
-            mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
         }
     }
