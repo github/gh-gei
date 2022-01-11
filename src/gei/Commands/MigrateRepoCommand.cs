@@ -58,7 +58,7 @@ namespace OctoshiftCLI.gei.Commands
 
             if (string.IsNullOrWhiteSpace(targetRepo))
             {
-                _log.LogInformation($"Target Repo name not provided, defaulting to same as source repo ({sourceRepo}");
+                _log.LogInformation($"Target Repo name not provided, defaulting to same as source repo ({sourceRepo})");
                 targetRepo = sourceRepo;
             }
 
