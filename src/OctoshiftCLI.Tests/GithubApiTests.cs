@@ -293,7 +293,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!) " +
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB\",\"accessToken\":\"{githubPat}\",\"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
+                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\",\"accessToken\":\"{githubPat}\",\"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
             var response = $@"
             {{
