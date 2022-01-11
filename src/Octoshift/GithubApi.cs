@@ -159,7 +159,7 @@ namespace OctoshiftCLI
                     name = "GHEC Source",
                     url = "https://github.com",
                     ownerId = orgId,
-                    type = "GITHUB",
+                    type = "GITHUB_ARCHIVE",
                     accessToken = githubPat,
                     githubPat
                 },
