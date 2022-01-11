@@ -1,27 +1,14 @@
 ﻿using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
-    public class GithubClient : IDisposable
+    public class GithubClient
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
-        private bool disposedValue;
-
-        public GithubClient(OctoLogger log, string githubToken)
-        {
-            _log = log;
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
-            _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
-        }
 
         public GithubClient(OctoLogger log, HttpClient httpClient)
         {
@@ -41,26 +28,6 @@ namespace OctoshiftCLI
             await SendAsync(HttpMethod.Patch, url, body);
 
         public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _httpClient.Dispose();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
 
         private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
         {

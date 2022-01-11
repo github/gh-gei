@@ -33,9 +33,7 @@ namespace OctoshiftCLI.Tests.Commands
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            using var githubFactory = new GithubApiFactory(mockGithub.Object);
-
-            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, githubFactory);
+            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
@@ -44,9 +42,7 @@ namespace OctoshiftCLI.Tests.Commands
         [Fact]
         public async Task Invalid_Actor_Type()
         {
-            using var githubFactory = new GithubApiFactory(api: null);
-
-            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, githubFactory);
+            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, null);
 
             await command.Invoke("foo", "foo", "foo");
         }
