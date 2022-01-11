@@ -303,7 +303,7 @@ namespace OctoshiftCLI.Tests
                             ""id"": ""{actualMigrationSourceId}"",
                             ""name"": ""GHEC Source"",
                             ""url"": ""https://github.com"",
-                            ""type"": ""GITHUB""
+                            ""type"": ""GITHUB_ARCHIVE""
                         }}
                     }}
                 }}
