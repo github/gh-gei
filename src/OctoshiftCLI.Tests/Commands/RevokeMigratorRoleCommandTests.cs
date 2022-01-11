@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.Commands
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithub.Object);
+            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));

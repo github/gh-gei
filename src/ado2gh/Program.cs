@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace OctoshiftCLI
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApi>()
+                .AddTransient(sp => new Lazy<GithubApi>(sp.GetRequiredService<GithubApi>))
                 .AddHttpClient<GithubClient>((sp, client) =>
                 {
                     client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");

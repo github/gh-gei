@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
@@ -37,7 +38,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
 
-            var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithub.Object);
+            var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
             await command.Invoke(githubOrg, teamName, idpGroup);
 
             mockGithub.Verify(x => x.CreateTeam(githubOrg, teamName));

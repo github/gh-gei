@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -7,12 +8,12 @@ namespace OctoshiftCLI.Commands
     public class GrantMigratorRoleCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApi _githubApi;
+        private readonly Lazy<GithubApi> _lazyGithubApi;
 
-        public GrantMigratorRoleCommand(OctoLogger log, GithubApi githubApi) : base("grant-migrator-role")
+        public GrantMigratorRoleCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("grant-migrator-role")
         {
             _log = log;
-            _githubApi = githubApi;
+            _lazyGithubApi = lazyGithubApi;
 
             Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
 
@@ -62,8 +63,9 @@ namespace OctoshiftCLI.Commands
                 return;
             }
 
-            var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
-            var success = await _githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
+            var githubApi = _lazyGithubApi.Value;
+            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
+            var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 
             if (success)
             {

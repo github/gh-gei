@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.Commands
 
             using var adoFactory = new AdoApiFactory(adoToken);
 
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, adoFactory, mockGithub.Object,
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, adoFactory, new Lazy<GithubApi>(mockGithub.Object),
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 
