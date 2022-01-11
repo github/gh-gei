@@ -30,7 +30,7 @@ namespace OctoshiftCLI.ado2gh.Commands
             {
                 IsRequired = false
             };
-            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./octoshift.sh"))
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
                 IsRequired = false
             };

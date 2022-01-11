@@ -48,7 +48,7 @@ namespace OctoshiftCLI.Tests.gei.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --github-target-org \"{githubTargetOrg}\" --repo \"{repo}\"";
+            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"";
 
             script.Should().Be(expected);
         }
@@ -69,11 +69,11 @@ namespace OctoshiftCLI.Tests.gei.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --github-target-org \"{githubTargetOrg}\" --repo \"{repo1}\"";
+            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\"";
             expected += Environment.NewLine;
-            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --github-target-org \"{githubTargetOrg}\" --repo \"{repo2}\"";
+            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\"";
             expected += Environment.NewLine;
-            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --github-target-org \"{githubTargetOrg}\" --repo \"{repo3}\"";
+            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\"";
 
             script.Should().Be(expected);
         }

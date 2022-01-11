@@ -28,7 +28,7 @@ namespace OctoshiftCLI.gei.Commands
             {
                 IsRequired = true
             };
-            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./gei.sh"))
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
                 IsRequired = false
             };
@@ -105,7 +105,7 @@ namespace OctoshiftCLI.gei.Commands
 
         private string MigrateRepoScript(string githubSourceOrg, string githubTargetOrg, string repo)
         {
-            return $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --github-target-org \"{githubTargetOrg}\" --repo \"{repo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            return $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
     }
 }

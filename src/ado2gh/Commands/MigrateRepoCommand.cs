@@ -70,7 +70,7 @@ namespace OctoshiftCLI.ado2gh.Commands
             var adoToken = _adoFactory.GetAdoToken();
             var githubPat = _githubFactory.GetGithubToken();
             var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var migrationSourceId = await github.CreateMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationSourceId = await github.CreateADOMigrationSource(githubOrgId, adoToken, githubPat);
             var migrationId = await github.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await github.GetMigrationState(migrationId);
