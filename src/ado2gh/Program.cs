@@ -26,7 +26,7 @@ namespace OctoshiftCLI.ado2gh
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Migrates Azure DevOps repos to GitHub");
+            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())
