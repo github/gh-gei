@@ -114,7 +114,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateADOMigrationSource(string orgId, string adoToken, string githubPat)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -142,7 +142,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGHECMigrationSource(string orgId, string githubPat)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat)
         {
             var url = $"https://api.github.com/graphql";
 

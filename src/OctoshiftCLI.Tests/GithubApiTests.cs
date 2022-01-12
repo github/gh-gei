@@ -277,7 +277,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var expectedMigrationSourceId = await githubApi.CreateADOMigrationSource(orgId, adoToken, githubPat);
+            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoToken, githubPat);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
@@ -316,7 +316,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var expectedMigrationSourceId = await githubApi.CreateGHECMigrationSource(orgId, githubPat);
+            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, githubPat);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
