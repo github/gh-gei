@@ -7,11 +7,23 @@ public class EnvironmentVariableProvider
     private const string GH_PAT = "GH_PAT";
     private const string ADO_PAT = "ADO_PAT";
 
-    public virtual string GithubPersonalAccessToken() => Environment.GetEnvironmentVariable(GH_PAT) ??
-                                                         throw new ArgumentNullException(
-                                                             $"{GH_PAT} environment variables is not set.");
+    private readonly OctoLogger _logger;
 
-    public virtual string AdoPersonalAccessToken() => Environment.GetEnvironmentVariable(ADO_PAT) ??
-                                                      throw new ArgumentNullException(
-                                                          $"{ADO_PAT} environment variables is not set.");
+    public EnvironmentVariableProvider(OctoLogger logger)
+    {
+        _logger = logger;
+    }
+
+    public virtual string GithubPersonalAccessToken() => GetSecret(GH_PAT);
+
+    public virtual string AdoPersonalAccessToken() => GetSecret(ADO_PAT);
+
+    private string GetSecret(string secretName)
+    {
+        var secret = Environment.GetEnvironmentVariable(secretName) ?? throw new ArgumentNullException($"{secretName} environment variable is not set.");
+
+        _logger.RegisterSecret(secret);
+
+        return secret;
+    }
 }

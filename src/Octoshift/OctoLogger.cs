@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace OctoshiftCLI
@@ -18,12 +19,14 @@ namespace OctoshiftCLI
         private readonly DateTime _logStartTime;
         private readonly string _logFilePath;
         private readonly string _verboseFilePath;
+        private readonly List<string> _secrets;
 
         public OctoLogger()
         {
             _logStartTime = DateTime.Now;
             _logFilePath = $"{_logStartTime:yyyyMMddHHmmss}.octoshift.log";
             _verboseFilePath = $"{_logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
+            _secrets = new List<string>();
 
             // TODO: Open the file once and keep it open
         }
@@ -31,12 +34,25 @@ namespace OctoshiftCLI
         private void Log(string msg, string level)
         {
             var output = FormatMessage(msg, level);
+            output = MaskSecrets(output);
             Console.Write(output);
             File.AppendAllText(_logFilePath, output);
             File.AppendAllText(_verboseFilePath, output);
         }
 
         private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+
+        private string MaskSecrets(string msg)
+        {
+            var result = msg;
+
+            foreach (var secret in _secrets)
+            {
+                result = result.Replace(secret, "***");
+            }
+
+            return result;
+        }
 
         public virtual void LogInformation(string msg) => Log(msg, LogLevel.INFO);
 
@@ -75,7 +91,7 @@ namespace OctoshiftCLI
             }
             else
             {
-                File.AppendAllText(_verboseFilePath, FormatMessage(msg, LogLevel.VERBOSE));
+                File.AppendAllText(_verboseFilePath, MaskSecrets(FormatMessage(msg, LogLevel.VERBOSE)));
             }
         }
 
@@ -84,6 +100,11 @@ namespace OctoshiftCLI
             Console.ForegroundColor = ConsoleColor.Green;
             Log(msg, LogLevel.SUCCESS);
             Console.ResetColor();
+        }
+
+        public virtual void RegisterSecret(string secret)
+        {
+            _secrets.Add(secret);
         }
     }
 }
