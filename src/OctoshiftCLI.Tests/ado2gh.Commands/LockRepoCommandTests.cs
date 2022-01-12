@@ -37,9 +37,7 @@ namespace OctoshiftCLI.Tests.ado2gh.Commands
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new LockRepoCommand(new Mock<OctoLogger>().Object, adoFactory);
+            var command = new LockRepoCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor));

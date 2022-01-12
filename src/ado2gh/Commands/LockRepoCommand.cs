@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,12 +8,12 @@ namespace OctoshiftCLI.ado2gh.Commands
     public class LockRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly Lazy<AdoApi> _lazyAdoApi;
 
-        public LockRepoCommand(OctoLogger log, AdoApiFactory adoFactory) : base("lock-ado-repo")
+        public LockRepoCommand(OctoLogger log, Lazy<AdoApi> lazyAdoApi) : base("lock-ado-repo")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _lazyAdoApi = lazyAdoApi;
 
             Description = "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.";
 
@@ -50,7 +51,7 @@ namespace OctoshiftCLI.ado2gh.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"ADO REPO: {adoRepo}");
 
-            using var ado = _adoFactory.Create();
+            var ado = _lazyAdoApi.Value;
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
