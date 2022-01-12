@@ -7,10 +7,9 @@ using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI
 {
-    public class AdoApi : IDisposable
+    public class AdoApi
     {
         private readonly AdoClient _client;
-        private bool disposedValue;
 
         public AdoApi(AdoClient client) => _client = client;
 
@@ -524,26 +523,6 @@ namespace OctoshiftCLI
             payload = payload.Replace("IDENTITY_DESCRIPTOR", identityDescriptor);
 
             await _client.PostAsync(url, payload);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _client.Dispose();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,12 +8,12 @@ namespace OctoshiftCLI.Commands
     public class ShareServiceConnectionCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly Lazy<AdoApi> _lazyAdoApi;
 
-        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoFactory) : base("share-service-connection")
+        public ShareServiceConnectionCommand(OctoLogger log, Lazy<AdoApi> lazyAdoApi) : base("share-service-connection")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _lazyAdoApi = lazyAdoApi;
 
             Description = "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines.";
 
@@ -50,7 +51,7 @@ namespace OctoshiftCLI.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
 
-            using var ado = _adoFactory.Create();
+            var ado = _lazyAdoApi.Value;
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash

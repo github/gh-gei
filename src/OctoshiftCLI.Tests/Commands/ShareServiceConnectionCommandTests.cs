@@ -33,9 +33,7 @@ namespace OctoshiftCLI.Tests.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, adoFactory);
+            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
