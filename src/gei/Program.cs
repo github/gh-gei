@@ -26,7 +26,7 @@ namespace OctoshiftCLI.gei
                     client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
                     client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
                     client.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
-                    var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubTargetPersonalAccessToken();
+                    var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubPersonalAccessToken();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
                 });
 

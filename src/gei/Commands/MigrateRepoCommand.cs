@@ -68,7 +68,7 @@ namespace OctoshiftCLI.gei.Commands
             var githubRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
 
             var githubApi = _lazyGithubApi.Value;
-            var githubPat = _environmentVariableProvider.GithubTargetPersonalAccessToken();
+            var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             var migrationSourceId = await githubApi.CreateGHECMigrationSource(githubOrgId, githubPat);
             var migrationId = await githubApi.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);

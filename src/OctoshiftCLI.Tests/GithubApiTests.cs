@@ -309,7 +309,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, "");
+            var githubClientMock = new Mock<GithubClient>(null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
