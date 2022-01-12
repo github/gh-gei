@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.ado2gh.Commands
 {
     public class LockRepoCommand : Command
     {

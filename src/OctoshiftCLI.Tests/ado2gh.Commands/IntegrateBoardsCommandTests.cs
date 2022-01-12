@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.ado2gh.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.ado2gh.Commands
 {
     public class IntegrateBoardsCommandTests
     {
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
@@ -87,7 +87,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
@@ -128,7 +128,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);

@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.ado2gh.Commands
 {
     public class MigrateRepoCommand : Command
     {
@@ -74,7 +74,7 @@ namespace OctoshiftCLI.Commands
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _lazyGithubApi.Value;
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);

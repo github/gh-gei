@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.ado2gh.Commands
 {
     public class GenerateScriptCommand : Command
     {
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
-            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./octoshift.sh"))
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
                 IsRequired = false
             };

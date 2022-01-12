@@ -1,6 +1,6 @@
 using System;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.ado2gh;
 
 public class EnvironmentVariableProvider
 {
