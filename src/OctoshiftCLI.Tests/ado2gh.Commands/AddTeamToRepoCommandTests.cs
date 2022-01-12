@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.Threading.Tasks;
 using Moq;
@@ -33,8 +34,7 @@ namespace OctoshiftCLI.Tests.ado2gh.Commands
 
             var mockGithub = new Mock<GithubApi>(null);
 
-            using var githubFactory = new GithubApiFactory(mockGithub.Object);
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, githubFactory);
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
@@ -50,8 +50,7 @@ namespace OctoshiftCLI.Tests.ado2gh.Commands
 
             var mockGithub = new Mock<GithubApi>(null);
 
-            using var githubFactory = new GithubApiFactory(mockGithub.Object);
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, githubFactory);
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
 
             var root = new RootCommand();
             root.AddCommand(command);

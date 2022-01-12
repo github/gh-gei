@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,12 +8,12 @@ namespace OctoshiftCLI.ado2gh.Commands
     public class CreateTeamCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly Lazy<GithubApi> _lazyGithubApi;
 
-        public CreateTeamCommand(OctoLogger log, GithubApiFactory githubFactory) : base("create-team")
+        public CreateTeamCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("create-team")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _lazyGithubApi = lazyGithubApi;
 
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
 
@@ -50,9 +51,9 @@ namespace OctoshiftCLI.ado2gh.Commands
             _log.LogInformation($"TEAM NAME: {teamName}");
             _log.LogInformation($"IDP GROUP: {idpGroup}");
 
-            using var github = _githubFactory.Create();
+            var githubApi = _lazyGithubApi.Value;
 
-            await github.CreateTeam(githubOrg, teamName);
+            await githubApi.CreateTeam(githubOrg, teamName);
 
             _log.LogSuccess("Successfully created team");
 
@@ -62,17 +63,17 @@ namespace OctoshiftCLI.ado2gh.Commands
             }
             else
             {
-                var members = await github.GetTeamMembers(githubOrg, teamName);
+                var members = await githubApi.GetTeamMembers(githubOrg, teamName);
 
                 foreach (var member in members)
                 {
-                    await github.RemoveTeamMember(githubOrg, teamName, member);
+                    await githubApi.RemoveTeamMember(githubOrg, teamName, member);
                 }
 
-                var idpGroupId = await github.GetIdpGroupId(githubOrg, idpGroup);
-                var teamSlug = await github.GetTeamSlug(githubOrg, teamName);
+                var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
+                var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
 
-                await github.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+                await _lazyGithubApi.Value.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
                 _log.LogSuccess("Successfully linked team to Idp group");
             }

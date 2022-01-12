@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,12 +8,14 @@ namespace OctoshiftCLI.gei.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly Lazy<GithubApi> _lazyGithubApi;
+        private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubFactory) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _lazyGithubApi = lazyGithubApi;
+            _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
 
@@ -64,25 +67,25 @@ namespace OctoshiftCLI.gei.Commands
 
             var githubRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
 
-            using var github = _githubFactory.Create();
-            var githubPat = _githubFactory.GetGithubToken();
-            var githubOrgId = await github.GetOrganizationId(githubTargetOrg);
-            var migrationSourceId = await github.CreateGHECMigrationSource(githubOrgId, githubPat);
-            var migrationId = await github.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);
+            var githubApi = _lazyGithubApi.Value;
+            var githubPat = _environmentVariableProvider.GithubTargetPersonalAccessToken();
+            var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
+            var migrationSourceId = await githubApi.CreateGHECMigrationSource(githubOrgId, githubPat);
+            var migrationId = await githubApi.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);
 
-            var migrationState = await github.GetMigrationState(migrationId);
+            var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await github.GetMigrationState(migrationId);
+                migrationState = await githubApi.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                var failureReason = await github.GetMigrationFailureReason(migrationId);
+                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
                 _log.LogError(failureReason);
             }
             else

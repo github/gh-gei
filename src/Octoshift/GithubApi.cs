@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -7,10 +6,9 @@ using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI
 {
-    public class GithubApi : IDisposable
+    public class GithubApi
     {
         private readonly GithubClient _client;
-        private bool disposedValue;
 
         public GithubApi(GithubClient client) => _client = client;
 
@@ -311,26 +309,6 @@ namespace OctoshiftCLI
             {
                 return false;
             }
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _client.Dispose();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

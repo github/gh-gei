@@ -11,12 +11,12 @@ namespace OctoshiftCLI.gei.Commands
     public class GenerateScriptCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly Lazy<GithubApi> _lazyGithubApi;
 
-        public GenerateScriptCommand(OctoLogger log, GithubApiFactory githubFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("generate-script")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _lazyGithubApi = lazyGithubApi;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -54,9 +54,7 @@ namespace OctoshiftCLI.gei.Commands
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"OUTPUT: {output}");
 
-            using var github = _githubFactory.Create();
-
-            var repos = await GetRepos(github, githubSourceOrg);
+            var repos = await GetRepos(_lazyGithubApi.Value, githubSourceOrg);
 
             var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg);
 

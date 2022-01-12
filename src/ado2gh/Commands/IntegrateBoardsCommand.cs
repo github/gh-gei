@@ -11,13 +11,16 @@ namespace OctoshiftCLI.ado2gh.Commands
     {
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoFactory;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public IntegrateBoardsCommand(OctoLogger log, AdoApiFactory adoFactory, GithubApiFactory githubFactory) : base("integrate-boards")
+        public IntegrateBoardsCommand(
+            OctoLogger log,
+            AdoApiFactory adoFactory,
+            EnvironmentVariableProvider environmentVariableProvider) : base("integrate-boards")
         {
             _log = log;
             _adoFactory = adoFactory;
-            _githubFactory = githubFactory;
+            _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
 
@@ -62,7 +65,7 @@ namespace OctoshiftCLI.ado2gh.Commands
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
             using var ado = _adoFactory.Create();
-            var githubToken = _githubFactory.GetGithubToken();
+            var githubToken = _environmentVariableProvider.GithubPersonalAccessToken();
 
             var userId = await ado.GetUserId();
             var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);

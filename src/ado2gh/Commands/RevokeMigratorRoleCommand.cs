@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -7,12 +8,12 @@ namespace OctoshiftCLI.ado2gh.Commands
     public class RevokeMigratorRoleCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubFactory;
+        private readonly Lazy<GithubApi> _lazyGithubApi;
 
-        public RevokeMigratorRoleCommand(OctoLogger log, GithubApiFactory githubFactory) : base("revoke-migrator-role")
+        public RevokeMigratorRoleCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("revoke-migrator-role")
         {
             _log = log;
-            _githubFactory = githubFactory;
+            _lazyGithubApi = lazyGithubApi;
             Description = "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.";
 
             var githubOrg = new Option<string>("--github-org")
@@ -63,10 +64,9 @@ namespace OctoshiftCLI.ado2gh.Commands
                 return;
             }
 
-            using var github = _githubFactory.Create();
-
-            var githubOrgId = await github.GetOrganizationId(githubOrg);
-            var success = await github.RevokeMigratorRole(githubOrgId, actor, actorType);
+            var githubApi = _lazyGithubApi.Value;
+            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
+            var success = await githubApi.RevokeMigratorRole(githubOrgId, actor, actorType);
 
             if (success)
             {
