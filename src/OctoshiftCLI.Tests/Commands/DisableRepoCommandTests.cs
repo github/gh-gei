@@ -33,9 +33,7 @@ namespace OctoshiftCLI.Tests.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, adoFactory);
+            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId));
