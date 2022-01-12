@@ -20,6 +20,8 @@ namespace OctoshiftCLI
         private readonly string _logFilePath;
         private readonly string _verboseFilePath;
         private readonly List<string> _secrets;
+        //private FileStream _logFile;
+        //private FileStream _verboseLogFile;
 
         public OctoLogger()
         {
@@ -29,6 +31,8 @@ namespace OctoshiftCLI
             _secrets = new List<string>();
 
             // TODO: Open the file once and keep it open
+            //_logFile = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write);
+            //_verboseLogFile = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write);
         }
 
         private void Log(string msg, string level)

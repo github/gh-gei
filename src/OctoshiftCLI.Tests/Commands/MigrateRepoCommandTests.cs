@@ -45,7 +45,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);

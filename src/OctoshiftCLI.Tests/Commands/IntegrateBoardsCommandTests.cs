@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
@@ -132,7 +132,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);

@@ -22,7 +22,7 @@ public class EnvironmentVariableProvider
     {
         var secret = Environment.GetEnvironmentVariable(secretName) ?? throw new ArgumentNullException($"{secretName} environment variable is not set.");
 
-        _logger.RegisterSecret(secret);
+        _logger?.RegisterSecret(secret);
 
         return secret;
     }
