@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.ado2gh.Commands;
+using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.ado2gh.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class MigrateRepoCommandTests
     {
@@ -45,7 +45,7 @@ namespace OctoshiftCLI.Tests.ado2gh.Commands
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);

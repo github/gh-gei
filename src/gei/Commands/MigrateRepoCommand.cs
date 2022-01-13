@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.gei.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class MigrateRepoCommand : Command
     {

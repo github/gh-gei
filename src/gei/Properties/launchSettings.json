@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "gei": {
+      "commandName": "Project",
+      "commandLineArgs": "migrate-repo --github-source-org \"DylanEY\" --source-repo \"demo-repository\" --github-target-org \"DylanTestOrg\" --target-repo \"demo-repository\"",
+      "environmentVariables": {
+        "GH_PAT": "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"
+      }
+    }
+  }
+}
