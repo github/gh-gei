@@ -16,32 +16,39 @@ namespace OctoshiftCLI
     public class OctoLogger
     {
         public bool Verbose { get; set; }
-        private readonly DateTime _logStartTime;
+        private readonly List<string> _secrets = new List<string>();
         private readonly string _logFilePath;
         private readonly string _verboseFilePath;
-        private readonly List<string> _secrets;
-        //private FileStream _logFile;
-        //private FileStream _verboseLogFile;
+
+        private readonly Action<string> _writeToLog;
+        private readonly Action<string> _writeToVerboseLog;
+        private readonly Action<string> _writeToConsole;
 
         public OctoLogger()
         {
-            _logStartTime = DateTime.Now;
-            _logFilePath = $"{_logStartTime:yyyyMMddHHmmss}.octoshift.log";
-            _verboseFilePath = $"{_logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
-            _secrets = new List<string>();
+            var logStartTime = DateTime.Now;
+            _logFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.log";
+            _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
 
-            // TODO: Open the file once and keep it open
-            //_logFile = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write);
-            //_verboseLogFile = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write);
+            _writeToLog = msg => File.AppendAllText(_logFilePath, msg);
+            _writeToVerboseLog = msg => File.AppendAllText(_verboseFilePath, msg);
+            _writeToConsole = msg => Console.Write(msg);
+        }
+
+        public OctoLogger(Action<string> writeToLog, Action<string> writeToVerboseLog, Action<string> writeToConsole)
+        {
+            _writeToLog = writeToLog;
+            _writeToVerboseLog = writeToVerboseLog;
+            _writeToConsole = writeToConsole;
         }
 
         private void Log(string msg, string level)
         {
             var output = FormatMessage(msg, level);
             output = MaskSecrets(output);
-            Console.Write(output);
-            File.AppendAllText(_logFilePath, output);
-            File.AppendAllText(_verboseFilePath, output);
+            _writeToConsole(output);
+            _writeToLog(output);
+            _writeToVerboseLog(output);
         }
 
         private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
@@ -95,7 +102,7 @@ namespace OctoshiftCLI
             }
             else
             {
-                File.AppendAllText(_verboseFilePath, MaskSecrets(FormatMessage(msg, LogLevel.VERBOSE)));
+                _writeToVerboseLog(MaskSecrets(FormatMessage(msg, LogLevel.VERBOSE)));
             }
         }
 
@@ -106,9 +113,6 @@ namespace OctoshiftCLI
             Console.ResetColor();
         }
 
-        public virtual void RegisterSecret(string secret)
-        {
-            _secrets.Add(secret);
-        }
+        public virtual void RegisterSecret(string secret) => _secrets.Add(secret);
     }
 }
