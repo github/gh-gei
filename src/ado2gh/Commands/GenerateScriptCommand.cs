@@ -7,18 +7,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.ado2gh.Commands
 {
     public class GenerateScriptCommand : Command
     {
         private bool _reposOnly;
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
+        private readonly Lazy<AdoApi> _lazyAdoApi;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, Lazy<AdoApi> lazyAdoApi) : base("generate-script")
         {
             _log = log;
-            _adoFactory = adoFactory;
+            _lazyAdoApi = lazyAdoApi;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Commands
             {
                 IsRequired = false
             };
-            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./octoshift.sh"))
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
                 IsRequired = false
             };
@@ -68,7 +68,7 @@ namespace OctoshiftCLI.Commands
 
             _reposOnly = reposOnly;
 
-            using var ado = _adoFactory.Create();
+            var ado = _lazyAdoApi.Value;
 
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs);

@@ -46,6 +46,16 @@ namespace OctoshiftCLI
             return data.Children().Select(x => (string)x["login"]).ToList();
         }
 
+        public virtual async Task<IEnumerable<string>> GetRepos(string org)
+        {
+            var url = $"https://api.github.com/orgs/{org}/repos";
+
+            var response = await _client.GetAsync(url);
+            var data = JArray.Parse(response);
+
+            return data.Children().Select(x => (string)x["name"]).ToList();
+        }
+
         public virtual async Task RemoveTeamMember(string org, string teamName, string member)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/memberships/{member}";
@@ -104,7 +114,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateMigrationSource(string orgId, string adoToken, string githubPat)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -121,6 +131,34 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "AZURE_DEVOPS",
                     accessToken = adoToken,
+                    githubPat
+                },
+                operationName = "createMigrationSource"
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+        }
+
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat)
+        {
+            var url = $"https://api.github.com/graphql";
+
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    name = "GHEC Source",
+                    url = "https://github.com",
+                    ownerId = orgId,
+                    type = "GITHUB_ARCHIVE",
+                    accessToken = githubPat,
                     githubPat
                 },
                 operationName = "createMigrationSource"

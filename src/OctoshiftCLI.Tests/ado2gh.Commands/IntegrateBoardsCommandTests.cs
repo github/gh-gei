@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.ado2gh.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.ado2gh.Commands
 {
     public class IntegrateBoardsCommandTests
     {
@@ -49,14 +49,12 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory,
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
@@ -89,14 +87,12 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory,
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
@@ -132,14 +128,12 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, adoFactory,
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 

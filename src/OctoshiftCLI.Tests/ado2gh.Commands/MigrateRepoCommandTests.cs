@@ -1,17 +1,17 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.ado2gh.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.ado2gh.Commands
 {
     public class MigrateRepoCommandTests
     {
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new MigrateRepoCommand(null, null, null, null);
+            var command = new MigrateRepoCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("migrate-repo", command.Name);
             Assert.Equal(6, command.Options.Count);
@@ -41,18 +41,19 @@ namespace OctoshiftCLI.Tests.Commands
 
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateMigrationSource(githubOrgId, adoToken, githubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat).Result).Returns(migrationSourceId);
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.ado2gh.EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);
+            environmentVariableProviderMock
+                .Setup(m => m.AdoPersonalAccessToken())
+                .Returns(adoToken);
 
-            using var adoFactory = new AdoApiFactory(adoToken);
-
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, adoFactory, new Lazy<GithubApi>(mockGithub.Object),
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object),
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 

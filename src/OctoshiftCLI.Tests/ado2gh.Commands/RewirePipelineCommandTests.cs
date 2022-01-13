@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.ado2gh.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Commands
+namespace OctoshiftCLI.Tests.ado2gh.Commands
 {
     public class RewirePipelineCommandTests
     {
@@ -41,9 +41,7 @@ namespace OctoshiftCLI.Tests.Commands
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns(pipeline);
 
-            using var adoFactory = new AdoApiFactory(mockAdo.Object);
-
-            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, adoFactory);
+            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId));

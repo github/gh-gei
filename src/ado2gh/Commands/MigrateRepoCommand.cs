@@ -3,23 +3,20 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Commands
+namespace OctoshiftCLI.ado2gh.Commands
 {
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoFactory;
         private readonly Lazy<GithubApi> _lazyGithubApi;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public MigrateRepoCommand(
             OctoLogger log,
-            AdoApiFactory adoFactory,
             Lazy<GithubApi> lazyGithubApi,
             EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _adoFactory = adoFactory;
             _lazyGithubApi = lazyGithubApi;
             _environmentVariableProvider = environmentVariableProvider;
 
@@ -73,11 +70,11 @@ namespace OctoshiftCLI.Commands
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            var adoToken = _adoFactory.GetAdoToken();
+            var adoToken = _environmentVariableProvider.AdoPersonalAccessToken();
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _lazyGithubApi.Value;
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);
