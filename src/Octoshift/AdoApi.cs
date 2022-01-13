@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
@@ -28,7 +29,6 @@ namespace OctoshiftCLI
                 return userId;
             }
 
-            // TODO: Throw an exception instead
             Console.WriteLine("Unexpected response when retrieving User ID");
             Console.WriteLine(response);
 
@@ -98,34 +98,35 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-    ""contributionIds"": [
-        ""ms.vss-work-web.github-user-data-provider""
-    ],
-    ""dataProviderContext"": {
-        ""properties"": {
-            ""accessToken"": ""GITHUB_TOKEN"",
-            ""sourcePage"": {
-                ""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration#"",
-                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-                ""routeValues"": {
-                    ""project"": ""ADO_TEAMPROJECT"",
-                    ""adminPivot"": ""boards-external-integration"",
-                    ""controller"": ""ContributedPage"",
-                    ""action"": ""Execute"",
-                    ""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.github-user-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        accessToken = githubToken,
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-}";
-            payload = payload.Replace("GITHUB_TOKEN", githubToken);
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
+            };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _client.PostAsync(url, payload.ToJson());
             var data = JObject.Parse(response);
 
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];

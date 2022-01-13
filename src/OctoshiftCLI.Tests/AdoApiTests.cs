@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -176,39 +177,49 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetGithubHandle_Should_Return_Handle()
         {
+            var adoOrg = "FOO-ORG";
+            var adoOrgId = "FOO-ORG-ID";
+            var teamProject = "FOO-TEAMPROJECT";
+            var githubToken = Guid.NewGuid().ToString();
+
             var handle = "FOO-LOGIN";
-            var endpoint = $"https://dev.azure.com/FOO-ORG/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
-            var payload = @"
-{
-    ""contributionIds"": [
-        ""ms.vss-work-web.github-user-data-provider""
-    ],
-    ""dataProviderContext"": {
-        ""properties"": {
-            ""accessToken"": ""FOO-TOKEN"",
-            ""sourcePage"": {
-                ""url"": ""https://dev.azure.com/FOO-ORG/FOO-TEAMPROJECT/_settings/boards-external-integration#"",
-                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-                ""routeValues"": {
-                    ""project"": ""FOO-TEAMPROJECT"",
-                    ""adminPivot"": ""boards-external-integration"",
-                    ""controller"": ""ContributedPage"",
-                    ""action"": ""Execute"",
-                    ""serviceHost"": ""FOO-ORGID (FOO-ORG)""
+            var endpoint = $"https://dev.azure.com/{adoOrg}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.github-user-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        accessToken = githubToken,
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{adoOrg}/{teamProject}/_settings/boards-external-integration#",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{adoOrgId} ({adoOrg})"
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-}";
-            payload = JObject.Parse(payload).ToString();
+            }.ToJson();
+
             var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.github-user-data-provider\": {{ \"login\": '{handle}' }} }} }}";
 
             var mockClient = new Mock<AdoClient>(null, null);
 
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result).Returns(json);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == JObject.Parse(payload).ToString())).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetGithubHandle("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT", "FOO-TOKEN");
+            var result = await sut.GetGithubHandle(adoOrg, adoOrgId, teamProject, githubToken);
 
             result.Should().Be(handle);
         }
