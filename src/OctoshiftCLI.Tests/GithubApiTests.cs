@@ -289,11 +289,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             const string url = "https://api.github.com/graphql";
             const string orgId = "ORG_ID";
-            const string githubPat = "GITHUB_PAT";
+            const string sourceGithubPat = "SOURCE_GITHUB_PAT";
+            const string targetGithubPat = "GITHUB_PAT";
             var payload =
                 "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String!) " +
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\",\"accessToken\":\"{githubPat}\",\"githubPat\":\"{githubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
+                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\",\"accessToken\":\"{sourceGithubPat}\",\"githubPat\":\"{targetGithubPat}\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
             var response = $@"
             {{
@@ -316,7 +317,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, githubPat);
+            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);

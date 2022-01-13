@@ -2,7 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
-using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,18 +16,26 @@ namespace OctoshiftCLI.gei
         {
             var serviceCollection = new ServiceCollection();
             serviceCollection
-                .AddCommands()
+                .AddSingleton<Command, MigrateRepoCommand>(sp =>
+                {
+                    return new MigrateRepoCommand(
+                        sp.GetRequiredService<OctoLogger>(),
+                        new Lazy<GithubApi>(() => CreateGithubApi(sp, sp.GetRequiredService<EnvironmentVariableProvider>().TargetGithubPersonalAccessToken())),
+                        sp.GetRequiredService<EnvironmentVariableProvider>());
+                })
+                .AddSingleton<Command, GenerateScriptCommand>(sp =>
+                {
+                    return new GenerateScriptCommand(
+                        sp.GetRequiredService<OctoLogger>(),
+                        new Lazy<GithubApi>(() => CreateGithubApi(sp, sp.GetRequiredService<EnvironmentVariableProvider>().SourceGitHubPersonalAccessToken())));
+                })
                 .AddSingleton<OctoLogger>()
                 .AddSingleton<EnvironmentVariableProvider>()
-                .AddSingleton<GithubApi>()
-                .AddTransient(sp => new Lazy<GithubApi>(sp.GetRequiredService<GithubApi>))
-                .AddHttpClient<GithubClient>((sp, client) =>
+                .AddHttpClient("GithubClient", client =>
                 {
                     client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
                     client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
                     client.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
-                    var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubPersonalAccessToken();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
                 });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -39,7 +47,7 @@ namespace OctoshiftCLI.gei
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("Automate end-to-end Github to GitHub migrations.");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())
@@ -50,22 +58,15 @@ namespace OctoshiftCLI.gei
             return commandLineBuilder.UseDefaults().Build();
         }
 
-        private static IServiceCollection AddCommands(this IServiceCollection services)
+        private static GithubApi CreateGithubApi(IServiceProvider sp, string githubPat)
         {
-            var sampleCommandType = typeof(GenerateScriptCommand);
-            var commandType = typeof(Command);
+            var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = httpClientFactory.CreateClient("GithubClient");
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubPat);
 
-            var commands = sampleCommandType
-                .Assembly
-                .GetExportedTypes()
-                .Where(x => x.Namespace == sampleCommandType.Namespace && commandType.IsAssignableFrom(x));
-
-            foreach (var command in commands)
-            {
-                services.AddSingleton(commandType, command);
-            }
-
-            return services;
+            var octoLogger = sp.GetRequiredService<OctoLogger>();
+            var githubClient = new GithubClient(octoLogger, httpClient);
+            return new GithubApi(githubClient);
         }
     }
 }
