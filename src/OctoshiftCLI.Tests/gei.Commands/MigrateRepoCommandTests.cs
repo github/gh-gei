@@ -15,12 +15,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new MigrateRepoCommand(null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(5);
+            command.Options.Count.Should().Be(6);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
