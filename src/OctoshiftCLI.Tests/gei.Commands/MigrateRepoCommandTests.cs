@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.gei.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo).Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var environmentVariableProviderMock = new Mock<OctoshiftCLI.gei.EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.GithubEnterpriseImporter.EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);
