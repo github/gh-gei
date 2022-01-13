@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.Integration
             var parameterString = $"generate-script --github-org GuacamoleResearch --ado-org OCLI --output {outputFilename} {additionalFlags}";
             var parameters = parameterString.Trim().Split(' ');
 
-            await OctoshiftCLI.ado2gh.Program.Main(parameters);
+            await OctoshiftCLI.AdoToGithub.Program.Main(parameters);
             return outputFilename;
         }
 

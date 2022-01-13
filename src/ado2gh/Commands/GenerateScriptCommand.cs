@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.ado2gh.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class GenerateScriptCommand : Command
     {

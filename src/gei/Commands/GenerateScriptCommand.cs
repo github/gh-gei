@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.gei.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommand : Command
     {

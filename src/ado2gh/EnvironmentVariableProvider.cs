@@ -1,6 +1,6 @@
 using System;
 
-namespace OctoshiftCLI.ado2gh;
+namespace OctoshiftCLI.AdoToGithub;
 
 public class EnvironmentVariableProvider
 {

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.ado2gh.Commands;
+using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.ado2gh.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class GenerateScriptCommandTests
     {

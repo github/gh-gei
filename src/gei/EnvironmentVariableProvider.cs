@@ -1,6 +1,6 @@
 using System;
 
-namespace OctoshiftCLI.gei
+namespace OctoshiftCLI.GithubEnterpriseImporter
 {
 
     public class EnvironmentVariableProvider

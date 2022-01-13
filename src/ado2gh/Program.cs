@@ -7,9 +7,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.ado2gh.Commands;
+using OctoshiftCLI.AdoToGithub.Commands;
 
-namespace OctoshiftCLI.ado2gh
+namespace OctoshiftCLI.AdoToGithub
 {
     public static class Program
     {
