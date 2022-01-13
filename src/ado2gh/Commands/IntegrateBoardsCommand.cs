@@ -5,7 +5,7 @@ using System.CommandLine.Invocation;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.ado2gh.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class IntegrateBoardsCommand : Command
     {

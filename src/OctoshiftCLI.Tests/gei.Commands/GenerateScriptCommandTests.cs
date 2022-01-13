@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.gei.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.gei.Commands
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommandTests
     {
