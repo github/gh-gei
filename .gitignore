@@ -353,3 +353,4 @@ MigrationBackup/
 /src/OctoshiftCLI/Properties/launchSettings.json
 
 /dist
+/src/gei/Properties/launchSettings.json
