@@ -200,11 +200,12 @@ namespace OctoshiftCLI.Tests
         }
     }
 }";
+            payload = JObject.Parse(payload).ToString();
             var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.github-user-data-provider\": {{ \"login\": '{handle}' }} }} }}";
 
             var mockClient = new Mock<AdoClient>(null, null);
 
-            mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetGithubHandle("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT", "FOO-TOKEN");
@@ -240,6 +241,8 @@ namespace OctoshiftCLI.Tests
 		}}
 	}}
 }}";
+            payload = JObject.Parse(payload).ToString();
+
             var connectionId = "foo-id";
             var endpointId = "foo-endpoint-id";
             var connectionName = "foo-name";
@@ -250,7 +253,7 @@ namespace OctoshiftCLI.Tests
 
             var mockClient = new Mock<AdoClient>(null, null);
 
-            mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT");
@@ -289,11 +292,12 @@ namespace OctoshiftCLI.Tests
     ""name"": ""{endpointName}""
 }}";
 
+            payload = JObject.Parse(payload).ToString();
             var endpointId = "foo-id";
             var json = $"{{id: '{endpointId}', name: 'something'}}";
 
             var mockClient = new Mock<AdoClient>(null, null);
-            mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
             var result = await sut.CreateBoardsGithubEndpoint(orgName, teamProjectId, githubToken, githubHandle, endpointName);
@@ -346,11 +350,12 @@ namespace OctoshiftCLI.Tests
 	}}
 }}";
 
+            payload = JObject.Parse(payload).ToString();
             var mockClient = new Mock<AdoClient>(null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.AddRepoToBoardsGithubConnection(orgName, orgId, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
 
-            mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
+            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result);
         }
 
         [Fact]
@@ -453,11 +458,12 @@ namespace OctoshiftCLI.Tests
     }}
 }}]";
 
+            payload = JArray.Parse(payload).ToString();
             var mockClient = new Mock<AdoClient>(null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.ShareServiceConnection(org, teamProject, teamProjectId, serviceConnectionId);
 
-            mockClient.Verify(m => m.PatchAsync(endpoint, payload));
+            mockClient.Verify(m => m.PatchAsync(endpoint, It.Is<string>(y => JArray.Parse(y).ToString() == payload)));
         }
 
         [Fact]
@@ -598,11 +604,12 @@ namespace OctoshiftCLI.Tests
     }}
 }}";
 
+            payload = JObject.Parse(payload).ToString();
             var repoId = Guid.NewGuid().ToString();
             var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
 
             var mockClient = new Mock<AdoClient>(null, null);
-            mockClient.Setup(x => x.PostAsync(endpoint, payload).Result).Returns(json);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetBoardsGithubRepoId(orgName, orgId, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
@@ -652,12 +659,13 @@ namespace OctoshiftCLI.Tests
     }}
 }}";
 
+            payload = JObject.Parse(payload).ToString();
             var mockClient = new Mock<AdoClient>(null, null);
 
             var sut = new AdoApi(mockClient.Object);
             await sut.CreateBoardsGithubConnection(orgName, orgId, teamProject, endpointId, repoId);
 
-            mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
+            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result);
         }
 
         [Fact]
@@ -673,9 +681,10 @@ namespace OctoshiftCLI.Tests
             var sut = new AdoApi(mockClient.Object);
             await sut.DisableRepo(orgName, teamProject, repoId);
 
-            var expectedPayload = @"{ ""isDisabled"": true }";
+            var payload = @"{ ""isDisabled"": true }";
+            payload = JObject.Parse(payload).ToString();
 
-            mockClient.Verify(m => m.PatchAsync(endpoint, expectedPayload).Result);
+            mockClient.Verify(m => m.PatchAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result);
         }
 
         [Fact]
@@ -730,11 +739,12 @@ namespace OctoshiftCLI.Tests
 }}
 ";
 
+            payload = JObject.Parse(payload).ToString();
             var mockClient = new Mock<AdoClient>(null, null);
             var sut = new AdoApi(mockClient.Object);
             await sut.LockRepo(orgName, teamProjectId, repoId, identityDescriptor);
 
-            mockClient.Verify(m => m.PostAsync(endpoint, payload).Result);
+            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<string>(y => JObject.Parse(y).ToString() == payload)).Result);
         }
     }
 }
