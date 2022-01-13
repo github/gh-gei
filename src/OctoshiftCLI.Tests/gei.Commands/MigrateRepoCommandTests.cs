@@ -55,5 +55,36 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
+
+        [Fact]
+        public async Task With_Ssh()
+        {
+            var githubSourceOrg = "foo-source-org";
+            var sourceRepo = "foo-repo-source";
+            var githubTargetOrg = "foo-target-org";
+            var targetRepo = "foo-target-repo";
+
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var githubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://github.com/{githubSourceOrg}/{sourceRepo}";
+            var migrationId = Guid.NewGuid().ToString();
+
+            var mockGithub = new Mock<GithubApi>(null);
+            mockGithub.Setup(x => x.GetOrganizationId(githubTargetOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceSsh(githubOrgId, githubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.GithubEnterpriseImporter.EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock
+                .Setup(m => m.GithubPersonalAccessToken())
+                .Returns(githubPat);
+
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object), environmentVariableProviderMock.Object);
+            await command.Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo, true);
+
+            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+        }
     }
 }

@@ -79,6 +79,24 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             script.Should().Be(expected);
         }
 
+        [Fact]
+        public void With_SSH()
+        {
+            var githubSourceOrg = "foo-source";
+            var githubTargetOrg = "foo-target";
+            var repo = "foo-repo";
+
+            var repos = new List<string>() { repo };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh";
+
+            script.Should().Be(expected);
+        }
 
         private string TrimNonExecutableLines(string script)
         {

@@ -250,6 +250,34 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public void Single_Repo_Repos_Only_With_Ssh()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+            reposOnlyField.SetValue(command, true);
+
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ssh";
+
+            Assert.Equal(expected, script);
+        }
+
+        [Fact]
         public void Single_Repo_Skip_Idp()
         {
             var githubOrg = "foo-gh-org";
