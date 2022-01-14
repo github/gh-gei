@@ -244,7 +244,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateADOMigrationSource_Returns_New_Migration_Source_Id()
+        public async Task CreateAdoMigrationSource_Returns_New_Migration_Source_Id()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -284,7 +284,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateADOMigrationSource_Using_SSH()
+        public async Task CreateAdoMigrationSource_Using_Ssh()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -324,7 +324,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateGHECMigrationSource_Returns_New_Migration_Source_Id()
+        public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -363,7 +363,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateGHECMigrationSource_With_Ssh()
+        public async Task CreateGhecMigrationSource_Using_Ssh()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";

@@ -80,7 +80,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void With_SSH()
+        public void With_Ssh()
         {
             var githubSourceOrg = "foo-source";
             var githubTargetOrg = "foo-target";
