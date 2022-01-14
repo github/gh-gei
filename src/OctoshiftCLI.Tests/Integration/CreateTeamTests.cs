@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests.Integration
             var parameters = parameterString.Trim().Split(' ');
 
             // Act
-            await OctoshiftCLI.ado2gh.Program.Main(parameters);
+            await OctoshiftCLI.AdoToGithub.Program.Main(parameters);
 
             // Assert
             var exists = await TestHelpers.TeamExists(TestHelpers.TargetOrg, targetTeam);
@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.Integration
             var parameters = parameterString.Trim().Split(' ');
 
             // Act
-            await OctoshiftCLI.ado2gh.Program.Main(parameters);
+            await OctoshiftCLI.AdoToGithub.Program.Main(parameters);
 
             // Assert
             var exists = await TestHelpers.TeamExists(TestHelpers.TargetOrg, targetTeam);

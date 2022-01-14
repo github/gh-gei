@@ -6,9 +6,9 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.gei.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
-namespace OctoshiftCLI.gei
+namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public static class Program
     {

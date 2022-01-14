@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.ado2gh.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class MigrateRepoCommand : Command
     {
@@ -42,6 +42,10 @@ namespace OctoshiftCLI.ado2gh.Commands
             {
                 IsRequired = true
             };
+            var ssh = new Option("--ssh")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -52,12 +56,13 @@ namespace OctoshiftCLI.ado2gh.Commands
             AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
+            AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -67,6 +72,10 @@ namespace OctoshiftCLI.ado2gh.Commands
             _log.LogInformation($"ADO REPO: {adoRepo}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            if (ssh)
+            {
+                _log.LogInformation("SSH: true");
+            }
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
@@ -74,7 +83,7 @@ namespace OctoshiftCLI.ado2gh.Commands
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _lazyGithubApi.Value;
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.gei.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.gei.Commands
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommandTests
     {
@@ -17,11 +17,12 @@ namespace OctoshiftCLI.Tests.gei.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(4);
+            command.Options.Count.Should().Be(5);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -29,7 +30,7 @@ namespace OctoshiftCLI.Tests.gei.Commands
         public void No_Data()
         {
             var command = new GenerateScriptCommand(null, null);
-            var script = command.GenerateScript(null, "foo-source", "foo-target");
+            var script = command.GenerateScript(null, "foo-source", "foo-target", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -44,7 +45,7 @@ namespace OctoshiftCLI.Tests.gei.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg);
+            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -65,7 +66,7 @@ namespace OctoshiftCLI.Tests.gei.Commands
             var repos = new List<string>() { repo1, repo2, repo3 };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg);
+            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -78,6 +79,24 @@ namespace OctoshiftCLI.Tests.gei.Commands
             script.Should().Be(expected);
         }
 
+        [Fact]
+        public void With_Ssh()
+        {
+            var githubSourceOrg = "foo-source";
+            var githubTargetOrg = "foo-target";
+            var repo = "foo-repo";
+
+            var repos = new List<string>() { repo };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh";
+
+            script.Should().Be(expected);
+        }
 
         private string TrimNonExecutableLines(string script)
         {
