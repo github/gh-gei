@@ -83,8 +83,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _lazyGithubApi.Value;
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = ssh ? await githubApi.CreateAdoMigrationSourceSsh(githubOrgId, adoToken)
-                                        : await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);

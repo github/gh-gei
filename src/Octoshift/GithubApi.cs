@@ -114,7 +114,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat, bool ssh = false)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -131,7 +131,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "AZURE_DEVOPS",
                     accessToken = adoToken,
-                    githubPat
+                    githubPat = !ssh ? githubPat : null
                 },
                 operationName = "createMigrationSource"
             };
@@ -142,34 +142,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSourceSsh(string orgId, string adoToken)
-        {
-            var url = $"https://api.github.com/graphql";
-
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type}) { migrationSource { id, name, url, type } }";
-
-            var payload = new
-            {
-                query = $"{query} {{ {gql} }}",
-                variables = new
-                {
-                    name = "Azure DevOps Source",
-                    url = "https://dev.azure.com",
-                    ownerId = orgId,
-                    type = "AZURE_DEVOPS",
-                    accessToken = adoToken
-                },
-                operationName = "createMigrationSource"
-            };
-
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
-
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat, bool ssh = false)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -186,34 +159,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "GITHUB_ARCHIVE",
                     accessToken = githubPat,
-                    githubPat
-                },
-                operationName = "createMigrationSource"
-            };
-
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
-
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-
-        public virtual async Task<string> CreateGhecMigrationSourceSsh(string orgId, string githubPat)
-        {
-            var url = $"https://api.github.com/graphql";
-
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type}) { migrationSource { id, name, url, type } }";
-
-            var payload = new
-            {
-                query = $"{query} {{ {gql} }}",
-                variables = new
-                {
-                    name = "GHEC Source",
-                    url = "https://github.com",
-                    ownerId = orgId,
-                    type = "GITHUB_ARCHIVE",
-                    accessToken = githubPat
+                    githubPat = !ssh ? githubPat : null
                 },
                 operationName = "createMigrationSource"
             };
