@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
@@ -20,66 +20,39 @@ namespace OctoshiftCLI
             _httpClient = httpClient;
         }
 
-        public virtual async Task<string> GetAsync(string url)
+        public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);
+
+        public virtual async Task<string> PostAsync(string url, object body) => await SendAsync(HttpMethod.Post, url, body);
+
+        public virtual async Task<string> PutAsync(string url, object body) => await SendAsync(HttpMethod.Put, url, body);
+
+        public virtual async Task<string> PatchAsync(string url, object body) => await SendAsync(HttpMethod.Patch, url, body);
+
+        private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
         {
             url = url?.Replace(" ", "%20");
 
             ApplyRetryDelay();
-            _log.LogVerbose($"HTTP GET: {url}");
-            var response = await _httpClient.GetAsync(url);
+            _log.LogVerbose($"HTTP {httpMethod}: {url}");
+
+            if (body != null)
+            {
+                _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
+            }
+
+            using var payload = body?.ToJson().ToStringContent();
+            var response = httpMethod.ToString() switch
+            {
+                "GET" => await _httpClient.GetAsync(url),
+                "DELETE" => await _httpClient.DeleteAsync(url),
+                "POST" => await _httpClient.PostAsync(url, payload),
+                "PUT" => await _httpClient.PutAsync(url, payload),
+                "PATCH" => await _httpClient.PatchAsync(url, payload),
+                _ => throw new ArgumentOutOfRangeException($"{httpMethod} is not supported.")
+            };
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
-            response.EnsureSuccessStatusCode();
-            CheckForRetryDelay(response);
 
-            return content;
-        }
-
-        public virtual async Task<string> PostAsync(string url, string body)
-        {
-            url = url?.Replace(" ", "%20");
-
-            ApplyRetryDelay();
-            _log.LogVerbose($"HTTP POST: {url}");
-            _log.LogVerbose($"HTTP BODY: {body}");
-            using var bodyContent = new StringContent(body, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(url, bodyContent);
-            var content = await response.Content.ReadAsStringAsync();
-            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
-            response.EnsureSuccessStatusCode();
-            CheckForRetryDelay(response);
-
-            return content;
-        }
-
-        public virtual async Task<string> PutAsync(string url, string body)
-        {
-            url = url?.Replace(" ", "%20");
-
-            ApplyRetryDelay();
-            _log.LogVerbose($"HTTP PUT: {url}");
-            _log.LogVerbose($"HTTP BODY: {body}");
-            using var bodyContent = new StringContent(body, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PutAsync(url, bodyContent);
-            var content = await response.Content.ReadAsStringAsync();
-            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
-            response.EnsureSuccessStatusCode();
-            CheckForRetryDelay(response);
-
-            return content;
-        }
-
-        public virtual async Task<string> PatchAsync(string url, string body)
-        {
-            url = url?.Replace(" ", "%20");
-
-            ApplyRetryDelay();
-            _log.LogVerbose($"HTTP PATCH: {url}");
-            _log.LogVerbose($"HTTP BODY: {body}");
-            using var bodyContent = new StringContent(body, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PatchAsync(url, bodyContent);
-            var content = await response.Content.ReadAsStringAsync();
-            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
             response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
