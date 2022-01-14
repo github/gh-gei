@@ -72,8 +72,8 @@ namespace OctoshiftCLI.ado2gh.Commands
             var ado = _lazyAdoApi.Value;
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var pipeline = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
-            await ado.ChangePipelineRepo(adoOrg, adoTeamProject, adoPipelineId, pipeline.defaultBranch, pipeline.clean, pipeline.checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
+            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
+            await ado.ChangePipelineRepo(adoOrg, adoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
 
             _log.LogSuccess("Successfully rewired pipeline");
         }
