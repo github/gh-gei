@@ -18,6 +18,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<OctoLogger>()
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
+                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

@@ -2,7 +2,7 @@ using System.Net.Http;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter;
 
-public class GithubApiFactory
+public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApiFactory
 {
     private readonly OctoLogger _octoLogger;
     private readonly HttpClient _client;
@@ -15,14 +15,14 @@ public class GithubApiFactory
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public virtual GithubApi CreateSourceGithubApi()
+    GithubApi ISourceGithubApiFactory.Create()
     {
         var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _client, githubPat);
         return new GithubApi(githubClient);
     }
 
-    public virtual GithubApi CreateTargetGithubClient()
+    GithubApi ITargetGithubApiFactory.Create()
     {
         var githubPat = _environmentVariableProvider.TargetGitHubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _client, githubPat);

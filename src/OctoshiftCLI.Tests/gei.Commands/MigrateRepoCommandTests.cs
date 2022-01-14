@@ -63,8 +63,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.TargetGitHubPersonalAccessToken())
                 .Returns(targetGithubPat);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, new HttpClient(), environmentVariableProviderMock.Object);
-            mockGithubApiFactory.Setup(m => m.CreateTargetGithubClient()).Returns(mockGithub.Object);
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo);
@@ -101,8 +101,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.TargetGitHubPersonalAccessToken())
                 .Returns(targetGithubPat);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, new HttpClient(), environmentVariableProviderMock.Object);
-            mockGithubApiFactory.Setup(m => m.CreateTargetGithubClient()).Returns(mockGithub.Object);
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo, true);

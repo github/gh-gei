@@ -11,12 +11,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class GenerateScriptCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
+        private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
 
-        public GenerateScriptCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory) : base("generate-script")
         {
             _log = log;
-            _githubApiFactory = githubApiFactory;
+            _sourceGithubApiFactory = sourceGithubApiFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -63,7 +63,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSH: true");
             }
 
-            var repos = await GetRepos(_githubApiFactory.CreateSourceGithubApi(), githubSourceOrg);
+            var repos = await GetRepos(_sourceGithubApiFactory.Create(), githubSourceOrg);
 
             var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg, ssh);
 

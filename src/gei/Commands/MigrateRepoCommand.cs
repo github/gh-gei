@@ -7,13 +7,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
+        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _githubApiFactory = githubApiFactory;
+            _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
@@ -75,7 +75,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
 
-            var githubApi = _githubApiFactory.CreateTargetGithubClient();
+            var githubApi = _targetGithubApiFactory.Create();
             var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var targetGithubPat = _environmentVariableProvider.TargetGitHubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);

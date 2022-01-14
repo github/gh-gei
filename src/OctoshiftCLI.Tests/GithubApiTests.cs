@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Tests
                 url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests
             const string teamId = "TEAM_ID";
             var response = $"{{\"id\": \"{teamId}\"}}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
@@ -84,7 +84,7 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -107,15 +107,15 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/memberships/{member}";
 
-            var githubClinetMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
-            githubClinetMock.Setup(m => m.DeleteAsync(url));
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock.Setup(m => m.DeleteAsync(url));
 
             // Act
-            var githubApi = new GithubApi(githubClinetMock.Object);
+            var githubApi = new GithubApi(githubClientMock.Object);
             await githubApi.RemoveTeamMember(org, teamName, member);
 
             // Assert
-            githubClinetMock.Verify(m => m.DeleteAsync(url));
+            githubClientMock.Verify(m => m.DeleteAsync(url));
         }
 
         [Fact]
@@ -144,7 +144,7 @@ namespace OctoshiftCLI.Tests
                 ]
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -175,7 +175,7 @@ namespace OctoshiftCLI.Tests
                 groups = new[] { new { group_id = groupId, group_name = groupName, group_description = groupDesc } }
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
@@ -197,7 +197,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
             var payload = new { permission = role };
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
@@ -230,7 +230,7 @@ namespace OctoshiftCLI.Tests
                     }} 
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -270,7 +270,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -310,7 +310,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -350,7 +350,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -390,7 +390,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -439,7 +439,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -479,7 +479,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -518,7 +518,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -556,7 +556,7 @@ namespace OctoshiftCLI.Tests
                 ]
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -596,7 +596,7 @@ namespace OctoshiftCLI.Tests
               }}
             ]";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -620,7 +620,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
@@ -654,7 +654,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -682,7 +682,7 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"grantMigratorRole\"}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
@@ -719,7 +719,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -747,7 +747,7 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"revokeMigratorRole\"}";
 
-            var githubClientMock = new Mock<GithubClient>(null, new HttpClient(), "pat");
+            var githubClientMock = new Mock<GithubClient>(null, null, null);;
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
