@@ -114,7 +114,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat, bool ssh = false)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -131,7 +131,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "AZURE_DEVOPS",
                     accessToken = adoToken,
-                    githubPat
+                    githubPat = !ssh ? githubPat : null
                 },
                 operationName = "createMigrationSource"
             };
@@ -142,7 +142,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat, bool ssh = false)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -159,7 +159,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "GITHUB_ARCHIVE",
                     accessToken = githubPat,
-                    githubPat
+                    githubPat = !ssh ? githubPat : null
                 },
                 operationName = "createMigrationSource"
             };

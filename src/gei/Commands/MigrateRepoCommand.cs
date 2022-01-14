@@ -35,6 +35,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var ssh = new Option("--ssh")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -44,12 +48,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(sourceRepo);
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
+            AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string sourceRepo, string githubTargetOrg, string targetRepo, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -58,6 +63,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"SOURCE REPO: {sourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {targetRepo}");
+            if (ssh)
+            {
+                _log.LogInformation("SSH: true");
+            }
 
             if (string.IsNullOrWhiteSpace(targetRepo))
             {
@@ -70,7 +79,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubApi = _lazyGithubApi.Value;
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
-            var migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, githubPat);
+            var migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, githubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);

@@ -39,7 +39,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("CLI for GitHub Enterprise Importer.");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())

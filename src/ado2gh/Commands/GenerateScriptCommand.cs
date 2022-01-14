@@ -42,6 +42,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var sshOption = new Option("--ssh")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -52,12 +56,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(outputOption);
             AddOption(reposOnlyOption);
             AddOption(skipIdpOption);
+            AddOption(sshOption);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool verbose = false)
+        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -65,6 +70,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"OUTPUT: {output}");
+            if (ssh)
+            {
+                _log.LogInformation("SSH: true");
+            }
 
             _reposOnly = reposOnly;
 
@@ -77,7 +86,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             CheckForDuplicateRepoNames(repos);
 
-            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp);
+            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp, ssh);
 
             if (output != null)
             {
@@ -212,7 +221,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                                           IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
                                           IDictionary<string, string> appIds,
                                           string githubOrg,
-                                          bool skipIdp)
+                                          bool skipIdp,
+                                          bool ssh)
         {
             if (repos == null)
             {
@@ -258,7 +268,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
                             content.AppendLine(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
-                            content.AppendLine(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
+                            content.AppendLine(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh));
                             content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
                             content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
@@ -310,9 +320,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 : $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
-        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo)
+        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh)
         {
-            return $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            return $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -15,15 +16,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public void Should_Have_Options()
         {
             var command = new GenerateScriptCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("generate-script", command.Name);
-            Assert.Equal(6, command.Options.Count);
+            command.Should().NotBeNull();
+            command.Name.Should().Be("generate-script");
+            command.Options.Count.Should().Be(7);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "repos-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "skip-idp", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -33,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-gh-org";
 
             var command = new GenerateScriptCommand(null, null);
-            var script = command.GenerateScript(null, null, null, githubOrg, false);
+            var script = command.GenerateScript(null, null, null, githubOrg, false, false);
 
             Assert.True(string.IsNullOrWhiteSpace(script));
         }
@@ -54,7 +56,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, false);
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -94,7 +96,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>());
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, false);
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -133,7 +135,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false);
+            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -192,7 +194,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var appIds = new Dictionary<string, string>();
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false);
+            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -238,11 +240,39 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
             reposOnlyField.SetValue(command, true);
 
-            var script = command.GenerateScript(repos, null, null, githubOrg, false);
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
             var expected = $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\"";
+
+            Assert.Equal(expected, script);
+        }
+
+        [Fact]
+        public void Single_Repo_Repos_Only_With_Ssh()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+            reposOnlyField.SetValue(command, true);
+
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ssh";
 
             Assert.Equal(expected, script);
         }
@@ -263,7 +293,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, true);
+            var script = command.GenerateScript(repos, null, null, githubOrg, true, false);
 
             script = TrimNonExecutableLines(script);
 

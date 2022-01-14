@@ -32,6 +32,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var ssh = new Option("--ssh")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -40,12 +44,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubSourceOrgOption);
             AddOption(githubTargetOrgOption);
             AddOption(outputOption);
+            AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string githubTargetOrg, FileInfo output, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string githubTargetOrg, FileInfo output, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -53,10 +58,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"OUTPUT: {output}");
+            if (ssh)
+            {
+                _log.LogInformation("SSH: true");
+            }
 
             var repos = await GetRepos(_lazyGithubApi.Value, githubSourceOrg);
 
-            var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg);
+            var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg, ssh);
 
             if (output != null)
             {
@@ -82,7 +91,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        public string GenerateScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg)
+        public string GenerateScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, bool ssh)
         {
             if (repos == null)
             {
@@ -95,15 +104,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             foreach (var repo in repos)
             {
-                content.AppendLine(MigrateRepoScript(githubSourceOrg, githubTargetOrg, repo));
+                content.AppendLine(MigrateRepoScript(githubSourceOrg, githubTargetOrg, repo, ssh));
             }
 
             return content.ToString();
         }
 
-        private string MigrateRepoScript(string githubSourceOrg, string githubTargetOrg, string repo)
+        private string MigrateRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, bool ssh)
         {
-            return $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            return $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}";
         }
     }
 }
