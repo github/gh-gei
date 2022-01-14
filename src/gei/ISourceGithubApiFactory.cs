@@ -1,6 +1,7 @@
-namespace OctoshiftCLI.GithubEnterpriseImporter;
-
-public interface ISourceGithubApiFactory
+namespace OctoshiftCLI.GithubEnterpriseImporter
 {
-    GithubApi Create();
+    public interface ISourceGithubApiFactory
+    {
+        GithubApi Create();
+    }
 }
