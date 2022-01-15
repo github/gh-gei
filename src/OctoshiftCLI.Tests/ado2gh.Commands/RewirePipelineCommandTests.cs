@@ -35,16 +35,18 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubRepo = "foo-repo";
             var serviceConnectionId = Guid.NewGuid().ToString();
             var pipelineId = 1234;
-            var pipeline = new AdoPipeline();
+            var defaultBranch = "default-branch";
+            var clean = "true";
+            var checkoutSubmodules = "null";
 
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
-            mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns(pipeline);
+            mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
             var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
-            mockAdo.Verify(x => x.ChangePipelineRepo(pipeline, githubOrg, githubRepo, serviceConnectionId));
+            mockAdo.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
         }
     }
 }

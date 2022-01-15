@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
@@ -28,7 +29,6 @@ namespace OctoshiftCLI
                 return userId;
             }
 
-            // TODO: Throw an exception instead
             Console.WriteLine("Unexpected response when retrieving User ID");
             Console.WriteLine(response);
 
@@ -98,32 +98,33 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-    ""contributionIds"": [
-        ""ms.vss-work-web.github-user-data-provider""
-    ],
-    ""dataProviderContext"": {
-        ""properties"": {
-            ""accessToken"": ""GITHUB_TOKEN"",
-            ""sourcePage"": {
-                ""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration#"",
-                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-                ""routeValues"": {
-                    ""project"": ""ADO_TEAMPROJECT"",
-                    ""adminPivot"": ""boards-external-integration"",
-                    ""controller"": ""ContributedPage"",
-                    ""action"": ""Execute"",
-                    ""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.github-user-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        accessToken = githubToken,
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-}";
-            payload = payload.Replace("GITHUB_TOKEN", githubToken);
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -135,29 +136,33 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-	""contributionIds"": [""ms.vss-work-web.azure-boards-external-connection-data-provider""],
-	""dataProviderContext"": {
-		""properties"": {
-			""includeInvalidConnections"": false,
-			""sourcePage"": {
-				""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/work-team"",
-				""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-				""routeValues"": {
-					""project"": ""ADO_TEAMPROJECT"",
-					""adminPivot"": ""work-team"",
-					""controller"": ""ContributedPage"",
-					""action"": ""Execute"",
-					""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
-				}
-			}
-		}
-	}
-}";
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.azure-boards-external-connection-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        includeInvalidConnections = false,
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/work-team",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "work-team",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
+                }
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -178,25 +183,24 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-    ""type"": ""githubboards"",
-    ""url"": ""http://github.com"",
-    ""authorization"": {
-        ""scheme"": ""PersonalAccessToken"",
-        ""parameters"": {
-            ""accessToken"": ""GITHUB_TOKEN""
-        }
-    },
-    ""data"": {
-        ""GitHubHandle"": ""GITHUB_HANDLE""
-    },
-    ""name"": ""ENDPOINT_NAME""
-}";
-
-            payload = payload.Replace("GITHUB_TOKEN", githubToken);
-            payload = payload.Replace("GITHUB_HANDLE", githubHandle);
-            payload = payload.Replace("ENDPOINT_NAME", endpointName);
+            var payload = new
+            {
+                type = "githubboards",
+                url = "http://github.com",
+                authorization = new
+                {
+                    scheme = "PersonalAccessToken",
+                    parameters = new
+                    {
+                        accessToken = githubToken
+                    }
+                },
+                data = new
+                {
+                    GitHubHandle = githubHandle
+                },
+                name = endpointName
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -208,44 +212,42 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-	""contributionIds"": [""ms.vss-work-web.azure-boards-save-external-connection-data-provider""],
-	""dataProviderContext"": {
-		""properties"": {
-			""externalConnection"": {
-				""serviceEndpointId"": ""ENDPOINT_ID"",
-				""connectionName"": ""CONNECTION_NAME"",
-				""connectionId"": ""CONNECTION_ID"",
-				""operation"": 1,
-                ""externalRepositoryExternalIds"": [
-                    REPO_IDS
-                ],
-				""providerKey"": ""github.com"",
-				""isGitHubApp"": false
-			},
-			""sourcePage"": {
-				""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration"",
-				""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-				""routeValues"": {
-					""project"": ""ADO_TEAMPROJECT"",
-					""adminPivot"": ""boards-external-integration"",
-					""controller"": ""ContributedPage"",
-					""action"": ""Execute"",
-					""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
-				}
-			}
-		}
-	}
-}";
-
-            payload = payload.Replace("ENDPOINT_ID", endpointId);
-            payload = payload.Replace("CONNECTION_NAME", connectionName);
-            payload = payload.Replace("CONNECTION_ID", connectionId);
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
-            payload = payload.Replace("REPO_IDS", BuildRepoString(repoIds));
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.azure-boards-save-external-connection-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        externalConnection = new
+                        {
+                            serviceEndpointId = endpointId,
+                            connectionName,
+                            connectionId,
+                            operation = 1,
+                            externalRepositoryExternalIds = repoIds.ToArray(),
+                            providerKey = "github.com",
+                            isGitHubApp = false
+                        },
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
+                }
+            };
 
             await _client.PostAsync(url, payload);
         }
@@ -284,87 +286,77 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
-            var payload = @"
-[{
-    ""name"": ""ADO_ORGANIZATION-ADO_TEAM_PROJECT"",
-	""projectReference"": {
-        ""id"": ""ADO_PROJECT_ID"",
-		""name"": ""ADO_TEAM_PROJECT""
-    }
-}]";
-
-            payload = payload.Replace("ADO_ORGANIZATION", adoOrg);
-            payload = payload.Replace("ADO_TEAM_PROJECT", adoTeamProject);
-            payload = payload.Replace("ADO_PROJECT_ID", adoTeamProjectId);
+            var payload = new[]
+            {
+                new
+                {
+                    name = $"{adoOrg}-{adoTeamProject}",
+                    projectReference = new
+                    {
+                        id = adoTeamProjectId,
+                        name = adoTeamProject
+                    }
+                }
+            };
 
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task<AdoPipeline> GetPipeline(string org, string teamProject, int pipelineId)
+        public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            var result = new AdoPipeline
-            {
-                Id = pipelineId,
-                Org = org,
-                TeamProject = teamProject
-            };
+            var defaultBranch = (string)data["repository"]["defaultBranch"];
 
-            result.DefaultBranch = (string)data["repository"]["defaultBranch"];
-            if (result.DefaultBranch.ToLower().StartsWith("refs/heads/"))
+            if (defaultBranch.ToLower().StartsWith("refs/heads/"))
             {
-                result.DefaultBranch = result.DefaultBranch["refs/heads/".Length..];
+                defaultBranch = defaultBranch["refs/heads/".Length..];
             }
-            result.Clean = (string)data["repository"]["clean"];
-            result.Clean = result.Clean == null ? "null" : result.Clean.ToLower();
-            result.CheckoutSubmodules = (string)data["repository"]["checkoutSubmodules"];
-            result.CheckoutSubmodules = result.CheckoutSubmodules == null ? "null" : result.CheckoutSubmodules.ToLower();
 
-            return result;
+            var clean = (string)data["repository"]["clean"];
+            clean = clean == null ? "null" : clean.ToLower();
+
+            var checkoutSubmodules = (string)data["repository"]["checkoutSubmodules"];
+            checkoutSubmodules = checkoutSubmodules == null ? "null" : checkoutSubmodules.ToLower();
+
+            return (defaultBranch, clean, checkoutSubmodules);
         }
 
-        public virtual async Task ChangePipelineRepo(AdoPipeline pipeline, string githubOrg, string githubRepo, string serviceConnectionId)
+        public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
         {
-            var url = $"https://dev.azure.com/{pipeline?.Org}/{pipeline?.TeamProject}/_apis/build/definitions/{pipeline?.Id}?api-version=6.0";
+            var url = $"https://dev.azure.com/{adoOrg}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            var newRepo = @"
-{
-    ""properties"": {
-        ""apiUrl"": ""https://api.github.com/repos/GITHUB_ORG/GITHUB_REPO"",
-        ""branchesUrl"": ""https://api.github.com/repos/GITHUB_ORG/GITHUB_REPO/branches"",
-        ""cloneUrl"": ""https://github.com/GITHUB_ORG/GITHUB_REPO.git"",
-        ""connectedServiceId"": ""CONNECTED_SERVICE_ID"",
-        ""defaultBranch"": ""DEFAULT_BRANCH"",
-        ""fullName"": ""GITHUB_ORG/GITHUB_REPO"",
-        ""manageUrl"": ""https://github.com/GITHUB_ORG/GITHUB_REPO"",
-        ""orgName"": ""GITHUB_ORG"",
-        ""refsUrl"": ""https://api.github.com/repos/GITHUB_ORG/GITHUB_REPO/git/refs"",
-        ""safeRepository"": ""GITHUB_ORG/GITHUB_REPO"",
-        ""shortName"": ""GITHUB_REPO"",
-        ""reportBuildStatus"": ""true""
-    },
-    ""id"": ""GITHUB_ORG/GITHUB_REPO"",
-    ""type"": ""GitHub"",
-    ""name"": ""GITHUB_ORG/GITHUB_REPO"",
-    ""url"": ""https://github.com/GITHUB_ORG/GITHUB_REPO.git"",
-    ""defaultBranch"": ""DEFAULT_BRANCH"",
-    ""clean"": CLEAN_FLAG,
-    ""checkoutSubmodules"": CHECKOUT_SUBMODULES_FLAG
-}";
-
-            newRepo = newRepo.Replace("GITHUB_ORG", githubOrg);
-            newRepo = newRepo.Replace("GITHUB_REPO", githubRepo);
-            newRepo = newRepo.Replace("DEFAULT_BRANCH", pipeline?.DefaultBranch);
-            newRepo = newRepo.Replace("CLEAN_FLAG", pipeline?.Clean);
-            newRepo = newRepo.Replace("CHECKOUT_SUBMODULES_FLAG", pipeline?.CheckoutSubmodules);
-            newRepo = newRepo.Replace("CONNECTED_SERVICE_ID", serviceConnectionId);
+            var newRepo = new
+            {
+                properties = new
+                {
+                    apiUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}",
+                    branchesUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/branches",
+                    cloneUrl = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                    connectedServiceId,
+                    defaultBranch,
+                    fullName = $"{githubOrg}/{githubRepo}",
+                    manageUrl = $"https://github.com/{githubOrg}/{githubRepo}",
+                    orgName = githubOrg,
+                    refsUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/git/refs",
+                    safeRepository = $"{githubOrg}/{githubRepo}",
+                    shortName = githubRepo,
+                    reportBuildStatus = true
+                },
+                id = $"{githubOrg}/{githubRepo}",
+                type = "GitHub",
+                name = $"{githubOrg}/{githubRepo}",
+                url = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                defaultBranch,
+                clean,
+                checkoutSubmodules
+            };
 
             var payload = new JObject();
 
@@ -372,51 +364,48 @@ namespace OctoshiftCLI
             {
                 if (prop.Name == "repository")
                 {
-                    prop.Value = JObject.Parse(newRepo);
+                    prop.Value = JObject.Parse(newRepo.ToJson());
                 }
 
                 payload.Add(prop.Name, prop.Value);
             }
 
-            await _client.PutAsync(url, payload.ToString());
+            await _client.PutAsync(url, payload.ToObject(typeof(object)));
         }
 
         public virtual async Task<string> GetBoardsGithubRepoId(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-    ""contributionIds"": [
-        ""ms.vss-work-web.github-user-repository-data-provider""
-    ],
-    ""dataProviderContext"": {
-        ""properties"": {
-            ""projectId"": ""ADO_TEAMPROJECTID"",
-            ""repoWithOwnerName"": ""GITHUB_ORG/GITHUB_REPO"",
-            ""serviceEndpointId"": ""ENDPOINT_ID"",
-            ""sourcePage"": {
-                ""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration#"",
-                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-                ""routeValues"": {
-                    ""project"": ""ADO_TEAMPROJECT"",
-                    ""adminPivot"": ""boards-external-integration"",
-                    ""controller"": ""ContributedPage"",
-                    ""action"": ""Execute"",
-                    ""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.github-user-repository-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        projectId = teamProjectId,
+                        repoWithOwnerName = $"{githubOrg}/{githubRepo}",
+                        serviceEndpointId = endpointId,
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-}";
-
-            payload = payload.Replace("ADO_TEAMPROJECTID", teamProjectId);
-            payload = payload.Replace("GITHUB_ORG", githubOrg);
-            payload = payload.Replace("ENDPOINT_ID", endpointId);
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
-            payload = payload.Replace("GITHUB_REPO", githubRepo);
+            };
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -428,42 +417,43 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-            var payload = @"
-{
-    ""contributionIds"": [
-        ""ms.vss-work-web.azure-boards-save-external-connection-data-provider""
-    ],
-    ""dataProviderContext"": {
-        ""properties"": {
-            ""externalConnection"": {
-                ""serviceEndpointId"": ""ENDPOINT_ID"",
-                ""operation"": 0,
-                ""externalRepositoryExternalIds"": [
-                    ""REPO_ID""
-                ],
-                ""providerKey"": ""github.com"",
-                ""isGitHubApp"": false
-            },
-            ""sourcePage"": {
-                ""url"": ""https://dev.azure.com/ADO_ORGANIZATION/ADO_TEAMPROJECT/_settings/boards-external-integration#"",
-                ""routeId"": ""ms.vss-admin-web.project-admin-hub-route"",
-                ""routeValues"": {
-                    ""project"": ""ADO_TEAMPROJECT"",
-                    ""adminPivot"": ""boards-external-integration"",
-                    ""controller"": ""ContributedPage"",
-                    ""action"": ""Execute"",
-                    ""serviceHost"": ""ADO_ORGID (ADO_ORGANIZATION)""
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-work-web.azure-boards-save-external-connection-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        externalConnection = new
+                        {
+                            serviceEndpointId = endpointId,
+                            operation = 0,
+                            externalRepositoryExternalIds = new[]
+                            {
+                                repoId
+                            },
+                            providerKey = "github.com",
+                            isGitHubApp = false
+                        },
+                        sourcePage = new
+                        {
+                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
+                            routeId = "ms.vss-admin-web.project-admin-hub-route",
+                            routeValues = new
+                            {
+                                project = teamProject,
+                                adminPivot = "boards-external-integration",
+                                controller = "ContributedPage",
+                                action = "Execute",
+                                serviceHost = $"{orgId} ({org})"
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-}";
-
-            payload = payload.Replace("ENDPOINT_ID", endpointId);
-            payload = payload.Replace("ADO_ORGANIZATION", org);
-            payload = payload.Replace("ADO_TEAMPROJECT", teamProject);
-            payload = payload.Replace("ADO_ORGID", orgId);
-            payload = payload.Replace("REPO_ID", repoId);
+            };
 
             await _client.PostAsync(url, payload);
         }
@@ -478,7 +468,7 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
-            var payload = "{ \"isDisabled\": true }";
+            var payload = new { isDisabled = true };
             await _client.PatchAsync(url, payload);
         }
 
@@ -498,41 +488,29 @@ namespace OctoshiftCLI
 
             var url = $"https://dev.azure.com/{org}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
 
-            var payload = @"
-{
-  ""token"": ""repoV2/TEAM_PROJECT_ID/REPO_ID"",
-  ""merge"": true,
-  ""accessControlEntries"": [
-    {
-      ""descriptor"": ""IDENTITY_DESCRIPTOR"",
-      ""allow"": 0,
-      ""deny"": 56828,
-      ""extendedInfo"": {
-        ""effectiveAllow"": 0,
-        ""effectiveDeny"": 56828,
-        ""inheritedAllow"": 0,
-        ""inheritedDeny"": 56828
-      }
-    }
-  ]
-}
-";
-
-            payload = payload.Replace("TEAM_PROJECT_ID", teamProjectId);
-            payload = payload.Replace("REPO_ID", repoId);
-            payload = payload.Replace("IDENTITY_DESCRIPTOR", identityDescriptor);
+            var payload = new
+            {
+                token = $"repoV2/{teamProjectId}/{repoId}",
+                merge = true,
+                accessControlEntries = new[]
+                {
+                    new
+                    {
+                        descriptor = identityDescriptor,
+                        allow = 0,
+                        deny = 56828,
+                        extendedInfo = new
+                        {
+                            effectiveAllow = 0,
+                            effectiveDeny = 56828,
+                            inheritedAllow = 0,
+                            inheritedDeny = 56828
+                        }
+                    }
+                }
+            };
 
             await _client.PostAsync(url, payload);
         }
-    }
-
-    public class AdoPipeline
-    {
-        public int Id { get; set; }
-        public string Org { get; set; }
-        public string TeamProject { get; set; }
-        public string DefaultBranch { get; set; }
-        public string Clean { get; set; }
-        public string CheckoutSubmodules { get; set; }
     }
 }
