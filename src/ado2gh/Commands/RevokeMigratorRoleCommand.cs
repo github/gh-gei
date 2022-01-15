@@ -15,6 +15,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log = log;
             _lazyGithubApi = lazyGithubApi;
             Description = "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT env variable to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

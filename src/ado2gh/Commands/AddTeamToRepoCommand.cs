@@ -16,6 +16,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _lazyGithubApi = lazyGithubApi;
 
             Description = "Adds a team to a repo with a specific role/permission";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT env variable to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

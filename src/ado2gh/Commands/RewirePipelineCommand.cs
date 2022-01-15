@@ -16,6 +16,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _lazyAdoApi = lazyAdoApi;
 
             Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects ADO_PAT env variable to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

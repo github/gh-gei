@@ -16,6 +16,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _lazyGithubApi = lazyGithubApi;
 
             Description = "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT env variable to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

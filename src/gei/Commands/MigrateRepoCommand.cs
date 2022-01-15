@@ -8,16 +8,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<GithubApi> _lazyGithubApi;
+        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _lazyGithubApi = lazyGithubApi;
+            _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data";
+            Description = "Invokes the GitHub API's to migrate the repo and all PR data.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -76,10 +78,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
 
-            var githubApi = _lazyGithubApi.Value;
-            var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubApi = _targetGithubApiFactory.Create();
+            var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
+            var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
-            var migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, githubPat, ssh);
+            var migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);
 
             var migrationState = await githubApi.GetMigrationState(migrationId);

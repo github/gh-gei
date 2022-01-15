@@ -142,7 +142,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string githubPat, bool ssh = false)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat, bool ssh = false)
         {
             var url = $"https://api.github.com/graphql";
 
@@ -158,8 +158,8 @@ namespace OctoshiftCLI
                     url = "https://github.com",
                     ownerId = orgId,
                     type = "GITHUB_ARCHIVE",
-                    accessToken = githubPat,
-                    githubPat = !ssh ? githubPat : null
+                    accessToken = sourceGithubPat,
+                    githubPat = !ssh ? targetGithubPat : null
                 },
                 operationName = "createMigrationSource"
             };

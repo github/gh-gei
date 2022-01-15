@@ -1,9 +1,7 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
@@ -19,16 +17,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddCommands()
                 .AddSingleton<OctoLogger>()
                 .AddSingleton<EnvironmentVariableProvider>()
-                .AddSingleton<GithubApi>()
-                .AddTransient(sp => new Lazy<GithubApi>(sp.GetRequiredService<GithubApi>))
-                .AddHttpClient<GithubClient>((sp, client) =>
-                {
-                    client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                    client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
-                    client.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
-                    var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubPersonalAccessToken();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
-                });
+                .AddSingleton<GithubApiFactory>()
+                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
