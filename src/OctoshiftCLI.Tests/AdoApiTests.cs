@@ -636,11 +636,11 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetPipeline(org, teamProject, pipelineId);
+            var (DefaultBranch, Clean, CheckoutSubmodules) = await sut.GetPipeline(org, teamProject, pipelineId);
 
-            result.defaultBranch.Should().Be(branchName);
-            result.clean.Should().Be("true");
-            result.checkoutSubmodules.Should().Be("null");
+            DefaultBranch.Should().Be(branchName);
+            Clean.Should().Be("true");
+            CheckoutSubmodules.Should().Be("null");
         }
 
         [Fact]

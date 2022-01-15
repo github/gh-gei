@@ -302,7 +302,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task<(string defaultBranch, string clean, string checkoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
+        public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -325,7 +325,6 @@ namespace OctoshiftCLI
             return (defaultBranch, clean, checkoutSubmodules);
         }
 
-        //public virtual async Task ChangePipelineRepo(AdoPipeline pipeline, string githubOrg, string githubRepo, string connectedServiceId)
         public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
         {
             var url = $"https://dev.azure.com/{adoOrg}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
@@ -514,14 +513,4 @@ namespace OctoshiftCLI
             await _client.PostAsync(url, payload);
         }
     }
-
-    //public class AdoPipeline
-    //{
-    //    public int Id { get; set; }
-    //    public string Org { get; set; }
-    //    public string TeamProject { get; set; }
-    //    public string DefaultBranch { get; set; }
-    //    public string Clean { get; set; }
-    //    public string CheckoutSubmodules { get; set; }
-    //}
 }
