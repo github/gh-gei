@@ -11,14 +11,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class GenerateScriptCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<GithubApi> _lazyGithubApi;
+        private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
 
-        public GenerateScriptCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory) : base("generate-script")
         {
             _log = log;
-            _lazyGithubApi = lazyGithubApi;
+            _sourceGithubApiFactory = sourceGithubApiFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_SOURCE_PAT or GH_PAT env variable to be set.";
 
             var githubSourceOrgOption = new Option<string>("--github-source-org")
             {
@@ -63,7 +65,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSH: true");
             }
 
-            var repos = await GetRepos(_lazyGithubApi.Value, githubSourceOrg);
+            var repos = await GetRepos(_sourceGithubApiFactory.Create(), githubSourceOrg);
 
             var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg, ssh);
 

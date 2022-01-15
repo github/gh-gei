@@ -21,6 +21,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
+            Description += Environment.NewLine;
+            Description += "Note: Expects ADO_PAT and GH_PAT env variables to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -10,10 +11,18 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient)
+        public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+
+            if (_httpClient != null)
+            {
+                _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
+                _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
+            }
         }
 
         public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);
