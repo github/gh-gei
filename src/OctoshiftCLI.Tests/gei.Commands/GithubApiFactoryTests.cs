@@ -4,59 +4,62 @@ using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
-
-public class GithubApiFactoryTests
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
-    private const string SOURCE_GH_PAT = "SOURCE_GH_PAT";
-    private const string TARGET_GH_PAT = "TARGET_GH_PAT";
-
-    private readonly OctoLogger _logger;
-
-    public GithubApiFactoryTests()
+    public class GithubApiFactoryTests
     {
-        _logger = new Mock<OctoLogger>().Object;
-    }
+        private const string SOURCE_GH_PAT = "SOURCE_GH_PAT";
+        private const string TARGET_GH_PAT = "TARGET_GH_PAT";
 
-    [Fact]
-    public void GithubApiFactory_Should_Create_GithubApi_For_Source_Github_Api()
-    {
-        // Arrange
-        var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
-        environmentVariableProviderMock
-            .Setup(m => m.SourceGithubPersonalAccessToken())
-            .Returns(SOURCE_GH_PAT);
+        private readonly OctoLogger _logger;
 
-        using var httpClient = new HttpClient();
+        public GithubApiFactoryTests()
+        {
+            _logger = new Mock<OctoLogger>().Object;
+        }
 
-        // Act
-        ISourceGithubApiFactory factory = new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
-        var githubApi = factory.Create();
+        [Fact]
+        public void GithubApiFactory_Should_Create_GithubApi_For_Source_Github_Api()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
+            environmentVariableProviderMock
+                .Setup(m => m.SourceGithubPersonalAccessToken())
+                .Returns(SOURCE_GH_PAT);
 
-        // Assert
-        githubApi.Should().BeOfType<GithubApi>();
-        httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(SOURCE_GH_PAT);
-        httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
-    }
+            using var httpClient = new HttpClient();
 
-    [Fact]
-    public void GithubApiFactory_Should_Create_GithubApi_For_Target_Github_Api()
-    {
-        // Arrange
-        var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
-        environmentVariableProviderMock
-            .Setup(m => m.TargetGithubPersonalAccessToken())
-            .Returns(TARGET_GH_PAT);
+            // Act
+            ISourceGithubApiFactory factory =
+                new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
+            var githubApi = factory.Create();
 
-        using var httpClient = new HttpClient();
+            // Assert
+            githubApi.Should().BeOfType<GithubApi>();
+            httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(SOURCE_GH_PAT);
+            httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
+        }
 
-        // Act
-        ITargetGithubApiFactory factory = new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
-        var githubApi = factory.Create();
+        [Fact]
+        public void GithubApiFactory_Should_Create_GithubApi_For_Target_Github_Api()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
+            environmentVariableProviderMock
+                .Setup(m => m.TargetGithubPersonalAccessToken())
+                .Returns(TARGET_GH_PAT);
 
-        // Assert
-        githubApi.Should().BeOfType<GithubApi>();
-        httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(TARGET_GH_PAT);
-        httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
+            using var httpClient = new HttpClient();
+
+            // Act
+            ITargetGithubApiFactory factory =
+                new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
+            var githubApi = factory.Create();
+
+            // Assert
+            githubApi.Should().BeOfType<GithubApi>();
+            httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(TARGET_GH_PAT);
+            httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
+        }
     }
 }
