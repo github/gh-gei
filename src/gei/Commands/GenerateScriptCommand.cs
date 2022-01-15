@@ -19,6 +19,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _sourceGithubApiFactory = sourceGithubApiFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_SOURCE_PAT or GH_PAT env variable to be set.";
 
             var githubSourceOrgOption = new Option<string>("--github-source-org")
             {

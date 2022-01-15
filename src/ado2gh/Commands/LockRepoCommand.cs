@@ -16,6 +16,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _lazyAdoApi = lazyAdoApi;
 
             Description = "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects ADO_PAT env variable to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
