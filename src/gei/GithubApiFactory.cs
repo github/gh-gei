@@ -25,7 +25,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         GithubApi ITargetGithubApiFactory.Create()
         {
-            var githubPat = _environmentVariableProvider.TargetGitHubPersonalAccessToken();
+            var githubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _client, githubPat);
             return new GithubApi(githubClient);
         }

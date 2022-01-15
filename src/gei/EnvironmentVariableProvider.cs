@@ -2,7 +2,6 @@ using System;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
 {
-
     public class EnvironmentVariableProvider
     {
         private const string SOURCE_GH_PAT = "GH_SOURCE_PAT";
@@ -14,14 +13,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _logger = logger;
         }
 
-        public virtual string SourceGithubPersonalAccessToken() => GetSecret(SOURCE_GH_PAT);
+        public virtual string SourceGithubPersonalAccessToken() => GetSecret(SOURCE_GH_PAT) ?? TargetGithubPersonalAccessToken();
 
-        public virtual string TargetGitHubPersonalAccessToken() => GetSecret(TARGET_GH_PAT);
+        public virtual string TargetGithubPersonalAccessToken() =>
+            GetSecret(TARGET_GH_PAT) ??
+            throw new ArgumentNullException($"{TARGET_GH_PAT} environment variable is not set.");
 
         private string GetSecret(string secretName)
         {
-            var secret = Environment.GetEnvironmentVariable(secretName) ??
-                         throw new ArgumentNullException($"{secretName} environment variable is not set.");
+            var secret = Environment.GetEnvironmentVariable(secretName);
+
+            if (secret is null)
+            {
+                return null;
+            }
 
             _logger?.RegisterSecret(secret);
 

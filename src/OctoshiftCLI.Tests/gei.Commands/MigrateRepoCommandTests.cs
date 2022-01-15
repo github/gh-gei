@@ -59,7 +59,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.SourceGithubPersonalAccessToken())
                 .Returns(sourceGithubPat);
             environmentVariableProviderMock
-                .Setup(m => m.TargetGitHubPersonalAccessToken())
+                .Setup(m => m.TargetGithubPersonalAccessToken())
                 .Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.SourceGithubPersonalAccessToken())
                 .Returns(sourceGithubPat);
             environmentVariableProviderMock
-                .Setup(m => m.TargetGitHubPersonalAccessToken())
+                .Setup(m => m.TargetGithubPersonalAccessToken())
                 .Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();

@@ -77,7 +77,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create();
             var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var targetGithubPat = _environmentVariableProvider.TargetGitHubPersonalAccessToken();
+            var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             var migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo);
