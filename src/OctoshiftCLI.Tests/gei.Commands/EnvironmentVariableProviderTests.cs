@@ -23,6 +23,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             // Arrange
             Environment.SetEnvironmentVariable("GH_SOURCE_PAT", SOURCE_GH_PAT);
+            Environment.SetEnvironmentVariable("GH_PAT", null);
 
             // Act
             var result = _environmentVariableProvider.SourceGithubPersonalAccessToken();
@@ -34,6 +35,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void SourceGithubPersonalAccessToken_Throws_If_Github_Source_And_Target_Pats_Are_Not_Set()
         {
+            // Arrange
+            Environment.SetEnvironmentVariable("GH_SOURCE_PAT", null);
+            Environment.SetEnvironmentVariable("GH_PAT", null);
+
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.SourceGithubPersonalAccessToken())
                 .Should().Throw<ArgumentNullException>();
@@ -43,6 +48,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void SourceGithubPersonalAccessToken_Falls_Back_To_Github_Target_Pat_If_Github_Source_Pat_Is_Not_Set()
         {
             // Arrange
+            Environment.SetEnvironmentVariable("GH_SOURCE_PAT", null);
             Environment.SetEnvironmentVariable("GH_PAT", TARGET_GH_PAT);
 
             // Act
@@ -57,6 +63,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void TargetGithubPersonalAccessToken_Should_Return_Github_Target_Pat()
         {
             // Arrange
+            Environment.SetEnvironmentVariable("GH_SOURCE_PAT", null);
             Environment.SetEnvironmentVariable("GH_PAT", TARGET_GH_PAT);
 
             // Act
@@ -69,6 +76,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void TargetGithubPersonalAccessToken_Throws_If_Github_Source_Pat_Is_Not_Set()
         {
+            Environment.SetEnvironmentVariable("GH_SOURCE_PAT", SOURCE_GH_PAT);
+            Environment.SetEnvironmentVariable("GH_PAT", null);
+
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.TargetGithubPersonalAccessToken())
                 .Should().Throw<ArgumentNullException>();
