@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -33,7 +34,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
 
-            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object));
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+
+            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId));

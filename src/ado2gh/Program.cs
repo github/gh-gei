@@ -1,10 +1,7 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Commands;
@@ -20,26 +17,9 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddCommands()
                 .AddSingleton<OctoLogger>()
                 .AddSingleton<EnvironmentVariableProvider>()
-                .AddSingleton<GithubApi>()
-                .AddSingleton<AdoApi>()
-                .AddTransient(sp => new Lazy<GithubApi>(sp.GetRequiredService<GithubApi>))
-                .AddTransient(sp => new Lazy<AdoApi>(sp.GetRequiredService<AdoApi>))
-                .AddHttpClient<GithubClient>((sp, client) =>
-                {
-                    client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                    client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", "0.1"));
-                    client.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
-                    var githubToken = sp.GetRequiredService<EnvironmentVariableProvider>().GithubPersonalAccessToken();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
-                })
-                .Services
-                .AddHttpClient<AdoClient>((sp, client) =>
-                {
-                    client.DefaultRequestHeaders.Add("accept", "application/json");
-                    var adoToken = sp.GetRequiredService<EnvironmentVariableProvider>().AdoPersonalAccessToken();
-                    var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{adoToken}"));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
-                });
+                .AddSingleton<AdoApiFactory>()
+                .AddSingleton<GithubApiFactory>()
+                .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
 

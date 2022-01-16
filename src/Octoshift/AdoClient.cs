@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -14,10 +16,17 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private double _retryDelay;
 
-        public AdoClient(OctoLogger log, HttpClient httpClient)
+        public AdoClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+
+            if (_httpClient != null)
+            {
+                _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+                var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{personalAccessToken}"));
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+            }
         }
 
         public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);

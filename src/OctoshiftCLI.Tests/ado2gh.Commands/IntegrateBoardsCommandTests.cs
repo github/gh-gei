@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -54,7 +55,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
@@ -92,7 +96,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
@@ -133,7 +140,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, new Lazy<AdoApi>(mockAdo.Object),
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+
+            var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 

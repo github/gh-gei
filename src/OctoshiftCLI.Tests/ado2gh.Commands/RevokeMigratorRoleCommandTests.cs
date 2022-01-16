@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -33,7 +34,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+
+            var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
