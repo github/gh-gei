@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
+    [Collection("Environment Variables")]
     public class EnvironmentVariableProviderTests
     {
         private const string ADO_PAT = "ADO_PAT";
