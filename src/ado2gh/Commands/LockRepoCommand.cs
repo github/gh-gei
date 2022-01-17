@@ -8,12 +8,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class LockRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<AdoApi> _lazyAdoApi;
+        private readonly AdoApiFactory _adoApiFactory;
 
-        public LockRepoCommand(OctoLogger log, Lazy<AdoApi> lazyAdoApi) : base("lock-ado-repo")
+        public LockRepoCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("lock-ado-repo")
         {
             _log = log;
-            _lazyAdoApi = lazyAdoApi;
+            _adoApiFactory = adoApiFactory;
 
             Description = "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo.";
             Description += Environment.NewLine;
@@ -53,7 +53,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"ADO REPO: {adoRepo}");
 
-            var ado = _lazyAdoApi.Value;
+            var ado = _adoApiFactory.Create();
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);

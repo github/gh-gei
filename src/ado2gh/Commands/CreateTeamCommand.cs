@@ -8,12 +8,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class CreateTeamCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<GithubApi> _lazyGithubApi;
+        private readonly GithubApiFactory _githubApiFactory;
 
-        public CreateTeamCommand(OctoLogger log, Lazy<GithubApi> lazyGithubApi) : base("create-team")
+        public CreateTeamCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("create-team")
         {
             _log = log;
-            _lazyGithubApi = lazyGithubApi;
+            _githubApiFactory = githubApiFactory;
 
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
             Description += Environment.NewLine;
@@ -53,7 +53,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"TEAM NAME: {teamName}");
             _log.LogInformation($"IDP GROUP: {idpGroup}");
 
-            var githubApi = _lazyGithubApi.Value;
+            var githubApi = _githubApiFactory.Create();
 
             await githubApi.CreateTeam(githubOrg, teamName);
 
@@ -75,7 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
                 var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
 
-                await _lazyGithubApi.Value.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+                await _githubApiFactory.Create().AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
                 _log.LogSuccess("Successfully linked team to Idp group");
             }

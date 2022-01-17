@@ -13,12 +13,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     {
         private bool _reposOnly;
         private readonly OctoLogger _log;
-        private readonly Lazy<AdoApi> _lazyAdoApi;
+        private readonly AdoApiFactory _adoApiFactory;
 
-        public GenerateScriptCommand(OctoLogger log, Lazy<AdoApi> lazyAdoApi) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("generate-script")
         {
             _log = log;
-            _lazyAdoApi = lazyAdoApi;
+            _adoApiFactory = adoApiFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
@@ -79,7 +79,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             _reposOnly = reposOnly;
 
-            var ado = _lazyAdoApi.Value;
+            var ado = _adoApiFactory.Create();
 
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs);

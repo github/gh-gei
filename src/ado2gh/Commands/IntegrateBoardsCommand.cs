@@ -10,16 +10,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class IntegrateBoardsCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<AdoApi> _lazyAdoApi;
+        private readonly AdoApiFactory _adoApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public IntegrateBoardsCommand(
             OctoLogger log,
-            Lazy<AdoApi> lazyAdoApi,
+            AdoApiFactory adoApiFactory,
             EnvironmentVariableProvider environmentVariableProvider) : base("integrate-boards")
         {
             _log = log;
-            _lazyAdoApi = lazyAdoApi;
+            _adoApiFactory = adoApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
@@ -66,7 +66,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
-            var ado = _lazyAdoApi.Value;
+            var ado = _adoApiFactory.Create();
             var githubToken = _environmentVariableProvider.GithubPersonalAccessToken();
 
             var userId = await ado.GetUserId();

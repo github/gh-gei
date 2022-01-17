@@ -8,16 +8,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly Lazy<GithubApi> _lazyGithubApi;
+        private readonly GithubApiFactory _githubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public MigrateRepoCommand(
             OctoLogger log,
-            Lazy<GithubApi> lazyGithubApi,
+            GithubApiFactory githubApiFactory,
             EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
         {
             _log = log;
-            _lazyGithubApi = lazyGithubApi;
+            _githubApiFactory = githubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
@@ -83,7 +83,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var adoToken = _environmentVariableProvider.AdoPersonalAccessToken();
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _lazyGithubApi.Value;
+            var githubApi = _githubApiFactory.Create();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);

@@ -1,7 +1,7 @@
-using System;
 using System.CommandLine;
 using System.Threading.Tasks;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -33,8 +33,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var role = "maintain";
 
             var mockGithub = new Mock<GithubApi>(null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
@@ -49,8 +51,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var role = "read";  // read is not a valid role
 
             var mockGithub = new Mock<GithubApi>(null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
 
             var root = new RootCommand();
             root.AddCommand(command);

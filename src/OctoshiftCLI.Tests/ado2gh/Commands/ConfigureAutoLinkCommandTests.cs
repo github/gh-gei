@@ -1,6 +1,6 @@
-using System;
 using System.Threading.Tasks;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -32,8 +32,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoTeamProject = "foo-ado-tp";
 
             var mockGithub = new Mock<GithubApi>(null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, new Lazy<GithubApi>(mockGithub.Object));
+            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject));

@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubApi = factory.Create();
 
             // Assert
-            githubApi.Should().BeOfType<GithubApi>();
+            githubApi.Should().NotBeNull();
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(SOURCE_GH_PAT);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
         }
@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubApi = factory.Create();
 
             // Assert
-            githubApi.Should().BeOfType<GithubApi>();
+            githubApi.Should().NotBeNull();
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(TARGET_GH_PAT);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
         }

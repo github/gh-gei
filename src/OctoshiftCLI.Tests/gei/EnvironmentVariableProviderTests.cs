@@ -6,6 +6,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
+    [Collection("Environment Variables")]
     public class EnvironmentVariableProviderTests
     {
         private const string SOURCE_GH_PAT = "SOURCE_GH_PAT";
