@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"";
+            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"";
 
             script.Should().Be(expected);
         }
@@ -70,11 +70,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\"";
+            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\"";
             expected += Environment.NewLine;
-            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\"";
+            expected += $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\"";
             expected += Environment.NewLine;
-            expected += $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\"";
+            expected += $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\"";
 
             script.Should().Be(expected);
         }
@@ -93,7 +93,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"./gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh";
+            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh";
 
             script.Should().Be(expected);
         }
