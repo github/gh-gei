@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var result = factory.Create();
 
             // Assert
-            result.Should().BeOfType<GithubApi>();
+            result.Should().NotBeNull();
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(GH_PAT);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
         }

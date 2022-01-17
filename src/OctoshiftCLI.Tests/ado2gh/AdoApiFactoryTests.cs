@@ -6,7 +6,7 @@ using Moq;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub
 {
     public class AdoApiFactoryTests
     {
@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var result = factory.Create();
 
             // Assert
-            result.Should().BeOfType<AdoApi>();
+            result.Should().NotBeNull();
 
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{ADO_PAT}"));
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
