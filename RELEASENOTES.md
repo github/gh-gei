@@ -1,2 +1,1 @@
-# Release Notes
-- fixed bug where using --ssh flag would cause the migration to crash
+
