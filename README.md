@@ -20,12 +20,12 @@ Learn more about what exactly is migrated and any limitations in the [GEI docume
 ## Quick Start Videos
 You'll find videos below to help you quickly get started with the GEI CLI. Be sure to pick the videos relevant to your migration scenario. 
 
-**Migrating GitHub to GitHub**
+### Migrating GitHub to GitHub
 The quick start video below will help you start migrating between GitHub organizations. 
 
 * Migrating GitHub to GitHub with the GEI CLI: https://youtu.be/5cQkM_8n5YY
 
-**Migrating from Azure DevOps to GitHub**
+### Migrating from Azure DevOps to GitHub
 Video guides below will help you get started with your first migration. Then help you build up to orchestrating a complete end-to-end production migration. 
 * Running your first few migrations: https://www.youtube.com/watch?v=yfnXbwtXY80
 * Orchestrating an end-to-end production migration: https://www.youtube.com/watch?v=AtFB-U1Og4c
@@ -33,7 +33,7 @@ Video guides below will help you get started with your first migration. Then hel
 
 ## GitHub to GitHub Migration Usage
 
-GEI-CLI is a cross-platform .NET Core console application. Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from a GitHub organization. To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run *gh extension install github/gh-gei* to install the GEI CLI. 
+GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from a GitHub organization. To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run *gh extension install github/gh-gei* to install the GEI CLI. 
 
 ### Command line
 ```
