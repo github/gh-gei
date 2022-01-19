@@ -512,5 +512,12 @@ namespace OctoshiftCLI
 
             await _client.PostAsync(url, payload);
         }
+
+        public virtual async Task DeleteTeamProject(string org, string teamProjectId)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
+
+            _client.DeleteAsync(url);
+        }
     }
 }
