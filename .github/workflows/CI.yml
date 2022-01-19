@@ -43,14 +43,13 @@ jobs:
       run: dotnet build src/OctoshiftCLI.sln --no-restore /p:TreatWarningsAsErrors=true
 
     - name: Unit Test
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
+      run: dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
     - name: Integration Test
-      if: false
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
-      run: dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\~Integration --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
 
     - name: Copy Coverage To Predictable Location
       run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
