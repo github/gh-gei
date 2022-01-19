@@ -517,7 +517,7 @@ namespace OctoshiftCLI
         {
             var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
 
-            _client.DeleteAsync(url);
+            await _client.DeleteAsync(url);
         }
     }
 }
