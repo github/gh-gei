@@ -18,14 +18,49 @@ GEI-CLI is continuing to expand what it can support. However, it supports the fo
 Learn more about what exactly is migrated and any limitations in the [GEI documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer/about-github-enterprise-importer). 
 
 ## Quick Start Videos
-Check out the below videos for getting quickly getting started with the GEI-CLI.
+You'll find videos below to help you quickly get started with the GEI CLI. Be sure to pick the videos relevant to your migration scenario. 
 
+### Migrating GitHub to GitHub
+The quick start video below will help you start migrating between GitHub organizations. 
+
+* Migrating GitHub to GitHub with the GEI CLI: https://youtu.be/5cQkM_8n5YY
+
+### Migrating from Azure DevOps to GitHub
+Video guides below will help you get started with your first migration. Then help you build up to orchestrating a complete end-to-end production migration. 
 * Running your first few migrations: https://www.youtube.com/watch?v=yfnXbwtXY80
 * Orchestrating an end-to-end production migration: https://www.youtube.com/watch?v=AtFB-U1Og4c
 
-## Usage
 
-GEI-CLI is a cross-platform .NET Core console application.  Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
+## GitHub to GitHub Migration Usage
+
+GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from a GitHub organization. To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run *gh extension install github/gh-gei* to install the GEI CLI. 
+
+### Command line
+```
+gh-gei
+  CLI for GitHub Enterprise Importer.
+
+Usage:
+  gh-gei [options] [command]
+
+Options:
+  --version       Show version information
+  -?, -h, --help  Show help and usage information
+
+Commands:
+  generate-script  Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally 
+                   modify the script if desired before running it.
+                   Note: Expects GH_SOURCE_PAT or GH_PAT env variable to be set.
+  migrate-repo     Invokes the GitHub API's to migrate the repo and all PR data.
+                   Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used 
+                   instead.
+```
+
+To generate a script, you'll need to set an `GH_PAT` as an environment variable for your destination and `GH_SOURCE_PAT` for your source location. 
+
+## Azure DevOps to GitHub Migration Usage
+
+GEI-CLI is a cross-platform .NET Core console application. Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
 
 ### Command line
 ```
@@ -112,9 +147,8 @@ Once you have configured the `octoshift`(*gh-gei*) command-line tool and `enviro
 ![octoshift help](https://user-images.githubusercontent.com/29484535/145065029-ea8b3fcd-fcea-4f9b-ba7e-f9d3407e17fa.png)
 
 The first step you will want to run is `generate-script` to help outline all commands to migrate an entire **Azure Project**
-This command will generate a `octoshift.sh` file in the local folder. You will want to open it with an editor tool as it can be quite large. It's recommended that you include the `--repos-only` flag the first time. 
+This command will generate a `migrate.ps1` file in the local folder. You will want to open it with an editor tool as it can be quite large. It's recommended that you include the `--repos-only` flag the first time. 
 Tools like `Atom`, `VSCode`, or `NotePad++` are great ways to see the data.
-As you can see from the data, it builds out the command-line options one after another to migrate all repositories, lock repositories, create teams, etc.
 
 You can then use this as a guide to pick and choose which commands you would like to run.
 
