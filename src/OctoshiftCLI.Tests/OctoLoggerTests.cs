@@ -76,7 +76,7 @@ namespace OctoshiftCLI.Tests
         public void LogError_For_Unexpected_Exception_Should_Log_Generic_Error_Message_In_Non_Verbose_Mode()
         {
             // Arrange
-            const string genericErrorMessage = "An unexpeted error happened. Please see the logs for details.";
+            const string genericErrorMessage = "An unexpected error happened. Please see the logs for details.";
 
             string console = null;
             string log = null;
