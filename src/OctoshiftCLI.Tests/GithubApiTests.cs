@@ -778,5 +778,60 @@ namespace OctoshiftCLI.Tests
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
+
+        [Fact]
+        public async Task DeleteTeam_Calls_The_Right_Endpoint()
+        {
+            // Arrange
+            const string org = "FOO-ORG";
+            const string team = "FOO-TEAM";
+
+            var url = $"https://api.github.com/orgs/{org}/teams/{team}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            await githubApi.DeleteTeam(org, team);
+
+            // Assert
+            githubClientMock.Verify(m => m.DeleteAsync(url));
+        }
+
+        [Fact]
+        public async Task GetTeams_Returns_Teams()
+        {
+            // Arrange
+            const string org = "ORG";
+
+            var url = $"https://api.github.com/orgs/{org}/teams";
+            const string team1 = "foo-1";
+            const string team2 = "foo-2";
+
+            var response = new object[]
+            {
+                new
+                {
+                    id = 123,
+                    slug = team1
+                },
+                new
+                {
+                    slug = team2
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .ReturnsAsync(response.ToJson());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetTeams(org);
+
+            // Assert
+            result.Should().Contain(new[] { team1, team2 });
+        }
     }
 }

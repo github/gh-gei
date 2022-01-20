@@ -317,5 +317,22 @@ namespace OctoshiftCLI
 
             await _client.DeleteAsync(url);
         }
+
+        public virtual async Task<IEnumerable<string>> GetTeams(string org)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams";
+
+            var response = await _client.GetAsync(url);
+            var data = JArray.Parse(response);
+
+            return data.Children().Select(x => (string)x["slug"]).ToList();
+        }
+
+        public virtual async Task DeleteTeam(string org, string team)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams/{team}";
+
+            await _client.DeleteAsync(url);
+        }
     }
 }

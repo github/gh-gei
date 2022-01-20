@@ -55,6 +55,14 @@ namespace OctoshiftCLI.IntegrationTests
                 output.WriteLine($"Deleting GitHub repo: {repo}...");
                 await githubApi.DeleteRepo(githubOrg, repo);
             }
+
+            var githubTeams = await githubApi.GetTeams(githubOrg);
+
+            foreach (var team in githubTeams)
+            {
+                output.WriteLine($"Deleting GitHub team: {team}");
+                await githubApi.DeleteTeam(githubOrg, team);
+            }
         }
     }
 }
