@@ -310,5 +310,12 @@ namespace OctoshiftCLI
                 return false;
             }
         }
+
+        public virtual async Task DeleteRepo(string org, string repo)
+        {
+            var url = $"https://api.github.com/repos/{org}/{repo}";
+
+            await _client.DeleteAsync(url);
+        }
     }
 }

@@ -19,12 +19,20 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Test1()
         {
+            var logger = new OctoLogger();
+
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT"); ;
-            using var httpClient = new HttpClient();
-            var adoClient = new AdoClient(new OctoLogger(), httpClient, adoToken);
+            using var adoHttpClient = new HttpClient();
+            var adoClient = new AdoClient(logger, adoHttpClient, adoToken);
             var adoApi = new AdoApi(adoClient);
 
+            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            using var githubHttpClient = new HttpClient();
+            var githubClient = new GithubClient(logger, githubHttpClient, githubToken);
+            var githubApi = new GithubApi(githubClient);
+
             var adoOrg = "gei-e2e-testing";
+            var githubOrg = "e2e-testing";
 
             var teamProjects = await adoApi.GetTeamProjects(adoOrg);
 
@@ -38,6 +46,14 @@ namespace OctoshiftCLI.IntegrationTests
                     var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
                     await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
                 }
+            }
+
+            var githubRepos = await githubApi.GetRepos(githubOrg);
+
+            foreach (var repo in githubRepos)
+            {
+                output.WriteLine($"Deleting GitHub repo: {repo}...");
+                await githubApi.DeleteRepo(githubOrg, repo);
             }
         }
     }

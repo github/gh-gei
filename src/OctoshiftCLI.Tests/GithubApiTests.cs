@@ -759,5 +759,24 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualSuccessState.Should().BeFalse();
         }
+
+        [Fact]
+        public async Task DeleteRepo_Calls_The_Right_Endpoint()
+        {
+            // Arrange
+            const string org = "FOO-ORG";
+            const string repo = "FOO-REPO";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            await githubApi.DeleteRepo(org, repo);
+
+            // Assert
+            githubClientMock.Verify(m => m.DeleteAsync(url));
+        }
     }
 }
