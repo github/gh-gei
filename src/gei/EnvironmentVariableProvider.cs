@@ -17,7 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         public virtual string TargetGithubPersonalAccessToken() =>
             GetSecret(TARGET_GH_PAT) ??
-            throw new ArgumentNullException($"{TARGET_GH_PAT} environment variable is not set.");
+            throw new OctoshiftCliException($"{TARGET_GH_PAT} environment variable is not set.");
 
         private string GetSecret(string secretName)
         {
