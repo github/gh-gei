@@ -10,12 +10,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public static class Program
     {
+        private static readonly OctoLogger Logger = new OctoLogger();
+
         public static async Task Main(string[] args)
         {
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddCommands()
-                .AddSingleton<OctoLogger>()
+                .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
@@ -39,7 +41,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 commandLineBuilder.AddCommand(command);
             }
 
-            return commandLineBuilder.UseDefaults().Build();
+            return commandLineBuilder
+                .UseDefaults()
+                .UseExceptionHandler((ex, _) => Logger.LogError(ex), 1)
+                .Build();
         }
 
         private static IServiceCollection AddCommands(this IServiceCollection services)

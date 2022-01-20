@@ -55,7 +55,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.GithubPersonalAccessToken())
-                .Should().Throw<ArgumentNullException>();
+                .Should().Throw<OctoshiftCliException>();
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.AdoPersonalAccessToken())
-                .Should().Throw<ArgumentNullException>();
+                .Should().Throw<OctoshiftCliException>();
         }
 
         private void ResetEnvs(string githubPat = null, string adoPat = null)

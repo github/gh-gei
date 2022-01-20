@@ -42,7 +42,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.SourceGithubPersonalAccessToken())
-                .Should().Throw<ArgumentNullException>();
+                .Should().Throw<OctoshiftCliException>();
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act, Assert
             _environmentVariableProvider.Invoking(env => env.TargetGithubPersonalAccessToken())
-                .Should().Throw<ArgumentNullException>();
+                .Should().Throw<OctoshiftCliException>();
         }
     }
 }
