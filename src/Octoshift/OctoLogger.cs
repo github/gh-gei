@@ -22,7 +22,8 @@ namespace OctoshiftCLI
 
         private readonly Action<string> _writeToLog;
         private readonly Action<string> _writeToVerboseLog;
-        private readonly Action<string> _writeToConsole;
+        private readonly Action<string> _writeToConsoleOut;
+        private readonly Action<string> _writeToConsoleError;
 
         private const string GENERIC_ERROR_MESSAGE = "An unexpeted error happened. Please see the logs for details.";
 
@@ -34,21 +35,30 @@ namespace OctoshiftCLI
 
             _writeToLog = msg => File.AppendAllText(_logFilePath, msg);
             _writeToVerboseLog = msg => File.AppendAllText(_verboseFilePath, msg);
-            _writeToConsole = msg => Console.Write(msg);
+            _writeToConsoleOut = msg => Console.Write(msg);
+            _writeToConsoleError = msg => Console.Error.Write(msg);
         }
 
-        public OctoLogger(Action<string> writeToLog, Action<string> writeToVerboseLog, Action<string> writeToConsole)
+        public OctoLogger(Action<string> writeToLog, Action<string> writeToVerboseLog, Action<string> writeToConsoleOut, Action<string> writeToConsoleError)
         {
             _writeToLog = writeToLog;
             _writeToVerboseLog = writeToVerboseLog;
-            _writeToConsole = writeToConsole;
+            _writeToConsoleOut = writeToConsoleOut;
+            _writeToConsoleError = writeToConsoleError;
         }
 
         private void Log(string msg, string level)
         {
             var output = FormatMessage(msg, level);
             output = MaskSecrets(output);
-            _writeToConsole(output);
+            if (level == LogLevel.ERROR)
+            {
+                _writeToConsoleError(output);
+            }
+            else
+            {
+                _writeToConsoleOut(output);
+            }
             _writeToLog(output);
             _writeToVerboseLog(output);
         }
@@ -94,7 +104,7 @@ namespace OctoshiftCLI
             var output = MaskSecrets(FormatMessage(logMessage, LogLevel.ERROR));
 
             Console.ForegroundColor = ConsoleColor.Red;
-            _writeToConsole(output);
+            _writeToConsoleError(output);
             Console.ResetColor();
 
             _writeToLog(output);

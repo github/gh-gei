@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
@@ -42,7 +43,11 @@ namespace OctoshiftCLI.AdoToGithub
 
             return commandLineBuilder
                 .UseDefaults()
-                .UseExceptionHandler((ex, _) => Logger.LogError(ex), 1)
+                .UseExceptionHandler((ex, _) =>
+                {
+                    Logger.LogError(ex);
+                    Environment.ExitCode = 1;
+                }, 1)
                 .Build();
         }
 
