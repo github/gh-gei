@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -31,6 +32,105 @@ namespace OctoshiftCLI.Tests
             _consoleOutput.Should().NotContain(secret);
             _logOutput.Should().NotContain(secret);
             _verboseLogOutput.Should().NotContain(secret);
+        }
+
+        [Fact]
+        public void LogError_For_OctoshiftCliException_Should_Log_Exception_Message_In_Non_Verbose_Mode()
+        {
+            // Arrange
+            string console = null;
+            string log = null;
+            string verbose = null;
+
+            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg)
+            {
+                Verbose = false
+            };
+
+            const string userFriendlyMessage = "A user friendly message";
+            const string exceptionDetails = "exception details";
+            var octoshiftCliException = new OctoshiftCliException(userFriendlyMessage,
+                new ArgumentNullException("arg", exceptionDetails));
+
+            // Act
+            logger.LogError(octoshiftCliException);
+
+            // Assert
+            console.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
+            console.Should().NotContain(exceptionDetails);
+
+            log.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
+            log.Should().NotContain(exceptionDetails);
+
+            verbose.Trim().Should().EndWith($"[ERROR] {octoshiftCliException}");
+        }
+
+        [Fact]
+        public void LogError_For_Unexpected_Exception_Should_Log_Generic_Error_Message_In_Non_Verbose_Mode()
+        {
+            // Arrange
+            const string genericErrorMessage = "An unexpeted error happened. Please see the logs for details.";
+
+            string console = null;
+            string log = null;
+            string verbose = null;
+
+            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg)
+            {
+                Verbose = false
+            };
+
+            const string userEnemyMessage = "Some user enemy error message!";
+            const string exceptionDetails = "exception details";
+            var unexpectedException = new InvalidOperationException(userEnemyMessage,
+                new ArgumentNullException("arg", exceptionDetails));
+
+            // Act
+            logger.LogError(unexpectedException);
+
+            // Assert
+            console.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
+            console.Should().NotContain(userEnemyMessage);
+            console.Should().NotContain(exceptionDetails);
+
+            log.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
+            log.Should().NotContain(userEnemyMessage);
+            log.Should().NotContain(exceptionDetails);
+
+            verbose.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            verbose.Should().NotContain(genericErrorMessage);
+        }
+
+        [Fact]
+        public void LogError_For_Any_Exception_Should_Always_Log_Entire_Exception_In_Verbose_Mode()
+        {
+            // Arrange
+            const string genericErrorMessage = "An unexpeted error happened. Please see the logs for details.";
+
+            string console = null;
+            string log = null;
+            string verbose = null;
+
+            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg)
+            {
+                Verbose = true
+            };
+
+            var unexpectedException =
+                new InvalidOperationException("Some user enemy error message!", new ArgumentNullException("arg"));
+
+            // Act
+            logger.LogError(unexpectedException);
+
+            // Assert
+            console.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            console.Should().NotContain(genericErrorMessage);
+
+            log.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            log.Should().NotContain(genericErrorMessage);
+
+            verbose.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            verbose.Should().NotContain(genericErrorMessage);
         }
 
         private void CaptureLogOutput(string msg) => _logOutput += msg;

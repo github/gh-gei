@@ -24,6 +24,8 @@ namespace OctoshiftCLI
         private readonly Action<string> _writeToVerboseLog;
         private readonly Action<string> _writeToConsole;
 
+        private const string GENERIC_ERROR_MESSAGE = "An unexpeted error happened. Please see the logs for details.";
+
         public OctoLogger()
         {
             var logStartTime = DateTime.Now;
@@ -81,15 +83,22 @@ namespace OctoshiftCLI
             Console.ResetColor();
         }
 
-        public virtual void LogError(string msg, Exception ex)
-        {
-            // TODO: include details from the exception in the logs
-            throw new NotImplementedException();
-        }
-
         public virtual void LogError(Exception ex)
         {
-            throw new NotImplementedException();
+            if (ex is null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            var logMessage = Verbose ? ex.ToString() : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
+            var output = MaskSecrets(FormatMessage(logMessage, LogLevel.ERROR));
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            _writeToConsole(output);
+            Console.ResetColor();
+
+            _writeToLog(output);
+            _writeToVerboseLog(MaskSecrets(FormatMessage(ex.ToString(), LogLevel.ERROR)));
         }
 
         public virtual void LogVerbose(string msg)
