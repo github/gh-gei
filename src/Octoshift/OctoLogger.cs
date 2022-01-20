@@ -25,7 +25,7 @@ namespace OctoshiftCLI
         private readonly Action<string> _writeToConsoleOut;
         private readonly Action<string> _writeToConsoleError;
 
-        private const string GENERIC_ERROR_MESSAGE = "An unexpeted error happened. Please see the logs for details.";
+        private const string GENERIC_ERROR_MESSAGE = "An unexpected error happened. Please see the logs for details.";
 
         public OctoLogger()
         {
