@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -579,6 +580,244 @@ namespace OctoshiftCLI.Tests
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
                     return githubClient.DeleteAsync("http://example.com");
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Should_Get_All_Pages()
+        {
+            // Arrange
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
+
+            const string firstResponseContent = "first";
+            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(firstResponseContent),
+            };
+            firstResponse.Headers.Add("Link", new[]
+            {
+                $"<{url}&page=2>; rel=\"next\", " +
+                $"<{url}&page=4>; rel=\"last\""
+            });
+
+            const string secondResponseContent = "second";
+            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(secondResponseContent)
+            };
+            secondResponse.Headers.Add("Link", new[]
+            {
+                $"<{url}&page=1>; rel=\"prev\", " +
+                $"<{url}&page=3>; rel=\"next\", " +
+                $"<{url}&page=3>; rel=\"last\", " +
+                $"<{url}&page=1>; rel=\"first\""
+            });
+
+            const string thirdResponseContent = "third";
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(thirdResponseContent)
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock // first request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == url),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstResponse);
+            handlerMock // second request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == $"{url}&page=2"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondResponse);
+            handlerMock // third request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == $"{url}&page=3"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(thirdResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var results = new List<string>();
+            await foreach (var result in githubClient.GetAllAsync(url))
+            {
+                results.Add(result);
+            }
+
+            // Assert
+            results.Should().HaveCount(3);
+            results[0].Should().Be(firstResponseContent);
+            results[1].Should().Be(secondResponseContent);
+            results[2].Should().Be(thirdResponseContent);
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Logs_The_Url_Per_Each_Page_Request()
+        {
+            // Arrange
+            const string url = "https://example.com/resource";
+
+            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("first"),
+            };
+            firstResponse.Headers.Add("Link", new[]
+            {
+                $"<{url}&page=2>; rel=\"next\", " +
+                $"<{url}&page=2>; rel=\"last\""
+            });
+
+            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("second"),
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock // first request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == url),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstResponse);
+
+            handlerMock // second request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == $"{url}&page=2"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await foreach (var _ in githubClient.GetAllAsync(url)) { }
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose(It.Is<string>(actual => actual == $"HTTP GET: {url}")));
+            _loggerMock.Verify(m => m.LogVerbose(It.Is<string>(actual => actual == $"HTTP GET: {url}&page=2")));
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Logs_The_Response_Per_Each_Page_Request()
+        {
+            // Arrange
+            const string url = "https://example.com/resource";
+
+            var firstResponseContent = "first";
+            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(firstResponseContent),
+            };
+            firstResponse.Headers.Add("Link", new[]
+            {
+                $"<{url}&page=2>; rel=\"next\", " +
+                $"<{url}&page=2>; rel=\"last\""
+            });
+
+            var secondResponseContent = "second";
+            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(secondResponseContent),
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock // first request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == url),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstResponse);
+
+            handlerMock // second request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == $"{url}&page=2"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await foreach (var _ in githubClient.GetAllAsync(url)) { }
+
+            // Assert
+            _loggerMock.Verify(m =>
+                m.LogVerbose(
+                    It.Is<string>(actual =>
+                        actual == $"RESPONSE ({HttpStatusCode.OK}): {firstResponseContent}")));
+            _loggerMock.Verify(m =>
+                m.LogVerbose(It.Is<string>(actual =>
+                    actual == $"RESPONSE ({HttpStatusCode.OK}): {secondResponseContent}")));
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Throws_HttpRequestException_On_Non_Success_Response()
+        {
+            // Arrange
+            const string url = "https://example.com/resource";
+
+            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("first"),
+            };
+            firstResponse.Headers.Add("Link", new[]
+            {
+                $"<{url}&page=2>; rel=\"next\", " +
+                $"<{url}&page=2>; rel=\"last\""
+            });
+
+            using var failureResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock // first request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == url),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstResponse);
+
+            handlerMock // second request
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
+                                                         req.RequestUri.ToString() == $"{url}&page=2"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(failureResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act, Assert
+            await FluentActions
+                .Invoking(async () =>
+                {
+                    await foreach (var _ in githubClient.GetAllAsync(url)) { }
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();

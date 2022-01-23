@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -25,20 +28,36 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);
+        public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
+
+        public virtual async IAsyncEnumerable<string> GetAllAsync(string url)
+        {
+            var (content, headers) = await SendAsync(HttpMethod.Get, url);
+            yield return content;
+
+            var nextUrl = GetNextUrl(headers);
+            while (nextUrl != null)
+            {
+                (content, headers) = await SendAsync(HttpMethod.Get, nextUrl);
+                yield return content;
+
+                nextUrl = GetNextUrl(headers);
+            }
+        }
 
         public virtual async Task<string> PostAsync(string url, object body) =>
-            await SendAsync(HttpMethod.Post, url, body);
+            (await SendAsync(HttpMethod.Post, url, body)).Content;
 
         public virtual async Task<string> PutAsync(string url, object body) =>
-            await SendAsync(HttpMethod.Put, url, body);
+            (await SendAsync(HttpMethod.Put, url, body)).Content;
 
         public virtual async Task<string> PatchAsync(string url, object body) =>
-            await SendAsync(HttpMethod.Patch, url, body);
+            (await SendAsync(HttpMethod.Patch, url, body)).Content;
 
-        public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
+        public virtual async Task<string> DeleteAsync(string url) => (await SendAsync(HttpMethod.Delete, url)).Content;
 
-        private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
+        private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
+            HttpMethod httpMethod, string url, object body = null)
         {
             url = url?.Replace(" ", "%20");
 
@@ -50,7 +69,7 @@ namespace OctoshiftCLI
             }
 
             using var payload = body?.ToJson().ToStringContent();
-            var response = httpMethod.ToString() switch
+            using var response = httpMethod.ToString() switch
             {
                 "GET" => await _httpClient.GetAsync(url),
                 "DELETE" => await _httpClient.DeleteAsync(url),
@@ -64,7 +83,29 @@ namespace OctoshiftCLI
 
             response.EnsureSuccessStatusCode();
 
-            return content;
+            return (content, response.Headers.ToArray());
         }
+
+        private string GetNextUrl(KeyValuePair<string, IEnumerable<string>>[] headers)
+        {
+            var linkHeaderValue = ExtractLinkHeader(headers);
+
+            var nextUrl = linkHeaderValue?
+                .Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Select(link =>
+                {
+                    var rx = new Regex(@"<(?<url>.+)>;\s*rel=""(?<rel>.+)""");
+                    var url = rx.Match(link).Groups["url"].Value;
+                    var rel = rx.Match(link).Groups["rel"].Value; // first, next, last, prev
+
+                    return (Url: url, Rel: rel);
+                })
+                .FirstOrDefault(x => x.Rel == "next").Url;
+
+            return nextUrl;
+        }
+
+        private string ExtractLinkHeader(KeyValuePair<string, IEnumerable<string>>[] headers) =>
+            headers.SingleOrDefault(kvp => kvp.Key == "Link").Value?.FirstOrDefault();
     }
 }
