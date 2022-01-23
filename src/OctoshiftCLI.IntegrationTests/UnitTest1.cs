@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Moq;
 using Xunit;
@@ -92,7 +93,26 @@ namespace OctoshiftCLI.IntegrationTests
             }
 
             //var cliPath = Path.Join(Directory.GetCurrentDirectory(), "ado2gh.exe");
-            var startInfo = new ProcessStartInfo(@"..\..\..\..\..\dist\win-x64\ado2gh.exe", "generate-script --github-org e2e-testing");
+
+            var startInfo = new ProcessStartInfo();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                startInfo.FileName = @"..\..\..\..\..\dist\linux-x64\ado2gh";
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                startInfo.FileName = @"..\..\..\..\..\dist\win-x64\ado2gh.exe";
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                startInfo.FileName = @"..\..\..\..\..\dist\osx-x64\ado2gh";
+            }
+
+            startInfo.Arguments = "generate-script --github-org e2e-testing";
+
             if (startInfo.EnvironmentVariables.ContainsKey("ADO_PAT"))
             {
                 startInfo.EnvironmentVariables["ADO_PAT"] = adoToken;
