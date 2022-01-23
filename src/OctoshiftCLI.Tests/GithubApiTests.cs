@@ -98,6 +98,41 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetRepos_Returns_Names_Of_All_Repositories()
+        {
+            // Arrange
+            const string org = "ORG";
+            var url = $"https://api.github.com/orgs/{org}/repos";
+
+            const string repoName1 = "FOO";
+            const string repoName2 = "BAR";
+            var response = $@"
+            [
+                {{
+                    ""id"": 1,
+                    ""name"": ""{repoName1}""
+                }},
+                {{
+                    ""id"": 2,
+                    ""name"": ""{repoName2}""
+                }}
+            ]";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetRepos(org);
+
+            // Assert
+            result.Should().HaveCount(2);
+            result.Should().Equal(repoName1, repoName2);
+        }
+
+        [Fact]
         public async Task RemoveTeamMember_Calls_The_Right_Endpoint()
         {
             // Arrange
