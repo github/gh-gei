@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Moq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -24,8 +23,6 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Test1()
         {
-            //var logger = new OctoLogger();
-            //var logger = new Mock<OctoLogger>().Object;
             var logger = new OctoLogger(x => { }, x => output.WriteLine(x), x => { }, x => { });
 
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
