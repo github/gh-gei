@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -69,10 +70,11 @@ namespace OctoshiftCLI.Tests
             const string org = "ORG";
             const string teamName = "TEAM_NAME";
 
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members";
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
+            
             const string teamMember1 = "TEAM_MEMBER_1";
             const string teamMember2 = "TEAM_MEMBER_2";
-            var response = $@"
+            var responsePgae1 = $@"
             [
                 {{
                     ""login"": ""{teamMember1}"",
@@ -84,17 +86,40 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
+            const string teamMember3 = "TEAM_MEMBER_3";
+            const string teamMember4 = "TEAM_MEMBER_4";
+            var responsePage2 = $@"
+            [
+                {{
+                    ""login"": ""{teamMember3}"",
+                    ""id"": 3
+                }},
+                {{
+                    ""login"": ""{teamMember4}"", 
+                    ""id"": 4
+                }}
+            ]";
+
+            async IAsyncEnumerable<string> GetAllPages()
+            {
+                yield return responsePgae1;
+                yield return responsePage2;
+
+                await Task.CompletedTask;
+            }
+
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(GetAllPages);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
             var result = await githubApi.GetTeamMembers(org, teamName);
 
             // Assert
-            result.Should().Equal(teamMember1, teamMember2);
+            result.Should().HaveCount(4);
+            result.Should().Equal(teamMember1, teamMember2, teamMember3, teamMember4);
         }
 
         [Fact]
@@ -102,11 +127,11 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             const string org = "ORG";
-            var url = $"https://api.github.com/orgs/{org}/repos";
+            var url = $"https://api.github.com/orgs/{org}/repos?per_page=100";
 
             const string repoName1 = "FOO";
             const string repoName2 = "BAR";
-            var response = $@"
+            var responsePage1 = $@"
             [
                 {{
                     ""id"": 1,
@@ -118,18 +143,38 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
+            const string repoName3 = "BAZ";
+            const string repoName4 = "QUX";
+            var responsePage2 = $@"
+            [
+                {{
+                    ""id"": 1,
+                    ""name"": ""{repoName3}""
+                }},
+                {{
+                    ""id"": 2,
+                    ""name"": ""{repoName4}""
+                }}
+            ]";
+
+            async IAsyncEnumerable<string> GetAllPages()
+            {
+                yield return responsePage1;
+                yield return responsePage2;
+            }
+
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(GetAllPages);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
             var result = await githubApi.GetRepos(org);
 
             // Assert
-            result.Should().HaveCount(2);
-            result.Should().Equal(repoName1, repoName2);
+            result.Should().HaveCount(4);
+            result.Should().Equal(repoName1, repoName2, repoName3, repoName4);
         }
 
         [Fact]
