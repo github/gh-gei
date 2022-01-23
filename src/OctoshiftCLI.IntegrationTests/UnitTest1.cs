@@ -141,6 +141,10 @@ namespace OctoshiftCLI.IntegrationTests
                 startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
             }
 
+            var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
+            cliPath = Path.GetFullPath(cliPath);
+            startInfo.FileName = cliPath;
+            output.WriteLine($"Starting process {cliPath}");
             var p = Process.Start(startInfo);
             p.WaitForExit();
 
