@@ -96,8 +96,9 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
 
-    - name: Publish Unit Test Results
+    - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
