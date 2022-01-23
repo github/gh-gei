@@ -77,6 +77,7 @@ jobs:
 
   integration-test:
     runs-on: ubuntu-latest
+    concurrency: integration-test
     steps:
     - uses: actions/checkout@v2
 
