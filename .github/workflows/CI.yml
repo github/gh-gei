@@ -69,7 +69,7 @@ jobs:
       if: matrix.runner-os == 'ubuntu-latest'
       with:
         files: "**/*-tests.xml"
-        check_name: "Test Results"
+        check_name: "Unit Test Results"
     
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
@@ -94,6 +94,12 @@ jobs:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      with:
+        files: "**/*-tests.xml"
+        check_name: "Integration Test Results"
   
   publish:
     runs-on: ubuntu-latest
