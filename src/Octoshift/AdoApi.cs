@@ -519,5 +519,80 @@ namespace OctoshiftCLI
 
             await _client.DeleteAsync(url);
         }
+
+        public virtual async Task<string> CreateTeamProject(string org, string teamProject)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/projects?api-version=6.0";
+
+            var payload = new
+            {
+                name = teamProject,
+                capabilities = new
+                {
+                    versioncontrol = new
+                    {
+                        sourceControlType = "Git"
+                    },
+                    processTemplate = new
+                    {
+                        templateTypeId = "6b724908-ef14-45cf-84f8-768b5384da45"
+                    }
+                }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var result = JObject.Parse(response);
+
+            return (string)result["id"];
+        }
+
+        public virtual async Task<string> GetTeamProjectStatus(string org, string teamProjectId)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
+            var response = await _client.GetAsync(url);
+            return (string)JObject.Parse(response)["state"];
+        }
+
+        public virtual async Task InitializeRepo(string org, string repoId)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
+
+            var payload = new
+            {
+                refUpdates = new[]
+                {
+                    new
+                    {
+                        name = "refs/heads/main",
+                        oldObjectId = "0000000000000000000000000000000000000000"
+                    }
+                },
+                commits = new[]
+                {
+                    new
+                    {
+                        comment = "Initial commit.",
+                        changes = new []
+                        {
+                            new
+                            {
+                                changeType = "add",
+                                item = new
+                                {
+                                    path = "/readme.md"
+                                },
+                                newContent = new
+                                {
+                                    content = "My first file!",
+                                    contentType = "rawtext"
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            await _client.PostAsync(url, payload);
+        }
     }
 }

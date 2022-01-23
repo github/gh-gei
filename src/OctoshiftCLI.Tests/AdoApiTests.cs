@@ -908,5 +908,64 @@ namespace OctoshiftCLI.Tests
 
             mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
+
+        [Fact]
+        public async Task CreateTeamProject_Should_Return_TeamProjectId()
+        {
+            var orgName = "FOO-ORG";
+            var teamProjectName = "foo-tp";
+            var teamProjectId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{orgName}/_apis/projects?api-version=6.0";
+
+            var payload = new
+            {
+                name = teamProjectName,
+                capabilities = new
+                {
+                    versioncontrol = new
+                    {
+                        sourceControlType = "Git"
+                    },
+                    processTemplate = new
+                    {
+                        templateTypeId = "6b724908-ef14-45cf-84f8-768b5384da45"
+                    }
+                }
+            };
+
+            var json = new
+            {
+                id = teamProjectId,
+                status = "queued"
+            };
+
+            var mockClient = new Mock<AdoClient>(null, null, null);
+            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json.ToJson());
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.CreateTeamProject(orgName, teamProjectName);
+
+            result.Should().Be(teamProjectId);
+        }
+
+        [Fact]
+        public async Task GetTeamProjectStatus_Should_Return_TeamProjectStatus()
+        {
+            var org = "foo-org";
+            var teamProjectId = Guid.NewGuid().ToString();
+            var teamProjectStatus = "foo-status";
+
+            var endpoint = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
+            var response = new { state = teamProjectStatus };
+
+            var mockClient = new Mock<AdoClient>(null, null, null);
+            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetTeamProjectStatus(org, teamProjectId);
+
+            result.Should().Be(teamProjectStatus);
+        }
     }
 }

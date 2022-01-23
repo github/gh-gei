@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Moq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,9 +23,10 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Test1()
         {
-            var logger = new OctoLogger();
+            //var logger = new OctoLogger();
+            var logger = new Mock<OctoLogger>().Object;
 
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT"); ;
+            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             using var adoHttpClient = new HttpClient();
             var adoClient = new AdoClient(logger, adoHttpClient, adoToken);
             var adoApi = new AdoApi(adoClient);
@@ -52,7 +57,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var repo in githubRepos)
             {
-                output.WriteLine($"Deleting GitHub repo: {repo}...");
+                output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
                 await githubApi.DeleteRepo(githubOrg, repo);
             }
 
@@ -63,6 +68,64 @@ namespace OctoshiftCLI.IntegrationTests
                 output.WriteLine($"Deleting GitHub team: {team}");
                 await githubApi.DeleteTeam(githubOrg, team);
             }
+
+            var testTeamProjects = new List<string>() { "e2e-1", "e2e-2" };
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
+                await adoApi.CreateTeamProject(adoOrg, teamProject);
+
+                while (await adoApi.GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new")
+                {
+                    await Task.Delay(1000);
+                }
+
+                var teamProjectStatus = await adoApi.GetTeamProjectStatus(adoOrg, teamProject);
+                if (teamProjectStatus != "wellFormed")
+                {
+                    throw new Exception($"Project in unexpected state [{teamProjectStatus}]");
+                }
+
+                var defaultRepoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
+                await adoApi.InitializeRepo(adoOrg, defaultRepoId);
+            }
+
+            //var cliPath = Path.Join(Directory.GetCurrentDirectory(), "ado2gh.exe");
+            var startInfo = new ProcessStartInfo(@"..\..\..\..\..\dist\win-x64\ado2gh.exe", "generate-script --github-org e2e-testing");
+            if (startInfo.EnvironmentVariables.ContainsKey("ADO_PAT"))
+            {
+                startInfo.EnvironmentVariables["ADO_PAT"] = adoToken;
+            }
+            else
+            {
+                startInfo.EnvironmentVariables.Add("ADO_PAT", adoToken);
+            }
+
+            if (startInfo.EnvironmentVariables.ContainsKey("GH_PAT"))
+            {
+                startInfo.EnvironmentVariables["GH_PAT"] = githubToken;
+            }
+            else
+            {
+                startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
+            }
+
+            startInfo.WorkingDirectory = @"..\..\..\..\..\dist\win-x64";
+
+            var p = Process.Start(startInfo);
+            p.WaitForExit();
+
+            startInfo.FileName = "powershell";
+            var scriptPath = Path.Join(@"..\..\..\..\..\dist\win-x64", "migrate.ps1");
+            scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
+            scriptPath = Path.GetFullPath(scriptPath);
+            startInfo.Arguments = $"-File {scriptPath}";
+
+            output.WriteLine($"scriptPath: {scriptPath}");
+
+            p = Process.Start(startInfo);
+            p.WaitForExit();
         }
     }
 }

@@ -49,6 +49,10 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
+Remove-Item ./dist/win-x64/gei-windows-amd64.exe
+Remove-Item ./dist/linux-x64/gei-linux-amd64
+Remove-Item ./dist/osx-x64/gei-darwin-amd64
+
 Rename-Item ./dist/win-x64/gei.exe gei-windows-amd64.exe
 Rename-Item ./dist/linux-x64/gei gei-linux-amd64
 Rename-Item ./dist/osx-x64/gei gei-darwin-amd64
