@@ -25,7 +25,8 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task Test1()
         {
             //var logger = new OctoLogger();
-            var logger = new Mock<OctoLogger>().Object;
+            //var logger = new Mock<OctoLogger>().Object;
+            var logger = new OctoLogger(x => { }, x => output.WriteLine(x), x => { });
 
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             using var adoHttpClient = new HttpClient();
