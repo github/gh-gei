@@ -93,7 +93,7 @@ jobs:
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
   
   publish:
     runs-on: ubuntu-latest
