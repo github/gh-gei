@@ -102,6 +102,12 @@ jobs:
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
+    
+    - uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: integration-test-logs
+        path: dist/
   
   publish:
     runs-on: ubuntu-latest
