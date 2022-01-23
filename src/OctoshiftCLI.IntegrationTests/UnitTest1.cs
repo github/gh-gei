@@ -95,20 +95,30 @@ namespace OctoshiftCLI.IntegrationTests
             //var cliPath = Path.Join(Directory.GetCurrentDirectory(), "ado2gh.exe");
 
             var startInfo = new ProcessStartInfo();
+            var scriptPath = string.Empty;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 startInfo.FileName = @"..\..\..\..\..\dist\linux-x64\ado2gh";
+                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\linux-x64";
+
+                scriptPath = Path.Join(@"..\..\..\..\..\dist\linux-x64", "migrate.ps1");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.FileName = @"..\..\..\..\..\dist\win-x64\ado2gh.exe";
+                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\win-x64";
+
+                scriptPath = Path.Join(@"..\..\..\..\..\dist\win-x64", "migrate.ps1");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 startInfo.FileName = @"..\..\..\..\..\dist\osx-x64\ado2gh";
+                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\osx-x64";
+
+                scriptPath = Path.Join(@"..\..\..\..\..\dist\osx-x64", "migrate.ps1");
             }
 
             startInfo.Arguments = "generate-script --github-org e2e-testing";
@@ -131,13 +141,10 @@ namespace OctoshiftCLI.IntegrationTests
                 startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
             }
 
-            startInfo.WorkingDirectory = @"..\..\..\..\..\dist\win-x64";
-
             var p = Process.Start(startInfo);
             p.WaitForExit();
 
             startInfo.FileName = "powershell";
-            var scriptPath = Path.Join(@"..\..\..\..\..\dist\win-x64", "migrate.ps1");
             scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
             scriptPath = Path.GetFullPath(scriptPath);
             startInfo.Arguments = $"-File {scriptPath}";
