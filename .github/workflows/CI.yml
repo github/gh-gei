@@ -45,13 +45,6 @@ jobs:
     - name: Unit Test
       run: dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
-    - name: Integration Test
-      if: matrix.runner-os == 'ubuntu-latest'
-      env: 
-        ADO_PAT: ${{ secrets.ADO_PAT }}
-        GH_PAT: ${{ secrets.GH_PAT }}
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
-
     - name: Copy Coverage To Predictable Location
       run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
@@ -82,11 +75,30 @@ jobs:
       uses: github/codeql-action/analyze@v1
       if: matrix.runner-os == 'ubuntu-latest'
 
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build Artifacts
+      run: ./publish.ps1
+      shell: pwsh
+
+    - name: Integration Test
+      env: 
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=integration-tests.xml"
+  
   publish:
-    
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [ build, integration-test ]
     environment: PUBLISH_RELEASE
 
     steps:
