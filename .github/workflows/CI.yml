@@ -46,6 +46,7 @@ jobs:
       run: dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
     - name: Integration Test
+      if: matrix.runner-os == 'ubuntu-latest'
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
