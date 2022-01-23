@@ -84,7 +84,7 @@ namespace OctoshiftCLI.IntegrationTests
                 var teamProjectStatus = await adoApi.GetTeamProjectStatus(adoOrg, teamProject);
                 if (teamProjectStatus != "wellFormed")
                 {
-                    throw new Exception($"Project in unexpected state [{teamProjectStatus}]");
+                    throw new InvalidDataException($"Project in unexpected state [{teamProjectStatus}]");
                 }
 
                 var defaultRepoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
