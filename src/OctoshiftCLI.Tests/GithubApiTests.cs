@@ -71,7 +71,7 @@ namespace OctoshiftCLI.Tests
             const string teamName = "TEAM_NAME";
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
-            
+
             const string teamMember1 = "TEAM_MEMBER_1";
             const string teamMember2 = "TEAM_MEMBER_2";
             var responsePgae1 = $@"
@@ -161,6 +161,8 @@ namespace OctoshiftCLI.Tests
             {
                 yield return responsePage1;
                 yield return responsePage2;
+
+                await Task.CompletedTask;
             }
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
