@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -74,7 +76,7 @@ namespace OctoshiftCLI.Tests
 
             const string teamMember1 = "TEAM_MEMBER_1";
             const string teamMember2 = "TEAM_MEMBER_2";
-            var responsePgae1 = $@"
+            var responsePage1 = $@"
             [
                 {{
                     ""login"": ""{teamMember1}"",
@@ -100,10 +102,15 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
-            async IAsyncEnumerable<string> GetAllPages()
+            async IAsyncEnumerable<JToken> GetAllPages()
             {
-                yield return responsePgae1;
-                yield return responsePage2;
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
 
                 await Task.CompletedTask;
             }
@@ -115,7 +122,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var result = await githubApi.GetTeamMembers(org, teamName);
+            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);
@@ -148,19 +155,24 @@ namespace OctoshiftCLI.Tests
             var responsePage2 = $@"
             [
                 {{
-                    ""id"": 1,
+                    ""id"": 3,
                     ""name"": ""{repoName3}""
                 }},
                 {{
-                    ""id"": 2,
+                    ""id"": 4,
                     ""name"": ""{repoName4}""
                 }}
             ]";
 
-            async IAsyncEnumerable<string> GetAllPages()
+            async IAsyncEnumerable<JToken> GetAllPages()
             {
-                yield return responsePage1;
-                yield return responsePage2;
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
 
                 await Task.CompletedTask;
             }
@@ -172,7 +184,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var result = await githubApi.GetRepos(org);
+            var result = (await githubApi.GetRepos(org)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);

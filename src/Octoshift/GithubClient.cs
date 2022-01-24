@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
@@ -30,19 +31,19 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
 
-        public virtual async IAsyncEnumerable<string> GetAllAsync(string url)
+        public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)
         {
-            var (content, headers) = await SendAsync(HttpMethod.Get, url);
-            yield return content;
-
-            var nextUrl = GetNextUrl(headers);
-            while (nextUrl != null)
+            var nextUrl = url;
+            do
             {
-                (content, headers) = await SendAsync(HttpMethod.Get, nextUrl);
-                yield return content;
+                var (content, headers) = await SendAsync(HttpMethod.Get, nextUrl);
+                foreach (var jToken in JArray.Parse(content))
+                {
+                    yield return jToken;
+                }
 
                 nextUrl = GetNextUrl(headers);
-            }
+            } while (nextUrl != null);
         }
 
         public virtual async Task<string> PostAsync(string url, object body) =>

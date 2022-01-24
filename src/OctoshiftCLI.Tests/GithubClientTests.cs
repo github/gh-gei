@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -591,10 +592,11 @@ namespace OctoshiftCLI.Tests
             // Arrange
             const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
 
-            const string firstResponseContent = "first";
+            const string firstItem = "first";
+            const string secondItem = "second";
             using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(firstResponseContent),
+                Content = new StringContent($"[\"{firstItem}\", \"{secondItem}\"]"),
             };
             firstResponse.Headers.Add("Link", new[]
             {
@@ -602,10 +604,11 @@ namespace OctoshiftCLI.Tests
                 $"<{url}&page=4>; rel=\"last\""
             });
 
-            const string secondResponseContent = "second";
+            const string thirdItem = "third";
+            const string fourthItem = "fourth";
             using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(secondResponseContent)
+                Content = new StringContent($"[\"{thirdItem}\", \"{fourthItem}\"]")
             };
             secondResponse.Headers.Add("Link", new[]
             {
@@ -615,10 +618,10 @@ namespace OctoshiftCLI.Tests
                 $"<{url}&page=1>; rel=\"first\""
             });
 
-            const string thirdResponseContent = "third";
+            const string fifthItem = "fifth";
             using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(thirdResponseContent)
+                Content = new StringContent($"[\"{fifthItem}\"]")
             };
 
             var handlerMock = new Mock<HttpMessageHandler>();
@@ -651,17 +654,19 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var results = new List<string>();
+            var results = new List<JToken>();
             await foreach (var result in githubClient.GetAllAsync(url))
             {
                 results.Add(result);
             }
 
             // Assert
-            results.Should().HaveCount(3);
-            results[0].Should().Be(firstResponseContent);
-            results[1].Should().Be(secondResponseContent);
-            results[2].Should().Be(thirdResponseContent);
+            results.Should().HaveCount(5);
+            results[0].Value<string>().Should().Be(firstItem);
+            results[1].Value<string>().Should().Be(secondItem);
+            results[2].Value<string>().Should().Be(thirdItem);
+            results[3].Value<string>().Should().Be(fourthItem);
+            results[4].Value<string>().Should().Be(fifthItem);
         }
 
         [Fact]
@@ -672,7 +677,7 @@ namespace OctoshiftCLI.Tests
 
             using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("first"),
+                Content = new StringContent("[\"first\"]"),
             };
             firstResponse.Headers.Add("Link", new[]
             {
@@ -682,7 +687,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("second"),
+                Content = new StringContent("[\"second\"]"),
             };
 
             var handlerMock = new Mock<HttpMessageHandler>();
@@ -721,7 +726,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             const string url = "https://example.com/resource";
 
-            var firstResponseContent = "first";
+            var firstResponseContent = "[\"firs\"]";
             using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(firstResponseContent),
@@ -732,7 +737,7 @@ namespace OctoshiftCLI.Tests
                 $"<{url}&page=2>; rel=\"last\""
             });
 
-            var secondResponseContent = "second";
+            var secondResponseContent = "[\"second\"]";
             using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(secondResponseContent),
@@ -781,7 +786,7 @@ namespace OctoshiftCLI.Tests
 
             using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("first"),
+                Content = new StringContent("[\"first\"]"),
             };
             firstResponse.Headers.Add("Link", new[]
             {
