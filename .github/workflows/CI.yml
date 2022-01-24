@@ -108,6 +108,18 @@ jobs:
       with:
         name: integration-test-logs
         path: dist/
+
+    - name: Test Logs
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist/linux-x64
+      shell: pwsh
+
+    - name: Test Logs (Verbose)
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist/linux-x64
+      shell: pwsh
   
   publish:
     runs-on: ubuntu-latest
