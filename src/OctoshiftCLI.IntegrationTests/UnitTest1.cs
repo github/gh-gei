@@ -154,7 +154,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
 
-            startInfo.FileName = "powershell";
+            startInfo.FileName = "pwsh";
             scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
             scriptPath = Path.GetFullPath(scriptPath);
             startInfo.Arguments = $"-File {scriptPath}";
