@@ -662,7 +662,7 @@ steps:
             var payload = new
             {
                 folder = @"\\",
-                name = name,
+                name,
                 configuration = new
                 {
                     type = "yaml",
