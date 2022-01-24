@@ -4,3 +4,5 @@
 - Show a generic error message instead of the actual one for unhandled exceptions in non-verbose mode.
 - Exit code is now 1 instead of 0 in case of an error.
 - Errors are written to std error instead of std out. 
+- Adding Support to get multi page results from Github API.
+- The Github to Github migrations are no longer limited to 30 repos. 

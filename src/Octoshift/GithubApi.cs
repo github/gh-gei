@@ -38,22 +38,16 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members";
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            var response = await _client.GetAsync(url);
-            var data = JArray.Parse(response);
-
-            return data.Children().Select(x => (string)x["login"]).ToList();
+            return await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync();
         }
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
         {
-            var url = $"https://api.github.com/orgs/{org}/repos";
+            var url = $"https://api.github.com/orgs/{org}/repos?per_page=100";
 
-            var response = await _client.GetAsync(url);
-            var data = JArray.Parse(response);
-
-            return data.Children().Select(x => (string)x["name"]).ToList();
+            return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
         public virtual async Task RemoveTeamMember(string org, string teamName, string member)
