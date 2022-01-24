@@ -74,7 +74,7 @@ namespace OctoshiftCLI.IntegrationTests
                 await githubApi.DeleteTeam(githubOrg, team);
             }
 
-            var testTeamProjects = new List<string>() { "e2e-1", "e2e-2" };
+            var testTeamProjects = new List<string>() { "gei-e2e-1", "gei-e2e-2" };
 
             foreach (var teamProject in testTeamProjects)
             {
@@ -95,8 +95,6 @@ namespace OctoshiftCLI.IntegrationTests
                 var defaultRepoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
                 await adoApi.InitializeRepo(adoOrg, defaultRepoId);
             }
-
-            //var cliPath = Path.Join(Directory.GetCurrentDirectory(), "ado2gh.exe");
 
             var startInfo = new ProcessStartInfo();
             var scriptPath = string.Empty;
