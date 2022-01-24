@@ -144,7 +144,6 @@ namespace OctoshiftCLI.IntegrationTests
             }
 
             var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
-            cliPath = Path.GetFullPath(cliPath);
             startInfo.FileName = cliPath;
             output.WriteLine($"Starting process {cliPath}");
             var p = Process.Start(startInfo);
@@ -154,7 +153,6 @@ namespace OctoshiftCLI.IntegrationTests
 
             startInfo.FileName = "pwsh";
             scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
-            scriptPath = Path.GetFullPath(scriptPath);
             startInfo.Arguments = $"-File {scriptPath}";
 
             output.WriteLine($"scriptPath: {scriptPath}");
