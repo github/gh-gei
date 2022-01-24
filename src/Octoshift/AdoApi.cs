@@ -563,7 +563,7 @@ namespace OctoshiftCLI
             return (string)JObject.Parse(response)["status"];
         }
 
-        public virtual async Task InitializeRepo(string org, string repoId)
+        public virtual async Task<string> InitializeRepo(string org, string repoId)
         {
             var url = $"https://dev.azure.com/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
 
@@ -602,7 +602,83 @@ namespace OctoshiftCLI
                 }
             };
 
-            await _client.PostAsync(url, payload);
+            var response = await _client.PostAsync(url, payload);
+            return (string)JObject.Parse(response)["refUpdates"].Children().First()["newObjectId"];
+        }
+
+        public virtual async Task<string> PushDummyPipelineYaml(string org, string repoId, string parentCommit)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
+
+            var payload = new
+            {
+                refUpdates = new[]
+                {
+                    new
+                    {
+                        name = "refs/heads/main",
+                        oldObjectId = parentCommit
+                    }
+                },
+                commits = new[]
+                {
+                    new
+                    {
+                        comment = "Initial commit.",
+                        changes = new []
+                        {
+                            new
+                            {
+                                changeType = "add",
+                                item = new
+                                {
+                                    path = "/azure-pipelines.yml"
+                                },
+                                newContent = new
+                                {
+                                    content = @"
+trigger:
+- main
+pool:
+  vmImage: ubuntu-latest
+steps:
+- script: echo Hello, world!",
+                                    contentType = "rawtext"
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            return (string)JObject.Parse(response)["refUpdates"].Children().First()["newObjectId"];
+        }
+
+        public virtual async Task<string> CreatePipeline(string org, string teamProject, string name, string ymlFile, string repoId, string repoName)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/pipelines?api-version=6.1-preview.1";
+
+            var payload = new
+            {
+                folder = @"\\",
+                name = name,
+                configuration = new
+                {
+                    type = "yaml",
+                    path = ymlFile,
+                    repository = new
+                    {
+                        id = repoId,
+                        name = repoName,
+                        type = "azureReposGit"
+                    }
+                }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+
+            return (string)JObject.Parse(response)["id"];
         }
     }
 }

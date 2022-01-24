@@ -93,7 +93,10 @@ namespace OctoshiftCLI.IntegrationTests
                 }
 
                 var defaultRepoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
-                await adoApi.InitializeRepo(adoOrg, defaultRepoId);
+                var commitId = await adoApi.InitializeRepo(adoOrg, defaultRepoId);
+
+                await adoApi.PushDummyPipelineYaml(adoOrg, defaultRepoId, commitId);
+                await adoApi.CreatePipeline(adoOrg, teamProject, teamProject, "/azure-pipelines.yml", defaultRepoId, teamProject);
             }
 
             var startInfo = new ProcessStartInfo();
