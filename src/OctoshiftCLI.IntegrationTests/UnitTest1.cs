@@ -103,26 +103,26 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                startInfo.FileName = @"..\..\..\..\..\dist\linux-x64\ado2gh";
-                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\linux-x64";
+                startInfo.FileName = @"../../../../../dist/linux-x64/ado2gh";
+                startInfo.WorkingDirectory = @"../../../../../dist/linux-x64";
 
-                scriptPath = Path.Join(@"..\..\..\..\..\dist\linux-x64", "migrate.ps1");
+                scriptPath = Path.Join(@"../../../../../dist/linux-x64", "migrate.ps1");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                startInfo.FileName = @"..\..\..\..\..\dist\win-x64\ado2gh.exe";
-                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\win-x64";
+                startInfo.FileName = @"../../../../../dist/win-x64/ado2gh.exe";
+                startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
 
-                scriptPath = Path.Join(@"..\..\..\..\..\dist\win-x64", "migrate.ps1");
+                scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                startInfo.FileName = @"..\..\..\..\..\dist\osx-x64\ado2gh";
-                startInfo.WorkingDirectory = @"..\..\..\..\..\dist\osx-x64";
+                startInfo.FileName = @"../../../../../dist/osx-x64/ado2gh";
+                startInfo.WorkingDirectory = @"../../../../../dist/osx-x64";
 
-                scriptPath = Path.Join(@"..\..\..\..\..\dist\osx-x64", "migrate.ps1");
+                scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
             }
 
             startInfo.Arguments = "generate-script --github-org e2e-testing";
