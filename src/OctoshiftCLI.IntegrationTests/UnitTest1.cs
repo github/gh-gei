@@ -164,6 +164,20 @@ namespace OctoshiftCLI.IntegrationTests
             p.WaitForExit();
 
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
+
+            // *** Asserts ***
+
+            // Are the repos in GH
+            // Do they have the latest commit SHA
+            // Is autolink configured (create a commit and link?)
+            // Is the repo disabled on ADO
+            // Are the deny permissions set
+            // are the GH teams created
+            // do the GH teams have Idp linked
+            // do the GH teams have permissions on the repo
+            // is boards integration configured
+            // are pipelines rewired (run a pipeline?)
+            // service connection shared
         }
     }
 }
