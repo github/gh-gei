@@ -52,10 +52,10 @@ if ($LASTEXITCODE -ne 0) {
 if (Test-Path -Path ./dist/win-x64/gei-windows-amd64.exe) {
     Remove-Item ./dist/win-x64/gei-windows-amd64.exe
 }
-if (Test-Path -Path ./dist/win-x64/gei-linux-amd64) {
+if (Test-Path -Path ./dist/linux-x64/gei-linux-amd64) {
     Remove-Item ./dist/linux-x64/gei-linux-amd64
 }
-if (Test-Path -Path ./dist/win-x64/gei-darwin-amd64) {
+if (Test-Path -Path ./dist/osx-x64/gei-darwin-amd64) {
     Remove-Item ./dist/osx-x64/gei-darwin-amd64
 }
 

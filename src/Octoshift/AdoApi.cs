@@ -513,11 +513,14 @@ namespace OctoshiftCLI
             await _client.PostAsync(url, payload);
         }
 
-        public virtual async Task DeleteTeamProject(string org, string teamProjectId)
+        public virtual async Task<string> DeleteTeamProject(string org, string teamProjectId)
         {
             var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
 
-            await _client.DeleteAsync(url);
+            var response = await _client.DeleteAsync(url);
+            var result = JObject.Parse(response);
+
+            return (string)result["id"];
         }
 
         public virtual async Task<string> CreateTeamProject(string org, string teamProject)
@@ -551,6 +554,13 @@ namespace OctoshiftCLI
             var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
             var response = await _client.GetAsync(url);
             return (string)JObject.Parse(response)["state"];
+        }
+
+        public virtual async Task<string> GetOperationStatus(string org, string operationId)
+        {
+            var url = $"https://dev.azure.com/{org}/_apis/operations/{operationId}?api-version=6.0";
+            var response = await _client.GetAsync(url);
+            return (string)JObject.Parse(response)["status"];
         }
 
         public virtual async Task InitializeRepo(string org, string repoId)

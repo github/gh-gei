@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -48,7 +49,12 @@ namespace OctoshiftCLI.IntegrationTests
                 {
                     output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
                     var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
-                    await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
+                    var operationId = await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
+
+                    while (await adoApi.GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
             }
 
@@ -146,6 +152,8 @@ namespace OctoshiftCLI.IntegrationTests
             var p = Process.Start(startInfo);
             p.WaitForExit();
 
+            p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
+
             startInfo.FileName = "powershell";
             scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
             scriptPath = Path.GetFullPath(scriptPath);
@@ -155,6 +163,8 @@ namespace OctoshiftCLI.IntegrationTests
 
             p = Process.Start(startInfo);
             p.WaitForExit();
+
+            p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
     }
 }
