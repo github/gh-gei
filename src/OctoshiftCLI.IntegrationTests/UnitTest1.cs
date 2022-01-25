@@ -203,10 +203,11 @@ namespace OctoshiftCLI.IntegrationTests
 
             _output.WriteLine("Checking that the ADO repos have been disabled...");
 
+
             foreach (var teamProject in testTeamProjects)
             {
-                var repoDisabled = await adoApi.GetRepoDisabledState(adoOrg, teamProject, teamProject);
-                repoDisabled.Should().BeTrue();
+                var reposDisabled = await adoApi.GetReposDisabledState(adoOrg, teamProject);
+                reposDisabled.Should().Contain(x => x.repo == teamProject && x.disabled);
             }
 
             // Are the repos in GH
