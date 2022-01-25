@@ -328,5 +328,21 @@ namespace OctoshiftCLI
 
             await _client.DeleteAsync(url);
         }
+
+        public virtual async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
+        {
+            var url = $"https://api.github.com/repos/{org}/{repo}/commits";
+
+            var commits = await _client.GetAllAsync(url).ToListAsync();
+
+            return commits.Select(x => (string)x["sha"]).ToList();
+        }
+
+        public virtual async Task<IEnumerable<(string id, string key, string url)>> GetAutolinks(string org, string repo)
+        {
+            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+            var autolinks = await _client.GetAllAsync(url).ToListAsync();
+            return autolinks.Select(x => ((string)x["id"], (string)x["key_prefix"], (string)x["url_template"])).ToList();
+        }
     }
 }

@@ -15,10 +15,6 @@ namespace OctoshiftCLI.IntegrationTests
     public class UnitTest1
     {
         private readonly ITestOutputHelper _output;
-        //private OctoLogger _logger;
-        //private string _adoOrg;
-        //private string _githubOrg;
-        //private IEnumerable<string> _testTeamProjects;
 
         public UnitTest1(ITestOutputHelper output) => _output = output;
 
@@ -179,7 +175,7 @@ namespace OctoshiftCLI.IntegrationTests
         }
         private async Task AssertFinalState(string adoOrg, string githubOrg, AdoApi adoApi, GithubApi githubApi, IEnumerable<string> testTeamProjects)
         {
-            _output.WriteLine("Checking that the repos in GitHub are correct...");
+            _output.WriteLine("Checking that the repos in GitHub exist...");
             var repos = await githubApi.GetRepos(githubOrg);
 
             var expectedRepos = testTeamProjects.Select(x => $"{x}-{x}");
@@ -187,7 +183,23 @@ namespace OctoshiftCLI.IntegrationTests
             repos.Should().Contain(expectedRepos);
             repos.Count().Should().Be(expectedRepos.Count());
 
-            _output.WriteLine($"{adoOrg} {adoApi}");
+            _output.WriteLine("Checking that the repos in GitHub are initialized...");
+
+            foreach (var repo in repos)
+            {
+                var commits = await githubApi.GetRepoCommitShas(githubOrg, repo);
+                commits.Count().Should().BeGreaterThan(0);
+            }
+
+            _output.WriteLine("Checking that the Autolinks have been configured...");
+
+            foreach (var repo in repos)
+            {
+                var autolinks = await githubApi.GetAutolinks(githubOrg, repo);
+                autolinks.Where(x => x.key == "AB#" && x.url == $"https://dev.azure.com/{adoOrg}/{GithubRepoToTeamProject(repo)}/_workitems/edit/<num>/")
+                         .Count()
+                         .Should().Be(1);
+            }
 
             // Are the repos in GH
             // Do they have the latest commit SHA
@@ -201,5 +213,7 @@ namespace OctoshiftCLI.IntegrationTests
             // are pipelines rewired (run a pipeline?)
             // service connection shared
         }
+
+        private string GithubRepoToTeamProject(string repo) => repo[((repo.Length - 1) / 2)..];
     }
 }
