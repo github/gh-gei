@@ -215,6 +215,6 @@ namespace OctoshiftCLI.IntegrationTests
             // service connection shared
         }
 
-        private string GithubRepoToTeamProject(string repo) => repo[((repo.Length - 1) / 2)..];
+        private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];
     }
 }
