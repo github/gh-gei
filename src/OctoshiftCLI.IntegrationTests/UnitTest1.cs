@@ -14,17 +14,21 @@ namespace OctoshiftCLI.IntegrationTests
 {
     public class UnitTest1
     {
-        private readonly ITestOutputHelper output;
+        private readonly ITestOutputHelper _output;
+        //private OctoLogger _logger;
+        //private string _adoOrg;
+        //private string _githubOrg;
+        //private IEnumerable<string> _testTeamProjects;
 
-        public UnitTest1(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
+        public UnitTest1(ITestOutputHelper output) => _output = output;
 
         [Fact]
-        public async Task Test1()
+        public async Task AdoToGithubE2ETest()
         {
-            var logger = new OctoLogger(x => { }, x => output.WriteLine(x), x => { }, x => { });
+            var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
+            var adoOrg = "gei-e2e-testing";
+            var githubOrg = "e2e-testing";
+            var testTeamProjects = new List<string>() { "gei-e2e-1", "gei-e2e-2" };
 
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             using var adoHttpClient = new HttpClient();
@@ -36,18 +40,23 @@ namespace OctoshiftCLI.IntegrationTests
             var githubClient = new GithubClient(logger, githubHttpClient, githubToken);
             var githubApi = new GithubApi(githubClient);
 
-            var adoOrg = "gei-e2e-testing";
-            var githubOrg = "e2e-testing";
+            await ResetTestEnvironment(adoOrg, githubOrg, adoApi, githubApi);
+            await CreateTestingData(adoOrg, testTeamProjects, adoApi);
+            RunCliMigration(adoOrg, githubOrg, adoToken, githubToken);
+            await AssertFinalState(adoOrg, githubOrg, adoApi, githubApi, testTeamProjects);
+        }
 
+        private async Task ResetTestEnvironment(string adoOrg, string githubOrg, AdoApi adoApi, GithubApi githubApi)
+        {
             var teamProjects = await adoApi.GetTeamProjects(adoOrg);
 
-            output.WriteLine($"Found {teamProjects.Count()} Team Projects");
+            _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
 
             foreach (var teamProject in teamProjects)
             {
                 if (teamProject != "service-connection-project-do-not-delete")
                 {
-                    output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
+                    _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
                     var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
                     var operationId = await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
 
@@ -62,7 +71,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var repo in githubRepos)
             {
-                output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
+                _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
                 await githubApi.DeleteRepo(githubOrg, repo);
             }
 
@@ -70,15 +79,15 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var team in githubTeams)
             {
-                output.WriteLine($"Deleting GitHub team: {team}");
+                _output.WriteLine($"Deleting GitHub team: {team}");
                 await githubApi.DeleteTeam(githubOrg, team);
             }
-
-            var testTeamProjects = new List<string>() { "gei-e2e-1", "gei-e2e-2" };
-
+        }
+        private async Task CreateTestingData(string adoOrg, IEnumerable<string> testTeamProjects, AdoApi adoApi)
+        {
             foreach (var teamProject in testTeamProjects)
             {
-                output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
+                _output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
                 await adoApi.CreateTeamProject(adoOrg, teamProject);
 
                 while (await adoApi.GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new")
@@ -92,13 +101,17 @@ namespace OctoshiftCLI.IntegrationTests
                     throw new InvalidDataException($"Project in unexpected state [{teamProjectStatus}]");
                 }
 
+                _output.WriteLine($"Initialiing Repo: {adoOrg}\\{teamProject}\\{teamProject}...");
                 var defaultRepoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
                 var commitId = await adoApi.InitializeRepo(adoOrg, defaultRepoId);
 
+                _output.WriteLine($"Creating Pipeline: {adoOrg}\\{teamProject}\\{teamProject}...");
                 await adoApi.PushDummyPipelineYaml(adoOrg, defaultRepoId, commitId);
                 await adoApi.CreatePipeline(adoOrg, teamProject, teamProject, "/azure-pipelines.yml", defaultRepoId, teamProject);
             }
-
+        }
+        private void RunCliMigration(string adoOrg, string githubOrg, string adoToken, string githubToken)
+        {
             var startInfo = new ProcessStartInfo();
             var scriptPath = string.Empty;
 
@@ -126,7 +139,7 @@ namespace OctoshiftCLI.IntegrationTests
                 scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
             }
 
-            startInfo.Arguments = "generate-script --github-org e2e-testing";
+            startInfo.Arguments = $"generate-script --github-org {githubOrg} --ado-org {adoOrg}";
 
             if (startInfo.EnvironmentVariables.ContainsKey("ADO_PAT"))
             {
@@ -148,7 +161,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
             startInfo.FileName = cliPath;
-            output.WriteLine($"Starting process {cliPath}");
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             var p = Process.Start(startInfo);
             p.WaitForExit();
 
@@ -158,14 +171,23 @@ namespace OctoshiftCLI.IntegrationTests
             scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
             startInfo.Arguments = $"-File {scriptPath}";
 
-            output.WriteLine($"scriptPath: {scriptPath}");
-
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             p = Process.Start(startInfo);
             p.WaitForExit();
 
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
+        }
+        private async Task AssertFinalState(string adoOrg, string githubOrg, AdoApi adoApi, GithubApi githubApi, IEnumerable<string> testTeamProjects)
+        {
+            _output.WriteLine("Checking that the repos in GitHub are correct...");
+            var repos = await githubApi.GetRepos(githubOrg);
 
-            // *** Asserts ***
+            var expectedRepos = testTeamProjects.Select(x => $"{x}-{x}");
+
+            repos.Should().Contain(expectedRepos);
+            repos.Count().Should().Be(expectedRepos.Count());
+
+            _output.WriteLine($"{adoOrg} {adoApi}");
 
             // Are the repos in GH
             // Do they have the latest commit SHA
