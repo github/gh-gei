@@ -195,11 +195,18 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var repo in repos)
             {
-                _output.WriteLine($"https://dev.azure.com/{adoOrg}/{GithubRepoToTeamProject(repo)}/_workitems/edit/<num>/");
                 var autolinks = await githubApi.GetAutolinks(githubOrg, repo);
                 autolinks.Where(x => x.key == "AB#" && x.url == $"https://dev.azure.com/{adoOrg}/{GithubRepoToTeamProject(repo)}/_workitems/edit/<num>/")
                          .Count()
                          .Should().Be(1);
+            }
+
+            _output.WriteLine("Checking that the ADO repos have been disabled...");
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                var repoDisabled = await adoApi.GetRepoDisabledState(adoOrg, teamProject, teamProject);
+                repoDisabled.Should().BeTrue();
             }
 
             // Are the repos in GH

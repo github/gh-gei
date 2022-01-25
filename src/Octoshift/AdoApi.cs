@@ -680,5 +680,12 @@ steps:
 
             return (string)JObject.Parse(response)["id"];
         }
+
+        public virtual async Task<bool> GetRepoDisabledState(string org, string teamProject, string repo)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var response = await _client.GetAsync(url);
+            return (bool)JObject.Parse(response)["isDisabled"];
+        }
     }
 }
