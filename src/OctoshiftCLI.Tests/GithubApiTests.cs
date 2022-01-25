@@ -1,7 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -69,10 +72,11 @@ namespace OctoshiftCLI.Tests
             const string org = "ORG";
             const string teamName = "TEAM_NAME";
 
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members";
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
+
             const string teamMember1 = "TEAM_MEMBER_1";
             const string teamMember2 = "TEAM_MEMBER_2";
-            var response = $@"
+            var responsePage1 = $@"
             [
                 {{
                     ""login"": ""{teamMember1}"",
@@ -84,17 +88,45 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
+            const string teamMember3 = "TEAM_MEMBER_3";
+            const string teamMember4 = "TEAM_MEMBER_4";
+            var responsePage2 = $@"
+            [
+                {{
+                    ""login"": ""{teamMember3}"",
+                    ""id"": 3
+                }},
+                {{
+                    ""login"": ""{teamMember4}"", 
+                    ""id"": 4
+                }}
+            ]";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
+
+                await Task.CompletedTask;
+            }
+
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(GetAllPages);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var result = await githubApi.GetTeamMembers(org, teamName);
+            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
 
             // Assert
-            result.Should().Equal(teamMember1, teamMember2);
+            result.Should().HaveCount(4);
+            result.Should().Equal(teamMember1, teamMember2, teamMember3, teamMember4);
         }
 
         [Fact]
@@ -102,11 +134,11 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             const string org = "ORG";
-            var url = $"https://api.github.com/orgs/{org}/repos";
+            var url = $"https://api.github.com/orgs/{org}/repos?per_page=100";
 
             const string repoName1 = "FOO";
             const string repoName2 = "BAR";
-            var response = $@"
+            var responsePage1 = $@"
             [
                 {{
                     ""id"": 1,
@@ -118,18 +150,45 @@ namespace OctoshiftCLI.Tests
                 }}
             ]";
 
+            const string repoName3 = "BAZ";
+            const string repoName4 = "QUX";
+            var responsePage2 = $@"
+            [
+                {{
+                    ""id"": 3,
+                    ""name"": ""{repoName3}""
+                }},
+                {{
+                    ""id"": 4,
+                    ""name"": ""{repoName4}""
+                }}
+            ]";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
+
+                await Task.CompletedTask;
+            }
+
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(GetAllPages);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object);
-            var result = await githubApi.GetRepos(org);
+            var result = (await githubApi.GetRepos(org)).ToArray();
 
             // Assert
-            result.Should().HaveCount(2);
-            result.Should().Equal(repoName1, repoName2);
+            result.Should().HaveCount(4);
+            result.Should().Equal(repoName1, repoName2, repoName3, repoName4);
         }
 
         [Fact]
