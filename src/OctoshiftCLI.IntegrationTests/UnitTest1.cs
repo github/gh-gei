@@ -48,18 +48,15 @@ namespace OctoshiftCLI.IntegrationTests
 
             _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
 
-            foreach (var teamProject in teamProjects)
+            foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
             {
-                if (teamProject != "service-connection-project-do-not-delete")
-                {
-                    _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
-                    var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
-                    var operationId = await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
+                _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
+                var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
+                var operationId = await adoApi.DeleteTeamProject(adoOrg, teamProjectId);
 
-                    while (await adoApi.GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
-                    {
-                        await Task.Delay(1000);
-                    }
+                while (await adoApi.GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
+                {
+                    await Task.Delay(1000);
                 }
             }
 
@@ -185,9 +182,8 @@ namespace OctoshiftCLI.IntegrationTests
 
             _output.WriteLine("Checking that the repos in GitHub are initialized...");
 
-            foreach (var repo in repos)
+            foreach (var commits in repos.Select(x => githubApi.GetRepoCommitShas(githubOrg, x).Result))
             {
-                var commits = await githubApi.GetRepoCommitShas(githubOrg, repo);
                 commits.Count().Should().BeGreaterThan(0);
             }
 
