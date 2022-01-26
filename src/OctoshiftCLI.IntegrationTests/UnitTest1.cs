@@ -218,17 +218,29 @@ namespace OctoshiftCLI.IntegrationTests
                 deny.Should().Be(56828);
             }
 
-            // Are the repos in GH
-            // Do they have the latest commit SHA
-            // Is autolink configured (create a commit and link?)
-            // Is the repo disabled on ADO
-            // Are the deny permissions set
+            _output.WriteLine("Checking that the GitHub teams were created...");
+            var githubTeams = await githubApi.GetTeams(githubOrg);
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                githubTeams.Should().Contain($"{teamProject}-maintainers");
+                githubTeams.Should().Contain($"{teamProject}-admins");
+            }
+
+
             // are the GH teams created
             // do the GH teams have Idp linked
             // do the GH teams have permissions on the repo
             // is boards integration configured
             // are pipelines rewired (run a pipeline?)
             // service connection shared
+
+
+            // Are the repos in GH
+            // Do they have the latest commit SHA
+            // Is autolink configured (create a commit and link?)
+            // Is the repo disabled on ADO
+            // Are the deny permissions set
         }
 
         private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];
