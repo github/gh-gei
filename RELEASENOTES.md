@@ -1,1 +1,1 @@
-
+- The script generated from generate-script will now stop on the first command that fails. Previously this script could be renamed between .ps1 and .sh, but with this change it will now only work as a .ps1 script.

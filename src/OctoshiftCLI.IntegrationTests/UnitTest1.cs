@@ -206,6 +206,18 @@ namespace OctoshiftCLI.IntegrationTests
                 reposDisabled.Should().Contain(x => x.repo == teamProject && x.disabled);
             }
 
+            _output.WriteLine("Checking that the ADO repos were locked...");
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
+                var repoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
+                var identityDescriptor = await adoApi.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
+                var (allow, deny) = await adoApi.GetRepoPermissions(adoOrg, teamProjectId, repoId, identityDescriptor);
+
+                deny.Should().Be(56828);
+            }
+
             // Are the repos in GH
             // Do they have the latest commit SHA
             // Is autolink configured (create a commit and link?)

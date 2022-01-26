@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -262,8 +264,25 @@ namespace OctoshiftCLI
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
-            var response = await _client.GetAsync(url);
-            return (string)JObject.Parse(response)["id"];
+            try
+            {
+                var response = await _client.GetAsync(url);
+                return (string)JObject.Parse(response)["id"];
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // The repo may be disabled, can still get the ID by getting it from the repo list
+                    url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+
+                    var response = await _client.GetWithPagingAsync(url);
+
+                    return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
+                }
+
+                throw;
+            }
         }
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
@@ -686,6 +705,21 @@ steps:
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
             var response = await _client.GetWithPagingAsync(url);
             return response.Select(x => ((string)x["name"], (bool)x["isDisabled"]));
+        }
+
+        public virtual async Task<(int allow, int deny)> GetRepoPermissions(string org, string teamProjectId, string repoId, string identityDescriptor)
+        {
+            var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
+            var token = $"repoV2/{teamProjectId}/{repoId}";
+
+            var url = $"https://dev.azure.com/{org}/_apis/accesscontrollists/{gitReposNamespace}?token={token}&descriptors={identityDescriptor}&api-version=6.0";
+
+            var response = await _client.GetAsync(url);
+
+            var allow = (int)JObject.Parse(response)["value"].First()["acesDictionary"][identityDescriptor]["allow"];
+            var deny = (int)JObject.Parse(response)["value"].First()["acesDictionary"][identityDescriptor]["deny"];
+
+            return (allow, deny);
         }
     }
 }
