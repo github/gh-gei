@@ -353,5 +353,14 @@ namespace OctoshiftCLI
 
             return (string)JObject.Parse(response)["groups"].Single()["group_name"];
         }
+
+        public virtual async Task<string> GetTeamRepoRole(string org, string team, string repo)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
+
+            var response = await _client.GetAllAsync(url).ToListAsync();
+
+            return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
+        }
     }
 }

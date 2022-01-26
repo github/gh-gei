@@ -235,8 +235,19 @@ namespace OctoshiftCLI.IntegrationTests
                 idpGroup.ToLower().Should().Be(team);
             }
 
+            _output.WriteLine("Checking that the GitHub teams have repo permissions...");
 
-            // do the GH teams have Idp linked
+            foreach (var teamProject in testTeamProjects)
+            {
+                var adminRole = await githubApi.GetTeamRepoRole(githubOrg, $"{teamProject}-admins", $"{teamProject}-{teamProject}");
+                adminRole.Should().Be("admin");
+
+                var maintainRole = await githubApi.GetTeamRepoRole(githubOrg, $"{teamProject}-maintainers", $"{teamProject}-{teamProject}");
+                maintainRole.Should().Be("maintain");
+            }
+
+
+
             // do the GH teams have permissions on the repo
             // is boards integration configured
             // are pipelines rewired (run a pipeline?)
@@ -249,6 +260,7 @@ namespace OctoshiftCLI.IntegrationTests
             // Is the repo disabled on ADO
             // Are the deny permissions set
             // are the GH teams created
+            // do the GH teams have Idp linked
         }
 
         private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];
