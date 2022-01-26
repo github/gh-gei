@@ -344,5 +344,14 @@ namespace OctoshiftCLI
             var autolinks = await _client.GetAllAsync(url).ToListAsync();
             return autolinks.Select(x => ((string)x["id"], (string)x["key_prefix"], (string)x["url_template"])).ToList();
         }
+
+        public virtual async Task<string> GetTeamIdPGroup(string org, string teamSlug)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
+
+            var response = await _client.GetAsync(url);
+
+            return (string)JObject.Parse(response)["groups"].Single()["group_name"];
+        }
     }
 }

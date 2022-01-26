@@ -227,8 +227,15 @@ namespace OctoshiftCLI.IntegrationTests
                 githubTeams.Should().Contain($"{teamProject}-admins");
             }
 
+            _output.WriteLine("Checking that the GitHub teams are linked to IdP groups...");
 
-            // are the GH teams created
+            foreach (var team in githubTeams)
+            {
+                var idpGroup = await githubApi.GetTeamIdPGroup(githubOrg, team);
+                idpGroup.ToLower().Should().Be(team);
+            }
+
+
             // do the GH teams have Idp linked
             // do the GH teams have permissions on the repo
             // is boards integration configured
@@ -241,6 +248,7 @@ namespace OctoshiftCLI.IntegrationTests
             // Is autolink configured (create a commit and link?)
             // Is the repo disabled on ADO
             // Are the deny permissions set
+            // are the GH teams created
         }
 
         private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];
