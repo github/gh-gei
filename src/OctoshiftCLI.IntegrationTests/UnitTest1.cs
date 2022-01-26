@@ -246,9 +246,14 @@ namespace OctoshiftCLI.IntegrationTests
                 maintainRole.Should().Be("maintain");
             }
 
+            _output.WriteLine("Checking that the service connection was shared...");
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                var serviceConnection = await adoApi.GetServiceConnections(adoOrg, teamProject);
+            }
 
 
-            // do the GH teams have permissions on the repo
             // is boards integration configured
             // are pipelines rewired (run a pipeline?)
             // service connection shared
@@ -261,6 +266,7 @@ namespace OctoshiftCLI.IntegrationTests
             // Are the deny permissions set
             // are the GH teams created
             // do the GH teams have Idp linked
+            // do the GH teams have permissions on the repo
         }
 
         private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];

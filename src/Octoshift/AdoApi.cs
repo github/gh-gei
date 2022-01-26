@@ -721,5 +721,12 @@ steps:
 
             return (allow, deny);
         }
+
+        public virtual async Task<IEnumerable<(string Id, string Name, string Type)>> GetServiceConnections(string org, string teamProject)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var response = await _client.GetWithPagingAsync(url);
+            return response.Select(x => ((string)x["id"], (string)x["name"], (string)x["type"]));
+        }
     }
 }

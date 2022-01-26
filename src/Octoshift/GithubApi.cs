@@ -308,7 +308,6 @@ namespace OctoshiftCLI
         public virtual async Task DeleteRepo(string org, string repo)
         {
             var url = $"https://api.github.com/repos/{org}/{repo}";
-
             await _client.DeleteAsync(url);
         }
 
@@ -325,16 +324,13 @@ namespace OctoshiftCLI
         public virtual async Task DeleteTeam(string org, string team)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{team}";
-
             await _client.DeleteAsync(url);
         }
 
         public virtual async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
         {
             var url = $"https://api.github.com/repos/{org}/{repo}/commits";
-
             var commits = await _client.GetAllAsync(url).ToListAsync();
-
             return commits.Select(x => (string)x["sha"]).ToList();
         }
 
@@ -348,18 +344,14 @@ namespace OctoshiftCLI
         public virtual async Task<string> GetTeamIdPGroup(string org, string teamSlug)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
-
             var response = await _client.GetAsync(url);
-
             return (string)JObject.Parse(response)["groups"].Single()["group_name"];
         }
 
         public virtual async Task<string> GetTeamRepoRole(string org, string team, string repo)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
-
             var response = await _client.GetAllAsync(url).ToListAsync();
-
             return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
         }
     }
