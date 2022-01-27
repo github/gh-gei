@@ -213,7 +213,7 @@ namespace OctoshiftCLI.IntegrationTests
                 var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
                 var repoId = await adoApi.GetRepoId(adoOrg, teamProject, teamProject);
                 var identityDescriptor = await adoApi.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
-                var (allow, deny) = await adoApi.GetRepoPermissions(adoOrg, teamProjectId, repoId, identityDescriptor);
+                var (_, deny) = await adoApi.GetRepoPermissions(adoOrg, teamProjectId, repoId, identityDescriptor);
 
                 deny.Should().Be(56828);
             }
@@ -250,23 +250,27 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var teamProject in testTeamProjects)
             {
-                var serviceConnection = await adoApi.GetServiceConnections(adoOrg, teamProject);
+                var serviceConnections = await adoApi.GetServiceConnections(adoOrg, teamProject);
+                serviceConnections.Should().Contain(x => x.Type == "GitHub");
             }
 
+            _output.WriteLine("Checking that the pipelines are rewired...");
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                var pipelineId = await adoApi.GetPipelineId(adoOrg, teamProject, teamProject);
+                var pipelineRepo = await adoApi.GetPipelineRepo(adoOrg, teamProject, pipelineId);
+
+                var serviceConnectionId = (await adoApi.GetServiceConnections(adoOrg, teamProject)).First(x => x.Type == "GitHub");
+                pipelineRepo.Type.Should().Be("GitHub");
+                pipelineRepo.Id.Should().Be($"{githubOrg}/{teamProject}-{teamProject}");
+                pipelineRepo.ConnectedServiceId.Should().Be(serviceConnectionId.Id);
+            }
 
             // is boards integration configured
-            // are pipelines rewired (run a pipeline?)
-            // service connection shared
 
-
-            // Are the repos in GH
-            // Do they have the latest commit SHA
-            // Is autolink configured (create a commit and link?)
-            // Is the repo disabled on ADO
-            // Are the deny permissions set
-            // are the GH teams created
-            // do the GH teams have Idp linked
-            // do the GH teams have permissions on the repo
+            // TODO: run a pipeline, and check for success
+            // TODO: link to a WI, and check that both sides of the link worked
         }
 
         private string GithubRepoToTeamProject(string repo) => repo[(((repo.Length - 1) / 2) + 1)..];

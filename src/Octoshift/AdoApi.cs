@@ -728,5 +728,13 @@ steps:
             var response = await _client.GetWithPagingAsync(url);
             return response.Select(x => ((string)x["id"], (string)x["name"], (string)x["type"]));
         }
+
+        public virtual async Task<(string Id, string Type, string ConnectedServiceId)> GetPipelineRepo(string org, string teamProject, int pipelineId)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var response = await _client.GetAsync(url);
+            var result = JObject.Parse(response)["repository"];
+            return ((string)result["id"], (string)result["type"], (string)result["properties"]["connectedServiceId"]);
+        }
     }
 }
