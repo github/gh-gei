@@ -267,7 +267,22 @@ namespace OctoshiftCLI.IntegrationTests
                 pipelineRepo.ConnectedServiceId.Should().Be(serviceConnectionId.Id);
             }
 
-            // is boards integration configured
+            _output.WriteLine("Checking that the boards integration is configured...");
+
+            foreach (var teamProject in testTeamProjects)
+            {
+                var userId = await adoApi.GetUserId();
+                var adoOrgId = await adoApi.GetOrganizationId(userId, adoOrg);
+                var boardsConnection = await adoApi.GetBoardsGithubConnection(adoOrg, adoOrgId, teamProject);
+
+                boardsConnection.Should().NotBeNull();
+                boardsConnection.repoIds.Count().Should().Be(1);
+
+                //var teamProjectId = await adoApi.GetTeamProjectId(adoOrg, teamProject);
+                //var repoId = await adoApi.GetBoardsGithubRepoId(adoOrg, adoOrgId, teamProject, teamProjectId, boardsConnection.endpointId, githubOrg, teamProject);
+
+                //boardsConnection.repoIds.First().Should().Be(repoId);
+            }
 
             // TODO: run a pipeline, and check for success
             // TODO: link to a WI, and check that both sides of the link worked
