@@ -90,7 +90,7 @@ namespace OctoshiftCLI.IntegrationTests
             await _adoApi.CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject);
         }
 
-        public void RunCliMigration(string adoOrg, string githubOrg)
+        public void RunCliMigration(string generateScriptCommand)
         {
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
@@ -122,7 +122,7 @@ namespace OctoshiftCLI.IntegrationTests
                 scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
             }
 
-            startInfo.Arguments = $"generate-script --github-org {githubOrg} --ado-org {adoOrg}";
+            startInfo.Arguments = generateScriptCommand;
 
             if (startInfo.EnvironmentVariables.ContainsKey("ADO_PAT"))
             {
