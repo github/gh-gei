@@ -114,13 +114,13 @@ jobs:
 
     - name: Test Logs
       if: always()
-      run: Get-ChildItem . -Filter **/*.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
+      run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.Name }
       working-directory: ./dist
       shell: pwsh
 
     - name: Test Logs (Verbose)
       if: always()
-      run: Get-ChildItem . -Filter **/*.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
+      run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.Name }
       working-directory: ./dist
       shell: pwsh
 
@@ -148,13 +148,13 @@ jobs:
 
     - name: Test Logs
       if: always()
-      run: Get-ChildItem . -Filter **/*.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
+      run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.Name }
       working-directory: ./dist
       shell: pwsh
 
     - name: Test Logs (Verbose)
       if: always()
-      run: Get-ChildItem . -Filter **/*.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
+      run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.Name }
       working-directory: ./dist
       shell: pwsh
   
