@@ -48,17 +48,18 @@ namespace OctoshiftCLI.IntegrationTests
             var pipeline1 = "pipeline1";
             var pipeline2 = "pipeline2";
 
-            await _helper.ResetTestEnvironment(adoOrg, githubOrg);
+            await _helper.ResetAdoTestEnvironment(adoOrg);
+            await _helper.ResetGithubTestEnvironment(githubOrg);
 
             await _helper.CreateTeamProject(adoOrg, teamProject1);
-            var commitId = await _helper.InitializeRepo(adoOrg, teamProject1, adoRepo1);
+            var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
             await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
 
             await _helper.CreateTeamProject(adoOrg, teamProject2);
-            commitId = await _helper.InitializeRepo(adoOrg, teamProject2, adoRepo2);
+            commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
             await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
 
-            _helper.RunCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg}");
+            _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg}");
 
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
@@ -102,17 +103,18 @@ namespace OctoshiftCLI.IntegrationTests
             var pipeline1 = "pipeline1";
             var pipeline2 = "pipeline2";
 
-            await _helper.ResetTestEnvironment(adoOrg, githubOrg);
+            await _helper.ResetAdoTestEnvironment(adoOrg);
+            await _helper.ResetGithubTestEnvironment(githubOrg);
 
             await _helper.CreateTeamProject(adoOrg, teamProject1);
-            var commitId = await _helper.InitializeRepo(adoOrg, teamProject1, adoRepo1);
+            var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
             await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
 
             await _helper.CreateTeamProject(adoOrg, teamProject2);
-            commitId = await _helper.InitializeRepo(adoOrg, teamProject2, adoRepo2);
+            commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
             await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
 
-            _helper.RunCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ssh");
+            _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ssh");
 
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");

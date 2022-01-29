@@ -13,16 +13,24 @@ namespace OctoshiftCLI.IntegrationTests
     {
         private readonly ITestOutputHelper _output;
         private readonly AdoApi _adoApi;
-        private readonly GithubApi _githubApi;
+        private readonly GithubApi _githubSourceApi;
+        private readonly GithubApi _githubTargetApi;
 
         public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi)
         {
             _output = output;
             _adoApi = adoApi;
-            _githubApi = githubApi;
+            _githubTargetApi = githubApi;
         }
 
-        public async Task ResetTestEnvironment(string adoOrg, string githubOrg)
+        public TestHelper(ITestOutputHelper output, GithubApi githubSourceApi, GithubApi githubTargetApi)
+        {
+            _output = output;
+            _githubSourceApi = githubSourceApi;
+            _githubTargetApi = githubTargetApi;
+        }
+
+        public async Task ResetAdoTestEnvironment(string adoOrg)
         {
             var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
 
@@ -39,21 +47,30 @@ namespace OctoshiftCLI.IntegrationTests
                     await Task.Delay(1000);
                 }
             }
+        }
 
-            var githubRepos = await _githubApi.GetRepos(githubOrg);
+        public async Task CreateGithubRepo(string githubOrg, string repo)
+        {
+            _output.WriteLine($"Creating Github repo: {githubOrg}\\{repo}...");
+            await _githubSourceApi.CreateRepo(githubOrg, repo, true, true);
+        }
+
+        public async Task ResetGithubTestEnvironment(string githubOrg)
+        {
+            var githubRepos = await _githubTargetApi.GetRepos(githubOrg);
 
             foreach (var repo in githubRepos)
             {
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubApi.DeleteRepo(githubOrg, repo);
+                await _githubTargetApi.DeleteRepo(githubOrg, repo);
             }
 
-            var githubTeams = await _githubApi.GetTeams(githubOrg);
+            var githubTeams = await _githubTargetApi.GetTeams(githubOrg);
 
             foreach (var team in githubTeams)
             {
                 _output.WriteLine($"Deleting GitHub team: {team}");
-                await _githubApi.DeleteTeam(githubOrg, team);
+                await _githubTargetApi.DeleteTeam(githubOrg, team);
             }
         }
 
@@ -75,9 +92,9 @@ namespace OctoshiftCLI.IntegrationTests
             }
         }
 
-        public async Task<string> InitializeRepo(string adoOrg, string teamProject, string repo)
+        public async Task<string> InitializeAdoRepo(string adoOrg, string teamProject, string repo)
         {
-            _output.WriteLine($"Initialiing Repo: {adoOrg}\\{teamProject}\\{repo}...");
+            _output.WriteLine($"Initializing Repo: {adoOrg}\\{teamProject}\\{repo}...");
             var repoId = await _adoApi.GetRepoId(adoOrg, teamProject, repo);
             return await _adoApi.InitializeRepo(adoOrg, repoId);
         }
@@ -90,7 +107,7 @@ namespace OctoshiftCLI.IntegrationTests
             await _adoApi.CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject);
         }
 
-        public void RunCliMigration(string generateScriptCommand)
+        public void RunAdoToGithubCliMigration(string generateScriptCommand)
         {
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
@@ -161,10 +178,71 @@ namespace OctoshiftCLI.IntegrationTests
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
 
+        public void RunGeiCliMigration(string generateScriptCommand)
+        {
+            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+
+            var startInfo = new ProcessStartInfo();
+            var scriptPath = string.Empty;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                startInfo.FileName = @"../../../../../dist/linux-x64/gei-linux-amd64";
+                startInfo.WorkingDirectory = @"../../../../../dist/linux-x64";
+
+                scriptPath = Path.Join(@"../../../../../dist/linux-x64", "migrate.ps1");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                startInfo.FileName = @"../../../../../dist/win-x64/gei-windows-amd64.exe";
+                startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
+
+                scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                startInfo.FileName = @"../../../../../dist/osx-x64/gei-darwin-amd64";
+                startInfo.WorkingDirectory = @"../../../../../dist/osx-x64";
+
+                scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
+            }
+
+            startInfo.Arguments = generateScriptCommand;
+
+            if (startInfo.EnvironmentVariables.ContainsKey("GH_PAT"))
+            {
+                startInfo.EnvironmentVariables["GH_PAT"] = githubToken;
+            }
+            else
+            {
+                startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
+            }
+
+            var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
+            startInfo.FileName = cliPath;
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+            var p = Process.Start(startInfo);
+            p.WaitForExit();
+
+            p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
+
+            startInfo.FileName = "pwsh";
+            scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
+            startInfo.Arguments = $"-File {scriptPath}";
+
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+            p = Process.Start(startInfo);
+            p.WaitForExit();
+
+            p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
+        }
+
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
         {
             _output.WriteLine("Checking that the repos in GitHub exist...");
-            var repos = await _githubApi.GetRepos(githubOrg);
+            var repos = await _githubTargetApi.GetRepos(githubOrg);
             repos.Should().Contain(repo);
         }
 
@@ -172,7 +250,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
             _output.WriteLine("Checking that the repos in GitHub are initialized...");
 
-            var commits = await _githubApi.GetRepoCommitShas(githubOrg, repo);
+            var commits = await _githubTargetApi.GetRepoCommitShas(githubOrg, repo);
             commits.Count().Should().BeGreaterThan(0);
         }
 
@@ -180,7 +258,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
             _output.WriteLine("Checking that the Autolinks have been configured...");
 
-            var autolinks = await _githubApi.GetAutolinks(githubOrg, repo);
+            var autolinks = await _githubTargetApi.GetAutolinks(githubOrg, repo);
             autolinks.Where(x => x.key == "AB#" && x.url == urlTemplate)
                      .Count()
                      .Should().Be(1);
@@ -208,7 +286,7 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task AssertGithubTeamCreated(string githubOrg, string teamSlug)
         {
             _output.WriteLine("Checking that the GitHub teams were created...");
-            var githubTeams = await _githubApi.GetTeams(githubOrg);
+            var githubTeams = await _githubTargetApi.GetTeams(githubOrg);
 
             githubTeams.Should().Contain(teamSlug);
         }
@@ -217,7 +295,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
             _output.WriteLine("Checking that the GitHub teams are linked to IdP groups...");
 
-            var idp = await _githubApi.GetTeamIdPGroup(githubOrg, teamSlug);
+            var idp = await _githubTargetApi.GetTeamIdPGroup(githubOrg, teamSlug);
             idp.ToLower().Should().Be(idpGroup);
         }
 
@@ -225,7 +303,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
             _output.WriteLine("Checking that the GitHub teams have repo permissions...");
 
-            var actualRole = await _githubApi.GetTeamRepoRole(githubOrg, teamSlug, repo);
+            var actualRole = await _githubTargetApi.GetTeamRepoRole(githubOrg, teamSlug, repo);
             actualRole.Should().Be(role);
         }
 

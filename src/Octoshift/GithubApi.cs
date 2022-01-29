@@ -57,6 +57,20 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
+        public async Task CreateRepo(string org, string repo, bool isPrivate, bool isInitialized)
+        {
+            var url = $"https://api.github.com/orgs/{org}/repos";
+
+            var payload = new
+            {
+                name = repo,
+                @private = isPrivate,
+                auto_init = isInitialized
+            };
+
+            _ = await _client.PostAsync(url, payload);
+        }
+
         public virtual async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
         {
             var url = $"https://api.github.com/orgs/{org}/team-sync/groups";
