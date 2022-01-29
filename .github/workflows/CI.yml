@@ -75,11 +75,8 @@ jobs:
       uses: github/codeql-action/analyze@v1
       if: matrix.runner-os == 'ubuntu-latest'
 
-  integration-test:
-    strategy:
-      matrix:
-        runner-os: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.runner-os }}
+  integration-test-linux:
+    runs-on: ubuntu-latest
     concurrency: integration-test
     steps:
     - uses: actions/checkout@v2
@@ -101,13 +98,13 @@ jobs:
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
-      if: always() && matrix.runner-os == 'ubuntu-latest'
+      if: always()
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
     
     - uses: actions/upload-artifact@v2
-      if: always() && matrix.runner-os == 'ubuntu-latest'
+      if: always()
       with:
         name: integration-test-logs
         path: dist/
@@ -124,9 +121,44 @@ jobs:
       working-directory: ./dist
       shell: pwsh
 
-  integration-test-mac-os:
+  integration-test-windows:
+    runs-on: windows-latest
+    needs: integration-test-linux
+    concurrency: integration-test
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    # TODO: Don't build them 3 times, build once and publish as pipeline artifacts
+    - name: Build Artifacts
+      run: ./publish.ps1
+      shell: pwsh
+
+    - name: Integration Test
+      env: 
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Test Logs
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+      working-directory: ./dist
+      shell: pwsh
+
+    - name: Test Logs (Verbose)
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+      working-directory: ./dist
+      shell: pwsh
+
+  integration-test-macos:
     runs-on: macos-latest
-    needs: integration-test
+    needs: integration-test-windows
     concurrency: integration-test
     steps:
     - uses: actions/checkout@v2
@@ -161,7 +193,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, integration-test ]
+    needs: [ build, integration-test-macos ]
     environment: PUBLISH_RELEASE
 
     steps:
