@@ -36,6 +36,7 @@ namespace OctoshiftCLI.IntegrationTests
             _helper = new TestHelper(_output, _githubSourceApi, _githubTargetApi);
         }
 
+        // Tracking Issue: https://github.com/github/octoshift/issues/3606
         [Fact(Skip = "random 404 errors")]
         public async Task Basic()
         {
@@ -58,7 +59,8 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
         }
 
-        [Fact]
+        // Tracking Issue: https://github.com/github/octoshift/issues/3525
+        [Fact(Skip = "bug where it says permanently added XXXX to list of known hosts")]
         public async Task BasicWithSsh()
         {
             var githubSourceOrg = "e2e-testing-source";

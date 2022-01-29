@@ -37,6 +37,7 @@ namespace OctoshiftCLI.IntegrationTests
             _helper = new TestHelper(_output, _adoApi, _githubApi);
         }
 
+        // Tracking Issue: https://github.com/github/octoshift/issues/3606
         [Fact(Skip = "random 404 errors")]
         public async Task Basic()
         {
