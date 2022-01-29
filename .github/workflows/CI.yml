@@ -92,6 +92,8 @@ jobs:
     - name: Install GH extension
       run: gh extension install github/gh-gei
       shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Integration Test
       env: 
@@ -144,6 +146,8 @@ jobs:
     - name: Install GH extension
       run: gh extension install github/gh-gei
       shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Integration Test
       env: 
@@ -182,6 +186,8 @@ jobs:
     - name: Install GH extension
       run: gh extension install github/gh-gei
       shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Integration Test
       env: 
