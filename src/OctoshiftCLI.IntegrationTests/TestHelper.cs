@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -107,25 +108,22 @@ namespace OctoshiftCLI.IntegrationTests
             await _adoApi.CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject);
         }
 
-        public void RunAdoToGithubCliMigration(string generateScriptCommand)
+        public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-
             var startInfo = new ProcessStartInfo();
             var scriptPath = string.Empty;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                startInfo.FileName = @"../../../../../dist/linux-x64/ado2gh";
-                startInfo.WorkingDirectory = @"../../../../../dist/linux-x64";
+                startInfo.FileName = $"../../../../../dist/linux-x64/{cliName}";
+                startInfo.WorkingDirectory = "../../../../../dist/linux-x64";
 
-                scriptPath = Path.Join(@"../../../../../dist/linux-x64", "migrate.ps1");
+                scriptPath = Path.Join("../../../../../dist/linux-x64", "migrate.ps1");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                startInfo.FileName = @"../../../../../dist/win-x64/ado2gh.exe";
+                startInfo.FileName = $"../../../../../dist/win-x64/{cliName}.exe";
                 startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
 
                 scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
@@ -133,30 +131,27 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                startInfo.FileName = @"../../../../../dist/osx-x64/ado2gh";
-                startInfo.WorkingDirectory = @"../../../../../dist/osx-x64";
+                startInfo.FileName = $"../../../../../dist/osx-x64/{cliName}";
+                startInfo.WorkingDirectory = $"../../../../../dist/osx-x64";
 
-                scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
+                scriptPath = Path.Join($"../../../../../dist/osx-x64", "migrate.ps1");
             }
 
             startInfo.Arguments = generateScriptCommand;
 
-            if (startInfo.EnvironmentVariables.ContainsKey("ADO_PAT"))
+            if (tokens != null)
             {
-                startInfo.EnvironmentVariables["ADO_PAT"] = adoToken;
-            }
-            else
-            {
-                startInfo.EnvironmentVariables.Add("ADO_PAT", adoToken);
-            }
-
-            if (startInfo.EnvironmentVariables.ContainsKey("GH_PAT"))
-            {
-                startInfo.EnvironmentVariables["GH_PAT"] = githubToken;
-            }
-            else
-            {
-                startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
+                foreach (var token in tokens)
+                {
+                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
+                    {
+                        startInfo.EnvironmentVariables[token.Key] = token.Value;
+                    }
+                    else
+                    {
+                        startInfo.EnvironmentVariables.Add("ADO_PAT", token.Value);
+                    }
+                }
             }
 
             var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
@@ -178,65 +173,38 @@ namespace OctoshiftCLI.IntegrationTests
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
 
+        public void RunAdoToGithubCliMigration(string generateScriptCommand)
+        {
+            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            var tokens = new Dictionary<string, string>() { { "ADO_PAT", adoToken }, { "GH_PAT", githubToken } };
+
+            RunCliMigration(generateScriptCommand, "ado2gh", tokens);
+        }
+
         public void RunGeiCliMigration(string generateScriptCommand)
         {
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
 
-            var startInfo = new ProcessStartInfo();
-            var scriptPath = string.Empty;
+            var cliName = string.Empty;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                startInfo.FileName = @"../../../../../dist/linux-x64/gei-linux-amd64";
-                startInfo.WorkingDirectory = @"../../../../../dist/linux-x64";
-
-                scriptPath = Path.Join(@"../../../../../dist/linux-x64", "migrate.ps1");
+                cliName = "gei-linux-amd64";
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                startInfo.FileName = @"../../../../../dist/win-x64/gei-windows-amd64.exe";
-                startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
-
-                scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
+                cliName = "gei-windows-amd64";
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                startInfo.FileName = @"../../../../../dist/osx-x64/gei-darwin-amd64";
-                startInfo.WorkingDirectory = @"../../../../../dist/osx-x64";
-
-                scriptPath = Path.Join(@"../../../../../dist/osx-x64", "migrate.ps1");
+                cliName = "gei-darwin-amd64";
             }
 
-            startInfo.Arguments = generateScriptCommand;
-
-            if (startInfo.EnvironmentVariables.ContainsKey("GH_PAT"))
-            {
-                startInfo.EnvironmentVariables["GH_PAT"] = githubToken;
-            }
-            else
-            {
-                startInfo.EnvironmentVariables.Add("GH_PAT", githubToken);
-            }
-
-            var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
-            startInfo.FileName = cliPath;
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-            var p = Process.Start(startInfo);
-            p.WaitForExit();
-
-            p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
-
-            startInfo.FileName = "pwsh";
-            scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
-            startInfo.Arguments = $"-File {scriptPath}";
-
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-            p = Process.Start(startInfo);
-            p.WaitForExit();
-
-            p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
+            RunCliMigration(generateScriptCommand, cliName, tokens);
         }
 
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
