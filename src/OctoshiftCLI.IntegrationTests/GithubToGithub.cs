@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests
 {
+    [Collection("Integration Tests")]
     public class GithubToGithub : IDisposable
     {
         private readonly ITestOutputHelper _output;
