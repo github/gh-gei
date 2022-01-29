@@ -78,7 +78,7 @@ jobs:
   integration-test:
     strategy:
       matrix:
-        runner-os: [windows-latest, ubuntu-latest, macos-latest]
+        runner-os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test
     steps:
@@ -114,14 +114,48 @@ jobs:
 
     - name: Test Logs
       if: always()
-      run: Get-ChildItem . -Filter *.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
-      working-directory: ./dist/linux-x64
+      run: Get-ChildItem . -Filter **/*.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist
       shell: pwsh
 
     - name: Test Logs (Verbose)
       if: always()
-      run: Get-ChildItem . -Filter *.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
-      working-directory: ./dist/linux-x64
+      run: Get-ChildItem . -Filter **/*.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist
+      shell: pwsh
+
+  integration-test-mac-os:
+    runs-on: macos-latest
+    needs: integration-test
+    concurrency: integration-test
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build Artifacts
+      run: ./publish.ps1
+      shell: pwsh
+
+    - name: Integration Test
+      env: 
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Test Logs
+      if: always()
+      run: Get-ChildItem . -Filter **/*.octoshift.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist
+      shell: pwsh
+
+    - name: Test Logs (Verbose)
+      if: always()
+      run: Get-ChildItem . -Filter **/*.octoshift.verbose.log | ForEach-Object { Get-Content -Path $_.Name }
+      working-directory: ./dist
       shell: pwsh
   
   publish:
