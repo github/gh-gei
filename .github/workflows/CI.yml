@@ -76,7 +76,10 @@ jobs:
       if: matrix.runner-os == 'ubuntu-latest'
 
   integration-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner-os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test
     steps:
     - uses: actions/checkout@v2
@@ -98,13 +101,13 @@ jobs:
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
-      if: always()
+      if: matrix.runner-os == 'ubuntu-latest'
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
     
     - uses: actions/upload-artifact@v2
-      if: always()
+      if: matrix.runner-os == 'ubuntu-latest'
       with:
         name: integration-test-logs
         path: dist/
