@@ -94,7 +94,10 @@ jobs:
       if: always()
       with:
         name: publish-binaries
-        path: dist/
+        path: |
+          dist/
+          !dist/*.tar.gz
+          !dist/*.zip
 
     - name: Copy binary to root
       run: Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei
