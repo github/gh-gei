@@ -304,5 +304,34 @@ namespace OctoshiftCLI
                 return false;
             }
         }
+
+        public virtual async Task<int> StartArchiveGeneration(string apiUrl, string org, string[] repositories)
+        {
+            var url = $"{apiUrl}/orgs/{org}/migrations";
+
+            var payload = new { repositories };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+            return (int)data["id"];
+        }
+
+        public virtual async Task<string> MigrationStatus(string apiUrl, string org, int migrationId)
+        {
+            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["state"];
+        }
+
+        public virtual async Task<string> MigrationArchiveURL(string apiUrl, string org, int migrationId)
+        {
+            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
+
+            var response = await _client.GetHeadersAsync(url);
+            return response;
+        }
     }
 }

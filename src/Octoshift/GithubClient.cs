@@ -18,6 +18,7 @@ namespace OctoshiftCLI
         public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;
+
             _httpClient = httpClient;
 
             if (_httpClient != null)
@@ -28,6 +29,8 @@ namespace OctoshiftCLI
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
             }
         }
+
+        public virtual async Task<string> GetHeadersAsync(string url) => (await SendAsync(HttpMethod.Get, url, shouldEnsureSuccessStatusCode: false)).Content;
 
         public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
 
@@ -58,7 +61,7 @@ namespace OctoshiftCLI
         public virtual async Task<string> DeleteAsync(string url) => (await SendAsync(HttpMethod.Delete, url)).Content;
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
-            HttpMethod httpMethod, string url, object body = null)
+            HttpMethod httpMethod, string url, object body = null, bool shouldEnsureSuccessStatusCode = true)
         {
             url = url?.Replace(" ", "%20");
 
@@ -82,7 +85,10 @@ namespace OctoshiftCLI
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
-            response.EnsureSuccessStatusCode();
+            if (shouldEnsureSuccessStatusCode)
+            {
+                response.EnsureSuccessStatusCode();
+            }
 
             return (content, response.Headers.ToArray());
         }

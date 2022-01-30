@@ -8,11 +8,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public GithubApiFactory(OctoLogger octoLogger, HttpClient client,
-            EnvironmentVariableProvider environmentVariableProvider)
+        public GithubApiFactory(OctoLogger octoLogger, EnvironmentVariableProvider environmentVariableProvider)
         {
             _octoLogger = octoLogger;
-            _client = client;
+            _client = new HttpClientFactory().CreateClient("OctoShift");
             _environmentVariableProvider = environmentVariableProvider;
         }
 
