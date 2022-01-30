@@ -120,12 +120,7 @@ namespace OctoshiftCLI.IntegrationTests
                 return "windows";
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                return "macos";
-            }
-
-            throw new InvalidOperationException("Could not determine OS");
+            return RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "macos" : throw new InvalidOperationException("Could not determine OS");
         }
 
         public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
