@@ -108,6 +108,26 @@ namespace OctoshiftCLI.IntegrationTests
             await _adoApi.CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject);
         }
 
+        public string GetOsName()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "linux";
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "windows";
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "macos";
+            }
+
+            throw new InvalidOperationException("Could not determine OS");
+        }
+
         public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
             var startInfo = new ProcessStartInfo();

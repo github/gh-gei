@@ -40,8 +40,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact(Skip = "random 404 errors")]
         public async Task Basic()
         {
-            var githubSourceOrg = "e2e-testing-source";
-            var githubTargetOrg = "e2e-testing";
+            var githubSourceOrg = $"e2e-testing-source-{_helper.GetOsName()}";
+            var githubTargetOrg = $"e2e-testing-{_helper.GetOsName()}";
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
@@ -62,8 +62,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task BasicWithSsh()
         {
-            var githubSourceOrg = "e2e-testing-source";
-            var githubTargetOrg = "e2e-testing";
+            var githubSourceOrg = $"e2e-testing-source-{_helper.GetOsName()}";
+            var githubTargetOrg = $"e2e-testing-{_helper.GetOsName()}";
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 

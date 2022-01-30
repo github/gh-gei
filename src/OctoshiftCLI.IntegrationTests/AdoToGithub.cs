@@ -41,8 +41,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact(Skip = "random 404 errors")]
         public async Task Basic()
         {
-            var adoOrg = "gei-e2e-testing";
-            var githubOrg = "e2e-testing";
+            var adoOrg = $"gei-e2e-testing-{_helper.GetOsName()}";
+            var githubOrg = $"e2e-testing-{_helper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
@@ -96,8 +96,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task BasicWithSsh()
         {
-            var adoOrg = "gei-e2e-testing";
-            var githubOrg = "e2e-testing";
+            var adoOrg = $"gei-e2e-testing-{_helper.GetOsName()}";
+            var githubOrg = $"e2e-testing-{_helper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
