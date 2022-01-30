@@ -108,6 +108,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
 
                     _isRetry = true;
+                    await githubApi.DeleteRepo(githubOrg, githubRepo);
                     await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, verbose);
                 }
                 else

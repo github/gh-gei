@@ -105,6 +105,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
 
                     _isRetry = true;
+                    await githubApi.DeleteRepo(githubOrg, githubRepo);
                     await Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
                 }
                 else
