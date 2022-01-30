@@ -206,9 +206,11 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build Artifacts
-      run: ./publish.ps1
-      shell: pwsh
+    - name: Download binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: publish-binaries
+        path: ./dist
 
     - name: Copy binary to root
       run: Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei
