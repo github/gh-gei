@@ -112,11 +112,25 @@ jobs:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
     
-    - uses: actions/upload-artifact@v2
+    - name: Upload test logs
+      uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: integration-test-logs
-        path: dist/
+        name: integration-test-logs-linux
+        path: dist/**/*.log
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: publish-binaries
+        path: |
+          dist/win-x64/ado2gh.exe
+          dist/win-x64/gei-windows-amd64.exe
+          dist/linux-x64/ado2gh
+          dist/linux-x64/gei-linux-amd64
+          dist/osx-x64/ado2gh
+          dist/osx-x64/gei-darwin-amd64
 
     - name: Test Logs
       if: always()
@@ -142,10 +156,11 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    # TODO: Don't build them 3 times, build once and publish as pipeline artifacts
-    - name: Build Artifacts
-      run: ./publish.ps1
-      shell: pwsh
+    - name: Download binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: publish-binaries
+        path: ./dist
 
     - name: Copy binary to root
       run: Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei.exe
@@ -162,6 +177,13 @@ jobs:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Upload test logs
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: integration-test-logs-windows
+        path: dist/**/*.log
 
     - name: Test Logs
       if: always()
@@ -206,6 +228,13 @@ jobs:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Upload test logs
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: integration-test-logs-macos
+        path: dist/**/*.log
 
     - name: Test Logs
       if: always()
