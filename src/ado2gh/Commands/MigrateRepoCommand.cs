@@ -10,7 +10,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private bool _isRetry = false;
+        private bool _isRetry;
 
         public MigrateRepoCommand(
             OctoLogger log,
@@ -107,6 +107,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     _log.LogWarning(failureReason);
                     _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
 
+                    _isRetry = true;
                     await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, verbose);
                 }
                 else
