@@ -187,7 +187,7 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
 
-            RunCliMigration(generateScriptCommand, "gh gei", tokens);
+            RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
         }
 
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
