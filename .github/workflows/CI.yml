@@ -89,8 +89,12 @@ jobs:
       run: ./publish.ps1
       shell: pwsh
 
+    - name: Copy binary to root
+      run: Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei
+      shell: pwsh
+
     - name: Install GH extension
-      run: gh extension install github/gh-gei
+      run: gh extension install .
       shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -143,8 +147,12 @@ jobs:
       run: ./publish.ps1
       shell: pwsh
 
+    - name: Copy binary to root
+      run: Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei.exe
+      shell: pwsh
+
     - name: Install GH extension
-      run: gh extension install github/gh-gei
+      run: gh extension install .
       shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,8 +191,12 @@ jobs:
       run: ./publish.ps1
       shell: pwsh
 
+    - name: Copy binary to root
+      run: Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei
+      shell: pwsh
+
     - name: Install GH extension
-      run: gh extension install github/gh-gei
+      run: gh extension install .
       shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
