@@ -187,24 +187,7 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
 
-            var cliName = string.Empty;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                cliName = "gei-linux-amd64";
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                cliName = "gei-windows-amd64";
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                cliName = "gei-darwin-amd64";
-            }
-
-            RunCliMigration(generateScriptCommand, cliName, tokens);
+            RunCliMigration(generateScriptCommand, "gh gei", tokens);
         }
 
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
