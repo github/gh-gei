@@ -89,6 +89,13 @@ jobs:
       run: ./publish.ps1
       shell: pwsh
 
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: publish-binaries
+        path: dist/
+
     - name: Copy binary to root
       run: Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei
       shell: pwsh
@@ -118,19 +125,6 @@ jobs:
       with:
         name: integration-test-logs-linux
         path: dist/**/*.log
-
-    - name: Upload Binaries
-      uses: actions/upload-artifact@v2
-      if: always()
-      with:
-        name: publish-binaries
-        path: |
-          dist/win-x64/ado2gh.exe
-          dist/win-x64/gei-windows-amd64.exe
-          dist/linux-x64/ado2gh
-          dist/linux-x64/gei-linux-amd64
-          dist/osx-x64/ado2gh
-          dist/osx-x64/gei-darwin-amd64
 
     - name: Test Logs
       if: always()
