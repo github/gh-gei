@@ -61,7 +61,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var repositories = new string[] { githubSourceRepo };
 
-            var githubApi = _sourceGithubApiFactory.Create();
+            var githubApi = _sourceGithubApiFactory.CreateDefaultClient();
             var migrationId = await githubApi.StartArchiveGeneration(githubURL, githubSourceOrg, repositories);
 
             _log.LogInformation($"Archive generation started with id: {migrationId}");

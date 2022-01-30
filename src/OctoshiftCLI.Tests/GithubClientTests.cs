@@ -543,6 +543,23 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetHeadersAsync_Is_Successful()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
+
+            // Act
+            await githubClient.GetHeadersAsync("http://example.com");
+
+            // Assert
+            _loggerMock.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
         public async Task DeleteAsync_Logs_The_Response_Status_Code_And_Content()
         {
             // Arrange
