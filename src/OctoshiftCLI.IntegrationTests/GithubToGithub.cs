@@ -59,8 +59,7 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
         }
 
-        // Tracking Issue: https://github.com/github/octoshift/issues/3525
-        [Fact(Skip = "bug where it says permanently added XXXX to list of known hosts")]
+        [Fact]
         public async Task BasicWithSsh()
         {
             var githubSourceOrg = "e2e-testing-source";
