@@ -273,6 +273,8 @@ namespace OctoshiftCLI
             {
                 if (ex.StatusCode == HttpStatusCode.NotFound)
                 {
+                    await Task.Delay(30000);
+
                     // The repo may be disabled, can still get the ID by getting it from the repo list
                     url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
 
@@ -475,12 +477,6 @@ namespace OctoshiftCLI
             };
 
             await _client.PostAsync(url, payload);
-        }
-
-        private string BuildRepoString(IEnumerable<string> repoIds)
-        {
-            var result = string.Join("\",\"", repoIds);
-            return $"\"{result}\"";
         }
 
         public virtual async Task DisableRepo(string org, string teamProject, string repoId)

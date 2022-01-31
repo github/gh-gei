@@ -80,7 +80,7 @@ namespace OctoshiftCLI.IntegrationTests
             _output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
             await _adoApi.CreateTeamProject(adoOrg, teamProject);
 
-            while (await _adoApi.GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new")
+            while (await _adoApi.GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new" or "notSet")
             {
                 await Task.Delay(1000);
             }
@@ -130,7 +130,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                startInfo.FileName = $"../../../../../dist/linux-x64/{cliName}";
+                startInfo.FileName = $"{cliName}";
                 startInfo.WorkingDirectory = "../../../../../dist/linux-x64";
 
                 scriptPath = Path.Join("../../../../../dist/linux-x64", "migrate.ps1");
@@ -138,7 +138,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                startInfo.FileName = $"../../../../../dist/win-x64/{cliName}.exe";
+                startInfo.FileName = $"{cliName}.exe";
                 startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
 
                 scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
@@ -146,7 +146,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                startInfo.FileName = $"../../../../../dist/osx-x64/{cliName}";
+                startInfo.FileName = $"{cliName}";
                 startInfo.WorkingDirectory = $"../../../../../dist/osx-x64";
 
                 scriptPath = Path.Join($"../../../../../dist/osx-x64", "migrate.ps1");

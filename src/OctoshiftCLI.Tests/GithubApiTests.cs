@@ -927,5 +927,168 @@ namespace OctoshiftCLI.Tests
             // Assert
             result.Should().Contain(new[] { team1, team2 });
         }
+
+        [Fact]
+        public async Task CreateRepo_Calls_The_Right_Endpoint_With_Payload()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "FOO-REPO";
+
+            var url = $"https://api.github.com/orgs/{org}/repos";
+            var payload = new { name = repo, @private = true, auto_init = true };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            await githubApi.CreateRepo(org, repo, true, true);
+
+            // Assert
+            githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+        }
+
+        [Fact]
+        public async Task GetRepoCommitShas_Returns_Commits()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "foo-repo";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}/commits";
+            const string sha1 = "123abc";
+            const string sha2 = "9h349h34h34g9hh934g";
+
+            var response = new List<JToken>
+            {
+                JObject.Parse(new
+                {
+                    sha = sha1
+                }.ToJson()),
+                JObject.Parse(new
+                {
+                    sha = sha2
+                }.ToJson())
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(response.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetRepoCommitShas(org, repo);
+
+            // Assert
+            result.Should().Contain(new[] { sha1, sha2 });
+        }
+
+        [Fact]
+        public async Task GetAutolinks_Returns_Autolinks()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "foo-repo";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+            const string id = "123456";
+            const string key = "AB#";
+            const string template = "https://dev.azure.com/something/something/workitems/<num>";
+
+            var response = new List<JToken>
+            {
+                JObject.Parse(new
+                {
+                    id,
+                    key_prefix = key,
+                    url_template = template
+                }.ToJson())
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(response.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetAutolinks(org, repo);
+
+            // Assert
+            result.Should().Contain(new[] { (id, key, template) });
+        }
+
+        [Fact]
+        public async Task GetTeamIdpGroup_Returns_Autolinks()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string team = "foo-team";
+
+            var url = $"https://api.github.com/orgs/{org}/teams/{team}/external-groups";
+            const string group_name = "someteam-admins";
+
+            var response = new
+            {
+                groups = new[]
+                {
+                    new
+                    {
+                        group_name
+                    }
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAsync(url).Result)
+                .Returns(response.ToJson());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetTeamIdPGroup(org, team);
+
+            // Assert
+            result.Should().Be(group_name);
+        }
+
+        [Fact]
+        public async Task GetTeamRepoRole_Returns_Role()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string team = "foo-team";
+            const string repo = "foo-repo";
+
+            var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
+            const string role_name = "maintain";
+
+            var response = new List<JToken>
+            {
+                JObject.Parse(new
+                {
+                    name = "other-repo",
+                    role = "other-role"
+                }.ToJson()),
+                JObject.Parse(new
+                {
+                    name = repo,
+                    role_name
+                }.ToJson())
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(response.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            var result = await githubApi.GetTeamRepoRole(org, team, repo);
+
+            // Assert
+            result.Should().Be(role_name);
+        }
     }
 }
