@@ -22,7 +22,7 @@ namespace OctoshiftCLI.Tests.Integration
         [Fact]
         public async void Should_Fail_To_Generate_With_Invalid_Parameters()
         {
-            var response = await GenerateArchive("invalid-parameters", "--unsupport-parameter");
+            _ = await GenerateArchive("invalid-parameters", "--unsupport-parameter");
         }
     }
 }

@@ -316,7 +316,7 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<string> MigrationStatus(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
 
@@ -326,12 +326,20 @@ namespace OctoshiftCLI
             return (string)data["state"];
         }
 
-        public virtual async Task<string> MigrationArchiveURL(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationUrl(string apiUrl, string org, int migrationId)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
 
-            var response = await _client.GetHeadersAsync(url);
-            return response;
+            try
+            {
+                var response = await _client.GetAsync(url);
+                return response;
+            }
+            catch (HttpRequestException)
+            {
+                return null;
+            }
+
         }
     }
 }

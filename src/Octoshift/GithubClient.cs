@@ -30,7 +30,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetHeadersAsync(string url) => (await SendAsync(HttpMethod.Get, url, shouldEnsureSuccessStatusCode: false)).Content;
+        // public virtual async Task<string> GetHeadersAsync(string url) => (await SendAsync(HttpMethod.Get, url, shouldEnsureSuccessStatusCode: false)).Content;
 
         public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
 

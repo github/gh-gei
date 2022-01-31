@@ -26,7 +26,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-            #pragma warning disable CA2000 // We don't want to dispose the handler until the client is disposed
+#pragma warning disable CA2000 // We don't want to dispose the handler until the client is disposed
             var client = new HttpClientFactory().CreateClient("OctoShift");
             var githubClient = new GithubClient(_octoLogger, client, githubPat);
             return new GithubApi(githubClient);

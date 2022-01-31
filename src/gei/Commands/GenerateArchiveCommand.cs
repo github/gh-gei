@@ -71,7 +71,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             while (!isFinished && DateTime.Now < timeOut)
             {
-                var archiveStatus = await githubApi.MigrationStatus(githubURL, githubSourceOrg, migrationId);
+                var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubURL, githubSourceOrg, migrationId);
 
                 _log.LogInformation($"Waiting for archive generation to finish. Current status: {archiveStatus}");
 
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 await Task.Delay(10000);
             }
 
-            var urlLocation = await githubApi.MigrationArchiveURL(githubURL, githubSourceOrg, migrationId);
+            var urlLocation = await githubApi.GetArchiveMigrationUrl(githubURL, githubSourceOrg, migrationId);
             _log.LogInformation($"Archive dowload url: {urlLocation}");
         }
     }
