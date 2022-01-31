@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -316,30 +317,24 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
+        public virtual async Task<GithubEnums.ArchiveMigrationStatus> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            return (string)data["state"];
+            var state = (string)data["state"];
+
+            return GithubEnums.StringToArchiveMigrationStatus(state);
         }
 
         public virtual async Task<string> GetArchiveMigrationUrl(string apiUrl, string org, int migrationId)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
 
-            try
-            {
-                var response = await _client.GetAsync(url);
-                return response;
-            }
-            catch (HttpRequestException)
-            {
-                return null;
-            }
-
+            var response = await _client.GetNonSuccessAsync(url, HttpStatusCode.Found);
+            return response;
         }
     }
 }

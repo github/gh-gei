@@ -3,6 +3,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
     public interface ISourceGithubApiFactory
     {
         GithubApi Create();
-        GithubApi CreateDefaultClient();
+        GithubApi CreateClientNoSSL();
     }
 }

@@ -61,7 +61,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var repositories = new string[] { githubSourceRepo };
 
-            var githubApi = _sourceGithubApiFactory.CreateDefaultClient();
+            var githubApi = _sourceGithubApiFactory.CreateClientNoSSL();
             var migrationId = await githubApi.StartArchiveGeneration(githubURL, githubSourceOrg, repositories);
 
             _log.LogInformation($"Archive generation started with id: {migrationId}");
@@ -72,14 +72,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             while (!isFinished && DateTime.Now < timeOut)
             {
                 var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubURL, githubSourceOrg, migrationId);
+                var stringStatus = GithubEnums.ArchiveMigrationStatusToString(archiveStatus);
+    
+                _log.LogInformation($"Waiting for archive generation to finish. Current status: {stringStatus}");
 
-                _log.LogInformation($"Waiting for archive generation to finish. Current status: {archiveStatus}");
 
-                if (archiveStatus == "exported")
+                if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Exported)
                 {
                     isFinished = true;
                 }
-                else if (archiveStatus == "failed")
+                else if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Failed)
                 {
                     _log.LogError($"Archive generation failed with id: {migrationId}");
                     return;

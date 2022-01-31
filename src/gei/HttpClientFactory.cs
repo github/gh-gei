@@ -12,12 +12,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             {
                 AllowAutoRedirect = false,
                 CheckCertificateRevocationList = false,
-
-                // ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                // ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                ServerCertificateCustomValidationCallback = delegate { return true; }
             };
-
-            // handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
 
             return new HttpClient(handler);
         }
