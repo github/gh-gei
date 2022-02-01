@@ -11,8 +11,10 @@ namespace OctoshiftCLI
             Failed
         }
 
-        public static ArchiveMigrationStatus StringToArchiveMigrationStatus(string status) {
-            switch (status) {
+        public static ArchiveMigrationStatus StringToArchiveMigrationStatus(string status)
+        {
+            switch (status)
+            {
                 case "pending":
                     return ArchiveMigrationStatus.Pending;
                 case "exporting":
@@ -26,8 +28,10 @@ namespace OctoshiftCLI
             }
         }
 
-        public static string ArchiveMigrationStatusToString(ArchiveMigrationStatus status) {
-            switch (status) {
+        public static string ArchiveMigrationStatusToString(ArchiveMigrationStatus status)
+        {
+            switch (status)
+            {
                 case ArchiveMigrationStatus.Pending:
                     return "pending";
                 case ArchiveMigrationStatus.Exporting:
