@@ -11,6 +11,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
+        private const int _timeoutInHours = 10;
+
         public GenerateArchiveCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-archive")
         {
             _log = log;
@@ -67,7 +69,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Archive generation started with id: {migrationId}");
 
             var isFinished = false;
-            var timeOut = DateTime.Now.AddHours(10);
+            var timeOut = DateTime.Now.AddHours(_timeoutInHours);
 
             while (!isFinished && DateTime.Now < timeOut)
             {
