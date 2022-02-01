@@ -55,7 +55,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (string.IsNullOrWhiteSpace(githubURL))
             {
-                _log.LogInformation("GitHubURL not provided, defaulting to https://api.github.com");
+                _log.LogInformation("GitHub URL not provided, defaulting to https://api.github.com");
                 githubURL = "https://api.github.com";
             }
 
@@ -75,7 +75,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 var stringStatus = GithubEnums.ArchiveMigrationStatusToString(archiveStatus);
     
                 _log.LogInformation($"Waiting for archive generation to finish. Current status: {stringStatus}");
-
 
                 if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Exported)
                 {
