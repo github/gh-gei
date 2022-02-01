@@ -21,7 +21,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Invokes the GitHub Migration API's to generate a migration archive";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to source GHES API";
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
 
             var githubURL = new Option<string>("--github-url")
             {
