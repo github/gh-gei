@@ -55,7 +55,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (string.IsNullOrWhiteSpace(githubURL))
             {
-                _log.LogInformation("GithubURL not provided, defaulting to https://api.github.com");
+                _log.LogInformation("GitHubURL not provided, defaulting to https://api.github.com");
                 githubURL = "https://api.github.com";
             }
 
