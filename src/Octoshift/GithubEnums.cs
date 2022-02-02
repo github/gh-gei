@@ -1,7 +1,7 @@
 ﻿
 namespace OctoshiftCLI
 {
-    public class GithubEnums
+    public static class GithubEnums
     {
         public enum ArchiveMigrationStatus
         {
@@ -11,34 +11,28 @@ namespace OctoshiftCLI
             Failed
         }
 
-        public static ArchiveMigrationStatus StringToArchiveMigrationStatus(string status) {
-            switch (status) {
-                case "pending":
-                    return ArchiveMigrationStatus.Pending;
-                case "exporting":
-                    return ArchiveMigrationStatus.Exporting;
-                case "exported":
-                    return ArchiveMigrationStatus.Exported;
-                case "failed":
-                    return ArchiveMigrationStatus.Failed;
-                default:
-                    return ArchiveMigrationStatus.Failed;
-            }
+        public static ArchiveMigrationStatus StringToArchiveMigrationStatus(string status)
+        {
+            return status switch
+            {
+                "pending" => ArchiveMigrationStatus.Pending,
+                "exporting" => ArchiveMigrationStatus.Exporting,
+                "exported" => ArchiveMigrationStatus.Exported,
+                "failed" => ArchiveMigrationStatus.Failed,
+                _ => ArchiveMigrationStatus.Failed,
+            };
         }
 
-        public static string ArchiveMigrationStatusToString(ArchiveMigrationStatus status) {
-            switch (status) {
-                case ArchiveMigrationStatus.Pending:
-                    return "pending";
-                case ArchiveMigrationStatus.Exporting:
-                    return "exporting";
-                case ArchiveMigrationStatus.Exported:
-                    return "exported";
-                case ArchiveMigrationStatus.Failed:
-                    return "failed";
-                default:
-                    return "failed";
-            }
+        public static string ArchiveMigrationStatusToString(ArchiveMigrationStatus status)
+        {
+            return status switch
+            {
+                ArchiveMigrationStatus.Pending => "pending",
+                ArchiveMigrationStatus.Exporting => "exporting",
+                ArchiveMigrationStatus.Exported => "exported",
+                ArchiveMigrationStatus.Failed => "failed",
+                _ => "failed",
+            };
         }
 
     }

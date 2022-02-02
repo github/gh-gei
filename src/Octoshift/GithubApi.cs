@@ -306,13 +306,11 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<int> StartArchiveGeneration(string apiUrl, string org, string[] repositories)
+        public virtual async Task<int> StartArchiveGeneration(string apiUrl, string org, object options)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations";
 
-            var payload = new { repositories };
-
-            var response = await _client.PostAsync(url, payload);
+            var response = await _client.PostAsync(url, options);
             var data = JObject.Parse(response);
             return (int)data["id"];
         }

@@ -5,3 +5,6 @@ Familiarize yourself with [.NET core](https://docs.microsoft.com/en-us/dotnet/co
 ## Basic Getting Started
 
 Try developing this repo using GitHub codespaces, so all the dependencies are installed for you!
+
+Check out `publish.ps1` to see how binaries are built for this repo for various distributions.
+
