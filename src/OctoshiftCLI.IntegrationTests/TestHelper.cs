@@ -134,22 +134,20 @@ namespace OctoshiftCLI.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                startInfo.FileName = $"{cliName}";
                 startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                startInfo.FileName = $"{cliName}.exe";
                 startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                startInfo.FileName = $"{cliName}";
                 startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/osx-x64");
             }
 
+            startInfo.FileName = $"{cliName}";
             startInfo.Arguments = generateScriptCommand;
 
             if (tokens != null)
