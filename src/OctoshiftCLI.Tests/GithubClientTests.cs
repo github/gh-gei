@@ -543,16 +543,49 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public Task GetAsync_With_302_Is_Successful()
+        public async Task GetNonSuccessAsync_Is_Unsuccessful()
         {
-            //TODO, write this up
-
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.NotFound);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+
+            // Assert
+            await FluentActions
+                .Invoking(() =>
+                {
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    return githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task GetNonSuccessAsync_With_302_Is_Successful()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.Moved);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
-            return Task.CompletedTask;
+            // Act
+            await githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
+
+            // Assert
+            // If it doesn't crash, we are good
         }
 
         [Fact]

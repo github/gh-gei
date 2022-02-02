@@ -54,8 +54,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             _log.Verbose = verbose;
 
-            _log.LogInformation("Generating Migration Archive...");
-            _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+            _log.LogInformation("Generating Migration Archives...");
+            _log.LogInformation($"GHES SOURCE ORG: {githubSourceOrg}");
 
             if (string.IsNullOrWhiteSpace(ghesUrl))
             {
@@ -67,7 +67,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var repositories = new string[] { githubSourceRepo };
 
-            // Archive of repo git data
             var gitDataOptions = new
             {
                 repositories,
@@ -77,7 +76,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
 
-            // Archive of repo metadata
             var metadataOptions = new
             {
                 repositories,
@@ -92,7 +90,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var ids = new int[] { gitDataArchiveId, metadataArchiveId };
 
-            var isFinished = new Dictionary<int, bool>()
+            var archiveIdsWithFinished = new Dictionary<int, bool>()
             {
                 { gitDataArchiveId, false },
                 { metadataArchiveId, false }
@@ -104,7 +102,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             while (currFinished < total && DateTime.Now < timeOut)
             {
-                foreach (var pair in isFinished)
+                foreach (var pair in archiveIdsWithFinished)
                 {
                     if (pair.Value)
                     {
@@ -118,7 +116,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Exported)
                     {
-                        isFinished[id] = true;
+                        archiveIdsWithFinished[id] = true;
                         currFinished++;
                     }
                     else if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Failed)
@@ -132,7 +130,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 await Task.Delay(_delayInMS);
             }
 
-            foreach(int id in ids) {
+            foreach (var id in ids)
+            {
                 var urlLocation = await githubApi.GetArchiveMigrationUrl(ghesUrl, githubSourceOrg, id);
                 _log.LogInformation($"Archive dowload url: {urlLocation}");
             }
