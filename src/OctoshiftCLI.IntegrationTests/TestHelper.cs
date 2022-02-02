@@ -78,7 +78,12 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task CreateTeamProject(string adoOrg, string teamProject)
         {
             _output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
-            await _adoApi.CreateTeamProject(adoOrg, teamProject);
+            var operationId = await _adoApi.CreateTeamProject(adoOrg, teamProject);
+
+            while (await _adoApi.GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
+            {
+                await Task.Delay(1000);
+            }
 
             while (await _adoApi.GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new" or "notSet")
             {
@@ -126,30 +131,23 @@ namespace OctoshiftCLI.IntegrationTests
         public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
             var startInfo = new ProcessStartInfo();
-            var scriptPath = string.Empty;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 startInfo.FileName = $"{cliName}";
-                startInfo.WorkingDirectory = "../../../../../dist/linux-x64";
-
-                scriptPath = Path.Join("../../../../../dist/linux-x64", "migrate.ps1");
+                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.FileName = $"{cliName}.exe";
-                startInfo.WorkingDirectory = @"../../../../../dist/win-x64";
-
-                scriptPath = Path.Join(@"../../../../../dist/win-x64", "migrate.ps1");
+                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 startInfo.FileName = $"{cliName}";
-                startInfo.WorkingDirectory = $"../../../../../dist/osx-x64";
-
-                scriptPath = Path.Join($"../../../../../dist/osx-x64", "migrate.ps1");
+                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/osx-x64");
             }
 
             startInfo.Arguments = generateScriptCommand;
@@ -169,8 +167,6 @@ namespace OctoshiftCLI.IntegrationTests
                 }
             }
 
-            var cliPath = Path.Join(Directory.GetCurrentDirectory(), startInfo.FileName);
-            startInfo.FileName = cliPath;
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             var p = Process.Start(startInfo);
             p.WaitForExit();
@@ -178,7 +174,7 @@ namespace OctoshiftCLI.IntegrationTests
             p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
 
             startInfo.FileName = "pwsh";
-            scriptPath = Path.Join(Directory.GetCurrentDirectory(), scriptPath);
+            var scriptPath = Path.Join(startInfo.WorkingDirectory, "migrate.ps1");
             startInfo.Arguments = $"-File {scriptPath}";
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
@@ -194,7 +190,7 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "ADO_PAT", adoToken }, { "GH_PAT", githubToken } };
 
-            RunCliMigration(generateScriptCommand, "ado2gh", tokens);
+            RunCliMigration(generateScriptCommand, Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64/ado2gh"), tokens);
         }
 
         public void RunGeiCliMigration(string generateScriptCommand)
