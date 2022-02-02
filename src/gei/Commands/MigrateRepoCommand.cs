@@ -72,7 +72,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (string.IsNullOrWhiteSpace(targetRepo))
             {
-                _log.LogInformation($"Target Repo name not provided, defaulting to same as source repo ({sourceRepo})");
+                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({sourceRepo})");
                 targetRepo = sourceRepo;
             }
 
