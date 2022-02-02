@@ -12,6 +12,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
+        private const int _timeoutInHours = 10;
+        private const int _delayInMS = 10000; // 10 seconds
+
         public GenerateArchiveCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-archive")
         {
             _log = log;
@@ -20,7 +23,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Invokes the GitHub Migration API's to generate a migration archive";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to source GHES API";
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
 
             var ghesUrl = new Option<string>("--ghes-url")
             {
@@ -97,7 +100,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var currFinished = 0;
             var total = ids.Length;
-            var timeOut = DateTime.Now.AddHours(10);
+            var timeOut = DateTime.Now.AddHours(_timeoutInHours);
 
             while (currFinished < total && DateTime.Now < timeOut)
             {
@@ -126,8 +129,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 }
 
-                // 10 seconds
-                await Task.Delay(10000);
+                await Task.Delay(_delayInMS);
             }
 
             foreach(int id in ids) {
