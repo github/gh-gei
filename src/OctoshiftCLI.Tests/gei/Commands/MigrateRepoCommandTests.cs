@@ -16,9 +16,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new MigrateRepoCommand(null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(6);
+            command.Options.Count.Should().Be(8);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo", false);
@@ -66,7 +68,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            await command.Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo);
+            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -104,7 +106,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            await command.Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo, true);
+            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo, true);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
