@@ -126,25 +126,12 @@ namespace OctoshiftCLI.IntegrationTests
 
         public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
-            var startInfo = new ProcessStartInfo();
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            var startInfo = new ProcessStartInfo
             {
-                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64");
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64");
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                startInfo.WorkingDirectory = Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/osx-x64");
-            }
-
-            startInfo.FileName = $"{cliName}";
-            startInfo.Arguments = generateScriptCommand;
+                WorkingDirectory = GetOsDistPath(),
+                FileName = $"{cliName}",
+                Arguments = generateScriptCommand
+            };
 
             if (tokens != null)
             {
@@ -184,7 +171,7 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "ADO_PAT", adoToken }, { "GH_PAT", githubToken } };
 
-            RunCliMigration(generateScriptCommand, Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64/ado2gh"), tokens);
+            RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
         }
 
         public void RunGeiCliMigration(string generateScriptCommand)
@@ -193,6 +180,17 @@ namespace OctoshiftCLI.IntegrationTests
             var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
 
             RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
+        }
+
+        private string GetOsDistPath()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64")
+                : RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/win-x64")
+                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/osx-x64")
+                : throw new InvalidOperationException("Could not determine OS");
         }
 
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
