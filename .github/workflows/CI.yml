@@ -109,12 +109,12 @@ jobs:
 
     - name: Copy binary to root (windows)
       if: matrix.runner-os == 'windows-latest'
-      run: Copy-Item ./dist/windows-x64/gei-windows-amd64 ./gh-gei
+      run: Copy-Item ./dist/win-x64/gei-windows-amd64 ./gh-gei
       shell: pwsh
 
     - name: Copy binary to root (macos)
       if: matrix.runner-os == 'macos-latest'
-      run: Copy-Item ./dist/macos-x64/gei-darwin-amd64 ./gh-gei
+      run: Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei
       shell: pwsh
 
     - name: Install GH extension
