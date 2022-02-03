@@ -13,13 +13,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateScriptCommand(null, null);
+            var command = new GenerateScriptCommand(null, null, null);
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(5);
+            command.Options.Count.Should().Be(6);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
@@ -27,16 +28,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void No_Data()
+        public void Github_No_Data()
         {
-            var command = new GenerateScriptCommand(null, null);
-            var script = command.GenerateScript(null, "foo-source", "foo-target", false);
+            var command = new GenerateScriptCommand(null, null, null);
+            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
 
         [Fact]
-        public void Single_Repo()
+        public void Github_Single_Repo()
         {
             var githubSourceOrg = "foo-source";
             var githubTargetOrg = "foo-target";
@@ -44,8 +45,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new List<string>() { repo };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -55,7 +56,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void Multiple_Repos()
+        public void Github_Multiple_Repos()
         {
             var githubSourceOrg = "foo-source";
             var githubTargetOrg = "foo-target";
@@ -65,8 +66,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new List<string>() { repo1, repo2, repo3 };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -80,7 +81,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void With_Ssh()
+        public void Github_With_Ssh()
         {
             var githubSourceOrg = "foo-source";
             var githubTargetOrg = "foo-target";
@@ -88,12 +89,87 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new List<string>() { repo };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, githubSourceOrg, githubTargetOrg, true);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, true);
 
             script = TrimNonExecutableLines(script);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh }}";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Ado_No_Data()
+        {
+            var command = new GenerateScriptCommand(null, null, null);
+            var script = command.GenerateAdoScript(null, "foo-source", "foo-target", false);
+
+            string.IsNullOrWhiteSpace(script).Should().BeTrue();
+        }
+
+        [Fact]
+        public void Ado_Single_Repo()
+        {
+            var adoSourceOrg = "foo-source";
+            var adoTeamProject = "foo-team-project";
+            var githubTargetOrg = "foo-target";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\"";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Ado_Multiple_Repos()
+        {
+            var adoSourceOrg = "foo-source";
+            var adoTeamProject = "foo-team-project";
+            var githubTargetOrg = "foo-target";
+            var repo1 = "foo-repo-1";
+            var repo2 = "foo-repo-2";
+            var repo3 = "foo-repo-3";
+
+            var repos = new Dictionary<string, IEnumerable<string>> { { adoTeamProject, new List<string>() { repo1, repo2, repo3 } } };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\"";
+            expected += Environment.NewLine;
+            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\"";
+            expected += Environment.NewLine;
+            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\"";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Ado_With_Ssh()
+        {
+            var adoSourceOrg = "foo-source";
+            var adoTeamProject = "foo-team-project";
+            var githubTargetOrg = "foo-target";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh";
 
             script.Should().Be(expected);
         }
