@@ -34,9 +34,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
             serviceCollection
                 .AddHttpClient("Default")
-                .ConfigureHttpMessageHandlerBuilder(x => new HttpClientHandler()
+                .ConfigurePrimaryHttpMessageHandler(x => new HttpClientHandler()
                 {
-                    AllowAutoRedirect = false,
+                    AllowAutoRedirect = false
                 });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
