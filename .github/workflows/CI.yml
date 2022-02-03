@@ -109,7 +109,7 @@ jobs:
 
     - name: Copy binary to root (windows)
       if: matrix.runner-os == 'windows-latest'
-      run: Copy-Item ./dist/win-x64/gei-windows-amd64 ./gh-gei
+      run: Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei.exe
       shell: pwsh
 
     - name: Copy binary to root (macos)
