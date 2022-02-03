@@ -23,6 +23,7 @@ namespace OctoshiftCLI
 
             _httpClient = httpClient;
 
+
             if (_httpClient != null)
             {
                 _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");

@@ -29,9 +29,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             using var httpClient = new HttpClient();
 
+            var _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient("Default"))
+                .Returns(httpClient);
+
             // Act
             ISourceGithubApiFactory factory =
-                new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
+                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
             var githubApi = factory.Create();
 
             // Assert
@@ -51,9 +56,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             using var httpClient = new HttpClient();
 
+            var _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient("Default"))
+                .Returns(httpClient);
+
             // Act
             ITargetGithubApiFactory factory =
-                new GithubApiFactory(_logger, httpClient, environmentVariableProviderMock.Object);
+                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
             var githubApi = factory.Create();
 
             // Assert
