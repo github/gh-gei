@@ -26,16 +26,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("NoSSL")
-                .ConfigurePrimaryHttpMessageHandler(x => new HttpClientHandler()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
                     AllowAutoRedirect = false,
                     CheckCertificateRevocationList = false,
                     ServerCertificateCustomValidationCallback = delegate { return true; }
-                });
-
-            serviceCollection
+                })
+                .Services
                 .AddHttpClient("Default")
-                .ConfigurePrimaryHttpMessageHandler(x => new HttpClientHandler()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
                     AllowAutoRedirect = false
                 });
