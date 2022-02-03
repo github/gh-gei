@@ -20,9 +20,7 @@ namespace OctoshiftCLI
         public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;
-
             _httpClient = httpClient;
-
 
             if (_httpClient != null)
             {
