@@ -31,7 +31,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, shouldEnsureSuccessStatusCode: false, status: status)).Content;
+        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
         public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
 
@@ -62,7 +62,7 @@ namespace OctoshiftCLI
         public virtual async Task<string> DeleteAsync(string url) => (await SendAsync(HttpMethod.Delete, url)).Content;
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
-            HttpMethod httpMethod, string url, object body = null, bool shouldEnsureSuccessStatusCode = true, HttpStatusCode status = HttpStatusCode.OK)
+            HttpMethod httpMethod, string url, object body = null, HttpStatusCode status = HttpStatusCode.OK)
         {
             url = url?.Replace(" ", "%20");
 
@@ -86,7 +86,7 @@ namespace OctoshiftCLI
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
-            if (shouldEnsureSuccessStatusCode)
+            if (status == HttpStatusCode.OK)
             {
                 response.EnsureSuccessStatusCode();
             }

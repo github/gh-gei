@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -12,8 +11,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        private const int _timeoutInHours = 10;
-        private const int _delayInMS = 10000; // 10 seconds
+        private const int Timeout_In_Hours = 10;
+        private const int Delay_In_Milliseconds = 10000; // 10 seconds
 
         public GenerateArchiveCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-archive")
         {
@@ -23,9 +22,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Invokes the GitHub Migration API's to generate a migration archive";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API. For GHES, we expect that --ghes-api-url is passed in as the api endpoint for the hostname of your GHES instance. For example: https://api.myghes.com";
 
-            var ghesUrl = new Option<string>("--ghes-url")
+            var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
                 IsRequired = false
             };
@@ -46,7 +46,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
-            AddOption(ghesUrl);
+            AddOption(ghesApiUrl);
             AddOption(githubSourceOrg);
             AddOption(sourceRepo);
             AddOption(noSslVerify);
@@ -55,96 +55,56 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Handler = CommandHandler.Create<string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string ghesUrl, string githubSourceOrg, string sourceRepo, bool noSslVerify = false, bool verbose = false)
+        public async Task Invoke(string ghesApiUrl, string githubSourceOrg, string sourceRepo, bool noSslVerify = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Generating Migration Archives...");
             _log.LogInformation($"GHES SOURCE ORG: {githubSourceOrg}");
+            _log.LogInformation($"GHES SOURCE REPO: {sourceRepo}");
 
-            if (string.IsNullOrWhiteSpace(ghesUrl))
+            if (string.IsNullOrWhiteSpace(ghesApiUrl))
             {
-                _log.LogInformation("ghesUrl not provided, defaulting to https://api.github.com");
-                ghesUrl = "https://api.github.com";
+                _log.LogInformation("--ghes-api-url not provided, defaulting to https://api.github.com");
+                ghesApiUrl = "https://api.github.com";
             }
 
             if (noSslVerify)
             {
-                _log.LogInformation("No SSL verification enabled");
+                _log.LogInformation("SSL verification disabled");
             }
 
             var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSSL() : _sourceGithubApiFactory.Create();
 
-            var repositories = new string[] { sourceRepo };
-
-            var gitDataOptions = new
-            {
-                repositories,
-                exclude_metadata = true
-            };
-            var gitDataArchiveId = await githubApi.StartArchiveGeneration(ghesUrl, githubSourceOrg, gitDataOptions);
-
+            var gitDataArchiveId = await githubApi.StartGitArchiveGeneration(ghesApiUrl, githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-
-            var metadataOptions = new
-            {
-                repositories,
-                exclude_git_data = true,
-                exclude_releases = true,
-                exclude_owner_projects = true
-            };
-            var metadataArchiveId = await githubApi.StartArchiveGeneration(ghesUrl, githubSourceOrg, metadataOptions);
-
+            var metadataArchiveId = await githubApi.StartMetadataArchiveGeneration(ghesApiUrl, githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
+            var metadataArchiveUrl = await WaitForArchiveGeneration(githubApi, ghesApiUrl, githubSourceOrg, metadataArchiveId);
+            _log.LogInformation($"Archive(metadata) download url: {metadataArchiveUrl}");
+            var gitArchiveUrl = await WaitForArchiveGeneration(githubApi, ghesApiUrl, githubSourceOrg, gitDataArchiveId);
+            _log.LogInformation($"Archive(git) download url: {gitArchiveUrl}");
+        }
 
-            var ids = new int[] { gitDataArchiveId, metadataArchiveId };
-
-            var archiveIdsWithFinished = new Dictionary<int, bool>()
+        private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string ghesApiUrl, string githubSourceOrg, int archiveId)
+        {
+            var timeOut = DateTime.Now.AddHours(Timeout_In_Hours);
+            while (DateTime.Now < timeOut)
             {
-                { gitDataArchiveId, false },
-                { metadataArchiveId, false }
-            };
-
-            var currFinished = 0;
-            var total = ids.Length;
-            var timeOut = DateTime.Now.AddHours(_timeoutInHours);
-
-            while (currFinished < total && DateTime.Now < timeOut)
-            {
-                foreach (var pair in archiveIdsWithFinished)
+                var archiveStatus = await githubApi.GetArchiveMigrationStatus(ghesApiUrl, githubSourceOrg, archiveId);
+                _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
+                if (archiveStatus == ArchiveMigrationStatus.Exported)
                 {
-                    if (pair.Value)
-                    {
-                        continue;
-                    }
-                    var id = pair.Key;
-                    var archiveStatus = await githubApi.GetArchiveMigrationStatus(ghesUrl, githubSourceOrg, id);
-                    var stringStatus = GithubEnums.ArchiveMigrationStatusToString(archiveStatus);
-
-                    _log.LogInformation($"Waiting for archive with id {id} generation to finish. Current status: {stringStatus}");
-
-                    if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Exported)
-                    {
-                        archiveIdsWithFinished[id] = true;
-                        currFinished++;
-                    }
-                    else if (archiveStatus == GithubEnums.ArchiveMigrationStatus.Failed)
-                    {
-                        _log.LogError($"Archive generation failed with id: {id}");
-                        return;
-                    }
-
+                    return await githubApi.GetArchiveMigrationUrl(ghesApiUrl, githubSourceOrg, archiveId);
                 }
-
-                await Task.Delay(_delayInMS);
+                if (archiveStatus == ArchiveMigrationStatus.Failed)
+                {
+                    throw new OctoshiftCliException($"Archive generation failed with id: {archiveId}");
+                }
+                await Task.Delay(Delay_In_Milliseconds);
             }
-
-            foreach (var id in ids)
-            {
-                var urlLocation = await githubApi.GetArchiveMigrationUrl(ghesUrl, githubSourceOrg, id);
-                _log.LogInformation($"Archive dowload url: {urlLocation}");
-            }
+            throw new TimeoutException($"Archive generation timed out after {Timeout_In_Hours} hours");
         }
     }
 }

@@ -306,25 +306,46 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<int> StartArchiveGeneration(string apiUrl, string org, object options)
+        public virtual async Task<int> StartGitArchiveGeneration(string apiUrl, string org, string repo)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations";
+
+            var options = new
+            {
+                repositories = new[] { repo },
+                exclude_metadata = true
+            };
 
             var response = await _client.PostAsync(url, options);
             var data = JObject.Parse(response);
             return (int)data["id"];
         }
 
-        public virtual async Task<GithubEnums.ArchiveMigrationStatus> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string apiUrl, string org, string repo)
+        {
+            var url = $"{apiUrl}/orgs/{org}/migrations";
+
+            var options = new
+            {
+                repositories = new[] { repo },
+                exclude_git_data = true,
+                exclude_releases = true,
+                exclude_owner_projects = true
+            };
+
+            var response = await _client.PostAsync(url, options);
+            var data = JObject.Parse(response);
+            return (int)data["id"];
+        }
+
+        public virtual async Task<string> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
         {
             var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            var state = (string)data["state"];
-
-            return GithubEnums.StringToArchiveMigrationStatus(state);
+            return (string)data["state"];
         }
 
         public virtual async Task<string> GetArchiveMigrationUrl(string apiUrl, string org, int migrationId)
