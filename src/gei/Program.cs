@@ -32,12 +32,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                     ServerCertificateCustomValidationCallback = delegate { return true; }
                 });
 
-            // serviceCollection
-            //     .AddHttpClient("Default")
-            //     .ConfigureHttpMessageHandlerBuilder(x => new HttpClientHandler()
-            //     {
-            //         AllowAutoRedirect = false,
-            //     });
+            serviceCollection
+                .AddHttpClient("Default")
+                .ConfigureHttpMessageHandlerBuilder(x => new HttpClientHandler()
+                {
+                    AllowAutoRedirect = false,
+                });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
 

@@ -37,7 +37,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = true
             };
-            var noSslVerification = new Option("--no-ssl-verify")
+            var noSslVerify = new Option("--no-ssl-verify")
             {
                 IsRequired = false
             };
@@ -49,13 +49,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(ghesUrl);
             AddOption(githubSourceOrg);
             AddOption(sourceRepo);
-            AddOption(noSslVerification);
+            AddOption(noSslVerify);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string ghesUrl, string githubSourceOrg, string sourceRepo, bool noSslVerification = false, bool verbose = false)
+        public async Task Invoke(string ghesUrl, string githubSourceOrg, string sourceRepo, bool noSslVerify = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -68,12 +68,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 ghesUrl = "https://api.github.com";
             }
 
-            if (noSslVerification)
+            if (noSslVerify)
             {
                 _log.LogInformation("No SSL verification enabled");
             }
 
-            var githubApi = noSslVerification ? _sourceGithubApiFactory.CreateClientNoSSL() : _sourceGithubApiFactory.Create();
+            var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSSL() : _sourceGithubApiFactory.Create();
 
             var repositories = new string[] { sourceRepo };
 

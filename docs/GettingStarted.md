@@ -34,3 +34,8 @@ Format your files locally with:
 ```bash
 dotnet format src/OctoshiftCLI.sln
 ```
+
+
+## Good to Knows
+
+When you add a new parameter, the name of the argument in the invoke function has to match the name of the parameter.
