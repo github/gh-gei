@@ -146,7 +146,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
+                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
                 }
                 else
                 {

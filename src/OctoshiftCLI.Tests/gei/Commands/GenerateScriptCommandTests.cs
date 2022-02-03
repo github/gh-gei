@@ -123,7 +123,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" }}";
 
             script.Should().Be(expected);
         }
@@ -145,11 +145,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\"";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\"";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\" }}";
 
             script.Should().Be(expected);
         }
@@ -169,7 +169,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}";
 
             script.Should().Be(expected);
         }
