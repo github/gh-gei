@@ -11,6 +11,21 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests
 {
+    public static class OperationStatus
+    {
+        public const string NotSet = "notSet";
+        public const string Queued = "queued";
+        public const string InProgress = "inProgress";
+    }
+
+    public static class TeamProjectStatus
+    {
+        public const string NotSet = "notSet";
+        public const string CreatePending = "createPending";
+        public const string New = "new";
+        public const string WellFormed = "wellFormed";
+    }
+
     public class TestHelper
     {
         private readonly ITestOutputHelper _output;
@@ -47,7 +62,7 @@ namespace OctoshiftCLI.IntegrationTests
                 var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
                 var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
 
-                while (await GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
+                while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
                 {
                     await Task.Delay(1000);
                 }
@@ -84,19 +99,19 @@ namespace OctoshiftCLI.IntegrationTests
             _output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
             var operationId = await QueueCreateTeamProject(adoOrg, teamProject);
 
-            while (await GetOperationStatus(adoOrg, operationId) is "notSet" or "queued" or "inProgress")
+            while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
             {
                 await Task.Delay(1000);
             }
 
-            while (await GetTeamProjectStatus(adoOrg, teamProject) is "createPending" or "new" or "notSet")
+            while (await GetTeamProjectStatus(adoOrg, teamProject) is TeamProjectStatus.NotSet or TeamProjectStatus.CreatePending or TeamProjectStatus.New)
             {
                 await Task.Delay(1000);
             }
 
             var teamProjectStatus = await GetTeamProjectStatus(adoOrg, teamProject);
 
-            if (teamProjectStatus != "wellFormed")
+            if (teamProjectStatus != TeamProjectStatus.WellFormed)
             {
                 throw new InvalidDataException($"Project in unexpected state [{teamProjectStatus}]");
             }
