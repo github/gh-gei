@@ -32,7 +32,7 @@ namespace OctoshiftCLI.IntegrationTests
             var githubClient = new GithubClient(logger, _githubHttpClient, githubToken);
             var githubApi = new GithubApi(githubClient);
 
-            _helper = new TestHelper(_output, adoApi, githubApi, adoClient);
+            _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
         }
 
         // Tracking Issue: https://github.com/github/octoshift/issues/3606

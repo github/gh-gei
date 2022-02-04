@@ -19,12 +19,13 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly AdoClient _adoClient;
         private readonly GithubClient _githubClient;
 
-        public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi, AdoClient adoClient)
+        public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi, AdoClient adoClient, GithubClient githubClient)
         {
             _output = output;
             _adoApi = adoApi;
             _githubApi = githubApi;
             _adoClient = adoClient;
+            _githubClient = githubClient;
         }
 
         public TestHelper(ITestOutputHelper output, GithubApi githubTargetApi, GithubClient githubClient)
