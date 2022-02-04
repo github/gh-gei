@@ -213,47 +213,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetIdpGroup_Returns_Id_Name_And_Description_Of_Idp_Group()
-        {
-            // Arrange
-            const string org = "ORG";
-            const string idpGroupName = "IDP_GROUP_NAME";
-            const string groupId = "123";
-            const string groupDescription = "GROUP_DESCRIPTION";
-
-            var url = $"https://api.github.com/orgs/{org}/team-sync/groups";
-            var response = $@"
-            {{
-                ""groups"": [
-                    {{
-                        ""group_id"": ""{groupId}"",
-                        ""group_name"": ""{idpGroupName}"", 
-                        ""group_description"": ""{groupDescription}""
-                    }},
-                    {{
-                        ""group_id"": ""123"",
-                        ""group_name"": ""Octocat admins"",
-                        ""group_description"": ""The people who configure your octoworld.""
-                    }}
-                ]
-            }}";
-
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
-
-            // Act
-            var githubApi = new GithubApi(githubClientMock.Object);
-            var (id, name, description) = await githubApi.GetIdpGroup(org, idpGroupName);
-
-            // Assert
-            id.Should().Be(groupId);
-            name.Should().Be(idpGroupName);
-            description.Should().Be(groupDescription);
-        }
-
-        [Fact]
         public async Task AddTeamSync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
@@ -852,6 +811,25 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             actualSuccessState.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task DeleteRepo_Calls_The_Right_Endpoint()
+        {
+            // Arrange
+            const string org = "FOO-ORG";
+            const string repo = "FOO-REPO";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object);
+            await githubApi.DeleteRepo(org, repo);
+
+            // Assert
+            githubClientMock.Verify(m => m.DeleteAsync(url));
         }
     }
 }

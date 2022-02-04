@@ -31,6 +31,8 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);
 
+        public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
+
         public virtual async Task<string> PostAsync(string url, object body) => await SendAsync(HttpMethod.Post, url, body);
 
         public virtual async Task<string> PutAsync(string url, object body) => await SendAsync(HttpMethod.Put, url, body);
@@ -91,7 +93,7 @@ namespace OctoshiftCLI
 
             if (!string.IsNullOrWhiteSpace(continuationToken))
             {
-                if (!updatedUrl.Contains("?"))
+                if (!updatedUrl.Contains('?'))
                 {
                     updatedUrl += "?";
                 }
