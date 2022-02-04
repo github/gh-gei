@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
@@ -24,7 +25,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<AdoApiFactory>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
-                .AddHttpClient();
+                .AddHttpClient("NoSSL")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                {
+                    AllowAutoRedirect = false,
+                    CheckCertificateRevocationList = false,
+                    ServerCertificateCustomValidationCallback = delegate { return true; }
+                })
+                .Services
+                .AddHttpClient("Default")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                {
+                    AllowAutoRedirect = false
+                });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
 

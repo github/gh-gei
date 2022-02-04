@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -28,6 +30,8 @@ namespace OctoshiftCLI
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
             }
         }
+
+        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
         public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
 
@@ -58,7 +62,7 @@ namespace OctoshiftCLI
         public virtual async Task<string> DeleteAsync(string url) => (await SendAsync(HttpMethod.Delete, url)).Content;
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
-            HttpMethod httpMethod, string url, object body = null)
+            HttpMethod httpMethod, string url, object body = null, HttpStatusCode status = HttpStatusCode.OK)
         {
             url = url?.Replace(" ", "%20");
 
@@ -82,7 +86,14 @@ namespace OctoshiftCLI
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
-            response.EnsureSuccessStatusCode();
+            if (status == HttpStatusCode.OK)
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            else if (response.StatusCode != status)
+            {
+                throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}");
+            }
 
             return (content, response.Headers.ToArray());
         }
