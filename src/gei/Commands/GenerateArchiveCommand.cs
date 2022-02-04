@@ -1,7 +1,13 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Sas;
+
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -38,6 +44,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = true
             };
+            var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
+            {
+                IsRequired = true
+            };
             var noSslVerify = new Option("--no-ssl-verify")
             {
                 IsRequired = false
@@ -50,13 +60,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(ghesApiUrl);
             AddOption(githubSourceOrg);
             AddOption(sourceRepo);
+            AddOption(azureStorageConnectionString);
             AddOption(noSslVerify);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string ghesApiUrl, string githubSourceOrg, string sourceRepo, bool noSslVerify = false, bool verbose = false)
+        public async Task Invoke(string ghesApiUrl, string githubSourceOrg, string sourceRepo, string azureStorageConnectionString, bool noSslVerify = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -90,6 +101,27 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Archive(metadata) download url: {metadataArchiveUrl}");
             var gitArchiveUrl = await WaitForArchiveGeneration(githubApi, ghesApiUrl, githubSourceOrg, gitDataArchiveId);
             _log.LogInformation($"Archive(git) download url: {gitArchiveUrl}");
+
+            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+
+            // TODO: Update these with the real file names
+            var gitArchiveFileName = $"{timeNow}gitArchive.tar.gz";
+            var metadataArchiveFileName = $"{timeNow}metadataArchive.tar.gz";
+
+            var gitArchiveFilePath = "/tmp/" + gitArchiveFileName;
+            var metadataArchiveFilePath = "/tmp/" + metadataArchiveFileName;
+
+            // Download both archives to the local filesystem
+            await DownloadFileTo(gitArchiveUrl, gitArchiveFilePath);
+            await DownloadFileTo(metadataArchiveUrl, metadataArchiveFilePath);
+
+            var blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
+            var containerName = "migration-archives-" + Guid.NewGuid();
+            BlobContainerClient containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
+
+            _log.LogInformation($"Created blob container {containerName} in storage account: {blobServiceClient.AccountName}");
+            _ = await UploadFileToBlob(containerClient, gitArchiveFileName, gitArchiveFilePath);
+            _ = await UploadFileToBlob(containerClient, metadataArchiveFileName, metadataArchiveFilePath);
         }
 
         private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string ghesApiUrl, string githubSourceOrg, int archiveId)
@@ -110,6 +142,73 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 await Task.Delay(Delay_In_Milliseconds);
             }
             throw new TimeoutException($"Archive generation timed out after {Timeout_In_Hours} hours");
+        }
+
+        private async Task DownloadFileTo(string fromUrl, string toFilePath)
+        {
+            using var client = new HttpClient();
+            _log.LogInformation($"Downloading file from {fromUrl}...");
+
+            using (var response = await client.GetAsync(fromUrl, HttpCompletionOption.ResponseHeadersRead))
+            using (var streamToReadFrom = await response.Content.ReadAsStreamAsync())
+            {
+                using Stream streamToWriteTo = File.Open(toFilePath, FileMode.Create);
+                await streamToReadFrom.CopyToAsync(streamToWriteTo);
+            }
+
+            _log.LogInformation($"Download completed. Wrote output to: {toFilePath}");
+        }
+
+        private async Task<Uri> UploadFileToBlob(BlobContainerClient containerClient, string fileName, string filePath)
+        {
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            _log.LogInformation($"Uploading {filePath} to blob container {containerClient.Name}...");
+
+            await blobClient.UploadAsync(filePath, true);
+
+            _log.LogInformation($"Upload completed for {filePath}");
+
+            return GetServiceSasUriForBlob(blobClient);
+        }
+
+        private Uri GetServiceSasUriForBlob(BlobClient blobClient, string storedPolicyName = null)
+        {
+            var sasDurationInHours = 1;
+            _log.LogInformation($"Generating SAS URI with {sasDurationInHours} hour duration for {blobClient.Name}...");
+
+            // Check whether this BlobClient object has been authorized with Shared Key.
+            if (blobClient.CanGenerateSasUri)
+            {
+                var sasBuilder = new BlobSasBuilder()
+                {
+                    BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
+                    BlobName = blobClient.Name,
+                    Resource = "b"
+                };
+
+                if (storedPolicyName == null)
+                {
+                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(sasDurationInHours);
+                    sasBuilder.SetPermissions(BlobSasPermissions.Read |
+                        BlobSasPermissions.Write);
+                }
+                else
+                {
+                    sasBuilder.Identifier = storedPolicyName;
+                }
+
+                var sasUri = blobClient.GenerateSasUri(sasBuilder);
+
+                _log.LogInformation($"Generated SAS URI for {blobClient.Name} at: {sasUri}");
+
+                return sasUri;
+            }
+            else
+            {
+                _log.LogInformation("Error generating SAS URI: BlobClient must be authorized with Shared Key credentials to create a service SAS.");
+                return null;
+            }
         }
     }
 }
