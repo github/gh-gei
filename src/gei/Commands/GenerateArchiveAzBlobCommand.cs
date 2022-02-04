@@ -1,14 +1,12 @@
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-using Azure.Storage.Blobs.Models;
-using Azure.Storage.Sas;
 using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Sas;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -65,54 +63,49 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // TODO: Insert generate archive code here
 
             // TODO: Update these with the real url locations
-            string gitArchiveLocation = "https://raw.githubusercontent.com/github/gh-gei/main/images/CodeLayers.png";
-            string metadataArchiveLocation = "https://raw.githubusercontent.com/github/gh-gei/main/images/CodeLayers.png";
+            var gitArchiveLocation = "https://raw.githubusercontent.com/github/gh-gei/main/images/CodeLayers.png";
+            var metadataArchiveLocation = "https://raw.githubusercontent.com/github/gh-gei/main/images/CodeLayers.png";
 
             // TODO: Update these with the real file names
-            string gitArchiveFileName = "gitArchive.png";
-            string metadataArchiveFileName = "metadataArchive.png";
+            var gitArchiveFileName = "gitArchive.png";
+            var metadataArchiveFileName = "metadataArchive.png";
 
-            string gitArchiveFilePath = "/tmp/" + gitArchiveFileName;
-            string metadataArchiveFilePath = "/tmp/" + metadataArchiveFileName;
+            var gitArchiveFilePath = "/tmp/" + gitArchiveFileName;
+            var metadataArchiveFilePath = "/tmp/" + metadataArchiveFileName;
 
             // Download both archives to the local filesystem
             await DownloadFileTo(gitArchiveLocation, gitArchiveFilePath);
             await DownloadFileTo(metadataArchiveLocation, metadataArchiveFilePath);
 
-            BlobServiceClient blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
-            string containerName = "migration-archives-" + Guid.NewGuid().ToString();
+            var blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
+            var containerName = "migration-archives-" + Guid.NewGuid().ToString();
             BlobContainerClient containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
 
             _log.LogInformation($"Created blob container {containerName} in storage account: {blobServiceClient.AccountName}");
-
-            Uri gitArchiveSasUri = await UploadFileToBlob(containerClient, gitArchiveFileName, gitArchiveFilePath);
-            Uri metadataArchiveSasUri = await UploadFileToBlob(containerClient, metadataArchiveFileName, metadataArchiveFilePath);
+            _ = await UploadFileToBlob(containerClient, gitArchiveFileName, gitArchiveFilePath);
+            _ = await UploadFileToBlob(containerClient, metadataArchiveFileName, metadataArchiveFilePath);
 
             // TODO: Kick off Octoshift migration, pass in both SAS URLs
         }
 
         private async Task DownloadFileTo(string fromUrl, string toFilePath)
         {
-            using (HttpClient client = new HttpClient())
+            using var client = new HttpClient();
+            _log.LogInformation($"Downloading file from {fromUrl}...");
+
+            using (var response = await client.GetAsync(fromUrl, HttpCompletionOption.ResponseHeadersRead))
+            using (var streamToReadFrom = await response.Content.ReadAsStreamAsync())
             {
-                _log.LogInformation($"Downloading file from {fromUrl}...");
-
-                using (HttpResponseMessage response = await client.GetAsync(fromUrl, HttpCompletionOption.ResponseHeadersRead))
-                using (Stream streamToReadFrom = await response.Content.ReadAsStreamAsync())
-                {
-                    using (Stream streamToWriteTo = File.Open(toFilePath, FileMode.Create))
-                    {
-                        await streamToReadFrom.CopyToAsync(streamToWriteTo);
-                    }
-                }
-
-                _log.LogInformation($"Download completed. Wrote output to: {toFilePath}");
+                using Stream streamToWriteTo = File.Open(toFilePath, FileMode.Create);
+                await streamToReadFrom.CopyToAsync(streamToWriteTo);
             }
+
+            _log.LogInformation($"Download completed. Wrote output to: {toFilePath}");
         }
 
         private async Task<Uri> UploadFileToBlob(BlobContainerClient containerClient, string fileName, string filePath)
         {
-            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+            var blobClient = containerClient.GetBlobClient(fileName);
 
             _log.LogInformation($"Uploading {filePath} to blob container {containerClient.Name}...");
 
@@ -125,13 +118,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private Uri GetServiceSasUriForBlob(BlobClient blobClient, string storedPolicyName = null)
         {
-            int sasDurationInHours = 1;
+            var sasDurationInHours = 1;
             _log.LogInformation($"Generating SAS URI with {sasDurationInHours} hour duration for {blobClient.Name}...");
 
             // Check whether this BlobClient object has been authorized with Shared Key.
             if (blobClient.CanGenerateSasUri)
             {
-                BlobSasBuilder sasBuilder = new BlobSasBuilder()
+                var sasBuilder = new BlobSasBuilder()
                 {
                     BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
                     BlobName = blobClient.Name,
@@ -149,7 +142,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     sasBuilder.Identifier = storedPolicyName;
                 }
 
-                Uri sasUri = blobClient.GenerateSasUri(sasBuilder);
+                var sasUri = blobClient.GenerateSasUri(sasBuilder);
 
                 _log.LogInformation($"Generated SAS URI for {blobClient.Name} at: {sasUri}");
 
