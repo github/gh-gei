@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -517,6 +519,31 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetRepoId_Should_Work_On_Disabled_Repo()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var repo = "foo-repo";
+            var repoId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var response = new[] {
+                new { name = "blah", id = Guid.NewGuid().ToString() },
+                new { name = repo, id = repoId }
+            };
+
+            var mockClient = new Mock<AdoClient>(null, null, null);
+            mockClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+            mockClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetRepoId(org, teamProject, repo);
+
+            result.Should().Be(repoId);
+        }
+
+        [Fact]
         public async Task GetPipelines_Should_Return_All_Pipelines()
         {
             var org = "foo-org";
@@ -907,65 +934,6 @@ namespace OctoshiftCLI.Tests
             await sut.LockRepo(orgName, teamProjectId, repoId, identityDescriptor);
 
             mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
-        }
-
-        [Fact]
-        public async Task CreateTeamProject_Should_Return_TeamProjectId()
-        {
-            var orgName = "FOO-ORG";
-            var teamProjectName = "foo-tp";
-            var teamProjectId = Guid.NewGuid().ToString();
-
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/projects?api-version=6.0";
-
-            var payload = new
-            {
-                name = teamProjectName,
-                capabilities = new
-                {
-                    versioncontrol = new
-                    {
-                        sourceControlType = "Git"
-                    },
-                    processTemplate = new
-                    {
-                        templateTypeId = "6b724908-ef14-45cf-84f8-768b5384da45"
-                    }
-                }
-            };
-
-            var json = new
-            {
-                id = teamProjectId,
-                status = "queued"
-            };
-
-            var mockClient = new Mock<AdoClient>(null, null, null);
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json.ToJson());
-
-            var sut = new AdoApi(mockClient.Object);
-            var result = await sut.CreateTeamProject(orgName, teamProjectName);
-
-            result.Should().Be(teamProjectId);
-        }
-
-        [Fact]
-        public async Task GetTeamProjectStatus_Should_Return_TeamProjectStatus()
-        {
-            var org = "foo-org";
-            var teamProjectId = Guid.NewGuid().ToString();
-            var teamProjectStatus = "foo-status";
-
-            var endpoint = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
-            var response = new { state = teamProjectStatus };
-
-            var mockClient = new Mock<AdoClient>(null, null, null);
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
-
-            var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetTeamProjectStatus(org, teamProjectId);
-
-            result.Should().Be(teamProjectStatus);
         }
     }
 }
