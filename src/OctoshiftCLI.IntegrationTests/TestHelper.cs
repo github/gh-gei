@@ -406,7 +406,7 @@ steps:
                 : throw new InvalidOperationException("Could not determine OS");
         }
 
-        public void RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
+        public async Task RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
             var startInfo = new ProcessStartInfo
             {
@@ -432,7 +432,7 @@ steps:
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             var p = Process.Start(startInfo);
-            p.WaitForExit();
+            await p.WaitForExitAsync();
 
             p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
 
@@ -442,26 +442,26 @@ steps:
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             p = Process.Start(startInfo);
-            p.WaitForExit();
+            await p.WaitForExitAsync();
 
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
 
-        public void RunAdoToGithubCliMigration(string generateScriptCommand)
+        public async Task RunAdoToGithubCliMigration(string generateScriptCommand)
         {
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "ADO_PAT", adoToken }, { "GH_PAT", githubToken } };
 
-            RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
+            await RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
         }
 
-        public void RunGeiCliMigration(string generateScriptCommand)
+        public async Task RunGeiCliMigration(string generateScriptCommand)
         {
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
 
-            RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
+            await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
         }
 
         private string GetOsDistPath()

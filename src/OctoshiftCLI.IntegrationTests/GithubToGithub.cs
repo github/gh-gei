@@ -46,7 +46,7 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreateGithubRepo(githubSourceOrg, repo1);
             await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
-            _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
@@ -68,7 +68,7 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreateGithubRepo(githubSourceOrg, repo1);
             await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
-            _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ssh");
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ssh");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
