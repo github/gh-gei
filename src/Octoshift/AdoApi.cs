@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -262,8 +264,20 @@ namespace OctoshiftCLI
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
-            var response = await _client.GetAsync(url);
-            return (string)JObject.Parse(response)["id"];
+            try
+            {
+                var response = await _client.GetAsync(url);
+                return (string)JObject.Parse(response)["id"];
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                // The repo may be disabled, can still get the ID by getting it from the repo list
+                url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+
+                var response = await _client.GetWithPagingAsync(url);
+
+                return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
+            }
         }
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
@@ -456,12 +470,6 @@ namespace OctoshiftCLI
             };
 
             await _client.PostAsync(url, payload);
-        }
-
-        private string BuildRepoString(IEnumerable<string> repoIds)
-        {
-            var result = string.Join("\",\"", repoIds);
-            return $"\"{result}\"";
         }
 
         public virtual async Task DisableRepo(string org, string teamProject, string repoId)

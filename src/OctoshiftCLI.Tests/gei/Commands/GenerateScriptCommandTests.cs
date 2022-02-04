@@ -50,7 +50,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" }}";
 
             script.Should().Be(expected);
         }
@@ -71,11 +71,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\"";
+            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\"";
+            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\" }}";
 
             script.Should().Be(expected);
         }
@@ -94,7 +94,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh }}";
 
             script.Should().Be(expected);
         }
@@ -123,7 +123,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" }}";
 
             script.Should().Be(expected);
         }
@@ -145,11 +145,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\"";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\"";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\" }}";
             expected += Environment.NewLine;
-            expected += $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\"";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\" }}";
 
             script.Should().Be(expected);
         }
@@ -169,7 +169,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}";
 
             script.Should().Be(expected);
         }
@@ -179,6 +179,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var lines = script.Split(new string[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
 
             lines = lines.Where(x => !string.IsNullOrWhiteSpace(x)).Where(x => !x.Trim().StartsWith("#"));
+            // This skips the Exec function definition
+            lines = lines.Skip(9);
 
             return string.Join(Environment.NewLine, lines);
         }

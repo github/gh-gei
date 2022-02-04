@@ -58,18 +58,6 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
-        {
-            var url = $"/orgs/{org}/team-sync/groups";
-
-            var response = await _client.GetAsync(url);
-            var data = JObject.Parse(response);
-
-            return data["groups"].Children()
-                                 .Select(x => (id: (string)x["group_id"], name: (string)x["group_name"], description: (string)x["group_description"]))
-                                 .Single(x => x.name.ToLower() == idpGroupName.ToLower());
-        }
-
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
@@ -304,6 +292,12 @@ namespace OctoshiftCLI
             {
                 return false;
             }
+        }
+
+        public virtual async Task DeleteRepo(string org, string repo)
+        {
+            var url = $"https://api.github.com/repos/{org}/{repo}";
+            await _client.DeleteAsync(url);
         }
 
         public virtual async Task<int> StartGitArchiveGeneration(string apiUrl, string org, string repo)

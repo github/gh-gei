@@ -354,3 +354,4 @@ MigrationBackup/
 
 /dist
 /src/gei/Properties/launchSettings.json
+/src/OctoshiftCLI.IntegrationTests/Properties/launchSettings.json

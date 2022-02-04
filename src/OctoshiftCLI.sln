@@ -14,7 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Octoshift", "Octoshift\Octoshift.csproj", "{FA310CCF-3FF2-4DED-9619-28B6DBC3DC4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gei", "gei\gei.csproj", "{0818E9ED-2B8A-4312-A3B2-6E1B1ED78A1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gei", "gei\gei.csproj", "{0818E9ED-2B8A-4312-A3B2-6E1B1ED78A1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoshiftCLI.IntegrationTests", "OctoshiftCLI.IntegrationTests\OctoshiftCLI.IntegrationTests.csproj", "{308F794A-92E9-43E1-A092-C2F7D99F2C44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,10 @@ Global
 		{0818E9ED-2B8A-4312-A3B2-6E1B1ED78A1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0818E9ED-2B8A-4312-A3B2-6E1B1ED78A1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0818E9ED-2B8A-4312-A3B2-6E1B1ED78A1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

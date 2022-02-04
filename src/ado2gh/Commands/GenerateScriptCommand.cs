@@ -233,6 +233,17 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
 
+            content.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+
             foreach (var adoOrg in repos.Keys)
             {
                 content.AppendLine($"# =========== Organization: {adoOrg} ===========");
@@ -298,33 +309,33 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh)
         {
-            return $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}";
+            return $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
@@ -334,20 +345,24 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return string.Empty;
             }
 
-            var result = $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            var result = $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
             if (!skipIdp)
             {
                 result += $" --idp-group \"{adoTeamProject}-Maintainers\"";
             }
+
+            result += " }";
             result += Environment.NewLine;
 
-            result += $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            result += $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
             if (!skipIdp)
             {
                 result += $" --idp-group \"{adoTeamProject}-Admins\"";
             }
+
+            result += " }";
 
             return result;
         }
@@ -359,9 +374,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return string.Empty;
             }
 
-            var result = $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            var result = $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
             result += Environment.NewLine;
-            result += $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            result += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
 
             return result;
         }
@@ -370,14 +385,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 
         private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo)
         {
             return _reposOnly
                 ? string.Empty
-                : $"./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+                : $"Exec {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
     }
 }
