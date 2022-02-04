@@ -47,3 +47,40 @@ This will trigger an Actions workflow that results in a new release being publis
 - Runs `publish.ps1` to build self-contained binaries for each platform. This script also embeds the version number (extracted from the tag) into each binary.
 - Creates a release in this repo with the self-contained binaries, uses the contents of `RELEASENOTES.md` as the release description.
 - Moves the contents of `RELEASENOTES.md` to a version specific file under the releasenotes folder, then empties out `RELEASENOTES.md` and commits the 2 files
+
+## Development Basics
+
+You can try developing this repo using GitHub codespaces, so all the dependencies are installed for you!
+
+Check out `publish.ps1` to see how binaries are built for this repo for various distributions.
+
+Build with:
+```bash
+dotnet build src/OctoshiftCLI.sln
+```
+
+Alternatively, you can use for gei
+```bash
+ dotnet watch build --project  src/gei/gei.csproj
+```
+to run builds automatically.
+- If you're doing this, you can run the binaries with `./src/gei/bin/Debug/net6.0/gei`
+
+If you aren't using watch, run **after** building with:
+```bash
+dotnet run --project src/gei/gei.csproj
+```
+
+Run tests with
+```bash
+dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj
+```
+
+Format your files locally with:
+```bash
+dotnet format src/OctoshiftCLI.sln
+```
+
+### Good to Knows
+
+When you add a new parameter, the name of the argument in the invoke function has to match the name of the parameter.
