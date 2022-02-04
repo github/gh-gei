@@ -299,6 +299,6 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        
+
     }
 }
