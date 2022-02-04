@@ -22,9 +22,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
+                .AddSingleton<AzureApiFactory>()
                 .AddSingleton<AdoApiFactory>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddTransient<IAzureApiFactory>(sp => sp.GetRequiredService<AzureApiFactory>())
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
