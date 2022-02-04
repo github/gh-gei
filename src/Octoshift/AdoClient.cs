@@ -93,7 +93,7 @@ namespace OctoshiftCLI
 
             if (!string.IsNullOrWhiteSpace(continuationToken))
             {
-                if (!updatedUrl.Contains("?"))
+                if (!updatedUrl.Contains('?'))
                 {
                     updatedUrl += "?";
                 }

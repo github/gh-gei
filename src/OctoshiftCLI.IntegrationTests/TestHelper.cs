@@ -15,23 +15,23 @@ namespace OctoshiftCLI.IntegrationTests
     {
         private readonly ITestOutputHelper _output;
         private readonly AdoApi _adoApi;
-        private readonly GithubApi _githubSourceApi;
-        private readonly GithubApi _githubTargetApi;
+        private readonly GithubApi _githubApi;
         private readonly AdoClient _adoClient;
+        private readonly GithubClient _githubClient;
 
         public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi, AdoClient adoClient)
         {
             _output = output;
             _adoApi = adoApi;
-            _githubTargetApi = githubApi;
+            _githubApi = githubApi;
             _adoClient = adoClient;
         }
 
-        public TestHelper(ITestOutputHelper output, GithubApi githubSourceApi, GithubApi githubTargetApi)
+        public TestHelper(ITestOutputHelper output, GithubApi githubTargetApi, GithubClient githubClient)
         {
             _output = output;
-            _githubSourceApi = githubSourceApi;
-            _githubTargetApi = githubTargetApi;
+            _githubApi = githubTargetApi;
+            _githubClient = githubClient;
         }
 
         public async Task ResetAdoTestEnvironment(string adoOrg)
@@ -53,28 +53,28 @@ namespace OctoshiftCLI.IntegrationTests
             }
         }
 
-        public async Task CreateGithubRepo(string githubOrg, string repo, GithubClient githubClient)
+        public async Task CreateGithubRepo(string githubOrg, string repo)
         {
             _output.WriteLine($"Creating Github repo: {githubOrg}\\{repo}...");
-            await CreateRepo(githubOrg, repo, true, true, githubClient);
+            await CreateRepo(githubOrg, repo, true, true);
         }
 
-        public async Task ResetGithubTestEnvironment(string githubOrg, GithubClient githubClient)
+        public async Task ResetGithubTestEnvironment(string githubOrg)
         {
-            var githubRepos = await _githubTargetApi.GetRepos(githubOrg);
+            var githubRepos = await _githubApi.GetRepos(githubOrg);
 
             foreach (var repo in githubRepos)
             {
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubTargetApi.DeleteRepo(githubOrg, repo);
+                await _githubApi.DeleteRepo(githubOrg, repo);
             }
 
-            var githubTeams = await GetTeams(githubOrg, githubClient);
+            var githubTeams = await GetTeams(githubOrg);
 
             foreach (var team in githubTeams)
             {
                 _output.WriteLine($"Deleting GitHub team: {team}");
-                await DeleteTeam(githubOrg, team, githubClient);
+                await DeleteTeam(githubOrg, team);
             }
         }
 
@@ -321,23 +321,23 @@ steps:
             return (string)JObject.Parse(response)["status"];
         }
 
-        private async Task<IEnumerable<string>> GetTeams(string org, GithubClient githubClient)
+        private async Task<IEnumerable<string>> GetTeams(string org)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
 
-            var response = await githubClient.GetAsync(url);
+            var response = await _githubClient.GetAsync(url);
             var data = JArray.Parse(response);
 
             return data.Children().Select(x => (string)x["slug"]).ToList();
         }
 
-        private async Task DeleteTeam(string org, string team, GithubClient githubClient)
+        private async Task DeleteTeam(string org, string team)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{team}";
-            await githubClient.DeleteAsync(url);
+            await _githubClient.DeleteAsync(url);
         }
 
-        private async Task CreateRepo(string org, string repo, bool isPrivate, bool isInitialized, GithubClient githubClient)
+        private async Task CreateRepo(string org, string repo, bool isPrivate, bool isInitialized)
         {
             var url = $"https://api.github.com/orgs/{org}/repos";
 
@@ -348,34 +348,34 @@ steps:
                 auto_init = isInitialized
             };
 
-            _ = await githubClient.PostAsync(url, payload);
+            _ = await _githubClient.PostAsync(url, payload);
         }
 
-        private async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo, GithubClient githubClient)
+        private async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
         {
             var url = $"https://api.github.com/repos/{org}/{repo}/commits";
-            var commits = await githubClient.GetAllAsync(url).ToListAsync();
+            var commits = await _githubClient.GetAllAsync(url).ToListAsync();
             return commits.Select(x => (string)x["sha"]).ToList();
         }
 
-        private async Task<IEnumerable<(string id, string key, string url)>> GetAutolinks(string org, string repo, GithubClient githubClient)
+        private async Task<IEnumerable<(string id, string key, string url)>> GetAutolinks(string org, string repo)
         {
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
-            var autolinks = await githubClient.GetAllAsync(url).ToListAsync();
+            var autolinks = await _githubClient.GetAllAsync(url).ToListAsync();
             return autolinks.Select(x => ((string)x["id"], (string)x["key_prefix"], (string)x["url_template"])).ToList();
         }
 
-        private async Task<string> GetTeamIdPGroup(string org, string teamSlug, GithubClient githubClient)
+        private async Task<string> GetTeamIdPGroup(string org, string teamSlug)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
-            var response = await githubClient.GetAsync(url);
+            var response = await _githubClient.GetAsync(url);
             return (string)JObject.Parse(response)["groups"].Single()["group_name"];
         }
 
-        private async Task<string> GetTeamRepoRole(string org, string team, string repo, GithubClient githubClient)
+        private async Task<string> GetTeamRepoRole(string org, string team, string repo)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
-            var response = await githubClient.GetAllAsync(url).ToListAsync();
+            var response = await _githubClient.GetAllAsync(url).ToListAsync();
             return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
         }
 
@@ -462,23 +462,23 @@ steps:
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
         {
             _output.WriteLine("Checking that the repos in GitHub exist...");
-            var repos = await _githubTargetApi.GetRepos(githubOrg);
+            var repos = await _githubApi.GetRepos(githubOrg);
             repos.Should().Contain(repo);
         }
 
-        public async Task AssertGithubRepoInitialized(string githubOrg, string repo, GithubClient githubClient)
+        public async Task AssertGithubRepoInitialized(string githubOrg, string repo)
         {
             _output.WriteLine("Checking that the repos in GitHub are initialized...");
 
-            var commits = await GetRepoCommitShas(githubOrg, repo, githubClient);
+            var commits = await GetRepoCommitShas(githubOrg, repo);
             commits.Count().Should().BeGreaterThan(0);
         }
 
-        public async Task AssertAutolinkConfigured(string githubOrg, string repo, string urlTemplate, GithubClient githubClient)
+        public async Task AssertAutolinkConfigured(string githubOrg, string repo, string urlTemplate)
         {
             _output.WriteLine("Checking that the Autolinks have been configured...");
 
-            var autolinks = await GetAutolinks(githubOrg, repo, githubClient);
+            var autolinks = await GetAutolinks(githubOrg, repo);
             autolinks.Where(x => x.key == "AB#" && x.url == urlTemplate)
                      .Count()
                      .Should().Be(1);
@@ -503,27 +503,27 @@ steps:
             deny.Should().Be(56828);
         }
 
-        public async Task AssertGithubTeamCreated(string githubOrg, string teamSlug, GithubClient githubClient)
+        public async Task AssertGithubTeamCreated(string githubOrg, string teamSlug)
         {
             _output.WriteLine("Checking that the GitHub teams were created...");
-            var githubTeams = await GetTeams(githubOrg, githubClient);
+            var githubTeams = await GetTeams(githubOrg);
 
             githubTeams.Should().Contain(teamSlug);
         }
 
-        public async Task AssertGithubTeamIdpLinked(string githubOrg, string teamSlug, string idpGroup, GithubClient githubClient)
+        public async Task AssertGithubTeamIdpLinked(string githubOrg, string teamSlug, string idpGroup)
         {
             _output.WriteLine("Checking that the GitHub teams are linked to IdP groups...");
 
-            var idp = await GetTeamIdPGroup(githubOrg, teamSlug, githubClient);
+            var idp = await GetTeamIdPGroup(githubOrg, teamSlug);
             idp.ToLower().Should().Be(idpGroup);
         }
 
-        public async Task AssertGithubTeamHasRepoRole(string githubOrg, string teamSlug, string repo, string role, GithubClient githubClient)
+        public async Task AssertGithubTeamHasRepoRole(string githubOrg, string teamSlug, string repo, string role)
         {
             _output.WriteLine("Checking that the GitHub teams have repo permissions...");
 
-            var actualRole = await GetTeamRepoRole(githubOrg, teamSlug, repo, githubClient);
+            var actualRole = await GetTeamRepoRole(githubOrg, teamSlug, repo);
             actualRole.Should().Be(role);
         }
 

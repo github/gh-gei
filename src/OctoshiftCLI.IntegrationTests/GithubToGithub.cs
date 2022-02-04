@@ -10,14 +10,11 @@ namespace OctoshiftCLI.IntegrationTests
     public class GithubToGithub : IDisposable
     {
         private readonly ITestOutputHelper _output;
-        private readonly GithubApi _githubSourceApi;
-        private readonly GithubApi _githubTargetApi;
+        private readonly GithubApi _githubApi;
         private readonly TestHelper _helper;
 
-        private readonly HttpClient _githubSourceHttpClient;
-        private readonly HttpClient _githubTargetHttpClient;
-        private readonly GithubClient _githubSourceClient;
-        private readonly GithubClient _githubTargetClient;
+        private readonly HttpClient _githubHttpClient;
+        private readonly GithubClient _githubClient;
         private bool disposedValue;
 
         public GithubToGithub(ITestOutputHelper output)
@@ -27,15 +24,11 @@ namespace OctoshiftCLI.IntegrationTests
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
-            _githubSourceHttpClient = new HttpClient();
-            _githubSourceClient = new GithubClient(logger, _githubSourceHttpClient, githubToken);
-            _githubSourceApi = new GithubApi(_githubSourceClient);
+            _githubHttpClient = new HttpClient();
+            _githubClient = new GithubClient(logger, _githubHttpClient, githubToken);
+            _githubApi = new GithubApi(_githubClient);
 
-            _githubTargetHttpClient = new HttpClient();
-            _githubTargetClient = new GithubClient(logger, _githubTargetHttpClient, githubToken);
-            _githubTargetApi = new GithubApi(_githubTargetClient);
-
-            _helper = new TestHelper(_output, _githubSourceApi, _githubTargetApi);
+            _helper = new TestHelper(_output, _githubApi, _githubClient);
         }
 
         // Tracking Issue: https://github.com/github/octoshift/issues/3606
@@ -47,18 +40,18 @@ namespace OctoshiftCLI.IntegrationTests
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            await _helper.ResetGithubTestEnvironment(githubSourceOrg, _githubSourceClient);
-            await _helper.ResetGithubTestEnvironment(githubTargetOrg, _githubTargetClient);
+            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
+            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
 
-            await _helper.CreateGithubRepo(githubSourceOrg, repo1, _githubSourceClient);
-            await _helper.CreateGithubRepo(githubSourceOrg, repo2, _githubSourceClient);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
             _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1, _githubTargetClient);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2, _githubTargetClient);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
         }
 
         [Fact]
@@ -69,18 +62,18 @@ namespace OctoshiftCLI.IntegrationTests
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            await _helper.ResetGithubTestEnvironment(githubSourceOrg, _githubSourceClient);
-            await _helper.ResetGithubTestEnvironment(githubTargetOrg, _githubTargetClient);
+            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
+            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
 
-            await _helper.CreateGithubRepo(githubSourceOrg, repo1, _githubSourceClient);
-            await _helper.CreateGithubRepo(githubSourceOrg, repo2, _githubSourceClient);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
             _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ssh");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1, _githubTargetClient);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2, _githubTargetClient);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -89,8 +82,7 @@ namespace OctoshiftCLI.IntegrationTests
             {
                 if (disposing)
                 {
-                    _githubSourceHttpClient.Dispose();
-                    _githubTargetHttpClient.Dispose();
+                    _githubHttpClient.Dispose();
                 }
 
                 disposedValue = true;
