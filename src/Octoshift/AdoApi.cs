@@ -269,19 +269,14 @@ namespace OctoshiftCLI
                 var response = await _client.GetAsync(url);
                 return (string)JObject.Parse(response)["id"];
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                if (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    // The repo may be disabled, can still get the ID by getting it from the repo list
-                    url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+                // The repo may be disabled, can still get the ID by getting it from the repo list
+                url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
 
-                    var response = await _client.GetWithPagingAsync(url);
+                var response = await _client.GetWithPagingAsync(url);
 
-                    return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
-                }
-
-                throw;
+                return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
             }
         }
 
