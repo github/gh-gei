@@ -15,24 +15,24 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _environmentVariableProvider = environmentVariableProvider;
         }
 
-        GithubApi ISourceGithubApiFactory.Create()
+        GithubApi ISourceGithubApiFactory.Create(string baseUrl)
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat, baseUrl);
             return new GithubApi(githubClient);
         }
 
-        GithubApi ISourceGithubApiFactory.CreateClientNoSSL()
+        GithubApi ISourceGithubApiFactory.CreateClientNoSSL(string baseUrl)
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), githubPat);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), githubPat, baseUrl);
             return new GithubApi(githubClient);
         }
 
-        GithubApi ITargetGithubApiFactory.Create()
+        GithubApi ITargetGithubApiFactory.Create(string baseUrl)
         {
             var githubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat, baseUrl);
             return new GithubApi(githubClient);
         }
     }

@@ -23,6 +23,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses GH_SOURCE_PAT env variable. Will fall back to GH_PAT if not set."
             };
+            var ghesUrl = new Option<string>("--ghes-url")
+            {
+                IsRequired = false,
+                Description = "The hostname of your GHES instance. For example: https://myghes.com"
+            };
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
@@ -56,6 +61,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrg);
+            AddOption(ghesUrl);
             AddOption(adoSourceOrg);
             AddOption(adoTeamProject);
             AddOption(sourceRepo);
@@ -64,10 +70,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string ghesApiUrl, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -105,7 +111,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 targetRepo = sourceRepo;
             }
 
-            var githubApi = _targetGithubApiFactory.Create();
+            var githubApi = _targetGithubApiFactory.Create(ghesApiUrl);
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
