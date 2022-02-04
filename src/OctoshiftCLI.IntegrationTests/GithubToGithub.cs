@@ -16,6 +16,8 @@ namespace OctoshiftCLI.IntegrationTests
 
         private readonly HttpClient _githubSourceHttpClient;
         private readonly HttpClient _githubTargetHttpClient;
+        private readonly GithubClient _githubSourceClient;
+        private readonly GithubClient _githubTargetClient;
         private bool disposedValue;
 
         public GithubToGithub(ITestOutputHelper output)
@@ -26,12 +28,12 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
             _githubSourceHttpClient = new HttpClient();
-            var githubSourceClient = new GithubClient(logger, _githubSourceHttpClient, githubToken);
-            _githubSourceApi = new GithubApi(githubSourceClient);
+            _githubSourceClient = new GithubClient(logger, _githubSourceHttpClient, githubToken);
+            _githubSourceApi = new GithubApi(_githubSourceClient);
 
             _githubTargetHttpClient = new HttpClient();
-            var githubTargetClient = new GithubClient(logger, _githubTargetHttpClient, githubToken);
-            _githubTargetApi = new GithubApi(githubTargetClient);
+            _githubTargetClient = new GithubClient(logger, _githubTargetHttpClient, githubToken);
+            _githubTargetApi = new GithubApi(_githubTargetClient);
 
             _helper = new TestHelper(_output, _githubSourceApi, _githubTargetApi);
         }
@@ -45,18 +47,18 @@ namespace OctoshiftCLI.IntegrationTests
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
-            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
+            await _helper.ResetGithubTestEnvironment(githubSourceOrg, _githubSourceClient);
+            await _helper.ResetGithubTestEnvironment(githubTargetOrg, _githubTargetClient);
 
-            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
-            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo1, _githubSourceClient);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo2, _githubSourceClient);
 
             _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1, _githubTargetClient);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2, _githubTargetClient);
         }
 
         [Fact]
@@ -67,18 +69,18 @@ namespace OctoshiftCLI.IntegrationTests
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
-            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
+            await _helper.ResetGithubTestEnvironment(githubSourceOrg, _githubSourceClient);
+            await _helper.ResetGithubTestEnvironment(githubTargetOrg, _githubTargetClient);
 
-            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
-            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo1, _githubSourceClient);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo2, _githubSourceClient);
 
             _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ssh");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
-            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1, _githubTargetClient);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2, _githubTargetClient);
         }
 
         protected virtual void Dispose(bool disposing)

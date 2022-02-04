@@ -57,18 +57,6 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
-        {
-            var url = $"https://api.github.com/orgs/{org}/team-sync/groups";
-
-            var response = await _client.GetAsync(url);
-            var data = JObject.Parse(response);
-
-            return data["groups"].Children()
-                                 .Select(x => (id: (string)x["group_id"], name: (string)x["group_name"], description: (string)x["group_description"]))
-                                 .Single(x => x.name.ToLower() == idpGroupName.ToLower());
-        }
-
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
@@ -311,62 +299,6 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<IEnumerable<string>> GetTeams(string org)
-        {
-            var url = $"https://api.github.com/orgs/{org}/teams";
-
-            var response = await _client.GetAsync(url);
-            var data = JArray.Parse(response);
-
-            return data.Children().Select(x => (string)x["slug"]).ToList();
-        }
-
-        public virtual async Task DeleteTeam(string org, string team)
-        {
-            var url = $"https://api.github.com/orgs/{org}/teams/{team}";
-            await _client.DeleteAsync(url);
-        }
-
-        public async Task CreateRepo(string org, string repo, bool isPrivate, bool isInitialized)
-        {
-            var url = $"https://api.github.com/orgs/{org}/repos";
-
-            var payload = new
-            {
-                name = repo,
-                @private = isPrivate,
-                auto_init = isInitialized
-            };
-
-            _ = await _client.PostAsync(url, payload);
-        }
-
-        public virtual async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
-        {
-            var url = $"https://api.github.com/repos/{org}/{repo}/commits";
-            var commits = await _client.GetAllAsync(url).ToListAsync();
-            return commits.Select(x => (string)x["sha"]).ToList();
-        }
-
-        public virtual async Task<IEnumerable<(string id, string key, string url)>> GetAutolinks(string org, string repo)
-        {
-            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
-            var autolinks = await _client.GetAllAsync(url).ToListAsync();
-            return autolinks.Select(x => ((string)x["id"], (string)x["key_prefix"], (string)x["url_template"])).ToList();
-        }
-
-        public virtual async Task<string> GetTeamIdPGroup(string org, string teamSlug)
-        {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
-            var response = await _client.GetAsync(url);
-            return (string)JObject.Parse(response)["groups"].Single()["group_name"];
-        }
-
-        public virtual async Task<string> GetTeamRepoRole(string org, string team, string repo)
-        {
-            var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
-            var response = await _client.GetAllAsync(url).ToListAsync();
-            return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
-        }
+        
     }
 }
