@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,23 +13,30 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     {
         private readonly OctoLogger _log;
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
+        private readonly AdoApiFactory _sourceAdoApiFactory;
 
-        public GenerateScriptCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, AdoApiFactory sourceAdoApiFactory) : base("generate-script")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
+            _sourceAdoApiFactory = sourceAdoApiFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects GH_SOURCE_PAT or GH_PAT env variable to be set.";
 
             var githubSourceOrgOption = new Option<string>("--github-source-org")
             {
-                IsRequired = true
+                IsRequired = false,
+                Description = "Uses GH_SOURCE_PAT env variable. Will fall back to GH_PAT if not set."
+            };
+            var adoSourceOrgOption = new Option<string>("--ado-source-org")
+            {
+                IsRequired = false,
+                Description = "Uses ADO_PAT env variable."
             };
             var githubTargetOrgOption = new Option<string>("--github-target-org")
             {
-                IsRequired = true
+                IsRequired = true,
+                Description = "Uses GH_PAT env variable."
             };
             var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
@@ -44,20 +52,28 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrgOption);
+            AddOption(adoSourceOrgOption);
             AddOption(githubTargetOrgOption);
             AddOption(outputOption);
             AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, FileInfo, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string githubTargetOrg, FileInfo output, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string githubTargetOrg, FileInfo output, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Generating Script...");
-            _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+            if (!string.IsNullOrWhiteSpace(githubSourceOrg))
+            {
+                _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+            }
+            if (!string.IsNullOrWhiteSpace(adoSourceOrg))
+            {
+                _log.LogInformation($"ADO SOURCE ORG: {adoSourceOrg}");
+            }
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"OUTPUT: {output}");
             if (ssh)
@@ -65,9 +81,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSH: true");
             }
 
-            var repos = await GetRepos(_sourceGithubApiFactory.Create(), githubSourceOrg);
+            if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
+            {
+                throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
+            }
 
-            var script = GenerateScript(repos, githubSourceOrg, githubTargetOrg, ssh);
+            var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
+                await InvokeAdo(adoSourceOrg, githubTargetOrg, ssh) :
+                await InvokeGithub(githubSourceOrg, githubTargetOrg, ssh);
 
             if (output != null)
             {
@@ -75,7 +96,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        public async Task<IEnumerable<string>> GetRepos(GithubApi github, string githubOrg)
+        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, bool ssh)
+        {
+            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(), githubSourceOrg);
+            return GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, ssh);
+        }
+
+        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool ssh)
+        {
+            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(), adoSourceOrg);
+            return GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, ssh);
+        }
+
+        public async Task<IEnumerable<string>> GetGithubRepos(GithubApi github, string githubOrg)
         {
             if (!string.IsNullOrWhiteSpace(githubOrg) && github != null)
             {
@@ -93,7 +126,33 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        public string GenerateScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, bool ssh)
+        public async Task<IDictionary<string, IEnumerable<string>>> GetAdoRepos(AdoApi adoApi, string adoOrg)
+        {
+            var repos = new Dictionary<string, IEnumerable<string>>();
+
+            if (!string.IsNullOrWhiteSpace(adoOrg) && adoApi != null)
+            {
+                var teamProjects = await adoApi.GetTeamProjects(adoOrg);
+
+                foreach (var teamProject in teamProjects)
+                {
+                    _log.LogInformation($"Team Project: {teamProject}");
+                    var projectRepos = await adoApi.GetRepos(adoOrg, teamProject);
+                    repos.Add(teamProject, projectRepos);
+
+                    foreach (var repo in projectRepos)
+                    {
+                        _log.LogInformation($"  Repo: {repo}");
+                    }
+                }
+
+                return repos;
+            }
+
+            throw new ArgumentException("All arguments must be non-null");
+        }
+
+        public string GenerateGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, bool ssh)
         {
             if (repos == null)
             {
@@ -102,19 +161,81 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var content = new StringBuilder();
 
+            content.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+
             content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
             foreach (var repo in repos)
             {
-                content.AppendLine(MigrateRepoScript(githubSourceOrg, githubTargetOrg, repo, ssh));
+                content.AppendLine(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ssh));
             }
 
             return content.ToString();
         }
 
-        private string MigrateRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, bool ssh)
+        public string GenerateAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg, bool ssh)
         {
-            return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}";
+            if (repos == null)
+            {
+                return string.Empty;
+            }
+
+            var content = new StringBuilder();
+
+            content.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+
+            content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
+
+            foreach (var teamProject in repos.Keys)
+            {
+                content.AppendLine();
+                content.AppendLine($"# === Team Project: {adoSourceOrg}/{teamProject} ===");
+
+                if (!repos[teamProject].Any())
+                {
+                    content.AppendLine("# Skipping this Team Project because it has no git repos");
+                }
+                else
+                {
+                    foreach (var repo in repos[teamProject])
+                    {
+                        var githubRepo = GetGithubRepoName(teamProject, repo);
+                        content.AppendLine(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, ssh));
+                    }
+                }
+            }
+
+            return content.ToString();
+        }
+
+        private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
+
+        private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, bool ssh)
+        {
+            return $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
+        }
+
+        private string MigrateAdoRepoScript(string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool ssh)
+        {
+            return $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
     }
 }

@@ -6,6 +6,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
     {
         private const string SOURCE_GH_PAT = "GH_SOURCE_PAT";
         private const string TARGET_GH_PAT = "GH_PAT";
+        private const string ADO_PAT = "ADO_PAT";
         private readonly OctoLogger _logger;
 
         public EnvironmentVariableProvider(OctoLogger logger)
@@ -18,6 +19,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         public virtual string TargetGithubPersonalAccessToken() =>
             GetSecret(TARGET_GH_PAT) ??
             throw new OctoshiftCliException($"{TARGET_GH_PAT} environment variable is not set.");
+
+        public virtual string AdoPersonalAccessToken() => GetSecret(ADO_PAT);
 
         private string GetSecret(string secretName)
         {
