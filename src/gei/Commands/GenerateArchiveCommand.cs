@@ -23,11 +23,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Description = "Invokes the GitHub Migration API's to generate a migration archive";
             Description += Environment.NewLine;
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API. For GHES, we expect that --ghes-api-url is passed in as the api endpoint for the hostname of your GHES instance. For example: https://api.myghes.com";
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
 
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "The api endpoint for the hostname of your GHES instance. For example: https://api.myghes.com"
             };
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -67,6 +68,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("--ghes-api-url not provided, defaulting to https://api.github.com");
                 ghesApiUrl = "https://api.github.com";
+            }
+            else
+            {
+                _log.LogInformation($"GHES API URL: {ghesApiUrl}");
             }
 
             if (noSslVerify)
