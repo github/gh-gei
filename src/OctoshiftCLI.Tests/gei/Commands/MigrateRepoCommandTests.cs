@@ -186,10 +186,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepoUrl = $"https://github.com/{githubSourceOrg}/{sourceRepo}";
             var migrationId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubTargetOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo, "", "").Result).Returns(migrationId);
             mockGithub.SetupSequence(x => x.GetMigrationState(migrationId).Result).Returns("FAILED").Returns("SUCCEEDED");
             mockGithub.Setup(x => x.GetMigrationFailureReason(migrationId).Result).Returns("Warning: Permanently added XXXXX (ECDSA) to the list of known hosts");
 
@@ -198,13 +198,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(targetApiUrl)).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo);
+            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo, "");
 
             mockGithub.Verify(x => x.DeleteRepo(githubTargetOrg, targetRepo));
-            mockGithub.Verify(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo), Times.Exactly(2));
+            mockGithub.Verify(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo, "", ""), Times.Exactly(2));
         }
 
         [Fact]
@@ -222,10 +222,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepoUrl = $"https://github.com/{githubSourceOrg}/{sourceRepo}";
             var migrationId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubTargetOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, targetRepo, "", "").Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("FAILED");
             mockGithub.Setup(x => x.GetMigrationFailureReason(migrationId).Result).Returns("Warning: Permanently added XXXXX (ECDSA) to the list of known hosts");
 
@@ -234,11 +234,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(targetApiUrl)).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await FluentActions
-                .Invoking(async () => await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo))
+                .Invoking(async () => await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, targetRepo, ""))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -251,7 +251,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(null, null, null, sourceRepo, githubTargetOrg, targetRepo))
+                .Invoking(async () => await command.Invoke(null, null, null, sourceRepo, githubTargetOrg, targetRepo, ""))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -265,7 +265,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(null, adoSourceOrg, null, sourceRepo, githubTargetOrg, targetRepo))
+                .Invoking(async () => await command.Invoke(null, adoSourceOrg, null, sourceRepo, githubTargetOrg, targetRepo, ""))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -283,10 +283,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepoUrl = $"https://github.com/{githubSourceOrg}/{sourceRepo}";
             var migrationId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubTargetOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, sourceRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, sourceRepo, "", "").Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
@@ -294,10 +294,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(targetApiUrl)).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, null);
+            await command.Invoke(githubSourceOrg, null, null, sourceRepo, githubTargetOrg, null, "");
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }

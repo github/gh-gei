@@ -829,7 +829,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object);
+            var githubApi = new GithubApi(githubClientMock.Object, null);
             await githubApi.DeleteRepo(org, repo);
 
             // Assert
