@@ -15,25 +15,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _environmentVariableProvider = environmentVariableProvider;
         }
 
-        GithubApi ISourceGithubApiFactory.Create()
+        GithubApi ISourceGithubApiFactory.Create(string apiUrl)
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
-            return new GithubApi(githubClient);
+            return new GithubApi(githubClient, apiUrl);
         }
 
-        GithubApi ISourceGithubApiFactory.CreateClientNoSSL()
+        GithubApi ISourceGithubApiFactory.CreateClientNoSSL(string apiUrl)
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), githubPat);
-            return new GithubApi(githubClient);
+            return new GithubApi(githubClient, apiUrl);
         }
 
-        GithubApi ITargetGithubApiFactory.Create()
+        GithubApi ITargetGithubApiFactory.Create(string apiUrl)
         {
             var githubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
-            return new GithubApi(githubClient);
+            return new GithubApi(githubClient, apiUrl);
         }
     }
 }

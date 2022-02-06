@@ -93,19 +93,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSL verification disabled");
             }
 
-            var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSSL() : _sourceGithubApiFactory.Create();
+            var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSSL(ghesApiUrl) : _sourceGithubApiFactory.Create(ghesApiUrl);
+            var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSSL(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
-            var gitDataArchiveId = await githubApi.StartGitArchiveGeneration(ghesApiUrl, githubSourceOrg, sourceRepo);
+            var gitDataArchiveId = await githubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await githubApi.StartMetadataArchiveGeneration(ghesApiUrl, githubSourceOrg, sourceRepo);
+            var metadataArchiveId = await githubApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
-            var metadataArchiveUrl = await WaitForArchiveGeneration(githubApi, ghesApiUrl, githubSourceOrg, metadataArchiveId);
+            var metadataArchiveUrl = await WaitForArchiveGeneration(githubApi, githubSourceOrg, metadataArchiveId);
             _log.LogInformation($"Archive(metadata) download url: {metadataArchiveUrl}");
-            var gitArchiveUrl = await WaitForArchiveGeneration(githubApi, ghesApiUrl, githubSourceOrg, gitDataArchiveId);
+            var gitArchiveUrl = await WaitForArchiveGeneration(githubApi, githubSourceOrg, gitDataArchiveId);
             _log.LogInformation($"Archive(git) download url: {gitArchiveUrl}");
 
-            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            var timeNow = $"{dateTimeNow:yyyy-MM-dd_HH-mm-ss}";
 
             // TODO: Update these with the real file names
             var gitArchiveFileName = $"{timeNow}gitArchive.tar.gz";
@@ -114,31 +115,49 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var gitArchiveFilePath = $"/tmp/{gitArchiveFileName}";
             var metadataArchiveFilePath = $"/tmp/{metadataArchiveFileName}";
 
-            var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
-
             // Download both archives to the local filesystem
-
             _log.LogInformation($"Downloading archive from {gitArchiveUrl} to {gitArchiveFilePath}");
             await azureApi.DownloadFileTo(gitArchiveUrl, gitArchiveFilePath);
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl} to {metadataArchiveFilePath}");
             await azureApi.DownloadFileTo(metadataArchiveUrl, metadataArchiveFilePath);
 
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-            await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveFilePath);
+            var authenticatedGitUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveFilePath);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-            await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
+            var authenticatedMetadataUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
+
+            _log.LogInformation($"Deleting local archive files");
+            // delete the files
+            // File.Delete(gitArchiveFilePath);
+            // File.Delete(metadataArchiveFilePath);
+
+            // run migrate repo command
+            var migrateRepoCommand = new MigrateRepoCommand(_log, _targetGithubApiFactory, _environmentVariableProvider);
+            await migrateRepoCommand.Invoke(
+                githubSourceOrg,
+                "",
+                "",
+                sourceRepo,
+                githubTargetOrg,
+                targetRepo,
+                "",
+                authenticatedMetadataUrl.ToString(),
+                authenticatedGitUrl.ToString(),
+                false,
+                verbose
+            );
         }
 
-        private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string ghesApiUrl, string githubSourceOrg, int archiveId)
+        private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
         {
             var timeOut = DateTime.Now.AddHours(Timeout_In_Hours);
             while (DateTime.Now < timeOut)
             {
-                var archiveStatus = await githubApi.GetArchiveMigrationStatus(ghesApiUrl, githubSourceOrg, archiveId);
+                var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
                 _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
                 if (archiveStatus == ArchiveMigrationStatus.Exported)
                 {
-                    return await githubApi.GetArchiveMigrationUrl(ghesApiUrl, githubSourceOrg, archiveId);
+                    return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
                 }
                 if (archiveStatus == ArchiveMigrationStatus.Failed)
                 {

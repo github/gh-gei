@@ -84,6 +84,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"SOURCE REPO: {sourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {targetRepo}");
+            if (string.IsNullOrWhiteSpace(targetApiUrl))
+            {
+                targetApiUrl = "https://api.github.com";
+            }
+
+            _log.LogInformation($"Target API URL: {targetApiUrl}");
+
             if (ssh)
             {
                 _log.LogInformation("SSH: true");
@@ -105,7 +112,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 targetRepo = sourceRepo;
             }
 
-            var githubApi = _targetGithubApiFactory.Create();
+            if (string.IsNullOrWhiteSpace(metadataArchiveUrl) != string.IsNullOrWhiteSpace(gitArchiveUrl))
+            {
+                throw new OctoshiftCliException("Providing archive urls, you must provide both --metadata-archive-url --git-archive-url");
+            }
+            else if (!string.IsNullOrWhiteSpace(metadataArchiveUrl))
+            {
+                _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
+                _log.LogInformation($"GIT ARCHIVE URL: {gitArchiveUrl}");
+            }
+
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;

@@ -10,12 +10,17 @@ namespace OctoshiftCLI
     public class GithubApi
     {
         private readonly GithubClient _client;
+        private readonly string _apiUrl;
 
-        public GithubApi(GithubClient client) => _client = client;
+        public GithubApi(GithubClient client, string apiUrl)
+        {
+            _client = client;
+            _apiUrl = apiUrl;
+        }
 
         public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
         {
-            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
@@ -28,7 +33,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> CreateTeam(string org, string teamName)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams";
+            var url = $"{_apiUrl}/orgs/{org}/teams";
             var payload = new { name = teamName, privacy = "closed" };
 
             var response = await _client.PostAsync(url, payload);
@@ -39,28 +44,28 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync();
         }
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
         {
-            var url = $"https://api.github.com/orgs/{org}/repos?per_page=100";
+            var url = $"{_apiUrl}/orgs/{org}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
         public virtual async Task RemoveTeamMember(string org, string teamName, string member)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/memberships/{member}";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/memberships/{member}";
 
             await _client.DeleteAsync(url);
         }
 
         public virtual async Task<(string id, string name, string description)> GetIdpGroup(string org, string idpGroupName)
         {
-            var url = $"https://api.github.com/orgs/{org}/team-sync/groups";
+            var url = $"{_apiUrl}/orgs/{org}/team-sync/groups";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -72,7 +77,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
             var payload = new
             {
                 groups = new[]
@@ -86,7 +91,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddTeamToRepo(string org, string repo, string teamName, string role)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
             var payload = new { permission = role };
 
             await _client.PutAsync(url, payload);
@@ -94,7 +99,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetOrganizationId(string org)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var payload = new
             {
@@ -111,7 +116,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat, bool ssh = false)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String)";
             var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
@@ -139,7 +144,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat, bool ssh = false)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String)";
             var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
@@ -165,12 +170,12 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo)
+        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string gitArchiveUrl = "", string metadataArchiveUrl = "")
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!)";
-            var gql = "startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError }) { repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } }";
+            var query = "mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!, $gitArchiveUrl: String!, $metadataArchiveUrl: String!)";
+            var gql = "startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError, gitArchiveUrl: $gitArchiveUrl, metadataArchiveUrl: $metadataArchiveUrl }) { repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } }";
 
             var payload = new
             {
@@ -181,7 +186,9 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     sourceRepositoryUrl = adoRepoUrl,
                     repositoryName = repo,
-                    continueOnError = true
+                    continueOnError = true,
+                    gitArchiveUrl = gitArchiveUrl,
+                    metadataArchiveUrl = metadataArchiveUrl
                 },
                 operationName = "startRepositoryMigration"
             };
@@ -194,7 +201,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetMigrationState(string migrationId)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
@@ -209,7 +216,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetMigrationFailureReason(string migrationId)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
@@ -224,7 +231,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
         {
-            var url = $"https://api.github.com/orgs/{org}/external-groups";
+            var url = $"{_apiUrl}/orgs/{org}/external-groups";
 
             // TODO: Need to implement paging
             var response = await _client.GetAsync(url);
@@ -235,7 +242,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetTeamSlug(string org, string teamName)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams";
+            var url = $"{_apiUrl}/orgs/{org}/teams";
 
             // TODO: Need to implement paging
             var response = await _client.GetAsync(url);
@@ -246,7 +253,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
             await _client.PatchAsync(url, payload);
@@ -254,7 +261,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "mutation grantMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
             var gql = "grantMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
@@ -281,7 +288,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<bool> RevokeMigratorRole(string org, string actor, string actorType)
         {
-            var url = $"https://api.github.com/graphql";
+            var url = $"{_apiUrl}/graphql";
 
             var query = "mutation revokeMigratorRole ( $organizationId: ID!, $actor: String!, $actor_type: ActorType! )";
             var gql = "revokeMigratorRole( input: {organizationId: $organizationId, actor: $actor, actorType: $actor_type }) { success }";
@@ -306,9 +313,9 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<int> StartGitArchiveGeneration(string apiUrl, string org, string repo)
+        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations";
+            var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
@@ -321,9 +328,9 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string apiUrl, string org, string repo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations";
+            var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
@@ -338,9 +345,9 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationStatus(string org, int migrationId)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
+            var url = $"{_apiUrl}/orgs/{org}/migrations/{migrationId}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -348,9 +355,9 @@ namespace OctoshiftCLI
             return (string)data["state"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationUrl(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationUrl(string org, int migrationId)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
+            var url = $"{_apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
 
             var response = await _client.GetNonSuccessAsync(url, HttpStatusCode.Found);
             return response;
