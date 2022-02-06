@@ -17,7 +17,7 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken, string baseUrl = null)
+        public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken, string baseUrl)
         {
             _log = log;
             _httpClient = httpClient;
@@ -29,14 +29,7 @@ namespace OctoshiftCLI
                 _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
 
-                if (string.IsNullOrWhiteSpace(baseUrl))
-                {
-                    _httpClient.BaseAddress = new Uri(baseUrl);
-                }
-                else
-                {
-                    _httpClient.BaseAddress = new Uri("https://api.github.com");
-                }
+                _httpClient.BaseAddress = new Uri(baseUrl);
             }
         }
 

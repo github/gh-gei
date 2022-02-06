@@ -17,9 +17,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(6);
+            command.Options.Count.Should().Be(7);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ghes-source-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
@@ -31,7 +32,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void Github_No_Data()
         {
             var command = new GenerateScriptCommand(null, null, null);
-            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", false);
+            var script = command.GenerateGithubScript(null, "foo-source", null, "foo-target", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -46,7 +47,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, null, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -67,7 +68,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo1, repo2, repo3 };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, null, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -90,7 +91,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, true);
+            var script = command.GenerateGithubScript(repos, githubSourceOrg, null, githubTargetOrg, true);
 
             script = TrimNonExecutableLines(script);
 

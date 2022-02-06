@@ -18,7 +18,7 @@ namespace OctoshiftCLI.AdoToGithub
         public virtual GithubApi Create()
         {
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _client, githubPat);
+            var githubClient = new GithubClient(_octoLogger, _client, githubPat, "https://api.github.com");
             return new GithubApi(githubClient);
         }
     }

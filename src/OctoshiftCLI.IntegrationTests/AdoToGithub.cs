@@ -29,7 +29,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, githubToken);
+            var githubClient = new GithubClient(logger, _githubHttpClient, githubToken, "https://api.github.com");
             var githubApi = new GithubApi(githubClient);
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);

@@ -43,7 +43,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, null);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, null, "https://something");
 
             // Act
             var actualContent = await githubClient.GetAsync("http://example.com");
@@ -58,7 +58,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForGet();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -79,7 +79,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string url = "http://example.com";
             var expectedLogMessage = $"HTTP GET: {url}";
@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
 
@@ -127,7 +127,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.GetAsync("http://example.com");
                 })
                 .Should()
@@ -139,7 +139,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             var actualContent = await githubClient.PostAsync("http://example.com", _rawRequestBody);
@@ -154,7 +154,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForPost();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -175,7 +175,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string url = "http://example.com";
             var expectedLogMessage = $"HTTP POST: {url}";
@@ -193,7 +193,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
@@ -210,7 +210,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
@@ -245,7 +245,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.PostAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
@@ -257,7 +257,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             var actualContent = await githubClient.PutAsync("http://example.com", _rawRequestBody);
@@ -272,7 +272,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForPut();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -293,7 +293,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string url = "http://example.com";
             var expectedLogMessage = $"HTTP PUT: {url}";
@@ -311,7 +311,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
@@ -328,7 +328,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
@@ -363,7 +363,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.PutAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
@@ -375,7 +375,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             var actualContent = await githubClient.PatchAsync("http://example.com", _rawRequestBody);
@@ -390,7 +390,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForPatch();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -411,7 +411,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string url = "http://example.com";
             var expectedLogMessage = $"HTTP PATCH: {url}";
@@ -429,7 +429,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
@@ -446,7 +446,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
@@ -481,7 +481,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.PatchAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
@@ -493,7 +493,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             var actualContent = await githubClient.DeleteAsync("http://example.com");
@@ -508,7 +508,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForDelete();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -529,7 +529,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             const string url = "http://example.com";
             var expectedLogMessage = $"HTTP DELETE: {url}";
@@ -559,7 +559,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
                 })
                 .Should()
@@ -579,7 +579,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             await githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
@@ -593,7 +593,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
 
@@ -625,7 +625,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
                     return githubClient.DeleteAsync("http://example.com");
                 })
                 .Should()
@@ -697,7 +697,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             var results = new List<JToken>();
@@ -756,7 +756,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(secondResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             await foreach (var _ in githubClient.GetAllAsync(url)) { }
@@ -809,7 +809,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(secondResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act
             await foreach (var _ in githubClient.GetAllAsync(url)) { }
@@ -862,7 +862,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(failureResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, "https://something");
 
             // Act, Assert
             await FluentActions

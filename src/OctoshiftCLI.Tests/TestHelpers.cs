@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests
     public static class TestHelpers
     {
         #region  Constructor, Member variables and misc. helpers
-        private static readonly GithubClient _client = new GithubClient(new Mock<OctoLogger>().Object, null, null);
+        private static readonly GithubClient _client = new GithubClient(new Mock<OctoLogger>().Object, null, null, null);
         private const string TARGET_PREFIX = "OCLI-Int";
 
         internal static string GetTargetName(string targetType)

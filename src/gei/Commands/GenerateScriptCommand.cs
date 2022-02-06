@@ -28,7 +28,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses GH_SOURCE_PAT env variable. Will fall back to GH_PAT if not set."
             };
-            var ghesUrlOption = new Option<string>("--ghes-url")
+            var ghesSourceUrlOption = new Option<string>("--ghes-source-url")
             {
                 IsRequired = false,
                 Description = "The base URL of your source GHES instance. For example: https://ghes.contoso.com"
@@ -57,7 +57,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrgOption);
-            AddOption(ghesUrlOption);
+            AddOption(ghesSourceUrlOption);
             AddOption(adoSourceOrgOption);
             AddOption(githubTargetOrgOption);
             AddOption(outputOption);
@@ -67,7 +67,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Handler = CommandHandler.Create<string, string, string, string, FileInfo, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string ghesUrl, string adoSourceOrg, string githubTargetOrg, FileInfo output, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string ghesSourceUrl, string adoSourceOrg, string githubTargetOrg, FileInfo output, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -75,6 +75,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (!string.IsNullOrWhiteSpace(githubSourceOrg))
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+            }
+            if (!string.IsNullOrWhiteSpace(ghesSourceUrl))
+            {
+                _log.LogInformation($"GHES SOURCE URL: {ghesSourceUrl}");
             }
             if (!string.IsNullOrWhiteSpace(adoSourceOrg))
             {
@@ -94,7 +98,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
                 await InvokeAdo(adoSourceOrg, githubTargetOrg, ssh) :
-                await InvokeGithub(githubSourceOrg, ghesUrl, githubTargetOrg, ssh);
+                await InvokeGithub(githubSourceOrg, ghesSourceUrl, githubTargetOrg, ssh);
 
             if (output != null)
             {
@@ -102,10 +106,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private async Task<string> InvokeGithub(string githubSourceOrg, string ghesUrl, string githubTargetOrg, bool ssh)
+        private async Task<string> InvokeGithub(string githubSourceOrg, string ghesSourceUrl, string githubTargetOrg, bool ssh)
         {
-            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create($"{ghesUrl}/api/v3"), githubSourceOrg);
-            return GenerateGithubScript(repos, githubSourceOrg, ghesUrl, githubTargetOrg, ssh);
+            var githubSourceApi = string.IsNullOrWhiteSpace(ghesSourceUrl) ?
+                _sourceGithubApiFactory.Create($"{ghesSourceUrl}/api/v3") :
+                _sourceGithubApiFactory.Create("https://api.github.com");
+
+            var repos = await GetGithubRepos(githubSourceApi, githubSourceOrg);
+
+            return GenerateGithubScript(repos, githubSourceOrg, ghesSourceUrl, githubTargetOrg, ssh);
         }
 
         private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool ssh)
@@ -158,7 +167,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        public string GenerateGithubScript(IEnumerable<string> repos, string githubSourceOrg, string ghesUrl, string githubTargetOrg, bool ssh)
+        public string GenerateGithubScript(IEnumerable<string> repos, string githubSourceOrg, string ghesSourceUrl, string githubTargetOrg, bool ssh)
         {
             if (repos == null)
             {
@@ -182,7 +191,7 @@ function Exec {
 
             foreach (var repo in repos)
             {
-                content.AppendLine(MigrateGithubRepoScript(githubSourceOrg, ghesUrl, githubTargetOrg, repo, ssh));
+                content.AppendLine(MigrateGithubRepoScript(githubSourceOrg, ghesSourceUrl, githubTargetOrg, repo, ssh));
             }
 
             return content.ToString();
@@ -234,9 +243,9 @@ function Exec {
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
 
-        private string MigrateGithubRepoScript(string githubSourceOrg, string ghesUrl, string githubTargetOrg, string repo, bool ssh)
+        private string MigrateGithubRepoScript(string githubSourceOrg, string ghesSourceUrl, string githubTargetOrg, string repo, bool ssh)
         {
-            var ghesArg = string.IsNullOrWhitespace(ghesUrl) ? string.Empty : $" --ghes-url \"{ghesUrl}\"";
+            var ghesArg = string.IsNullOrWhiteSpace(ghesSourceUrl) ? string.Empty : $" --ghes-url \"{ghesSourceUrl}\"";
             return $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\"{ghesArg} --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
         }
 

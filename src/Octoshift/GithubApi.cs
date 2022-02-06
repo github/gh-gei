@@ -125,7 +125,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat, bool ssh = false)
+        public virtual async Task<string> CreateGithubMigrationSource(string orgId, string sourceGithubPat, string sourceUrl, string targetGithubPat, bool ssh = false)
         {
             var url = $"/graphql";
 
@@ -138,7 +138,7 @@ namespace OctoshiftCLI
                 variables = new
                 {
                     name = "GHEC Source",
-                    url = "https://github.com",
+                    url = sourceUrl,
                     ownerId = orgId,
                     type = "GITHUB_ARCHIVE",
                     accessToken = sourceGithubPat,
@@ -296,13 +296,13 @@ namespace OctoshiftCLI
 
         public virtual async Task DeleteRepo(string org, string repo)
         {
-            var url = $"https://api.github.com/repos/{org}/{repo}";
+            var url = $"/repos/{org}/{repo}";
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<int> StartGitArchiveGeneration(string apiUrl, string org, string repo)
+        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations";
+            var url = $"/orgs/{org}/migrations";
 
             var options = new
             {
@@ -315,9 +315,9 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string apiUrl, string org, string repo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations";
+            var url = $"/orgs/{org}/migrations";
 
             var options = new
             {
@@ -332,9 +332,9 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationStatus(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationStatus(string org, int migrationId)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}";
+            var url = $"/orgs/{org}/migrations/{migrationId}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -342,9 +342,9 @@ namespace OctoshiftCLI
             return (string)data["state"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationUrl(string apiUrl, string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationUrl(string org, int migrationId)
         {
-            var url = $"{apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
+            var url = $"/orgs/{org}/migrations/{migrationId}/archive";
 
             var response = await _client.GetNonSuccessAsync(url, HttpStatusCode.Found);
             return response;

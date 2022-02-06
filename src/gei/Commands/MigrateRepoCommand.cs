@@ -24,10 +24,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses GH_SOURCE_PAT env variable. Will fall back to GH_PAT if not set."
             };
-            var ghesUrl = new Option<string>("--ghes-url")
+            var ghesSourceUrl = new Option<string>("--ghes-source-url")
             {
                 IsRequired = false,
-                Description = "The hostname of your GHES instance. For example: https://myghes.com"
+                Description = "The hostname of your GHES instance. For example: https://ghes.contoso.com"
             };
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
@@ -62,7 +62,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrg);
-            AddOption(ghesUrl);
+            AddOption(ghesSourceUrl);
             AddOption(adoSourceOrg);
             AddOption(adoTeamProject);
             AddOption(sourceRepo);
@@ -74,7 +74,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string ghesApiUrl, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string ghesSourceUrl, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -82,6 +82,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (!string.IsNullOrWhiteSpace(githubSourceOrg))
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+            }
+            if (!string.IsNullOrWhiteSpace(ghesSourceUrl))
+            {
+                _log.LogInformation($"GHES SOURCE URL: {ghesSourceUrl}");
+            }
+            else
+            {
+                ghesSourceUrl = "https://github.com";
             }
             if (!string.IsNullOrWhiteSpace(adoSourceOrg))
             {
@@ -112,9 +120,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 targetRepo = sourceRepo;
             }
 
-            var githubApi = _targetGithubApiFactory.Create(ghesApiUrl);
+            var targetGithubApi = _targetGithubApiFactory.Create("https://api.github.com");
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
+            var githubOrgId = await targetGithubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
             string migrationSourceId;
 
@@ -122,28 +130,28 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
                 var sourceAdoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat, ssh);
+                migrationSourceId = await targetGithubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat, ssh);
             }
             else
             {
-                sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
+                sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, ghesSourceUrl, sourceRepo);
                 var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
+                migrationSourceId = await targetGithubApi.CreateGithubMigrationSource(githubOrgId, sourceGithubPat, ghesSourceUrl, targetGithubPat, ssh);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo);
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var migrationId = await targetGithubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo);
+            var migrationState = await targetGithubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                migrationState = await targetGithubApi.GetMigrationState(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
+                var failureReason = await targetGithubApi.GetMigrationFailureReason(migrationId);
 
                 if (!_isRetry && failureReason.Contains("Warning: Permanently added") && failureReason.Contains("(ECDSA) to the list of known hosts"))
                 {
@@ -151,8 +159,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
 
                     _isRetry = true;
-                    await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
+                    await targetGithubApi.DeleteRepo(githubTargetOrg, targetRepo);
+                    await Invoke(githubSourceOrg, ghesSourceUrl, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
                 }
                 else
                 {
@@ -166,7 +174,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private string GetGithubRepoUrl(string org, string repo) => $"https://github.com/{org}/{repo}".Replace(" ", "%20");
+        private string GetGithubRepoUrl(string org, string ghesUrl, string repo) => $"{ghesUrl}/{org}/{repo}".Replace(" ", "%20");
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
     }
