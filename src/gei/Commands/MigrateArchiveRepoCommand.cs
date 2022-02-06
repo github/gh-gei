@@ -10,18 +10,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     {
         private readonly OctoLogger _log;
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
+        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         private const int Timeout_In_Hours = 10;
         private const int Delay_In_Milliseconds = 10000; // 10 seconds
 
-        public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-archive-repo")
+        public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-archive-repo")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _azureApiFactory = azureApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
+            _targetGithubApiFactory = targetGithubApiFactory;
 
             Description = "Invokes the GitHub Migration API's to generate a migration archive";
             Description += Environment.NewLine;
@@ -41,6 +43,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = true
             };
+            var githubTargetOrg = new Option<string>("--github-target-org")
+            {
+                IsRequired = true,
+                Description = "Uses GH_PAT env variable."
+            };
+            var targetRepo = new Option<string>("--target-repo")
+            {
+                IsRequired = false,
+                Description = "Defaults to the name of source-repo"
+            };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
                 IsRequired = false
@@ -57,14 +69,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(ghesApiUrl);
             AddOption(githubSourceOrg);
             AddOption(sourceRepo);
+            AddOption(githubTargetOrg);
+            AddOption(targetRepo);
             AddOption(azureStorageConnectionString);
             AddOption(noSslVerify);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string ghesApiUrl, string githubSourceOrg, string sourceRepo, string azureStorageConnectionString, bool noSslVerify = false, bool verbose = false)
+        public async Task Invoke(string ghesApiUrl, string githubSourceOrg, string sourceRepo, string githubTargetOrg, string targetRepo, string azureStorageConnectionString, bool noSslVerify = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -72,10 +86,27 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation("Starting Migration Archives...");
             _log.LogInformation($"GHES SOURCE ORG: {githubSourceOrg}");
             _log.LogInformation($"GHES SOURCE REPO: {sourceRepo}");
+            _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+
+            var dateTimeNow = DateTime.Now;
+
+            if (string.IsNullOrWhiteSpace(targetRepo))
+            {
+                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({sourceRepo}) + timestamp");
+                targetRepo = $"{sourceRepo}-{dateTimeNow:MMdd-HHmm}";
+            }
+
+            _log.LogInformation($"TARGET REPO: {targetRepo}");
 
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
             {
                 _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
+                azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
+
+                if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+                {
+                    throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
+                }
             }
 
             if (string.IsNullOrWhiteSpace(ghesApiUrl))

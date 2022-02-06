@@ -187,8 +187,8 @@ namespace OctoshiftCLI
                     sourceRepositoryUrl = adoRepoUrl,
                     repositoryName = repo,
                     continueOnError = true,
-                    gitArchiveUrl = gitArchiveUrl,
-                    metadataArchiveUrl = metadataArchiveUrl
+                    gitArchiveUrl,
+                    metadataArchiveUrl
                 },
                 operationName = "startRepositoryMigration"
             };

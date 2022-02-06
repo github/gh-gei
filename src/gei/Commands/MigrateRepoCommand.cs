@@ -46,6 +46,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Defaults to the name of source-repo"
             };
+            var targetApiUrl = new Option<string>("--api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API. Defaults to https://api.github.com"
+            };
+            var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
+            {
+                IsRequired = false,
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with the metadata archive. Must be passed in with --git-archive-url."
+            };
+            var gitArchiveUrl = new Option<string>("--git-archive-url")
+            {
+                IsRequired = false,
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with the git archive. Must be passed in with --metadata-archive-url."
+            };
             var ssh = new Option("--ssh")
             {
                 IsRequired = false
@@ -61,13 +76,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(sourceRepo);
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
+            AddOption(targetApiUrl);
+            AddOption(metadataArchiveUrl);
+            AddOption(gitArchiveUrl);
             AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, string targetApiUrl, string metadataArchiveUrl = "", string gitArchiveUrl = "", bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -141,7 +159,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo);
+            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
