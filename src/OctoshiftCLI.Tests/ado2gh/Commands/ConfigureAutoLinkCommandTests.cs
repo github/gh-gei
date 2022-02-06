@@ -31,7 +31,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoOrg = "foo-ado-org";
             var adoTeamProject = "foo-ado-tp";
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 

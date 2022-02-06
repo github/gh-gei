@@ -42,10 +42,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var migrationId = Guid.NewGuid().ToString();
             var githubPat = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", "").Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
@@ -81,10 +81,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var migrationId = Guid.NewGuid().ToString();
             var githubPat = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, true).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", "").Result).Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);

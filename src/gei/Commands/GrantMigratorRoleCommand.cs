@@ -65,8 +65,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var targetApiUrl = "https://api.github.com";
-            var githubApi = _githubApiFactory.Create(targetApiUrl);
+            var githubApi = _githubApiFactory.Create();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 

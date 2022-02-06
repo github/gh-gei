@@ -170,7 +170,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string gitArchiveUrl = "", string metadataArchiveUrl = "")
+        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string gitArchUrl = "", string metadataArchUrl = "")
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -187,8 +187,8 @@ namespace OctoshiftCLI
                     sourceRepositoryUrl = adoRepoUrl,
                     repositoryName = repo,
                     continueOnError = true,
-                    gitArchiveUrl,
-                    metadataArchiveUrl
+                    gitArchiveUrl = gitArchUrl,
+                    metadataArchiveUrl = metadataArchUrl
                 },
                 operationName = "startRepositoryMigration"
             };
