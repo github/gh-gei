@@ -6,13 +6,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
     public sealed class AzureApiFactory : IAzureApiFactory
     {
         private readonly OctoLogger _octoLogger;
-        private readonly HttpClient _client;
+        private readonly IHttpClientFactory _clientFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public AzureApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider)
+        public AzureApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider)
         {
             _octoLogger = octoLogger;
-            _client = client;
+            _clientFactory = clientFactory;
             _environmentVariableProvider = environmentVariableProvider;
         }
 
@@ -21,7 +21,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
             var blobServiceClient = new BlobServiceClient(connectionString);
-            return new AzureApi(_client, blobServiceClient, connectionString);
+            return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient, connectionString);
         }
+
+        AzureApi IAzureApiFactory.CreateClientNoSSL(string azureStorageConnectionString)
+        {
+            var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
+
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient, connectionString);
+        }
+
     }
 }
