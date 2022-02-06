@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -509,6 +511,31 @@ namespace OctoshiftCLI.Tests
 
             var mockClient = new Mock<AdoClient>(null, null, null);
             mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+            var sut = new AdoApi(mockClient.Object);
+            var result = await sut.GetRepoId(org, teamProject, repo);
+
+            result.Should().Be(repoId);
+        }
+
+        [Fact]
+        public async Task GetRepoId_Should_Work_On_Disabled_Repo()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var repo = "foo-repo";
+            var repoId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var response = new[] {
+                new { name = "blah", id = Guid.NewGuid().ToString() },
+                new { name = repo, id = repoId }
+            };
+
+            var mockClient = new Mock<AdoClient>(null, null, null);
+            mockClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+            mockClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
             var sut = new AdoApi(mockClient.Object);
             var result = await sut.GetRepoId(org, teamProject, repo);

@@ -75,7 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
                 var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
 
-                await _githubApiFactory.Create().AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+                await githubApi.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
                 _log.LogSuccess("Successfully linked team to Idp group");
             }
