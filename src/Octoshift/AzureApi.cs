@@ -37,13 +37,13 @@ namespace OctoshiftCLI
             return GetServiceSasUriForBlob(blobClient);
         }
 
-        public async Task<BlobContainerClient> CreateBlobContainerAsync()
+        private async Task<BlobContainerClient> CreateBlobContainerAsync()
         {
             var containerName = $"{CONTAINER_PREFIX}-{Guid.NewGuid()}";
             return await _blobServiceClient.CreateBlobContainerAsync(containerName);
         }
 
-        public Uri GetServiceSasUriForBlob(BlobClient blobClient)
+        private Uri GetServiceSasUriForBlob(BlobClient blobClient)
         {
             if (blobClient == null)
             {
