@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void AzureApiFactory_Should_Create_With_NoSSL()
         {
             // Arrange
-            string _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
+            var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
             environmentVariableProviderMock
@@ -51,7 +51,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void AzureApiFactory_Should_Create()
         {
             // Arrange
-            string _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
+            var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
 

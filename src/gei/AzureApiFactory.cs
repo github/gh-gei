@@ -1,5 +1,4 @@
 using System.Net.Http;
-using Azure.Storage.Blobs;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
 {
