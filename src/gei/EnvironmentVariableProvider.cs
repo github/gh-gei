@@ -7,8 +7,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private const string SOURCE_GH_PAT = "GH_SOURCE_PAT";
         private const string TARGET_GH_PAT = "GH_PAT";
         private const string ADO_PAT = "ADO_PAT";
-
         private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
+
         private readonly OctoLogger _logger;
 
         public EnvironmentVariableProvider(OctoLogger logger)
