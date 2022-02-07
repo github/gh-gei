@@ -22,7 +22,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
             var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-            return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient, connectionString);
+            return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient);
         }
 
         AzureApi IAzureApiFactory.CreateClientNoSSL(string azureStorageConnectionString)
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
             var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-            return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient, connectionString);
+            return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient);
         }
     }
 }

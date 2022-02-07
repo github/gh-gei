@@ -12,14 +12,12 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _client;
         private readonly BlobServiceClient _blobServiceClient;
-        private readonly string _connectionString;
         private const string CONTAINER_PREFIX = "migration-archives";
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
-        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, string connectionString)
+        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient)
         {
             _client = client;
             _blobServiceClient = blobServiceClient;
-            _connectionString = connectionString;
         }
 
         public async Task DownloadFileTo(string fromUrl, string toFilePath)
