@@ -136,8 +136,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var gitArchiveFileName = $"{timeNow}-{Git_Archive_File_Name}";
             var metadataArchiveFileName = $"{timeNow}-{Metadata_Archive_File_Name}";
 
-            var gitArchiveFilePath = $"/tmp/{gitArchiveFileName}";
-            var metadataArchiveFilePath = $"/tmp/{metadataArchiveFileName}";
+            var tempPath = Path.GetTempPath();
+            var gitArchiveFilePath = $"{tempPath}/{gitArchiveFileName}";
+            var metadataArchiveFilePath = $"{tempPath}/{metadataArchiveFileName}";
 
             // Download both archives to the local filesystem
             _log.LogInformation($"Downloading archive from {gitArchiveUrl} to {gitArchiveFilePath}");
