@@ -7,20 +7,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
     {
         private readonly OctoLogger _octoLogger;
         private readonly IHttpClientFactory _clientFactory;
+        private readonly IBlobServiceClientFactory _blobServiceClientFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public AzureApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider)
+        public AzureApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, IBlobServiceClientFactory blobServiceClientFactory)
         {
             _octoLogger = octoLogger;
             _clientFactory = clientFactory;
             _environmentVariableProvider = environmentVariableProvider;
+            _blobServiceClientFactory = blobServiceClientFactory;
         }
 
         AzureApi IAzureApiFactory.Create(string azureStorageConnectionString)
         {
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
-            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
             return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient, connectionString);
         }
 
@@ -28,7 +30,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
-            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
             return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient, connectionString);
         }
 
