@@ -4,7 +4,6 @@ using System.CommandLine.Invocation;
 using System.IO;
 using System.Threading.Tasks;
 
-
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class MigrateArchiveRepoCommand : Command
@@ -17,6 +16,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private const int Archive_Generataion_Timeout_In_Hours = 10;
         private const int Check_Status_Delay_In_Milliseconds = 10000; // 10 seconds
+        private const string Git_Archive_File_Name = "gitArchive.tar.gz";
+        private const string Metadata_Archive_File_Name = "metadataArchive.tar.gz";
 
         public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-archive-repo")
         {
@@ -26,7 +27,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _environmentVariableProvider = environmentVariableProvider;
             _targetGithubApiFactory = targetGithubApiFactory;
 
-            Description = "Invokes the GitHub Migration API's to generate a migration archive";
+            Description = "Generates migration archives, uploads them to Azure Blob Storage, then invokes the GitHub Migration APIs to migrate the repo and all repo data using those uploaded archives.";
             Description += Environment.NewLine;
             Description += Environment.NewLine;
             Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
@@ -134,15 +135,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var metadataArchiveUrl = await WaitForArchiveGeneration(githubApi, githubSourceOrg, metadataArchiveId);
-            _log.LogInformation($"Archive(metadata) download url: {metadataArchiveUrl}");
+            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
             var gitArchiveUrl = await WaitForArchiveGeneration(githubApi, githubSourceOrg, gitDataArchiveId);
-            _log.LogInformation($"Archive(git) download url: {gitArchiveUrl}");
+            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
 
             var timeNow = $"{dateTimeNow:yyyy-MM-dd_HH-mm-ss}";
 
-            // TODO: Update these with the real file names
-            var gitArchiveFileName = $"{timeNow}gitArchive.tar.gz";
-            var metadataArchiveFileName = $"{timeNow}metadataArchive.tar.gz";
+            var gitArchiveFileName = $"{timeNow}-{Git_Archive_File_Name}";
+            var metadataArchiveFileName = $"{timeNow}-{Metadata_Archive_File_Name}";
 
             var gitArchiveFilePath = $"/tmp/{gitArchiveFileName}";
             var metadataArchiveFilePath = $"/tmp/{metadataArchiveFileName}";
@@ -154,15 +154,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             await azureApi.DownloadFileTo(metadataArchiveUrl, metadataArchiveFilePath);
 
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-            var authenticatedGitUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveFilePath);
+            var authenticatedGitArchiveUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveFilePath);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-            var authenticatedMetadataUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
+            var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
 
             _log.LogInformation($"Deleting local archive files");
             File.Delete(gitArchiveFilePath);
             File.Delete(metadataArchiveFilePath);
 
-            // run migrate repo command
+            // Run migrate repo command
             var migrateRepoCommand = new MigrateRepoCommand(_log, _targetGithubApiFactory, _environmentVariableProvider);
             await migrateRepoCommand.Invoke(
                 githubSourceOrg,
@@ -172,8 +172,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 githubTargetOrg,
                 targetRepo,
                 "",
-                authenticatedMetadataUrl.ToString(),
-                authenticatedGitUrl.ToString(),
+                authenticatedMetadataArchiveUrl.ToString(),
+                authenticatedGitArchiveUrl.ToString(),
                 false,
                 verbose
             );
@@ -192,7 +192,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
                 if (archiveStatus == ArchiveMigrationStatus.Failed)
                 {
-                    throw new OctoshiftCliException($"Archive generation failed with id: {archiveId}");
+                    throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
                 }
                 await Task.Delay(Check_Status_Delay_In_Milliseconds);
             }

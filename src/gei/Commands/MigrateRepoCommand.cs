@@ -17,7 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data.";
+            Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -55,12 +55,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
             {
                 IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with the metadata archive. Must be passed in with --git-archive-url."
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with the metadata archive. Must be passed in when also using --git-archive-url"
             };
             var gitArchiveUrl = new Option<string>("--git-archive-url")
             {
                 IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with the git archive. Must be passed in with --metadata-archive-url."
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with the git archive. Must be passed in when also using --metadata-archive-url"
             };
             var ssh = new Option("--ssh")
             {
@@ -133,12 +133,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (string.IsNullOrWhiteSpace(metadataArchiveUrl) != string.IsNullOrWhiteSpace(gitArchiveUrl))
             {
-                throw new OctoshiftCliException("Providing archive urls, you must provide both --metadata-archive-url --git-archive-url");
+                throw new OctoshiftCliException("When using archive urls, you must provide both --metadata-archive-url --git-archive-url");
             }
             else if (!string.IsNullOrWhiteSpace(metadataArchiveUrl))
             {
-                _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
                 _log.LogInformation($"GIT ARCHIVE URL: {gitArchiveUrl}");
+                _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
             }
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
