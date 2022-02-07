@@ -6,8 +6,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
-
-
 namespace OctoshiftCLI
 {
     public class AzureApi
@@ -32,7 +30,6 @@ namespace OctoshiftCLI
             await streamToReadFrom.CopyToAsync(streamToWriteTo);
         }
 
-
         public async Task<Uri> UploadToBlob(string fileName, string filePath)
         {
             var containerClient = await CreateBlobContainerAsync();
@@ -42,13 +39,13 @@ namespace OctoshiftCLI
             return GetServiceSasUriForBlob(blobClient);
         }
 
-        private async Task<BlobContainerClient> CreateBlobContainerAsync()
+        public async Task<BlobContainerClient> CreateBlobContainerAsync()
         {
             var containerName = "migration-archives-" + Guid.NewGuid();
             return await _blobServiceClient.CreateBlobContainerAsync(containerName);
         }
 
-        private Uri GetServiceSasUriForBlob(BlobClient blobClient, string storedPolicyName = null)
+        public Uri GetServiceSasUriForBlob(BlobClient blobClient, string storedPolicyName = null)
         {
             // Check whether this BlobClient object has been authorized with Shared Key.
             if (blobClient.CanGenerateSasUri)
@@ -83,6 +80,5 @@ namespace OctoshiftCLI
                 return null;
             }
         }
-
     }
 }

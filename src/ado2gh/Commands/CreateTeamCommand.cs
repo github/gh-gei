@@ -61,7 +61,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             if (string.IsNullOrWhiteSpace(idpGroup))
             {
-                _log.LogInformation("No IdP group provided, skipping the IdP linking step");
+                _log.LogInformation("No IdP Group provided, skipping the IdP linking step");
             }
             else
             {
