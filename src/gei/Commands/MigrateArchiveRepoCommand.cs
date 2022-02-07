@@ -142,14 +142,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             // Download both archives to the local filesystem
             _log.LogInformation($"Downloading archive from {gitArchiveUrl} to {gitArchiveFilePath}");
-            await azureApi.DownloadFileTo(gitArchiveUrl, gitArchiveFilePath);
+            using var gitArchiveContent = await azureApi.DownloadArchiveToStream(gitArchiveUrl);
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl} to {metadataArchiveFilePath}");
-            await azureApi.DownloadFileTo(metadataArchiveUrl, metadataArchiveFilePath);
+            using var metadataArchiveContent = await azureApi.DownloadArchiveToStream(metadataArchiveUrl);
 
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-            var authenticatedGitArchiveUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveFilePath);
+            var authenticatedGitArchiveUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-            var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
+            var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
 
             _log.LogInformation($"Deleting local archive files");
             File.Delete(gitArchiveFilePath);

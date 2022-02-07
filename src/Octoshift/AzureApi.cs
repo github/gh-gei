@@ -20,19 +20,17 @@ namespace OctoshiftCLI
             _blobServiceClient = blobServiceClient;
         }
 
-        public async Task DownloadFileTo(string fromUrl, string toFilePath)
+        public async Task<Stream> DownloadArchiveToStream(string fromUrl)
         {
-            using var response = await _client.GetAsync(fromUrl, HttpCompletionOption.ResponseHeadersRead);
-            using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            using Stream streamToWriteTo = File.Open(toFilePath, FileMode.Create);
-            await streamToReadFrom.CopyToAsync(streamToWriteTo);
+            using var response = await _client.GetAsync(fromUrl);
+            return await response.Content.ReadAsStreamAsync();
         }
 
-        public async Task<Uri> UploadToBlob(string fileName, string filePath)
+        public async Task<Uri> UploadToBlob(string fileName, Stream stream)
         {
             var containerClient = await CreateBlobContainerAsync();
             var blobClient = containerClient.GetBlobClient(fileName);
-            await blobClient.UploadAsync(filePath, true);
+            await blobClient.UploadAsync(stream, true);
 
             return GetServiceSasUriForBlob(blobClient);
         }
