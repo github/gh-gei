@@ -47,7 +47,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Defaults to the name of source-repo"
             };
-            var targetApiUrl = new Option<string>("--api-url")
+            var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
                 Description = "The URL of the target API. Defaults to https://api.github.com"
