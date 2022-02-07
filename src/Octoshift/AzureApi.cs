@@ -13,8 +13,8 @@ namespace OctoshiftCLI
         private readonly HttpClient _client;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly string _connectionString;
-        private const string Container_Prefix = "migration-archives";
-        private const int Authorization_Timeout_In_Hours = 24;
+        private const string CONTAINER_PREFIX = "migration-archives";
+        private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
         public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, string connectionString)
         {
             _client = client;
@@ -41,7 +41,7 @@ namespace OctoshiftCLI
 
         public async Task<BlobContainerClient> CreateBlobContainerAsync()
         {
-            var containerName = $"{Container_Prefix}-{Guid.NewGuid()}";
+            var containerName = $"{CONTAINER_PREFIX}-{Guid.NewGuid()}";
             return await _blobServiceClient.CreateBlobContainerAsync(containerName);
         }
 
@@ -64,7 +64,7 @@ namespace OctoshiftCLI
                 Resource = "b"  // Resource = "b" for blobs, "c" for containers
             };
 
-            sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(Authorization_Timeout_In_Hours);
+            sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS);
             sasBuilder.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Write);
 
             return blobClient.GenerateSasUri(sasBuilder);
