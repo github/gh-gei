@@ -47,6 +47,11 @@ namespace OctoshiftCLI
 
         public Uri GetServiceSasUriForBlob(BlobClient blobClient, string storedPolicyName = null)
         {
+            if (blobClient == null)
+            {
+                throw new ArgumentNullException(nameof(blobClient));
+            }
+
             // Check whether this BlobClient object has been authorized with Shared Key.
             if (blobClient.CanGenerateSasUri)
             {
