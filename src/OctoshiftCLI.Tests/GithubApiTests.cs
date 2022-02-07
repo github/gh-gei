@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests
 {
     public class GithubApiTests
     {
-        private const string apiUrl = $"https://api.github.com";
+        private const string Api_Url = $"https://api.github.com";
 
         [Fact]
         public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
@@ -34,7 +34,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
 
             // Assert
@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var result = await githubApi.CreateTeam(org, teamName);
 
             // Assert
@@ -123,7 +123,7 @@ namespace OctoshiftCLI.Tests
                 .Returns(GetAllPages);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
 
             // Assert
@@ -185,7 +185,7 @@ namespace OctoshiftCLI.Tests
                 .Returns(GetAllPages);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var result = (await githubApi.GetRepos(org)).ToArray();
 
             // Assert
@@ -207,7 +207,7 @@ namespace OctoshiftCLI.Tests
             githubClientMock.Setup(m => m.DeleteAsync(url));
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.RemoveTeamMember(org, teamName, member);
 
             // Assert
@@ -233,7 +233,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.AddTeamSync(org, teamName, groupId, groupName, groupDesc);
 
             // Assert
@@ -255,7 +255,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.AddTeamToRepo(org, repo, teamName, role);
 
             // Assert
@@ -291,7 +291,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var result = await githubApi.GetOrganizationId(org);
 
             // Assert
@@ -331,7 +331,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoToken, githubPat);
 
             // Assert
@@ -371,7 +371,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoToken, githubPat, true);
 
             // Assert
@@ -411,7 +411,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat);
 
             // Assert
@@ -451,7 +451,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat, true);
 
             // Assert
@@ -502,7 +502,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedRepositoryMigrationId =
                 await githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, repo, gitArchiveUrl, metadataArchiveUrl);
 
@@ -542,7 +542,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
 
             // Assert
@@ -581,7 +581,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
 
             // Assert
@@ -619,7 +619,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualGroupId = await githubApi.GetIdpGroupId(org, groupName);
 
             // Assert
@@ -659,7 +659,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualTeamSlug = await githubApi.GetTeamSlug(org, teamName);
 
             // Assert
@@ -680,7 +680,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.AddEmuGroupToTeam(org, teamSlug, groupId);
 
             // Assert
@@ -717,7 +717,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
 
             // Assert
@@ -745,7 +745,7 @@ namespace OctoshiftCLI.Tests
                 .Throws<HttpRequestException>();
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
 
             // Assert
@@ -782,7 +782,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
 
             // Assert
@@ -810,7 +810,7 @@ namespace OctoshiftCLI.Tests
                 .Throws<HttpRequestException>();
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, apiUrl);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
 
             // Assert

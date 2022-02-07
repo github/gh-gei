@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
 using System.Threading.Tasks;
 
 
@@ -14,8 +15,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        private const int Timeout_In_Hours = 10;
-        private const int Delay_In_Milliseconds = 10000; // 10 seconds
+        private const int Archive_Generataion_Timeout_In_Hours = 10;
+        private const int Check_Status_Delay_In_Milliseconds = 10000; // 10 seconds
 
         public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-archive-repo")
         {
@@ -158,9 +159,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var authenticatedMetadataUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveFilePath);
 
             _log.LogInformation($"Deleting local archive files");
-            // delete the files
-            // File.Delete(gitArchiveFilePath);
-            // File.Delete(metadataArchiveFilePath);
+            File.Delete(gitArchiveFilePath);
+            File.Delete(metadataArchiveFilePath);
 
             // run migrate repo command
             var migrateRepoCommand = new MigrateRepoCommand(_log, _targetGithubApiFactory, _environmentVariableProvider);
@@ -181,8 +181,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
         {
-            var timeOut = DateTime.Now.AddHours(Timeout_In_Hours);
-            while (DateTime.Now < timeOut)
+            var timeout = DateTime.Now.AddHours(Archive_Generataion_Timeout_In_Hours);
+            while (DateTime.Now < timeout)
             {
                 var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
                 _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
@@ -194,9 +194,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 {
                     throw new OctoshiftCliException($"Archive generation failed with id: {archiveId}");
                 }
-                await Task.Delay(Delay_In_Milliseconds);
+                await Task.Delay(Check_Status_Delay_In_Milliseconds);
             }
-            throw new TimeoutException($"Archive generation timed out after {Timeout_In_Hours} hours");
+            throw new TimeoutException($"Archive generation timed out after {Archive_Generataion_Timeout_In_Hours} hours");
         }
     }
 }

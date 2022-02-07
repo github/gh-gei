@@ -21,10 +21,6 @@ namespace OctoshiftCLI.Tests
             var connectionString = "connectionString";
             var url = "http://example.com/file.zip";
             var filePath = "/tmp/file.zip";
-            _ = new Mock<System.IO.Stream>();
-            _ = new Mock<HttpResponseMessage>();
-            _ = new Mock<HttpContent>();
-            _ = new Mock<System.IO.Stream>();
 
             var azureApi = new AzureApi(client.Object, blobServiceClient.Object, connectionString);
 
