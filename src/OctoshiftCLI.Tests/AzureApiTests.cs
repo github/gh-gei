@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests
         public async Task DownloadArchive_Should_Succeed()
         {
             // Arrange  
-            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
