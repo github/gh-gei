@@ -35,7 +35,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
-                IsRequired = true,
+                IsRequired = false,
                 Description = "The api endpoint for the hostname of your GHES instance. For example: https://api.myghes.com"
             };
             var githubSourceOrg = new Option<string>("--github-source-org")
