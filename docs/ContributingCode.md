@@ -20,7 +20,11 @@ For unit testing we use XUnit.Net and Moq.
 
 Pretty much all code should be covered by unit tests. Any new code should come with appropriate unit tests in the same PR.
 
-In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub.
+In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub. Be sure to set your environment variables before running them.
+```
+export ADO_PAT=<pat_found_in_1password>
+export GH_PAT=<pat_found_in_1password>
+```
 
 All tests must run and pass on every PR.
 
