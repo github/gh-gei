@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -20,18 +19,19 @@ namespace OctoshiftCLI
             _blobServiceClient = blobServiceClient;
         }
 
-        public async Task<Stream> DownloadArchiveToStream(string fromUrl)
+        public async Task<byte[]> DownloadArchive(string fromUrl)
         {
             using var response = await _client.GetAsync(fromUrl);
-            return await response.Content.ReadAsStreamAsync();
+            return await response.Content.ReadAsByteArrayAsync();
         }
 
-        public async Task<Uri> UploadToBlob(string fileName, Stream stream)
+        public async Task<Uri> UploadToBlob(string fileName, byte[] content)
         {
             var containerClient = await CreateBlobContainerAsync();
             var blobClient = containerClient.GetBlobClient(fileName);
-            await blobClient.UploadAsync(stream, true);
 
+            var binaryDataContent = new BinaryData(content);
+            await blobClient.UploadAsync(binaryDataContent, true);
             return GetServiceSasUriForBlob(blobClient);
         }
 
