@@ -136,24 +136,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var gitArchiveFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
 
-            var tempPath = Path.GetTempPath();
-            var gitArchiveFilePath = $"{tempPath}/{gitArchiveFileName}";
-            var metadataArchiveFilePath = $"{tempPath}/{metadataArchiveFileName}";
-
             // Download both archives to the local filesystem
-            _log.LogInformation($"Downloading archive from {gitArchiveUrl} to {gitArchiveFilePath}");
+            _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
-            _log.LogInformation($"Downloading archive from {metadataArchiveUrl} to {metadataArchiveFilePath}");
+            _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
             var authenticatedGitArchiveUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
             var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
-
-            _log.LogInformation($"Deleting local archive files");
-            File.Delete(gitArchiveFilePath);
-            File.Delete(metadataArchiveFilePath);
 
             // Run migrate repo command
             var migrateRepoCommand = new MigrateRepoCommand(_log, _targetGithubApiFactory, _environmentVariableProvider);

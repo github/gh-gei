@@ -13,6 +13,7 @@ namespace OctoshiftCLI
         private readonly BlobServiceClient _blobServiceClient;
         private const string CONTAINER_PREFIX = "migration-archives";
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
+
         public AzureApi(HttpClient client, BlobServiceClient blobServiceClient)
         {
             _client = client;
