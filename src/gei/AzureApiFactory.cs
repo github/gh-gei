@@ -17,7 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _blobServiceClientFactory = blobServiceClientFactory;
         }
 
-        public AzureApi Create(string azureStorageConnectionString)
+        public AzureApi Create(string azureStorageConnectionString = null)
         {
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 
