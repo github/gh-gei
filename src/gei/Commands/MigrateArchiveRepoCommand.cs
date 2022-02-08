@@ -13,19 +13,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
+        private readonly MigrateRepoCommand _migrateRepoCommand;
 
         private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "gitArchive.tar.gz";
         private const string METADATA_ARCHIVE_FILE_NAME = "metadataArchive.tar.gz";
 
-        public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-archive-repo")
+        public MigrateArchiveRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, MigrateRepoCommand migrateRepoCommand) : base("migrate-archive-repo")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _azureApiFactory = azureApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _targetGithubApiFactory = targetGithubApiFactory;
+            _migrateRepoCommand = migrateRepoCommand;
 
             Description = "Generates migration archives, uploads them to Azure Blob Storage, then invokes the GitHub Migration APIs to migrate the repo and all repo data using those uploaded archives.";
             Description += Environment.NewLine;
@@ -148,8 +150,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
 
             // Run migrate repo command
-            var migrateRepoCommand = new MigrateRepoCommand(_log, _targetGithubApiFactory, _environmentVariableProvider);
-            await migrateRepoCommand.Invoke(
+            await _migrateRepoCommand.Invoke(
                 githubSourceOrg,
                 "",
                 "",
