@@ -29,6 +29,11 @@ namespace OctoshiftCLI
                 _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api");
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
 
+                if (!baseUrl.EndsWith("/"))
+                {
+                    baseUrl = $"{baseUrl.Trim()}/";
+                }
+
                 _httpClient.BaseAddress = new Uri(baseUrl);
             }
         }
@@ -67,6 +72,8 @@ namespace OctoshiftCLI
             HttpMethod httpMethod, string url, object body = null, HttpStatusCode status = HttpStatusCode.OK)
         {
             url = url?.Replace(" ", "%20");
+
+            url = url.TrimStart('/');
 
             _log.LogVerbose($"HTTP {httpMethod}: {_httpClient.BaseAddress}{url}");
 

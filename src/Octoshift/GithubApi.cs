@@ -46,7 +46,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
         {
-            var url = $"/orgs/{org}/repos?per_page=100";
+            var url = $"orgs/{org}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }

@@ -110,7 +110,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             var githubSourceApi = string.IsNullOrWhiteSpace(ghesSourceUrl) ?
                 _sourceGithubApiFactory.Create("https://api.github.com") :
-                _sourceGithubApiFactory.CreateClientNoSSL($"{ghesSourceUrl}/api/v3");
+                _sourceGithubApiFactory.CreateClientNoSSL($"{ghesSourceUrl.TrimEnd('/')}/api/v3/");
 
             var repos = await GetGithubRepos(githubSourceApi, githubSourceOrg);
 
