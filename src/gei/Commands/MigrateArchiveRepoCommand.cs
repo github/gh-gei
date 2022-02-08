@@ -31,7 +31,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Description = "Generates migration archives, uploads them to Azure Blob Storage, then invokes the GitHub Migration APIs to migrate the repo and all repo data using those uploaded archives.";
             Description += Environment.NewLine;
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used instead. This authenticates to the source GHES API.";
+            Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT  authenticates to the source GHES API. GH_PAT authenticates with the target api.";
 
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
