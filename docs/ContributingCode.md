@@ -16,24 +16,40 @@ When the CLI is executed the flow of execution is:
 4. AdoClient/GithubClient - A wrapper over HttpClient that implements some helper logic that is not specific to any single API. E.g. paging through results, setting authorization headers, handling throttling/retries, etc.
 
 ## Testing
+All tests must run and pass on every PR.
+
+### Unit Tests
 For unit testing we use XUnit.Net and Moq.
 
 Pretty much all code should be covered by unit tests. Any new code should come with appropriate unit tests in the same PR.
 
-In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub. BEWARE that running the integration tests locally will crash any CI integration test actions that are in progress, so wait until any in progress actions finish first.
+### Integration Tests
+In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub.
 
-Be sure to set your environment variables before running them.
-```
-export ADO_PAT=<pat_found_in_1password>
-export GH_PAT=<pat_found_in_1password>
-```
+**WARNING:** Running the integration tests locally will crash any CI integration test actions that are in progress and result in unexpected behavior, so wait until any in progress actions finish first.
 
-All tests must run and pass on every PR.
-
-To run the unit tests locally either use the Test Runner in Visual Studio, or run the command:
-```
-dotnet test src/OctoshiftCLI.sln --filter FullyQualifiedName\!~Integration
-```
+1. First make sure your environment variables are set
+    ```
+    export ADO_PAT=<pat_found_in_1password>
+    export GH_PAT=<pat_found_in_1password>
+    ```
+2. Build the binary with publish.ps1 or
+    ```bash
+    dotnet build src/OctoshiftCLI.sln
+    ```
+3. Install the gh gei extension using the new binary
+    ```bash
+    mkdir gh-gei
+    # Copy the binary from wherever it's located, for ex:
+    cp ./dist/linux-x64/gei ./gh-gei/gh-gei
+    cd gh-gei
+    gh extension install .
+    cd ..
+    ```
+4. Run the integration tests, either use the Test Runner in Visual Studio, or run the command:
+    ```
+    dotnet test src/OctoshiftCLI.sln src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj
+    ```
 
 Running e2e tests locally isn't supported yet, to run these you can create a draft PR.
 
