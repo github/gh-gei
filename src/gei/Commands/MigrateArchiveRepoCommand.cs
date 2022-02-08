@@ -119,8 +119,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSL verification disabled");
             }
 
-            var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSSL(ghesApiUrl) : _sourceGithubApiFactory.Create(ghesApiUrl);
-            var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSSL(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
+            var githubApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl) : _sourceGithubApiFactory.Create(ghesApiUrl);
+            var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
             var gitDataArchiveId = await githubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");

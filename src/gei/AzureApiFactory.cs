@@ -25,7 +25,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient);
         }
 
-        public AzureApi CreateClientNoSSL(string azureStorageConnectionString)
+        public AzureApi CreateClientNoSsl(string azureStorageConnectionString)
         {
             var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
 

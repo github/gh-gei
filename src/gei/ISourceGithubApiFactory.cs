@@ -4,6 +4,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
     {
         GithubApi Create();
         GithubApi Create(string apiUrl);
-        GithubApi CreateClientNoSSL(string apiUrl);
+        GithubApi CreateClientNoSsl(string apiUrl);
     }
 }

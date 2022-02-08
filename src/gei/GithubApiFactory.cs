@@ -30,7 +30,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             return new GithubApi(githubClient, apiUrl);
         }
 
-        GithubApi ISourceGithubApiFactory.CreateClientNoSSL(string apiUrl)
+        GithubApi ISourceGithubApiFactory.CreateClientNoSsl(string apiUrl)
         {
             var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), githubPat);

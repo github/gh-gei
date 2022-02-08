@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
-            var githubApi = factory.CreateClientNoSSL(apiUrl);
+            var githubApi = factory.CreateClientNoSsl(apiUrl);
 
             // Assert
             githubApi.Should().NotBeNull();

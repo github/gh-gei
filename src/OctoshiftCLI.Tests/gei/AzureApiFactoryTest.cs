@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             IAzureApiFactory factory =
                 new AzureApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, blob.Object);
-            var azureApi = factory.CreateClientNoSSL(_connectionString);
+            var azureApi = factory.CreateClientNoSsl(_connectionString);
 
             // Assert
             azureApi.Should().NotBeNull();
