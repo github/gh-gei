@@ -68,7 +68,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            _log.LogVerbose($"HTTP {httpMethod}: {url}");
+            _log.LogVerbose($"HTTP {httpMethod}: {_httpClient.BaseAddress}{url}");
 
             if (body != null)
             {
