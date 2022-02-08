@@ -48,7 +48,7 @@ In addition there are a small number of End-to-End integration tests (still a wo
     ```
 4. Run the integration tests, either use the Test Runner in Visual Studio, or run the command:
     ```
-    dotnet test src/OctoshiftCLI.sln src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj
+    dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj
     ```
 
 Running e2e tests locally isn't supported yet, to run these you can create a draft PR.
