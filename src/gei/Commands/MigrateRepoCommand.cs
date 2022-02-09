@@ -202,21 +202,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
             }
 
-            if (ghes) {
-              var uris = await MigrateArchiveRepo(
-                ghesApiUrl,
-                githubSourceOrg,
-                sourceRepo,
-                githubTargetOrg,
-                targetRepo,
-                azureStorageConnectionString,
-                noSslVerify,
-                verbose
-              );
-              gitArchiveUrl = uris[0].ToString();
-              metadataArchiveUrl = uris[1].ToString();
+            if (ghes)
+            {
+                var uris = await MigrateArchiveRepo(
+                  ghesApiUrl,
+                  githubSourceOrg,
+                  sourceRepo,
+                  githubTargetOrg,
+                  targetRepo,
+                  azureStorageConnectionString,
+                  noSslVerify,
+                  verbose
+                );
+                gitArchiveUrl = uris[0].ToString();
+                metadataArchiveUrl = uris[1].ToString();
 
-              _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+                _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
@@ -282,7 +283,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string azureStorageConnectionString,
           bool noSslVerify = false,
           bool verbose = false
-          ) {
+          )
+        {
             _log.LogInformation($"GHES API URL: {ghesApiUrl}");
 
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
