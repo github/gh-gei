@@ -56,7 +56,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
-                IsRequired = true,
+                IsRequired = false,
                 Description = "The connection string for the Azure storage account. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
             };
             var noSslVerify = new Option("--no-ssl-verify")
