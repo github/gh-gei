@@ -26,7 +26,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _environmentVariableProvider = environmentVariableProvider;
             _targetGithubApiFactory = targetGithubApiFactory;
 
-            Description = "Generates migration archives, uploads them to Azure Blob Storage, then invokes the GitHub Migration APIs to migrate the repo and all repo data using those uploaded archives.";
+            Description = "Generates migration archives, uploads them to Azure Blob Storage, then invokes the GitHub Migration APIs to migrate the repo and all repo data using those uploaded archives. This is typically only used when migrating from a GHES instance with strict firewall rules.";
             Description += Environment.NewLine;
             Description += Environment.NewLine;
             Description += "Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT  authenticates to the source GHES API. GH_PAT authenticates with the target api.";
