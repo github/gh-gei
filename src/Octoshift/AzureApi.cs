@@ -44,11 +44,6 @@ namespace OctoshiftCLI
 
         private Uri GetServiceSasUriForBlob(BlobClient blobClient)
         {
-            if (blobClient == null)
-            {
-                throw new ArgumentNullException(nameof(blobClient));
-            }
-
             if (!blobClient.CanGenerateSasUri)
             {
                 throw new InvalidOperationException("BlobClient object has not been authorized to generate shared key credentials. Verify --azure-storage-connection-key is valid and has proper permissions.");
