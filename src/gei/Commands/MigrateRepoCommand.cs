@@ -202,11 +202,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
-
             if (ghes) {
               var uris = await MigrateArchiveRepo(
-                githubApi,
                 ghesApiUrl,
                 githubSourceOrg,
                 sourceRepo,
@@ -218,8 +215,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
               );
               gitArchiveUrl = uris[0].ToString();
               metadataArchiveUrl = uris[1].ToString();
+
+              _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
@@ -274,7 +274,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         }
 
         private async Task<Uri[]> MigrateArchiveRepo(
-          GithubApi githubApi,
           string ghesApiUrl,
           string githubSourceOrg,
           string sourceRepo,
@@ -285,8 +284,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           bool verbose = false
           ) {
             _log.LogInformation($"GHES API URL: {ghesApiUrl}");
-
-            var dateTimeNow = DateTime.Now;
 
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
             {
@@ -312,17 +309,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
-            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
-            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
             var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
             _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
+            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
+            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
 
-            var timeNow = $"{dateTimeNow:yyyy-MM-dd_HH-mm-ss}";
+            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
 
             var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
 
-            // Download both archives to the local filesystem
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
