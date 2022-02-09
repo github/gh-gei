@@ -303,7 +303,7 @@ namespace OctoshiftCLI
 
         public virtual async Task DeleteRepo(string org, string repo)
         {
-            var url = $"https://api.github.com/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
             await _client.DeleteAsync(url);
         }
 
