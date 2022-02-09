@@ -28,12 +28,12 @@ In addition there are a small number of End-to-End integration tests (still a wo
 
 **WARNING:** Running the integration tests locally will crash any CI integration test actions that are in progress and result in unexpected behavior, so wait until any in progress actions finish first.
 
-1. First make sure your environment variables are set
+1. First make sure your environment variables are set:
     ```
     export ADO_PAT=<pat_found_in_1password>
     export GH_PAT=<pat_found_in_1password>
     ```
-2. Build the binary with publish.ps1 (needs PowerShell) or copy the build command from publish.ps1
+2. Build the binary with publish.ps1 (needs PowerShell) or copy the build command from publish.ps1:
     ```bash
     pwsh
     ```
@@ -41,7 +41,7 @@ In addition there are a small number of End-to-End integration tests (still a wo
     > ./publish.ps1
     > exit
     ```
-3. Install the gh gei extension using the new binary
+3. Install the gh gei extension using the new binary:
     ```bash
     mkdir gh-gei
     # Copy the binary from wherever it's located, for ex:
