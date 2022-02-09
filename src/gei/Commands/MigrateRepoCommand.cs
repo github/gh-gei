@@ -319,8 +319,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var timeNow = $"{dateTimeNow:yyyy-MM-dd_HH-mm-ss}";
 
-            var gitArchiveFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
-            var metadataArchiveFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
+            var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
+            var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
 
             // Download both archives to the local filesystem
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
