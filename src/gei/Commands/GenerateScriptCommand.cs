@@ -98,7 +98,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, bool ssh)
         {
-            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(), githubSourceOrg);
+            var targetApiUrl = "https://api.github.com";
+            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(targetApiUrl), githubSourceOrg);
             return GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, ssh);
         }
 

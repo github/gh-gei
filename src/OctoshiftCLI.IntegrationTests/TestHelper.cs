@@ -71,7 +71,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task CreateGithubRepo(string githubOrg, string repo)
         {
-            _output.WriteLine($"Creating Github repo: {githubOrg}\\{repo}...");
+            _output.WriteLine($"Creating GitHub repo: {githubOrg}\\{repo}...");
             await CreateRepo(githubOrg, repo, true, true);
         }
 

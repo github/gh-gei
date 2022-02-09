@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var idpGroupId = 42;
             var teamSlug = "foo-slug";
 
-            var mockGithub = new Mock<GithubApi>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamName).Result).Returns(teamMembers);
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
