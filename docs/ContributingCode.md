@@ -33,15 +33,19 @@ In addition there are a small number of End-to-End integration tests (still a wo
     export ADO_PAT=<pat_found_in_1password>
     export GH_PAT=<pat_found_in_1password>
     ```
-2. Build the binary with publish.ps1 or
+2. Build the binary with publish.ps1 (needs PowerShell) or copy the build command from publish.ps1
     ```bash
-    dotnet build src/OctoshiftCLI.sln
+    pwsh
+    ```
+    ```powershell
+    > ./publish.ps1
+    > exit
     ```
 3. Install the gh gei extension using the new binary
     ```bash
     mkdir gh-gei
     # Copy the binary from wherever it's located, for ex:
-    cp ./dist/linux-x64/gei ./gh-gei/gh-gei
+    cp ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
     cd gh-gei
     gh extension install .
     cd ..
