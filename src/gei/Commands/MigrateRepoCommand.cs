@@ -55,12 +55,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var gitArchiveUrl = new Option<string>("--git-archive-url")
             {
                 IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Must be passed in when also using --metadata-archive-url"
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
             };
             var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
             {
                 IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Must be passed in when also using --git-archive-url"
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
             };
             var ssh = new Option("--ssh")
             {
