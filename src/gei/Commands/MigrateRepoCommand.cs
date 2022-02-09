@@ -52,15 +52,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
             };
-            var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
-            {
-                IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with the metadata archive. Must be passed in when also using --git-archive-url"
-            };
             var gitArchiveUrl = new Option<string>("--git-archive-url")
             {
                 IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with the git archive. Must be passed in when also using --metadata-archive-url"
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Must be passed in when also using --metadata-archive-url"
+            };
+            var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
+            {
+                IsRequired = false,
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Must be passed in when also using --git-archive-url"
             };
             var ssh = new Option("--ssh")
             {
@@ -78,15 +78,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
             AddOption(targetApiUrl);
-            AddOption(metadataArchiveUrl);
             AddOption(gitArchiveUrl);
+            AddOption(metadataArchiveUrl);
             AddOption(ssh);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, string targetApiUrl, string metadataArchiveUrl = "", string gitArchiveUrl = "", bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, string targetApiUrl, string gitArchiveUrl = "", string metadataArchiveUrl = "", bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -131,9 +131,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 targetRepo = sourceRepo;
             }
 
-            if (string.IsNullOrWhiteSpace(metadataArchiveUrl) != string.IsNullOrWhiteSpace(gitArchiveUrl))
+            if (string.IsNullOrWhiteSpace(gitArchiveUrl) != string.IsNullOrWhiteSpace(metadataArchiveUrl))
             {
-                throw new OctoshiftCliException("When using archive urls, you must provide both --metadata-archive-url --git-archive-url");
+                throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
             }
             else if (!string.IsNullOrWhiteSpace(metadataArchiveUrl))
             {
