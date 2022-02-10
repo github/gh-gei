@@ -199,15 +199,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (!string.IsNullOrWhiteSpace(ghesApiUrl))
             {
-                var uris = await GenerateAndUploadArchive(
+                var archiveUris = await GenerateAndUploadArchive(
                   ghesApiUrl,
                   githubSourceOrg,
                   sourceRepo,
                   azureStorageConnectionString,
                   noSslVerify
                 );
-                gitArchiveUrl = uris[0].ToString();
-                metadataArchiveUrl = uris[1].ToString();
+                gitArchiveUrl = archiveUris[0].ToString();
+                metadataArchiveUrl = archiveUris[1].ToString();
 
                 _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
