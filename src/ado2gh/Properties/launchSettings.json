@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "ado2gh": {
-      "commandName": "Project",
-      "commandLineArgs": "generate-script --github-org GEI-MVP-Testing --ado-org beeming --ado-team-project public2"
-    }
-  }
-}
