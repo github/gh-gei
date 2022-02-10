@@ -209,7 +209,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   githubSourceOrg,
                   sourceRepo,
                   azureStorageConnectionString,
-                  noSslVerify,
+                  noSslVerify
                 );
                 gitArchiveUrl = uris[0].ToString();
                 metadataArchiveUrl = uris[1].ToString();
