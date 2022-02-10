@@ -20,7 +20,7 @@ namespace OctoshiftCLI
             var payload = new
             {
                 key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20")
             };
 
             await _client.PostAsync(url, payload);
