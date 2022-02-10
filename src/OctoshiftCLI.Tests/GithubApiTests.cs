@@ -42,6 +42,33 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task AddAutoLink_Replaces_Spaces_In_Url_Tempalte()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "REPO";
+            const string adoOrg = "ADO_ORG";
+            const string adoTeamProject = "ADO TEAM PROJECT";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+
+            var payload = new
+            {
+                key_prefix = "AB#",
+                url_template = $"https://dev.azure.com/{adoOrg}/ADO%20TEAM%20PROJECT/_workitems/edit/<num>/"
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
+
+            // Assert
+            githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+        }
+
+        [Fact]
         public async Task CreateTeam_Returns_Created_Team_Id()
         {
             // Arrange
