@@ -327,5 +327,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
+
+        [Fact]
+        public async Task Ghes_Without_AzureConnectionString_Throws_Error()
+        {
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
+            await FluentActions
+                .Invoking(async () => await command.Invoke(null, null, null, Source_Repo, Target_Org, Target_Repo, GHES_Api_Url, ""))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
     }
 }
