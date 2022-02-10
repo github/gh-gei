@@ -400,9 +400,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
 
-            Assert.Single(result[org][teamProject1]);
+            Assert.Single(result[org][teamProjectArg]);
             Assert.False(result[org].ContainsKey(teamProject2));
-            Assert.Contains(result[org][teamProject1], x => x == repo1);
+            Assert.Contains(result[org][teamProjectArg], x => x == repo1);
         }
 
         [Fact]
