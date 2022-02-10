@@ -85,7 +85,7 @@ namespace OctoshiftCLI
                 var url = $"https://dev.azure.com/{org}/{adoTeamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
                 var response = await _client.GetWithPagingAsync(url);
 
-                var endpoint = response.FirstOrDefault(x => (string)x["type"] == "GitHub" && ((string)x["name"]).ToLower() == githubOrg.ToLower());
+                var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
 
                 if (endpoint != null)
                 {
