@@ -95,7 +95,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var ssh = new Option("--ssh")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
             var verbose = new Option("--verbose")
             {
