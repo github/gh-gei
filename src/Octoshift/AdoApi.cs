@@ -73,27 +73,43 @@ namespace OctoshiftCLI
                        .ToList();
         }
 
-        public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
+        public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects, string adoTeamProject)
         {
             if (teamProjects == null)
             {
                 return null;
             }
 
-            foreach (var adoTeamProject in teamProjects)
+            if (string.IsNullOrEmpty(adoTeamProject))
             {
-                var url = $"https://dev.azure.com/{org}/{adoTeamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
-                var response = await _client.GetWithPagingAsync(url);
-
-                var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
-
-                if (endpoint != null)
+                foreach (var teamProject in teamProjects)
                 {
-                    return (string)endpoint["id"];
+                    var appId = await GetTeamProjectGithubAppId(org, githubOrg, teamProject);
+                    if (appId != null)
+                    {
+                        return appId;
+                    }
+                }
+            }
+            else
+            {
+                if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return await GetTeamProjectGithubAppId(org, githubOrg, adoTeamProject);
                 }
             }
 
             return null;
+        }
+
+        private async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var response = await _client.GetWithPagingAsync(url);
+
+            var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
+
+            return endpoint != null ? (string)endpoint["id"] : null;
         }
 
         public virtual async Task<string> GetGithubHandle(string org, string orgId, string teamProject, string githubToken)
