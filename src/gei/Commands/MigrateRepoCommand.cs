@@ -204,7 +204,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (ghes)
             {
-                var uris = await MigrateArchiveRepo(
+                var uris = await GenerateAndUploadArchive(
                   ghesApiUrl,
                   githubSourceOrg,
                   sourceRepo,
@@ -274,15 +274,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private async Task<Uri[]> MigrateArchiveRepo(
+        private async Task<Uri[]> GenerateAndUploadArchive(
           string ghesApiUrl,
           string githubSourceOrg,
           string sourceRepo,
-          string githubTargetOrg,
-          string targetRepo,
           string azureStorageConnectionString,
-          bool noSslVerify = false,
-          bool verbose = false
+          bool noSslVerify = false
           )
         {
             _log.LogInformation($"GHES API URL: {ghesApiUrl}");
