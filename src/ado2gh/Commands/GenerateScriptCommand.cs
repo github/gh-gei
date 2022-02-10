@@ -166,9 +166,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     _log.LogInformation($"ADO ORG: {org}");
                     repos.Add(org, new Dictionary<string, IEnumerable<string>>());
 
-                    var teamProjects = await ado.GetTeamProjects(org);
                     if (string.IsNullOrEmpty(adoTeamProject))
                     {
+                        var teamProjects = await ado.GetTeamProjects(org);
                         foreach (var teamProject in teamProjects)
                         {
                             await GetTeamProjectRepos(ado, repos, org, teamProject);
@@ -176,10 +176,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     }
                     else
                     {
-                        if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            await GetTeamProjectRepos(ado, repos, org, adoTeamProject);
-                        }
+                        await GetTeamProjectRepos(ado, repos, org, adoTeamProject);
                     }
                 }
             }
