@@ -18,10 +18,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(7);
+            command.Options.Count.Should().Be(8);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "repos-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "skip-idp", false);
@@ -356,6 +357,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var org = "foo-org";
             var orgs = new List<string>() { org };
+            var teamProject = string.Empty;
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
@@ -369,12 +371,38 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetRepos(mockAdo.Object, orgs);
+            var result = await command.GetRepos(mockAdo.Object, orgs, teamProject);
 
             Assert.Single(result[org][teamProject1]);
             Assert.Single(result[org][teamProject2]);
             Assert.Contains(result[org][teamProject1], x => x == repo1);
             Assert.Contains(result[org][teamProject2], x => x == repo2);
+        }
+
+        [Fact]
+        public async Task GetRepos_Two_Repos_Two_Team_Projects_With_Team_Project_Supplied()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjectArg = teamProject1;
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var repo1 = "foo-repo1";
+            var repo2 = "foo-repo2";
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
+            mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
+            mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
+
+            Assert.Single(result[org][teamProject1]);
+            Assert.False(result[org].ContainsKey(teamProject2));
+            Assert.Contains(result[org][teamProject1], x => x == repo1);
         }
 
         [Fact]
