@@ -61,7 +61,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
 
             // Assert
