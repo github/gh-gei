@@ -336,5 +336,29 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Invoking(async () => await command.Invoke(null, null, null, Source_Repo, Target_Org, Target_Repo, GHES_Api_Url, ""))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
+
+        [Fact]
+        public async Task Ghes_AzureConnectionString_Uses_Env_When_Option_Empty()
+        {
+            var azureConnectionStringEnv = Guid.NewGuid().ToString();
+
+            var mockGhesGithubApi = new Mock<GithubApi>(null, null);
+
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory.Setup(m => m.Create(GHES_Api_Url)).Returns(mockGhesGithubApi.Object);
+
+            var mockAzureApi = new Mock<AzureApi>(null, null);
+
+            var mockAzureApiFactory = new Mock<IAzureApiFactory>();
+            mockAzureApiFactory.Setup(m => m.Create(azureConnectionStringEnv)).Returns(mockAzureApi.Object);
+
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock.Setup(m => m.AzureStorageConnectionString()).Returns(azureConnectionStringEnv);
+
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, null, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
+            await command.Invoke(Source_Org, null, null, Source_Repo, Target_Org, GHES_Api_Url, "");
+
+            mockAzureApiFactory.Verify(x => x.Create(azureConnectionStringEnv));
+        }
     }
 }
