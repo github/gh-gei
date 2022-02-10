@@ -90,7 +90,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs, adoTeamProject);
             var pipelines = _reposOnly ? null : await GetPipelines(ado, repos);
-            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, githubOrg);
+            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, adoTeamProject, githubOrg);
 
             CheckForDuplicateRepoNames(repos);
 
@@ -102,7 +102,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
         }
 
-        public async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string githubOrg)
+        public async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string adoTeamProject, string githubOrg)
         {
             var appIds = new Dictionary<string, string>();
 
@@ -111,7 +111,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 foreach (var org in orgs)
                 {
                     var teamProjects = await ado.GetTeamProjects(org);
-                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
+                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects, adoTeamProject);
 
                     if (string.IsNullOrWhiteSpace(appId))
                     {
@@ -166,9 +166,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     _log.LogInformation($"ADO ORG: {org}");
                     repos.Add(org, new Dictionary<string, IEnumerable<string>>());
 
+                    var teamProjects = await ado.GetTeamProjects(org);
                     if (string.IsNullOrEmpty(adoTeamProject))
                     {
-                        var teamProjects = await ado.GetTeamProjects(org);
                         foreach (var teamProject in teamProjects)
                         {
                             await GetTeamProjectRepos(ado, repos, org, teamProject);
@@ -176,7 +176,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     }
                     else
                     {
-                        await GetTeamProjectRepos(ado, repos, org, adoTeamProject);
+                        if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            await GetTeamProjectRepos(ado, repos, org, adoTeamProject);
+                        }
                     }
                 }
             }
