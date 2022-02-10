@@ -406,6 +406,30 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public async Task GetRepos_With_Team_Project_Supplied_Does_Not_Exist()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjectArg = "foo-tp3";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var repo1 = "foo-repo1";
+            var repo2 = "foo-repo2";
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
+            mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
+            mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
+
+            Assert.Empty(result[org].Keys);
+        }
+
+        [Fact]
         public async Task GetPipelines_One_Repo_Two_Pipelines()
         {
             var org = "foo-org";
@@ -440,16 +464,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
+            var teamProjectArg = string.Empty;
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
             var mockAdo = new Mock<AdoApi>(null);
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
-            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
+            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects, teamProjectArg).Result).Returns(appId);
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, teamProjectArg, githubOrg);
 
             Assert.Equal(appId, result[org]);
         }

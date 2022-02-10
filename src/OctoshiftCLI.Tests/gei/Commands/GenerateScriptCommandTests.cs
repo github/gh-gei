@@ -17,10 +17,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(6);
+            command.Options.Count.Should().Be(7);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
