@@ -457,6 +457,28 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public async Task GetAppIds_With_Team_Project_Supplied_Does_Not_Exist()
+        {
+            var org = "foo-org";
+            var orgs = new List<string>() { org };
+            var githubOrg = "foo-gh-org";
+            var teamProject1 = "foo-tp1";
+            var teamProject2 = "foo-tp2";
+            var teamProjectArg = "foo-tp3";
+            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var appId = Guid.NewGuid().ToString();
+
+            var mockAdo = new Mock<AdoApi>(null);
+
+            mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, teamProjectArg, githubOrg);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
         public async Task GetAppIds_Service_Connect_Exists()
         {
             var org = "foo-org";
