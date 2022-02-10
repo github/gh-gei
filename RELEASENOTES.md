@@ -2,3 +2,4 @@
 - Modify `gh gei migrate-repo` to optionally accept two archive urls to start a migration
 - Add target api url parameter to `gh gei migrate-repo` command
 - Add ado-team-project parameter to `ado2gh generate-script` command
+- Fixed a bug where `configure-autolink` command would fail if your ADO team project had a space in it
