@@ -407,5 +407,30 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Invoking(async () => command.Invoke(Source_Org, null, null, Source_Repo, Target_Org, Target_Repo, Target_Api_Url, GHES_Api_Url, Azure_Connection_String))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
+
+        [Fact]
+        public async Task Ghes_Archive_Generation_Timeout_Throws_Error()
+        {
+            var gitArchiveId = 1;
+            var metadataArchiveId = 2;
+
+            var mockGhesGithubApi = new Mock<GithubApi>(null, null);
+            mockGhesGithubApi.Setup(x => x.StartGitArchiveGeneration(Source_Org, Source_Repo).Result).Returns(gitArchiveId);
+            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGeneration(Source_Org, Source_Repo).Result).Returns(metadataArchiveId);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(Source_Org, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exporting);
+
+            var mockAzureApi = new Mock<AzureApi>(null, null);
+
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory.Setup(m => m.Create(GHES_Api_Url)).Returns(mockGhesGithubApi.Object);
+
+            var mockAzureApiFactory = new Mock<IAzureApiFactory>();
+            mockAzureApiFactory.Setup(m => m.Create(Azure_Connection_String)).Returns(mockAzureApi.Object);
+
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, null, null, mockAzureApiFactory.Object);
+            await FluentActions
+                .Invoking(async () => command.Invoke(Source_Org, null, null, Source_Repo, Target_Org, Target_Repo, Target_Api_Url, GHES_Api_Url, Azure_Connection_String))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
     }
 }
