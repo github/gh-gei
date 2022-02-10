@@ -208,11 +208,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   ghesApiUrl,
                   githubSourceOrg,
                   sourceRepo,
-                  githubTargetOrg,
-                  targetRepo,
                   azureStorageConnectionString,
                   noSslVerify,
-                  verbose
                 );
                 gitArchiveUrl = uris[0].ToString();
                 metadataArchiveUrl = uris[1].ToString();
