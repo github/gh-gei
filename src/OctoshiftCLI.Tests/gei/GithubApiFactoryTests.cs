@@ -34,10 +34,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(x => x.CreateClient("NoSSL"))
                 .Returns(httpClient);
 
+            var apiUrl = $"https://api.github.com";
+
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
-            var githubApi = factory.CreateClientNoSSL();
+            var githubApi = factory.CreateClientNoSsl(apiUrl);
 
             // Assert
             githubApi.Should().NotBeNull();

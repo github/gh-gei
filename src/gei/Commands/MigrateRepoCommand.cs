@@ -17,7 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data.";
+            Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -47,6 +47,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Defaults to the name of source-repo"
             };
+            var targetApiUrl = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+            };
+            var gitArchiveUrl = new Option<string>("--git-archive-url")
+            {
+                IsRequired = false,
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
+            };
+            var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
+            {
+                IsRequired = false,
+                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
+            };
             var ssh = new Option("--ssh")
             {
                 IsRequired = false
@@ -62,13 +77,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(sourceRepo);
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
+            AddOption(targetApiUrl);
+            AddOption(gitArchiveUrl);
+            AddOption(metadataArchiveUrl);
             AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, string targetApiUrl, string gitArchiveUrl = "", string metadataArchiveUrl = "", bool ssh = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -85,6 +103,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"SOURCE REPO: {sourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {targetRepo}");
+            if (string.IsNullOrWhiteSpace(targetApiUrl))
+            {
+                targetApiUrl = "https://api.github.com";
+            }
+
+            _log.LogInformation($"Target API URL: {targetApiUrl}");
+
             if (ssh)
             {
                 _log.LogInformation("SSH: true");
@@ -102,11 +127,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (string.IsNullOrWhiteSpace(targetRepo))
             {
-                _log.LogInformation($"Target Repo name not provided, defaulting to same as source repo ({sourceRepo})");
+                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({sourceRepo})");
                 targetRepo = sourceRepo;
             }
 
-            var githubApi = _targetGithubApiFactory.Create();
+            if (string.IsNullOrWhiteSpace(gitArchiveUrl) != string.IsNullOrWhiteSpace(metadataArchiveUrl))
+            {
+                throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
+            }
+            else if (!string.IsNullOrWhiteSpace(metadataArchiveUrl))
+            {
+                _log.LogInformation($"GIT ARCHIVE URL: {gitArchiveUrl}");
+                _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
+            }
+
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
@@ -125,7 +160,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo);
+            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
@@ -146,7 +181,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, ssh, verbose);
+                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, "", ssh: ssh, verbose: verbose);
                 }
                 else
                 {
