@@ -63,35 +63,32 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             // GHES migration path
-            var ghes = new Option("--ghes")
+            var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
                 IsRequired = false,
-                Description = "Migrates from a GHES instance bypassing firewall restrictions. This method generates data archives on the instance, uploads them to Azure Blob Storage using the provided credentials, then starts a migration pulling from the pre-uploaded archives in Azure."
+                Description = "The api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
             };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
                 IsRequired = false,
-                Description = "(required when used with --ghes) The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
-            };
-            var ghesApiUrl = new Option<string>("--ghes-api-url")
-            {
-                IsRequired = false,
-                Description = "(required when used with --ghes) The api endpoint for the hostname of your GHES instance. For example: https://api.myghes.com"
+                Description = "(Required when used with --ghes-api-url) The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
             };
             var noSslVerify = new Option("--no-ssl-verify")
             {
                 IsRequired = false,
-                Description = "Disables SSL verification, typically for --ghes migrations."
+                Description = "(Only effective when passed in with --ghes-api-url) Disables SSL verification. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted. All other migration steps will continue to verify SSL."
             };
 
-            // Pre-uploaded archive urls
+            // Pre-uploaded archive urls, hidden by default
             var gitArchiveUrl = new Option<string>("--git-archive-url")
             {
+                IsHidden = true,
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
             };
             var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
             {
+                IsHidden = true,
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
             };
@@ -113,9 +110,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(targetRepo);
             AddOption(targetApiUrl);
 
-            AddOption(ghes);
-            AddOption(azureStorageConnectionString);
             AddOption(ghesApiUrl);
+            AddOption(azureStorageConnectionString);
             AddOption(noSslVerify);
 
             AddOption(gitArchiveUrl);
@@ -126,7 +122,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Handler = CommandHandler.Create<
               string, string, string, string, string, string, string,
-              bool, string, string, bool,
+              string, string, bool,
               string, string,
               bool, bool>(Invoke);
         }
@@ -139,9 +135,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string githubTargetOrg,
           string targetRepo,
           string targetApiUrl,
-          bool ghes = false,
-          string azureStorageConnectionString = "",
           string ghesApiUrl = "",
+          string azureStorageConnectionString = "",
           bool noSslVerify = false,
           string gitArchiveUrl = "",
           string metadataArchiveUrl = "",
@@ -202,7 +197,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
             }
 
-            if (ghes)
+            if (!string.IsNullOrWhiteSpace(ghesApiUrl))
             {
                 var uris = await GenerateAndUploadArchive(
                   ghesApiUrl,
@@ -257,7 +252,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghes, azureStorageConnectionString, ghesApiUrl, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, verbose);
+                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, verbose);
                 }
                 else
                 {
