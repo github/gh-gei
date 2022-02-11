@@ -862,5 +862,101 @@ namespace OctoshiftCLI.Tests
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
+
+        [Fact]
+        public async Task GetMigrationStates_Returns_All_Migrations_With_Their_States()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+
+            var payload =
+                @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                                    node(id: $id) { 
+                                        ... on Organization { 
+                                            login, 
+                                            repositoryMigrations(first: $first, after: $after) {
+                                                pageInfo {
+                                                    endCursor
+                                                    hasNextPage
+                                                }
+                                                totalCount
+                                                nodes {
+                                                    id
+                                                    sourceUrl
+                                                    migrationSource { name }
+                                                    state
+                                                    failureReason
+                                                    createdAt
+                                                }
+                                            }
+                                        }
+                                    } 
+                                }""" +
+                $",\"variables\":{{\"id\":\"{orgId}\", \"first\": 100, \"after\": null}}}}";
+
+            var migration1 = (MigrationId: "MIGRATION_ID_1", State: "SUCCEEDED");
+            var migration2 = (MigrationId: "MIGRATION_ID_2", State: "IN_PROGRESS");
+            var response = $@"
+            {{
+	            ""data"": {{
+                    ""node"": {{
+                        ""login"": ""github"",
+                        ""repositoryMigrations"": {{
+                            ""pageInfo"": {{
+                                ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMi0wMi0xMFQyMzozMDozMCsw="",
+                                ""hasNextPage"": false
+                            }},
+                            ""totalCount"": 2,
+                            ""nodes"": [
+                                {{
+                                    ""id"": ""{migration1.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_1"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration1.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:30:30Z""
+                                }},
+                                {{
+                                    ""id"": ""{migration2.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration2.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:31:30Z""
+                                }}
+                            ]
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var migrationStates = (await githubApi.GetMigrationStates(orgId)).ToArray();
+
+            // Assert
+            migrationStates.Should().HaveCount(2);
+            migrationStates.Should().Contain(new[] { migration1, migration2 });
+        }
+
+        private string Compact(string source) =>
+            source
+                .Replace("\r", "")
+                .Replace("\n", "")
+                .Replace("\t", "")
+                .Replace("\\r", "")
+                .Replace("\\n", "")
+                .Replace("\\t", "")
+                .Replace(" ", "");
     }
 }
