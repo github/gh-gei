@@ -200,7 +200,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (!string.IsNullOrWhiteSpace(ghesApiUrl))
             {
-                var (gitArchiveUrl, metadataArchiveUrl) = await GenerateAndUploadArchive(
+                (gitArchiveUrl, metadataArchiveUrl) = await GenerateAndUploadArchive(
                   ghesApiUrl,
                   githubSourceOrg,
                   sourceRepo,
