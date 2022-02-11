@@ -200,15 +200,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (!string.IsNullOrWhiteSpace(ghesApiUrl))
             {
-                var archiveUris = await GenerateAndUploadArchive(
+                var (gitArchiveUrl, metadataArchiveUrl) = await GenerateAndUploadArchive(
                   ghesApiUrl,
                   githubSourceOrg,
                   sourceRepo,
                   azureStorageConnectionString,
                   noSslVerify
                 );
-                gitArchiveUrl = archiveUris[0].ToString();
-                metadataArchiveUrl = archiveUris[1].ToString();
 
                 _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
@@ -267,7 +265,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private async Task<Uri[]> GenerateAndUploadArchive(
+        private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
           string ghesApiUrl,
           string githubSourceOrg,
           string sourceRepo,
@@ -317,11 +315,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-            var authenticatedGitArchiveUrl = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
+            var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-            var authenticatedMetadataArchiveUrl = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
+            var authenticatedMetadataArchiveUri = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
 
-            return new Uri[] { authenticatedGitArchiveUrl, authenticatedMetadataArchiveUrl };
+            return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
         }
 
         private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
