@@ -864,7 +864,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetMigrationStates_Returns_All_Migrations_With_Their_States()
+        public async Task GetMigrationStates_Returns_All_Migration_States_For_An_Org()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
