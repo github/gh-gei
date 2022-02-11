@@ -270,8 +270,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string githubSourceOrg,
           string sourceRepo,
           string azureStorageConnectionString,
-          bool noSslVerify = false
-          )
+          bool noSslVerify = false)
         {
             _log.LogInformation($"GHES API URL: {ghesApiUrl}");
 
