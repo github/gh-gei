@@ -89,8 +89,28 @@ jobs:
         dotnet-version: 6.0.x
 
     - name: Build Artifacts
+      if: matrix.runner-os == 'ubuntu-latest'
       run: ./publish.ps1
       shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts
+      if: matrix.runner-os == 'windows-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_LINUX: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts
+      if: matrix.runner-os == 'macos-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_LINUX: "true"
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
