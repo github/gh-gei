@@ -144,14 +144,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 {
                     foreach (var teamProject in teamProjects)
                     {
-                        await GetTeamProjectRepos(adoApi, adoOrg, repos, teamProject);
+                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, teamProject);
+                        repos.Add(teamProject, projectRepos);
                     }
                 }
                 else
                 {
                     if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
                     {
-                        await GetTeamProjectRepos(adoApi, adoOrg, repos, adoTeamProject);
+                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, adoTeamProject);
+                        repos.Add(adoTeamProject, projectRepos);
                     }
                 }
 
@@ -161,16 +163,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        private async Task GetTeamProjectRepos(AdoApi adoApi, string adoOrg, Dictionary<string, IEnumerable<string>> repos, string teamProject)
+        private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi adoApi, string adoOrg, string teamProject)
         {
             _log.LogInformation($"Team Project: {teamProject}");
             var projectRepos = await adoApi.GetRepos(adoOrg, teamProject);
-            repos.Add(teamProject, projectRepos);
 
             foreach (var repo in projectRepos)
             {
                 _log.LogInformation($"  Repo: {repo}");
             }
+            return projectRepos;
         }
 
         public string GenerateGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, bool ssh)

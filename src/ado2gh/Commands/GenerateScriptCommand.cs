@@ -171,14 +171,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     {
                         foreach (var teamProject in teamProjects)
                         {
-                            await GetTeamProjectRepos(ado, repos, org, teamProject);
+                            var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
+                            repos[org].Add(teamProject, projectRepos);
                         }
                     }
                     else
                     {
                         if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
                         {
-                            await GetTeamProjectRepos(ado, repos, org, adoTeamProject);
+                            var projectRepos = await GetTeamProjectRepos(ado, org, adoTeamProject);
+                            repos[org].Add(adoTeamProject, projectRepos);
                         }
                     }
                 }
@@ -187,16 +189,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return repos;
         }
 
-        private async Task GetTeamProjectRepos(AdoApi ado, Dictionary<string, IDictionary<string, IEnumerable<string>>> repos, string org, string teamProject)
+        private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi ado, string org, string teamProject)
         {
             _log.LogInformation($"  Team Project: {teamProject}");
             var projectRepos = await ado.GetRepos(org, teamProject);
-            repos[org].Add(teamProject, projectRepos);
 
             foreach (var repo in projectRepos)
             {
                 _log.LogInformation($"    Repo: {repo}");
             }
+            return projectRepos;
         }
 
         public async Task<IEnumerable<string>> GetOrgs(AdoApi ado, string adoOrg)
