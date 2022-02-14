@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -7,15 +8,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class MigrateRepoCommand : Command
     {
         private readonly OctoLogger _log;
+        private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+        private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private bool _isRetry;
+        private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
+        private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
+        private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
+        private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
 
-        public MigrateRepoCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-repo")
         {
             _log = log;
+            _sourceGithubApiFactory = sourceGithubApiFactory;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
+            _azureApiFactory = azureApiFactory;
 
             Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
@@ -52,16 +61,38 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
             };
+
+            // GHES migration path
+            var ghesApiUrl = new Option<string>("--ghes-api-url")
+            {
+                IsRequired = false,
+                Description = "The api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
+            };
+            var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
+            {
+                IsRequired = false,
+                Description = "(Required when used with --ghes-api-url) The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
+            };
+            var noSslVerify = new Option("--no-ssl-verify")
+            {
+                IsRequired = false,
+                Description = "(Only effective when passed in with --ghes-api-url) Disables SSL verification. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted. All other migration steps will continue to verify SSL."
+            };
+
+            // Pre-uploaded archive urls, hidden by default
             var gitArchiveUrl = new Option<string>("--git-archive-url")
             {
+                IsHidden = true,
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
             };
             var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
             {
+                IsHidden = true,
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
             };
+
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
@@ -79,15 +110,39 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
             AddOption(targetApiUrl);
+
+            AddOption(ghesApiUrl);
+            AddOption(azureStorageConnectionString);
+            AddOption(noSslVerify);
+
             AddOption(gitArchiveUrl);
             AddOption(metadataArchiveUrl);
+
             AddOption(ssh);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<
+              string, string, string, string, string, string, string,
+              string, string, bool,
+              string, string,
+              bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubSourceOrg, string adoSourceOrg, string adoTeamProject, string sourceRepo, string githubTargetOrg, string targetRepo, string targetApiUrl, string gitArchiveUrl = "", string metadataArchiveUrl = "", bool ssh = false, bool verbose = false)
+        public async Task Invoke(
+          string githubSourceOrg,
+          string adoSourceOrg,
+          string adoTeamProject,
+          string sourceRepo,
+          string githubTargetOrg,
+          string targetRepo,
+          string targetApiUrl,
+          string ghesApiUrl = "",
+          string azureStorageConnectionString = "",
+          bool noSslVerify = false,
+          string gitArchiveUrl = "",
+          string metadataArchiveUrl = "",
+          bool ssh = false,
+          bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -104,6 +159,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"SOURCE REPO: {sourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {targetRepo}");
+
             if (string.IsNullOrWhiteSpace(targetApiUrl))
             {
                 targetApiUrl = "https://api.github.com";
@@ -140,6 +196,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"GIT ARCHIVE URL: {gitArchiveUrl}");
                 _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ghesApiUrl))
+            {
+                (gitArchiveUrl, metadataArchiveUrl) = await GenerateAndUploadArchive(
+                  ghesApiUrl,
+                  githubSourceOrg,
+                  sourceRepo,
+                  azureStorageConnectionString,
+                  noSslVerify
+                );
+
+                _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
@@ -182,7 +251,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, "", ssh: ssh, verbose: verbose);
+                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, verbose);
                 }
                 else
                 {
@@ -194,6 +263,82 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
             }
+        }
+
+        private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
+          string ghesApiUrl,
+          string githubSourceOrg,
+          string sourceRepo,
+          string azureStorageConnectionString,
+          bool noSslVerify = false)
+        {
+            _log.LogInformation($"GHES API URL: {ghesApiUrl}");
+
+            if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+            {
+                _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
+                azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
+
+                if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+                {
+                    throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
+                }
+            }
+
+            if (noSslVerify)
+            {
+                _log.LogInformation("SSL verification disabled");
+            }
+
+            var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl) : _sourceGithubApiFactory.Create(ghesApiUrl);
+            var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
+
+            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+            _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
+            _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
+
+            var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
+            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
+            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
+            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
+            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+
+            var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
+            var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
+
+            _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
+            var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
+            _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
+            var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
+
+            _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
+            var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
+            _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
+            var authenticatedMetadataArchiveUri = await azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
+
+            return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+        }
+
+        private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
+        {
+            var timeout = DateTime.Now.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
+            while (DateTime.Now < timeout)
+            {
+                var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
+                _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
+                if (archiveStatus == ArchiveMigrationStatus.Exported)
+                {
+                    return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
+                }
+                if (archiveStatus == ArchiveMigrationStatus.Failed)
+                {
+                    throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
+                }
+                await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            }
+            throw new TimeoutException($"Archive generation timed out after {ARCHIVE_GENERATION_TIMEOUT_IN_HOURS} hours");
         }
 
         private string GetGithubRepoUrl(string org, string repo) => $"https://github.com/{org}/{repo}".Replace(" ", "%20");
