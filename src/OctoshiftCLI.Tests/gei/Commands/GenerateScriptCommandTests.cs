@@ -33,8 +33,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Github_No_Data()
         {
-            var command = new GenerateScriptCommand(null, null, null);
-            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", false);
+            var command = new GenerateScriptCommand(null, null, null, null);
+            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", "", "", false, false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
