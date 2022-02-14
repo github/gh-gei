@@ -14,6 +14,7 @@ GEI-CLI is continuing to expand what it can support. However, it supports the fo
 
 * Azure DevOps -> GitHub Enterprise Cloud migrations
 * GitHub Enterprise Cloud -> GitHub Enterprise Cloud migrations
+* GitHub Enterprise Server -> GitHub Enterprise Cloud migrations
 
 Learn more about what exactly is migrated and any limitations in the [GEI documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer/about-github-enterprise-importer). 
 
@@ -33,9 +34,10 @@ Video guides below will help you get started with your first migration. Then hel
 
 ## GitHub to GitHub Migration Usage
 
-GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from a GitHub organization. To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run *gh extension install github/gh-gei* to install the GEI CLI. 
-
+GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GitHub organization. 
 ### Command line
+To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run `gh extension install github/gh-gei` to install the GEI CLI. Once installed, run `gh gei --help` to learn about the options.
+
 ```
 gh-gei
   CLI for GitHub Enterprise Importer.
@@ -48,15 +50,30 @@ Options:
   -?, -h, --help  Show help and usage information
 
 Commands:
-  generate-script  Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally 
-                   modify the script if desired before running it.
-                   Note: Expects GH_SOURCE_PAT or GH_PAT env variable to be set.
-  migrate-repo     Invokes the GitHub API's to migrate the repo and all PR data.
-                   Note: Expects GH_PAT and GH_SOURCE_PAT env variables to be set. GH_SOURCE_PAT is optional, if not set GH_PAT will be used 
-                   instead.
+  generate-script       Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.
+  grant-migrator-role   Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.
+                        Note: Expects GH_PAT env variable to be set.
+  migrate-repo          Invokes the GitHub APIs to migrate the repo and all repo data.
+  revoke-migrator-role  Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.
+                        Note: Expects GH_PAT env variable to be set.
 ```
 
-To generate a script, you'll need to set an `GH_PAT` as an environment variable for your destination and `GH_SOURCE_PAT` for your source location. 
+To generate a migration script, you'll need to set `GH_PAT` as an environment variable for your destination and `GH_SOURCE_PAT` for your source location. 
+
+## GitHub Enterprise Server (GHES) to GitHub Migration Usage
+
+GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GHES organization.
+
+Due to many GHES instances containing firewall rules restricting the direct API access that GEI needs to perform a migration, the GEI CLI uploads the migration's archive data to Azure Blob Storage as a step prior to starting the migration using GEI. This allows GEI to perform a migration without directly accessing the GHES instance. Because of this extra step, you'll pass in a connection string to an Azure Storage account, specified in the parameters below.
+
+### Command Line
+
+Generating a migration script for GHES is very similar to GitHub to GitHub migration scripts, but requires a couple extra parameters. You can run `gh gei generate-script --help` to learn about all of the options.
+
+The extra options you will need when migrating from GHES are:
+- `--ghes-api-url`
+- `--azure-storage-connection-string`
+- `--no-ssl-verify` (optional)
 
 ## Azure DevOps to GitHub Migration Usage
 
