@@ -13,15 +13,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateScriptCommand(null, null, null);
+            var command = new GenerateScriptCommand(null, null, null, null);
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(6);
+            command.Options.Count.Should().Be(9);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
