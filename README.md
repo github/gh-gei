@@ -75,6 +75,13 @@ The extra options you will need when migrating from GHES are:
 - `--azure-storage-connection-string` - it's recommend to use quotes around this value since the connection string itself uses characters that might otherwise be interpreted by bash
 - `--no-ssl-verify` (optional)
 
+Here's an example:
+```
+gh gei generate-script --github-source-org "source-ghes-org" --github-target-org "target-ghec-org" --ghes-api-url "https://api.myghesinstance.com" --azure-storage-connection-string "DefaultEndpointsProtocol=https;AccountName=myazureaccount;AccountKey=myazurestoragekey;EndpointSuffix=core.windows.net" --no-ssl-verify
+```
+
+This will generate a new file (named `./migrate.ps1` by default) which gives you an opportunity to review the steps GEI-CLI will take. Once ready, running the `./migrate.ps1` file (in PowerShell, for example) will kick off the migration!
+
 ## Azure DevOps to GitHub Migration Usage
 
 Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
