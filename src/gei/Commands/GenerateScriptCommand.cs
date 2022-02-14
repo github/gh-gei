@@ -45,17 +45,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
                 IsRequired = false,
-                Description = "If migrating from GHES, the api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
+                Description = "Required if migrating from GHES. The api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
             };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
                 IsRequired = false,
-                Description = "(Required when used with --ghes-api-url) The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
+                Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
             };
             var noSslVerify = new Option("--no-ssl-verify")
             {
                 IsRequired = false,
-                Description = "(Only effective when passed in with --ghes-api-url) Disables SSL verification. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted. All other migration steps will continue to verify SSL."
+                Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
             };
 
             var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
