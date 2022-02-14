@@ -3,7 +3,7 @@
 [![Actions Status: CI](https://github.com/github/octoshiftcli/workflows/CI/badge.svg)](https://github.com/github/octoshiftcli/actions?query=workflow%3ACI)
 
 
-The [GitHub Enterprise Importer](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs to simplify customizing your migration experience. 
+The [GitHub Enterprise Importer](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform .NET Core console application to simplify customizing your migration experience.
 
 > GEI is in a private preview for GitHub Enterprise Cloud. It needs to be enabled before using this CLI. Please reach out to [GitHub Sales](https://github.com/enterprise/contact) to enquire about getting into the private beta. 
 
@@ -34,7 +34,7 @@ Video guides below will help you get started with your first migration. Then hel
 
 ## GitHub to GitHub Migration Usage
 
-GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GitHub organization. 
+General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GitHub organization. 
 ### Command line
 To get started you'll need to download the official [GitHub CLI](https://cli.github.com). You can run `gh extension install github/gh-gei` to install the GEI CLI. Once installed, run `gh gei --help` to learn about the options.
 
@@ -62,7 +62,7 @@ To generate a migration script, you'll need to set `GH_PAT` as an environment va
 
 ## GitHub Enterprise Server (GHES) to GitHub Migration Usage
 
-GEI-CLI is a cross-platform .NET Core console application. General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GHES organization.
+General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GHES organization.
 
 Due to many GHES instances containing firewall rules restricting the direct API access that GEI needs to perform a migration, the GEI CLI uploads the migration's archive data to Azure Blob Storage as a step prior to starting the migration using GEI. This allows GEI to perform a migration without directly accessing the GHES instance. Because of this extra step, you'll pass in a connection string to an Azure Storage account, specified in the parameters below.
 
@@ -77,7 +77,7 @@ The extra options you will need when migrating from GHES are:
 
 ## Azure DevOps to GitHub Migration Usage
 
-GEI-CLI is a cross-platform .NET Core console application. Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
+Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
 
 ### Command line
 ```
