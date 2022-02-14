@@ -105,7 +105,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Ado_No_Data()
         {
-            var command = new GenerateScriptCommand(null, null, null);
+            var command = new GenerateScriptCommand(null, null, null, null);
             var script = command.GenerateAdoScript(null, "foo-source", "foo-target", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -143,7 +143,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new Dictionary<string, IEnumerable<string>> { { adoTeamProject, new List<string>() { repo1, repo2, repo3 } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -167,7 +167,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, true);
 
             script = TrimNonExecutableLines(script);
