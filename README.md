@@ -72,7 +72,7 @@ Generating a migration script for GHES is very similar to GitHub to GitHub migra
 
 The extra options you will need when migrating from GHES are:
 - `--ghes-api-url`
-- `--azure-storage-connection-string`
+- `--azure-storage-connection-string` - it's recommend to use quotes around this value since the connection string itself uses characters that might otherwise be interpreted by bash
 - `--no-ssl-verify` (optional)
 
 ## Azure DevOps to GitHub Migration Usage
