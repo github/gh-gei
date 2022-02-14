@@ -304,7 +304,7 @@ function Exec {
 
         private string GHESRepoOptions(string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
         {
-            return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" {(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
+            return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
         }
     }
 }

@@ -97,6 +97,42 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public void Github_GHES_Repo()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+            var ghesApiUrl = "https://api.foo.com";
+            var azureStorageConnectionString = "foo-storage-connection-string";
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Github_GHES_Repo_No_Ssl()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+            var ghesApiUrl = "https://api.foo.com";
+            var azureStorageConnectionString = "foo-storage-connection-string";
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify }}";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
         public void Ado_No_Data()
         {
             var command = new GenerateScriptCommand(null, null, null, null);
