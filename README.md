@@ -63,11 +63,7 @@ To generate a migration script, you'll need to set `GH_PAT` as an environment va
 
 General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GHES organization.
 
-Due to many GHES instances containing firewall rules restricting the direct API access that GEI needs to perform a migration, the GEI CLI uploads the migration's archive data to Azure Blob Storage as a step prior to starting the migration using GEI. This allows GEI to perform a migration without directly accessing the GHES instance. Because of this extra step, you'll pass in a connection string to an Azure Storage account, specified in the parameters below.
-
-Here are some references to help:
-- Getting the Azure storage connection string: https://docs.microsoft.com/en-us/azure/data-explorer/kusto/api/connection-strings/storage-connection-strings
-- Creating a blob storage container: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal
+Due to many GHES instances containing firewall rules restricting the direct API access that GEI needs to perform a migration, the GEI CLI uploads the migration's archive data to Azure Blob Storage as a step prior to starting the migration using GEI. This allows GEI to perform a migration without directly accessing the GHES instance. To get started you'll need to setup an [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal). Then, you'll pass in a [connection string](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/api/connection-strings/storage-connection-strings) to the CLI for that Azure storage account, specified in the parameters below. GEI CLI will take care of the rest.
 
 ### Command Line
 
