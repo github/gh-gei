@@ -50,7 +50,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
                 IsRequired = false,
-                Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net"
+                Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
             };
             var noSslVerify = new Option("--no-ssl-verify")
             {
