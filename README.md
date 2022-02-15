@@ -31,7 +31,6 @@ Video guides below will help you get started with your first migration. Then hel
 * Running your first few migrations: https://www.youtube.com/watch?v=yfnXbwtXY80
 * Orchestrating an end-to-end production migration: https://www.youtube.com/watch?v=AtFB-U1Og4c
 
-
 ## GitHub to GitHub Migration Usage
 
 General usage will use the `generate-script` command to create a script that can be used to migrate all repositories from a GitHub organization. 
@@ -71,9 +70,9 @@ Due to many GHES instances containing firewall rules restricting the direct API 
 Generating a migration script for GHES is very similar to GitHub to GitHub migration scripts, but requires a couple extra parameters. You can run `gh gei generate-script --help` to learn about all of the options.
 
 The extra options you will need when migrating from GHES are:
-- `--ghes-api-url`
-- `--azure-storage-connection-string` - it's recommend to use quotes around this value since the connection string itself uses characters that might otherwise be interpreted by bash
-- `--no-ssl-verify` (optional)
+- `--ghes-api-url` - (Required) The api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
+- `--azure-storage-connection-string` - (Required) The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\". It's recommend to use quotes around this value since the connection string itself uses characters that might otherwise be interpreted by bash.
+- `--no-ssl-verify` (Optional) Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted.
 
 Here's an example:
 ```
