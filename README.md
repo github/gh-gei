@@ -80,7 +80,7 @@ Here's an example:
 gh gei generate-script --github-source-org "source-ghes-org" --github-target-org "target-ghec-org" --ghes-api-url "https://api.myghesinstance.com" --azure-storage-connection-string "DefaultEndpointsProtocol=https;AccountName=myazureaccount;AccountKey=myazurestoragekey;EndpointSuffix=core.windows.net" --no-ssl-verify
 ```
 
-This will generate a new file (named `./migrate.ps1` by default) which gives you an opportunity to review the steps GEI-CLI will take. Once ready, running the `./migrate.ps1` file (in PowerShell, for example) will kick off the migration!
+This will generate a new file (named `./migrate.ps1` by default) which gives you an opportunity to review the steps GEI-CLI will take. Once ready, running the `./migrate.ps1` file will kick off the migration!
 
 ## Azure DevOps to GitHub Migration Usage
 
