@@ -202,7 +202,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["state"];
         }
 
-        public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
+        public virtual async Task<IEnumerable<(string MigrationId, string State, string FailureReason)>> GetMigrationStates(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -239,7 +239,7 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return data["data"]["node"]["repositoryMigrations"]["nodes"]
-                .Select(node => ((string)node["id"], (string)node["state"])).ToList();
+                .Select(node => ((string)node["id"], (string)node["state"], (string)node["failureReason"])).ToList();
         }
 
         public virtual async Task<string> GetMigrationFailureReason(string migrationId)

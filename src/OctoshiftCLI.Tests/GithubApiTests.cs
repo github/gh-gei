@@ -895,8 +895,9 @@ namespace OctoshiftCLI.Tests
                                 }""" +
                 $",\"variables\":{{\"id\":\"{orgId}\", \"first\": 100, \"after\": null}}}}";
 
-            var migration1 = (MigrationId: "MIGRATION_ID_1", State: "SUCCEEDED");
-            var migration2 = (MigrationId: "MIGRATION_ID_2", State: "IN_PROGRESS");
+            var migration1 = (MigrationId: "MIGRATION_ID_1", State: RepositoryMigrationStatus.Succeeded, FailureReason: "");
+            var migration2 = (MigrationId: "MIGRATION_ID_2", State: RepositoryMigrationStatus.InProgress, FailureReason: "");
+            var migration3 = (MigrationId: "MIGRATION_ID_3", State: RepositoryMigrationStatus.Failed, FailureReason: "FAILURE REASON");
             var response = $@"
             {{
 	            ""data"": {{
@@ -916,7 +917,7 @@ namespace OctoshiftCLI.Tests
                                         ""name"": ""Azure Devops Source""
                                     }},
                                     ""state"": ""{migration1.State}"",
-                                    ""failureReason"": """",
+                                    ""failureReason"": ""{migration1.FailureReason}"",
                                     ""createdAt"": ""2022-02-10T23:30:30Z""
                                 }},
                                 {{
@@ -926,8 +927,18 @@ namespace OctoshiftCLI.Tests
                                         ""name"": ""Azure Devops Source""
                                     }},
                                     ""state"": ""{migration2.State}"",
-                                    ""failureReason"": """",
+                                    ""failureReason"": ""{migration2.FailureReason}"",
                                     ""createdAt"": ""2022-02-10T23:31:30Z""
+                                }},
+                                {{
+                                    ""id"": ""{migration3.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration3.State}"",
+                                    ""failureReason"": ""{migration3.FailureReason}"",
+                                    ""createdAt"": ""2022-02-10T23:32:30Z""
                                 }}
                             ]
                         }}
@@ -945,8 +956,8 @@ namespace OctoshiftCLI.Tests
             var migrationStates = (await githubApi.GetMigrationStates(orgId)).ToArray();
 
             // Assert
-            migrationStates.Should().HaveCount(2);
-            migrationStates.Should().Contain(new[] { migration1, migration2 });
+            migrationStates.Should().HaveCount(3);
+            migrationStates.Should().Contain(new[] { migration1, migration2, migration3 });
         }
 
         private string Compact(string source) =>
