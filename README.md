@@ -81,7 +81,7 @@ gh gei generate-script --github-source-org "source-ghes-org" --github-target-org
 
 This will generate a new file (named `./migrate.ps1` by default) which gives you an opportunity to review the steps GEI-CLI will take. Once ready, running the `./migrate.ps1` file will kick off the migration!
 
-After running the migration and validating the migration data, we recommend logging in to your Azure storage account and deleting the blob container that was created and used to perform the migration.
+After running the migration and validating the migration data, you will need to remove the archive data from your Azure storage account. If you're done with all of your migrations, the blob container(s) containing the archives can be deleted. 
 
 ## Azure DevOps to GitHub Migration Usage
 
