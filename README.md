@@ -81,6 +81,8 @@ gh gei generate-script --github-source-org "source-ghes-org" --github-target-org
 
 This will generate a new file (named `./migrate.ps1` by default) which gives you an opportunity to review the steps GEI-CLI will take. Once ready, running the `./migrate.ps1` file will kick off the migration!
 
+After running the migration and checking the migrated data for soundness, we recommend logging in to your Azure storage account and deleting the blob container that was created and used to perform the migration.
+
 ## Azure DevOps to GitHub Migration Usage
 
 Execute the executable without any parameters to learn about the options. General usage will use the `generate-script` option to create a script that can be used to migrate all repositories from an Azure DevOps org and re-wire Azure Boards and Azure Pipelines connections.
