@@ -9,10 +9,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands;
 
 public class WaitForMigrationCommand: Command
 {
-    private const int WAIT_INTERVAL_IN_SECONDS = 10;
-    
     private readonly OctoLogger _log;
     private readonly GithubApiFactory _githubApiFactory;
+
+    public int WaitIntervalInSeconds = 10;
 
     public WaitForMigrationCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("wait-for-migration")
     {
@@ -92,13 +92,13 @@ public class WaitForMigrationCommand: Command
             _log.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: {totalInProgress}, " +
                                 $"Total migrations {RepositoryMigrationStatus.Queued}: {totalQueued}");
 
-            if (totalInProgress + totalQueued <= 0)
+            if (!hasMigrationId && totalInProgress + totalQueued <= 0)
             {
                 break;
             }
             
-            _log.LogInformation($"Waiting {WAIT_INTERVAL_IN_SECONDS} seconds...");
-            await Task.Delay(WAIT_INTERVAL_IN_SECONDS * 1000);
+            _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
+            await Task.Delay(WaitIntervalInSeconds * 1000);
         }
     }
 }
