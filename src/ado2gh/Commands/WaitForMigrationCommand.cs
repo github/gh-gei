@@ -2,103 +2,101 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI.AdoToGithub.Commands;
-
-public class WaitForMigrationCommand: Command
+[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    private readonly OctoLogger _log;
-    private readonly GithubApiFactory _githubApiFactory;
-
-    public int WaitIntervalInSeconds = 10;
-
-    public WaitForMigrationCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("wait-for-migration")
+    public class WaitForMigrationCommand : Command
     {
-        _log = log;
-        _githubApiFactory = githubApiFactory;
+        internal int WaitIntervalInSeconds = 10;
 
-        Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
-        Description += Environment.NewLine;
-        Description += "Note: Expects GH_PAT env variables to be set.";
+        private readonly OctoLogger _log;
+        private readonly GithubApiFactory _githubApiFactory;
 
-        var githubOrg = new Option<string>("--github-org")
+        public WaitForMigrationCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("wait-for-migration")
         {
-            IsRequired = true
-        };
-        var migrationId = new Option<string>("--migration-id")
-        {
-            IsRequired = false,
-            Description = "Waits for the specified migration to finish."
-        };
-        var verbose = new Option("--verbose")
-        {
-            IsRequired = false
-        };
-        
-        AddOption(githubOrg);
-        AddOption(migrationId);
-        AddOption(verbose);
+            _log = log;
+            _githubApiFactory = githubApiFactory;
 
-        Handler = CommandHandler.Create<string, string, bool>(Invoke);
-    }
+            Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
+            Description += Environment.NewLine;
+            Description += "Note: Expects GH_PAT env variables to be set.";
 
-    public async Task Invoke(string githubOrg, string migrationId = null, bool verbose = false)
-    {
-        _log.Verbose = verbose;
+            var githubOrg = new Option<string>("--github-org") { IsRequired = true };
+            var migrationId = new Option<string>("--migration-id")
+            {
+                IsRequired = false,
+                Description = "Waits for the specified migration to finish."
+            };
+            var verbose = new Option("--verbose") { IsRequired = false };
 
-        var hasMigrationId = !migrationId.IsNullOrWhiteSpace();
+            AddOption(githubOrg);
+            AddOption(migrationId);
+            AddOption(verbose);
 
-        _log.LogInformation($"Waiting for {(hasMigrationId ? $"migration {migrationId}" : "all migrations")} to finish...");
-        _log.LogInformation($"GITHUB ORG: {githubOrg}");
-        if (hasMigrationId)
-        {
-            _log.LogInformation($"MIGRATION ID: {migrationId}");
+            Handler = CommandHandler.Create<string, string, bool>(Invoke);
         }
 
-        var githubApi = _githubApiFactory.Create();
-        var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-
-        while (true)
+        public async Task Invoke(string githubOrg, string migrationId = null, bool verbose = false)
         {
+            _log.Verbose = verbose;
+
+            var hasMigrationId = !migrationId.IsNullOrWhiteSpace();
+
+            _log.LogInformation(
+                $"Waiting for {(hasMigrationId ? $"migration {migrationId}" : "all migrations")} to finish...");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
             if (hasMigrationId)
             {
-                var specifiedMigrationState = await githubApi.GetMigrationState(migrationId);
-                switch (specifiedMigrationState)
-                {
-                    case RepositoryMigrationStatus.Failed:
-                    {
-                        var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-                        _log.LogError($"Migration Failed for migration {migrationId}");
-                        throw new OctoshiftCliException(failureReason);
-                    }
-                    case RepositoryMigrationStatus.Succeeded:
-                        _log.LogSuccess($"Migration succeeded for migration {migrationId}");
-                        return;
-                    default: // IN_PROGRESS, QUEUED
-                        _log.LogInformation($"Migration {migrationId} is {specifiedMigrationState}");
-                        break;
-                }
+                _log.LogInformation($"MIGRATION ID: {migrationId}");
             }
 
-            var ongoingMigrations = (await githubApi.GetMigrationStates(githubOrgId))
-                .Where(mig => mig.State is RepositoryMigrationStatus.Queued or RepositoryMigrationStatus.InProgress)
-                .ToList();
-            
-            var totalInProgress = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.InProgress);
-            var totalQueued = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.Queued);
+            var githubApi = _githubApiFactory.Create();
+            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
 
-            _log.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: {totalInProgress}, " +
-                                $"Total migrations {RepositoryMigrationStatus.Queued}: {totalQueued}");
-
-            if (!hasMigrationId && totalInProgress + totalQueued <= 0)
+            while (true)
             {
-                break;
+                if (hasMigrationId)
+                {
+                    var specifiedMigrationState = await githubApi.GetMigrationState(migrationId);
+                    switch (specifiedMigrationState)
+                    {
+                        case RepositoryMigrationStatus.Failed:
+                            {
+                                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
+                                _log.LogError($"Migration Failed for migration {migrationId}");
+                                throw new OctoshiftCliException(failureReason);
+                            }
+                        case RepositoryMigrationStatus.Succeeded:
+                            _log.LogSuccess($"Migration succeeded for migration {migrationId}");
+                            return;
+                        default: // IN_PROGRESS, QUEUED
+                            _log.LogInformation($"Migration {migrationId} is {specifiedMigrationState}");
+                            break;
+                    }
+                }
+
+                var ongoingMigrations = (await githubApi.GetMigrationStates(githubOrgId))
+                    .Where(mig => mig.State is RepositoryMigrationStatus.Queued or RepositoryMigrationStatus.InProgress)
+                    .ToList();
+
+                var totalInProgress = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.InProgress);
+                var totalQueued = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.Queued);
+
+                _log.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: {totalInProgress}, " +
+                                    $"Total migrations {RepositoryMigrationStatus.Queued}: {totalQueued}");
+
+                if (!hasMigrationId && totalInProgress + totalQueued <= 0)
+                {
+                    break;
+                }
+
+                _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
+                await Task.Delay(WaitIntervalInSeconds * 1000);
             }
-            
-            _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
-            await Task.Delay(WaitIntervalInSeconds * 1000);
         }
     }
 }
