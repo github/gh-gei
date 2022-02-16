@@ -15,13 +15,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _environmentVariableProvider = environmentVariableProvider;
         }
 
-        GithubApi ISourceGithubApiFactory.Create()
-        {
-            var githubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
-
-            return new GithubApi(githubClient, "https://api.github.com");
-        }
+        GithubApi ISourceGithubApiFactory.Create() => (this as ISourceGithubApiFactory).Create("https://api.github.com");
 
         GithubApi ISourceGithubApiFactory.Create(string apiUrl)
         {
@@ -37,12 +31,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             return new GithubApi(githubClient, apiUrl);
         }
 
-        GithubApi ITargetGithubApiFactory.Create()
-        {
-            var githubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), githubPat);
-            return new GithubApi(githubClient, "https://api.github.com");
-        }
+        GithubApi ITargetGithubApiFactory.Create() => (this as ITargetGithubApiFactory).Create("https://api.github.com");
 
         GithubApi ITargetGithubApiFactory.Create(string apiUrl)
         {
