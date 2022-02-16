@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
@@ -61,8 +60,7 @@ public class WaitForMigrationCommand: Command
         var githubApi = _githubApiFactory.Create();
         var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
 
-        var ongoingMigrations = new Dictionary<string, string>();
-        do
+        while (true)
         {
             if (hasMigrationId)
             {
@@ -84,24 +82,23 @@ public class WaitForMigrationCommand: Command
                 }
             }
 
-            ongoingMigrations = (await githubApi.GetMigrationStates(githubOrgId))
-                .Where(mig => mig.MigrationId == migrationId 
-                              || IsOngoingMigration(mig.State) 
-                              || ongoingMigrations.ContainsKey(mig.MigrationId))
-                .ToDictionary(x => x.MigrationId, x => x.State);
+            var ongoingMigrations = (await githubApi.GetMigrationStates(githubOrgId))
+                .Where(mig => mig.State is RepositoryMigrationStatus.Queued or RepositoryMigrationStatus.InProgress)
+                .ToList();
             
-            var totalInProgress = ongoingMigrations.Count(kvp => kvp.Value == RepositoryMigrationStatus.InProgress);
-            var totalQueued = ongoingMigrations.Count(kvp => kvp.Value == RepositoryMigrationStatus.Queued);
+            var totalInProgress = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.InProgress);
+            var totalQueued = ongoingMigrations.Count(mig => mig.State == RepositoryMigrationStatus.Queued);
 
             _log.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: {totalInProgress}, " +
                                 $"Total migrations {RepositoryMigrationStatus.Queued}: {totalQueued}");
-            _log.LogInformation($"Waiting {WAIT_INTERVAL_IN_SECONDS} seconds...");
-                                
-            await Task.Delay(WAIT_INTERVAL_IN_SECONDS * 1000);
-        } while (ongoingMigrations.Any(kvp => IsOngoingMigration(kvp.Value)));
-    }
 
-    private bool IsOngoingMigration(string state) => state is
-        RepositoryMigrationStatus.Queued or 
-        RepositoryMigrationStatus.InProgress;
+            if (totalInProgress + totalQueued <= 0)
+            {
+                break;
+            }
+            
+            _log.LogInformation($"Waiting {WAIT_INTERVAL_IN_SECONDS} seconds...");
+            await Task.Delay(WAIT_INTERVAL_IN_SECONDS * 1000);
+        }
+    }
 }
