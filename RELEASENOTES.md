@@ -1,4 +1,1 @@
-- Rename `gh gei generate-archive` to `gh gei migrate-archive-repo` which generates migration archives, uploads them to azure blob storage, and kicks off an github enterprise importer migration
-- Modify `gh gei migrate-repo` to optionally accept two archive urls to start a migration
-- Add target api url parameter to `gh gei migrate-repo` command
-- Fixed a bug where `configure-autolink` command would fail if your ADO team project had a space in it
+

@@ -10,18 +10,24 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommandTests
     {
+        private const string SOURCE_ORG = "foo-source-org";
+        private const string TARGET_ORG = "foo-target-org";
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateScriptCommand(null, null, null);
+            var command = new GenerateScriptCommand(null, null, null, null);
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(6);
+            command.Options.Count.Should().Be(9);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
@@ -30,8 +36,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Github_No_Data()
         {
-            var command = new GenerateScriptCommand(null, null, null);
-            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", false);
+            var command = new GenerateScriptCommand(null, null, null, null);
+            var script = command.GenerateGithubScript(null, "foo-source", "foo-target", "", "", false, false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -39,18 +45,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Github_Single_Repo()
         {
-            var githubSourceOrg = "foo-source";
-            var githubTargetOrg = "foo-target";
             var repo = "foo-repo";
-
             var repos = new List<string>() { repo };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" }}";
 
             script.Should().Be(expected);
         }
@@ -58,24 +61,21 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Github_Multiple_Repos()
         {
-            var githubSourceOrg = "foo-source";
-            var githubTargetOrg = "foo-target";
             var repo1 = "foo-repo-1";
             var repo2 = "foo-repo-2";
             var repo3 = "foo-repo-3";
-
             var repos = new List<string>() { repo1, repo2, repo3 };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo1}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo2}\" }}";
+            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo3}\" }}";
+            expected += $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" }}";
 
             script.Should().Be(expected);
         }
@@ -83,18 +83,51 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Github_With_Ssh()
         {
-            var githubSourceOrg = "foo-source";
-            var githubTargetOrg = "foo-target";
             var repo = "foo-repo";
-
             var repos = new List<string>() { repo };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, true);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\" --ssh }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ssh }}";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Github_GHES_Repo()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+            var ghesApiUrl = "https://api.foo.com";
+            var azureStorageConnectionString = "foo-storage-connection-string";
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}";
+
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public void Github_GHES_Repo_No_Ssl()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+            var ghesApiUrl = "https://api.foo.com";
+            var azureStorageConnectionString = "foo-storage-connection-string";
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify }}";
 
             script.Should().Be(expected);
         }
@@ -102,7 +135,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Ado_No_Data()
         {
-            var command = new GenerateScriptCommand(null, null, null);
+            var command = new GenerateScriptCommand(null, null, null, null);
             var script = command.GenerateAdoScript(null, "foo-source", "foo-target", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
@@ -111,19 +144,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Ado_Single_Repo()
         {
-            var adoSourceOrg = "foo-source";
             var adoTeamProject = "foo-team-project";
-            var githubTargetOrg = "foo-target";
             var repo = "foo-repo";
-
             var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateAdoScript(repos, SOURCE_ORG, TARGET_ORG, false);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo}\" }}";
 
             script.Should().Be(expected);
         }
@@ -131,25 +161,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Ado_Multiple_Repos()
         {
-            var adoSourceOrg = "foo-source";
             var adoTeamProject = "foo-team-project";
-            var githubTargetOrg = "foo-target";
             var repo1 = "foo-repo-1";
             var repo2 = "foo-repo-2";
             var repo3 = "foo-repo-3";
-
             var repos = new Dictionary<string, IEnumerable<string>> { { adoTeamProject, new List<string>() { repo1, repo2, repo3 } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, false);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateAdoScript(repos, SOURCE_ORG, TARGET_ORG, false);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo1}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo2}\" }}";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo3}\" }}";
+            expected += $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo3}\" }}";
 
             script.Should().Be(expected);
         }
@@ -157,19 +184,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Ado_With_Ssh()
         {
-            var adoSourceOrg = "foo-source";
             var adoTeamProject = "foo-team-project";
-            var githubTargetOrg = "foo-target";
             var repo = "foo-repo";
-
             var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
-            var script = command.GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, true);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateAdoScript(repos, SOURCE_ORG, TARGET_ORG, true);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}";
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}";
 
             script.Should().Be(expected);
         }
