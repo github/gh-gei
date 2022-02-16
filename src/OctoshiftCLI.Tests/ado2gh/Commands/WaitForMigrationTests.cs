@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -37,6 +38,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string previouslyFailedMigration = "PREVIOUS_FAILED_MIGRATION";
             const string previouslySucceededMigration = "PREVIOUS_SUCCEEDED_MIGRATION";
 
+            const int waitIntervalInSeconds = 1;
+
             var mockGithubApi = new Mock<GithubApi>(null, null);
             mockGithubApi.Setup(m => m.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
@@ -66,10 +69,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
 
+            var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                $"Waiting for migration {specifiedMigrationId} to finish...",
+                $"GITHUB ORG: {githubOrg}",
+                $"MIGRATION ID: {specifiedMigrationId}",
+                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 3, Total migrations {RepositoryMigrationStatus.Queued}: 1",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 4, Total migrations {RepositoryMigrationStatus.Queued}: 0",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Migration succeeded for migration {specifiedMigrationId}"
+            };
 
             // Act
-            const int waitIntervalInSeconds = 1;
             var command = new WaitForMigrationCommand(mockLogger.Object, mockGithubApiFactory.Object)
             {
                 WaitIntervalInSeconds = waitIntervalInSeconds
@@ -79,27 +98,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithubApi.Verify(m => m.GetOrganizationId(githubOrg));
 
-            mockLogger.Verify(
-                m => m.LogInformation($"Waiting for migration {specifiedMigrationId} to finish..."),
-                Times.Once);
-            mockLogger.Verify(m => m.LogInformation($"GITHUB ORG: {githubOrg}"), Times.Once);
-            mockLogger.Verify(m => m.LogInformation($"MIGRATION ID: {specifiedMigrationId}"), Times.Once);
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(9));
+            mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
             mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
-            mockLogger.Verify(
-                m => m.LogInformation($"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}"),
-                Times.Exactly(2));
-            mockLogger.Verify(
-                m => m.LogSuccess($"Migration succeeded for migration {specifiedMigrationId}"),
-                Times.Once);
-
             mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId), Times.Exactly(2));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 3, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 1"));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 4, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 0"));
-            
-            mockLogger.Verify(m => m.LogInformation($"Waiting {waitIntervalInSeconds} seconds..."), Times.Exactly(2));
+
+            actualLogOutput.Should().Equal(expectedLogOutput);
 
             mockLogger.VerifyNoOtherCalls();
             mockGithubApi.VerifyNoOtherCalls();
@@ -121,6 +126,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string previouslySucceededMigration = "PREVIOUS_SUCCEEDED_MIGRATION";
 
             const string failureReason = "FAILURE_REASON";
+            const int waitIntervalInSeconds = 1;
 
             var mockGithubApi = new Mock<GithubApi>(null, null);
             mockGithubApi.Setup(m => m.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
@@ -152,10 +158,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
 
+            var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                $"Waiting for migration {specifiedMigrationId} to finish...",
+                $"GITHUB ORG: {githubOrg}",
+                $"MIGRATION ID: {specifiedMigrationId}",
+                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 3, Total migrations {RepositoryMigrationStatus.Queued}: 1",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 4, Total migrations {RepositoryMigrationStatus.Queued}: 0",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Migration failed for migration {specifiedMigrationId}"
+            };
 
             // Act
-            const int waitIntervalInSeconds = 1;
             var command = new WaitForMigrationCommand(mockLogger.Object, mockGithubApiFactory.Object)
             {
                 WaitIntervalInSeconds = waitIntervalInSeconds
@@ -169,29 +191,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithubApi.Verify(m => m.GetOrganizationId(githubOrg));
 
-            mockLogger.Verify(m => m.LogInformation($"Waiting for migration {specifiedMigrationId} to finish..."));
-            mockLogger.Verify(m => m.LogInformation($"GITHUB ORG: {githubOrg}"));
-            mockLogger.Verify(m => m.LogInformation($"MIGRATION ID: {specifiedMigrationId}"));
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(9));
+            mockLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId));
-            mockLogger.Verify(m =>
-                m.LogInformation($"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}"));
-            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 3, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 1"));
-            mockLogger.Verify(m => m.LogInformation($"Waiting {waitIntervalInSeconds} seconds..."));
+            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
+            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId), Times.Exactly(2));
+            mockGithubApi.Verify(m => m.GetMigrationFailureReason(specifiedMigrationId), Times.Once);
 
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId));
-            mockLogger.Verify(m =>
-                m.LogInformation($"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}"));
-            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 4, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 0"));
-            mockLogger.Verify(m => m.LogInformation($"Waiting {waitIntervalInSeconds} seconds..."));
-
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId));
-            mockGithubApi.Verify(m => m.GetMigrationFailureReason(specifiedMigrationId));
-            mockLogger.Verify(m => m.LogError($"Migration failed for migration {specifiedMigrationId}"));
+            actualLogOutput.Should().Equal(expectedLogOutput);
 
             mockLogger.VerifyNoOtherCalls();
             mockGithubApi.VerifyNoOtherCalls();
@@ -210,6 +217,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             const string previouslyFailedMigration = "PREVIOUS_FAILED_MIGRATION";
             const string previouslySucceededMigration = "PREVIOUS_SUCCEEDED_MIGRATION";
+
+            const int waitIntervalInSeconds = 1;
 
             var mockGithubApi = new Mock<GithubApi>(null, null);
             mockGithubApi.Setup(m => m.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
@@ -242,10 +251,22 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
 
+            var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                "Waiting for all migrations to finish...",
+                $"GITHUB ORG: {githubOrg}",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 2, Total migrations {RepositoryMigrationStatus.Queued}: 1",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 3, Total migrations {RepositoryMigrationStatus.Queued}: 0",
+                $"Waiting {waitIntervalInSeconds} seconds...",
+                $"Total migrations {RepositoryMigrationStatus.InProgress}: 0, Total migrations {RepositoryMigrationStatus.Queued}: 0"
+            };
 
             // Act
-            const int waitIntervalInSeconds = 1;
             var command = new WaitForMigrationCommand(mockLogger.Object, mockGithubApiFactory.Object)
             {
                 WaitIntervalInSeconds = waitIntervalInSeconds
@@ -254,23 +275,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             mockGithubApi.Verify(m => m.GetOrganizationId(githubOrg));
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
+            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId), Times.Exactly(3));
 
-            mockLogger.Verify(m => m.LogInformation($"Waiting for all migrations to finish..."));
-            mockLogger.Verify(m => m.LogInformation($"GITHUB ORG: {githubOrg}"));
-
-            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 2, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 1"));
-            mockLogger.Verify(m => m.LogInformation($"Waiting {waitIntervalInSeconds} seconds..."));
-
-            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 3, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 0"));
-            mockLogger.Verify(m => m.LogInformation($"Waiting {waitIntervalInSeconds} seconds..."));
-
-            mockGithubApi.Verify(m => m.GetMigrationStates(githubOrgId));
-            mockLogger.Verify(m => m.LogInformation($"Total migrations {RepositoryMigrationStatus.InProgress}: 0, " +
-                                                    $"Total migrations {RepositoryMigrationStatus.Queued}: 0"));
+            actualLogOutput.Should().Equal(expectedLogOutput);
 
             mockLogger.VerifyNoOtherCalls();
             mockGithubApi.VerifyNoOtherCalls();
