@@ -67,7 +67,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         case RepositoryMigrationStatus.Failed:
                             {
                                 var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-                                _log.LogError($"Migration Failed for migration {migrationId}");
+                                _log.LogError($"Migration failed for migration {migrationId}");
                                 throw new OctoshiftCliException(failureReason);
                             }
                         case RepositoryMigrationStatus.Succeeded:
