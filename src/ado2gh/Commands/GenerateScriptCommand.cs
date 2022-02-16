@@ -233,7 +233,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
 
-            content.AppendLine(@"
+            content.AppendLine(@"#!/usr/bin/pwsh
+
 function Exec {
     param (
         [scriptblock]$ScriptBlock

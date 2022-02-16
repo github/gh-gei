@@ -29,6 +29,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
+
         [Fact]
         public void No_Data()
         {
@@ -39,6 +40,28 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             Assert.True(string.IsNullOrWhiteSpace(script));
         }
+
+        [Fact]
+        public void Github_StartsWithShebang()
+        {
+            var githubOrg = "foo-gh-org";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-team-project";
+            var repo = "foo-repo";
+
+            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>
+            {
+                { adoOrg, new Dictionary<string, IEnumerable<string>>() }
+            };
+
+            repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
+
+            script.Should().StartWith("#!/usr/bin/pwsh");
+        }
+
 
         [Fact]
         public void Single_Repo()

@@ -4,8 +4,10 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Unix;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -150,6 +152,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (output != null)
             {
                 File.WriteAllText(output.FullName, script);
+
+                // +x so script can be executed on macos and linux
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    var unixFileInfo = new UnixFileInfo(output.FullName);
+                    unixFileInfo.FileAccessPermissions |= FileAccessPermissions.UserExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.OtherExecute;
+                }
             }
         }
 
@@ -219,7 +228,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var content = new StringBuilder();
 
-            content.AppendLine(@"
+            content.AppendLine(@"#!/usr/bin/pwsh
+
 function Exec {
     param (
         [scriptblock]$ScriptBlock
