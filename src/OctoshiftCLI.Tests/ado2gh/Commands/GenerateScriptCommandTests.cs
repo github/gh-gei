@@ -18,7 +18,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(7);
+            command.Options.Count.Should().Be(8);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -26,6 +26,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "repos-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "skip-idp", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
+            TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -35,7 +36,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-gh-org";
 
             var command = new GenerateScriptCommand(null, null);
-            var script = command.GenerateScript(null, null, null, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(null, null, null, githubOrg, false, false);
 
             Assert.True(string.IsNullOrWhiteSpace(script));
         }
@@ -56,7 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -66,7 +67,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
@@ -96,7 +97,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>());
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -135,7 +136,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(repos, pipelines, appIds, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -147,7 +148,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
@@ -194,7 +195,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var appIds = new Dictionary<string, string>();
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, pipelines, appIds, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(repos, pipelines, appIds, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -204,7 +205,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
@@ -240,11 +241,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
             reposOnlyField.SetValue(command, true);
 
-            var script = command.GenerateScript(repos, null, null, githubOrg, false, false);
+            var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false, false);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
 
             Assert.Equal(expected, script);
         }
@@ -268,11 +269,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
             reposOnlyField.SetValue(command, true);
 
-            var script = command.GenerateScript(repos, null, null, githubOrg, false, true);
+            var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false, true);
 
             script = TrimNonExecutableLines(script);
 
-            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ssh }}";
+            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ssh --wait }}";
 
             Assert.Equal(expected, script);
         }
@@ -293,7 +294,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var script = command.GenerateScript(repos, null, null, githubOrg, true, false);
+            var script = command.GenerateSequentialScript(repos, null, null, githubOrg, true, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -303,7 +304,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
             expected += Environment.NewLine;
             expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
             expected += Environment.NewLine;
