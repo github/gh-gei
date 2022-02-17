@@ -1,1 +1,1 @@
-
+- Add `wait` option to `migrate-repo` command. If set to `true` (default is `false`) it will synchronously wait for the migration to finish, otherwise it will just queue up a repo migration and return the `migration-id`.
