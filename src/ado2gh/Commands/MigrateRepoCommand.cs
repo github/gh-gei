@@ -126,7 +126,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubOrg, githubRepo);
-                    await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, verbose);
+                    await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, wait, verbose);
                 }
                 else
                 {
