@@ -1,9 +1,2 @@
-- Rename `gh gei generate-archive` to `gh gei migrate-archive-repo` which generates migration archives, uploads them to azure blob storage, and kicks off an github enterprise importer migration
-- Modify `gh gei migrate-repo` to optionally accept two archive urls to start a migration
-- Add target api url parameter to `gh gei migrate-repo` command
-- Add ado-team-project parameter to `ado2gh generate-script` command
-- Add ado-team-project parameter to `gh gei generate-script` command
-- Fixed a bug where `configure-autolink` command would fail if your ADO team project had a space in it
-- Remove `gh gei generate-archive`
-- Update `gh gei migrate-repo` to allow for migrations from GHES instances. When `--ghes-api-url` is passed in, it requires an Azure Blob Storage connection string `--azure-storage-connection-string` and an optional flag to disable SSL verification `--no-ssl-verify`. This migration path generates migration archives on the source, uploads them to Azure Blob Storage using the connection string, then kicks off a GitHub Enterprise Importer migration using the uploaded migration archives.
-- Modify `gh gei migrate-repo` to optionally accept two pre-generated archive urls to start a migration (not commonly used) and a target api url parameter
+
+

@@ -75,6 +75,7 @@ jobs:
       if: matrix.runner-os == 'ubuntu-latest'
 
   integration-test:
+    if: false
     strategy:
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
@@ -178,7 +179,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, integration-test ]
+    needs: [ build ]
     environment: PUBLISH_RELEASE
 
     steps:
