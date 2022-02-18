@@ -99,7 +99,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var result = await command.GetAdoRepos(mockAdo.Object, org, teamProject);
 
             Assert.Single(result[teamProject1]);
@@ -126,7 +126,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var result = await command.GetAdoRepos(mockAdo.Object, org, teamProjectArg);
 
             Assert.Single(result[teamProjectArg]);
@@ -151,7 +151,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null);
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
             var result = await command.GetAdoRepos(mockAdo.Object, org, teamProjectArg);
 
             Assert.Empty(result);
