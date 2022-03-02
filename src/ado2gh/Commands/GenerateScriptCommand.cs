@@ -311,7 +311,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return content.ToString();
         }
 
-        private string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
+        public string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
             string githubOrg,
@@ -342,6 +342,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                 if (!hasAppId && !_reposOnly)
                 {
+                    content.AppendLine();
                     content.AppendLine("# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
                 }
 
@@ -377,13 +378,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 }
             }
 
-            content.AppendLine();
-
             // Waiting for migrations
             foreach (var adoOrg in repos.Keys)
             {
                 content.AppendLine();
-                content.AppendLine($"# =========== Waiting for migration to finish for Organization: {adoOrg} ===========");
+                content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
 
                 foreach (var adoTeamProject in repos[adoOrg].Keys)
                 {
@@ -392,7 +391,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         content.AppendLine();
                         content.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo} ===");
 
-                        var githubRepo = GetGithubRepoName(adoTeamProject, adoOrg);
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
                         content.AppendLine(WaitForMigrationScript(repoMigrationKey));
@@ -423,7 +422,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             // Generating report
             content.AppendLine();
-            content.AppendLine("");
             content.AppendLine("# =========== Summary ===========");
             content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             content.AppendLine("Write-Host Total number of failed migrations: $Failed");
@@ -432,6 +430,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 if ($Failed -ne 0) {
     exit 1
 }");
+
+            content.AppendLine();
+            content.AppendLine();
 
             return content.ToString();
         }
