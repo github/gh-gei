@@ -486,8 +486,26 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
+}";
+            expected += Environment.NewLine;
+            expected += @"
+function ExecBatch {
+    param (
+        [scriptblock[]]$ScriptBlocks
+    )
+    $Global:LastBatchFailures = 0
+    foreach ($ScriptBlock in $ScriptBlocks)
+    {
+        & @ScriptBlock
+        if ($lastexitcode -ne 0) {
+            $Global:LastBatchFailures++
+        }
+    }
 }";
             expected += Environment.NewLine;
             expected += Environment.NewLine;

@@ -327,6 +327,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+            content.AppendLine(EXEC_BATCH_FUNCTION_BLOCK);
 
             content.AppendLine();
             content.AppendLine("$RepoMigrations = [ordered]@{}");
@@ -544,8 +545,26 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
+}";
+
+        private const string EXEC_BATCH_FUNCTION_BLOCK = @"
+function ExecBatch {
+    param (
+        [scriptblock[]]$ScriptBlocks
+    )
+    $Global:LastBatchFailures = 0
+    foreach ($ScriptBlock in $ScriptBlocks)
+    {
+        & @ScriptBlock
+        if ($lastexitcode -ne 0) {
+            $Global:LastBatchFailures++
+        }
+    }
 }";
     }
 }
