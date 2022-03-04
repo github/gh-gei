@@ -330,6 +330,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             content.AppendLine(EXEC_BATCH_FUNCTION_BLOCK);
 
             content.AppendLine();
+            content.AppendLine("$Succeeded = 0");
+            content.AppendLine("$Failed = 0");
             content.AppendLine("$RepoMigrations = [ordered]@{}");
 
             // Queueing migrations
