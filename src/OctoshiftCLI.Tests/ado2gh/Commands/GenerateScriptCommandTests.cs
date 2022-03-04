@@ -543,7 +543,7 @@ function ExecBatch {
             expected += Environment.NewLine;
             expected += $"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===";
             expected += Environment.NewLine;
-            expected += $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]";
+            expected += $"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]";
             expected += Environment.NewLine;
             expected += "if ($lastexitcode -eq 0) {";
             expected += Environment.NewLine;
@@ -574,7 +574,7 @@ function ExecBatch {
             expected += Environment.NewLine;
             expected += $"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {barRepo} ===";
             expected += Environment.NewLine;
-            expected += $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{barRepo}\"]";
+            expected += $"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{barRepo}\"]";
             expected += Environment.NewLine;
             expected += "if ($lastexitcode -eq 0) {";
             expected += Environment.NewLine;
