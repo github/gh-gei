@@ -397,14 +397,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                         content.AppendLine(WaitForMigrationScript(repoMigrationKey));
                         content.AppendLine("if ($lastexitcode -eq 0) {");
-                        content.AppendLine("    $Succeeded++");
                         if (!_reposOnly)
                         {
-                            content.AppendLine("    " + Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                            content.AppendLine("    " + Exec(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
-                            content.AppendLine("    " + Exec(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                            content.AppendLine("    " + Exec(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                            content.AppendLine("    " + Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine("    " + "ExecBatch @(");
+                            content.AppendLine("        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            content.AppendLine("        " + Wrap(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
+                            content.AppendLine("        " + Wrap(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine("        " + Wrap(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine("        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
 
                             var appId = string.Empty;
                             var hasAppId = appIds != null && appIds.TryGetValue(adoOrg, out appId);
@@ -412,9 +412,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             {
                                 foreach (var adoPipeline in pipelines[adoOrg][adoTeamProject][adoRepo])
                                 {
-                                    content.AppendLine("    " + Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
+                                    content.AppendLine("        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                                 }
                             }
+
+                            content.AppendLine("    )");
+                            content.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
                         }
 
                         content.AppendLine("} else {"); // if ($lastexitcode -ne 0)
@@ -529,12 +532,12 @@ if ($Failed -ne 0) {
 
         private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
-        private string Exec(string script) => WrapSingleScript("Exec", script);
+        private string Exec(string script) => Wrap(script, "Exec");
 
-        private string ExecAndGetMigrationId(string script) => WrapSingleScript("ExecAndGetMigrationID", script);
+        private string ExecAndGetMigrationId(string script) => Wrap(script, "ExecAndGetMigrationID");
 
-        private string WrapSingleScript(string outerCommand, string script) =>
-            script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}";
+        private string Wrap(string script, string outerCommand = "") =>
+            script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
 
         private const string EXEC_FUNCTION_BLOCK = @"
 function Exec {
