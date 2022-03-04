@@ -509,6 +509,10 @@ function ExecBatch {
 }";
             expected += Environment.NewLine;
             expected += Environment.NewLine;
+            expected += "$Succeeded = 0";
+            expected += Environment.NewLine;
+            expected += "$Failed = 0";
+            expected += Environment.NewLine;
             expected += "$RepoMigrations = [ordered]@{}";
             expected += Environment.NewLine;
             expected += Environment.NewLine;
