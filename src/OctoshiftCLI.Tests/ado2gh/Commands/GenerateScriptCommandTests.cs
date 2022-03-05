@@ -570,7 +570,7 @@ if ($Failed -ne 0) {
 }");
             expected.AppendLine();
             expected.AppendLine();
-            
+
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
             var actual = command.GenerateParallelScript(repos, pipelines, appIds, githubOrg, false, false);
