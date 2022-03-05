@@ -421,6 +421,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             content.AppendLine("    )");
                             content.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
                         }
+                        else
+                        {
+                            content.AppendLine("    $Succeeded++");
+                        }
 
                         content.AppendLine("} else {"); // if ($lastexitcode -ne 0)
                         content.AppendLine("    $Failed++");
