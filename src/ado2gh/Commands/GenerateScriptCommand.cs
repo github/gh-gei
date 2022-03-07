@@ -435,7 +435,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             // Generating report
             content.AppendLine();
-            content.AppendLine("# =========== Summary ===========");
+            content.AppendLine("Write-Host =============== Summary ===============");
             content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             content.AppendLine("Write-Host Total number of failed migrations: $Failed");
 

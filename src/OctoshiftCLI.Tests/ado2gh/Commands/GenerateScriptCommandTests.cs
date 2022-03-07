@@ -561,7 +561,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine("# =========== Summary ===========");
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -681,7 +681,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine("# =========== Summary ===========");
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -819,7 +819,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine("# =========== Summary ===========");
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -953,7 +953,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine("# =========== Summary ===========");
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -1082,7 +1082,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine("# =========== Summary ===========");
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
