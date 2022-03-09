@@ -23,19 +23,22 @@ namespace OctoshiftCLI.Tests
             const string adoOrg = "ADO_ORG";
             const string adoTeamProject = "ADO_TEAM_PROJECT";
 
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
+
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
+            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
@@ -50,19 +53,22 @@ namespace OctoshiftCLI.Tests
             const string adoOrg = "ADO_ORG";
             const string adoTeamProject = "ADO TEAM PROJECT";
 
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
+
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/ADO%20TEAM%20PROJECT/_workitems/edit/<num>/"
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
+            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));

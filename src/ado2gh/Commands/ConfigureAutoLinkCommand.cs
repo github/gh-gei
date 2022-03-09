@@ -61,11 +61,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
 
             var keyPrefix = "AB#";
-            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
 
             var githubApi = _githubApiFactory.Create();
 
-            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo, adoOrg, adoTeamProject);
+            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
             if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
             {
                 _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
@@ -80,7 +80,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 await githubApi.DeleteAutoLink(githubOrg, githubRepo, autoLink.Id);
             }
 
-            await githubApi.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject, keyPrefix, urlTemplate);
+            await githubApi.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate);
 
             _log.LogSuccess("Successfully configured autolink references");
         }

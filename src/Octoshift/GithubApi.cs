@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -20,20 +21,29 @@ namespace OctoshiftCLI
             _apiUrl = apiUrl;
         }
 
-        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject, string keyPrefix, string urlTemplate)
+        public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
         {
+            if (string.IsNullOrWhiteSpace(keyPrefix))
+            {
+                throw new ArgumentException("Invalid value for keyPrefix");
+            }
+            if (string.IsNullOrWhiteSpace(urlTemplate))
+            {
+                throw new ArgumentException("Invalid value for urlTemplate");
+            }
+
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
                 key_prefix = keyPrefix,
-                url_template = urlTemplate
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             await _client.PostAsync(url, payload);
         }
 
-        public virtual async Task<List<AutoLink>> GetAutoLinks(string org, string repo, string adoOrg, string adoTeamProject)
+        public virtual async Task<List<AutoLink>> GetAutoLinks(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
