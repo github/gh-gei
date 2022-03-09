@@ -452,7 +452,7 @@ if ($Failed -ne 0) {
                 ? $" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]"
                 : "";
 
-            return $"./gh gei wait-for-migration --github-org \"{githubOrg}\"{migrationIdOption}";
+            return $"gh gei wait-for-migration --github-org \"{githubOrg}\"{migrationIdOption}";
         }
 
         private string Exec(string script) => Wrap(script, "Exec");
