@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -59,8 +60,27 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
 
-            // TODO: This crashes if autolink is already configured
-            await _githubApiFactory.Create().AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject);
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
+
+            var githubApi = _githubApiFactory.Create();
+
+            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo, adoOrg, adoTeamProject);
+            if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
+            {
+                _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
+                return;
+            }
+
+            var autoLink = autoLinks.FirstOrDefault(al => al.KeyPrefix == keyPrefix);
+            if (autoLink != null)
+            {
+                _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
+                _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
+                await githubApi.DeleteAutoLink(githubOrg, githubRepo, autoLink.Id);
+            }
+
+            await githubApi.AddAutoLink(githubOrg, githubRepo, adoOrg, adoTeamProject, keyPrefix, urlTemplate);
 
             _log.LogSuccess("Successfully configured autolink references");
         }

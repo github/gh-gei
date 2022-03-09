@@ -3,7 +3,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 
 namespace OctoshiftCLI
 {
@@ -18,17 +20,33 @@ namespace OctoshiftCLI
             _apiUrl = apiUrl;
         }
 
-        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
+        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject, string keyPrefix, string urlTemplate)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20")
+                key_prefix = keyPrefix,
+                url_template = urlTemplate
             };
 
             await _client.PostAsync(url, payload);
+        }
+
+        public virtual async Task<List<AutoLink>> GetAutoLinks(string org, string repo, string adoOrg, string adoTeamProject)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
+
+            // TODO: Need to implement paging
+            var response = await _client.GetAsync(url);
+            return JsonConvert.DeserializeObject<List<AutoLink>>(response);
+        }
+
+        public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks/{autoLinkId}";
+
+            await _client.DeleteAsync(url);
         }
 
         public virtual async Task<string> CreateTeam(string org, string teamName)
