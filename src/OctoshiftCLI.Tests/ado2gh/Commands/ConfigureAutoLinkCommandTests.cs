@@ -44,7 +44,60 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
+            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
             mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate));
+        }
+
+        [Fact]
+        public async Task Idempotency_AutoLink_Exists()
+        {
+            var githubOrg = "foo-org";
+            var githubRepo = "foo-repo";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-ado-tp";
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+                      .Returns(Task.FromResult(new List<AutoLink>
+                      {
+                          new AutoLink{Id = 1, KeyPrefix = keyPrefix, UrlTemplate = urlTemplate},
+                      }));
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+
+            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
+
+            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
+            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Never);
+        }
+
+        [Fact]
+        public async Task Idempotency_KeyPrefix_Exists()
+        {
+            var githubOrg = "foo-org";
+            var githubRepo = "foo-repo";
+            var adoOrg = "foo-ado-org";
+            var adoTeamProject = "foo-ado-tp";
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+                      .Returns(Task.FromResult(new List<AutoLink>
+                      {
+                          new AutoLink{Id = 1, KeyPrefix = keyPrefix, UrlTemplate = "SomethingElse"},
+                      }));
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+
+            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
+
+            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Once);
+            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Once);
         }
     }
 }
