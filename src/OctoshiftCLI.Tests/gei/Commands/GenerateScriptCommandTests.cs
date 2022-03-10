@@ -252,6 +252,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}");
             expected.AppendLine($"$RepoMigrations[\"{adoTeamProject}-{repo}\"] = $MigrationID");
             expected.AppendLine();
+            expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
@@ -322,6 +323,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" }}");
             expected.AppendLine($"$RepoMigrations[\"{adoTeamProject}-{repo2}\"] = $MigrationID");
+            expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
@@ -403,6 +405,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ssh }}");
             expected.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
             expected.AppendLine();
+            expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
@@ -471,6 +474,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" }}");
             expected.AppendLine($"$RepoMigrations[\"{repo2}\"] = $MigrationID");
+            expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
@@ -542,6 +546,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}");
             expected.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
             expected.AppendLine();
+            expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
@@ -608,6 +613,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine("# === Queuing repo migrations ===");
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify }}");
             expected.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
+            expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");

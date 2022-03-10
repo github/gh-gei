@@ -279,6 +279,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             // Waiting for migrations
+            content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {githubSourceOrg} ===========");
             content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
 
@@ -386,6 +387,7 @@ if ($Failed -ne 0) {
             }
 
             // Waiting for migrations
+            content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoSourceOrg} ===========");
             content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
 
