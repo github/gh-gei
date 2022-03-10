@@ -1,1 +1,1 @@
-
+- Support parallel migrations with `generate-script` for both `ado2gh` and `gh gei`. `generate-script` now by default generates a script to perform migrations in parallel. Adding `--sequential` flag will force migrations to perform in a sequential (one by one) fashion. 
