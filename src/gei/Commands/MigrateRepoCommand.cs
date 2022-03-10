@@ -216,21 +216,29 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
             string migrationSourceId;
+            string sourceToken;
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg))
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
-                var sourceAdoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat, ssh);
+                sourceToken = _environmentVariableProvider.AdoPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat, ssh);
             }
             else
             {
                 sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
-                var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
+                sourceToken = _environmentVariableProvider.SourceGithubPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat, ssh);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
+            var migrationId = await githubApi.StartMigration(
+                migrationSourceId,
+                sourceRepoUrl,
+                githubOrgId,
+                targetRepo,
+                sourceToken,
+                targetGithubPat,
+                gitArchiveUrl, metadataArchiveUrl);
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")

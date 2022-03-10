@@ -45,7 +45,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", "").Result).Returns(migrationId);
+            mockGithub
+                .Setup(x => x.StartMigration(
+                    migrationSourceId,
+                    adoRepoUrl,
+                    githubOrgId,
+                    githubRepo,
+                    adoToken,
+                    githubPat,
+                    "",
+                    "").Result)
+                .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
@@ -84,7 +94,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, true).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", "").Result).Returns(migrationId);
+            mockGithub
+                .Setup(x => x.StartMigration(
+                        migrationSourceId,
+                        adoRepoUrl,
+                        githubOrgId,
+                        githubRepo,
+                        adoToken,
+                        null,
+                        "",
+                        "").Result)
+                .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
@@ -123,7 +143,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, false).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", "").Result).Returns(migrationId);
+            mockGithub
+                .Setup(x => x.StartMigration(
+                        migrationSourceId,
+                        adoRepoUrl,
+                        githubOrgId,
+                        githubRepo,
+                        adoToken,
+                        githubPat,
+                        "",
+                        "").Result)
+                .Returns(migrationId);
             mockGithub.SetupSequence(x => x.GetMigrationState(migrationId).Result).Returns("FAILED").Returns("SUCCEEDED");
             mockGithub.Setup(x => x.GetMigrationFailureReason(migrationId).Result).Returns("Warning: Permanently added XXXXX (ECDSA) to the list of known hosts");
 
@@ -142,7 +172,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo);
 
             mockGithub.Verify(x => x.DeleteRepo(githubOrg, githubRepo));
-            mockGithub.Verify(x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, "", ""), Times.Exactly(2));
+            mockGithub.Verify(
+                x => x.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat, "", ""), Times.Exactly(2));
         }
     }
 }
