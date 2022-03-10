@@ -529,7 +529,7 @@ function ExecBatch {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
@@ -545,7 +545,7 @@ function ExecBatch {
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {barRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {barRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{barRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
@@ -673,7 +673,7 @@ function ExecBatch {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    $Succeeded++");
@@ -811,7 +811,7 @@ function ExecBatch {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    $Succeeded++");
@@ -937,7 +937,7 @@ function ExecBatch {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
@@ -1067,7 +1067,7 @@ function ExecBatch {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo} ===");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
             expected.AppendLine($"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");

@@ -392,7 +392,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     foreach (var adoRepo in repos[adoOrg][adoTeamProject])
                     {
                         content.AppendLine();
-                        content.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo} ===");
+                        content.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo}. Will then complete the below post migration steps. ===");
 
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
