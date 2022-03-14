@@ -148,7 +148,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string gitArchiveUrl = "",
           string metadataArchiveUrl = "",
           bool ssh = false,
-          bool wait = true,
+          bool wait = false,
           bool verbose = false)
         {
             _log.Verbose = verbose;

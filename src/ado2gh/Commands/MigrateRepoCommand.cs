@@ -72,7 +72,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = true, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
