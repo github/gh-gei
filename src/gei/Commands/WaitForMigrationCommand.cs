@@ -65,11 +65,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     switch (specifiedMigrationState)
                     {
                         case RepositoryMigrationStatus.Failed:
-                            {
-                                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-                                _log.LogError($"Migration failed for migration {migrationId}");
-                                throw new OctoshiftCliException(failureReason);
-                            }
+                            var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
+                            _log.LogError($"Migration failed for migration {migrationId}");
+                            throw new OctoshiftCliException(failureReason);
                         case RepositoryMigrationStatus.Succeeded:
                             _log.LogSuccess($"Migration succeeded for migration {migrationId}");
                             return;
