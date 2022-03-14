@@ -1,1 +1,1 @@
-
+- Add `wait-for-migration` command. By default it waits for all ongoing migrations to finish and reports the number of in progress and queued migrations. If an optional `migration-id` is provided, it will return as soon as that migration is complete.
