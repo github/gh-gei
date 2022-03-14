@@ -1,2 +1,3 @@
 - Add `wait-for-migration` command. By default it waits for all ongoing migrations to finish and reports the number of in progress and queued migrations. If an optional `migration-id` is provided, it will return as soon as that migration is complete.
 - Add `--wait` option to `migrate-repo` command. If set to `true` (default is `false`) it will synchronously wait for the migration to finish, otherwise it will just queue up a repo migration and return the `migration-id`.
+- Support parallel migrations with `generate-script` for both `ado2gh` and `gh gei`. `generate-script` now by default generates a script to perform migrations in parallel. Adding `--sequential` flag will force migrations to perform in a sequential (one by one) fashion. 
