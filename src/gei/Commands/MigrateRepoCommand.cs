@@ -98,6 +98,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
+            var wait = new Option("--wait")
+            {
+                IsRequired = false,
+                Description = "Synchronously waits for the repo migration to finish."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -119,12 +124,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(metadataArchiveUrl);
 
             AddOption(ssh);
+            AddOption(wait);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<
               string, string, string, string, string, string, string,
               string, string, bool,
-              string, string,
+              string, string, bool,
               bool, bool>(Invoke);
         }
 
@@ -142,6 +148,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string gitArchiveUrl = "",
           string metadataArchiveUrl = "",
           bool ssh = false,
+          bool wait = true,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -170,6 +177,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (ssh)
             {
                 _log.LogInformation("SSH: true");
+            }
+
+            if (wait)
+            {
+                _log.LogInformation("WAIT: true");
             }
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
@@ -231,6 +243,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
+
+            if (!wait)
+            {
+                _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+                return;
+            }
+
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
@@ -251,7 +270,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, verbose);
+                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, wait, verbose);
                 }
                 else
                 {
