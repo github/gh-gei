@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -8,6 +9,7 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -874,6 +876,235 @@ namespace OctoshiftCLI.Tests
                 .ThrowExactlyAsync<HttpRequestException>();
         }
 
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Should_Return_All_Pages()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string orgId = "ORG_ID";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // first request/response
+            var firstRequestVariables = new { id = orgId, first = 2, after = (string)null };
+            var firstRequestBody = new { query, variables = firstRequestVariables };
+            var firstResponseEndCursor = Guid.NewGuid().ToString();
+            var repoMigration1 = CreateRepositoryMigration();
+            var repoMigration2 = CreateRepositoryMigration();
+            var firstResponseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = firstResponseEndCursor, hasNextPage = true },
+                            totalCount = 5,
+                            nodes = new[] { repoMigration1, repoMigration2 }
+                        }
+                    }
+                }
+            };
+            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(firstResponseContent.ToJson())
+            };
+
+            // second request/response
+            var secondRequestVariables = new { id = orgId, first = 2, after = firstResponseEndCursor };
+            var secondResponseEndCursor = Guid.NewGuid().ToString();
+            var repoMigration3 = CreateRepositoryMigration();
+            var repoMigration4 = CreateRepositoryMigration();
+            var secondResponseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = secondResponseEndCursor, hasNextPage = true },
+                            totalCount = 5,
+                            nodes = new[] { repoMigration3, repoMigration4 }
+                        }
+                    }
+                }
+            };
+            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(secondResponseContent.ToJson())
+            };
+            var secondRequestBody = new { query, variables = secondRequestVariables };
+
+            // third request/response
+            var thirdRequestVariables = new { id = orgId, first = 2, after = secondResponseEndCursor };
+            var repoMigration5 = CreateRepositoryMigration();
+            var thirdResponseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = Guid.NewGuid().ToString(), hasNextPage = false },
+                            totalCount = 5,
+                            nodes = new[] { repoMigration5 }
+                        }
+                    }
+                }
+            };
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(thirdResponseContent.ToJson())
+            };
+            var thirdRequestBody = new { query, variables = thirdRequestVariables };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == firstRequestBody.ToJson(),
+                firstResponse); // first request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == secondRequestBody.ToJson(),
+                secondResponse,
+                handlerMock); // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == thirdRequestBody.ToJson(),
+                thirdResponse,
+                handlerMock); // third request
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    firstRequestBody,
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    2)
+                .ToListAsync();
+
+
+            // Assert
+            result.Should().HaveCount(5);
+            result[0].ToJson().Should().Be(repoMigration1.ToJson());
+            result[1].ToJson().Should().Be(repoMigration2.ToJson());
+            result[2].ToJson().Should().Be(repoMigration3.ToJson());
+            result[3].ToJson().Should().Be(repoMigration4.ToJson());
+            result[4].ToJson().Should().Be(repoMigration5.ToJson());
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Should_Create_Variables_If_Missing()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // first request/response
+            var requestVariables = new { first = 2, after = (string)null };
+            var requestBody = new { query, variables = requestVariables };
+            var repoMigration = CreateRepositoryMigration();
+            var responseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = Guid.NewGuid().ToString(), hasNextPage = false },
+                            totalCount = 1,
+                            nodes = new[] { repoMigration }
+                        }
+                    }
+                }
+            };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    new { query },
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    2)
+                .ToListAsync();
+
+            // Assert
+            result.Should().HaveCount(1);
+            result[0].ToJson().Should().Be(repoMigration.ToJson());
+        }
+
+        private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) =>
+            new
+            {
+                id = migrationId ?? Guid.NewGuid().ToString(),
+                sourceUrl = "SOURCE_URL",
+                migrationSource = new { name = "Azure Devops Source" },
+                state,
+                failureReason = "",
+                createdAt = DateTime.UtcNow
+            };
+
         private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
             MockHttpHandler(req => req.Method == HttpMethod.Get);
 
@@ -895,16 +1126,19 @@ namespace OctoshiftCLI.Tests
                 req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
                 && req.Method == HttpMethod.Patch);
 
-        private Mock<HttpMessageHandler> MockHttpHandler(Func<HttpRequestMessage, bool> requestMatcher)
+        private Mock<HttpMessageHandler> MockHttpHandler(
+            Func<HttpRequestMessage, bool> requestMatcher,
+            HttpResponseMessage httpResponse = null,
+            Mock<HttpMessageHandler> handlerMock = null)
         {
-            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock ??= new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(x => requestMatcher(x)),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(_httpResponse);
+                .ReturnsAsync(httpResponse ?? _httpResponse);
             return handlerMock;
         }
     }

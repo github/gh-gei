@@ -53,6 +53,46 @@ namespace OctoshiftCLI
         public virtual async Task<string> PostAsync(string url, object body) =>
             (await SendAsync(HttpMethod.Post, url, body)).Content;
 
+        public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
+            string url,
+            object body,
+            Func<JObject, JArray> resultCollectionSelector,
+            Func<JObject, JObject> pageInfoSelector,
+            int first = 100,
+            string after = null)
+        {
+            if (resultCollectionSelector is null)
+            {
+                throw new ArgumentNullException(nameof(resultCollectionSelector));
+            }
+
+            var jBody = JObject.FromObject(body);
+            jBody["variables"] ??= new JObject();
+            jBody["variables"]["first"] = first;
+
+            var hasNextPage = true;
+            while (hasNextPage)
+            {
+                jBody["variables"]["after"] = after;
+
+                var (content, _) = await SendAsync(HttpMethod.Post, url, jBody);
+                var jContent = JObject.Parse(content);
+                foreach (var jResult in resultCollectionSelector(jContent))
+                {
+                    yield return jResult;
+                }
+
+                var pageInfo = pageInfoSelector?.Invoke(jContent);
+                if (pageInfo is null)
+                {
+                    yield break;
+                }
+
+                hasNextPage = pageInfo["hasNextPage"]?.ToObject<bool>() ?? false;
+                after = pageInfo["endCursor"]?.ToObject<string>();
+            }
+        }
+
         public virtual async Task<string> PutAsync(string url, object body) =>
             (await SendAsync(HttpMethod.Put, url, body)).Content;
 
