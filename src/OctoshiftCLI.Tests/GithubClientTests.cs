@@ -1020,7 +1020,7 @@ query($id: ID!, $first: Int, $after: String) {
         }
 
         [Fact]
-        public async Task PostGraphQLWithPaginationAsync_Should_Create_Variables_If_Missing()
+        public async Task PostGraphQLWithPaginationAsync_Should_Create_Query_Variables_If_Missing()
         {
             // Arrange
             const string url = "https://example.com/graphql";
@@ -1048,8 +1048,8 @@ query($id: ID!, $first: Int, $after: String) {
     }
 }";
 
-            // first request/response
-            var requestVariables = new { first = 2, after = (string)null };
+            // request/response
+            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
             var requestBody = new { query, variables = requestVariables };
             var repoMigration = CreateRepositoryMigration();
             var responseContent = new
@@ -1086,7 +1086,8 @@ query($id: ID!, $first: Int, $after: String) {
                     new { query },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
-                    2)
+                    requestVariables.first,
+                    requestVariables.after)
                 .ToListAsync();
 
             // Assert
@@ -1094,16 +1095,106 @@ query($id: ID!, $first: Int, $after: String) {
             result[0].ToJson().Should().Be(repoMigration.ToJson());
         }
 
-        private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) =>
-            new
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Should_Override_First_And_After_Query_Variables()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // request/response
+            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
+            var requestBody = new { query, variables = requestVariables };
+            var repoMigration = CreateRepositoryMigration();
+            var responseContent = new
             {
-                id = migrationId ?? Guid.NewGuid().ToString(),
-                sourceUrl = "SOURCE_URL",
-                migrationSource = new { name = "Azure Devops Source" },
-                state,
-                failureReason = "",
-                createdAt = DateTime.UtcNow
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = Guid.NewGuid().ToString(), hasNextPage = false },
+                            totalCount = 1,
+                            nodes = new[] { repoMigration }
+                        }
+                    }
+                }
             };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    new { query, variables = new { first = 10, after = Guid.NewGuid().ToString() } },
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    requestVariables.first,
+                    requestVariables.after)
+                .ToListAsync();
+
+            // Assert
+            result.Should().HaveCount(1);
+            result[0].ToJson().Should().Be(repoMigration.ToJson());
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Throws_If_Result_Collection_Selector_Is_Null()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            using var httpClient = new HttpClient();
+            var githubClient = new GithubClient(null, httpClient, PERSONAL_ACCESS_TOKEN);
+            
+            // Act, Assert
+            await githubClient
+                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", null, null).ToListAsync())
+                .Should()
+                .ThrowAsync<ArgumentNullException>();
+        }
+
+        private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new
+        {
+            id = migrationId ?? Guid.NewGuid().ToString(),
+            sourceUrl = "SOURCE_URL",
+            migrationSource = new { name = "Azure Devops Source" },
+            state,
+            failureReason = "",
+            createdAt = DateTime.UtcNow
+        };
 
         private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
             MockHttpHandler(req => req.Method == HttpMethod.Get);
