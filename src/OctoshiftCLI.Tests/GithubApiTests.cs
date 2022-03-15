@@ -139,6 +139,69 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetTeams_Returns_All_Teams()
+        {
+            // Arrange
+            const string org = "ORG";
+
+            var url = $"https://api.github.com/orgs/{org}/teams";
+
+            const string team1 = "TEAM_1";
+            const string team2 = "TEAM_2";
+            var responsePage1 = $@"
+            [
+                {{
+                    ""name"": ""{team1}"",
+                    ""id"": 1
+                }},
+                {{
+                    ""name"": ""{team2}"", 
+                    ""id"": 2
+                }}
+            ]";
+
+            const string team3 = "TEAM_3";
+            const string team4 = "TEAM_4";
+            var responsePage2 = $@"
+            [
+                {{
+                    ""name"": ""{team3}"",
+                    ""id"": 3
+                }},
+                {{
+                    ""name"": ""{team4}"", 
+                    ""id"": 4
+                }}
+            ]";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
+
+                await Task.CompletedTask;
+            }
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(GetAllPages);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = (await githubApi.GetTeams(org)).ToArray();
+
+            // Assert
+            result.Should().HaveCount(4);
+            result.Should().Equal(team1, team2, team3, team4);
+        }
+
+        [Fact]
         public async Task GetTeamMembers_Returns_Team_Members()
         {
             // Arrange
