@@ -50,6 +50,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
+            var wait = new Option("--wait")
+            {
+                IsRequired = false,
+                Description = "Synchronously waits for the repo migration to finish."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -61,12 +66,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(ssh);
+            AddOption(wait);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -80,6 +86,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 _log.LogInformation("SSH: true");
             }
+            if (wait)
+            {
+                _log.LogInformation("WAIT: true");
+            }
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
@@ -89,6 +99,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, ssh);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
+
+            if (!wait)
+            {
+                _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+                return;
+            }
 
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
@@ -110,7 +126,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                     _isRetry = true;
                     await githubApi.DeleteRepo(githubOrg, githubRepo);
-                    await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, verbose);
+                    await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, wait, verbose);
                 }
                 else
                 {

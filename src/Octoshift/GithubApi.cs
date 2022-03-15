@@ -228,6 +228,46 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["state"];
         }
 
+        public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!, $first: Int, $after: String)";
+            var gql = @" 
+                node(id: $id) { 
+                    ... on Organization { 
+                        login, 
+                        repositoryMigrations(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            totalCount
+                            nodes {
+                                id
+                                sourceUrl
+                                migrationSource { name }
+                                state
+                                failureReason
+                                createdAt
+                            }
+                        }
+                    }
+                }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { id = orgId, first = 100, after = (string)null }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return data["data"]["node"]["repositoryMigrations"]["nodes"]
+                .Select(node => ((string)node["id"], (string)node["state"])).ToList();
+        }
+
         public virtual async Task<string> GetMigrationFailureReason(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
