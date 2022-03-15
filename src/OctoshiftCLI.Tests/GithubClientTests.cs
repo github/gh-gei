@@ -1178,7 +1178,7 @@ query($id: ID!, $first: Int, $after: String) {
             const string url = "https://example.com/graphql";
             using var httpClient = new HttpClient();
             var githubClient = new GithubClient(null, httpClient, PERSONAL_ACCESS_TOKEN);
-            
+
             // Act, Assert
             await githubClient
                 .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", null, null).ToListAsync())
