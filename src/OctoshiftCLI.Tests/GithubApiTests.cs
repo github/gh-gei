@@ -84,13 +84,13 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock.Setup(x => x.GetAsync(It.IsAny<string>())).ReturnsAsync("[]");
+            githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             await githubApi.GetAutoLinks(org, repo);
 
             // Assert
-            githubClientMock.Verify(m => m.GetAsync(url));
+            githubClientMock.Verify(m => m.GetAllAsync(url));
         }
 
         [Fact]

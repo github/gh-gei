@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
-using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-                      .Returns(Task.FromResult(new List<AutoLink>()));
+                      .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
@@ -60,18 +60,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-                      .Returns(Task.FromResult(new List<AutoLink>
+                      .Returns(Task.FromResult(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
-                          new AutoLink{Id = 1, KeyPrefix = keyPrefix, UrlTemplate = urlTemplate},
+                          (1, keyPrefix, urlTemplate),
                       }));
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var command = new ConfigureAutoLinkCommand(mockLogger.Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
             mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Never);
+            actualLogOutput.Should().Contain($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
         }
 
         [Fact]
@@ -86,18 +92,25 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-                      .Returns(Task.FromResult(new List<AutoLink>
+                      .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
-                          new AutoLink{Id = 1, KeyPrefix = keyPrefix, UrlTemplate = "SomethingElse"},
-                      }));
+                          (1, keyPrefix, "SomethingElse"),
+                      });
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var command = new ConfigureAutoLinkCommand(mockLogger.Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Once);
-            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Once);
+            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1));
+            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate));
+            actualLogOutput.Should().Contain($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
+            actualLogOutput.Should().Contain($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
         }
     }
 }

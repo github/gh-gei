@@ -73,7 +73,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var autoLink = autoLinks.FirstOrDefault(al => al.KeyPrefix == keyPrefix);
-            if (autoLink != null)
+            if (autoLink != default((int, string, string)))
             {
                 _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
                 _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");

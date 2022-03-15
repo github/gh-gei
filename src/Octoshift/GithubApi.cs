@@ -4,9 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octoshift.Models;
 
 namespace OctoshiftCLI
 {
@@ -25,11 +23,11 @@ namespace OctoshiftCLI
         {
             if (string.IsNullOrWhiteSpace(keyPrefix))
             {
-                throw new ArgumentException("Invalid value for keyPrefix");
+                throw new ArgumentException($"Invalid value for {nameof(keyPrefix)}");
             }
             if (string.IsNullOrWhiteSpace(urlTemplate))
             {
-                throw new ArgumentException("Invalid value for urlTemplate");
+                throw new ArgumentException($"Invalid value for {nameof(urlTemplate)}");
             }
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
@@ -43,13 +41,13 @@ namespace OctoshiftCLI
             await _client.PostAsync(url, payload);
         }
 
-        public virtual async Task<List<AutoLink>> GetAutoLinks(string org, string repo)
+        public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinks(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
-            // TODO: Need to implement paging
-            var response = await _client.GetAsync(url);
-            return JsonConvert.DeserializeObject<List<AutoLink>>(response);
+            return await _client.GetAllAsync(url)
+                                .Select(al => ((int)al["id"], (string)al["key_prefix"], (string)al["url_template"]))
+                                .ToListAsync();
         }
 
         public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
