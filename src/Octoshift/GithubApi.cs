@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -18,17 +19,42 @@ namespace OctoshiftCLI
             _apiUrl = apiUrl;
         }
 
-        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
+        public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
         {
+            if (string.IsNullOrWhiteSpace(keyPrefix))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(keyPrefix)}");
+            }
+            if (string.IsNullOrWhiteSpace(urlTemplate))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(urlTemplate)}");
+            }
+
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20")
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             await _client.PostAsync(url, payload);
+        }
+
+        public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinks(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
+
+            return await _client.GetAllAsync(url)
+                                .Select(al => ((int)al["id"], (string)al["key_prefix"], (string)al["url_template"]))
+                                .ToListAsync();
+        }
+
+        public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks/{autoLinkId}";
+
+            await _client.DeleteAsync(url);
         }
 
         public virtual async Task<string> CreateTeam(string org, string teamName)
