@@ -12,7 +12,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private bool _isRetry;
         private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
@@ -262,27 +261,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
+                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+
                 var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-
-                if (!_isRetry && failureReason.Contains("Warning: Permanently added") && failureReason.Contains("(ECDSA) to the list of known hosts"))
-                {
-                    _log.LogWarning(failureReason);
-                    _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
-
-                    _isRetry = true;
-                    await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, wait, verbose);
-                }
-                else
-                {
-                    _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                    throw new OctoshiftCliException(failureReason);
-                }
+                throw new OctoshiftCliException(failureReason);
             }
-            else
-            {
-                _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-            }
+
+            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
 
         private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
