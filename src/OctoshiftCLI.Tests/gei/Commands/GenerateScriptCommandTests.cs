@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ssh", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void Github_No_Data()
         {
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateSequentialGithubScript(null, "foo-source", "foo-target", "", "", false, false);
+            var script = command.GenerateSequentialGithubScript(null, "foo-source", "foo-target", "", "", false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -51,7 +51,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
 
             script = TrimNonExecutableLines(script);
 
@@ -69,7 +69,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo1, repo2, repo3 };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
 
             script = TrimNonExecutableLines(script);
 
@@ -83,22 +83,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void Github_With_Ssh()
-        {
-            var repo = "foo-repo";
-            var repos = new List<string>() { repo };
-
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
-
-            script = TrimNonExecutableLines(script);
-
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ssh --wait }}";
-
-            script.Should().Be(expected);
-        }
-
-        [Fact]
         public void Github_GHES_Repo()
         {
             var repo = "foo-repo";
@@ -107,7 +91,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -125,7 +109,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true);
 
             script = TrimNonExecutableLines(script);
 
@@ -138,7 +122,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void Ado_No_Data()
         {
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateSequentialAdoScript(null, "foo-source", "foo-target", false);
+            var script = command.GenerateSequentialAdoScript(null, "foo-source", "foo-target");
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -151,7 +135,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialAdoScript(repos, SOURCE_ORG, TARGET_ORG, false);
+            var script = command.GenerateSequentialAdoScript(repos, SOURCE_ORG, TARGET_ORG);
 
             script = TrimNonExecutableLines(script);
 
@@ -170,7 +154,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new Dictionary<string, IEnumerable<string>> { { adoTeamProject, new List<string>() { repo1, repo2, repo3 } } };
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialAdoScript(repos, SOURCE_ORG, TARGET_ORG, false);
+            var script = command.GenerateSequentialAdoScript(repos, SOURCE_ORG, TARGET_ORG);
 
             script = TrimNonExecutableLines(script);
 
@@ -184,99 +168,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void Ado_With_Ssh()
-        {
-            var adoTeamProject = "foo-team-project";
-            var repo = "foo-repo";
-            var repos = new Dictionary<string, IEnumerable<string>>() { { adoTeamProject, new List<string>() { repo } } };
-
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialAdoScript(repos, SOURCE_ORG, TARGET_ORG, true);
-
-            script = TrimNonExecutableLines(script);
-
-            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh --wait }}";
-
-            script.Should().Be(expected);
-        }
-
-        [Fact]
         public void GenerateParallelAdoScript_No_Data()
         {
             // Arrange, Act
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateParallelAdoScript(null, "foo-source", "foo-target", false);
+            var script = command.GenerateParallelAdoScript(null, "foo-source", "foo-target");
 
             // Assert
             script.Should().BeEmpty();
-        }
-
-        [Fact]
-        public void GenerateParallelAdoScript_Single_Repo_With_Ssh()
-        {
-            // Arrange
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-            var repos = new Dictionary<string, IEnumerable<string>> { { adoTeamProject, new[] { repo } } };
-
-            var expected = new StringBuilder();
-            expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
-function ExecAndGetMigrationID {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
-        Write-Host $_
-        $_
-    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
-    return $MigrationID
-}");
-            expected.AppendLine();
-            expected.AppendLine("$Succeeded = 0");
-            expected.AppendLine("$Failed = 0");
-            expected.AppendLine("$RepoMigrations = [ordered]@{}");
-            expected.AppendLine();
-            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
-            expected.AppendLine();
-            expected.AppendLine($"# === Queuing repo migrations for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo}\" --ssh }}");
-            expected.AppendLine($"$RepoMigrations[\"{adoTeamProject}-{repo}\"] = $MigrationID");
-            expected.AppendLine();
-            expected.AppendLine();
-            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
-            expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
-            expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
-            expected.AppendLine($"# === Migration stauts for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
-            expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{adoTeamProject}-{repo}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
-            expected.AppendLine();
-            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
-            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
-            expected.AppendLine(@"
-if ($Failed -ne 0) {
-    exit 1
-}");
-            expected.AppendLine();
-            expected.AppendLine();
-
-            // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelAdoScript(repos, SOURCE_ORG, TARGET_ORG, true);
-
-            // Assert
-            script.Should().Be(expected.ToString());
         }
 
         [Fact]
@@ -348,7 +247,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelAdoScript(repos, SOURCE_ORG, TARGET_ORG, false);
+            var script = command.GenerateParallelAdoScript(repos, SOURCE_ORG, TARGET_ORG);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -359,76 +258,10 @@ if ($Failed -ne 0) {
         {
             // Arrange, Act
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateParallelGithubScript(null, "github-source", "github-target", "", "", false, false);
+            var script = command.GenerateParallelGithubScript(null, "github-source", "github-target", "", "", false);
 
             // Assert
             script.Should().BeEmpty();
-        }
-
-        [Fact]
-        public void GenerateParallelGithubScript_Single_Repo_With_Ssh()
-        {
-            // Arrange
-            const string repo = "foo-repo";
-            var repos = new[] { repo };
-
-            var expected = new StringBuilder();
-            expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
-function ExecAndGetMigrationID {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
-        Write-Host $_
-        $_
-    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
-    return $MigrationID
-}");
-            expected.AppendLine();
-            expected.AppendLine("$Succeeded = 0");
-            expected.AppendLine("$Failed = 0");
-            expected.AppendLine("$RepoMigrations = [ordered]@{}");
-            expected.AppendLine();
-            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
-            expected.AppendLine();
-            expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --ssh }}");
-            expected.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
-            expected.AppendLine();
-            expected.AppendLine();
-            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
-            expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
-            expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{repo}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
-            expected.AppendLine();
-            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
-            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
-            expected.AppendLine(@"
-if ($Failed -ne 0) {
-    exit 1
-}");
-            expected.AppendLine();
-            expected.AppendLine();
-
-            // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
-
-            // Assert
-            script.Should().Be(expected.ToString());
         }
 
         [Fact]
@@ -498,7 +331,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -566,7 +399,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -634,7 +467,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true);
 
             // Assert
             script.Should().Be(expected.ToString());

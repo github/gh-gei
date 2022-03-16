@@ -473,46 +473,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateAdoMigrationSource_Using_Ssh()
-        {
-            // Arrange
-            const string url = "https://api.github.com/graphql";
-            const string orgId = "ORG_ID";
-            const string adoToken = "ADO_TOKEN";
-            const string githubPat = "GITHUB_PAT";
-            var payload =
-                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String) " +
-                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\",\"githubPat\":null}},\"operationName\":\"createMigrationSource\"}}";
-            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""createMigrationSource"": {{
-                        ""migrationSource"": {{
-                            ""id"": ""{actualMigrationSourceId}"",
-                            ""name"": ""Azure Devops Source"",
-                            ""url"": ""https://dev.azure.com"",
-                            ""type"": ""AZURE_DEVOPS""
-                        }}
-                    }}
-                }}
-            }}";
-
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .ReturnsAsync(response);
-
-            // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoToken, githubPat, true);
-
-            // Assert
-            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
-        }
-
-        [Fact]
         public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
         {
             // Arrange
@@ -547,46 +507,6 @@ namespace OctoshiftCLI.Tests
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
             var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat);
-
-            // Assert
-            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
-        }
-
-        [Fact]
-        public async Task CreateGhecMigrationSource_Using_Ssh()
-        {
-            // Arrange 
-            const string url = "https://api.github.com/graphql";
-            const string orgId = "ORG_ID";
-            const string sourceGithubPat = "SOURCE_GITHUB_PAT";
-            const string targetGithubPat = "target_GITHUB_PAT";
-            var payload =
-                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String) " +
-                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\",\"accessToken\":\"{sourceGithubPat}\",\"githubPat\":null}},\"operationName\":\"createMigrationSource\"}}";
-            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""createMigrationSource"": {{
-                        ""migrationSource"": {{
-                            ""id"": ""{actualMigrationSourceId}"",
-                            ""name"": ""GHEC Source"",
-                            ""url"": ""https://github.com"",
-                            ""type"": ""GITHUB_ARCHIVE""
-                        }}
-                    }}
-                }}
-            }}";
-
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .ReturnsAsync(response);
-
-            // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat, true);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
