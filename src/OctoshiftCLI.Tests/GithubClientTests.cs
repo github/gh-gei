@@ -1186,6 +1186,167 @@ query($id: ID!, $first: Int, $after: String) {
                 .ThrowAsync<ArgumentNullException>();
         }
 
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Returns_When_PageInfo_Is_Missing()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // request/response
+            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
+            var requestBody = new { query, variables = requestVariables };
+            var repoMigration = CreateRepositoryMigration();
+            var responseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            totalCount = 1,
+                            nodes = new[] { repoMigration }
+                        }
+                    }
+                }
+            };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    requestBody,
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    2,
+                    requestVariables.after)
+                .ToListAsync();
+
+            // Assert
+            result.Should().HaveCount(1);
+            result[0].ToJson().Should().Be(repoMigration.ToJson());
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Does_Not_Continue_When_HasNextPage_Is_Missing()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // request/response
+            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
+            var requestBody = new { query, variables = requestVariables };
+            var repoMigration = CreateRepositoryMigration();
+            var responseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = Guid.NewGuid().ToString() },
+                            totalCount = 1,
+                            nodes = new[] { repoMigration }
+                        }
+                    }
+                }
+            };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    requestBody,
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    2,
+                    requestVariables.after)
+                .ToListAsync();
+
+            // Assert
+            result.Should().HaveCount(1);
+            result[0].ToJson().Should().Be(repoMigration.ToJson());
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
         private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new
         {
             id = migrationId ?? Guid.NewGuid().ToString(),
