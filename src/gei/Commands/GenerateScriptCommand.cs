@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -64,7 +65,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var ssh = new Option("--ssh")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
+            };
+            var sequential = new Option("--sequential")
+            {
+                IsRequired = false,
+                Description = "Waits for each migration to finish before moving on to the next one."
             };
             var verbose = new Option("--verbose")
             {
@@ -81,9 +88,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(outputOption);
             AddOption(ssh);
+            AddOption(sequential);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, FileInfo, string, string, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, FileInfo, string, string, bool, bool, bool, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -95,6 +103,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string azureStorageConnectionString = "",
           bool noSslVerify = false,
           bool ssh = false,
+          bool sequential = false,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -135,7 +144,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"OUTPUT: {output}");
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
+            }
+            if (sequential)
+            {
+                _log.LogInformation("SEQUENTIAL: true");
             }
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
@@ -144,26 +157,30 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
-                await InvokeAdo(adoSourceOrg, githubTargetOrg, ssh) :
-                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, ssh);
+                await InvokeAdo(adoSourceOrg, githubTargetOrg, sequential) :
+                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential);
 
             if (output != null)
             {
-                File.WriteAllText(output.FullName, script);
+                await File.WriteAllTextAsync(output.FullName, script);
             }
         }
 
-        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool ssh)
+        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential)
         {
             var targetApiUrl = "https://api.github.com";
             var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(targetApiUrl), githubSourceOrg);
-            return GenerateGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, ssh);
+            return sequential
+                ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify)
+                : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify);
         }
 
-        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool ssh)
+        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool sequential)
         {
             var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(), adoSourceOrg);
-            return GenerateAdoScript(repos, adoSourceOrg, githubTargetOrg, ssh);
+            return sequential
+                ? GenerateSequentialAdoScript(repos, adoSourceOrg, githubTargetOrg)
+                : GenerateParallelAdoScript(repos, adoSourceOrg, githubTargetOrg);
         }
 
         public async Task<IEnumerable<string>> GetGithubRepos(GithubApi github, string githubOrg)
@@ -210,7 +227,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        public string GenerateGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool ssh)
+        public string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
         {
             if (repos == null)
             {
@@ -219,28 +236,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var content = new StringBuilder();
 
-            content.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
             foreach (var repo in repos)
             {
-                content.AppendLine(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, ssh));
+                content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true)));
             }
 
             return content.ToString();
         }
 
-        public string GenerateAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg, bool ssh)
+        public string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
         {
             if (repos == null)
             {
@@ -249,16 +257,69 @@ function Exec {
 
             var content = new StringBuilder();
 
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
+            content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+
+            content.AppendLine();
+            content.AppendLine("$Succeeded = 0");
+            content.AppendLine("$Failed = 0");
+            content.AppendLine("$RepoMigrations = [ordered]@{}");
+
+            content.AppendLine();
+            content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
+
+            content.AppendLine();
+            content.AppendLine("# === Queuing repo migrations ===");
+
+            // Queuing migrations
+            foreach (var repo in repos)
+            {
+                content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false))}");
+                content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
+                content.AppendLine();
+            }
+
+            // Waiting for migrations
+            content.AppendLine();
+            content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {githubSourceOrg} ===========");
+            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
+            content.AppendLine();
+
+            // Query each migration's status
+            foreach (var repo in repos)
+            {
+                content.AppendLine(WaitForMigrationScript(githubTargetOrg, repo));
+                content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+                content.AppendLine();
+            }
+
+            // Generating the final report
+            content.AppendLine();
+            content.AppendLine("Write-Host =============== Summary ===============");
+            content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            content.AppendLine("Write-Host Total number of failed migrations: $Failed");
+
             content.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
+if ($Failed -ne 0) {
+    exit 1
 }");
+
+            content.AppendLine();
+            content.AppendLine();
+
+            return content.ToString();
+        }
+
+        public string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        {
+            if (repos == null)
+            {
+                return string.Empty;
+            }
+
+            var content = new StringBuilder();
+
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
 
@@ -276,7 +337,7 @@ function Exec {
                     foreach (var repo in repos[teamProject])
                     {
                         var githubRepo = GetGithubRepoName(teamProject, repo);
-                        content.AppendLine(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, ssh));
+                        content.AppendLine(Exec(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, true)));
                     }
                 }
             }
@@ -284,9 +345,90 @@ function Exec {
             return content.ToString();
         }
 
+        public string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        {
+            if (repos == null)
+            {
+                return string.Empty;
+            }
+
+            var content = new StringBuilder();
+
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
+            content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+
+            content.AppendLine();
+            content.AppendLine("$Succeeded = 0");
+            content.AppendLine("$Failed = 0");
+            content.AppendLine("$RepoMigrations = [ordered]@{}");
+
+            content.AppendLine();
+            content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
+
+            // Queueing migrations
+            foreach (var teamProject in repos.Keys)
+            {
+                content.AppendLine();
+                content.AppendLine($"# === Queuing repo migrations for Team Project: {adoSourceOrg}/{teamProject} ===");
+
+                if (!repos[teamProject].Any())
+                {
+                    content.AppendLine("# Skipping this Team Project because it has no git repos");
+                    continue;
+                }
+
+                foreach (var repo in repos[teamProject])
+                {
+                    var githubRepo = GetGithubRepoName(teamProject, repo);
+                    content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, false))}");
+                    content.AppendLine($"$RepoMigrations[\"{githubRepo}\"] = $MigrationID");
+                    content.AppendLine();
+                }
+            }
+
+            // Waiting for migrations
+            content.AppendLine();
+            content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoSourceOrg} ===========");
+            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
+
+            // Query each migration's status
+            foreach (var teamProject in repos.Keys)
+            {
+                if (repos[teamProject].Any())
+                {
+                    content.AppendLine();
+                    content.AppendLine($"# === Migration stauts for Team Project: {adoSourceOrg}/{teamProject} ===");
+                }
+
+                foreach (var repo in repos[teamProject])
+                {
+                    var githubRepo = GetGithubRepoName(teamProject, repo);
+                    content.AppendLine(WaitForMigrationScript(githubTargetOrg, githubRepo));
+                    content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+                    content.AppendLine();
+                }
+            }
+
+            // Generating the final report
+            content.AppendLine();
+            content.AppendLine("Write-Host =============== Summary ===============");
+            content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            content.AppendLine("Write-Host Total number of failed migrations: $Failed");
+
+            content.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+
+            content.AppendLine();
+            content.AppendLine();
+
+            return content.ToString();
+        }
+
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
 
-        private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool ssh)
+        private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait)
         {
             var ghesRepoOptions = "";
             if (!string.IsNullOrWhiteSpace(ghesApiUrl))
@@ -294,17 +436,54 @@ function Exec {
                 ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, noSslVerify);
             }
 
-            return $"Exec {{ gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
+            return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
         }
 
-        private string MigrateAdoRepoScript(string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool ssh)
-        {
-            return $"Exec {{ gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+        private string MigrateAdoRepoScript(string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool wait) =>
+            $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
 
         private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
         {
             return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
         }
+
+        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey = null)
+        {
+            var migrationIdOption = !repoMigrationKey.IsNullOrWhiteSpace()
+                ? $" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]"
+                : "";
+
+            return $"gh gei wait-for-migration --github-org \"{githubOrg}\"{migrationIdOption}";
+        }
+
+        private string Exec(string script) => Wrap(script, "Exec");
+
+        private string ExecAndGetMigrationId(string script) => Wrap(script, "ExecAndGetMigrationID");
+
+        private string Wrap(string script, string outerCommand = "") =>
+            script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private const string EXEC_FUNCTION_BLOCK = @"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}";
+
+        private const string EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK = @"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}";
     }
 }
