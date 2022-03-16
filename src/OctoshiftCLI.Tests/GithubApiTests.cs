@@ -23,19 +23,22 @@ namespace OctoshiftCLI.Tests
             const string adoOrg = "ADO_ORG";
             const string adoTeamProject = "ADO_TEAM_PROJECT";
 
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
+
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/"
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
+            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
@@ -50,22 +53,63 @@ namespace OctoshiftCLI.Tests
             const string adoOrg = "ADO_ORG";
             const string adoTeamProject = "ADO TEAM PROJECT";
 
+            var keyPrefix = "AB#";
+            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
+
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/ADO%20TEAM%20PROJECT/_workitems/edit/<num>/"
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            await githubApi.AddAutoLink(org, repo, adoOrg, adoTeamProject);
+            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+        }
+
+        [Fact]
+        public async Task GetAutoLinks_Calls_The_Right_Endpoint()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "REPO";
+
+            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            await githubApi.GetAutoLinks(org, repo);
+
+            // Assert
+            githubClientMock.Verify(m => m.GetAllAsync(url));
+        }
+
+        [Fact]
+        public async Task DeleteAutoLink_Calls_The_Right_Endpoint()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string repo = "REPO";
+            const int autoLinkId = 1;
+
+            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks/{autoLinkId}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            await githubApi.DeleteAutoLink(org, repo, autoLinkId);
+
+            // Assert
+            githubClientMock.Verify(m => m.DeleteAsync(url));
         }
 
         [Fact]
@@ -366,46 +410,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateAdoMigrationSource_Using_Ssh()
-        {
-            // Arrange
-            const string url = "https://api.github.com/graphql";
-            const string orgId = "ORG_ID";
-            const string adoToken = "ADO_TOKEN";
-            const string githubPat = "GITHUB_PAT";
-            var payload =
-                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String) " +
-                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\",\"accessToken\":\"{adoToken}\",\"githubPat\":null}},\"operationName\":\"createMigrationSource\"}}";
-            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""createMigrationSource"": {{
-                        ""migrationSource"": {{
-                            ""id"": ""{actualMigrationSourceId}"",
-                            ""name"": ""Azure Devops Source"",
-                            ""url"": ""https://dev.azure.com"",
-                            ""type"": ""AZURE_DEVOPS""
-                        }}
-                    }}
-                }}
-            }}";
-
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .ReturnsAsync(response);
-
-            // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoToken, githubPat, true);
-
-            // Assert
-            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
-        }
-
-        [Fact]
         public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
         {
             // Arrange
@@ -446,46 +450,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateGhecMigrationSource_Using_Ssh()
-        {
-            // Arrange 
-            const string url = "https://api.github.com/graphql";
-            const string orgId = "ORG_ID";
-            const string sourceGithubPat = "SOURCE_GITHUB_PAT";
-            const string targetGithubPat = "target_GITHUB_PAT";
-            var payload =
-                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String) " +
-                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } } }\"" +
-                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\",\"accessToken\":\"{sourceGithubPat}\",\"githubPat\":null}},\"operationName\":\"createMigrationSource\"}}";
-            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""createMigrationSource"": {{
-                        ""migrationSource"": {{
-                            ""id"": ""{actualMigrationSourceId}"",
-                            ""name"": ""GHEC Source"",
-                            ""url"": ""https://github.com"",
-                            ""type"": ""GITHUB_ARCHIVE""
-                        }}
-                    }}
-                }}
-            }}";
-
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
-            githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .ReturnsAsync(response);
-
-            // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId, sourceGithubPat, targetGithubPat, true);
-
-            // Assert
-            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
-        }
-
-        [Fact]
         public async Task StartMigration_Returns_New_Repository_Migration_Id()
         {
             // Arrange
@@ -494,15 +458,65 @@ namespace OctoshiftCLI.Tests
             const string orgId = "ORG_ID";
             const string repo = "REPO";
             const string url = "https://api.github.com/graphql";
-            const string gitArchiveUrl = "";
-            const string metadataArchiveUrl = "";
+            const string gitArchiveUrl = "GIT_ARCHIVE_URL";
+            const string metadataArchiveUrl = "METADATA_ARCHIVE_URL";
+            const string sourceToken = "SOURCE_TOKEN";
+            const string targetToken = "TARGET_TOKEN";
 
-            var payload =
-                "{\"query\":\"mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!, $gitArchiveUrl: String!, $metadataArchiveUrl: String!) " +
-                "{ startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError, gitArchiveUrl: $gitArchiveUrl, metadataArchiveUrl: $metadataArchiveUrl }) " +
-                "{ repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } } }\"" +
-                $",\"variables\":{{\"sourceId\":\"{migrationSourceId}\",\"ownerId\":\"{orgId}\",\"sourceRepositoryUrl\":\"{adoRepoUrl}\",\"repositoryName\":\"{repo}\",\"continueOnError\":true,\"gitArchiveUrl\":\"{gitArchiveUrl}\",\"metadataArchiveUrl\":\"{metadataArchiveUrl}\"}}," +
-                "\"operationName\":\"startRepositoryMigration\"}";
+            const string query = @"
+                mutation startRepositoryMigration(
+                    $sourceId: ID!,
+                    $ownerId: ID!,
+                    $sourceRepositoryUrl: URI!,
+                    $repositoryName: String!,
+                    $continueOnError: Boolean!,
+                    $gitArchiveUrl: String!,
+                    $metadataArchiveUrl: String!,
+                    $accessToken: String!,
+                    $githubPat: String)";
+            const string gql = @"
+                startRepositoryMigration(
+                    input: { 
+                        sourceId: $sourceId,
+                        ownerId: $ownerId,
+                        sourceRepositoryUrl: $sourceRepositoryUrl,
+                        repositoryName: $repositoryName,
+                        continueOnError: $continueOnError,
+                        gitArchiveUrl: $gitArchiveUrl,
+                        metadataArchiveUrl: $metadataArchiveUrl,
+                        accessToken: $accessToken,
+                        githubPat: $githubPat
+                    }
+                ) {
+                    repositoryMigration {
+                        id,
+                        migrationSource {
+                            id,
+                            name,
+                            type
+                        },
+                        sourceUrl,
+                        state,
+                        failureReason
+                    }
+                  }";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    sourceId = migrationSourceId,
+                    ownerId = orgId,
+                    sourceRepositoryUrl = adoRepoUrl,
+                    repositoryName = repo,
+                    continueOnError = true,
+                    gitArchiveUrl,
+                    metadataArchiveUrl,
+                    accessToken = sourceToken,
+                    githubPat = targetToken
+                },
+                operationName = "startRepositoryMigration"
+            };
             const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
             var response = $@"
             {{
@@ -525,13 +539,12 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var expectedRepositoryMigrationId =
-                await githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, repo, gitArchiveUrl, metadataArchiveUrl);
+            var expectedRepositoryMigrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, repo, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
 
             // Assert
             expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
@@ -864,6 +877,115 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetMigrationStates_Returns_All_Migration_States_For_An_Org()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+
+            var payload =
+                @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                                    node(id: $id) { 
+                                        ... on Organization { 
+                                            login, 
+                                            repositoryMigrations(first: $first, after: $after) {
+                                                pageInfo {
+                                                    endCursor
+                                                    hasNextPage
+                                                }
+                                                totalCount
+                                                nodes {
+                                                    id
+                                                    sourceUrl
+                                                    migrationSource { name }
+                                                    state
+                                                    failureReason
+                                                    createdAt
+                                                }
+                                            }
+                                        }
+                                    } 
+                                }""" +
+                $",\"variables\":{{\"id\":\"{orgId}\", \"first\": 100, \"after\": null}}}}";
+
+            var migration1 = (MigrationId: "MIGRATION_ID_1", State: RepositoryMigrationStatus.Succeeded);
+            var migration2 = (MigrationId: "MIGRATION_ID_2", State: RepositoryMigrationStatus.InProgress);
+            var migration3 = (MigrationId: "MIGRATION_ID_3", State: RepositoryMigrationStatus.Failed);
+            var migration4 = (MigrationId: "MIGRATION_ID_4", State: RepositoryMigrationStatus.Queued);
+            var response = $@"
+            {{
+	            ""data"": {{
+                    ""node"": {{
+                        ""login"": ""github"",
+                        ""repositoryMigrations"": {{
+                            ""pageInfo"": {{
+                                ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMi0wMi0xMFQyMzozMDozMCsw="",
+                                ""hasNextPage"": false
+                            }},
+                            ""totalCount"": 2,
+                            ""nodes"": [
+                                {{
+                                    ""id"": ""{migration1.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_1"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration1.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:30:30Z""
+                                }},
+                                {{
+                                    ""id"": ""{migration2.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration2.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:31:30Z""
+                                }},
+                                {{
+                                    ""id"": ""{migration3.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration3.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:32:30Z""
+                                }},
+                                {{
+                                    ""id"": ""{migration4.MigrationId}"",
+                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
+                                    ""migrationSource"": {{
+                                        ""name"": ""Azure Devops Source""
+                                    }},
+                                    ""state"": ""{migration4.State}"",
+                                    ""failureReason"": """",
+                                    ""createdAt"": ""2022-02-10T23:33:30Z""
+                                }}
+
+                            ]
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var migrationStates = (await githubApi.GetMigrationStates(orgId)).ToArray();
+
+            // Assert
+            migrationStates.Should().HaveCount(4);
+            migrationStates.Should().Contain(new[] { migration1, migration2, migration3, migration4 });
+        }
+
+        [Fact]
         public async Task GetUserId_Returns_The_User_Id()
         {
             // Arrange
@@ -945,7 +1067,6 @@ namespace OctoshiftCLI.Tests
             // Assert
             result.Should().BeNull();
         }
-
 
         [Fact]
         public async Task GetMannequin_WithNoUser_Returns_Empty()
@@ -1043,5 +1164,15 @@ namespace OctoshiftCLI.Tests
             result.MappedUser.Should().BeNull();
         }
 
+
+        private string Compact(string source) =>
+            source
+                .Replace("\r", "")
+                .Replace("\n", "")
+                .Replace("\t", "")
+                .Replace("\\r", "")
+                .Replace("\\n", "")
+                .Replace("\\t", "")
+                .Replace(" ", "");
     }
 }

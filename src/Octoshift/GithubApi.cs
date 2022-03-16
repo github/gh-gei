@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -19,17 +20,42 @@ namespace OctoshiftCLI
             _apiUrl = apiUrl;
         }
 
-        public virtual async Task AddAutoLink(string org, string repo, string adoOrg, string adoTeamProject)
+        public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
         {
+            if (string.IsNullOrWhiteSpace(keyPrefix))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(keyPrefix)}");
+            }
+            if (string.IsNullOrWhiteSpace(urlTemplate))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(urlTemplate)}");
+            }
+
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
             var payload = new
             {
-                key_prefix = "AB#",
-                url_template = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20")
+                key_prefix = keyPrefix,
+                url_template = urlTemplate.Replace(" ", "%20")
             };
 
             await _client.PostAsync(url, payload);
+        }
+
+        public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinks(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
+
+            return await _client.GetAllAsync(url)
+                                .Select(al => ((int)al["id"], (string)al["key_prefix"], (string)al["url_template"]))
+                                .ToListAsync();
+        }
+
+        public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks/{autoLinkId}";
+
+            await _client.DeleteAsync(url);
         }
 
         public virtual async Task<string> CreateTeam(string org, string teamName)
@@ -103,7 +129,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat, bool ssh = false)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -120,7 +146,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "AZURE_DEVOPS",
                     accessToken = adoToken,
-                    githubPat = !ssh ? githubPat : null
+                    githubPat
                 },
                 operationName = "createMigrationSource"
             };
@@ -131,7 +157,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat, bool ssh = false)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -148,7 +174,7 @@ namespace OctoshiftCLI
                     ownerId = orgId,
                     type = "GITHUB_ARCHIVE",
                     accessToken = sourceGithubPat,
-                    githubPat = !ssh ? targetGithubPat : null
+                    githubPat = targetGithubPat
                 },
                 operationName = "createMigrationSource"
             };
@@ -159,12 +185,47 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string gitArchiveUrl = "", string metadataArchiveUrl = "")
+        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = "", string metadataArchiveUrl = "")
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation startRepositoryMigration($sourceId: ID!, $ownerId: ID!, $sourceRepositoryUrl: URI!, $repositoryName: String!, $continueOnError: Boolean!, $gitArchiveUrl: String!, $metadataArchiveUrl: String!)";
-            var gql = "startRepositoryMigration(input: { sourceId: $sourceId, ownerId: $ownerId, sourceRepositoryUrl: $sourceRepositoryUrl, repositoryName: $repositoryName, continueOnError: $continueOnError, gitArchiveUrl: $gitArchiveUrl, metadataArchiveUrl: $metadataArchiveUrl }) { repositoryMigration { id, migrationSource { id, name, type }, sourceUrl, state, failureReason } }";
+            var query = @"
+                mutation startRepositoryMigration(
+                    $sourceId: ID!,
+                    $ownerId: ID!,
+                    $sourceRepositoryUrl: URI!,
+                    $repositoryName: String!,
+                    $continueOnError: Boolean!,
+                    $gitArchiveUrl: String!,
+                    $metadataArchiveUrl: String!,
+                    $accessToken: String!,
+                    $githubPat: String)";
+            var gql = @"
+                startRepositoryMigration(
+                    input: { 
+                        sourceId: $sourceId,
+                        ownerId: $ownerId,
+                        sourceRepositoryUrl: $sourceRepositoryUrl,
+                        repositoryName: $repositoryName,
+                        continueOnError: $continueOnError,
+                        gitArchiveUrl: $gitArchiveUrl,
+                        metadataArchiveUrl: $metadataArchiveUrl,
+                        accessToken: $accessToken,
+                        githubPat: $githubPat
+                    }
+                ) {
+                    repositoryMigration {
+                        id,
+                        migrationSource {
+                            id,
+                            name,
+                            type
+                        },
+                        sourceUrl,
+                        state,
+                        failureReason
+                    }
+                  }";
 
             var payload = new
             {
@@ -177,7 +238,9 @@ namespace OctoshiftCLI
                     repositoryName = repo,
                     continueOnError = true,
                     gitArchiveUrl,
-                    metadataArchiveUrl
+                    metadataArchiveUrl,
+                    accessToken = sourceToken,
+                    githubPat = targetToken
                 },
                 operationName = "startRepositoryMigration"
             };
@@ -201,6 +264,46 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
+        }
+
+        public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!, $first: Int, $after: String)";
+            var gql = @" 
+                node(id: $id) { 
+                    ... on Organization { 
+                        login, 
+                        repositoryMigrations(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            totalCount
+                            nodes {
+                                id
+                                sourceUrl
+                                migrationSource { name }
+                                state
+                                failureReason
+                                createdAt
+                            }
+                        }
+                    }
+                }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { id = orgId, first = 100, after = (string)null }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return data["data"]["node"]["repositoryMigrations"]["nodes"]
+                .Select(node => ((string)node["id"], (string)node["state"])).ToList();
         }
 
         public virtual async Task<string> GetMigrationFailureReason(string migrationId)
