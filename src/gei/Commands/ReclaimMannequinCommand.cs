@@ -73,6 +73,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation("Reclaming Mannequin...");
 
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+            _log.LogInformation($"Mannequin: {mannequinUser}");
+            _log.LogInformation($"Reclaiming User: {targetUser}");
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
             var githubOrgId = await GetOrgId(githubApi, githubTargetOrg);
