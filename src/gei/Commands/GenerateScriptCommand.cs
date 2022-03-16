@@ -283,9 +283,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {githubSourceOrg} ===========");
             content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
-
-            content.AppendLine();
-            content.AppendLine("Write-Host =============== Summary ===============");
             content.AppendLine();
 
             // Query each migration's status
@@ -297,6 +294,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             // Generating the final report
+            content.AppendLine();
+            content.AppendLine("Write-Host =============== Summary ===============");
             content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             content.AppendLine("Write-Host Total number of failed migrations: $Failed");
 
@@ -392,9 +391,6 @@ if ($Failed -ne 0) {
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoSourceOrg} ===========");
             content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
 
-            content.AppendLine();
-            content.AppendLine("Write-Host =============== Summary ===============");
-
             // Query each migration's status
             foreach (var teamProject in repos.Keys)
             {
@@ -414,6 +410,8 @@ if ($Failed -ne 0) {
             }
 
             // Generating the final report
+            content.AppendLine();
+            content.AppendLine("Write-Host =============== Summary ===============");
             content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             content.AppendLine("Write-Host Total number of failed migrations: $Failed");
 
