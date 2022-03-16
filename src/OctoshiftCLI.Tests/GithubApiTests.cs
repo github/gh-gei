@@ -862,5 +862,186 @@ namespace OctoshiftCLI.Tests
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
+
+        [Fact]
+        public async Task GetUserId_Returns_The_User_Id()
+        {
+            // Arrange
+            const string login = "mona";
+            const string userId = "NDQ5VXNlcjc4NDc5MzU=";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = $@"
+            {{
+                ""data"": 
+                    {{
+                        ""user"": 
+                            {{
+                                ""id"": ""{userId}"",
+                                ""name"": ""{login}"" 
+                            }} 
+                    }} 
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().Be(userId);
+        }
+
+        [Fact]
+        public async Task GetUserId_For_No_Existant_User_Returns_Null()
+        {
+            // Arrange
+            const string login = "idonotexist";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = @"{
+	            ""data"": {
+
+                    ""user"": null
+
+                },
+	            ""errors"": [
+		            {
+			            ""type"": ""NOT_FOUND"",
+			            ""path"": [
+				            ""user""
+			            ],
+			            ""locations"": [
+				            {
+					            ""line"": 4,
+					            ""column"": 3
+
+                            }
+			            ],
+			            ""message"": ""Could not resolve to a User with the login of 'tspascoal2'.""
+		            }
+	            ]
+            }";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+
+        [Fact]
+        public async Task GetMannequin_WithNoUser_Returns_Empty()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "monadoessnotexist";
+
+            var url = $"https://api.github.com/graphql";
+            var response = @"{
+	            ""data"": {
+                ""node"": {
+                    ""login"": ""octocathouse"",
+			            ""mannequins"": {
+                        ""pageInfo"": {
+                            ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMS0xMC0yN1QxODowNzoxOCswMTowMM4Fj1Qf"",
+					            ""hasNextPage"": false
+
+
+                            },
+				            ""totalCount"": 1,
+				            ""nodes"": [
+
+                                {
+                            ""login"": ""mona"",
+						            ""id"": ""DUMMYID"",
+						            ""claimant"": null
+
+                                }
+				            ]
+			            }
+                    }
+                }
+            }";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => true))) // Will return the response for any payload. It's almost impossible to put the right payload
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.GetMannequin(orgId, login);
+
+            // Assert
+            result.Id.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetMannequin_Returns_Mannequin()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "mona";
+
+            var url = $"https://api.github.com/graphql";
+            var response = @"{
+	            ""data"": {
+                ""node"": {
+                    ""login"": ""ORG_ID"",
+			            ""mannequins"": {
+                        ""pageInfo"": {
+                            ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMS0xMC0yN1QxODowNzoxOCswMTowMM4Fj1Qf"",
+					            ""hasNextPage"": false
+
+
+                            },
+				            ""totalCount"": 1,
+				            ""nodes"": [
+
+                                {
+                            ""login"": ""mona"",
+						            ""id"": ""DUMMYID"",
+						            ""claimant"": null
+
+                                }
+				            ]
+			            }
+                    }
+                }
+            }";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => true))) // Will return the response for any payload. It's almost impossible to put the right payload
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.GetMannequin(orgId, login);
+
+            // Assert
+            result.Id.Should().Be("DUMMYID");
+            result.Login.Should().Be(login);
+            result.MappedUser.Should().BeNull();
+        }
+
     }
 }
