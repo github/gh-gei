@@ -367,8 +367,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdo = new Mock<AdoApi>(null);
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
-            mockAdo.Setup(x => x.GetRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
-            mockAdo.Setup(x => x.GetRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
+            mockAdo.Setup(x => x.GetNonDisabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
+            mockAdo.Setup(x => x.GetNonDisabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs);
