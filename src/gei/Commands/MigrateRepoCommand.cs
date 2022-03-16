@@ -96,6 +96,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
+                IsHidden = true,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
             var wait = new Option("--wait")
@@ -176,7 +177,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
             }
 
             if (wait)
@@ -233,13 +234,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
                 var sourceAdoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat, ssh);
+                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat);
             }
             else
             {
                 sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
                 var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
+                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat);
             }
 
             var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
