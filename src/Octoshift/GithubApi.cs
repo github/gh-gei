@@ -68,7 +68,7 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public virtual async Task<List<string>> GetTeams(string org)
+        public virtual async Task<IEnumerable<string>> GetTeams(string org)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
 
