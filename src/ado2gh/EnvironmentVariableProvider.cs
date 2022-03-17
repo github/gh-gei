@@ -21,18 +21,18 @@ public class EnvironmentVariableProvider
     public virtual string AdoPersonalAccessToken() =>
             GetSecret(ADO_PAT)
             ?? throw new OctoshiftCliException($"{ADO_PAT} environment variable is not set.");
-    
+
     private string GetSecret(string secretName)
     {
         var secret = Environment.GetEnvironmentVariable(secretName);
-        
+
         if (string.IsNullOrEmpty(secret))
         {
             return null;
         }
-        
+
         _logger?.RegisterSecret(secret);
-        
+
         return secret;
     }
 }
