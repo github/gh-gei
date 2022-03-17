@@ -115,7 +115,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return reclaimed;
         }
 
-        public async Task<string> GetOrgId(GithubApi github, string githubOrg)
+        private async Task<string> GetOrgId(GithubApi github, string githubOrg)
         {
             if (!string.IsNullOrWhiteSpace(githubOrg) && github != null)
             {
