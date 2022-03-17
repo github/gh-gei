@@ -228,21 +228,30 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
             string migrationSourceId;
+            string sourceToken;
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg))
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
-                var sourceAdoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat);
+                sourceToken = _environmentVariableProvider.AdoPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
             else
             {
                 sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
-                var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat);
+                sourceToken = _environmentVariableProvider.SourceGithubPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
+            var migrationId = await githubApi.StartMigration(
+                migrationSourceId,
+                sourceRepoUrl,
+                githubOrgId,
+                targetRepo,
+                sourceToken,
+                targetGithubPat,
+                gitArchiveUrl,
+                metadataArchiveUrl);
 
             if (!wait)
             {
