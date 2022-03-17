@@ -396,7 +396,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
-                        content.AppendLine(WaitForMigrationScript(githubOrg, repoMigrationKey));
+                        content.AppendLine(WaitForMigrationScript(repoMigrationKey));
                         content.AppendLine("if ($lastexitcode -eq 0) {");
                         if (!_reposOnly)
                         {
@@ -535,7 +535,7 @@ if ($Failed -ne 0) {
                 ? string.Empty
                 : $"./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey) => $"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+        private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
         private string Exec(string script) => Wrap(script, "Exec");
 
