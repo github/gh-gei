@@ -295,14 +295,17 @@ namespace OctoshiftCLI
             var payload = new
             {
                 query = $"{query} {{ {gql} }}",
-                variables = new { id = orgId, first = 100, after = (string)null }
+                variables = new { id = orgId }
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
-
-            return data["data"]["node"]["repositoryMigrations"]["nodes"]
-                .Select(node => ((string)node["id"], (string)node["state"])).ToList();
+            return await _client.PostGraphQLWithPaginationAsync(
+                    url,
+                    payload,
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    5)
+                .Select(jToken => ((string)jToken["id"], (string)jToken["state"]))
+                .ToListAsync();
         }
 
         public virtual async Task<string> GetMigrationFailureReason(string migrationId)
