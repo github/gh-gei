@@ -110,3 +110,13 @@ dotnet format src/OctoshiftCLI.sln
 ### Good to Knows
 
 When you add a new parameter, the name of the argument in the invoke function has to match the name of the parameter.
+
+### Pull Requests from non-maintainers
+
+If somebody who is not a maintainer on this repo submits a PR the CI build will fail because of permissions/secrets issues. We can probably improve this in the future, but for now a workaround is for somebody who is a maintainer to do this:
+```
+git fetch origin pull/263/head:pr263
+git checkout -b dylan-smith/external-pr-263 pr263
+git push -u origin dylan-smith/external-pr-263
+```
+where 263 is the PR number. After running these commands create a draft PR with the new branch (`dylan-smith/external-pr-263` in this example). The new draft PR will run CI successfully, and the success (or failure) will show up on both the new draft PR and the original PR from the external contributor.
