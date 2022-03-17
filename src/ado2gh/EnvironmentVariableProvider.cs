@@ -22,7 +22,9 @@ public class EnvironmentVariableProvider
     {
         var secret = Environment.GetEnvironmentVariable(secretName);
         if (string.IsNullOrEmpty(secret))
+        {
             throw new OctoshiftCliException($"{secretName} environment variable is not set.");
+        }
 
         _logger?.RegisterSecret(secret);
 
