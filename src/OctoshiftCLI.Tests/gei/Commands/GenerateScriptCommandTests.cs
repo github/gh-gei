@@ -240,8 +240,6 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
             expected.AppendLine($"# === Migration stauts for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
@@ -249,6 +247,8 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -325,14 +325,14 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{repo1}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{repo2}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -396,11 +396,11 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{repo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"
@@ -464,11 +464,11 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\"");
             expected.AppendLine();
-            expected.AppendLine("Write-Host =============== Summary ===============");
-            expected.AppendLine();
             expected.AppendLine($"gh gei wait-for-migration --github-org \"{TARGET_ORG}\" --migration-id $RepoMigrations[\"{repo}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
             expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
             expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
             expected.AppendLine(@"

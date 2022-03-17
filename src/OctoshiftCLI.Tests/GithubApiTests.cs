@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -906,75 +907,61 @@ namespace OctoshiftCLI.Tests
                                         }
                                     } 
                                 }""" +
-                $",\"variables\":{{\"id\":\"{orgId}\", \"first\": 100, \"after\": null}}}}";
+                $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
 
-            var migration1 = (MigrationId: "MIGRATION_ID_1", State: RepositoryMigrationStatus.Succeeded);
-            var migration2 = (MigrationId: "MIGRATION_ID_2", State: RepositoryMigrationStatus.InProgress);
-            var migration3 = (MigrationId: "MIGRATION_ID_3", State: RepositoryMigrationStatus.Failed);
-            var migration4 = (MigrationId: "MIGRATION_ID_4", State: RepositoryMigrationStatus.Queued);
-            var response = $@"
-            {{
-	            ""data"": {{
-                    ""node"": {{
-                        ""login"": ""github"",
-                        ""repositoryMigrations"": {{
-                            ""pageInfo"": {{
-                                ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMi0wMi0xMFQyMzozMDozMCsw="",
-                                ""hasNextPage"": false
-                            }},
-                            ""totalCount"": 2,
-                            ""nodes"": [
-                                {{
-                                    ""id"": ""{migration1.MigrationId}"",
-                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_1"",
-                                    ""migrationSource"": {{
-                                        ""name"": ""Azure Devops Source""
-                                    }},
-                                    ""state"": ""{migration1.State}"",
-                                    ""failureReason"": """",
-                                    ""createdAt"": ""2022-02-10T23:30:30Z""
-                                }},
-                                {{
-                                    ""id"": ""{migration2.MigrationId}"",
-                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
-                                    ""migrationSource"": {{
-                                        ""name"": ""Azure Devops Source""
-                                    }},
-                                    ""state"": ""{migration2.State}"",
-                                    ""failureReason"": """",
-                                    ""createdAt"": ""2022-02-10T23:31:30Z""
-                                }},
-                                {{
-                                    ""id"": ""{migration3.MigrationId}"",
-                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
-                                    ""migrationSource"": {{
-                                        ""name"": ""Azure Devops Source""
-                                    }},
-                                    ""state"": ""{migration3.State}"",
-                                    ""failureReason"": """",
-                                    ""createdAt"": ""2022-02-10T23:32:30Z""
-                                }},
-                                {{
-                                    ""id"": ""{migration4.MigrationId}"",
-                                    ""sourceUrl"": ""https://dev.azure.com/org/team_project/_git/repo_2"",
-                                    ""migrationSource"": {{
-                                        ""name"": ""Azure Devops Source""
-                                    }},
-                                    ""state"": ""{migration4.State}"",
-                                    ""failureReason"": """",
-                                    ""createdAt"": ""2022-02-10T23:33:30Z""
-                                }}
-
-                            ]
-                        }}
-                    }}
-                }}
-            }}";
+            var migration1 = new
+            {
+                id = Guid.NewGuid().ToString(),
+                sourceUrl = "https://dev.azure.com/org/team_project/_git/repo_1",
+                migrationSource = new { name = "Azure Devops Source" },
+                state = RepositoryMigrationStatus.Succeeded,
+                failureReason = "",
+                createdAt = DateTime.UtcNow
+            };
+            var migration2 = new
+            {
+                id = Guid.NewGuid().ToString(),
+                sourceUrl = "https://dev.azure.com/org/team_project/_git/repo_2",
+                migrationSource = new { name = "Azure Devops Source" },
+                state = RepositoryMigrationStatus.InProgress,
+                failureReason = "",
+                createdAt = DateTime.UtcNow
+            };
+            var migration3 = new
+            {
+                id = Guid.NewGuid().ToString(),
+                sourceUrl = "https://dev.azure.com/org/team_project/_git/repo_3",
+                migrationSource = new { name = "Azure Devops Source" },
+                state = RepositoryMigrationStatus.Failed,
+                failureReason = "FAILURE_REASON",
+                createdAt = DateTime.UtcNow
+            };
+            var migration4 = new
+            {
+                id = Guid.NewGuid().ToString(),
+                sourceUrl = "https://dev.azure.com/org/team_project/_git/repo_4",
+                migrationSource = new { name = "Azure Devops Source" },
+                state = RepositoryMigrationStatus.Queued,
+                failureReason = "",
+                createdAt = DateTime.UtcNow
+            };
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
-                .ReturnsAsync(response);
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                .Returns(new[]
+                {
+                    JToken.FromObject(migration1),
+                    JToken.FromObject(migration2),
+                    JToken.FromObject(migration3),
+                    JToken.FromObject(migration4)
+                }.ToAsyncEnumerable());
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
@@ -982,7 +969,13 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             migrationStates.Should().HaveCount(4);
-            migrationStates.Should().Contain(new[] { migration1, migration2, migration3, migration4 });
+            migrationStates.Should().Contain(new[]
+            {
+                (Migration: migration1.id, State: migration1.state),
+                (Migration: migration2.id, State: migration2.state),
+                (Migration: migration3.id, State: migration3.state),
+                (Migration: migration4.id, State: migration4.state)
+            });
         }
 
         private string Compact(string source) =>
