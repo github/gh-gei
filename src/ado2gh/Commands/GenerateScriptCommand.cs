@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 using Mono.Unix;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -48,7 +49,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
             var sshOption = new Option("--ssh")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
+            };
+            var sequential = new Option("--sequential")
+            {
+                IsRequired = false,
+                Description = "Waits for each migration to finish before moving on to the next one."
             };
             var verbose = new Option("--verbose")
             {
@@ -61,12 +68,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(reposOnlyOption);
             AddOption(skipIdpOption);
             AddOption(sshOption);
+            AddOption(sequential);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool verbose = false)
+        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool sequential = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -76,7 +84,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"OUTPUT: {output}");
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
+            }
+            if (sequential)
+            {
+                _log.LogInformation("SEQUENTIAL: true");
             }
 
             _reposOnly = reposOnly;
@@ -90,11 +102,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             CheckForDuplicateRepoNames(repos);
 
-            var script = GenerateScript(repos, pipelines, appIds, githubOrg, skipIdp, ssh);
+            var script = sequential
+                ? GenerateSequentialScript(repos, pipelines, appIds, githubOrg, skipIdp)
+                : GenerateParallelScript(repos, pipelines, appIds, githubOrg, skipIdp);
 
             if (output != null)
             {
-                File.WriteAllText(output.FullName, script);
+                await File.WriteAllTextAsync(output.FullName, script);
                 // +x so script can be executed on macos and linux
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
@@ -227,12 +241,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
 
-        public string GenerateScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
-                                          IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-                                          IDictionary<string, string> appIds,
-                                          string githubOrg,
-                                          bool skipIdp,
-                                          bool ssh)
+        private string GetRepoMigrationKey(string adoOrg, string githubRepoName) => $"{adoOrg}/{githubRepoName}";
+
+        public string GenerateSequentialScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
+            IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
+            IDictionary<string, string> appIds,
+            string githubOrg,
+            bool skipIdp)
         {
             if (repos == null)
             {
@@ -241,17 +256,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
 
-            content.AppendLine(@"#!/usr/bin/pwsh
-
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
+            content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             foreach (var adoOrg in repos.Keys)
             {
@@ -280,7 +286,7 @@ function Exec {
 
                         if (hasAppId)
                         {
-                            content.AppendLine(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId));
+                            content.AppendLine(Exec(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId)));
                         }
 
                         foreach (var adoRepo in repos[adoOrg][adoTeamProject])
@@ -289,18 +295,18 @@ function Exec {
 
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
-                            content.AppendLine(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
-                            content.AppendLine(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh));
-                            content.AppendLine(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo));
-                            content.AppendLine(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject));
+                            content.AppendLine(Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            content.AppendLine(Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
+                            content.AppendLine(Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            content.AppendLine(Exec(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
-                            content.AppendLine(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo));
+                            content.AppendLine(Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
 
                             if (hasAppId && pipelines != null)
                             {
                                 foreach (var adoPipeline in pipelines[adoOrg][adoTeamProject][adoRepo])
                                 {
-                                    content.AppendLine(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId));
+                                    content.AppendLine(Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                                 }
                             }
                         }
@@ -314,38 +320,169 @@ function Exec {
             return content.ToString();
         }
 
-        private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
+        public string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
+            IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
+            IDictionary<string, string> appIds,
+            string githubOrg,
+            bool skipIdp)
         {
-            return _reposOnly
-                ? string.Empty
-                : $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
+            if (repos == null)
+            {
+                return string.Empty;
+            }
+
+            var content = new StringBuilder();
+            content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine(EXEC_FUNCTION_BLOCK);
+            content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+            content.AppendLine(EXEC_BATCH_FUNCTION_BLOCK);
+
+            content.AppendLine();
+            content.AppendLine("$Succeeded = 0");
+            content.AppendLine("$Failed = 0");
+            content.AppendLine("$RepoMigrations = [ordered]@{}");
+
+            // Queueing migrations
+            foreach (var adoOrg in repos.Keys)
+            {
+                content.AppendLine();
+                content.AppendLine($"# =========== Queueing migration for Organization: {adoOrg} ===========");
+
+                var appId = string.Empty;
+                var hasAppId = appIds != null && appIds.TryGetValue(adoOrg, out appId);
+
+                if (!hasAppId && !_reposOnly)
+                {
+                    content.AppendLine();
+                    content.AppendLine("# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
+                }
+
+                foreach (var adoTeamProject in repos[adoOrg].Keys)
+                {
+                    content.AppendLine();
+                    content.AppendLine($"# === Queueing repo migrations for Team Project: {adoOrg}/{adoTeamProject} ===");
+
+                    if (!repos[adoOrg][adoTeamProject].Any())
+                    {
+                        content.AppendLine("# Skipping this Team Project because it has no git repos");
+                        continue;
+                    }
+
+                    content.AppendLine(CreateGithubTeamsScript(adoTeamProject, githubOrg, skipIdp));
+
+                    if (hasAppId)
+                    {
+                        content.AppendLine(Exec(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId)));
+                    }
+
+                    // queue up repo migration for each ADO repo
+                    foreach (var adoRepo in repos[adoOrg][adoTeamProject])
+                    {
+                        content.AppendLine();
+
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
+
+                        content.AppendLine(Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                        content.AppendLine(QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
+                        content.AppendLine($"$RepoMigrations[\"{GetRepoMigrationKey(adoOrg, githubRepo)}\"] = $MigrationID");
+                    }
+                }
+            }
+
+            // Waiting for migrations
+            foreach (var adoOrg in repos.Keys)
+            {
+                content.AppendLine();
+                content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
+
+                foreach (var adoTeamProject in repos[adoOrg].Keys)
+                {
+                    foreach (var adoRepo in repos[adoOrg][adoTeamProject])
+                    {
+                        content.AppendLine();
+                        content.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo}. Will then complete the below post migration steps. ===");
+
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
+                        var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
+
+                        content.AppendLine(WaitForMigrationScript(githubOrg, repoMigrationKey));
+                        content.AppendLine("if ($lastexitcode -eq 0) {");
+                        if (!_reposOnly)
+                        {
+                            content.AppendLine("    ExecBatch @(");
+                            content.AppendLine("        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            content.AppendLine("        " + Wrap(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
+                            content.AppendLine("        " + Wrap(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine("        " + Wrap(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine("        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+
+                            var appId = string.Empty;
+                            var hasAppId = appIds != null && appIds.TryGetValue(adoOrg, out appId);
+                            if (hasAppId && pipelines != null)
+                            {
+                                foreach (var adoPipeline in pipelines[adoOrg][adoTeamProject][adoRepo])
+                                {
+                                    content.AppendLine("        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
+                                }
+                            }
+
+                            content.AppendLine("    )");
+                            content.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
+                        }
+                        else
+                        {
+                            content.AppendLine("    $Succeeded++");
+                        }
+
+                        content.AppendLine("} else {"); // if ($lastexitcode -ne 0)
+                        content.AppendLine("    $Failed++");
+                        content.AppendLine("}");
+                    }
+                }
+            }
+
+            // Generating report
+            content.AppendLine();
+            content.AppendLine("Write-Host =============== Summary ===============");
+            content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            content.AppendLine("Write-Host Total number of failed migrations: $Failed");
+
+            content.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+
+            content.AppendLine();
+            content.AppendLine();
+
+            return content.ToString();
         }
 
-        private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo)
-        {
-            return _reposOnly
+        private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) =>
+            _reposOnly
                 ? string.Empty
-                : $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+                : $"./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId)
-        {
-            return _reposOnly
+        private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) =>
+            _reposOnly
                 ? string.Empty
-                : $"Exec {{ ./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+                : $"./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject)
-        {
-            return _reposOnly
+        private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId) =>
+            _reposOnly
                 ? string.Empty
-                : $"Exec {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+                : $"./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh)
-        {
-            return $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+        private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) =>
+            _reposOnly
+                ? string.Empty
+                : $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+
+        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait) =>
+            $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
+
+        private string QueueMigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo) =>
+            $"$MigrationID = {ExecAndGetMigrationId(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, false))}";
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
         {
@@ -354,27 +491,23 @@ function Exec {
                 return string.Empty;
             }
 
-            var result = $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+            var result = new StringBuilder();
 
-            if (!skipIdp)
-            {
-                result += $" --idp-group \"{adoTeamProject}-Maintainers\"";
-            }
+            result.AppendLine(Exec(CreateGithubMaintainersTeamScript(adoTeamProject, githubOrg, skipIdp)));
+            result.Append(Exec(CreateGithubAdminsTeamScript(adoTeamProject, githubOrg, skipIdp)));
 
-            result += " }";
-            result += Environment.NewLine;
-
-            result += $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}";
-
-            if (!skipIdp)
-            {
-                result += $" --idp-group \"{adoTeamProject}-Admins\"";
-            }
-
-            result += " }";
-
-            return result;
+            return result.ToString();
         }
+
+        private string CreateGithubMaintainersTeamScript(string adoTeamProject, string githubOrg, bool skipIdp) =>
+            _reposOnly
+                ? string.Empty
+                : $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}{(skipIdp ? string.Empty : $" --idp-group \"{adoTeamProject}-Maintainers\"")}";
+
+        private string CreateGithubAdminsTeamScript(string adoTeamProject, string githubOrg, bool skipIdp) =>
+            _reposOnly
+                ? string.Empty
+                : $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(skipIdp ? string.Empty : $" --idp-group \"{adoTeamProject}-Admins\"")}";
 
         private string GithubRepoPermissionsScript(string adoTeamProject, string githubOrg, string githubRepo)
         {
@@ -383,25 +516,81 @@ function Exec {
                 return string.Empty;
             }
 
-            var result = $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-            result += Environment.NewLine;
-            result += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
+            var result = new StringBuilder();
 
-            return result;
+            result.AppendLine(Exec(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+            result.Append(Exec(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+
+            return result.ToString();
         }
 
-        private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId)
-        {
-            return _reposOnly
+        private string GithubRepoMaintainPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+            _reposOnly
                 ? string.Empty
-                : $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
-        }
+                : $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo)
-        {
-            return _reposOnly
+        private string GithubRepoAdminPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+            _reposOnly
                 ? string.Empty
-                : $"Exec {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)} }}";
+                : $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+
+        private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId) =>
+            _reposOnly
+                ? string.Empty
+                : $"./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+
+        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo) =>
+            _reposOnly
+                ? string.Empty
+                : $"./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
+
+        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey) => $"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+
+        private string Exec(string script) => Wrap(script, "Exec");
+
+        private string ExecAndGetMigrationId(string script) => Wrap(script, "ExecAndGetMigrationID");
+
+        private string Wrap(string script, string outerCommand = "") =>
+            script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
+
+        private const string EXEC_FUNCTION_BLOCK = @"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}";
+
+        private const string EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK = @"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}";
+
+        private const string EXEC_BATCH_FUNCTION_BLOCK = @"
+function ExecBatch {
+    param (
+        [scriptblock[]]$ScriptBlocks
+    )
+    $Global:LastBatchFailures = 0
+    foreach ($ScriptBlock in $ScriptBlocks)
+    {
+        & @ScriptBlock
+        if ($lastexitcode -ne 0) {
+            $Global:LastBatchFailures++
         }
+    }
+}";
     }
 }

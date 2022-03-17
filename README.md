@@ -14,7 +14,7 @@ GEI-CLI is continuing to expand what it can support. However, it supports the fo
 
 * Azure DevOps -> GitHub Enterprise Cloud migrations
 * GitHub Enterprise Cloud -> GitHub Enterprise Cloud migrations
-* GitHub Enterprise Server (version 3.4 or newer) -> GitHub Enterprise Cloud migrations
+* GitHub Enterprise Server (version 3.4.1 or newer) -> GitHub Enterprise Cloud migrations
 
 Learn more about what exactly is migrated and any limitations in the [GEI documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer/about-github-enterprise-importer). 
 

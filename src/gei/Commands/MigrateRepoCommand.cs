@@ -12,7 +12,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private bool _isRetry;
         private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
@@ -96,7 +95,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
+                IsHidden = true,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
+            };
+            var wait = new Option("--wait")
+            {
+                IsRequired = false,
+                Description = "Synchronously waits for the repo migration to finish."
             };
             var verbose = new Option("--verbose")
             {
@@ -119,12 +124,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(metadataArchiveUrl);
 
             AddOption(ssh);
+            AddOption(wait);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<
               string, string, string, string, string, string, string,
               string, string, bool,
-              string, string,
+              string, string, bool,
               bool, bool>(Invoke);
         }
 
@@ -142,6 +148,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string gitArchiveUrl = "",
           string metadataArchiveUrl = "",
           bool ssh = false,
+          bool wait = false,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -169,7 +176,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
+            }
+
+            if (wait)
+            {
+                _log.LogInformation("WAIT: true");
             }
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
@@ -216,21 +228,37 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             string sourceRepoUrl;
             string migrationSourceId;
+            string sourceToken;
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg))
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
-                var sourceAdoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat, ssh);
+                sourceToken = _environmentVariableProvider.AdoPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
             else
             {
                 sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
-                var sourceGithubPat = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat, ssh);
+                sourceToken = _environmentVariableProvider.SourceGithubPersonalAccessToken();
+                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
 
-            var migrationId = await githubApi.StartMigration(migrationSourceId, sourceRepoUrl, githubOrgId, targetRepo, gitArchiveUrl, metadataArchiveUrl);
+            var migrationId = await githubApi.StartMigration(
+                migrationSourceId,
+                sourceRepoUrl,
+                githubOrgId,
+                targetRepo,
+                sourceToken,
+                targetGithubPat,
+                gitArchiveUrl,
+                metadataArchiveUrl);
+
+            if (!wait)
+            {
+                _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+                return;
+            }
+
             var migrationState = await githubApi.GetMigrationState(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
@@ -242,27 +270,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
+                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+
                 var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-
-                if (!_isRetry && failureReason.Contains("Warning: Permanently added") && failureReason.Contains("(ECDSA) to the list of known hosts"))
-                {
-                    _log.LogWarning(failureReason);
-                    _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
-
-                    _isRetry = true;
-                    await githubApi.DeleteRepo(githubTargetOrg, targetRepo);
-                    await Invoke(githubSourceOrg, adoSourceOrg, adoTeamProject, sourceRepo, githubTargetOrg, targetRepo, targetApiUrl, ghesApiUrl, azureStorageConnectionString, noSslVerify, gitArchiveUrl, metadataArchiveUrl, ssh, verbose);
-                }
-                else
-                {
-                    _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                    throw new OctoshiftCliException(failureReason);
-                }
+                throw new OctoshiftCliException(failureReason);
             }
-            else
-            {
-                _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-            }
+
+            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
 
         private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
