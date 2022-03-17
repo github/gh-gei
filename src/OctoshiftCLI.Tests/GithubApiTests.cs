@@ -951,14 +951,14 @@ namespace OctoshiftCLI.Tests
                 .Setup(m => m.PostGraphQLWithPaginationAsync(
                     url,
                     It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
-                    It.IsAny<Func<JObject,JArray>>(),
-                    It.IsAny<Func<JObject,JObject>>(),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
                     It.IsAny<int>(),
                     null))
                 .Returns(new[]
                 {
-                    JToken.FromObject(migration1), 
-                    JToken.FromObject(migration2), 
+                    JToken.FromObject(migration1),
+                    JToken.FromObject(migration2),
                     JToken.FromObject(migration3),
                     JToken.FromObject(migration4)
                 }.ToAsyncEnumerable());
