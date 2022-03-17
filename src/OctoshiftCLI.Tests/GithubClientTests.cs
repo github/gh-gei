@@ -1259,7 +1259,8 @@ query($id: ID!, $first: Int, $after: String) {
             await githubClient
                 .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", null, null).ToListAsync())
                 .Should()
-                .ThrowAsync<ArgumentNullException>();
+                .ThrowAsync<ArgumentNullException>()
+                .WithParameterName("resultCollectionSelector");
         }
 
         [Fact]
@@ -1421,6 +1422,22 @@ query($id: ID!, $first: Int, $after: String) {
                 Times.Once(),
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Throws_If_PageInfo_Selector_Is_Null()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            using var httpClient = new HttpClient();
+            var githubClient = new GithubClient(null, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act, Assert
+            await githubClient
+                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", x => (JArray)x["item"], null).ToListAsync())
+                .Should()
+                .ThrowAsync<ArgumentNullException>()
+                .WithParameterName("pageInfoSelector");
         }
 
         private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new

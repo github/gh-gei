@@ -66,6 +66,11 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(resultCollectionSelector));
             }
 
+            if (pageInfoSelector is null)
+            {
+                throw new ArgumentNullException(nameof(pageInfoSelector));
+            }
+
             var jBody = JObject.FromObject(body);
             jBody["variables"] ??= new JObject();
             jBody["variables"]["first"] = first;
@@ -82,7 +87,7 @@ namespace OctoshiftCLI
                     yield return jResult;
                 }
 
-                var pageInfo = pageInfoSelector?.Invoke(jContent);
+                var pageInfo = pageInfoSelector(jContent);
                 if (pageInfo is null)
                 {
                     yield break;
