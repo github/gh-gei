@@ -20,8 +20,9 @@ public class EnvironmentVariableProvider
 
     private string GetSecret(string secretName)
     {
-        var secret = Environment.GetEnvironmentVariable(secretName) ??
-                     throw new OctoshiftCliException($"{secretName} environment variable is not set.");
+        var secret = Environment.GetEnvironmentVariable(secretName);
+        if (string.IsNullOrEmpty(secret))
+            throw new OctoshiftCliException($"{secretName} environment variable is not set.");
 
         _logger?.RegisterSecret(secret);
 
