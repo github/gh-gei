@@ -14,20 +14,25 @@ public class EnvironmentVariableProvider
         _logger = logger;
     }
 
-    public virtual string GithubPersonalAccessToken() => GetSecret(GH_PAT);
+    public virtual string GithubPersonalAccessToken() =>
+            GetSecret(GH_PAT)
+            ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
 
-    public virtual string AdoPersonalAccessToken() => GetSecret(ADO_PAT);
-
+    public virtual string AdoPersonalAccessToken() =>
+            GetSecret(ADO_PAT)
+            ?? throw new OctoshiftCliException($"{ADO_PAT} environment variable is not set.");
+    
     private string GetSecret(string secretName)
     {
         var secret = Environment.GetEnvironmentVariable(secretName);
+        
         if (string.IsNullOrEmpty(secret))
         {
-            throw new OctoshiftCliException($"{secretName} environment variable is not set.");
+            return null;
         }
-
+        
         _logger?.RegisterSecret(secret);
-
+        
         return secret;
     }
 }
