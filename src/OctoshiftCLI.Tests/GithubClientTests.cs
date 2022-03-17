@@ -1049,8 +1049,8 @@ query($id: ID!, $first: Int, $after: String) {
 }";
 
             // request/response
-            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
-            var requestBody = new { query, variables = requestVariables };
+            var expectedRequestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
+            var expectedRequestBody = new { query, variables = expectedRequestVariables };
             var repoMigration = CreateRepositoryMigration();
             var responseContent = new
             {
@@ -1074,7 +1074,7 @@ query($id: ID!, $first: Int, $after: String) {
             };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
                 response);
 
             using var httpClient = new HttpClient(handlerMock.Object);
@@ -1086,8 +1086,8 @@ query($id: ID!, $first: Int, $after: String) {
                     new { query },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
-                    requestVariables.first,
-                    requestVariables.after)
+                    expectedRequestVariables.first,
+                    expectedRequestVariables.after)
                 .ToListAsync();
 
             // Assert
@@ -1096,7 +1096,7 @@ query($id: ID!, $first: Int, $after: String) {
         }
 
         [Fact]
-        public async Task PostGraphQLWithPaginationAsync_Should_Override_First_And_After_Query_Variables()
+        public async Task PostGraphQLWithPaginationAsync_Should_Create_First_And_After_In_Query_Variables_If_Missing()
         {
             // Arrange
             const string url = "https://example.com/graphql";
@@ -1125,8 +1125,8 @@ query($id: ID!, $first: Int, $after: String) {
 }";
 
             // request/response
-            var requestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
-            var requestBody = new { query, variables = requestVariables };
+            var expectedRequestVariables = new { id = "ORG_ID", first = 10, after = Guid.NewGuid().ToString() };
+            var expectedRequestBody = new { query, variables = expectedRequestVariables };
             var repoMigration = CreateRepositoryMigration();
             var responseContent = new
             {
@@ -1150,7 +1150,83 @@ query($id: ID!, $first: Int, $after: String) {
             };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
+                response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.PostGraphQLWithPaginationAsync(
+                    url,
+                    new { query, variables = new { id = "ORG_ID" } },
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
+                    expectedRequestVariables.first,
+                    expectedRequestVariables.after)
+                .ToListAsync();
+
+            // Assert
+            result.Should().HaveCount(1);
+            result[0].ToJson().Should().Be(repoMigration.ToJson());
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Should_Override_First_And_After_In_Query_Variables()
+        {
+            // Arrange
+            const string url = "https://example.com/graphql";
+            const string query = @"
+query($id: ID!, $first: Int, $after: String) {
+    node(id: $id) { 
+        ... on Organization { 
+            login, 
+            repositoryMigrations(first: $first, after: $after) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                totalCount
+                nodes {
+                    id
+                    sourceUrl
+                    migrationSource { name }
+                    state
+                    failureReason
+                    createdAt
+                }
+            }
+        }
+    }
+}";
+
+            // request/response
+            var expectedRequestVariables = new { first = 2, after = Guid.NewGuid().ToString() };
+            var expectedRequestBody = new { query, variables = expectedRequestVariables };
+            var repoMigration = CreateRepositoryMigration();
+            var responseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        login = "github",
+                        repositoryMigrations = new
+                        {
+                            pageInfo = new { endCursor = Guid.NewGuid().ToString(), hasNextPage = false },
+                            totalCount = 1,
+                            nodes = new[] { repoMigration }
+                        }
+                    }
+                }
+            };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
                 response);
 
             using var httpClient = new HttpClient(handlerMock.Object);
@@ -1162,8 +1238,8 @@ query($id: ID!, $first: Int, $after: String) {
                     new { query, variables = new { first = 10, after = Guid.NewGuid().ToString() } },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
-                    requestVariables.first,
-                    requestVariables.after)
+                    expectedRequestVariables.first,
+                    expectedRequestVariables.after)
                 .ToListAsync();
 
             // Assert
