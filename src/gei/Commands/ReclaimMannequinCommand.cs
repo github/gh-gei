@@ -86,7 +86,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogError($"User {mannequinUser} is not a mannequin.");
                 return false;
             }
-            else if (mannequin.MappedUser != null && force == false)
+
+            if (mannequin.MappedUser != null && force == false)
             {
                 _log.LogError($"User {mannequinUser} has been already mapped to {mannequin.MappedUser.Login}. Use the force option if you want to reclaim the mannequin again.");
                 return false;
