@@ -117,17 +117,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> GetOrgId(GithubApi github, string githubOrg)
         {
-            if (!string.IsNullOrWhiteSpace(githubOrg) && github != null)
+            if (github == null)
             {
-                _log.LogInformation($"GITHUB ORG: {githubOrg}");
-                var orgId = await github.GetOrganizationId(githubOrg);
-
-                _log.LogInformation($"    Organization Id: {orgId}");
-
-                return orgId;
+                throw new ArgumentException("Argument cannot be null", nameof(github));
             }
 
-            throw new ArgumentException("All arguments must be non-null");
+            if (string.IsNullOrWhiteSpace(githubOrg))
+            {
+                throw new ArgumentException("Argument cannot be null", nameof(githubOrg));
+            }
+
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            var orgId = await github.GetOrganizationId(githubOrg);
+
+            _log.LogInformation($"    Organization Id: {orgId}");
+
+            return orgId;
         }
     }
 }
