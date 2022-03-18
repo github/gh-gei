@@ -1026,9 +1026,7 @@ namespace OctoshiftCLI.Tests
 
             var response = @"{
 	            ""data"": {
-
                     ""user"": null
-
                 },
 	            ""errors"": [
 		            {
@@ -1040,10 +1038,9 @@ namespace OctoshiftCLI.Tests
 				            {
 					            ""line"": 4,
 					            ""column"": 3
-
                             }
 			            ],
-			            ""message"": ""Could not resolve to a User with the login of 'tspascoal2'.""
+			            ""message"": ""Could not resolve to a User with the login of 'idonotexist'.""
 		            }
 	            ]
             }";
@@ -1069,36 +1066,48 @@ namespace OctoshiftCLI.Tests
             const string login = "monadoessnotexist";
 
             var url = $"https://api.github.com/graphql";
-            var response = @"{
-	            ""data"": {
-                ""node"": {
-                    ""login"": ""octocathouse"",
-			            ""mannequins"": {
-                        ""pageInfo"": {
-                            ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMS0xMC0yN1QxODowNzoxOCswMTowMM4Fj1Qf"",
-					            ""hasNextPage"": false
 
-
-                            },
-				            ""totalCount"": 1,
-				            ""nodes"": [
-
-                                {
-                            ""login"": ""mona"",
-						            ""id"": ""DUMMYID"",
-						            ""claimant"": null
-
+            var payload = @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
                                 }
-				            ]
-			            }
+                            }
+                        }
                     }
                 }
-            }";
+            }""" +
+            $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => true))) // Will return the response for any payload. It's almost impossible to put the right payload
-                    .ReturnsAsync(response);
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                 .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
+
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
@@ -1116,36 +1125,48 @@ namespace OctoshiftCLI.Tests
             const string login = "mona";
 
             var url = $"https://api.github.com/graphql";
-            var response = @"{
-	            ""data"": {
-                ""node"": {
-                    ""login"": ""ORG_ID"",
-			            ""mannequins"": {
-                        ""pageInfo"": {
-                            ""endCursor"": ""Y3Vyc29yOnYyOpK5MjAyMS0xMC0yN1QxODowNzoxOCswMTowMM4Fj1Qf"",
-					            ""hasNextPage"": false
 
-
-                            },
-				            ""totalCount"": 1,
-				            ""nodes"": [
-
-                                {
-                            ""login"": ""mona"",
-						            ""id"": ""DUMMYID"",
-						            ""claimant"": null
-
+            var payload =
+    @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
                                 }
-				            ]
-			            }
+                            }
+                        }
                     }
                 }
-            }";
+            }""" +
+    $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => true))) // Will return the response for any payload. It's almost impossible to put the right payload
-                    .ReturnsAsync(response);
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                    .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);

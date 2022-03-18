@@ -464,49 +464,58 @@ namespace OctoshiftCLI
             return response;
         }
 
-        public virtual async Task<Mannequin> GetMannequin(string orgid, string username)
+        public virtual async Task<Mannequin> GetMannequin(string orgId, string username)
         {
             var url = $"{_apiUrl}/graphql";
 
-            var payload = BuildListMannequinPayload(orgid, null);
-
-            JObject data;
-            do
-            {
-                var response = await _client.PostAsync(url, payload);
-                data = JObject.Parse(response);
-
-                var mannequin = data["data"]["node"]["mannequins"]["nodes"].FirstOrDefault(node =>
-                    { return username.Equals((string)node["login"], System.StringComparison.OrdinalIgnoreCase); }
-                );
-
-                if (mannequin != null)
-                {
-                    Claimant claimant = null;
-
-                    if (mannequin["claimant"].Any())
-                    {
-                        claimant = new Claimant
-                        {
-                            Id = (string)mannequin["claimant"]["id"],
-                            Login = (string)mannequin["claimant"]["login"]
-                        };
+            var query = "query($id: ID!, $first: Int, $after: String)";
+            var gql = @"
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
                     }
+                }";
 
-                    return new Mannequin
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { id = orgId }
+            };
+
+            var mannequin = await _client.PostGraphQLWithPaginationAsync(
+                    url,
+                    payload,
+                    data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                    data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+                .FirstOrDefaultAsync(jToken => username.Equals((string)jToken["login"], StringComparison.OrdinalIgnoreCase));
+
+            return mannequin is null
+                ? new Mannequin()
+                : new Mannequin
+                {
+                    Id = (string)mannequin["id"],
+                    Login = (string)mannequin["login"],
+                    MappedUser = mannequin["claimant"].Any()
+                    ? new Claimant
                     {
-                        Id = (string)mannequin["id"],
-                        Login = (string)mannequin["login"],
-                        MappedUser = claimant
-
-                    };
-                }
-
-                payload = BuildListMannequinPayload(orgid, (string)data["data"]["node"]["mannequins"]["pageInfo"]["endCursor"]);
-
-            } while ((bool)data["data"]["node"]["mannequins"]["pageInfo"]["hasNextPage"]);
-
-            return new Mannequin();
+                        Id = (string)mannequin["claimant"]["id"],
+                        Login = (string)mannequin["claimant"]["login"]
+                    }
+                    : null
+                };
         }
 
         public virtual async Task<string> GetUserId(string login)
@@ -528,8 +537,32 @@ namespace OctoshiftCLI
         public virtual async Task<bool> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
         {
             var url = $"{_apiUrl}/graphql";
+            var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
+            var gql = @"
+	            createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
 
-            var payload = BuildReclaimMannequinPayload(orgId, mannequinId, targetUserId);
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+	            }";
+
+            var payload = new
+            {
+                query = $"{mutation} {{ {gql} }}",
+                variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
+            };
+
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
@@ -537,71 +570,6 @@ namespace OctoshiftCLI
             return data["data"]["createAttributionInvitation"].Any()
                 && (string)data["data"]["createAttributionInvitation"]["source"]["id"] == mannequinId
                 && (string)data["data"]["createAttributionInvitation"]["target"]["id"] == targetUserId;
-        }
-
-        private object BuildListMannequinPayload(string orgId, string cursor)
-        {
-            return new
-            {
-                query = @"query ($id: ID!, $after: String) {
-	                node(id: $id) {
-		                ... on Organization {
-			                mannequins(first: 100, after: $after) {
-				                pageInfo {
-					                endCursor
-					                hasNextPage
-				                }
-				                totalCount
-				                nodes {
-					                login
-					                id
-					                claimant {
-						                login
-						                id
-					                }
-				                }
-			                }
-		                }
-	                }
-                }
-                ",
-                variables = new { after = cursor, id = orgId }
-            };
-        }
-
-        private object BuildReclaimMannequinPayload(string orgId, string mannequinId, string targetUserId)
-        {
-            return new
-            {
-                query = @"mutation(
-                      $orgId: ID!,
-                      $sourceId: ID!,
-                      $targetId: ID!,
-                    ){
-                      createAttributionInvitation( input: {
-                        ownerId: $orgId,
-                        sourceId: $sourceId,
-                        targetId: $targetId
-                      })
-                      {
-                        source {
-                          ... on Mannequin {
-                            id
-                            login
-                          }
-                        }
-
-                        target {
-                          ... on User {
-                            id
-                            login
-                          }
-                        }
-                      }
-                    }
-                ",
-                variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
-            };
         }
     }
 }
