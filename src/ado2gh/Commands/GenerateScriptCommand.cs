@@ -4,8 +4,10 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Unix;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -107,6 +109,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (output != null)
             {
                 await File.WriteAllTextAsync(output.FullName, script);
+                // +x so script can be executed on macos and linux
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    var unixFileInfo = new UnixFileInfo(output.FullName);
+                    unixFileInfo.FileAccessPermissions |= FileAccessPermissions.UserExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.OtherExecute;
+                }
             }
         }
 
@@ -248,6 +256,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
 
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             foreach (var adoOrg in repos.Keys)
@@ -323,7 +332,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var content = new StringBuilder();
-
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
             content.AppendLine(EXEC_BATCH_FUNCTION_BLOCK);
@@ -543,6 +552,8 @@ if ($Failed -ne 0) {
 
         private string Wrap(string script, string outerCommand = "") =>
             script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
 
         private const string EXEC_FUNCTION_BLOCK = @"
 function Exec {
