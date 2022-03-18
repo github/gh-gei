@@ -119,12 +119,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             if (github == null)
             {
-                throw new ArgumentException("Argument cannot be null", nameof(github));
+                throw new ArgumentNullException(nameof(github));
             }
 
             if (string.IsNullOrWhiteSpace(githubOrg))
             {
-                throw new ArgumentException("Argument cannot be null", nameof(githubOrg));
+                throw new ArgumentNullException(nameof(githubOrg));
             }
 
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
