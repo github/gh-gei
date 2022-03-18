@@ -140,6 +140,41 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetTeams_Returns_All_Teams()
+        {
+            // Arrange
+            const string org = "ORG";
+
+            var url = $"https://api.github.com/orgs/{org}/teams";
+
+            const string team1 = "TEAM_1";
+            const string team2 = "TEAM_2";
+            const string team3 = "TEAM_3";
+            const string team4 = "TEAM_4";
+
+            var teamsResult = new[]
+            {
+                new { id = 1, name = team1 },
+                new { id = 2, name = team2 },
+                new { id = 3, name = team3 },
+                new { id = 4, name = team4 }
+            }.ToAsyncJTokenEnumerable();
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(teamsResult);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = (await githubApi.GetTeams(org)).ToArray();
+
+            // Assert
+            result.Should().HaveCount(4);
+            result.Should().Equal(team1, team2, team3, team4);
+        }
+
+        [Fact]
         public async Task GetTeamMembers_Returns_Team_Members()
         {
             // Arrange

@@ -68,6 +68,15 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
+        public virtual async Task<IEnumerable<string>> GetTeams(string org)
+        {
+            var url = $"{_apiUrl}/orgs/{org}/teams";
+
+            return await _client.GetAllAsync(url)
+                .Select(t => (string)t["name"])
+                .ToListAsync();
+        }
+
         public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
