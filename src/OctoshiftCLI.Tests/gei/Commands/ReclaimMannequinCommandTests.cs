@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.Data;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.Models;
 using Xunit;
 
 

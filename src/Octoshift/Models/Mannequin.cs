@@ -1,5 +1,5 @@
 ﻿
-namespace OctoshiftCLI.Data
+namespace OctoshiftCLI.Models
 {
     public class Claimant
     {
