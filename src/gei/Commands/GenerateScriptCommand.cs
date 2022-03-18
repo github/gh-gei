@@ -282,13 +282,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // Waiting for migrations
             content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {githubSourceOrg} ===========");
-            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
             content.AppendLine();
 
             // Query each migration's status
             foreach (var repo in repos)
             {
-                content.AppendLine(WaitForMigrationScript(githubTargetOrg, repo));
+                content.AppendLine(WaitForMigrationScript(repo));
                 content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
                 content.AppendLine();
             }
@@ -389,7 +388,6 @@ if ($Failed -ne 0) {
             // Waiting for migrations
             content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoSourceOrg} ===========");
-            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
 
             // Query each migration's status
             foreach (var teamProject in repos.Keys)
@@ -403,7 +401,7 @@ if ($Failed -ne 0) {
                 foreach (var repo in repos[teamProject])
                 {
                     var githubRepo = GetGithubRepoName(teamProject, repo);
-                    content.AppendLine(WaitForMigrationScript(githubTargetOrg, githubRepo));
+                    content.AppendLine(WaitForMigrationScript(githubRepo));
                     content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
                     content.AppendLine();
                 }
@@ -447,14 +445,7 @@ if ($Failed -ne 0) {
             return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
         }
 
-        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey = null)
-        {
-            var migrationIdOption = !repoMigrationKey.IsNullOrWhiteSpace()
-                ? $" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]"
-                : "";
-
-            return $"gh gei wait-for-migration --github-org \"{githubOrg}\"{migrationIdOption}";
-        }
+        private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
         private string Exec(string script) => Wrap(script, "Exec");
 
