@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -58,7 +59,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var teams = await githubApi.GetTeams(githubOrg);
             if (teams.Contains(teamName))
             {
-                _log.LogSuccess($"Team '{teamName}' already exists. New team will not be created");
+                _log.LogSuccess($"Team '{teamName}' already exists - New team will not be created");
             }
             else
             {

@@ -4,8 +4,10 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Unix;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -47,7 +49,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
             var sshOption = new Option("--ssh")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
             };
             var sequential = new Option("--sequential")
             {
@@ -81,7 +84,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"OUTPUT: {output}");
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
             }
             if (sequential)
             {
@@ -100,12 +103,18 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             CheckForDuplicateRepoNames(repos);
 
             var script = sequential
-                ? GenerateSequentialScript(repos, pipelines, appIds, githubOrg, skipIdp, ssh)
-                : GenerateParallelScript(repos, pipelines, appIds, githubOrg, skipIdp, ssh);
+                ? GenerateSequentialScript(repos, pipelines, appIds, githubOrg, skipIdp)
+                : GenerateParallelScript(repos, pipelines, appIds, githubOrg, skipIdp);
 
             if (output != null)
             {
                 await File.WriteAllTextAsync(output.FullName, script);
+                // +x so script can be executed on macos and linux
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    var unixFileInfo = new UnixFileInfo(output.FullName);
+                    unixFileInfo.FileAccessPermissions |= FileAccessPermissions.UserExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.OtherExecute;
+                }
             }
         }
 
@@ -238,8 +247,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
             string githubOrg,
-            bool skipIdp,
-            bool ssh)
+            bool skipIdp)
         {
             if (repos == null)
             {
@@ -248,6 +256,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
 
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             foreach (var adoOrg in repos.Keys)
@@ -287,7 +296,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
                             content.AppendLine(Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                            content.AppendLine(Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, true)));
+                            content.AppendLine(Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
                             content.AppendLine(Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                             content.AppendLine(Exec(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                             content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
@@ -315,8 +324,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
             string githubOrg,
-            bool skipIdp,
-            bool ssh)
+            bool skipIdp)
         {
             if (repos == null)
             {
@@ -324,7 +332,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var content = new StringBuilder();
-
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
             content.AppendLine(EXEC_BATCH_FUNCTION_BLOCK);
@@ -375,7 +383,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
                         content.AppendLine(Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                        content.AppendLine(QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh));
+                        content.AppendLine(QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
                         content.AppendLine($"$RepoMigrations[\"{GetRepoMigrationKey(adoOrg, githubRepo)}\"] = $MigrationID");
                     }
                 }
@@ -397,7 +405,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
-                        content.AppendLine(WaitForMigrationScript(githubOrg, repoMigrationKey));
+                        content.AppendLine(WaitForMigrationScript(repoMigrationKey));
                         content.AppendLine("if ($lastexitcode -eq 0) {");
                         if (!_reposOnly)
                         {
@@ -470,11 +478,11 @@ if ($Failed -ne 0) {
                 ? string.Empty
                 : $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh, bool wait) =>
-            $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(ssh ? " --ssh" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
+        private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait) =>
+            $"./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
 
-        private string QueueMigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh) =>
-            $"$MigrationID = {ExecAndGetMigrationId(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, false))}";
+        private string QueueMigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo) =>
+            $"$MigrationID = {ExecAndGetMigrationId(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, false))}";
 
         private string CreateGithubTeamsScript(string adoTeamProject, string githubOrg, bool skipIdp)
         {
@@ -536,7 +544,7 @@ if ($Failed -ne 0) {
                 ? string.Empty
                 : $"./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey) => $"./ado2gh wait-for-migration --github-org \"{githubOrg}\" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+        private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
         private string Exec(string script) => Wrap(script, "Exec");
 
@@ -544,6 +552,8 @@ if ($Failed -ne 0) {
 
         private string Wrap(string script, string outerCommand = "") =>
             script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
 
         private const string EXEC_FUNCTION_BLOCK = @"
 function Exec {

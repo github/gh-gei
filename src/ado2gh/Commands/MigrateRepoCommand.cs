@@ -10,7 +10,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private bool _isRetry;
 
         public MigrateRepoCommand(
             OctoLogger log,
@@ -48,6 +47,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
+                IsHidden = true,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
             var wait = new Option("--wait")
@@ -84,7 +84,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
             if (ssh)
             {
-                _log.LogInformation("SSH: true");
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
             }
             if (wait)
             {
@@ -97,8 +97,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _githubApiFactory.Create();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat, ssh);
-            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
+            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat);
 
             if (!wait)
             {
@@ -117,27 +117,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
+                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+
                 var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-
-                if (!_isRetry && failureReason.Contains("Warning: Permanently added") && failureReason.Contains("(ECDSA) to the list of known hosts"))
-                {
-                    _log.LogWarning(failureReason);
-                    _log.LogWarning("This is a known issue. Retrying the migration should resolve it. Retrying migration now...");
-
-                    _isRetry = true;
-                    await githubApi.DeleteRepo(githubOrg, githubRepo);
-                    await Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, ssh, wait, verbose);
-                }
-                else
-                {
-                    _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                    throw new OctoshiftCliException(failureReason);
-                }
+                throw new OctoshiftCliException(failureReason);
             }
-            else
-            {
-                _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-            }
+
+            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
