@@ -4,3 +4,6 @@
 - Deprecate `--ssh` flag in `generate-script` and `migrate-repo` commands for both `ado2gh` and `gh gei`.
 - Add powershell shebang command for execution of script on unix based systems.
 - Add executable bit on generated scripts in unix based systems.
+- Updates most commands to be idempotent. They will check if there is anything to do, and if not they will print a message to that effect and complete successfully. E.g. create-team will check if the team already exists and if so exit as success (compared to previously where it would crash). The following commands have been updated:
+  - configure-autolink
+  - create-team
