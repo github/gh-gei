@@ -45,6 +45,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public void Github_Sequential_StartsWithShebang()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
+
+            script.Should().StartWith("#!/usr/bin/pwsh");
+
+        }
+
+        [Fact]
         public void Github_Single_Repo()
         {
             var repo = "foo-repo";
