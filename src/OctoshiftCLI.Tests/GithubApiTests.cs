@@ -149,49 +149,41 @@ namespace OctoshiftCLI.Tests
 
             const string team1 = "TEAM_1";
             const string team2 = "TEAM_2";
-            var responsePage1 = $@"
-            [
-                {{
-                    ""name"": ""{team1}"",
-                    ""id"": 1
-                }},
-                {{
-                    ""name"": ""{team2}"", 
-                    ""id"": 2
-                }}
-            ]";
-
             const string team3 = "TEAM_3";
             const string team4 = "TEAM_4";
-            var responsePage2 = $@"
-            [
-                {{
-                    ""name"": ""{team3}"",
-                    ""id"": 3
-                }},
-                {{
-                    ""name"": ""{team4}"", 
-                    ""id"": 4
-                }}
-            ]";
-
-            async IAsyncEnumerable<JToken> GetAllPages()
+            var t1 = new
             {
-                var jArrayPage1 = JArray.Parse(responsePage1);
-                yield return jArrayPage1[0];
-                yield return jArrayPage1[1];
+                id = 1,
+                name = team1,
+            };
+            var t2 = new
+            {
+                id = 2,
+                name = team2,
+            };
+            var t3 = new
+            {
+                id = 3,
+                name = team3,
+            };
+            var t4 = new
+            {
+                id = 4,
+                name = team4,
+            };
 
-                var jArrayPage2 = JArray.Parse(responsePage2);
-                yield return jArrayPage2[0];
-                yield return jArrayPage2[1];
-
-                await Task.CompletedTask;
-            }
+            var asyncEnumerable = new[]
+            {
+                JToken.FromObject(t1),
+                JToken.FromObject(t2),
+                JToken.FromObject(t3),
+                JToken.FromObject(t4),
+            }.ToAsyncEnumerable();
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.GetAllAsync(url))
-                .Returns(GetAllPages);
+                .Returns(asyncEnumerable);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
