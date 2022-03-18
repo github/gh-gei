@@ -151,39 +151,19 @@ namespace OctoshiftCLI.Tests
             const string team2 = "TEAM_2";
             const string team3 = "TEAM_3";
             const string team4 = "TEAM_4";
-            var t1 = new
-            {
-                id = 1,
-                name = team1,
-            };
-            var t2 = new
-            {
-                id = 2,
-                name = team2,
-            };
-            var t3 = new
-            {
-                id = 3,
-                name = team3,
-            };
-            var t4 = new
-            {
-                id = 4,
-                name = team4,
-            };
 
-            var asyncEnumerable = new[]
+            var teamsResult = new[]
             {
-                JToken.FromObject(t1),
-                JToken.FromObject(t2),
-                JToken.FromObject(t3),
-                JToken.FromObject(t4),
-            }.ToAsyncEnumerable();
+                new { id = 1, name = team1 },
+                new { id = 2, name = team2 },
+                new { id = 3, name = team3 },
+                new { id = 4, name = team4 }
+            }.ToAsyncJTokenEnumerable();
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.GetAllAsync(url))
-                .Returns(asyncEnumerable);
+                .Returns(teamsResult);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
