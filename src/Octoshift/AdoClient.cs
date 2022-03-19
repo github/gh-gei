@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -43,7 +42,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            ApplyRetryDelay();
+            await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
             if (body != null)
@@ -70,12 +69,12 @@ namespace OctoshiftCLI
             return content;
         }
 
-        private void ApplyRetryDelay()
+        private async Task ApplyRetryDelayAsync()
         {
             if (_retryDelay > 0.0)
             {
                 _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
-                Thread.Sleep((int)_retryDelay);
+                await Task.Delay((int)_retryDelay);
                 _retryDelay = 0.0;
             }
         }
@@ -105,7 +104,7 @@ namespace OctoshiftCLI
                 updatedUrl += $"continuationToken={continuationToken}";
             }
 
-            ApplyRetryDelay();
+            ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP GET: {url}");
             var response = await _httpClient.GetAsync(updatedUrl);
             var content = await response.Content.ReadAsStringAsync();
