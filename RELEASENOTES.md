@@ -2,3 +2,4 @@
 - Add `--wait` option to `migrate-repo` command. If set to `true` (default is `false`) it will synchronously wait for the migration to finish, otherwise it will just queue up a repo migration and return the `migration-id`.
 - Support parallel migrations with `generate-script` for both `ado2gh` and `gh gei`. `generate-script` now by default generates a script to perform migrations in parallel. Adding `--sequential` flag will force migrations to perform in a sequential (one by one) fashion.
 - Deprecate `--ssh` flag in `generate-script` and `migrate-repo` commands for both `ado2gh` and `gh gei`.
+- Add `reclaim-mannequin` command. Reclaims a mannequin, by sending a mannequin attribution invitation to the target user. If the mannequin has been previously mapped (and accepted) it will refuse to do so unless the `--force` flag is set.
