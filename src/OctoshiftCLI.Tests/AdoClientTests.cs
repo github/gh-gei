@@ -315,6 +315,146 @@ namespace OctoshiftCLI.Tests
                 .ThrowExactlyAsync<HttpRequestException>();
         }
 
+        [Fact]
+        public async Task PutAsync_Encodes_The_Url()
+        {
+            var handlerMock = MockHttpHandlerForPut();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            const string actualUrl = "http://example.com/param with space";
+            const string expectedUrl = "http://example.com/param%20with%20space";
+
+            // Act
+            await adoClient.PutAsync(actualUrl, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PutAsync_Applies_Retry_Delay()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Headers = { RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(1)) },
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("THIRD_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Put &&
+                        req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse)
+                .ReturnsAsync(thridResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // normal call
+            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // call with retry delay
+            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // normal call
+
+            // Assert
+            _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
+        }
+
+        [Fact]
+        public async Task PutAsync_Logs_The_Url()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var url = "http://example.com/resource";
+
+            // Act
+            await adoClient.PutAsync(url, _rawRequestBody);
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP PUT: {url}"), Times.Once);
+        }
+
+        [Fact]
+        public async Task PutAsync_Logs_The_Request_Body()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}"), Times.Once);
+        }
+
+        [Fact]
+        public async Task PutAsync_Returns_String_Response()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var actualContent = await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+
+            // Assert
+            actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
+        public async Task PutAsync_Logs_The_Response_Status_Code_And_Content()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
+        }
+
+        [Fact]
+        public async Task PutAsync_Throws_HttpRequestException_On_Non_Success_Response()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var handlerMock = MockHttpHandler(_ => true, httpResponse);
+
+            // Act
+            // Assert
+            await FluentActions
+                .Invoking(() =>
+                {
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    return adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+        }
+
         private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
             MockHttpHandler(req => req.Method == HttpMethod.Get);
 
@@ -322,6 +462,11 @@ namespace OctoshiftCLI.Tests
             MockHttpHandler(req =>
                 req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
                 && req.Method == HttpMethod.Post);
+
+        private Mock<HttpMessageHandler> MockHttpHandlerForPut() =>
+            MockHttpHandler(req =>
+                req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
+                && req.Method == HttpMethod.Put);
 
         private Mock<HttpMessageHandler> MockHttpHandler(
             Func<HttpRequestMessage, bool> requestMatcher,
