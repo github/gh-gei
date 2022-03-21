@@ -595,8 +595,137 @@ namespace OctoshiftCLI.Tests
                 .ThrowExactlyAsync<HttpRequestException>();
         }
 
+        [Fact]
+        public async Task DeleteAsync_Encodes_The_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForDelete();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            const string actualUrl = "http://example.com/param with space";
+            const string expectedUrl = "http://example.com/param%20with%20space";
+
+            // Act
+            await adoClient.DeleteAsync(actualUrl);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Applies_Retry_Delay()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Headers = { RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(1)) },
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("THIRD_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Delete),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse)
+                .ReturnsAsync(thridResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.DeleteAsync("http://example.com/resource"); // normal call
+            await adoClient.DeleteAsync("http://example.com/resource"); // call with retry delay
+            await adoClient.DeleteAsync("http://example.com/resource"); // normal call
+
+            // Assert
+            _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Logs_The_Url()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var url = "http://example.com/resource";
+
+            // Act
+            await adoClient.DeleteAsync(url);
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP DELETE: {url}"), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Returns_String_Response()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var actualContent = await adoClient.DeleteAsync("http://example.com/resource");
+
+            // Assert
+            actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Logs_The_Response_Status_Code_And_Content()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var url = "http://example.com/resource";
+
+            // Act
+            await adoClient.DeleteAsync(url);
+
+            // Assert
+            _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Throws_HttpRequestException_On_Non_Success_Response()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var handlerMock = MockHttpHandler(_ => true, httpResponse);
+
+            // Act
+            // Assert
+            await FluentActions
+                .Invoking(() =>
+                {
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    return adoClient.DeleteAsync("http://example.com/resource");
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+        }
+
         private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
             MockHttpHandler(req => req.Method == HttpMethod.Get);
+
+        private Mock<HttpMessageHandler> MockHttpHandlerForDelete() =>
+            MockHttpHandler(req => req.Method == HttpMethod.Delete);
 
         private Mock<HttpMessageHandler> MockHttpHandlerForPost() =>
             MockHttpHandler(req =>
