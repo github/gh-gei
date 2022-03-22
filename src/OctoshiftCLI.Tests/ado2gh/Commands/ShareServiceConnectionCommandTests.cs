@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
-            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);

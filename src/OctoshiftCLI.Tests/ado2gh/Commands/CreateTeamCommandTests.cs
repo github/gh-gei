@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string>());
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, teamName, idpGroup);
@@ -68,7 +68,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string> { teamName });
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();

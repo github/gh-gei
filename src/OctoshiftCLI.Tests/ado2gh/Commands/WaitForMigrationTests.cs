@@ -36,7 +36,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Failed);
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
