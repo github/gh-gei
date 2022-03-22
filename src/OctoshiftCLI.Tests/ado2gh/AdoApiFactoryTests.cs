@@ -31,7 +31,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{ADO_PAT}"));
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
-            
+
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
         }
 
@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{ADO_PAT}"));
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
-            
+
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
         }
     }

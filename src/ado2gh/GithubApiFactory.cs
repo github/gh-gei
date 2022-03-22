@@ -5,7 +5,7 @@ namespace OctoshiftCLI.AdoToGithub
     public class GithubApiFactory
     {
         private const string DEFAULT_API_URL = "https://api.github.com";
-        
+
         private readonly OctoLogger _octoLogger;
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;

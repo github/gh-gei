@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             result.Should().NotBeNull();
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(GH_PAT);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
-            
+
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken());
         }
 
