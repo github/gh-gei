@@ -104,7 +104,7 @@ namespace OctoshiftCLI
                 updatedUrl += $"continuationToken={continuationToken}";
             }
 
-            ApplyRetryDelayAsync();
+            await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP GET: {url}");
             var response = await _httpClient.GetAsync(updatedUrl);
             var content = await response.Content.ReadAsStringAsync();
