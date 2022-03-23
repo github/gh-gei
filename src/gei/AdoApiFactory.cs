@@ -1,5 +1,5 @@
 using System.Net.Http;
-
+using System.Net.Http;
 namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public class AdoApiFactory
