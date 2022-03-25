@@ -442,12 +442,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
             await FluentActions
                 .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
-                    {
-                        SourceRepo = SOURCE_REPO,
-                        GithubTargetOrg = TARGET_ORG,
-                        TargetRepo = TARGET_REPO,
-                        GhesApiUrl = GHES_API_URL
-                    }
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL
+                }
                 ))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
@@ -637,15 +637,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, null, null, mockAzureApiFactory.Object);
             await FluentActions
                 .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
-                    {
-                        GithubSourceOrg = SOURCE_ORG,
-                        SourceRepo = SOURCE_REPO,
-                        GithubTargetOrg = TARGET_ORG,
-                        TargetRepo = TARGET_REPO,
-                        TargetApiUrl = TARGET_API_URL,
-                        GhesApiUrl = GHES_API_URL,
-                        AzureStorageConnectionString = AZURE_CONNECTION_STRING
-                    }
+                {
+                    GithubSourceOrg = SOURCE_ORG,
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    TargetApiUrl = TARGET_API_URL,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING
+                }
                 ))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }

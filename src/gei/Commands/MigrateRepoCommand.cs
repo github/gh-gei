@@ -136,7 +136,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 throw new ArgumentNullException(nameof(args));
             }
-            
+
             _log.Verbose = args.Verbose;
 
             _log.LogInformation("Migrating Repo...");
@@ -347,7 +347,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
     }
 
-    public class MigrateRepoCommandArgs 
+    public class MigrateRepoCommandArgs
     {
         public string GithubSourceOrg { get; set; }
         public string AdoSourceOrg { get; set; }
