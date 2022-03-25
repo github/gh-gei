@@ -492,7 +492,7 @@ if ($Failed -ne 0) {
             // Arrange
             const string githubSourcePat = "github-source-pat";
 
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null); 
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), githubSourcePat))
@@ -500,12 +500,12 @@ if ($Failed -ne 0) {
 
             var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
-           
+
             // Act
             var command = new GenerateScriptCommand(
-                new Mock<OctoLogger>().Object, 
+                new Mock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
-                mockAdoApiFactory.Object, 
+                mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
             await command.Invoke("githubSourceOrg", null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
 
@@ -520,23 +520,23 @@ if ($Failed -ne 0) {
             // Arrange
             const string adoPat = "ado-pat";
 
-            var mockAdoApi = new Mock<AdoApi>(null); 
+            var mockAdoApi = new Mock<AdoApi>(null);
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
-            
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null); 
+
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockSourceGithubApi.Object);
 
             var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
-           
+
             // Act
             var command = new GenerateScriptCommand(
-                new Mock<OctoLogger>().Object, 
+                new Mock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
-                mockAdoApiFactory.Object, 
+                mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
             await command.Invoke(null, "adoSourceOrg", "githubTargetOrg", null, adoPat: adoPat);
 
