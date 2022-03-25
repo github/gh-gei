@@ -30,6 +30,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -38,18 +42,23 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Granting migrator role ...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ACTOR: {actor}");
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
             actorType = actorType?.ToUpper();
             _log.LogInformation($"ACTOR TYPE: {actorType}");
@@ -66,7 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.RevokeMigratorRole(githubOrgId, actor, actorType);
 

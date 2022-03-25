@@ -15,12 +15,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new AddTeamToRepoCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("add-team-to-repo", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.Equal(6, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "team", true);
             TestHelpers.VerifyCommandOption(command.Options, "role", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -40,6 +41,21 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
+        }
+
+        [Fact]
+        public async Task It_Uses_The_Github_Pat_When_Provided()
+        {
+            const string githubPat = "github-pat";
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+
+            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            await command.Invoke("githubOrg", "githubRepo", "team", "role", githubPat);
+
+            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
         }
 
         [Fact]

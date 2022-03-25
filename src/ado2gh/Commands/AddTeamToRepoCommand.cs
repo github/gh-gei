@@ -36,6 +36,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = true,
                 Description = "The only valid values are: pull, push, admin, maintain, triage. For more details see https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions, custom repository roles are not currently supported."
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -45,12 +49,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubRepo);
             AddOption(team);
             AddOption(role.FromAmong("pull", "push", "admin", "maintain", "triage"));
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, bool verbose = false)
+        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -59,8 +64,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
             _log.LogInformation($"TEAM: {team}");
             _log.LogInformation($"ROLE: {role}");
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
-            await _githubApiFactory.Create().AddTeamToRepo(githubOrg, githubRepo, team, role);
+            await _githubApiFactory.Create(personalAccessToken: githubPat).AddTeamToRepo(githubOrg, githubRepo, team, role);
 
             _log.LogSuccess("Successfully added team to repo");
         }

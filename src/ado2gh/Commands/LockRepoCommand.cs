@@ -31,6 +31,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -39,12 +43,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoOrg);
             AddOption(adoTeamProject);
             AddOption(adoRepo);
+            AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -52,8 +57,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"ADO REPO: {adoRepo}");
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
 
-            var ado = _adoApiFactory.Create();
+            var ado = _adoApiFactory.Create(adoPat);
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);

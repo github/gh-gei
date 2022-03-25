@@ -28,21 +28,30 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = true,
                 Description = "Waits for the specified migration to finish."
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose") { IsRequired = false };
 
             AddOption(migrationId);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string migrationId, bool verbose = false)
+        public async Task Invoke(string migrationId, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation($"Waiting for migration {migrationId} to finish...");
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
-            var githubApi = _githubApiFactory.Create();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
             while (true)
             {

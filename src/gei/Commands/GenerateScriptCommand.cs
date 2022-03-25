@@ -75,6 +75,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Waits for each migration to finish before moving on to the next one."
             };
+            var githubSourcePath = new Option<string>("--github-source-pat")
+            {
+                IsRequired = false
+            };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -91,9 +99,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(outputOption);
             AddOption(ssh);
             AddOption(sequential);
+            AddOption(githubSourcePath);
+            AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, FileInfo, string, string, bool, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, FileInfo, string, string, bool, bool, bool, string, string, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -106,6 +116,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           bool noSslVerify = false,
           bool ssh = false,
           bool sequential = false,
+          string githubSourcePat = null,
+          string adoPat = null,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -152,6 +164,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("SEQUENTIAL: true");
             }
+            if (githubSourcePat is not null)
+            {
+                _log.LogInformation("GITHUB SOURCE PAT: ***");
+            }
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
 
             if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
             {
@@ -159,8 +179,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
-                await InvokeAdo(adoSourceOrg, githubTargetOrg, sequential) :
-                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential);
+                await InvokeAdo(adoSourceOrg, githubTargetOrg, sequential, adoPat) :
+                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential, githubSourcePat);
 
             if (output != null)
             {
@@ -175,18 +195,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential)
+        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat)
         {
-            var targetApiUrl = "https://api.github.com";
-            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(targetApiUrl), githubSourceOrg);
+            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(sourcePersonalAccessToken: githubSourcePat), githubSourceOrg);
             return sequential
                 ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify)
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify);
         }
 
-        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool sequential)
+        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool sequential, string adoPat)
         {
-            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(), adoSourceOrg);
+            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoPat), adoSourceOrg);
             return sequential
                 ? GenerateSequentialAdoScript(repos, adoSourceOrg, githubTargetOrg)
                 : GenerateParallelAdoScript(repos, adoSourceOrg, githubTargetOrg);

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
@@ -19,7 +20,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(8);
+            command.Options.Count.Should().Be(9);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -28,9 +29,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "skip-idp", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
-
 
         [Fact]
         public void No_Data()
@@ -63,7 +64,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             script.Should().StartWith("#!/usr/bin/pwsh");
         }
-
 
         [Fact]
         public void Single_Repo()
@@ -972,6 +972,24 @@ if ($Failed -ne 0) {
 
             // Assert
             actual.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task It_Uses_The_Ado_Pat_When_Provided()
+        {
+            // Arrange
+            const string adoPat = "ado-pat";
+
+            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
+
+            // Act
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            await command.Invoke("githubOrg", "adoOrg", null, false, false, adoPat: adoPat);
+
+            // Assert
+            mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
 
         private string TrimNonExecutableLines(string script)

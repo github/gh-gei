@@ -32,6 +32,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -40,12 +44,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrg);
             AddOption(teamName);
             AddOption(idpGroup);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string teamName, string idpGroup, bool verbose = false)
+        public async Task Invoke(string githubOrg, string teamName, string idpGroup, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -53,8 +58,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"TEAM NAME: {teamName}");
             _log.LogInformation($"IDP GROUP: {idpGroup}");
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
-            var githubApi = _githubApiFactory.Create();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
             var teams = await githubApi.GetTeams(githubOrg);
             if (teams.Contains(teamName))

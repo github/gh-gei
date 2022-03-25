@@ -8,7 +8,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
-    public class WaitForMigrationTests
+    public class WaitForMigrationCommandTests
     {
         [Fact]
         public void Should_Have_Options()
@@ -16,9 +16,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new WaitForMigrationCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("wait-for-migration");
-            command.Options.Count.Should().Be(2);
+            command.Options.Count.Should().Be(3);
 
             TestHelpers.VerifyCommandOption(command.Options, "migration-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -128,6 +129,33 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             mockLogger.VerifyNoOtherCalls();
             mockGithubApi.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task It_Uses_Github_Pat_When_Provided()
+        {
+            // Arrange
+            const string specifiedMigrationId = "MIGRATION_ID";
+            const int waitIntervalInSeconds = 1;
+            const string githubPat = "github-pat";
+
+            var mockGithubApi = new Mock<GithubApi>(null, null);
+            mockGithubApi
+                .Setup(x => x.GetMigrationState(specifiedMigrationId).Result)
+                .Returns(RepositoryMigrationStatus.Succeeded);
+
+            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithubApi.Object);
+
+            // Act
+            var command = new WaitForMigrationCommand(new Mock<OctoLogger>().Object, mockTargetGithubApiFactory.Object)
+            {
+                WaitIntervalInSeconds = waitIntervalInSeconds
+            };
+            await command.Invoke(specifiedMigrationId, githubPat);
+
+            // Assert
+            mockTargetGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
         }
     }
 }

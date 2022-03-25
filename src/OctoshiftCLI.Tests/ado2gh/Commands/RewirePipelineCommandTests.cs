@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new RewirePipelineCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("rewire-pipeline", command.Name);
-            Assert.Equal(7, command.Options.Count);
+            Assert.Equal(8, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
@@ -23,6 +23,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -51,6 +52,21 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
+        }
+
+        [Fact]
+        public async Task It_Uses_The_Ado_Pat_When_Provided()
+        {
+            const string adoPat = "ado-pat";
+
+            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+
+            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            await command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
+
+            mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }

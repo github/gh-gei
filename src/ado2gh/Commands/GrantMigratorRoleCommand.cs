@@ -31,6 +31,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -39,12 +43,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -65,7 +70,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create();
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
+
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 
