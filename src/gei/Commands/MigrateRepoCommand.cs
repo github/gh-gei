@@ -127,118 +127,105 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(wait);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<
-              string, string, string, string, string, string, string,
-              string, string, bool,
-              string, string, bool,
-              bool, bool>(Invoke);
+            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(
-          string githubSourceOrg,
-          string adoSourceOrg,
-          string adoTeamProject,
-          string sourceRepo,
-          string githubTargetOrg,
-          string targetRepo,
-          string targetApiUrl,
-          string ghesApiUrl = "",
-          string azureStorageConnectionString = "",
-          bool noSslVerify = false,
-          string gitArchiveUrl = "",
-          string metadataArchiveUrl = "",
-          bool ssh = false,
-          bool wait = false,
-          bool verbose = false)
+        public async Task Invoke(MigrateRepoCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+            
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Migrating Repo...");
-            if (!string.IsNullOrWhiteSpace(githubSourceOrg))
+            if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
             {
-                _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+                _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
-            if (!string.IsNullOrWhiteSpace(adoSourceOrg))
+            if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
-                _log.LogInformation($"ADO SOURCE ORG: {adoSourceOrg}");
-                _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+                _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
+                _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
-            _log.LogInformation($"SOURCE REPO: {sourceRepo}");
-            _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
-            _log.LogInformation($"TARGET REPO: {targetRepo}");
+            _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
+            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+            _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
 
-            if (string.IsNullOrWhiteSpace(targetApiUrl))
+            if (string.IsNullOrWhiteSpace(args.TargetApiUrl))
             {
-                targetApiUrl = "https://api.github.com";
+                args.TargetApiUrl = "https://api.github.com";
             }
 
-            _log.LogInformation($"Target API URL: {targetApiUrl}");
+            _log.LogInformation($"Target API URL: {args.TargetApiUrl}");
 
-            if (ssh)
+            if (args.Ssh)
             {
                 _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
             }
 
-            if (wait)
+            if (args.Wait)
             {
                 _log.LogInformation("WAIT: true");
             }
 
-            if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
+            if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
-            if (string.IsNullOrWhiteSpace(githubSourceOrg) && !string.IsNullOrWhiteSpace(adoSourceOrg) && string.IsNullOrWhiteSpace(adoTeamProject))
+            if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && !string.IsNullOrWhiteSpace(args.AdoSourceOrg) && string.IsNullOrWhiteSpace(args.AdoTeamProject))
             {
                 throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
             }
 
-            if (string.IsNullOrWhiteSpace(targetRepo))
+            if (string.IsNullOrWhiteSpace(args.TargetRepo))
             {
-                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({sourceRepo})");
-                targetRepo = sourceRepo;
+                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
+                args.TargetRepo = args.SourceRepo;
             }
 
-            if (string.IsNullOrWhiteSpace(gitArchiveUrl) != string.IsNullOrWhiteSpace(metadataArchiveUrl))
+            if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
             }
-            else if (!string.IsNullOrWhiteSpace(metadataArchiveUrl))
+
+            if (!string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
             {
-                _log.LogInformation($"GIT ARCHIVE URL: {gitArchiveUrl}");
-                _log.LogInformation($"METADATA ARCHIVE URL: {metadataArchiveUrl}");
+                _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
+                _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
 
-            if (!string.IsNullOrWhiteSpace(ghesApiUrl))
+            if (!string.IsNullOrWhiteSpace(args.GhesApiUrl))
             {
-                (gitArchiveUrl, metadataArchiveUrl) = await GenerateAndUploadArchive(
-                  ghesApiUrl,
-                  githubSourceOrg,
-                  sourceRepo,
-                  azureStorageConnectionString,
-                  noSslVerify
+                (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
+                  args.GhesApiUrl,
+                  args.GithubSourceOrg,
+                  args.SourceRepo,
+                  args.AzureStorageConnectionString,
+                  args.NoSslVerify
                 );
 
                 _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
+            var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl);
             var targetGithubPat = _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
+            var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
             string sourceRepoUrl;
             string migrationSourceId;
             string sourceToken;
 
-            if (string.IsNullOrWhiteSpace(githubSourceOrg))
+            if (string.IsNullOrWhiteSpace(args.GithubSourceOrg))
             {
-                sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
+                sourceRepoUrl = GetAdoRepoUrl(args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
                 sourceToken = _environmentVariableProvider.AdoPersonalAccessToken();
                 migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
             else
             {
-                sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
+                sourceRepoUrl = GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo);
                 sourceToken = _environmentVariableProvider.SourceGithubPersonalAccessToken();
                 migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat);
             }
@@ -247,13 +234,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 migrationSourceId,
                 sourceRepoUrl,
                 githubOrgId,
-                targetRepo,
+                args.TargetRepo,
                 sourceToken,
                 targetGithubPat,
-                gitArchiveUrl,
-                metadataArchiveUrl);
+                args.GitArchiveUrl,
+                args.MetadataArchiveUrl);
 
-            if (!wait)
+            if (!args.Wait)
             {
                 _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
                 return;
@@ -358,5 +345,24 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private string GetGithubRepoUrl(string org, string repo) => $"https://github.com/{org}/{repo}".Replace(" ", "%20");
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
+    }
+
+    public class MigrateRepoCommandArgs 
+    {
+        public string GithubSourceOrg { get; set; }
+        public string AdoSourceOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string SourceRepo { get; set; }
+        public string GithubTargetOrg { get; set; }
+        public string TargetRepo { get; set; }
+        public string TargetApiUrl { get; set; }
+        public string GhesApiUrl { get; set; } = "";
+        public string AzureStorageConnectionString { get; set; } = "";
+        public bool NoSslVerify { get; set; }
+        public string GitArchiveUrl { get; set; } = "";
+        public string MetadataArchiveUrl { get; set; } = "";
+        public bool Ssh { get; set; }
+        public bool Wait { get; set; }
+        public bool Verbose { get; set; }
     }
 }

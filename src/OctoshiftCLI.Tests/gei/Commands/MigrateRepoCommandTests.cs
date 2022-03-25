@@ -84,7 +84,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, wait: false);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                Wait = false
+            };
+            await command.Invoke(args);
 
             // Assert
             mockGithub.Verify(m => m.GetOrganizationId(TARGET_ORG));
@@ -132,7 +141,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -173,7 +191,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
-            await command.Invoke(null, SOURCE_ORG, adoTeamProject, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -241,7 +269,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAzureApiFactory.Setup(m => m.Create(AZURE_CONNECTION_STRING)).Returns(mockAzureApi.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, GHES_API_URL, AZURE_CONNECTION_STRING, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -283,7 +322,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, "", "", false, gitArchiveUrl, metadataArchiveUrl, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GitArchiveUrl = gitArchiveUrl,
+                MetadataArchiveUrl = metadataArchiveUrl,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -295,7 +345,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, "", "", false, gitArchiveUrl, wait: true))
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                {
+                    GithubSourceOrg = SOURCE_ORG,
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    TargetApiUrl = TARGET_API_URL,
+                    GitArchiveUrl = gitArchiveUrl,
+                    Wait = true
+                }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -304,7 +363,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(null, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, ""))
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    TargetApiUrl = ""
+                }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -313,7 +378,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(null, SOURCE_ORG, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, ""))
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                {
+                    AdoSourceOrg = SOURCE_ORG,
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    TargetApiUrl = ""
+                }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -351,7 +423,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, null, "", wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetApiUrl = "",
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
         }
@@ -361,7 +441,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, null, null, null);
             await FluentActions
-                .Invoking(async () => await command.Invoke(null, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, GHES_API_URL, ""))
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                    {
+                        SourceRepo = SOURCE_REPO,
+                        GithubTargetOrg = TARGET_ORG,
+                        TargetRepo = TARGET_REPO,
+                        GhesApiUrl = GHES_API_URL
+                    }
+                ))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
 
@@ -431,7 +518,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAzureApiFactory.Setup(m => m.Create(azureConnectionStringEnv)).Returns(mockAzureApi.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, GHES_API_URL, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockAzureApiFactory.Verify(x => x.Create(azureConnectionStringEnv));
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
@@ -500,7 +597,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockAzureApiFactory.Setup(m => m.CreateClientNoSsl(AZURE_CONNECTION_STRING)).Returns(mockAzureApi.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
-            await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, GHES_API_URL, AZURE_CONNECTION_STRING, true, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                NoSslVerify = true,
+                Wait = true
+            };
+            await command.Invoke(args);
 
             mockAzureApiFactory.Verify(x => x.CreateClientNoSsl(AZURE_CONNECTION_STRING));
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
@@ -527,7 +636,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, null, null, mockAzureApiFactory.Object);
             await FluentActions
-                .Invoking(async () => await command.Invoke(SOURCE_ORG, null, null, SOURCE_REPO, TARGET_ORG, TARGET_REPO, TARGET_API_URL, GHES_API_URL, AZURE_CONNECTION_STRING))
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                    {
+                        GithubSourceOrg = SOURCE_ORG,
+                        SourceRepo = SOURCE_REPO,
+                        GithubTargetOrg = TARGET_ORG,
+                        TargetRepo = TARGET_REPO,
+                        TargetApiUrl = TARGET_API_URL,
+                        GhesApiUrl = GHES_API_URL,
+                        AzureStorageConnectionString = AZURE_CONNECTION_STRING
+                    }
+                ))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
     }
