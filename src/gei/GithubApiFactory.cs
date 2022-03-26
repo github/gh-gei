@@ -17,6 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         GithubApi ISourceGithubApiFactory.Create(string apiUrl, string sourcePersonalAccessToken)
         {
+            apiUrl ??= Defaults.GithubApiUrl;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), sourcePersonalAccessToken);
             return new GithubApi(githubClient, apiUrl);
@@ -24,6 +25,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         GithubApi ISourceGithubApiFactory.CreateClientNoSsl(string apiUrl, string sourcePersonalAccessToken)
         {
+            apiUrl ??= Defaults.GithubApiUrl;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), sourcePersonalAccessToken);
             return new GithubApi(githubClient, apiUrl);
@@ -31,6 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         GithubApi ITargetGithubApiFactory.Create(string apiUrl, string targetPersonalAccessToken)
         {
+            apiUrl ??= Defaults.GithubApiUrl;
             targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), targetPersonalAccessToken);
             return new GithubApi(githubClient, apiUrl);

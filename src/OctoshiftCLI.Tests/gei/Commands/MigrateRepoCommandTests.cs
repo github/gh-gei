@@ -25,7 +25,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new MigrateRepoCommand(null, null, null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(15);
+            command.Options.Count.Should().Be(18);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
@@ -41,6 +41,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -65,7 +68,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
@@ -78,7 +81,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 $"SOURCE REPO: {SOURCE_REPO}",
                 $"GITHUB TARGET ORG: {TARGET_ORG}",
                 $"TARGET REPO: {TARGET_REPO}",
-                $"Target API URL: {TARGET_API_URL}",
+                $"TARGET API URL: {TARGET_API_URL}",
                 $"A repository migration (ID: {migrationId}) was successfully queued."
             };
 
@@ -420,7 +423,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
             var args = new MigrateRepoCommandArgs
@@ -428,7 +431,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubSourceOrg = SOURCE_ORG,
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
-                TargetApiUrl = "",
                 Wait = true
             };
             await command.Invoke(args);

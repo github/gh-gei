@@ -8,5 +8,7 @@ namespace OctoshiftCLI.Extensions
         public static StringContent ToStringContent(this string s) => new(s, Encoding.UTF8, "application/json");
 
         public static bool IsNullOrWhiteSpace(this string s) => string.IsNullOrWhiteSpace(s);
+
+        public static bool HasValue(this string s) => !s.IsNullOrWhiteSpace();
     }
 }
