@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Idempotency_Repo_Disabled()
         {
             var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
+            var adoTeamProject = "TeamProject1";
             var adoRepo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
             var repos = new List<(string Id, string Name, bool IsDisabled)> { { (repoId, adoRepo, true) } };
