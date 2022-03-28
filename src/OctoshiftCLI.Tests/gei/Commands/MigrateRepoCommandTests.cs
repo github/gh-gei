@@ -18,6 +18,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string SOURCE_REPO = "foo-repo-source";
         private const string TARGET_ORG = "foo-target-org";
         private const string TARGET_REPO = "foo-target-repo";
+        private const string ADO_PAT = "ado-pat";
+        private const string GITHUB_PAT = "github-pat";
+        private const string GITHUB_SOURCE_PAT = "github-source-pat";
 
         [Fact]
         public void Should_Have_Options()
@@ -650,6 +653,164 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
                 ))
                 .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task It_Uses_Ado_Pat_When_Provided()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+
+            // Act
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = "adoTeamProject",
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                AdoPat = ADO_PAT
+            };
+            await command.Invoke(args);
+
+            // Assert
+            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+            mockGithub.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), ADO_PAT, It.IsAny<string>()));
+            mockGithub.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                ADO_PAT,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()));
+        }
+
+        [Fact]
+        public async Task It_Uses_Github_Source_And_Target_Pats_When_Provided()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_PAT)).Returns(mockGithub.Object);
+
+            // Act
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GithubPat = GITHUB_PAT,
+                GithubSourcePat = GITHUB_SOURCE_PAT
+            };
+            await command.Invoke(args);
+
+            // Assert
+            environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
+            environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, GITHUB_PAT));
+            mockGithub.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                GITHUB_SOURCE_PAT,
+                GITHUB_PAT,
+                It.IsAny<string>(),
+                It.IsAny<string>()));
+        }
+
+        [Fact]
+        public async Task It_Uses_Github_Source_Pat_When_Provided()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            mockGithub.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGithub.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_SOURCE_PAT)).Returns(mockGithub.Object);
+            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), null)).Returns(mockGithub.Object);
+
+            var mockAzureApi = new Mock<AzureApi>(null, null);
+            mockAzureApi.Setup(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
+            var mockAzureApiFactory = new Mock<IAzureApiFactory>();
+            mockAzureApiFactory.Setup(m => m.Create(AZURE_CONNECTION_STRING)).Returns(mockAzureApi.Object);
+
+            // Act
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                GithubSourcePat = GITHUB_SOURCE_PAT
+            };
+            await command.Invoke(args);
+
+            // Assert
+            environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
+            environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken());
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, It.IsAny<string>()));
+            mockGithub.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                GITHUB_SOURCE_PAT,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()));
+        }
+
+        [Fact]
+        public async Task It_Falls_Back_To_Github_Pat_If_Github_Source_Pat_Is_Not_Provided()
+        {
+            // Arrange
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_PAT)).Returns(mockGithub.Object);
+
+            // Act
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GithubPat = GITHUB_PAT
+            };
+            await command.Invoke(args);
+
+            // Assert
+            environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
+            environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_PAT, GITHUB_PAT));
+            mockGithub.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                GITHUB_PAT,
+                GITHUB_PAT,
+                It.IsAny<string>(),
+                It.IsAny<string>()));
         }
     }
 }
