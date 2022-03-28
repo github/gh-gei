@@ -510,7 +510,7 @@ if ($Failed -ne 0) {
             await command.Invoke("githubSourceOrg", null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
 
             // Assert
-            mockSourceGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubSourcePat));
+            mockSourceGithubApiFactory.Verify(m => m.Create(null, githubSourcePat));
             mockEnvironmentVariableProvider.VerifyNoOtherCalls();
         }
 

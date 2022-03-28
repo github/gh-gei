@@ -1,6 +1,10 @@
+using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Moq.Protected;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using Xunit;
 
@@ -190,6 +194,105 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
 
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
+        }
+
+        [Fact]
+        public async Task GithubApiFactory_Should_Use_The_Default_Github_Api_Url_If_Passed_In_As_Null_When_Creating_Source_GithubApi()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+
+            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            mockHttpClientFactory
+                .Setup(x => x.CreateClient("Default"))
+                .Returns(httpClient);
+
+            // Act
+            ISourceGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null);
+            var githubApi = factory.Create(null, SOURCE_GH_PAT);
+            await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri.StartsWith("https://api.github.com")),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GithubApiFactory_Should_Use_The_Default_Github_Api_Url_If_Passed_In_As_Null_When_Creating_Target_GithubApi()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+
+            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            mockHttpClientFactory
+                .Setup(x => x.CreateClient("Default"))
+                .Returns(httpClient);
+
+            // Act
+            ITargetGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null);
+            var githubApi = factory.Create(null, TARGET_GH_PAT);
+            await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri.StartsWith("https://api.github.com")),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GithubApiFactory_Should_Use_The_Default_Github_Api_Url_If_Passed_In_As_Null_When_Creating_Source_GithubApi_No_Ssl()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+
+            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            mockHttpClientFactory
+                .Setup(x => x.CreateClient("NoSSL"))
+                .Returns(httpClient);
+
+            // Act
+            ISourceGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null);
+            var githubApi = factory.CreateClientNoSsl(null, SOURCE_GH_PAT);
+            await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri.StartsWith("https://api.github.com")),
+                ItExpr.IsAny<CancellationToken>());
         }
     }
 }

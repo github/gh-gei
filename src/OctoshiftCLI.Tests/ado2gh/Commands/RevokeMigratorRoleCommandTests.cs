@@ -56,7 +56,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "actor", "TEAM", githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
 
         [Fact]

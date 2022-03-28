@@ -64,7 +64,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "teamName", "idpGroup", githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
 
         [Fact]

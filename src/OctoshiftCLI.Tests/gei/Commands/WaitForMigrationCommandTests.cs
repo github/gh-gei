@@ -155,7 +155,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(specifiedMigrationId, githubPat);
 
             // Assert
-            mockTargetGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
     }
 }

@@ -177,7 +177,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true, adoPat: adoPat, githubPat: githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
         }
@@ -204,7 +204,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true);
 
-            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken());
         }

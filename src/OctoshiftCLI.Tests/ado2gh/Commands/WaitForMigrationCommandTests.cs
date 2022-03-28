@@ -155,7 +155,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(specifiedMigrationId, githubPat);
 
             // Assert
-            mockGithubApiFactory.Verify(m => m.Create("https://api.github.com", githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
     }
 }
