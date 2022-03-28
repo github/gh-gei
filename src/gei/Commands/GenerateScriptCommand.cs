@@ -221,7 +221,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 foreach (var teamProject in teamProjects)
                 {
                     _log.LogInformation($"Team Project: {teamProject}");
-                    var projectRepos = await adoApi.GetNonDisabledRepos(adoOrg, teamProject);
+                    var projectRepos = await adoApi.GetEnabledRepos(adoOrg, teamProject);
                     repos.Add(teamProject, projectRepos);
 
                     foreach (var repo in projectRepos)

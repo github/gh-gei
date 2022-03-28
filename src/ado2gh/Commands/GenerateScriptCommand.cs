@@ -187,7 +187,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     foreach (var teamProject in teamProjects)
                     {
                         _log.LogInformation($"  Team Project: {teamProject}");
-                        var projectRepos = await ado.GetNonDisabledRepos(org, teamProject);
+                        var projectRepos = await ado.GetEnabledRepos(org, teamProject);
                         repos[org].Add(teamProject, projectRepos);
 
                         foreach (var repo in projectRepos)

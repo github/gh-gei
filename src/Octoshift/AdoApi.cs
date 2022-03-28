@@ -64,13 +64,13 @@ namespace OctoshiftCLI
             return data.Select(x => (string)x["name"]).ToList();
         }
 
-        public virtual async Task<IEnumerable<string>> GetNonDisabledRepos(string org, string teamProject) => (await GetRepos(org, teamProject)).Where(x => !x.IsDisabled).Select(x => x.Name).ToList();
+        public virtual async Task<IEnumerable<string>> GetEnabledRepos(string org, string teamProject) => (await GetRepos(org, teamProject)).Where(x => !x.IsDisabled).Select(x => x.Name).ToList();
 
         public virtual async Task<IEnumerable<(string Id, string Name, bool IsDisabled)>> GetRepos(string org, string teamProject)
         {
             var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
-            return data.Select(x => ((string)x["id"], (string)x["name"], ((string)x["isDisabled"]).Equals("True", StringComparison.OrdinalIgnoreCase)))
+            return data.Select(x => ((string)x["id"], (string)x["name"], ((string)x["isDisabled"]).ToBool()))
                        .ToList();
         }
 
@@ -276,7 +276,6 @@ namespace OctoshiftCLI
                 url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
 
                 var response = await _client.GetWithPagingAsync(url);
-                Console.WriteLine(response);
 
                 return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
             }
