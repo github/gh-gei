@@ -4,8 +4,10 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Unix;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
@@ -163,6 +165,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (output != null)
             {
                 await File.WriteAllTextAsync(output.FullName, script);
+
+                // +x so script can be executed on macos and linux
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    var unixFileInfo = new UnixFileInfo(output.FullName);
+                    unixFileInfo.FileAccessPermissions |= FileAccessPermissions.UserExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.OtherExecute;
+                }
             }
         }
 
@@ -236,6 +245,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var content = new StringBuilder();
 
+            content.AppendLine(@"#!/usr/bin/pwsh");
+
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
@@ -282,13 +293,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // Waiting for migrations
             content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {githubSourceOrg} ===========");
-            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
             content.AppendLine();
 
             // Query each migration's status
             foreach (var repo in repos)
             {
-                content.AppendLine(WaitForMigrationScript(githubTargetOrg, repo));
+                content.AppendLine(WaitForMigrationScript(repo));
                 content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
                 content.AppendLine();
             }
@@ -389,7 +399,6 @@ if ($Failed -ne 0) {
             // Waiting for migrations
             content.AppendLine();
             content.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoSourceOrg} ===========");
-            content.AppendLine(WaitForMigrationScript(githubTargetOrg)); // Wait for all migrations to finish
 
             // Query each migration's status
             foreach (var teamProject in repos.Keys)
@@ -403,7 +412,7 @@ if ($Failed -ne 0) {
                 foreach (var repo in repos[teamProject])
                 {
                     var githubRepo = GetGithubRepoName(teamProject, repo);
-                    content.AppendLine(WaitForMigrationScript(githubTargetOrg, githubRepo));
+                    content.AppendLine(WaitForMigrationScript(githubRepo));
                     content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
                     content.AppendLine();
                 }
@@ -447,14 +456,7 @@ if ($Failed -ne 0) {
             return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
         }
 
-        private string WaitForMigrationScript(string githubOrg, string repoMigrationKey = null)
-        {
-            var migrationIdOption = !repoMigrationKey.IsNullOrWhiteSpace()
-                ? $" --migration-id $RepoMigrations[\"{repoMigrationKey}\"]"
-                : "";
-
-            return $"gh gei wait-for-migration --github-org \"{githubOrg}\"{migrationIdOption}";
-        }
+        private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
         private string Exec(string script) => Wrap(script, "Exec");
 
