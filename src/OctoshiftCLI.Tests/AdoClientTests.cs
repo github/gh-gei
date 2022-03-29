@@ -22,6 +22,7 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
+        private const string URL = "http://example.com/resource";
 
         public AdoClientTests()
         {
@@ -86,7 +87,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("THIRD_RESPONSE")
             };
@@ -99,15 +100,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.GetAsync("http://example.com/resource"); // normal call
-            await adoClient.GetAsync("http://example.com/resource"); // call with retry delay
-            await adoClient.GetAsync("http://example.com/resource"); // normal call
+            await adoClient.GetAsync(URL); // normal call
+            await adoClient.GetAsync(URL); // call with retry delay
+            await adoClient.GetAsync(URL); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -119,13 +120,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.GetAsync(url);
+            await adoClient.GetAsync(URL);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP GET: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP GET: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -136,7 +136,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await adoClient.GetAsync("http://example.com/resource");
+            var actualContent = await adoClient.GetAsync(URL);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -148,10 +148,9 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.GetAsync(url);
+            await adoClient.GetAsync(URL);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
@@ -171,7 +170,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.GetAsync("http://example.com/resource");
+                    return adoClient.GetAsync(URL);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -211,7 +210,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("THIRD_RESPONSE")
             };
@@ -226,15 +225,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PostAsync("http://example.com/resource", _rawRequestBody); // normal call
-            await adoClient.PostAsync("http://example.com/resource", _rawRequestBody); // call with retry delay
-            await adoClient.PostAsync("http://example.com/resource", _rawRequestBody); // normal call
+            await adoClient.PostAsync(URL, _rawRequestBody); // normal call
+            await adoClient.PostAsync(URL, _rawRequestBody); // call with retry delay
+            await adoClient.PostAsync(URL, _rawRequestBody); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -246,13 +245,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.PostAsync(url, _rawRequestBody);
+            await adoClient.PostAsync(URL, _rawRequestBody);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP POST: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP POST: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -263,7 +261,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PostAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PostAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}"), Times.Once);
@@ -277,7 +275,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await adoClient.PostAsync("http://example.com/resource", _rawRequestBody);
+            var actualContent = await adoClient.PostAsync(URL, _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -291,7 +289,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PostAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PostAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
@@ -311,7 +309,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.PostAsync("http://example.com/resource", _rawRequestBody);
+                    return adoClient.PostAsync(URL, _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -351,7 +349,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("THIRD_RESPONSE")
             };
@@ -366,15 +364,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // normal call
-            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // call with retry delay
-            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody); // normal call
+            await adoClient.PutAsync(URL, _rawRequestBody); // normal call
+            await adoClient.PutAsync(URL, _rawRequestBody); // call with retry delay
+            await adoClient.PutAsync(URL, _rawRequestBody); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -386,13 +384,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.PutAsync(url, _rawRequestBody);
+            await adoClient.PutAsync(URL, _rawRequestBody);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP PUT: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP PUT: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -403,7 +400,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PutAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}"), Times.Once);
@@ -417,7 +414,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+            var actualContent = await adoClient.PutAsync(URL, _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -431,7 +428,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PutAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
@@ -451,7 +448,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.PutAsync("http://example.com/resource", _rawRequestBody);
+                    return adoClient.PutAsync(URL, _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -491,7 +488,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("THIRD_RESPONSE")
             };
@@ -506,15 +503,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody); // normal call
-            await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody); // call with retry delay
-            await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody); // normal call
+            await adoClient.PatchAsync(URL, _rawRequestBody); // normal call
+            await adoClient.PatchAsync(URL, _rawRequestBody); // call with retry delay
+            await adoClient.PatchAsync(URL, _rawRequestBody); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -526,13 +523,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.PatchAsync(url, _rawRequestBody);
+            await adoClient.PatchAsync(URL, _rawRequestBody);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP PATCH: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP PATCH: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -543,7 +539,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PatchAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}"), Times.Once);
@@ -557,7 +553,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody);
+            var actualContent = await adoClient.PatchAsync(URL, _rawRequestBody);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -571,7 +567,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.PatchAsync("http://example.com/resource", _rawRequestBody);
+            await adoClient.PatchAsync(URL, _rawRequestBody);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
@@ -591,7 +587,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.PatchAsync("http://example.com/resource", _rawRequestBody);
+                    return adoClient.PatchAsync(URL, _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -632,7 +628,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("THIRD_RESPONSE")
             };
@@ -645,15 +641,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.DeleteAsync("http://example.com/resource"); // normal call
-            await adoClient.DeleteAsync("http://example.com/resource"); // call with retry delay
-            await adoClient.DeleteAsync("http://example.com/resource"); // normal call
+            await adoClient.DeleteAsync(URL); // normal call
+            await adoClient.DeleteAsync(URL); // call with retry delay
+            await adoClient.DeleteAsync(URL); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -665,13 +661,12 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.DeleteAsync(url);
+            await adoClient.DeleteAsync(URL);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP DELETE: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP DELETE: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -682,7 +677,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await adoClient.DeleteAsync("http://example.com/resource");
+            var actualContent = await adoClient.DeleteAsync(URL);
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -694,10 +689,9 @@ namespace OctoshiftCLI.Tests
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.DeleteAsync(url);
+            await adoClient.DeleteAsync(URL);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
@@ -717,7 +711,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.DeleteAsync("http://example.com/resource");
+                    return adoClient.DeleteAsync(URL);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -803,17 +797,16 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com/resource";
             const string continuationToken = "CONTINUATION_TOKEN";
 
             // Act
-            await adoClient.GetWithPagingAsync(url, continuationToken);
+            await adoClient.GetWithPagingAsync(URL, continuationToken);
 
             // Assert
             handlerMock.Protected().Verify(
                 "SendAsync",
                 Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{url}?continuationToken={continuationToken}"),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{URL}?continuationToken={continuationToken}"),
                 ItExpr.IsAny<CancellationToken>());
         }
 
@@ -856,7 +849,7 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent(new { value = new[] { "item4", "item5", "item6" } }.ToJson())
             };
-            using var thridResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(new { value = new[] { "item7", "item8", "item9" } }.ToJson())
             };
@@ -869,15 +862,15 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse)
                 .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thridResponse);
+                .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await adoClient.GetWithPagingAsync("http://example.com/resource", null); // normal call
-            await adoClient.GetWithPagingAsync("http://example.com/resource", null); // call with retry delay
-            await adoClient.GetWithPagingAsync("http://example.com/resource", null); // normal call
+            await adoClient.GetWithPagingAsync(URL, null); // normal call
+            await adoClient.GetWithPagingAsync(URL, null); // call with retry delay
+            await adoClient.GetWithPagingAsync(URL, null); // normal call
 
             // Assert
             _loggerMock.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 1000 ms"), Times.Once);
@@ -894,13 +887,12 @@ namespace OctoshiftCLI.Tests
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.GetWithPagingAsync(url);
+            await adoClient.GetWithPagingAsync(URL);
 
             // Assert
-            _loggerMock.Verify(m => m.LogVerbose($"HTTP GET: {url}"), Times.Once);
+            _loggerMock.Verify(m => m.LogVerbose($"HTTP GET: {URL}"), Times.Once);
         }
 
         [Fact]
@@ -915,10 +907,9 @@ namespace OctoshiftCLI.Tests
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-            const string url = "http://example.com/resource";
 
             // Act
-            await adoClient.GetWithPagingAsync(url);
+            await adoClient.GetWithPagingAsync(URL);
 
             // Assert
             _loggerMock.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {content}"), Times.Once);
@@ -938,7 +929,7 @@ namespace OctoshiftCLI.Tests
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.GetWithPagingAsync("http://example.com/resource");
+                    return adoClient.GetWithPagingAsync(URL);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
@@ -948,8 +939,6 @@ namespace OctoshiftCLI.Tests
         public async Task GetWithPagingAsync_Gets_All_Pages()
         {
             // Arrange
-            const string url = "http://example.com/resource";
-
             var continuationToken = Guid.NewGuid().ToString();
             var firstResult = new[] { "item1", "item2", "item3" };
             using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
@@ -971,7 +960,7 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req =>
                         req.Method == HttpMethod.Get &&
-                        req.RequestUri.AbsoluteUri == url),
+                        req.RequestUri.AbsoluteUri == URL),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(firstHttpResponse);
             handlerMock
@@ -980,7 +969,7 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req =>
                         req.Method == HttpMethod.Get &&
-                        req.RequestUri.AbsoluteUri == $"{url}?continuationToken={continuationToken}"),
+                        req.RequestUri.AbsoluteUri == $"{URL}?continuationToken={continuationToken}"),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(secondHttpResponse);
 
@@ -988,7 +977,7 @@ namespace OctoshiftCLI.Tests
             var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var expectedResult = await adoClient.GetWithPagingAsync(url);
+            var expectedResult = await adoClient.GetWithPagingAsync(URL);
 
             // Assert
             expectedResult.Should().HaveCount(5);
