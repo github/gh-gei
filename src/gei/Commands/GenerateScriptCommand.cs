@@ -229,6 +229,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 {
                     foreach (var teamProject in teamProjects)
                     {
+                        _log.LogInformation($"Team Project: {teamProject}");
                         var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, teamProject);
                         repos.Add(teamProject, projectRepos);
                     }
@@ -450,7 +451,7 @@ if ($Failed -ne 0) {
         private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi adoApi, string adoOrg, string teamProject)
         {
             _log.LogInformation($"Team Project: {teamProject}");
-            var projectRepos = await adoApi.GetRepos(adoOrg, teamProject);
+            var projectRepos = await adoApi.GetEnabledRepos(adoOrg, teamProject);
 
             foreach (var repo in projectRepos)
             {
