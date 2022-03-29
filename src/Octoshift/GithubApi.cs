@@ -141,8 +141,8 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String, $type: MigrationSourceType!, $githubPat: String)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
 
             var payload = new
             {
@@ -167,8 +167,8 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String, $type: MigrationSourceType!, $githubPat: String)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
 
             var payload = new
             {
