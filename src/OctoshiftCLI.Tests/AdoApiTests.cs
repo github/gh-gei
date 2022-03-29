@@ -193,7 +193,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetRepos(adoOrg, teamProject);
+            var result = await sut.GetEnabledRepos(adoOrg, teamProject);
 
             result.Count().Should().Be(2);
             result.Should().Contain(new[] { repo1, repo2 });
