@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
@@ -31,9 +32,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoTeamProject = "BlahTeamProject";
             var adoRepo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
+            var repos = new List<(string Id, string Name, bool IsDisabled)> { (repoId, adoRepo, false) };
 
             var mockAdo = new Mock<AdoApi>(null);
-            mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
+            mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
@@ -45,11 +47,34 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public async Task Idempotency_Repo_Disabled()
+        {
+            var adoOrg = "FooOrg";
+            var adoTeamProject = "TeamProject1";
+            var adoRepo = "foo-repo";
+            var repoId = Guid.NewGuid().ToString();
+            var repos = new List<(string Id, string Name, bool IsDisabled)> { (repoId, adoRepo, true) };
+
+            var mockAdo = new Mock<AdoApi>(null);
+            mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
+
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+
+            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            await command.Invoke(adoOrg, adoTeamProject, adoRepo);
+
+            mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId), Times.Never);
+        }
+
+        [Fact]
         public async Task It_Uses_The_Ado_Pat_When_Provided()
         {
             const string adoPat = "ado-pat";
 
+            var repos = new[] { ("repoId", "adoRepo", true) };
             var mockAdo = new Mock<AdoApi>(null);
+            mockAdo.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 

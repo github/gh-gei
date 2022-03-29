@@ -1,1 +1,5 @@
 - All commands in both `ado2gh` and `gei` now optionally accept required PATs as args as an alternate way to setting them as env variables. 
+- Updates most commands to be idempotent. They will check if there is anything to do, and if not they will print a message to that effect and complete successfully. E.g. create-team will check if the team already exists and if so exit as success (compared to previously where it would crash). The following commands have been updated:
+  - configure-autolink
+  - create-team
+  - disable-ado-repo

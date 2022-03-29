@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -64,7 +65,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var ado = _adoApiFactory.Create(adoPat);
 
-            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+            var allRepos = await ado.GetRepos(adoOrg, adoTeamProject);
+            if (allRepos.Any(r => r.Name == adoRepo && r.IsDisabled))
+            {
+                _log.LogSuccess($"Repo '{adoOrg}/{adoTeamProject}/{adoRepo}' is already disabled - No action will be performed");
+                return;
+            }
+            var repoId = allRepos.First(r => r.Name == adoRepo).Id;
             await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
 
             _log.LogSuccess("Repo successfully disabled");

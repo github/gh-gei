@@ -10,5 +10,7 @@ namespace OctoshiftCLI.Extensions
         public static bool IsNullOrWhiteSpace(this string s) => string.IsNullOrWhiteSpace(s);
 
         public static bool HasValue(this string s) => !s.IsNullOrWhiteSpace();
+
+        public static bool ToBool(this string s) => bool.TryParse(s, out var result) && result;
     }
 }
