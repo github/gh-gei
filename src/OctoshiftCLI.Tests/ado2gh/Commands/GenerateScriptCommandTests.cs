@@ -463,7 +463,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProject2 = "foo-tp2";
             var teamProjectArg = "foo-tp3";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
-            var appId = Guid.NewGuid().ToString();
 
             var mockAdo = new Mock<AdoApi>(null);
 

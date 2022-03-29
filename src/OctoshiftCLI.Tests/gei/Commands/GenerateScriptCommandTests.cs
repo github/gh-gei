@@ -127,7 +127,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task GetRepos_Two_Repos_Two_Team_Projects_With_Team_Project_Supplied()
         {
             var org = "foo-org";
-            var orgs = new List<string>() { org };
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
             var teamProjectArg = teamProject1;
