@@ -170,8 +170,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
-            await InvokeAdo(adoSourceOrg, adoTeamProject, githubTargetOrg, sequential) :
-            await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential);
+                await InvokeAdo(adoSourceOrg, adoTeamProject, githubTargetOrg, sequential) :
+                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential);
 
             if (output != null)
             {
