@@ -194,7 +194,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     {
                         foreach (var teamProject in teamProjects)
                         {
-                            _log.LogInformation($"  Team Project: {teamProject}");
                             teamProjectExists = true;
                             var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
                             repos[org].Add(teamProject, projectRepos);
@@ -204,7 +203,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     {
                         if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
                         {
-                            _log.LogInformation($"  Team Project: {adoTeamProject}");
                             teamProjectExists = true;
                             var projectRepos = await GetTeamProjectRepos(ado, org, adoTeamProject);
                             repos[org].Add(adoTeamProject, projectRepos);
