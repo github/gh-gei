@@ -127,6 +127,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
             
             if (!string.IsNullOrWhiteSpace(adoTeamProject))
+            { 
                 _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             }
 
