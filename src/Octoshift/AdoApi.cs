@@ -74,29 +74,19 @@ namespace OctoshiftCLI
                        .ToList();
         }
 
-        public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects, string adoTeamProject)
+        public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
         {
             if (teamProjects == null)
             {
                 return null;
             }
 
-            if (string.IsNullOrEmpty(adoTeamProject))
+            foreach (var teamProject in teamProjects)
             {
-                foreach (var teamProject in teamProjects)
+                var appId = await GetTeamProjectGithubAppId(org, githubOrg, teamProject);
+                if (appId != null)
                 {
-                    var appId = await GetTeamProjectGithubAppId(org, githubOrg, teamProject);
-                    if (appId != null)
-                    {
-                        return appId;
-                    }
-                }
-            }
-            else
-            {
-                if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
-                {
-                    return await GetTeamProjectGithubAppId(org, githubOrg, adoTeamProject);
+                    return appId;
                 }
             }
 

@@ -461,7 +461,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjectArg = "foo-tp3";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
 
             var mockAdo = new Mock<AdoApi>(null);
@@ -469,7 +468,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetAppIds(mockAdo.Object, orgs, teamProjectArg, githubOrg);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
 
             Assert.Empty(result);
         }
@@ -482,17 +481,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjectArg = string.Empty;
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
             var mockAdo = new Mock<AdoApi>(null);
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
-            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects, teamProjectArg).Result).Returns(appId);
+            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetAppIds(mockAdo.Object, orgs, teamProjectArg, githubOrg);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
 
             Assert.Equal(appId, result[org]);
         }

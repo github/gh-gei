@@ -104,7 +104,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs, adoTeamProject);
             var pipelines = _reposOnly ? null : await GetPipelines(ado, repos);
-            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, adoTeamProject, githubOrg);
+            var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, githubOrg);
 
             CheckForDuplicateRepoNames(repos);
 
@@ -124,7 +124,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
         }
 
-        public async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string adoTeamProject, string githubOrg)
+        public async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string githubOrg)
         {
             var appIds = new Dictionary<string, string>();
 
@@ -133,7 +133,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 foreach (var org in orgs)
                 {
                     var teamProjects = await ado.GetTeamProjects(org);
-                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects, adoTeamProject);
+                    var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
 
                     if (string.IsNullOrWhiteSpace(appId))
                     {

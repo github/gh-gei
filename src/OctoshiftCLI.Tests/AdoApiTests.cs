@@ -206,7 +206,6 @@ namespace OctoshiftCLI.Tests
             var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjectArg = string.Empty;
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
@@ -227,7 +226,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects, teamProjectArg);
+            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
 
             result.Should().Be(appId);
         }
@@ -239,7 +238,6 @@ namespace OctoshiftCLI.Tests
             var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjectArg = string.Empty;
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
@@ -260,7 +258,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects, teamProjectArg);
+            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
 
             result.Should().BeNull();
         }
