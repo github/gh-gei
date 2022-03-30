@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _environmentVariableProvider.Invoking(env => env.GithubPersonalAccessToken())
                 .Should().Throw<OctoshiftCliException>();
         }
-        
+
         [Fact]
         public void GithubPersonalAccessToken_Throws_If_Github_Pat_Is_Empty_String()
         {

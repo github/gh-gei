@@ -17,11 +17,11 @@ public class EnvironmentVariableProvider
     public EnvironmentVariableProvider(OctoLogger logger) : this(logger, v => Environment.GetEnvironmentVariable(v))
     {
     }
-    
+
     internal EnvironmentVariableProvider(OctoLogger logger, Func<string, string> getEnvironmentVariable)
     {
-          _logger = logger;
-          _getEnvironmentVariable = getEnvironmentVariable;
+        _logger = logger;
+        _getEnvironmentVariable = getEnvironmentVariable;
     }
 
     public virtual string GithubPersonalAccessToken() =>
