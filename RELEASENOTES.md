@@ -1,5 +1,3 @@
 - Add `reclaim-mannequin` command. Reclaims a mannequin, by sending a mannequin attribution invitation to the target user. If the mannequin has been previously mapped (and accepted) it will refuse to do so unless the `--force` flag is set.
-- Updates most commands to be idempotent. They will check if there is anything to do, and if not they will print a message to that effect and complete successfully. E.g. create-team will check if the team already exists and if so exit as success (compared to previously where it would crash). The following commands have been updated:
-  - configure-autolink
-  - create-team
-  - disable-ado-repo
+- Add ado-team-project parameter to `ado2gh generate-script` command
+- Add ado-team-project parameter to `gh gei generate-script` command
