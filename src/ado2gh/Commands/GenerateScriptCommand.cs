@@ -4,10 +4,8 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Mono.Unix;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -118,12 +116,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (output != null)
             {
                 await File.WriteAllTextAsync(output.FullName, script);
-                // +x so script can be executed on macos and linux
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    var unixFileInfo = new UnixFileInfo(output.FullName);
-                    unixFileInfo.FileAccessPermissions |= FileAccessPermissions.UserExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.OtherExecute;
-                }
             }
         }
 
