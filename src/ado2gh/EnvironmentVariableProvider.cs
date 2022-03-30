@@ -1,4 +1,7 @@
 using System;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleToAttribute("OctoshiftCLI.Tests")]
 
 namespace OctoshiftCLI.AdoToGithub;
 
@@ -9,9 +12,16 @@ public class EnvironmentVariableProvider
 
     private readonly OctoLogger _logger;
 
-    public EnvironmentVariableProvider(OctoLogger logger)
+    private readonly Func<string, string> _getEnvironmentVariable;
+
+    public EnvironmentVariableProvider(OctoLogger logger) : this(logger, v => Environment.GetEnvironmentVariable(v))
     {
-        _logger = logger;
+    }
+    
+    internal EnvironmentVariableProvider(OctoLogger logger, Func<string, string> getEnvironmentVariable)
+    {
+          _logger = logger;
+          _getEnvironmentVariable = getEnvironmentVariable;
     }
 
     public virtual string GithubPersonalAccessToken() =>
@@ -24,7 +34,7 @@ public class EnvironmentVariableProvider
 
     private string GetSecret(string secretName)
     {
-        var secret = Environment.GetEnvironmentVariable(secretName);
+        var secret = _getEnvironmentVariable(secretName);
 
         if (string.IsNullOrEmpty(secret))
         {

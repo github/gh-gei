@@ -57,6 +57,18 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _environmentVariableProvider.Invoking(env => env.GithubPersonalAccessToken())
                 .Should().Throw<OctoshiftCliException>();
         }
+        
+        [Fact]
+        public void GithubPersonalAccessToken_Throws_If_Github_Pat_Is_Empty_String()
+        {
+            // Arrange
+            ResetEnvs();
+            var altEnvironmentVariableProvider = new EnvironmentVariableProvider(_mockLogger.Object, v => string.Empty);
+
+            // Act, Assert
+            altEnvironmentVariableProvider.Invoking(env => env.GithubPersonalAccessToken())
+                .Should().Throw<OctoshiftCliException>();
+        }
 
         [Fact]
         public void AdoPersonalAccessToken_Should_Return_Ado_Pat()
@@ -95,10 +107,22 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Should().Throw<OctoshiftCliException>();
         }
 
+        [Fact]
+        public void AdoPersonalAccessToken_Throws_If_Ado_Pat_Is_Empty_String()
+        {
+            // Arrange
+            ResetEnvs();
+            var altEnvironmentVariableProvider = new EnvironmentVariableProvider(_mockLogger.Object, x => string.Empty);
+
+            // Act, Assert
+            altEnvironmentVariableProvider.Invoking(env => env.AdoPersonalAccessToken())
+                .Should().Throw<OctoshiftCliException>();
+        }
+
         private void ResetEnvs(string githubPat = null, string adoPat = null)
         {
-            Environment.SetEnvironmentVariable("GH_PAT", githubPat);
-            Environment.SetEnvironmentVariable("ADO_PAT", adoPat);
+            Environment.SetEnvironmentVariable(GH_PAT, githubPat);
+            Environment.SetEnvironmentVariable(ADO_PAT, adoPat);
         }
     }
 }
