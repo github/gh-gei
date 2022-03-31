@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(9);
+            command.Options.Count.Should().Be(10);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -1058,7 +1058,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
-            await command.Invoke("githubOrg", "adoOrg", null, false, false, adoPat: adoPat);
+            await command.Invoke("githubOrg", "adoOrg", null, null, false, false, adoPat: adoPat);
 
             // Assert
             mockAdoApiFactory.Verify(m => m.Create(adoPat));

@@ -582,7 +582,7 @@ if ($Failed -ne 0) {
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
-            await command.Invoke("githubSourceOrg", null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
+            await command.Invoke("githubSourceOrg", null, null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
 
             // Assert
             mockSourceGithubApiFactory.Verify(m => m.Create(null, githubSourcePat));
@@ -613,7 +613,7 @@ if ($Failed -ne 0) {
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
-            await command.Invoke(null, "adoSourceOrg", "githubTargetOrg", null, adoPat: adoPat);
+            await command.Invoke(null, "adoSourceOrg", null, "githubTargetOrg", null, adoPat: adoPat);
 
             // Assert
             mockAdoApiFactory.Verify(m => m.Create(adoPat));
