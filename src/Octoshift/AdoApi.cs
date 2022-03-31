@@ -81,20 +81,26 @@ namespace OctoshiftCLI
                 return null;
             }
 
-            foreach (var adoTeamProject in teamProjects)
+            foreach (var teamProject in teamProjects)
             {
-                var url = $"https://dev.azure.com/{org}/{adoTeamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
-                var response = await _client.GetWithPagingAsync(url);
-
-                var endpoint = response.FirstOrDefault(x => (string)x["type"] == "GitHub" && ((string)x["name"]).ToLower() == githubOrg.ToLower());
-
-                if (endpoint != null)
+                var appId = await GetTeamProjectGithubAppId(org, githubOrg, teamProject);
+                if (appId != null)
                 {
-                    return (string)endpoint["id"];
+                    return appId;
                 }
             }
 
             return null;
+        }
+
+        private async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
+        {
+            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var response = await _client.GetWithPagingAsync(url);
+
+            var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
+
+            return endpoint != null ? (string)endpoint["id"] : null;
         }
 
         public virtual async Task<string> GetGithubHandle(string org, string orgId, string teamProject, string githubToken)

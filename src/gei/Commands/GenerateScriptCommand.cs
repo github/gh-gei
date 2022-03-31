@@ -36,6 +36,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses ADO_PAT env variable."
             };
+            var adoTeamProject = new Option<string>("--ado-team-project")
+            {
+                IsRequired = false
+            };
             var githubTargetOrgOption = new Option<string>("--github-target-org")
             {
                 IsRequired = true,
@@ -88,6 +92,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(githubSourceOrgOption);
             AddOption(adoSourceOrgOption);
+            AddOption(adoTeamProject);
             AddOption(githubTargetOrgOption);
 
             AddOption(ghesApiUrl);
@@ -101,12 +106,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, FileInfo, string, string, bool, bool, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, FileInfo, string, string, bool, bool, bool, string, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubSourceOrg,
           string adoSourceOrg,
+          string adoTeamProject,
           string githubTargetOrg,
           FileInfo output,
           string ghesApiUrl = "",
@@ -128,6 +134,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (!string.IsNullOrWhiteSpace(adoSourceOrg))
             {
                 _log.LogInformation($"ADO SOURCE ORG: {adoSourceOrg}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(adoTeamProject))
+            {
+                _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             }
 
             // GHES Migration Path
@@ -177,7 +188,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
-                await InvokeAdo(adoSourceOrg, githubTargetOrg, sequential, adoPat) :
+                await InvokeAdo(adoSourceOrg, adoTeamProject, githubTargetOrg, sequential, adoPat) :
                 await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential, githubSourcePat);
 
             if (output != null)
@@ -194,9 +205,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify);
         }
 
-        private async Task<string> InvokeAdo(string adoSourceOrg, string githubTargetOrg, bool sequential, string adoPat)
+        private async Task<string> InvokeAdo(string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat)
         {
-            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoPat), adoSourceOrg);
+            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoPat), adoSourceOrg, adoTeamProject);
             return sequential
                 ? GenerateSequentialAdoScript(repos, adoSourceOrg, githubTargetOrg)
                 : GenerateParallelAdoScript(repos, adoSourceOrg, githubTargetOrg);
@@ -220,23 +231,27 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new ArgumentException("All arguments must be non-null");
         }
 
-        public async Task<IDictionary<string, IEnumerable<string>>> GetAdoRepos(AdoApi adoApi, string adoOrg)
+        public async Task<IDictionary<string, IEnumerable<string>>> GetAdoRepos(AdoApi adoApi, string adoOrg, string adoTeamProject)
         {
             var repos = new Dictionary<string, IEnumerable<string>>();
 
             if (!string.IsNullOrWhiteSpace(adoOrg) && adoApi != null)
             {
                 var teamProjects = await adoApi.GetTeamProjects(adoOrg);
-
-                foreach (var teamProject in teamProjects)
+                if (string.IsNullOrEmpty(adoTeamProject))
                 {
-                    _log.LogInformation($"Team Project: {teamProject}");
-                    var projectRepos = await adoApi.GetEnabledRepos(adoOrg, teamProject);
-                    repos.Add(teamProject, projectRepos);
-
-                    foreach (var repo in projectRepos)
+                    foreach (var teamProject in teamProjects)
                     {
-                        _log.LogInformation($"  Repo: {repo}");
+                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, teamProject);
+                        repos.Add(teamProject, projectRepos);
+                    }
+                }
+                else
+                {
+                    if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, adoTeamProject);
+                        repos.Add(adoTeamProject, projectRepos);
                     }
                 }
 
@@ -443,6 +458,18 @@ if ($Failed -ne 0) {
             content.AppendLine();
 
             return content.ToString();
+        }
+
+        private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi adoApi, string adoOrg, string teamProject)
+        {
+            _log.LogInformation($"Team Project: {teamProject}");
+            var projectRepos = await adoApi.GetEnabledRepos(adoOrg, teamProject);
+
+            foreach (var repo in projectRepos)
+            {
+                _log.LogInformation($"  Repo: {repo}");
+            }
+            return projectRepos;
         }
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";

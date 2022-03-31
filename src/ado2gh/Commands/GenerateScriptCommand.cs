@@ -33,6 +33,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var adoTeamProject = new Option<string>("--ado-team-project")
+            {
+                IsRequired = false
+            };
             var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
             {
                 IsRequired = false
@@ -66,6 +70,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             AddOption(githubOrgOption);
             AddOption(adoOrgOption);
+            AddOption(adoTeamProject);
             AddOption(outputOption);
             AddOption(reposOnlyOption);
             AddOption(skipIdpOption);
@@ -74,16 +79,17 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, FileInfo, bool, bool, bool, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, FileInfo, bool, bool, bool, bool, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string adoOrg, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool sequential = false, string adoPat = null, bool verbose = false)
+        public async Task Invoke(string githubOrg, string adoOrg, string adoTeamProject, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool sequential = false, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Generating Script...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ADO ORG: {adoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"OUTPUT: {output}");
             if (ssh)
             {
@@ -103,7 +109,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var ado = _adoApiFactory.Create(adoPat);
 
             var orgs = await GetOrgs(ado, adoOrg);
-            var repos = await GetRepos(ado, orgs);
+            var repos = await GetRepos(ado, orgs, adoTeamProject);
             var pipelines = _reposOnly ? null : await GetPipelines(ado, repos);
             var appIds = _reposOnly ? null : await GetAppIds(ado, orgs, githubOrg);
 
@@ -172,34 +178,57 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return pipelines;
         }
 
-        public async Task<IDictionary<string, IDictionary<string, IEnumerable<string>>>> GetRepos(AdoApi ado, IEnumerable<string> orgs)
+        public async Task<IDictionary<string, IDictionary<string, IEnumerable<string>>>> GetRepos(AdoApi ado, IEnumerable<string> orgs, string adoTeamProject)
         {
             var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
 
             if (orgs != null && ado != null)
             {
+                var teamProjectExists = false;
                 foreach (var org in orgs)
                 {
                     _log.LogInformation($"ADO ORG: {org}");
                     repos.Add(org, new Dictionary<string, IEnumerable<string>>());
 
                     var teamProjects = await ado.GetTeamProjects(org);
-
-                    foreach (var teamProject in teamProjects)
+                    if (string.IsNullOrEmpty(adoTeamProject))
                     {
-                        _log.LogInformation($"  Team Project: {teamProject}");
-                        var projectRepos = await ado.GetEnabledRepos(org, teamProject);
-                        repos[org].Add(teamProject, projectRepos);
-
-                        foreach (var repo in projectRepos)
+                        foreach (var teamProject in teamProjects)
                         {
-                            _log.LogInformation($"    Repo: {repo}");
+                            teamProjectExists = true;
+                            var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
+                            repos[org].Add(teamProject, projectRepos);
                         }
                     }
+                    else
+                    {
+                        if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            teamProjectExists = true;
+                            var projectRepos = await GetTeamProjectRepos(ado, org, adoTeamProject);
+                            repos[org].Add(adoTeamProject, projectRepos);
+                        }
+                    }
+                }
+                if (!teamProjectExists)
+                {
+                    _log.LogWarning($"ADO Team Project provided cannot be found [{adoTeamProject}]");
                 }
             }
 
             return repos;
+        }
+
+        private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi ado, string org, string teamProject)
+        {
+            _log.LogInformation($"  Team Project: {teamProject}");
+            var projectRepos = await ado.GetEnabledRepos(org, teamProject);
+
+            foreach (var repo in projectRepos)
+            {
+                _log.LogInformation($"    Repo: {repo}");
+            }
+            return projectRepos;
         }
 
         public async Task<IEnumerable<string>> GetOrgs(AdoApi ado, string adoOrg)
