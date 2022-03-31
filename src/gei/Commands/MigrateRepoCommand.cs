@@ -234,13 +234,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 sourceRepoUrl = GetAdoRepoUrl(adoSourceOrg, adoTeamProject, sourceRepo);
                 sourceToken = _environmentVariableProvider.AdoPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat);
+                migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId);
             }
             else
             {
                 sourceRepoUrl = GetGithubRepoUrl(githubSourceOrg, sourceRepo);
                 sourceToken = _environmentVariableProvider.SourceGithubPersonalAccessToken();
-                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat);
+                migrationSourceId = await githubApi.CreateGhecMigrationSource(githubOrgId);
             }
 
             var migrationId = await githubApi.StartMigration(
