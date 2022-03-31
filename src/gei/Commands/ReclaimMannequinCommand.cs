@@ -10,7 +10,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
 
-
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("reclaim-mannequin")
