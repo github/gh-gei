@@ -202,9 +202,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns<string>(null);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(true);
-
+            
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
