@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
@@ -20,7 +22,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "actor", true);
             TestHelpers.VerifyCommandOption(command.Options, "actor-type", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -53,18 +55,26 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task It_Uses_Github_Pat_When_Provided()
+        public async Task It_Uses_Github_Target_Pat_When_Provided()
         {
-            const string githubPat = "github-pat";
+            // Arrange
+            const string githubTargetPat = "github-target-pat";
 
             var mockGithub = new Mock<GithubApi>(null, null);
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, mockTargetGithubApiFactory.Object);
-            await command.Invoke("githubOrg", "actor", "TEAM", githubPat);
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            // Act
+            var command = new GrantMigratorRoleCommand(mockLogger.Object, mockTargetGithubApiFactory.Object);
+            await command.Invoke("githubOrg", "actor", "TEAM", githubTargetPat);
+
+            // Assert
+            actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
+            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
         }
     }
 }

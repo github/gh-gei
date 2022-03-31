@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string TARGET_ORG = "foo-target-org";
         private const string TARGET_REPO = "foo-target-repo";
         private const string ADO_PAT = "ado-pat";
-        private const string GITHUB_PAT = "github-pat";
+        private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
 
         [Fact]
@@ -45,7 +45,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
@@ -660,12 +660,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             // Arrange
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+
             var mockGithub = new Mock<GithubApi>(null, null);
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
             // Act
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
             var args = new MigrateRepoCommandArgs
             {
                 AdoSourceOrg = SOURCE_ORG,
@@ -678,6 +683,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
+            actualLogOutput.Should().Contain("ADO PAT: ***");
+            actualLogOutput.Should().NotContain("GITHUB SOURCE PAT: ***");
+            actualLogOutput.Should().NotContain("GITHUB TARGET PAT: ***");
+            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
+
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
             mockGithub.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), ADO_PAT, It.IsAny<string>()));
             mockGithub.Verify(m => m.StartMigration(
@@ -696,34 +706,44 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             // Arrange
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+
             var mockGithub = new Mock<GithubApi>(null, null);
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_PAT)).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TARGET_PAT)).Returns(mockGithub.Object);
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                GithubPat = GITHUB_PAT,
+                GithubTargetPat = GITHUB_TARGET_PAT,
                 GithubSourcePat = GITHUB_SOURCE_PAT
             };
             await command.Invoke(args);
 
             // Assert
+            actualLogOutput.Should().NotContain("ADO PAT: ***");
+            actualLogOutput.Should().Contain("GITHUB SOURCE PAT: ***");
+            actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
+            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
+
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, GITHUB_PAT));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, GITHUB_TARGET_PAT));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 GITHUB_SOURCE_PAT,
-                GITHUB_PAT,
+                GITHUB_TARGET_PAT,
                 It.IsAny<string>(),
                 It.IsAny<string>()));
         }
@@ -748,8 +768,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockAzureApiFactory = new Mock<IAzureApiFactory>();
             mockAzureApiFactory.Setup(m => m.Create(AZURE_CONNECTION_STRING)).Returns(mockAzureApi.Object);
 
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
             // Act
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
+            var command = new MigrateRepoCommand(mockLogger.Object, mockSourceGithubApiFactory.Object, mockTargetGithubApiFactory.Object, environmentVariableProviderMock.Object, mockAzureApiFactory.Object);
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
@@ -763,6 +787,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
+            actualLogOutput.Should().NotContain("ADO PAT: ***");
+            actualLogOutput.Should().Contain("GITHUB SOURCE PAT: ***");
+            actualLogOutput.Should().NotContain("GITHUB TARGET PAT: ***");
+            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
+
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken());
             mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, It.IsAny<string>()));
@@ -778,37 +807,47 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task It_Falls_Back_To_Github_Pat_If_Github_Source_Pat_Is_Not_Provided()
+        public async Task It_Falls_Back_To_Github_Target_Pat_If_Github_Source_Pat_Is_Not_Provided()
         {
             // Arrange
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+
             var mockGithub = new Mock<GithubApi>(null, null);
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_PAT)).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TARGET_PAT)).Returns(mockGithub.Object);
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
-            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                GithubPat = GITHUB_PAT
+                GithubTargetPat = GITHUB_TARGET_PAT
             };
             await command.Invoke(args);
 
             // Assert
+            actualLogOutput.Should().NotContain("ADO PAT: ***");
+            actualLogOutput.Should().NotContain("GITHUB SOURCE PAT: ***");
+            actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
+            actualLogOutput.Should().Contain("Since github-target-pat is provided, github-source-pat will also use its value.");
+
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_PAT, GITHUB_PAT));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_TARGET_PAT, GITHUB_TARGET_PAT));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                GITHUB_PAT,
-                GITHUB_PAT,
+                GITHUB_TARGET_PAT,
+                GITHUB_TARGET_PAT,
                 It.IsAny<string>(),
                 It.IsAny<string>()));
         }

@@ -108,7 +108,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
-            var githubPat = new Option<string>("--github-pat")
+            var githubTargetPat = new Option<string>("--github-target-pat")
             {
                 IsRequired = false
             };
@@ -139,7 +139,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(ssh);
             AddOption(wait);
             AddOption(githubSourcePat);
-            AddOption(githubPat);
+            AddOption(githubTargetPat);
             AddOption(adoPat);
             AddOption(verbose);
 
@@ -189,14 +189,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("GITHUB SOURCE PAT: ***");
             }
 
-            if (args.GithubPat is not null)
+            if (args.GithubTargetPat is not null)
             {
-                _log.LogInformation("GITHUB PAT: ***");
+                _log.LogInformation("GITHUB TARGET PAT: ***");
 
                 if (args.GithubSourcePat is null)
                 {
-                    args.GithubSourcePat = args.GithubPat;
-                    _log.LogInformation("Since github-pat is provided, github-source-pat will also use its value.");
+                    args.GithubSourcePat = args.GithubTargetPat;
+                    _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
                 }
             }
 
@@ -247,14 +247,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
+            var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
-            var targetGithubPat = args.GithubPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
+            var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var migrationSourceId = args.GithubSourceOrg.HasValue()
-                ? await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetGithubPat)
-                : await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetGithubPat);
+                ? await githubApi.CreateGhecMigrationSource(githubOrgId, sourceToken, targetToken)
+                : await githubApi.CreateAdoMigrationSource(githubOrgId, sourceToken, targetToken);
 
             var migrationId = await githubApi.StartMigration(
                 migrationSourceId,
@@ -262,7 +262,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 githubOrgId,
                 args.TargetRepo,
                 sourceToken,
-                targetGithubPat,
+                targetToken,
                 args.GitArchiveUrl,
                 args.MetadataArchiveUrl);
 
@@ -402,7 +402,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public bool Wait { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }
-        public string GithubPat { get; set; }
+        public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }
     }
 }

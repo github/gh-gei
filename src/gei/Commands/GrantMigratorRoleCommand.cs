@@ -31,7 +31,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = true
             };
-            var githubPat = new Option<string>("--github-pat")
+            var githubTargetPat = new Option<string>("--github-target-pat")
             {
                 IsRequired = false
             };
@@ -43,22 +43,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
-            AddOption(githubPat);
+            AddOption(githubTargetPat);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string actor, string actorType, string githubPat = null, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, string githubTargetPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Granting migrator role ...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ACTOR: {actor}");
-            if (githubPat is not null)
+            if (githubTargetPat is not null)
             {
-                _log.LogInformation("GITHUB PAT: ***");
+                _log.LogInformation("GITHUB TARGET PAT: ***");
             }
 
             actorType = actorType?.ToUpper();
@@ -74,7 +74,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 
