@@ -17,7 +17,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

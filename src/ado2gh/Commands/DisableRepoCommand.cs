@@ -18,7 +18,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Disables the repo in Azure DevOps. This makes the repo non-readable for all.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable to be set.";
+            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

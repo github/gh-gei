@@ -18,7 +18,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Creates a GitHub team and optionally links it to an IdP group.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

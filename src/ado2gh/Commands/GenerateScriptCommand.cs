@@ -23,7 +23,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable to be set.";
+            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var githubOrgOption = new Option<string>("--github-org")
             {

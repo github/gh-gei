@@ -21,7 +21,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variables to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-target-pat option to be set.";
 
             var migrationId = new Option<string>("--migration-id")
             {

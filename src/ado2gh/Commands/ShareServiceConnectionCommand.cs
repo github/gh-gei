@@ -17,7 +17,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable to be set.";
+            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

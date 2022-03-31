@@ -24,7 +24,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables to be set.";
+            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

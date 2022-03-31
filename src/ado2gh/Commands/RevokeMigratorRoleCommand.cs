@@ -16,7 +16,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _githubApiFactory = githubApiFactory;
             Description = "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

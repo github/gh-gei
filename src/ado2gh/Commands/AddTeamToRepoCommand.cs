@@ -17,7 +17,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Adds a team to a repo with a specific role/permission";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

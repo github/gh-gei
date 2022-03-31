@@ -31,12 +31,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
                 IsRequired = false,
-                Description = "Uses GH_SOURCE_PAT env variable. Will fall back to GH_PAT if not set."
+                Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
             };
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
-                Description = "Uses ADO_PAT env variable."
+                Description = "Uses ADO_PAT env variable or --ado-pat option."
             };
             var adoTeamProject = new Option<string>("--ado-team-project")
             {
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubTargetOrg = new Option<string>("--github-target-org")
             {
                 IsRequired = true,
-                Description = "Uses GH_PAT env variable."
+                Description = "Uses GH_PAT env variable or --github-target-pat option."
             };
             var targetRepo = new Option<string>("--target-repo")
             {
