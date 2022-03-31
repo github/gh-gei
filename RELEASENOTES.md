@@ -1,2 +1,3 @@
 - Add ado-team-project parameter to `ado2gh generate-script` command
 - Add ado-team-project parameter to `gh gei generate-script` command
+- Publishing ARM64 binaries for those users on M1 macs
