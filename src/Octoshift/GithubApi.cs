@@ -137,12 +137,12 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoToken, string githubPat)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
 
             var payload = new
             {
@@ -152,9 +152,7 @@ namespace OctoshiftCLI
                     name = "Azure DevOps Source",
                     url = "https://dev.azure.com",
                     ownerId = orgId,
-                    type = "AZURE_DEVOPS",
-                    accessToken = adoToken,
-                    githubPat
+                    type = "AZURE_DEVOPS"
                 },
                 operationName = "createMigrationSource"
             };
@@ -165,12 +163,12 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceGithubPat, string targetGithubPat)
+        public virtual async Task<string> CreateGhecMigrationSource(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $accessToken: String!, $type: MigrationSourceType!, $githubPat: String)";
-            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, accessToken: $accessToken, type: $type, githubPat: $githubPat}) { migrationSource { id, name, url, type } }";
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
 
             var payload = new
             {
@@ -180,9 +178,7 @@ namespace OctoshiftCLI
                     name = "GHEC Source",
                     url = "https://github.com",
                     ownerId = orgId,
-                    type = "GITHUB_ARCHIVE",
-                    accessToken = sourceGithubPat,
-                    githubPat = targetGithubPat
+                    type = "GITHUB_ARCHIVE"
                 },
                 operationName = "createMigrationSource"
             };
