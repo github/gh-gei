@@ -31,6 +31,7 @@ namespace OctoshiftCLI.IntegrationTests
             _helper = new TestHelper(_output, _githubApi, _githubClient);
         }
 
+        [Fact]
         public async Task Basic()
         {
             var githubSourceOrg = $"e2e-testing-source-{_helper.GetOsName()}";
