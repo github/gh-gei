@@ -1,1 +1,2 @@
-
+- Add ado-team-project parameter to `ado2gh generate-script` command
+- Add ado-team-project parameter to `gh gei generate-script` command
