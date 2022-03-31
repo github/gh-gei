@@ -75,7 +75,7 @@ jobs:
       if: matrix.runner-os == 'ubuntu-latest'
 
   integration-test:
-    if: false
+    if: true
     strategy:
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
