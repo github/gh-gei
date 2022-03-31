@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
@@ -76,7 +75,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"RECLAIMING USER: {targetUser}");
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
-            var githubOrgId = await GetOrgId(githubApi, githubTargetOrg);
+
+            _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
+            var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
+            _log.LogInformation($"    Organization Id: {githubOrgId}");
 
             var mannequin = await githubApi.GetMannequin(githubOrgId, mannequinUser);
 
@@ -112,26 +114,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             return reclaimed;
-        }
-
-        private async Task<string> GetOrgId(GithubApi github, string githubOrg)
-        {
-            if (github == null)
-            {
-                throw new ArgumentNullException(nameof(github));
-            }
-
-            if (string.IsNullOrWhiteSpace(githubOrg))
-            {
-                throw new ArgumentNullException(nameof(githubOrg));
-            }
-
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            var orgId = await github.GetOrganizationId(githubOrg);
-
-            _log.LogInformation($"    Organization Id: {orgId}");
-
-            return orgId;
         }
     }
 }
