@@ -34,7 +34,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
         }
-        
+
         [Fact]
         public async Task Basic()
         {
