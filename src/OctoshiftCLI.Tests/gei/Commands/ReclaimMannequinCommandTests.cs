@@ -98,11 +98,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            var reclaimed = await command.Invoke(githubOrg, mannequinUser, targetUser, false);
+
+
+            await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, mannequinUser, targetUser, false))
+                .Should().ThrowAsync<OctoshiftCliException>();
 
             mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
             mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
-            reclaimed.Should().BeFalse();
         }
 
         [Fact]
@@ -171,11 +174,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            var reclaimed = await command.Invoke(githubOrg, mannequinUser, targetUser, false);
+
+            await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, mannequinUser, targetUser, false))
+                .Should().ThrowAsync<OctoshiftCliException>();
 
             mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
             mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
-            reclaimed.Should().BeFalse();
         }
 
         [Fact]
@@ -202,7 +207,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
-            
+
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
@@ -210,11 +215,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(TARGET_API_URL)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
-            var reclaimed = await command.Invoke(githubOrg, mannequinUser, targetUser, false);
+
+            await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, mannequinUser, targetUser, false))
+                .Should().ThrowAsync<OctoshiftCliException>();
 
             mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
             mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
-            reclaimed.Should().BeFalse();
         }
     }
 }

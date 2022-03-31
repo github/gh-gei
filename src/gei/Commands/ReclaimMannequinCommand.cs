@@ -84,22 +84,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (mannequin == null || mannequin.Id == null)
             {
-                _log.LogError($"User {mannequinUser} is not a mannequin.");
-                return false;
+                throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
             }
 
             if (mannequin.MappedUser != null && force == false)
             {
-                _log.LogError($"User {mannequinUser} has been already mapped to {mannequin.MappedUser.Login}. Use the force option if you want to reclaim the mannequin again.");
-                return false;
+                throw new OctoshiftCliException($"User {mannequinUser} has been already mapped to {mannequin.MappedUser.Login}. Use the force option if you want to reclaim the mannequin again.");
             }
 
             var targetUserId = await githubApi.GetUserId(targetUser);
 
             if (targetUserId == null)
             {
-                _log.LogError($"Target user {targetUser} not found.");
-                return false;
+                throw new OctoshiftCliException($"Target user {targetUser} not found.");
             }
 
             var reclaimed = await githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
