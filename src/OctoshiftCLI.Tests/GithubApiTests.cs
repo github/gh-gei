@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -237,6 +238,33 @@ namespace OctoshiftCLI.Tests
             // Assert
             result.Should().HaveCount(4);
             result.Should().Equal(teamMember1, teamMember2, teamMember3, teamMember4);
+        }
+
+        [Fact]
+        public async Task GetTeamMembers_Retries_On_404()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string teamName = "TEAM_NAME";
+
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.GetAllAsync(url))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
+                .Returns(new[]
+                {
+                    new { login = "Sally", id = 1 }
+                }.ToAsyncJTokenEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
+
+            // Assert
+            result.Should().HaveCount(1);
         }
 
         [Fact]
@@ -651,8 +679,8 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
-                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
 
             // Act
@@ -731,8 +759,8 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
-                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
 
             // Act
