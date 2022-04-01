@@ -1,3 +1,4 @@
 - Add ado-team-project parameter to `ado2gh generate-script` command
 - Add ado-team-project parameter to `gh gei generate-script` command
 - Publishing ARM64 binaries for those users on M1 macs
+- Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
