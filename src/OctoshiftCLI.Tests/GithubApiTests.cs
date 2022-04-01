@@ -623,6 +623,47 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetMigrationState_Retries_On_502()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""id"": ""RM_kgC4NjFhNmE2ZWY1NmE4MjAwMDA4NjA5NTZi"",
+                        ""sourceUrl"": ""https://github.com/import-testing/archive-export-testing"",
+                        ""migrationSource"": {{
+                            ""name"": ""GHEC Archive Source""
+                        }},
+                        ""state"": ""{actualMigrationState}"",
+                        ""failureReason"": """"
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
+        }
+
+        [Fact]
         public async Task GetMigrationFailureReason_Returns_The_Migration_Failure_Reason()
         {
             // Arrange
@@ -651,6 +692,47 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
+
+            // Assert
+            expectedFailureReason.Should().Be(actualFailureReason);
+        }
+
+        [Fact]
+        public async Task GetMigrationFailureReason_Retries_On_502()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualFailureReason = "FAILURE_REASON";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""id"": ""RM_kgC4NjFhNmE2ZWY1NmE4MjAwMDA4NjA5NTZi"",
+                        ""sourceUrl"": ""https://github.com/import-testing/archive-export-testing"",
+                        ""migrationSource"": {{
+                            ""name"": ""GHEC Archive Source""
+                        }},
+                        ""state"": ""FAILED"",
+                        ""failureReason"": ""{actualFailureReason}""
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: System.Net.HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
 
             // Act
