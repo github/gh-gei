@@ -2,8 +2,4 @@
 - Add ado-team-project parameter to `gh gei generate-script` command
 - Publishing ARM64 binaries for those users on M1 macs
 - All commands in both `ado2gh` and `gei` now optionally accept required PATs as args as an alternate way to setting them as env variables. 
-- Updates most commands to be idempotent. They will check if there is anything to do, and if not they will print a message to that effect and complete successfully. E.g. create-team will check if the team already exists and if so exit as success (compared to previously where it would crash). The following commands have been updated:
-  - configure-autolink
-  - create-team
-  - disable-ado-repo
 - Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
