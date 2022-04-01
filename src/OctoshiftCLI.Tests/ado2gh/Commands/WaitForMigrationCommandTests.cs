@@ -8,7 +8,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
-    public class WaitForMigrationTests
+    public class WaitForMigrationCommandTests
     {
         [Fact]
         public void Should_Have_Options()
@@ -16,9 +16,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new WaitForMigrationCommand(null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("wait-for-migration");
-            command.Options.Count.Should().Be(2);
+            command.Options.Count.Should().Be(3);
 
             TestHelpers.VerifyCommandOption(command.Options, "migration-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -36,7 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
@@ -89,7 +90,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Failed);
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = new Mock<OctoLogger>();
@@ -128,6 +129,33 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             mockLogger.VerifyNoOtherCalls();
             mockGithubApi.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task It_Uses_The_Github_Pat_When_Provided()
+        {
+            // Arrange
+            const string specifiedMigrationId = "MIGRATION_ID";
+            const int waitIntervalInSeconds = 1;
+            const string githubPat = "github-pat";
+
+            var mockGithubApi = new Mock<GithubApi>(null, null, null);
+            mockGithubApi
+                .Setup(x => x.GetMigrationState(specifiedMigrationId).Result)
+                .Returns(RepositoryMigrationStatus.Succeeded);
+
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithubApi.Object);
+
+            // Act
+            var command = new WaitForMigrationCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object)
+            {
+                WaitIntervalInSeconds = waitIntervalInSeconds
+            };
+            await command.Invoke(specifiedMigrationId, githubPat);
+
+            // Assert
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
     }
 }

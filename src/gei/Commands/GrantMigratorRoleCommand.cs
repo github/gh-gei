@@ -17,7 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-target-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {
@@ -31,6 +31,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = true
             };
+            var githubTargetPat = new Option<string>("--github-target-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -39,18 +43,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubOrg);
             AddOption(actor);
             AddOption(actorType);
+            AddOption(githubTargetPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string actor, string actorType, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, string githubTargetPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Granting migrator role ...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"ACTOR: {actor}");
+            if (githubTargetPat is not null)
+            {
+                _log.LogInformation("GITHUB TARGET PAT: ***");
+            }
 
             actorType = actorType?.ToUpper();
             _log.LogInformation($"ACTOR TYPE: {actorType}");
@@ -65,7 +74,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create();
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 
