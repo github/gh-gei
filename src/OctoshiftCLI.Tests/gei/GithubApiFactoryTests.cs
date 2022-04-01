@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ISourceGithubApiFactory factory =
-                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
+                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null);
             var githubApi = factory.CreateClientNoSsl(apiUrl);
 
             // Assert
@@ -65,7 +65,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ISourceGithubApiFactory factory =
-                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
+                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null);
             var githubApi = factory.Create();
 
             // Assert
@@ -92,7 +92,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ITargetGithubApiFactory factory =
-                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object);
+                new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null);
             var githubApi = factory.Create();
 
             // Assert

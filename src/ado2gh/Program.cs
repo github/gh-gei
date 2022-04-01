@@ -22,6 +22,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<GithubApiFactory>()
+                .AddSingleton<RetryPolicy>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

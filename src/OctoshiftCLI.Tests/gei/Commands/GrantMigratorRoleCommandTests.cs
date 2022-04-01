@@ -31,10 +31,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);

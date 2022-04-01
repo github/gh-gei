@@ -7,12 +7,14 @@ namespace OctoshiftCLI.AdoToGithub
         private readonly OctoLogger _octoLogger;
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
+        private readonly RetryPolicy _retryPolicy;
 
-        public GithubApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider)
+        public GithubApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider, RetryPolicy retryPolicy)
         {
             _octoLogger = octoLogger;
             _client = client;
             _environmentVariableProvider = environmentVariableProvider;
+            _retryPolicy = retryPolicy;
         }
 
         public virtual GithubApi Create()
@@ -24,7 +26,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _client, githubPat);
-            return new GithubApi(githubClient, apiUrl);
+            return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
     }
 }

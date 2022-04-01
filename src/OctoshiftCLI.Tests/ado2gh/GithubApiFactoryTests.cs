@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             using var httpClient = new HttpClient();
 
             // Act
-            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object);
+            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
             var result = factory.Create();
 
             // Assert

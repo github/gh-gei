@@ -33,13 +33,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var idpGroupId = 42;
             var teamSlug = "foo-slug";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamName).Result).Returns(teamMembers);
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string>());
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -61,13 +61,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var idpGroupId = 42;
             var teamSlug = "foo-slug";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamName).Result).Returns(teamMembers);
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string> { teamName });
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();

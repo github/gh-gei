@@ -32,8 +32,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var team = "foo-team";
             var role = "maintain";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -50,8 +50,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var team = "foo-team";
             var role = "read";  // read is not a valid role
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
 
             var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
