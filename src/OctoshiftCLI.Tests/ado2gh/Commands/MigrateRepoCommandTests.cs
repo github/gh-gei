@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new MigrateRepoCommand(null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(8);
+            command.Options.Count.Should().Be(10);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
@@ -26,6 +26,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -62,7 +64,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
@@ -136,7 +138,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
-            mockGithubApiFactory.Setup(m => m.Create()).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock
@@ -151,6 +153,60 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, wait: true);
 
             mockGithub.Verify(x => x.GetMigrationState(migrationId));
+        }
+
+        [Fact]
+        public async Task It_Uses_Ado_And_Github_Pats_When_Provided()
+        {
+            const string adoPat = "ado-pat";
+            const string githubPat = "github-pat";
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock
+                .Setup(m => m.GithubPersonalAccessToken())
+                .Returns(githubPat);
+            environmentVariableProviderMock
+                .Setup(m => m.AdoPersonalAccessToken())
+                .Returns(adoPat);
+
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
+            await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true, adoPat: adoPat, githubPat: githubPat);
+
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+            environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
+        }
+
+        [Fact]
+        public async Task It_Falls_Back_To_Ado_And_Github_Pats_From_Environment_When_Not_Provided()
+        {
+            const string adoPat = "ado-pat";
+            const string githubPat = "github-pat";
+
+            var mockGithub = new Mock<GithubApi>(null, null);
+            mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock
+                .Setup(m => m.GithubPersonalAccessToken())
+                .Returns(githubPat);
+            environmentVariableProviderMock
+                .Setup(m => m.AdoPersonalAccessToken())
+                .Returns(adoPat);
+
+            var command = new MigrateRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
+            await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true);
+
+            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
+            environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken());
         }
     }
 }

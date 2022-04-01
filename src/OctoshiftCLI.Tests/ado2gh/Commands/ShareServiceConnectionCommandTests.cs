@@ -15,11 +15,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new ShareServiceConnectionCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("share-service-connection", command.Name);
-            Assert.Equal(4, command.Options.Count);
+            Assert.Equal(5, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
             TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -35,12 +36,27 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
-            mockAdoApiFactory.Setup(m => m.Create()).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
+        }
+
+        [Fact]
+        public async Task It_Uses_The_Ado_Pat_When_Provided()
+        {
+            const string adoPat = "ado-pat";
+
+            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+
+            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            await command.Invoke("adoOrg", "adoTeamProject", "serviceConnectionId", adoPat);
+
+            mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }

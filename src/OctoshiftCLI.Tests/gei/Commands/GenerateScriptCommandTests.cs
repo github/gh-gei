@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
@@ -22,7 +23,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(11);
+            command.Options.Count.Should().Be(13);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
@@ -34,6 +35,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
@@ -556,6 +559,65 @@ if ($Failed -ne 0) {
 
             // Assert
             script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task It_Uses_Github_Source_Pat_When_Provided()
+        {
+            // Arrange
+            const string githubSourcePat = "github-source-pat";
+
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), githubSourcePat))
+                .Returns(mockSourceGithubApi.Object);
+
+            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+
+            // Act
+            var command = new GenerateScriptCommand(
+                new Mock<OctoLogger>().Object,
+                mockSourceGithubApiFactory.Object,
+                mockAdoApiFactory.Object,
+                mockEnvironmentVariableProvider.Object);
+            await command.Invoke("githubSourceOrg", null, null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
+
+            // Assert
+            mockSourceGithubApiFactory.Verify(m => m.Create(null, githubSourcePat));
+            mockEnvironmentVariableProvider.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task It_Uses_Ado_Pat_When_Provided()
+        {
+            // Arrange
+            const string adoPat = "ado-pat";
+
+            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
+
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(mockSourceGithubApi.Object);
+
+            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
+
+            // Act
+            var command = new GenerateScriptCommand(
+                new Mock<OctoLogger>().Object,
+                mockSourceGithubApiFactory.Object,
+                mockAdoApiFactory.Object,
+                mockEnvironmentVariableProvider.Object);
+            await command.Invoke(null, "adoSourceOrg", null, "githubTargetOrg", null, adoPat: adoPat);
+
+            // Assert
+            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockEnvironmentVariableProvider.VerifyNoOtherCalls();
         }
 
         private string TrimNonExecutableLines(string script)

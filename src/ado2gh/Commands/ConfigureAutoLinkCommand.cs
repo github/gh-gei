@@ -18,7 +18,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {
@@ -36,6 +36,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -45,12 +49,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubRepo);
             AddOption(adoOrg);
             AddOption(adoTeamProject);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, bool verbose = false)
+        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -59,11 +64,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
             _log.LogInformation($"ADO ORG: {adoOrg}");
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
 
-            var githubApi = _githubApiFactory.Create();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
             var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
             if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))

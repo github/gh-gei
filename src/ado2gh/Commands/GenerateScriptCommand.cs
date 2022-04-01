@@ -23,7 +23,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable to be set.";
+            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var githubOrgOption = new Option<string>("--github-org")
             {
@@ -59,6 +59,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Waits for each migration to finish before moving on to the next one."
             };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -72,12 +76,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(skipIdpOption);
             AddOption(sshOption);
             AddOption(sequential);
+            AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, FileInfo, bool, bool, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, FileInfo, bool, bool, bool, bool, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string adoOrg, string adoTeamProject, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool sequential = false, bool verbose = false)
+        public async Task Invoke(string githubOrg, string adoOrg, string adoTeamProject, FileInfo output, bool reposOnly, bool skipIdp, bool ssh = false, bool sequential = false, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -94,10 +99,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 _log.LogInformation("SEQUENTIAL: true");
             }
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
 
             _reposOnly = reposOnly;
 
-            var ado = _adoApiFactory.Create();
+            var ado = _adoApiFactory.Create(adoPat);
 
             var orgs = await GetOrgs(ado, adoOrg);
             var repos = await GetRepos(ado, orgs, adoTeamProject);

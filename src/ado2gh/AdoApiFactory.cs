@@ -15,10 +15,10 @@ namespace OctoshiftCLI.AdoToGithub
             _environmentVariableProvider = environmentVariableProvider;
         }
 
-        public virtual AdoApi Create()
+        public virtual AdoApi Create(string personalAccessToken = null)
         {
-            var adoPat = _environmentVariableProvider.AdoPersonalAccessToken();
-            var adoClient = new AdoClient(_octoLogger, _client, adoPat);
+            personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
+            var adoClient = new AdoClient(_octoLogger, _client, personalAccessToken);
             return new AdoApi(adoClient);
         }
     }

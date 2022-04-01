@@ -21,28 +21,38 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
             Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variables to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-target-pat option to be set.";
 
             var migrationId = new Option<string>("--migration-id")
             {
                 IsRequired = true,
                 Description = "Waits for the specified migration to finish."
             };
+            var githubTargetPat = new Option<string>("--github-target-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose") { IsRequired = false };
 
             AddOption(migrationId);
+            AddOption(githubTargetPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string migrationId, bool verbose = false)
+        public async Task Invoke(string migrationId, string githubTargetPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation($"Waiting for migration {migrationId} to finish...");
 
-            var githubApi = _targetGithubApiFactory.Create();
+            if (githubTargetPat is not null)
+            {
+                _log.LogInformation("GITHUB TARGET PAT: ***");
+            }
+
+            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
 
             while (true)
             {
