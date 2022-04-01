@@ -63,7 +63,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "").Result).Returns(migrationId);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
@@ -103,7 +103,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             mockGithub.Verify(m => m.GetOrganizationId(TARGET_ORG));
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             mockGithub.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", ""));
 
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
@@ -125,7 +125,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -175,7 +175,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, sourceAdoPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -233,7 +233,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -306,7 +306,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -407,7 +407,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -480,7 +480,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -560,7 +560,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null);
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId, sourceGithubPat, targetGithubPat).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -689,7 +689,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), ADO_PAT, It.IsAny<string>()));
+            mockGithub.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>()));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -736,7 +736,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, GITHUB_TARGET_PAT));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -794,7 +794,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken());
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_SOURCE_PAT, It.IsAny<string>()));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -840,7 +840,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>(), GITHUB_TARGET_PAT, GITHUB_TARGET_PAT));
+            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
             mockGithub.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
