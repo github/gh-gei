@@ -57,7 +57,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Handler = CommandHandler.Create<string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task<bool> Invoke(
+        public async Task Invoke(
           string githubTargetOrg,
           string mannequinUser,
           string targetUser,
@@ -99,18 +99,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException($"Target user {targetUser} not found.");
             }
 
-            var reclaimed = await githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
+            var result = await githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
 
-            if (reclaimed)
+            if (result.Errors != null)
             {
-                _log.LogInformation($"{mannequinUser} ({mannequin.Id}) mapped to {targetUser} ({targetUserId})");
+                throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            }
+
+            if (result.Data.CreateAttributionInvitation != null &&
+                result.Data.CreateAttributionInvitation.Source.Id == mannequin.Id &&
+                result.Data.CreateAttributionInvitation.Target.Id == targetUserId)
+            {
+                _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             }
             else
             {
-                _log.LogInformation($"Failed to map {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+                throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             }
-
-            return reclaimed;
         }
     }
 }

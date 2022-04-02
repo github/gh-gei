@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI
@@ -543,7 +544,7 @@ namespace OctoshiftCLI
             return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
         }
 
-        public virtual async Task<bool> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
+        public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
         {
             var url = $"{_apiUrl}/graphql";
             var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
@@ -572,13 +573,10 @@ namespace OctoshiftCLI
                 variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
             };
 
-
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
-            return data["data"]["createAttributionInvitation"].Any()
-                && (string)data["data"]["createAttributionInvitation"]["source"]["id"] == mannequinId
-                && (string)data["data"]["createAttributionInvitation"]["target"]["id"] == targetUserId;
+            return data.ToObject<MannequinReclaimResult>();
         }
     }
 }

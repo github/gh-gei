@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -1213,7 +1215,167 @@ namespace OctoshiftCLI.Tests
             result.MappedUser.Should().BeNull();
         }
 
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Error()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
 
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                                ""createAttributionInvitation"": null
+                    }},
+                ""errors"": [{{
+                                ""type"": ""UNPROCESSABLE"",
+                    ""path"": [""createAttributionInvitation""],
+                    ""locations"": [{{
+                                        ""line"": 2,
+                        ""column"": 14
+                    }}],
+                    ""message"": ""Target must be a member of the octocat organization""
+                }}]
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = null
+                },
+                Errors = new Collection<ErrorData>{new ErrorData
+                {
+                    Type = "UNPROCESSABLE",
+                    Message = "Target must be a member of the octocat organization",
+                    Path = new Collection<string> { "createAttributionInvitation" },
+                    Locations = new Collection<Location> {
+                                new Location()
+                                {
+                                    Line = 2,
+                                    Column = 14
+                                }
+                            }
+                    }
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
+
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Success()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string mannequinUser = "mona";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
+            const string targetUser = "lisa";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                    ""createAttributionInvitation"": {{
+                        ""source"": {{
+                            ""id"": ""{mannequinId}"",
+                            ""login"": ""{mannequinUser}""
+                        }},
+                        ""target"": {{
+                            ""id"": ""{targetUserId}"",
+                            ""login"": ""{targetUser}""
+                        }}
+                    }}
+                }}
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = new CreateAttributionInvitation()
+                    {
+                        Source = new UserInfo()
+                        {
+                            Id = mannequinId,
+                            Login = mannequinUser
+                        },
+                        Target = new UserInfo()
+                        {
+                            Id = targetUserId,
+                            Login = targetUser
+                        }
+                    }
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
         private string Compact(string source) =>
             source
                 .Replace("\r", "")
