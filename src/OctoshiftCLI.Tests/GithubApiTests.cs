@@ -1207,7 +1207,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
-            var result = await githubApi.GetMannequin(orgId, login);
+            var result = await githubApi.GetMannequin(orgId, login.ToUpperInvariant()); // ensure case insensitivity
 
             // Assert
             result.Id.Should().Be("DUMMYID");
