@@ -17,7 +17,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable to be set.";
+            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
@@ -43,6 +43,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -54,12 +58,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(serviceConnectionId);
+            AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -70,8 +75,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
             _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
 
-            var ado = _adoApiFactory.Create();
+            var ado = _adoApiFactory.Create(adoPat);
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);

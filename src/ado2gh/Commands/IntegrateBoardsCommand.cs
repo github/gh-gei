@@ -24,7 +24,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Configures the Azure Boards<->GitHub integration in Azure DevOps.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables to be set.";
+            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
@@ -42,6 +42,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -51,12 +59,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoTeamProject);
             AddOption(githubOrg);
             AddOption(githubRepo);
+            AddOption(adoPat);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo, string adoPat = null, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -65,20 +75,28 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
-            var ado = _adoApiFactory.Create();
-            var githubToken = _environmentVariableProvider.GithubPersonalAccessToken();
+            var ado = _adoApiFactory.Create(adoPat);
+            githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
 
             var userId = await ado.GetUserId();
             var adoOrgId = await ado.GetOrganizationId(userId, adoOrg);
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubToken);
+            var githubHandle = await ado.GetGithubHandle(adoOrg, adoOrgId, adoTeamProject, githubPat);
 
             var boardsConnection = await ado.GetBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject);
 
             if (boardsConnection == default)
             {
-                var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubToken, githubHandle, Guid.NewGuid().ToString());
+                var endpointId = await ado.CreateBoardsGithubEndpoint(adoOrg, adoTeamProjectId, githubPat, githubHandle, Guid.NewGuid().ToString());
                 var repoId = await ado.GetBoardsGithubRepoId(adoOrg, adoOrgId, adoTeamProject, adoTeamProjectId, endpointId, githubOrg, githubRepo);
                 await ado.CreateBoardsGithubConnection(adoOrg, adoOrgId, adoTeamProject, endpointId, repoId);
                 _log.LogSuccess("Successfully configured Boards<->GitHub integration");
