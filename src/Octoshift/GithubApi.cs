@@ -83,7 +83,8 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            return await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync();
+            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+                                            ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)

@@ -1,1 +1,2 @@
 - Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
+- Sometimes `create-team` would error with a 404 error, now it will retry automatically when this happens
