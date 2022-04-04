@@ -567,7 +567,7 @@ if ($Failed -ne 0) {
             // Arrange
             const string githubSourcePat = "github-source-pat";
 
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null, null);
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), githubSourcePat))
@@ -599,7 +599,7 @@ if ($Failed -ne 0) {
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null);
+            var mockSourceGithubApi = new Mock<GithubApi>(null, null, null);
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))

@@ -1,1 +1,1 @@
-
+- Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
