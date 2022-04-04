@@ -1,3 +1,5 @@
 - Add `reclaim-mannequin` command. Reclaims a mannequin, by sending a mannequin attribution invitation to the target user. If the mannequin has been previously mapped (and accepted) it will refuse to do so unless the `--force` flag is set.
 - Add ado-team-project parameter to `ado2gh generate-script` command
 - Add ado-team-project parameter to `gh gei generate-script` command
+- Publishing ARM64 binaries for those users on M1 macs
+- All commands in both `ado2gh` and `gei` now optionally accept required PATs as args as an alternate way to setting them as env variables. 

@@ -30,7 +30,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             var secret = Environment.GetEnvironmentVariable(secretName);
 
-            if (secret is null)
+            if (string.IsNullOrEmpty(secret))
             {
                 return null;
             }

@@ -44,6 +44,15 @@ else {
     }
 
     tar -cvzf ./dist/ado2gh.$AssemblyVersion.osx-x64.tar.gz -C ./dist/osx-x64 ado2gh
+
+    # arm64 version for M1 macs
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/osx-arm64/ -r osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    tar -cvzf ./dist/ado2gh.$AssemblyVersion.osx-arm64.tar.gz -C ./dist/osx-arm64 ado2gh
 }  
 
 
@@ -97,6 +106,19 @@ else {
     }
 
     Rename-Item ./dist/osx-x64/gei gei-darwin-amd64
+
+    # arm64 version for M1 macs
+    dotnet publish src/gei/gei.csproj -c Release -o dist/osx-arm64/ -r osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    if (Test-Path -Path ./dist/osx-arm64/gei-darwin-arm64) {
+        Remove-Item ./dist/osx-arm64/gei-darwin-arm64
+    }
+
+    Rename-Item ./dist/osx-arm64/gei gei-darwin-arm64
 }
 
 

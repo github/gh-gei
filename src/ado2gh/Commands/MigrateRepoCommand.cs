@@ -22,7 +22,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             Description = "Invokes the GitHub API's to migrate the repo and all PR data";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables to be set.";
+            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
@@ -55,6 +55,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
             };
+            var adoPat = new Option<string>("--ado-pat")
+            {
+                IsRequired = false
+            };
+            var githubPat = new Option<string>("--github-pat")
+            {
+                IsRequired = false
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -67,12 +75,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubRepo);
             AddOption(ssh);
             AddOption(wait);
+            AddOption(adoPat);
+            AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -90,15 +100,23 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 _log.LogInformation("WAIT: true");
             }
+            if (adoPat is not null)
+            {
+                _log.LogInformation("ADO PAT: ***");
+            }
+            if (githubPat is not null)
+            {
+                _log.LogInformation("GITHUB PAT: ***");
+            }
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
-            var adoToken = _environmentVariableProvider.AdoPersonalAccessToken();
-            var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create();
+            adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
+            githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, adoToken, githubPat);
-            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId);
+            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
 
             if (!wait)
             {

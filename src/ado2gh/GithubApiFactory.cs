@@ -4,6 +4,8 @@ namespace OctoshiftCLI.AdoToGithub
 {
     public class GithubApiFactory
     {
+        private const string DEFAULT_API_URL = "https://api.github.com";
+
         private readonly OctoLogger _octoLogger;
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
@@ -15,15 +17,11 @@ namespace OctoshiftCLI.AdoToGithub
             _environmentVariableProvider = environmentVariableProvider;
         }
 
-        public virtual GithubApi Create()
+        public virtual GithubApi Create(string apiUrl = null, string personalAccessToken = null)
         {
-            return Create("https://api.github.com");
-        }
-
-        public virtual GithubApi Create(string apiUrl)
-        {
-            var githubPat = _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _client, githubPat);
+            apiUrl ??= DEFAULT_API_URL;
+            personalAccessToken ??= _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubClient = new GithubClient(_octoLogger, _client, personalAccessToken);
             return new GithubApi(githubClient, apiUrl);
         }
     }

@@ -2,7 +2,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public interface ITargetGithubApiFactory
     {
-        GithubApi Create();
-        GithubApi Create(string apiUrl);
+        GithubApi Create(string apiUrl = null, string targetPersonalAccessToken = null);
     }
 }
