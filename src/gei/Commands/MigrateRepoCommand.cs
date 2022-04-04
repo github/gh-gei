@@ -92,7 +92,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
             };
-
+            var skipReleases = new Option("--skip-releases")
+            {
+                IsHidden = true,
+                IsRequired = false,
+                Description = "Extra setting to skip releases when migrating. Default value is false."
+            };
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
@@ -135,6 +140,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(gitArchiveUrl);
             AddOption(metadataArchiveUrl);
+
+            AddOption(skipReleases);
 
             AddOption(ssh);
             AddOption(wait);
@@ -220,6 +227,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
                 args.TargetRepo = args.SourceRepo;
+            }
+
+            if (args.SkipReleases)
+            {
+                _log.LogInformation($"SKIP RELEASES: {args.SkipReleases}");
             }
 
             if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
@@ -398,6 +410,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; } = "";
         public string MetadataArchiveUrl { get; set; } = "";
+        public bool SkipReleases { get; set; }
         public bool Ssh { get; set; }
         public bool Wait { get; set; }
         public bool Verbose { get; set; }
