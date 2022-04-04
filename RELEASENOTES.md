@@ -1,5 +1,1 @@
-- Add ado-team-project parameter to `ado2gh generate-script` command
-- Add ado-team-project parameter to `gh gei generate-script` command
-- Publishing ARM64 binaries for those users on M1 macs
-- All commands in both `ado2gh` and `gei` now optionally accept required PATs as args as an alternate way to setting them as env variables. 
 - Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
