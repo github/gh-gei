@@ -32,10 +32,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -49,8 +49,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
             var command = new RevokeMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);

@@ -14,11 +14,13 @@ namespace OctoshiftCLI
     {
         private readonly GithubClient _client;
         private readonly string _apiUrl;
+        private readonly RetryPolicy _retryPolicy;
 
-        public GithubApi(GithubClient client, string apiUrl)
+        public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
             _apiUrl = apiUrl;
+            _retryPolicy = retryPolicy;
         }
 
         public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -83,7 +85,8 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            return await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync();
+            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+                                            ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
@@ -266,7 +269,8 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
@@ -324,7 +328,8 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["failureReason"];
