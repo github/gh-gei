@@ -1151,7 +1151,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.GetUserId(login);
 
             // Assert
@@ -1195,7 +1195,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.GetUserId(login);
 
             // Assert
@@ -1254,7 +1254,7 @@ namespace OctoshiftCLI.Tests
 
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.GetMannequin(orgId, login);
 
             // Assert
@@ -1313,7 +1313,7 @@ namespace OctoshiftCLI.Tests
                     .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.GetMannequin(orgId, login.ToUpperInvariant()); // ensure case insensitivity
 
             // Assert
@@ -1396,7 +1396,7 @@ namespace OctoshiftCLI.Tests
                     .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
 
             // Assert
@@ -1477,7 +1477,7 @@ namespace OctoshiftCLI.Tests
                     .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
 
             // Assert
