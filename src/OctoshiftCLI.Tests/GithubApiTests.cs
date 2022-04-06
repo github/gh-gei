@@ -251,7 +251,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
             githubClientMock
                 .SetupSequence(m => m.GetAllAsync(url))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
@@ -1145,7 +1145,7 @@ namespace OctoshiftCLI.Tests
                     }} 
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -1189,7 +1189,7 @@ namespace OctoshiftCLI.Tests
 	            ]
             }";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -1241,7 +1241,7 @@ namespace OctoshiftCLI.Tests
             };
 
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
             githubClientMock
                 .Setup(m => m.PostGraphQLWithPaginationAsync(
                     url,
@@ -1301,7 +1301,7 @@ namespace OctoshiftCLI.Tests
             };
 
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
             githubClientMock
                 .Setup(m => m.PostGraphQLWithPaginationAsync(
                     url,
@@ -1388,7 +1388,7 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
 
             githubClientMock
                 .Setup(m => m.PostAsync(url,
@@ -1469,7 +1469,7 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = new Mock<GithubClient>(null, null, null, null);
 
             githubClientMock
                 .Setup(m => m.PostAsync(url,
