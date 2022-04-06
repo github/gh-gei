@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
             var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                       {
                           (1, keyPrefix, urlTemplate),
                       }));
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                       {
                           (1, keyPrefix, "SomethingElse"),
                       });
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();

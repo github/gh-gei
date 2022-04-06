@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdo = new Mock<AdoApi>(null);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
@@ -50,7 +50,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
 
             var mockAdo = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);

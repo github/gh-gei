@@ -1053,7 +1053,7 @@ if ($Failed -ne 0) {
             const string adoPat = "ado-pat";
 
             var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             // Act

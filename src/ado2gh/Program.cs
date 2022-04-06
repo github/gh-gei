@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ namespace OctoshiftCLI.AdoToGithub
     {
         private static readonly OctoLogger Logger = new OctoLogger();
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "If the version check fails for any reason, we want the CLI to carry on with the current command")]
         public static async Task Main(string[] args)
         {
             var serviceCollection = new ServiceCollection();
@@ -23,13 +25,38 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
+                .AddSingleton<VersionChecker>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
-
             var parser = BuildParser(serviceProvider);
 
+            try
+            {
+                await LatestVersionCheck();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Could not retrieve latest ado2gh version from github.com, please ensure you are using the latest version by downloading it from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogVerbose(ex.ToString());
+            }
+
             await parser.InvokeAsync(args);
+        }
+
+        private static async Task LatestVersionCheck()
+        {
+            var versionChecker = new VersionChecker();
+
+            if (await versionChecker.IsLatest())
+            {
+                Logger.LogInformation($"You are running the latest version of the ado2gh CLI [v{await versionChecker.GetLatestVersion()}]");
+            }
+            else
+            {
+                Logger.LogWarning($"You are running an older version of the ado2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
+                Logger.LogWarning($"Please download the latest version from https://github.com/github/gh-gei/releases/latest");
+            }
         }
 
         private static Parser BuildParser(ServiceProvider serviceProvider)

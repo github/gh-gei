@@ -574,7 +574,7 @@ if ($Failed -ne 0) {
                 .Returns(mockSourceGithubApi.Object);
 
             var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
 
             // Act
             var command = new GenerateScriptCommand(
@@ -596,7 +596,7 @@ if ($Failed -ne 0) {
             const string adoPat = "ado-pat";
 
             var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             var mockSourceGithubApi = new Mock<GithubApi>(null, null, null);

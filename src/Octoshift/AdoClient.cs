@@ -15,7 +15,7 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private double _retryDelay;
 
-        public AdoClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
+        public AdoClient(OctoLogger log, HttpClient httpClient, VersionChecker versionChecker, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
@@ -25,6 +25,7 @@ namespace OctoshiftCLI
                 _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
                 var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{personalAccessToken}"));
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionChecker?.GetCurrentVersion()));
             }
         }
 

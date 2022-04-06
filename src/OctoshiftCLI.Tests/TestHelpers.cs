@@ -1,36 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
-using System.Threading.Tasks;
-using Moq;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
 {
     public static class TestHelpers
     {
-        #region  Constructor, Member variables and misc. helpers
-        private static readonly GithubClient _client = new GithubClient(new Mock<OctoLogger>().Object, null, null);
-        private const string TARGET_PREFIX = "OCLI-Int";
-
-        internal static string GetTargetName(string targetType)
-        {
-            return $"{TARGET_PREFIX}-{targetType}-{DateTime.UtcNow:yyMMdd-HHmmss}";
-        }
-
-        internal static string TargetOrg
-        {
-            get => "GuacamoleResearch";
-        }
-
-        internal static string SourceOrg
-        {
-            get => "OCLI";
-        }
-        #endregion
-
-        #region Command Helpers
         public static void VerifyCommandOption(IReadOnlyList<Option> options, string name, bool required, bool isHidden = false)
         {
             var option = options.Single(x => x.Name == name);
@@ -38,67 +14,5 @@ namespace OctoshiftCLI.Tests
             Assert.Equal(required, option.IsRequired);
             Assert.Equal(isHidden, option.IsHidden);
         }
-        #endregion
-
-        #region REST API Wrappers
-        private static async Task<bool> Exists(string url)
-        {
-            try
-            {
-                await _client.GetAsync(url);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("404"))
-                {
-                    return false;
-                }
-
-                throw;
-            }
-
-            return true;
-        }
-
-        private static async Task<bool> Delete(string url)
-        {
-            try
-            {
-                await _client.DeleteAsync(url);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("404"))
-                {
-                    return false;
-                }
-
-                throw;
-            }
-
-            return true;
-        }
-
-        internal static async Task<bool> DeleteTeam(string orgName, string teamName)
-        {
-            return await Delete($"https://api.github.com/orgs/{orgName}/teams/{teamName}");
-        }
-
-        internal static async Task<bool> TeamExists(string orgName, string teamName)
-        {
-            return await Exists($"https://api.github.com/orgs/{orgName}/teams/{teamName}");
-        }
-
-        internal static async Task<bool> DeleteRepo(string orgName, string repoName)
-        {
-            return await Delete($"https://api.github.com/repos/{orgName}/{repoName}");
-        }
-
-        internal static async Task<bool> RepoExists(string orgName, string repoName)
-        {
-            return await Exists($"https://api.github.com/repos/{orgName}/{repoName}");
-        }
-
-        #endregion
     }
 }

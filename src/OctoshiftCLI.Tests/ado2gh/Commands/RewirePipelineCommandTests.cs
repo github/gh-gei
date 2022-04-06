@@ -45,7 +45,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
 
             var mockAdo = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);

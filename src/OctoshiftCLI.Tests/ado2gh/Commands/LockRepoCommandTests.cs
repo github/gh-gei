@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new LockRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
 
             var mockAdo = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new LockRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);

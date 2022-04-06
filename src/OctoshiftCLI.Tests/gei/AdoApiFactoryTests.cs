@@ -22,7 +22,7 @@ public class AdoApiFactoryTests
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object);
+        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
         var result = factory.Create();
 
         // Assert
@@ -44,7 +44,7 @@ public class AdoApiFactoryTests
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object);
+        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
         var result = factory.Create(ADO_PAT);
 
         // Assert
