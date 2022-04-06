@@ -59,7 +59,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     adoToken,
                     githubPat,
                     "",
-                    "").Result)
+                    "",
+                    false).Result)
                 .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
@@ -97,7 +98,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithub.Verify(m => m.GetOrganizationId(githubOrg));
             mockGithub.Verify(m => m.CreateAdoMigrationSource(githubOrgId));
-            mockGithub.Verify(m => m.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat, "", ""));
+            mockGithub.Verify(m => m.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat, "", "", false));
 
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
@@ -133,7 +134,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                         adoToken,
                         githubPat,
                         "",
-                        "").Result)
+                        "",
+                        false).Result)
                 .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
