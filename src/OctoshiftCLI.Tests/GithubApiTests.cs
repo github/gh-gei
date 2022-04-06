@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -14,6 +17,7 @@ namespace OctoshiftCLI.Tests
     public class GithubApiTests
     {
         private const string Api_Url = $"https://api.github.com";
+        private readonly RetryPolicy _retryPolicy = new RetryPolicy(new Mock<OctoLogger>().Object);
 
         [Fact]
         public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
@@ -38,7 +42,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
@@ -68,7 +72,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
 
             // Assert
@@ -87,7 +91,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.GetAutoLinks(org, repo);
 
             // Assert
@@ -106,7 +110,7 @@ namespace OctoshiftCLI.Tests
 
             var githubClientMock = new Mock<GithubClient>(null, null, null);
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.DeleteAutoLink(org, repo, autoLinkId);
 
             // Assert
@@ -132,7 +136,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.CreateTeam(org, teamName);
 
             // Assert
@@ -166,7 +170,7 @@ namespace OctoshiftCLI.Tests
                 .Returns(teamsResult);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = (await githubApi.GetTeams(org)).ToArray();
 
             // Assert
@@ -230,12 +234,39 @@ namespace OctoshiftCLI.Tests
                 .Returns(GetAllPages);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);
             result.Should().Equal(teamMember1, teamMember2, teamMember3, teamMember4);
+        }
+
+        [Fact]
+        public async Task GetTeamMembers_Retries_On_404()
+        {
+            // Arrange
+            const string org = "ORG";
+            const string teamName = "TEAM_NAME";
+
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.GetAllAsync(url))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
+                .Returns(new[]
+                {
+                    new { login = "Sally", id = 1 }
+                }.ToAsyncJTokenEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
+
+            // Assert
+            result.Should().HaveCount(1);
         }
 
         [Fact]
@@ -292,7 +323,7 @@ namespace OctoshiftCLI.Tests
                 .Returns(GetAllPages);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = (await githubApi.GetRepos(org)).ToArray();
 
             // Assert
@@ -314,7 +345,7 @@ namespace OctoshiftCLI.Tests
             githubClientMock.Setup(m => m.DeleteAsync(url));
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.RemoveTeamMember(org, teamName, member);
 
             // Assert
@@ -340,7 +371,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.AddTeamSync(org, teamName, groupId, groupName, groupDesc);
 
             // Assert
@@ -362,7 +393,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.AddTeamToRepo(org, repo, teamName, role);
 
             // Assert
@@ -398,7 +429,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var result = await githubApi.GetOrganizationId(org);
 
             // Assert
@@ -436,7 +467,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId);
 
             // Assert
@@ -474,7 +505,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId);
 
             // Assert
@@ -575,7 +606,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var expectedRepositoryMigrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, repo, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
 
             // Assert
@@ -614,7 +645,48 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
+        }
+
+        [Fact]
+        public async Task GetMigrationState_Retries_On_502()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""id"": ""RM_kgC4NjFhNmE2ZWY1NmE4MjAwMDA4NjA5NTZi"",
+                        ""sourceUrl"": ""https://github.com/import-testing/archive-export-testing"",
+                        ""migrationSource"": {{
+                            ""name"": ""GHEC Archive Source""
+                        }},
+                        ""state"": ""{actualMigrationState}"",
+                        ""failureReason"": """"
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
 
             // Assert
@@ -653,7 +725,48 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
+
+            // Assert
+            expectedFailureReason.Should().Be(actualFailureReason);
+        }
+
+        [Fact]
+        public async Task GetMigrationFailureReason_Retries_On_502()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualFailureReason = "FAILURE_REASON";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""id"": ""RM_kgC4NjFhNmE2ZWY1NmE4MjAwMDA4NjA5NTZi"",
+                        ""sourceUrl"": ""https://github.com/import-testing/archive-export-testing"",
+                        ""migrationSource"": {{
+                            ""name"": ""GHEC Archive Source""
+                        }},
+                        ""state"": ""FAILED"",
+                        ""failureReason"": ""{actualFailureReason}""
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
 
             // Assert
@@ -691,7 +804,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualGroupId = await githubApi.GetIdpGroupId(org, groupName);
 
             // Assert
@@ -731,7 +844,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualTeamSlug = await githubApi.GetTeamSlug(org, teamName);
 
             // Assert
@@ -752,7 +865,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.AddEmuGroupToTeam(org, teamSlug, groupId);
 
             // Assert
@@ -789,7 +902,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
 
             // Assert
@@ -817,7 +930,7 @@ namespace OctoshiftCLI.Tests
                 .Throws<HttpRequestException>();
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
 
             // Assert
@@ -854,7 +967,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
 
             // Assert
@@ -882,7 +995,7 @@ namespace OctoshiftCLI.Tests
                 .Throws<HttpRequestException>();
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
 
             // Assert
@@ -901,7 +1014,7 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = new Mock<GithubClient>(null, null, null);
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.DeleteRepo(org, repo);
 
             // Assert
@@ -995,7 +1108,7 @@ namespace OctoshiftCLI.Tests
                 }.ToAsyncEnumerable());
 
             // Act
-            var githubApi = new GithubApi(githubClientMock.Object, Api_Url);
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             var migrationStates = (await githubApi.GetMigrationStates(orgId)).ToArray();
 
             // Assert
@@ -1009,6 +1122,367 @@ namespace OctoshiftCLI.Tests
             });
         }
 
+        [Fact]
+        public async Task GetUserId_Returns_The_User_Id()
+        {
+            // Arrange
+            const string login = "mona";
+            const string userId = "NDQ5VXNlcjc4NDc5MzU=";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = $@"
+            {{
+                ""data"": 
+                    {{
+                        ""user"": 
+                            {{
+                                ""id"": ""{userId}"",
+                                ""name"": ""{login}"" 
+                            }} 
+                    }} 
+            }}";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().Be(userId);
+        }
+
+        [Fact]
+        public async Task GetUserId_For_No_Existant_User_Returns_Null()
+        {
+            // Arrange
+            const string login = "idonotexist";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = @"{
+	            ""data"": {
+                    ""user"": null
+                },
+	            ""errors"": [
+		            {
+			            ""type"": ""NOT_FOUND"",
+			            ""path"": [
+				            ""user""
+			            ],
+			            ""locations"": [
+				            {
+					            ""line"": 4,
+					            ""column"": 3
+                            }
+			            ],
+			            ""message"": ""Could not resolve to a User with the login of 'idonotexist'.""
+		            }
+	            ]
+            }";
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetMannequin_WithNoUser_Returns_Empty()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "monadoessnotexist";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+            $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                 .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
+
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequin(orgId, login);
+
+            // Assert
+            result.Id.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetMannequin_Returns_Mannequin()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "mona";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload =
+    @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+    $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                    .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequin(orgId, login.ToUpperInvariant()); // ensure case insensitivity
+
+            // Assert
+            result.Id.Should().Be("DUMMYID");
+            result.Login.Should().Be(login);
+            result.MappedUser.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Error()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                                ""createAttributionInvitation"": null
+                    }},
+                ""errors"": [{{
+                                ""type"": ""UNPROCESSABLE"",
+                    ""path"": [""createAttributionInvitation""],
+                    ""locations"": [{{
+                                        ""line"": 2,
+                        ""column"": 14
+                    }}],
+                    ""message"": ""Target must be a member of the octocat organization""
+                }}]
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = null
+                },
+                Errors = new Collection<ErrorData>{new ErrorData
+                {
+                    Type = "UNPROCESSABLE",
+                    Message = "Target must be a member of the octocat organization",
+                    Path = new Collection<string> { "createAttributionInvitation" },
+                    Locations = new Collection<Location> {
+                                new Location()
+                                {
+                                    Line = 2,
+                                    Column = 14
+                                }
+                            }
+                    }
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
+
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Success()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string mannequinUser = "mona";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
+            const string targetUser = "lisa";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                    ""createAttributionInvitation"": {{
+                        ""source"": {{
+                            ""id"": ""{mannequinId}"",
+                            ""login"": ""{mannequinUser}""
+                        }},
+                        ""target"": {{
+                            ""id"": ""{targetUserId}"",
+                            ""login"": ""{targetUser}""
+                        }}
+                    }}
+                }}
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = new CreateAttributionInvitation()
+                    {
+                        Source = new UserInfo()
+                        {
+                            Id = mannequinId,
+                            Login = mannequinUser
+                        },
+                        Target = new UserInfo()
+                        {
+                            Id = targetUserId,
+                            Login = targetUser
+                        }
+                    }
+                }
+            };
+
+            var githubClientMock = new Mock<GithubClient>(null, null, null);
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
         private string Compact(string source) =>
             source
                 .Replace("\r", "")

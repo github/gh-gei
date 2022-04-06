@@ -47,7 +47,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var migrationId = Guid.NewGuid().ToString();
             var githubPat = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
@@ -63,7 +63,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var migrationId = Guid.NewGuid().ToString();
             var githubPat = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
@@ -137,7 +137,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(migrationId);
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
@@ -161,9 +161,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
@@ -188,9 +188,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);

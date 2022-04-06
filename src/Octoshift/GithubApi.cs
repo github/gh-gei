@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
+using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI
 {
@@ -12,11 +14,13 @@ namespace OctoshiftCLI
     {
         private readonly GithubClient _client;
         private readonly string _apiUrl;
+        private readonly RetryPolicy _retryPolicy;
 
-        public GithubApi(GithubClient client, string apiUrl)
+        public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
             _apiUrl = apiUrl;
+            _retryPolicy = retryPolicy;
         }
 
         public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -81,7 +85,8 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            return await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync();
+            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+                                            ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
@@ -269,7 +274,8 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
@@ -327,7 +333,8 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["failureReason"];
@@ -471,6 +478,111 @@ namespace OctoshiftCLI
 
             var response = await _client.GetNonSuccessAsync(url, HttpStatusCode.Found);
             return response;
+        }
+
+        public virtual async Task<Mannequin> GetMannequin(string orgId, string username)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!, $first: Int, $after: String)";
+            var gql = @"
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { id = orgId }
+            };
+
+            var mannequin = await _client.PostGraphQLWithPaginationAsync(
+                    url,
+                    payload,
+                    data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                    data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+                .FirstOrDefaultAsync(jToken => username.Equals((string)jToken["login"], StringComparison.OrdinalIgnoreCase));
+
+            return mannequin is null
+                ? new Mannequin()
+                : new Mannequin
+                {
+                    Id = (string)mannequin["id"],
+                    Login = (string)mannequin["login"],
+                    MappedUser = mannequin["claimant"].Any()
+                    ? new Claimant
+                    {
+                        Id = (string)mannequin["claimant"]["id"],
+                        Login = (string)mannequin["claimant"]["login"]
+                    }
+                    : null
+                };
+        }
+
+        public virtual async Task<string> GetUserId(string login)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = new
+            {
+                query = "query($login: String!) {user(login: $login) { id, name } }",
+                variables = new { login }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
+        }
+
+        public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
+        {
+            var url = $"{_apiUrl}/graphql";
+            var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
+            var gql = @"
+	            createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+	            }";
+
+            var payload = new
+            {
+                query = $"{mutation} {{ {gql} }}",
+                variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return data.ToObject<MannequinReclaimResult>();
         }
     }
 }
