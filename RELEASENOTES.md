@@ -1,1 +1,2 @@
 - Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
+- Compare the current running version against the latest version available on github.com and print out a message letting you know if you are up to date or not
