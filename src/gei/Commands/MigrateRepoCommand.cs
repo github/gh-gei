@@ -195,7 +195,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 sourceToken,
                 targetToken,
                 args.GitArchiveUrl,
-                args.MetadataArchiveUrl);
+                args.MetadataArchiveUrl,
+                args.SkipReleases);
 
             if (!args.Wait)
             {
