@@ -28,6 +28,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<RetryPolicy>()
+                .AddSingleton<VersionChecker>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("NoSSL")
