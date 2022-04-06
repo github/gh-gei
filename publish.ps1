@@ -1,4 +1,4 @@
-$AssemblyVersion = "0.12"
+$AssemblyVersion = "0.0"
 
 if ((Test-Path env:CLI_VERSION) -And $env:CLI_VERSION.StartsWith("refs/tags/v")) {
     $AssemblyVersion = $env:CLI_VERSION.Substring(11)
