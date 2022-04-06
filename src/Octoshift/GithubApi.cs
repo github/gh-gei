@@ -198,11 +198,6 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/graphql";
 
-            if (skipReleases)
-            {
-                // add the skipReleases flag to the graphql endpoint
-            }
-
             var query = @"
                 mutation startRepositoryMigration(
                     $sourceId: ID!,
@@ -213,7 +208,8 @@ namespace OctoshiftCLI
                     $gitArchiveUrl: String!,
                     $metadataArchiveUrl: String!,
                     $accessToken: String!,
-                    $githubPat: String)";
+                    $githubPat: String,
+                    $skipReleases: Boolean)";
             var gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -225,7 +221,8 @@ namespace OctoshiftCLI
                         gitArchiveUrl: $gitArchiveUrl,
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
-                        githubPat: $githubPat
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases
                     }
                 ) {
                     repositoryMigration {
@@ -254,7 +251,8 @@ namespace OctoshiftCLI
                     gitArchiveUrl,
                     metadataArchiveUrl,
                     accessToken = sourceToken,
-                    githubPat = targetToken
+                    githubPat = targetToken,
+                    skipReleases
                 },
                 operationName = "startRepositoryMigration"
             };
