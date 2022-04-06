@@ -9,6 +9,8 @@ namespace OctoshiftCLI
     {
         private readonly OctoLogger _log;
 
+        public RetryPolicy() : this(null) { }
+
         public RetryPolicy(OctoLogger log)
         {
             _log = log;

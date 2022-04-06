@@ -15,6 +15,8 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private double _retryDelay;
 
+        public AdoClient() : this(null, null, null) { }
+
         public AdoClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;

@@ -17,6 +17,8 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
 
+        public GithubClient() : this(null, null, null) { }
+
         public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken)
         {
             _log = log;

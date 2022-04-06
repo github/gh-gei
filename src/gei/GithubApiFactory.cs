@@ -11,6 +11,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private readonly RetryPolicy _retryPolicy;
 
+        public GithubApiFactory() : this(null, null, null, null) { }
+
         public GithubApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, RetryPolicy retryPolicy)
         {
             _octoLogger = octoLogger;

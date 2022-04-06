@@ -43,7 +43,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var newRepoId = Guid.NewGuid().ToString();
             var githubToken = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
@@ -52,12 +52,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
@@ -85,7 +85,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repoIds = new List<string>() { "12", "34" };
             var githubToken = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
@@ -93,12 +93,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
@@ -129,7 +129,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repoIds = new List<string>() { "12", newRepoId, "34" };
             var githubToken = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
@@ -137,12 +137,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
             mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
-            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubToken);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
@@ -159,13 +159,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
             const string githubPat = "github-pat";
 
-            var mockAdo = new Mock<AdoApi>(null);
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var mockAdo = new Mock<AdoApi>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,
@@ -182,13 +182,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
             const string githubPat = "github-pat";
 
-            var mockAdo = new Mock<AdoApi>(null);
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var mockAdo = new Mock<AdoApi>();
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
                 .Setup(m => m.GithubPersonalAccessToken())
                 .Returns(githubPat);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object,

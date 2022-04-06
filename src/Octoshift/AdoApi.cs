@@ -14,6 +14,8 @@ namespace OctoshiftCLI
     {
         private readonly AdoClient _client;
 
+        public AdoApi() : this(null) { }
+
         public AdoApi(AdoClient client) => _client = client;
 
         public virtual async Task<string> GetUserId()

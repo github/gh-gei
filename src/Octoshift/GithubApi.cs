@@ -16,6 +16,8 @@ namespace OctoshiftCLI
         private readonly string _apiUrl;
         private readonly RetryPolicy _retryPolicy;
 
+        public GithubApi() : this(null, null, null) { }
+
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;

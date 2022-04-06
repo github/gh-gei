@@ -111,7 +111,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -137,7 +137,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -162,7 +162,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -567,14 +567,14 @@ if ($Failed -ne 0) {
             // Arrange
             const string githubSourcePat = "github-source-pat";
 
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null, null);
+            var mockSourceGithubApi = new Mock<GithubApi>();
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), githubSourcePat))
                 .Returns(mockSourceGithubApi.Object);
 
-            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>();
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
 
             // Act
             var command = new GenerateScriptCommand(
@@ -595,17 +595,17 @@ if ($Failed -ne 0) {
             // Arrange
             const string adoPat = "ado-pat";
 
-            var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApi = new Mock<AdoApi>();
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
-            var mockSourceGithubApi = new Mock<GithubApi>(null, null, null);
+            var mockSourceGithubApi = new Mock<GithubApi>();
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockSourceGithubApi.Object);
 
-            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>(null);
+            var mockEnvironmentVariableProvider = new Mock<EnvironmentVariableProvider>();
 
             // Act
             var command = new GenerateScriptCommand(

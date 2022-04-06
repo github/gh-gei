@@ -34,7 +34,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             const string githubTargetPat = "github-target-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithub.Object);
 

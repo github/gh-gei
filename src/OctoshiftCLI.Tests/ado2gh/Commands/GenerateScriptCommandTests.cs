@@ -324,7 +324,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var org2 = "foo-2";
             var orgs = new List<string>() { org1, org2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizations(userId).Result).Returns(orgs);
@@ -361,7 +361,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -388,7 +388,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -414,7 +414,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
@@ -440,7 +440,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos.Add(org, new Dictionary<string, IEnumerable<string>>());
             repos[org].Add(teamProject, new List<string>() { repo });
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetRepoId(org, teamProject, repo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetPipelines(org, teamProject, repoId).Result).Returns(new List<string>() { pipeline1, pipeline2 });
@@ -463,7 +463,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
 
@@ -484,7 +484,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = new Mock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
@@ -1052,8 +1052,8 @@ if ($Failed -ne 0) {
             // Arrange
             const string adoPat = "ado-pat";
 
-            var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApi = new Mock<AdoApi>();
+            var mockAdoApiFactory = new Mock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             // Act

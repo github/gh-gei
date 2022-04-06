@@ -67,13 +67,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -107,11 +107,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -170,13 +170,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -232,12 +232,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -262,12 +262,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var targetGithubPat = Guid.NewGuid().ToString();
             var mannequinResponse = new Mannequin();
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -304,11 +304,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = new Mock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
