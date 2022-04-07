@@ -194,7 +194,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = "", string metadataArchiveUrl = "")
+        public virtual async Task<string> StartMigration(string migrationSourceId, string adoRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = "", string metadataArchiveUrl = "", bool skipReleases = false)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -208,7 +208,8 @@ namespace OctoshiftCLI
                     $gitArchiveUrl: String!,
                     $metadataArchiveUrl: String!,
                     $accessToken: String!,
-                    $githubPat: String)";
+                    $githubPat: String,
+                    $skipReleases: Boolean)";
             var gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -220,7 +221,8 @@ namespace OctoshiftCLI
                         gitArchiveUrl: $gitArchiveUrl,
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
-                        githubPat: $githubPat
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases
                     }
                 ) {
                     repositoryMigration {
@@ -249,7 +251,8 @@ namespace OctoshiftCLI
                     gitArchiveUrl,
                     metadataArchiveUrl,
                     accessToken = sourceToken,
-                    githubPat = targetToken
+                    githubPat = targetToken,
+                    skipReleases
                 },
                 operationName = "startRepositoryMigration"
             };
