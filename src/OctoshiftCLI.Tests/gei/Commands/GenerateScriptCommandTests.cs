@@ -627,7 +627,7 @@ if ($Failed -ne 0) {
             var repo = "foo-repo";
             var repos = new List<string>() { repo };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
             var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
 
             script = TrimNonExecutableLines(script);
