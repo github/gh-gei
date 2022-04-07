@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -248,6 +249,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
+            if ((await githubApi.GetRepos(args.GithubTargetOrg)).Contains(args.TargetRepo, StringComparer.OrdinalIgnoreCase))
+            {
+                _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
+                return;
+            }
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
