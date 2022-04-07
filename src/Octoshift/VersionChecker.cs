@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
@@ -27,7 +28,7 @@ namespace OctoshiftCLI
 
         public async Task<string> GetLatestVersion()
         {
-            if (string.IsNullOrWhiteSpace(_latestVersion))
+            if (_latestVersion.IsNullOrWhiteSpace())
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
