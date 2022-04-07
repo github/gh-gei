@@ -33,11 +33,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var team = "foo-team";
             var role = "maintain";
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, team, role);
 
             mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
@@ -48,11 +48,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "githubRepo", "team", "role", githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
@@ -66,11 +66,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var team = "foo-team";
             var role = "read";  // read is not a valid role
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new AddTeamToRepoCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
 
             var root = new RootCommand();
             root.AddCommand(command);

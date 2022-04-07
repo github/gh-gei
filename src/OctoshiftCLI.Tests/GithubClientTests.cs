@@ -32,7 +32,7 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
 
-            _loggerMock = new Mock<OctoLogger>();
+            _loggerMock = TestHelpers.CreateMock<OctoLogger>();
         }
 
         public void Dispose()
@@ -239,7 +239,7 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            var loggerMock = new Mock<OctoLogger>();
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
 
             // Act
             // Assert
@@ -357,7 +357,7 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            var loggerMock = new Mock<OctoLogger>();
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
 
             // Act
             // Assert
@@ -475,7 +475,7 @@ namespace OctoshiftCLI.Tests
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            var loggerMock = new Mock<OctoLogger>();
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
 
             // Act
             // Assert
@@ -619,7 +619,7 @@ namespace OctoshiftCLI.Tests
                     "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            var loggerMock = new Mock<OctoLogger>();
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
 
             // Act
             // Assert
