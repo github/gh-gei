@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI
 {
-    public class VersionChecker
+    public class VersionChecker : IVersionProvider
     {
         private string _latestVersion;
 

@@ -29,6 +29,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
+                .AddSingleton<IVersionProvider, VersionChecker>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("NoSSL")
@@ -50,7 +51,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
             try
             {
-                await LatestVersionCheck();
+                await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
@@ -61,9 +62,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             await parser.InvokeAsync(args);
         }
 
-        private static async Task LatestVersionCheck()
+        private static async Task LatestVersionCheck(ServiceProvider sp)
         {
-            var versionChecker = new VersionChecker();
+            var versionChecker = sp.GetService<VersionChecker>();
 
             if (await versionChecker.IsLatest())
             {

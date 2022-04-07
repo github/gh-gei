@@ -26,6 +26,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
+                .AddSingleton<IVersionProvider, VersionChecker>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -33,7 +34,7 @@ namespace OctoshiftCLI.AdoToGithub
 
             try
             {
-                await LatestVersionCheck();
+                await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
@@ -44,9 +45,9 @@ namespace OctoshiftCLI.AdoToGithub
             await parser.InvokeAsync(args);
         }
 
-        private static async Task LatestVersionCheck()
+        private static async Task LatestVersionCheck(ServiceProvider sp)
         {
-            var versionChecker = new VersionChecker();
+            var versionChecker = sp.GetService<VersionChecker>();
 
             if (await versionChecker.IsLatest())
             {
