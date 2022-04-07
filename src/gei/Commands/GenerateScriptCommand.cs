@@ -171,7 +171,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
             }
 
-            _log.LogInformation($"SKIP RELEASES: {skipReleases}");
+            if (skipReleases)
+            {
+                _log.LogInformation("SKIP RELEASES: true");
+            }
 
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"OUTPUT: {output}");
