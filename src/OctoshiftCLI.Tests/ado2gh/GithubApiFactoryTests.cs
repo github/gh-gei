@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public void Create_Should_Create_Github_Api_With_Github_Pat_From_Environment_If_Not_Provided()
         {
             // Arrange
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.GithubPersonalAccessToken()).Returns(GH_PAT);
 
             using var httpClient = new HttpClient();
@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public void Create_Should_Create_Github_Api_With_Provided_Github_Pat()
         {
             // Arrange
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.GithubPersonalAccessToken()).Returns(GH_PAT);
 
             using var httpClient = new HttpClient();

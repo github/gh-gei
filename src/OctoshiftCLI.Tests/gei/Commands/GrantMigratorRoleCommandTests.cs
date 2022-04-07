@@ -34,13 +34,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new GrantMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.GrantMigratorRole(githubOrgId, actor, actorType));
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Invalid_Actor_Type()
         {
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GrantMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
 
             await command.Invoke("foo", "foo", "foo");
         }
@@ -60,12 +60,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             const string githubTargetPat = "github-target-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = new Mock<OctoLogger>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
