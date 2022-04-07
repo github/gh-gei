@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(13);
+            command.Options.Count.Should().Be(14);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
@@ -32,6 +32,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
+            TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
@@ -44,7 +45,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void Github_No_Data()
         {
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateSequentialGithubScript(null, "foo-source", "foo-target", "", "", false);
+            var script = command.GenerateSequentialGithubScript(null, "foo-source", "foo-target", "", "", false, false);
 
             string.IsNullOrWhiteSpace(script).Should().BeTrue();
         }
@@ -56,7 +57,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             script.Should().StartWith("#!/usr/bin/pwsh");
 
@@ -69,7 +70,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo };
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -87,7 +88,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var repos = new List<string>() { repo1, repo2, repo3 };
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -183,7 +184,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -201,7 +202,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
 
             script = TrimNonExecutableLines(script);
 
@@ -349,7 +350,7 @@ if ($Failed -ne 0) {
         {
             // Arrange, Act
             var command = new GenerateScriptCommand(null, null, null, null);
-            var script = command.GenerateParallelGithubScript(null, "github-source", "github-target", "", "", false);
+            var script = command.GenerateParallelGithubScript(null, "github-source", "github-target", "", "", false, false);
 
             // Assert
             script.Should().BeEmpty();
@@ -421,7 +422,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, false);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -488,7 +489,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, false, false);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -555,7 +556,7 @@ if ($Failed -ne 0) {
 
             // Act
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
-            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true);
+            var script = command.GenerateParallelGithubScript(repos, SOURCE_ORG, TARGET_ORG, ghesApiUrl, azureStorageConnectionString, true, false);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -618,6 +619,22 @@ if ($Failed -ne 0) {
             // Assert
             mockAdoApiFactory.Verify(m => m.Create(adoPat));
             mockEnvironmentVariableProvider.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public void It_Adds_Skip_Releases_To_Migrate_Repo_Command_When_Provided()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --wait --skip-releases }}";
+
+            script.Should().Be(expected);
         }
 
         private string TrimNonExecutableLines(string script)
