@@ -7,20 +7,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private readonly OctoLogger _octoLogger;
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private readonly VersionChecker _versionChecker;
+        private readonly IVersionProvider _versionProvider;
 
-        public AdoApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider, VersionChecker versionChecker)
+        public AdoApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider, IVersionProvider versionProvider)
         {
             _octoLogger = octoLogger;
             _client = client;
             _environmentVariableProvider = environmentVariableProvider;
-            _versionChecker = versionChecker;
+            _versionProvider = versionProvider;
         }
 
         public virtual AdoApi Create(string personalAccessToken = null)
         {
             personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
-            var adoClient = new AdoClient(_octoLogger, _client, _versionChecker, personalAccessToken);
+            var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, personalAccessToken);
             return new AdoApi(adoClient);
         }
     }
