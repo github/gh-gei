@@ -63,6 +63,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
@@ -103,6 +104,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
+            mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
             mockGithub.Verify(m => m.GetOrganizationId(TARGET_ORG));
             mockGithub.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             mockGithub.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false));
@@ -128,9 +130,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(githubRepos);
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "").Result).Returns(migrationId);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
