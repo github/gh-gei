@@ -621,6 +621,22 @@ if ($Failed -ne 0) {
             mockEnvironmentVariableProvider.VerifyNoOtherCalls();
         }
 
+        [Fact]
+        public void It_Uses_Skip_Releases_When_Provided()
+        {
+            var repo = "foo-repo";
+            var repos = new List<string>() { repo };
+
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null, null, null);
+            var script = command.GenerateSequentialGithubScript(repos, SOURCE_ORG, TARGET_ORG, "", "", false, true);
+
+            script = TrimNonExecutableLines(script);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo}\" --wait --skip-releases }}";
+
+            script.Should().Be(expected);
+        }
+
         private string TrimNonExecutableLines(string script)
         {
             var lines = script.Split(new string[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
