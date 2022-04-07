@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -109,11 +110,17 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
+            githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            if ((await githubApi.GetRepos(githubOrg)).Contains(githubRepo, StringComparer.OrdinalIgnoreCase))
+            {
+                _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
+                return;
+            }
+
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
             adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
-            githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
