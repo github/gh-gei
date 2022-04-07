@@ -33,7 +33,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var team = "foo-team";
             var role = "maintain";
 
-            //var mockGithub = TestHelpers.CreateMock<GithubApi>();
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
