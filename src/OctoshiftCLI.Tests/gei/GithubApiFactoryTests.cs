@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public GithubApiFactoryTests()
         {
-            _logger = new Mock<OctoLogger>().Object;
+            _logger = TestHelpers.CreateMock<OctoLogger>().Object;
         }
 
         [Fact]

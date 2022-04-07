@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
 
-            _loggerMock = new Mock<OctoLogger>();
+            _loggerMock = TestHelpers.CreateMock<OctoLogger>();
         }
 
         [Fact]
