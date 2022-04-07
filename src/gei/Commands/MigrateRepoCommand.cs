@@ -96,7 +96,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsHidden = true,
                 IsRequired = false,
-                Description = "Extra setting to skip releases when migrating. Default value is false."
+                Description = "Skip releases when migrating."
             };
             var ssh = new Option("--ssh")
             {
