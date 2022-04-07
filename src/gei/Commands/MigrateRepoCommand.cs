@@ -386,7 +386,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (args.SkipReleases)
             {
-                _log.LogInformation($"SKIP RELEASES: {args.SkipReleases}");
+                _log.LogInformation("SKIP RELEASES: true");
             }
 
             if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
