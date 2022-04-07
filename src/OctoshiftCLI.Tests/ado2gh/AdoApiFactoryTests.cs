@@ -16,7 +16,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
         public void Create_Should_Create_Ado_Api_With_Ado_Pat_From_Environment_If_Not_Provided()
         {
             // Arrange
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
             using var httpClient = new HttpClient();
@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
         public void Create_Should_Create_Ado_Api_With_Provided_Ado_Pat()
         {
             // Arrange
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>();
+            var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
             using var httpClient = new HttpClient();

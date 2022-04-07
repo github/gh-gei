@@ -8,8 +8,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public AdoApiFactory() : this(null, null, null) { }
-
         public AdoApiFactory(OctoLogger octoLogger, HttpClient client, EnvironmentVariableProvider environmentVariableProvider)
         {
             _octoLogger = octoLogger;

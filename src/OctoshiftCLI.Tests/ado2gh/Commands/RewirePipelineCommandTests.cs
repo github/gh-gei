@@ -41,14 +41,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var clean = "true";
             var checkoutSubmodules = "null";
 
-            var mockAdo = new Mock<AdoApi>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
-            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
             mockAdo.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
@@ -59,11 +59,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdo = new Mock<AdoApi>();
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
-            var command = new RewirePipelineCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
 
             mockAdoApiFactory.Verify(m => m.Create(adoPat));

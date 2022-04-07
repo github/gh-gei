@@ -34,13 +34,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repoId = Guid.NewGuid().ToString();
             var repos = new List<(string Id, string Name, bool IsDisabled)> { (repoId, adoRepo, false) };
 
-            var mockAdo = new Mock<AdoApi>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
-            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId));
@@ -55,13 +55,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repoId = Guid.NewGuid().ToString();
             var repos = new List<(string Id, string Name, bool IsDisabled)> { (repoId, adoRepo, true) };
 
-            var mockAdo = new Mock<AdoApi>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
-            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
 
             mockAdo.Verify(x => x.DisableRepo(adoOrg, adoTeamProject, repoId), Times.Never);
@@ -73,12 +73,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoPat = "ado-pat";
 
             var repos = new[] { ("repoId", "adoRepo", true) };
-            var mockAdo = new Mock<AdoApi>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
-            var command = new DisableRepoCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
 
             mockAdoApiFactory.Verify(m => m.Create(adoPat));

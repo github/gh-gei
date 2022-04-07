@@ -14,8 +14,6 @@ public class EnvironmentVariableProvider
 
     private readonly Func<string, string> _getEnvironmentVariable;
 
-    public EnvironmentVariableProvider() : this(null) { }
-
     public EnvironmentVariableProvider(OctoLogger logger) : this(logger, v => Environment.GetEnvironmentVariable(v))
     {
     }

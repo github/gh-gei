@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public EnvironmentVariableProviderTests()
         {
-            _mockLogger = new Mock<OctoLogger>();
+            _mockLogger = TestHelpers.CreateMock<OctoLogger>();
             _environmentVariableProvider = new EnvironmentVariableProvider(_mockLogger.Object);
         }
 

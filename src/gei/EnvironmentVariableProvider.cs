@@ -11,8 +11,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private readonly OctoLogger _logger;
 
-        public EnvironmentVariableProvider() : this(null) { }
-
         public EnvironmentVariableProvider(OctoLogger logger)
         {
             _logger = logger;

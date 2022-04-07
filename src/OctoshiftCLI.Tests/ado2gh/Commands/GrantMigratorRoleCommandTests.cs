@@ -32,13 +32,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = new Mock<GithubApi>();
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new GrantMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, actor, actorType);
 
             mockGithub.Verify(x => x.GrantMigratorRole(githubOrgId, actor, actorType));
@@ -49,11 +49,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>();
-            var mockGithubApiFactory = new Mock<GithubApiFactory>();
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new GrantMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "actor", "TEAM", githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
@@ -62,7 +62,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Invalid_Actor_Type()
         {
-            var command = new GrantMigratorRoleCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GrantMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
 
             await command.Invoke("foo", "foo", "foo");
         }

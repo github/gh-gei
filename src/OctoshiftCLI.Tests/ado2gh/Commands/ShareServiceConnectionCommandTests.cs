@@ -32,13 +32,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
 
-            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new ShareServiceConnectionCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             mockAdo.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
@@ -49,11 +49,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdo = new Mock<AdoApi>();
-            var mockAdoApiFactory = new Mock<AdoApiFactory>();
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
-            var command = new ShareServiceConnectionCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new ShareServiceConnectionCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "serviceConnectionId", adoPat);
 
             mockAdoApiFactory.Verify(m => m.Create(adoPat));
