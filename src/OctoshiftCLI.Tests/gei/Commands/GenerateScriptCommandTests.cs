@@ -622,7 +622,7 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public void It_Uses_Skip_Releases_When_Provided()
+        public void It_Adds_Skip_Releases_To_Migrate_Repo_Command_When_Provided()
         {
             var repo = "foo-repo";
             var repos = new List<string>() { repo };
