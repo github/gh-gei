@@ -14,6 +14,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class GenerateScriptCommandTests
     {
+        private const string ADO_ORG = "ADO_ORG";
+        private const string ADO_TEAM_PROJECT = "ADO_TEAM_PROJECT";
+        private const string FOO_REPO = "FOO_REPO";
+        private const string FOO_REPO_ID = "FOO_REPO_ID";
+        private const string FOO_PIPELINE = "FOO_PIPELINE";
+        private const string BAR_REPO = "BAR_REPO";
+        private const string BAR_REPO_ID = "BAR_REPO_ID";
+        private const string BAR_PIPELINE = "BAR_PIPELINE";
+        private const string APP_ID = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
+        private const string GITHUB_ORG = "GITHUB_ORG";
+
         [Fact]
         public void Should_Have_Options()
         {
@@ -44,8 +55,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task No_Data()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-
             string script = null;
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, new Mock<AdoApiFactory>(null, null, null).Object)
             {
@@ -59,7 +68,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
+                GithubOrg = GITHUB_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output")
             };
@@ -73,21 +82,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Github_SequentialScript_StartsWithShebang()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { repo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -105,8 +109,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                AdoOrg = adoOrg,
-                GithubOrg = githubOrg,
+                AdoOrg = ADO_ORG,
+                GithubOrg = GITHUB_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output")
             };
@@ -120,21 +124,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Single_Repo()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { repo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -149,29 +148,29 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\" }}";
+            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" --idp-group \"{ADO_TEAM_PROJECT}-Maintainers\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\" }}";
+            expected += $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}";
+            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output"),
                 All = true
@@ -188,17 +187,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Skip_Team_Project_With_No_Repos()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -216,8 +211,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output")
             };
@@ -233,30 +228,22 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Single_Repo_Two_Pipelines()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-            const string pipelineOne = "CICD";
-            const string pipelineTwo = "Publish";
-            const string appId = "app-id";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { repo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, It.IsAny<string>()))
-                .ReturnsAsync(new[] { pipelineOne, pipelineTwo });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, It.IsAny<string>()))
+                .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
             mockAdoApi
-                .Setup(m => m.GetGithubAppId(adoOrg, githubOrg, new[] { adoTeamProject }))
-                .ReturnsAsync(appId);
+                .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
+                .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -271,35 +258,35 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\" }}";
+            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" --idp-group \"{ADO_TEAM_PROJECT}-Maintainers\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\" }}";
+            expected += $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\" }}";
+            expected += $"Exec {{ ./ado2gh share-service-connection --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --service-connection-id \"{APP_ID}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}";
+            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{pipelineOne}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --service-connection-id \"{appId}\" }}";
+            expected += $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{FOO_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --service-connection-id \"{APP_ID}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{pipelineTwo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --service-connection-id \"{appId}\" }}";
+            expected += $"Exec {{ ./ado2gh rewire-pipeline --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{BAR_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --service-connection-id \"{APP_ID}\" }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output"),
                 All = true
@@ -317,26 +304,19 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Single_Repo_Two_Pipelines_No_Service_Connection()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-            const string pipelineOne = "CICD";
-            const string pipelineTwo = "Publish";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { repo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, It.IsAny<string>()))
-                .ReturnsAsync(new[] { pipelineOne, pipelineTwo });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, It.IsAny<string>()))
+                .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -351,29 +331,29 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\" }}";
+            var expected = $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" --idp-group \"{ADO_TEAM_PROJECT}-Maintainers\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\" }}";
+            expected += $"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
+            expected += $"Exec {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}";
+            expected += $"Exec {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}";
+            expected += $"Exec {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}";
             expected += Environment.NewLine;
-            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" }}";
+            expected += $"Exec {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output"),
                 All = true
@@ -387,24 +367,19 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Single_Repo_Repos_Only()
+        public async Task Single_Repo_No_Options()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-            const string adoOrg = "foo-ado-org";
-            const string adoTeamProject = "foo-team-project";
-            const string repo = "foo-repo";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { repo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -422,15 +397,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output")
             };
             await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
-            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{repo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{repo}\" --wait }}";
+            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
 
             // Assert
             expected.Should().Be(script);
@@ -578,7 +553,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var org = "foo-org";
             var orgs = new List<string>() { org };
-            var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
@@ -588,7 +562,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, GITHUB_ORG);
 
             Assert.Empty(result);
         }
@@ -598,7 +572,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var org = "foo-org";
             var orgs = new List<string>() { org };
-            var githubOrg = "foo-gh-org";
             var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
@@ -607,10 +580,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdo = new Mock<AdoApi>(null);
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
-            mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
+            mockAdo.Setup(x => x.GetGithubAppId(org, GITHUB_ORG, teamProjects).Result).Returns(appId);
 
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
-            var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
+            var result = await command.GetAppIds(mockAdo.Object, orgs, GITHUB_ORG);
 
             Assert.Equal(appId, result[org]);
         }
@@ -619,42 +592,31 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task GenerateParallelScript_One_Team_Projects_Two_Repos_All_Options()
         {
             // Arrange
-            const string adoOrg = "ADO_ORG";
-            const string adoTeamProject = "ADO_TEAM_PROJECT";
-            const string fooRepo = "FOO_REPO";
-            const string fooRepoId = "FOO_REPO_ID";
-            const string fooPipeline = "FOO_PIPELINE";
-            const string barRepo = "BAR_REPO";
-            const string barRepoId = "BAR_REPO_ID";
-            const string barPipeline = "BAR_PIPELINE";
-            const string appId = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
-            const string githubOrg = "GITHUB_ORG";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
-                .Setup(m => m.GetTeamProjects(adoOrg))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .Setup(m => m.GetTeamProjects(ADO_ORG))
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { fooRepo, barRepo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO, BAR_REPO });
             mockAdoApi
-                .Setup(m => m.GetRepoId(adoOrg, adoTeamProject, fooRepo))
-                .ReturnsAsync(fooRepoId);
+                .Setup(m => m.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO))
+                .ReturnsAsync(FOO_REPO_ID);
             mockAdoApi
-                .Setup(m => m.GetRepoId(adoOrg, adoTeamProject, barRepo))
-                .ReturnsAsync(barRepoId);
+                .Setup(m => m.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, BAR_REPO))
+                .ReturnsAsync(BAR_REPO_ID);
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, fooRepoId))
-                .ReturnsAsync(new[] { fooPipeline });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO_ID))
+                .ReturnsAsync(new[] { FOO_PIPELINE });
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, barRepoId))
-                .ReturnsAsync(new[] { barPipeline });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, BAR_REPO_ID))
+                .ReturnsAsync(new[] { BAR_PIPELINE });
             mockAdoApi
-                .Setup(m => m.GetGithubAppId(adoOrg, githubOrg, new[] { adoTeamProject }))
-                .ReturnsAsync(appId);
+                .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
+                .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -711,49 +673,49 @@ function ExecBatch {
             expected.AppendLine("$Failed = 0");
             expected.AppendLine("$RepoMigrations = [ordered]@{}");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Queueing migration for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Queueing migration for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Queueing repo migrations for Team Project: {adoOrg}/{adoTeamProject} ===");
-            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\" }}");
-            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\" }}");
-            expected.AppendLine($"Exec {{ ./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\" }}");
+            expected.AppendLine($"# === Queueing repo migrations for Team Project: {ADO_ORG}/{ADO_TEAM_PROJECT} ===");
+            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" --idp-group \"{ADO_TEAM_PROJECT}-Maintainers\" }}");
+            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}");
+            expected.AppendLine($"Exec {{ ./ado2gh share-service-connection --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --service-connection-id \"{APP_ID}\" }}");
             expected.AppendLine();
-            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" }}");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" }}");
-            expected.AppendLine($"$RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"] = $MigrationID");
+            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{barRepo}\" }}");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{barRepo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" }}");
-            expected.AppendLine($"$RepoMigrations[\"{adoOrg}/{adoTeamProject}-{barRepo}\"] = $MigrationID");
+            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{BAR_REPO}\" }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{BAR_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{BAR_REPO}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
-            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
+            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
-            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}");
-            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{fooPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --service-connection-id \"{appId}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}");
+            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh rewire-pipeline --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{FOO_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --service-connection-id \"{APP_ID}\" }}");
             expected.AppendLine("    )");
             expected.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
             expected.AppendLine("} else {");
             expected.AppendLine("    $Failed++");
             expected.AppendLine("}");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {barRepo}. Will then complete the below post migration steps. ===");
-            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{barRepo}\"]");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {BAR_REPO}. Will then complete the below post migration steps. ===");
+            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{BAR_REPO}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
-            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{barRepo}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}");
-            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{barPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{barRepo}\" --service-connection-id \"{appId}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{BAR_REPO}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}");
+            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh rewire-pipeline --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{BAR_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{BAR_REPO}\" --service-connection-id \"{APP_ID}\" }}");
             expected.AppendLine("    )");
             expected.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
             expected.AppendLine("} else {");
@@ -773,8 +735,8 @@ if ($Failed -ne 0) {
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Output = new FileInfo("unit-test-output"),
                 All = true
             };
@@ -788,33 +750,25 @@ if ($Failed -ne 0) {
         public async Task GenerateParallelScript_Single_Repo_No_Options()
         {
             // Arrange
-            const string adoOrg = "ADO_ORG";
-            const string adoTeamProject = "ADO_TEAM_PROJECT";
-            const string fooRepo = "FOO_REPO";
-            const string fooRepoId = "FOO_REPO_ID";
-            const string fooPipeline = "FOO_PIPELINE";
-            const string appId = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
-            const string githubOrg = "GITHUB_ORG";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
-                .Setup(m => m.GetTeamProjects(adoOrg))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .Setup(m => m.GetTeamProjects(ADO_ORG))
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { fooRepo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
             mockAdoApi
-                .Setup(m => m.GetRepoId(adoOrg, adoTeamProject, fooRepo))
-                .ReturnsAsync(fooRepoId);
+                .Setup(m => m.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO))
+                .ReturnsAsync(FOO_REPO_ID);
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, fooRepoId))
-                .ReturnsAsync(new[] { fooPipeline });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO_ID))
+                .ReturnsAsync(new[] { FOO_PIPELINE });
             mockAdoApi
-                .Setup(m => m.GetGithubAppId(adoOrg, githubOrg, new[] { adoTeamProject }))
-                .ReturnsAsync(appId);
+                .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
+                .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -871,17 +825,17 @@ function ExecBatch {
             expected.AppendLine("$Failed = 0");
             expected.AppendLine("$RepoMigrations = [ordered]@{}");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Queueing migration for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Queueing migration for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Queueing repo migrations for Team Project: {adoOrg}/{adoTeamProject} ===");
+            expected.AppendLine($"# === Queueing repo migrations for Team Project: {ADO_ORG}/{ADO_TEAM_PROJECT} ===");
             expected.AppendLine();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" }}");
-            expected.AppendLine($"$RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"] = $MigrationID");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
-            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
+            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    $Succeeded++");
             expected.AppendLine("} else {");
@@ -901,8 +855,8 @@ if ($Failed -ne 0) {
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Output = new FileInfo("unit-test-output"),
             };
             await command.Invoke(args);
@@ -915,8 +869,6 @@ if ($Failed -ne 0) {
         public async Task GenerateParallelScript_No_Data()
         {
             // Arrange
-            const string githubOrg = "foo-gh-org";
-
             string script = null;
             var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, new Mock<AdoApiFactory>(null, null, null).Object)
             {
@@ -930,7 +882,7 @@ if ($Failed -ne 0) {
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
+                GithubOrg = GITHUB_ORG,
                 Sequential = true,
                 Output = new FileInfo("unit-test-output")
             };
@@ -944,30 +896,22 @@ if ($Failed -ne 0) {
         public async Task GenerateParallelScript_Single_Repo_No_Service_Connection_All_Options()
         {
             // Arrange
-            const string adoOrg = "ADO_ORG";
-            const string adoTeamProject = "ADO_TEAM_PROJECT";
-            const string fooRepo = "FOO_REPO";
-            const string fooRepoId = "FOO_REPO_ID";
-            const string fooPipeline = "FOO_PIPELINE";
-            const string barPipeline = "BAR_PIPELINE";
-            const string githubOrg = "GITHUB_ORG";
-
             var mockAdoApi = new Mock<AdoApi>(null);
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
-                .ReturnsAsync(new[] { adoOrg });
+                .ReturnsAsync(new[] { ADO_ORG });
             mockAdoApi
-                .Setup(m => m.GetTeamProjects(adoOrg))
-                .ReturnsAsync(new[] { adoTeamProject });
+                .Setup(m => m.GetTeamProjects(ADO_ORG))
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
             mockAdoApi
-                .Setup(m => m.GetEnabledRepos(adoOrg, adoTeamProject))
-                .ReturnsAsync(new[] { fooRepo });
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
             mockAdoApi
-                .Setup(m => m.GetRepoId(adoOrg, adoTeamProject, fooRepo))
-                .ReturnsAsync(fooRepoId);
+                .Setup(m => m.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO))
+                .ReturnsAsync(FOO_REPO_ID);
             mockAdoApi
-                .Setup(m => m.GetPipelines(adoOrg, adoTeamProject, fooRepoId))
-                .ReturnsAsync(new[] { fooPipeline, barPipeline });
+                .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO_ID))
+                .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
             var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
@@ -1024,29 +968,29 @@ function ExecBatch {
             expected.AppendLine("$Failed = 0");
             expected.AppendLine("$RepoMigrations = [ordered]@{}");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Queueing migration for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Queueing migration for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
             expected.AppendLine();
-            expected.AppendLine($"# === Queueing repo migrations for Team Project: {adoOrg}/{adoTeamProject} ===");
-            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\" --idp-group \"{adoTeamProject}-Maintainers\" }}");
-            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\" --idp-group \"{adoTeamProject}-Admins\" }}");
+            expected.AppendLine($"# === Queueing repo migrations for Team Project: {ADO_ORG}/{ADO_TEAM_PROJECT} ===");
+            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" --idp-group \"{ADO_TEAM_PROJECT}-Maintainers\" }}");
+            expected.AppendLine($"Exec {{ ./ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}");
             expected.AppendLine();
-            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" }}");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" }}");
-            expected.AppendLine($"$RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"] = $MigrationID");
+            expected.AppendLine($"Exec {{ ./ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {fooRepo}. Will then complete the below post migration steps. ===");
-            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{adoOrg}/{adoTeamProject}-{fooRepo}\"]");
+            expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
+            expected.AppendLine($"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) {");
             expected.AppendLine("    ExecBatch @(");
-            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{fooRepo}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\" }}");
-            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\" }}");
-            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{adoTeamProject}-{fooRepo}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh disable-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh configure-autolink --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}");
+            expected.AppendLine($"        {{ ./ado2gh add-team-to-repo --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}");
+            expected.AppendLine($"        {{ ./ado2gh integrate-boards --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
             expected.AppendLine("    )");
             expected.AppendLine("    if ($Global:LastBatchFailures -eq 0) { $Succeeded++ }");
             expected.AppendLine("} else {");
@@ -1066,8 +1010,8 @@ if ($Failed -ne 0) {
             // Act
             var args = new GenerateScriptCommandArgs
             {
-                GithubOrg = githubOrg,
-                AdoOrg = adoOrg,
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
                 Output = new FileInfo("unit-test-output"),
                 All = true
             };
