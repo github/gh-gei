@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task No_Data()
+        public async Task SequentialScript_No_Data()
         {
             // Arrange
             string script = null;
@@ -79,7 +79,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Github_SequentialScript_StartsWithShebang()
+        public async Task SequentialScript_StartsWith_Shebang()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Single_Repo()
+        public async Task SequentialScript_Single_Repo_All_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -184,7 +184,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Skip_Team_Project_With_No_Repos()
+        public async Task SequentialScript_Skips_Team_Project_With_No_Repos()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -225,7 +225,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Single_Repo_Two_Pipelines()
+        public async Task SequentialScript_Single_Repo_Two_Pipelines_All_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -301,7 +301,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Single_Repo_Two_Pipelines_No_Service_Connection()
+        public async Task SequentialScript_Single_Repo_Two_Pipelines_No_Service_Connection_All_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -367,7 +367,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Single_Repo_No_Options()
+        public async Task SequentialScript_Single_Repo_No_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -589,7 +589,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task GenerateParallelScript_One_Team_Projects_Two_Repos_All_Options()
+        public async Task ParallelScript_One_Team_Projects_Two_Repos_All_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -747,7 +747,7 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public async Task GenerateParallelScript_Single_Repo_No_Options()
+        public async Task ParallelScript_Single_Repo_No_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
@@ -866,7 +866,7 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public async Task GenerateParallelScript_No_Data()
+        public async Task ParallelScript_No_Data()
         {
             // Arrange
             string script = null;
@@ -893,7 +893,48 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public async Task GenerateParallelScript_Single_Repo_No_Service_Connection_All_Options()
+        public async Task ParallelScript_StartsWith_Shebang()
+        {
+            // Arrange
+            var mockAdoApi = new Mock<AdoApi>(null);
+            mockAdoApi
+                .Setup(m => m.GetOrganizations(It.IsAny<string>()))
+                .ReturnsAsync(new[] { ADO_ORG });
+            mockAdoApi
+                .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
+                .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
+            mockAdoApi
+                .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
+                .ReturnsAsync(new[] { FOO_REPO });
+
+            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
+
+            string script = null;
+            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                GithubOrg = GITHUB_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
+
+            // Assert
+            script.Should().StartWith("#!/usr/bin/pwsh");
+        }
+
+        [Fact]
+        public async Task ParallelScript_Single_Repo_No_Service_Connection_All_Options()
         {
             // Arrange
             var mockAdoApi = new Mock<AdoApi>(null);
