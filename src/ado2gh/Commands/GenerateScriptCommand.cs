@@ -15,7 +15,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class GenerateScriptCommand : Command
     {
         internal Func<string, string, Task> WriteToFile = (path, contents) => File.WriteAllTextAsync(path, contents);
-        
+
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
 
@@ -86,7 +86,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var rewritePipelines = new Option("--rewrite-pipelines")
+            var rewirePipelines = new Option("--rewire-pipelines")
             {
                 IsRequired = false
             };
@@ -109,7 +109,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(disableAdoRepos);
             AddOption(addTeamsToRepos);
             AddOption(integrateBoards);
-            AddOption(rewritePipelines);
+            AddOption(rewirePipelines);
             AddOption(all);
 
             Handler = CommandHandler.Create<GenerateScriptCommandArgs>(Invoke);
@@ -121,13 +121,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 throw new ArgumentNullException(nameof(args));
             }
-            
+
             _log.Verbose = args.Verbose;
-            
+
             _log.LogInformation("Generating Script...");
-            
+
             LogOptions(args);
-            
+
             var ado = _adoApiFactory.Create(args.AdoPat);
 
             var orgs = await GetOrgs(ado, args.AdoOrg);
@@ -407,7 +407,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-            IDictionary<string, string> appIds, 
+            IDictionary<string, string> appIds,
             string githubOrg,
             GenerateScriptOptions options)
         {
@@ -550,16 +550,16 @@ if ($Failed -ne 0) {
             return content.ToString();
         }
 
-        private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) => 
+        private string DisableAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) =>
             $"./ado2gh disable-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) => 
+        private string LockAdoRepoScript(string adoOrg, string adoTeamProject, string adoRepo) =>
             $"./ado2gh lock-ado-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId) => 
+        private string ShareServiceConnectionScript(string adoOrg, string adoTeamProject, string appId) =>
             $"./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) => 
+        private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) =>
             $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
         private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait) =>
@@ -578,10 +578,10 @@ if ($Failed -ne 0) {
             return result.ToString();
         }
 
-        private string CreateGithubMaintainersTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) => 
+        private string CreateGithubMaintainersTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) =>
             $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Maintainers\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject}-Maintainers\"" : string.Empty)}";
 
-        private string CreateGithubAdminsTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) => 
+        private string CreateGithubAdminsTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) =>
             $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject}-Admins\"" : string.Empty)}";
 
         private string GithubRepoPermissionsScript(string adoTeamProject, string githubOrg, string githubRepo)
@@ -594,16 +594,16 @@ if ($Failed -ne 0) {
             return result.ToString();
         }
 
-        private string GithubRepoMaintainPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) => 
+        private string GithubRepoMaintainPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
             $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string GithubRepoAdminPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) => 
+        private string GithubRepoAdminPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
             $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId) => 
+        private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId) =>
             $"./ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
-        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo) => 
+        private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo) =>
             $"./ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}";
 
         private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
@@ -656,7 +656,7 @@ if ($Failed -ne 0) {
             }
             if (args.DisableAdoRepos)
             {
-                _log.LogInformation("DISABLE ADO REPOS: true");   
+                _log.LogInformation("DISABLE ADO REPOS: true");
             }
             if (args.AddTeamsToRepos)
             {
@@ -664,7 +664,7 @@ if ($Failed -ne 0) {
             }
             if (args.IntegrateBoards)
             {
-                _log.LogInformation("INTEGRATE BOARDS: true");   
+                _log.LogInformation("INTEGRATE BOARDS: true");
             }
             if (args.RewirePipelines)
             {
@@ -672,7 +672,7 @@ if ($Failed -ne 0) {
             }
             if (args.All)
             {
-                _log.LogInformation("ALL: true");   
+                _log.LogInformation("ALL: true");
             }
         }
 
