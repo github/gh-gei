@@ -14,7 +14,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class GenerateScriptCommand : Command
     {
-        internal Func<string, string, Task> WriteToFile = (path, contents) => File.WriteAllTextAsync(path, contents);
+        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
@@ -128,15 +128,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             LogOptions(args);
 
-            var ado = _adoApiFactory.Create(args.AdoPat);
-
-            var orgs = await GetOrgs(ado, args.AdoOrg);
-            var repos = await GetRepos(ado, orgs, args.AdoTeamProject);
-            var pipelines = args.All || args.RewirePipelines ? await GetPipelines(ado, repos) : null;
-            var appIds = args.All || args.RewirePipelines ? await GetAppIds(ado, orgs, args.GithubOrg) : null;
-
-            CheckForDuplicateRepoNames(repos);
-
             var generateScriptOptions = new GenerateScriptOptions
             {
                 CreateTeams = args.All || args.CreateTeams || args.LinkIdpGroups,
@@ -147,6 +138,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IntegrateBoards = args.All || args.IntegrateBoards,
                 RewirePipelines = args.All || args.RewirePipelines
             };
+
+            var ado = _adoApiFactory.Create(args.AdoPat);
+
+            var orgs = await GetOrgs(ado, args.AdoOrg);
+            var repos = await GetRepos(ado, orgs, args.AdoTeamProject);
+            var pipelines = generateScriptOptions.RewirePipelines ? await GetPipelines(ado, repos) : null;
+            var appIds = generateScriptOptions.RewirePipelines ? await GetAppIds(ado, orgs, args.GithubOrg) : null;
+
+            CheckForDuplicateRepoNames(repos);
 
             var script = args.Sequential
                 ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg, generateScriptOptions)
