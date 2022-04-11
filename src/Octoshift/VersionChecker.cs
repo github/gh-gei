@@ -10,6 +10,9 @@ namespace OctoshiftCLI
     public class VersionChecker : IVersionProvider
     {
         private string _latestVersion;
+        private readonly HttpClient _httpClient;
+
+        public VersionChecker(HttpClient httpClient) => _httpClient = httpClient;
 
         public async Task<bool> IsLatest()
         {
@@ -30,13 +33,12 @@ namespace OctoshiftCLI
         {
             if (_latestVersion.IsNullOrWhiteSpace())
             {
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", GetCurrentVersion()));
+                _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", GetCurrentVersion()));
 
                 var url = "https://api.github.com/repos/github/gh-gei/releases/latest";
 
-                var response = await client.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 var data = JObject.Parse(content);

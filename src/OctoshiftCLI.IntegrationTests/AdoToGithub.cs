@@ -14,6 +14,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         private readonly HttpClient _adoHttpClient;
         private readonly HttpClient _githubHttpClient;
+        private readonly HttpClient _versionClient;
         private bool disposedValue;
 
         public AdoToGithub(ITestOutputHelper output)
@@ -22,14 +23,15 @@ namespace OctoshiftCLI.IntegrationTests
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
+            _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
-            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(), adoToken);
+            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient), adoToken);
             var adoApi = new AdoApi(adoClient);
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(), githubToken);
+            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
@@ -98,6 +100,7 @@ namespace OctoshiftCLI.IntegrationTests
                 {
                     _adoHttpClient.Dispose();
                     _githubHttpClient.Dispose();
+                    _versionClient.Dispose();
                 }
 
                 disposedValue = true;
