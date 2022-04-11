@@ -543,7 +543,7 @@ steps:
 
             var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
             var idp = await GetTeamIdPGroup(githubOrg, teamSlug);
-            idp.ToLower().Should().Be(idpGroup);
+            idp.ToLower().Should().Be(idpGroup?.ToLower());
         }
 
         public async Task AssertGithubTeamHasRepoRole(string githubOrg, string teamName, string repo, string role)
