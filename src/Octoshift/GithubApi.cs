@@ -117,9 +117,9 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task AddTeamToRepo(string org, string repo, string teamName, string role)
+        public virtual async Task AddTeamToRepo(string org, string repo, string teamSlug, string role)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/repos/{org}/{repo}";
             var payload = new { permission = role };
 
             await _client.PutAsync(url, payload);
