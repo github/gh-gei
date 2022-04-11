@@ -26,7 +26,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<IVersionProvider, VersionChecker>()
+                .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
