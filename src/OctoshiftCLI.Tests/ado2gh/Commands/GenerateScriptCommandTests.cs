@@ -59,12 +59,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var org2 = "foo-2";
             var orgs = new List<string>() { org1, org2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizations(userId).Result).Returns(orgs);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetOrgs(mockAdo.Object, null);
 
             Assert.Equal(2, result.Count());
@@ -77,7 +77,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var org1 = "foo-1";
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetOrgs(null, org1);
 
             Assert.Single(result);
@@ -96,13 +96,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProject);
 
             Assert.Single(result[org][teamProject1]);
@@ -123,13 +123,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
 
             Assert.Single(result[org][teamProjectArg]);
@@ -149,13 +149,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
 
             Assert.Empty(result[org].Keys);
@@ -175,12 +175,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos.Add(org, new Dictionary<string, IEnumerable<string>>());
             repos[org].Add(teamProject, new List<string>() { repo });
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetRepoId(org, teamProject, repo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetPipelines(org, teamProject, repoId).Result).Returns(new List<string>() { pipeline1, pipeline2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetPipelines(mockAdo.Object, repos);
 
             Assert.Equal(2, result[org][teamProject][repo].Count());
@@ -197,11 +197,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetAppIds(mockAdo.Object, orgs, GITHUB_ORG);
 
             Assert.Empty(result);
@@ -217,12 +217,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetGithubAppId(org, GITHUB_ORG, teamProjects).Result).Returns(appId);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetAppIds(mockAdo.Object, orgs, GITHUB_ORG);
 
             Assert.Equal(appId, result[org]);
@@ -233,7 +233,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, new Mock<AdoApiFactory>(null, null, null).Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -259,7 +259,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_StartsWith_Shebang()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -270,11 +270,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
                 .ReturnsAsync(new[] { FOO_REPO });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -301,7 +301,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_Single_Repo_No_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -312,11 +312,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
                 .ReturnsAsync(new[] { FOO_REPO });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -346,7 +346,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_Single_Repo_All_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -357,11 +357,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
                 .ReturnsAsync(new[] { FOO_REPO });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -409,7 +409,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_Skips_Team_Project_With_No_Repos()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -417,11 +417,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -450,7 +450,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_Single_Repo_Two_Pipelines_All_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -467,11 +467,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
                 .ReturnsAsync(APP_ID);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -526,7 +526,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SequentialScript_Single_Repo_Two_Pipelines_No_Service_Connection_All_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -540,11 +540,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, It.IsAny<string>()))
                 .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -593,7 +593,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, new Mock<AdoApiFactory>(null, null, null).Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -619,7 +619,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task ParallelScript_StartsWith_Shebang()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -630,11 +630,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT))
                 .ReturnsAsync(new[] { FOO_REPO });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -660,7 +660,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task ParallelScript_Single_Repo_No_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -680,11 +680,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
                 .ReturnsAsync(APP_ID);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -767,7 +767,7 @@ if ($Failed -ne 0) {
             {
                 GithubOrg = GITHUB_ORG,
                 AdoOrg = ADO_ORG,
-                Output = new FileInfo("unit-test-output"),
+                Output = new FileInfo("unit-test-output")
             };
             await command.Invoke(args);
 
@@ -779,7 +779,7 @@ if ($Failed -ne 0) {
         public async Task PatallelScript_Skips_Team_Project_With_No_Repos()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -787,11 +787,11 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetTeamProjects(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -814,12 +814,12 @@ if ($Failed -ne 0) {
             // Assert
             script.Should().BeEmpty();
         }
-        
+
         [Fact]
         public async Task ParallelScript_Two_Repos_Two_Pipelines_All_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -845,11 +845,11 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT }))
                 .ReturnsAsync(APP_ID);
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -977,7 +977,7 @@ if ($Failed -ne 0) {
         public async Task ParallelScript_Single_Repo_No_Service_Connection_All_Options()
         {
             // Arrange
-            var mockAdoApi = new Mock<AdoApi>(null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             mockAdoApi
                 .Setup(m => m.GetOrganizations(It.IsAny<string>()))
                 .ReturnsAsync(new[] { ADO_ORG });
@@ -994,11 +994,11 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO_ID))
                 .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1108,12 +1108,12 @@ if ($Failed -ne 0) {
             // Arrange
             const string adoPat = "ado-pat";
 
-            var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             var args = new GenerateScriptCommandArgs
             {
                 GithubOrg = "githubOrg",

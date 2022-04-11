@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -15,7 +17,7 @@ namespace OctoshiftCLI.Tests
     public class GithubApiTests
     {
         private const string Api_Url = $"https://api.github.com";
-        private readonly RetryPolicy _retryPolicy = new RetryPolicy(new Mock<OctoLogger>().Object);
+        private readonly RetryPolicy _retryPolicy = new RetryPolicy(TestHelpers.CreateMock<OctoLogger>().Object);
 
         [Fact]
         public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
@@ -37,7 +39,7 @@ namespace OctoshiftCLI.Tests
                 url_template = urlTemplate.Replace(" ", "%20")
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -67,7 +69,7 @@ namespace OctoshiftCLI.Tests
                 url_template = urlTemplate.Replace(" ", "%20")
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -86,7 +88,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -106,7 +108,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}/autolinks/{autoLinkId}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
             await githubApi.DeleteAutoLink(org, repo, autoLinkId);
@@ -128,7 +130,7 @@ namespace OctoshiftCLI.Tests
             const string teamId = "TEAM_ID";
             var response = $"{{\"id\": \"{teamId}\"}}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
@@ -162,7 +164,7 @@ namespace OctoshiftCLI.Tests
                 new { id = 4, name = team4 }
             }.ToAsyncJTokenEnumerable();
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.GetAllAsync(url))
                 .Returns(teamsResult);
@@ -226,7 +228,7 @@ namespace OctoshiftCLI.Tests
                 await Task.CompletedTask;
             }
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.GetAllAsync(url))
                 .Returns(GetAllPages);
@@ -249,7 +251,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/members?per_page=100";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .SetupSequence(m => m.GetAllAsync(url))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
@@ -315,7 +317,7 @@ namespace OctoshiftCLI.Tests
                 await Task.CompletedTask;
             }
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.GetAllAsync(url))
                 .Returns(GetAllPages);
@@ -339,7 +341,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/memberships/{member}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock.Setup(m => m.DeleteAsync(url));
 
             // Act
@@ -366,7 +368,7 @@ namespace OctoshiftCLI.Tests
                 groups = new[] { new { group_id = groupId, group_name = groupName, group_description = groupDesc } }
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -388,7 +390,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/orgs/{org}/teams/{teamName}/repos/{org}/{repo}";
             var payload = new { permission = role };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -421,7 +423,7 @@ namespace OctoshiftCLI.Tests
                     }} 
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -459,7 +461,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -497,7 +499,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -534,7 +536,8 @@ namespace OctoshiftCLI.Tests
                     $gitArchiveUrl: String!,
                     $metadataArchiveUrl: String!,
                     $accessToken: String!,
-                    $githubPat: String)";
+                    $githubPat: String,
+                    $skipReleases: Boolean)";
             const string gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -546,7 +549,8 @@ namespace OctoshiftCLI.Tests
                         gitArchiveUrl: $gitArchiveUrl,
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
-                        githubPat: $githubPat
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases
                     }
                 ) {
                     repositoryMigration {
@@ -574,7 +578,8 @@ namespace OctoshiftCLI.Tests
                     gitArchiveUrl,
                     metadataArchiveUrl,
                     accessToken = sourceToken,
-                    githubPat = targetToken
+                    githubPat = targetToken,
+                    skipReleases = false
                 },
                 operationName = "startRepositoryMigration"
             };
@@ -598,7 +603,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
@@ -637,7 +642,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -676,7 +681,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
@@ -717,7 +722,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -756,7 +761,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
@@ -796,7 +801,7 @@ namespace OctoshiftCLI.Tests
                 ]
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -836,7 +841,7 @@ namespace OctoshiftCLI.Tests
               }}
             ]";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .ReturnsAsync(response);
@@ -860,7 +865,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -894,7 +899,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -922,7 +927,7 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"grantMigratorRole\"}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
@@ -959,7 +964,7 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .ReturnsAsync(response);
@@ -987,7 +992,7 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{org}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"revokeMigratorRole\"}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
                 .Throws<HttpRequestException>();
@@ -1009,7 +1014,7 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/repos/{org}/{repo}";
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
@@ -1088,7 +1093,7 @@ namespace OctoshiftCLI.Tests
                 createdAt = DateTime.UtcNow
             };
 
-            var githubClientMock = new Mock<GithubClient>(null, null, null);
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
                 .Setup(m => m.PostGraphQLWithPaginationAsync(
                     url,
@@ -1120,6 +1125,367 @@ namespace OctoshiftCLI.Tests
             });
         }
 
+        [Fact]
+        public async Task GetUserId_Returns_The_User_Id()
+        {
+            // Arrange
+            const string login = "mona";
+            const string userId = "NDQ5VXNlcjc4NDc5MzU=";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = $@"
+            {{
+                ""data"": 
+                    {{
+                        ""user"": 
+                            {{
+                                ""id"": ""{userId}"",
+                                ""name"": ""{login}"" 
+                            }} 
+                    }} 
+            }}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().Be(userId);
+        }
+
+        [Fact]
+        public async Task GetUserId_For_No_Existant_User_Returns_Null()
+        {
+            // Arrange
+            const string login = "idonotexist";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
+
+            var response = @"{
+	            ""data"": {
+                    ""user"": null
+                },
+	            ""errors"": [
+		            {
+			            ""type"": ""NOT_FOUND"",
+			            ""path"": [
+				            ""user""
+			            ],
+			            ""locations"": [
+				            {
+					            ""line"": 4,
+					            ""column"": 3
+                            }
+			            ],
+			            ""message"": ""Could not resolve to a User with the login of 'idonotexist'.""
+		            }
+	            ]
+            }";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetUserId(login);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetMannequin_WithNoUser_Returns_Empty()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "monadoessnotexist";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+            $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                 .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
+
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequin(orgId, login);
+
+            // Assert
+            result.Id.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetMannequin_Returns_Mannequin()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login = "mona";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload =
+    @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+    $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin = new
+            {
+                login = "mona",
+                id = "DUMMYID",
+                claimant = new { }
+            };
+
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                    .Returns(new[] { JToken.FromObject(mannequin) }.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequin(orgId, login.ToUpperInvariant()); // ensure case insensitivity
+
+            // Assert
+            result.Id.Should().Be("DUMMYID");
+            result.Login.Should().Be(login);
+            result.MappedUser.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Error()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                                ""createAttributionInvitation"": null
+                    }},
+                ""errors"": [{{
+                                ""type"": ""UNPROCESSABLE"",
+                    ""path"": [""createAttributionInvitation""],
+                    ""locations"": [{{
+                                        ""line"": 2,
+                        ""column"": 14
+                    }}],
+                    ""message"": ""Target must be a member of the octocat organization""
+                }}]
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = null
+                },
+                Errors = new Collection<ErrorData>{new ErrorData
+                {
+                    Type = "UNPROCESSABLE",
+                    Message = "Target must be a member of the octocat organization",
+                    Path = new Collection<string> { "createAttributionInvitation" },
+                    Locations = new Collection<Location> {
+                                new Location()
+                                {
+                                    Line = 2,
+                                    Column = 14
+                                }
+                            }
+                    }
+                }
+            };
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
+
+        [Fact]
+        public async Task ReclaimMannequin_Returns_Success()
+        {
+            // Arrange
+            const string orgId = "dummyorgid";
+            const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+            const string mannequinUser = "mona";
+            const string targetUserId = "ND5TVXNlcjc4NDc5MzU=";
+            const string targetUser = "lisa";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { createAttributionInvitation(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+            var response = $@"{{
+                ""data"": {{
+                    ""createAttributionInvitation"": {{
+                        ""source"": {{
+                            ""id"": ""{mannequinId}"",
+                            ""login"": ""{mannequinUser}""
+                        }},
+                        ""target"": {{
+                            ""id"": ""{targetUserId}"",
+                            ""login"": ""{targetUser}""
+                        }}
+                    }}
+                }}
+            }}";
+
+            var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+            {
+                Data = new CreateAttributionInvitationData()
+                {
+                    CreateAttributionInvitation = new CreateAttributionInvitation()
+                    {
+                        Source = new UserInfo()
+                        {
+                            Id = mannequinId,
+                            Login = mannequinUser
+                        },
+                        Target = new UserInfo()
+                        {
+                            Id = targetUserId,
+                            Login = targetUser
+                        }
+                    }
+                }
+            };
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+
+            githubClientMock
+                .Setup(m => m.PostAsync(url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                    .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        }
         private string Compact(string source) =>
             source
                 .Replace("\r", "")
