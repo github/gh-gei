@@ -64,7 +64,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
         {
-            var versionChecker = sp.GetService<VersionChecker>();
+            var versionChecker = sp.GetRequiredService<VersionChecker>();
 
             if (await versionChecker.IsLatest())
             {
