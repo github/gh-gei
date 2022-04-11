@@ -145,16 +145,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             mockLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            var expectedLogOutput = new List<string>
-            {
-                "Migrating Repo...",
-                $"ADO ORG: {adoOrg}",
-                $"ADO TEAM PROJECT: {adoTeamProject}",
-                $"ADO REPO: {adoRepo}",
-                $"GITHUB ORG: {githubOrg}",
-                $"GITHUB REPO: {githubRepo}",
-                $"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed"
-            };
+            var expectedLogOutput = $"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed";
 
             // Act
             var command = new MigrateRepoCommand(mockLogger.Object, mockGithubApiFactory.Object,
@@ -164,12 +155,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithub.Verify(m => m.GetRepos(githubOrg));
 
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
             mockLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-            actualLogOutput.Should().Equal(expectedLogOutput);
+            actualLogOutput.Should().Contain(expectedLogOutput);
 
             mockGithub.VerifyNoOtherCalls();
-            mockLogger.VerifyNoOtherCalls();
         }
 
         [Fact]

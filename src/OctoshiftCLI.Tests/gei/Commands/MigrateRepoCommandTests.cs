@@ -144,16 +144,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             mockLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            var expectedLogOutput = new List<string>()
-            {
-                "Migrating Repo...",
-                $"GITHUB SOURCE ORG: {SOURCE_ORG}",
-                $"SOURCE REPO: {SOURCE_REPO}",
-                $"GITHUB TARGET ORG: {TARGET_ORG}",
-                $"TARGET REPO: {TARGET_REPO}",
-                $"TARGET API URL: {TARGET_API_URL}",
-                $"The Org '{TARGET_ORG}' already contains a repository with the name '{TARGET_REPO}'. No operation will be performed"
-            };
+            var expectedLogWarningOutput = $"The Org '{TARGET_ORG}' already contains a repository with the name '{TARGET_REPO}'. No operation will be performed";
 
             // Act
             var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
@@ -171,12 +162,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
 
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
             mockLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-            actualLogOutput.Should().Equal(expectedLogOutput);
+            actualLogOutput.Should().Contain(expectedLogWarningOutput);
 
             mockGithub.VerifyNoOtherCalls();
-            mockLogger.VerifyNoOtherCalls();
         }
 
         [Fact]
