@@ -81,9 +81,9 @@ namespace OctoshiftCLI
                 .ToListAsync();
         }
 
-        public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamName)
+        public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamSlug)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/members?per_page=100";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
 
             return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
@@ -96,9 +96,9 @@ namespace OctoshiftCLI
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
-        public virtual async Task RemoveTeamMember(string org, string teamName, string member)
+        public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/memberships/{member}";
+            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
             await _client.DeleteAsync(url);
         }
@@ -353,11 +353,10 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
 
-            // TODO: Need to implement paging
-            var response = await _client.GetAsync(url);
-            var data = JArray.Parse(response);
+            var response = await _client.GetAllAsync(url)
+                                        .SingleAsync(x => ((string)x["name"]).ToUpper() == teamName.ToUpper());
 
-            return (string)data.Children().Single(x => ((string)x["name"]).ToUpper() == teamName.ToUpper())["slug"];
+            return (string)response["slug"];
         }
 
         public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
