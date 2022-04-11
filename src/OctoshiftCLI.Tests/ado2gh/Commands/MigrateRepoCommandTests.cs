@@ -129,7 +129,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = new Mock<GithubApi>(null, null, null);
             mockGithub.Setup(x => x.GetRepos(githubOrg).Result).Returns(githubRepos);
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
