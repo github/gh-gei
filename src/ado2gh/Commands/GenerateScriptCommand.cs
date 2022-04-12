@@ -380,7 +380,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                         if (options.AddTeamsToRepos)
                         {
-                            content.AppendLine(GithubRepoPermissionsScript(adoTeamProject, githubOrg, githubRepo));
+                            content.AppendLine(Exec(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            content.AppendLine(Exec(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
                         }
 
                         if (options.IntegrateBoards)
@@ -499,14 +500,30 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                         content.AppendLine(WaitForMigrationScript(repoMigrationKey));
                         content.AppendLine("if ($lastexitcode -eq 0) {");
-                        if (options.Any())
+                        if (options.DisableAdoRepos || options.IntegrateBoards || options.RewirePipelines || options.AddTeamsToRepos)
                         {
                             content.AppendLine("    ExecBatch @(");
-                            content.AppendLine("        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                            content.AppendLine("        " + Wrap(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
-                            content.AppendLine("        " + Wrap(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                            content.AppendLine("        " + Wrap(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                            content.AppendLine("        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+
+                            if (options.DisableAdoRepos)
+                            {
+                                content.AppendLine("        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            }
+
+                            if (options.IntegrateBoards)
+                            {
+                                content.AppendLine("        " + Wrap(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
+                            }
+
+                            if (options.AddTeamsToRepos)
+                            {
+                                content.AppendLine("        " + Wrap(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                                content.AppendLine("        " + Wrap(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            }
+
+                            if (options.IntegrateBoards)
+                            {
+                                content.AppendLine("        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+                            }
 
                             var appId = string.Empty;
                             var hasAppId = appIds != null && appIds.TryGetValue(adoOrg, out appId);
@@ -583,16 +600,6 @@ if ($Failed -ne 0) {
 
         private string CreateGithubAdminsTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) =>
             $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject}-Admins\"" : string.Empty)}";
-
-        private string GithubRepoPermissionsScript(string adoTeamProject, string githubOrg, string githubRepo)
-        {
-            var result = new StringBuilder();
-
-            result.AppendLine(Exec(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-            result.Append(Exec(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-
-            return result.ToString();
-        }
 
         private string GithubRepoMaintainPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
             $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}";
@@ -685,14 +692,6 @@ if ($Failed -ne 0) {
             public bool AddTeamsToRepos { get; init; }
             public bool IntegrateBoards { get; init; }
             public bool RewirePipelines { get; init; }
-
-            public bool Any() => CreateTeams
-                               && LinkIdpGroups
-                               && LockAdoRepos
-                               && DisableAdoRepos
-                               && AddTeamsToRepos
-                               && IntegrateBoards
-                               && RewirePipelines;
         }
 
         private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
