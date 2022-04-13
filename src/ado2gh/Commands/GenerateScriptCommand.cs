@@ -358,9 +358,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
                         AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                        AppendLine(content, Exec(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
-                        AppendLine(content, Exec(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                        AppendLine(content, Exec(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                        AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
+                        AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
+                        AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
 
                         foreach (var adoPipeline in GetAdoRepoPipelines(pipelines, adoOrg, adoTeamProject, adoRepo))
@@ -463,9 +463,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         {
                             AppendLine(content, "    ExecBatch @(");
                             AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                            AppendLine(content, "        " + Wrap(AutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
-                            AppendLine(content, "        " + Wrap(GithubRepoMaintainPermissionScript(adoTeamProject, githubOrg, githubRepo)));
-                            AppendLine(content, "        " + Wrap(GithubRepoAdminPermissionScript(adoTeamProject, githubOrg, githubRepo)));
+                            AppendLine(content, "        " + Wrap(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
+                            AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
+                            AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                             AppendLine(content, "        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
 
                             appIds.TryGetValue(adoOrg, out var appId);
@@ -548,7 +548,7 @@ if ($Failed -ne 0) {
                 ? $"./ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
 
-        private string AutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) =>
+        private string ConfigureAutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) =>
             _generateScriptOptions.IntegrateBoards
                 ? $"./ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
@@ -569,12 +569,12 @@ if ($Failed -ne 0) {
                 ? $"./ado2gh create-team --github-org \"{githubOrg}\" --team-name \"{adoTeamProject}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject}-Admins\"" : string.Empty)}"
                 : null;
 
-        private string GithubRepoMaintainPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+        private string AddMaintainersToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
             _generateScriptOptions.AddTeamsToRepos
                 ? $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
 
-        private string GithubRepoAdminPermissionScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+        private string AddAdminsToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
             _generateScriptOptions.AddTeamsToRepos
                 ? $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
