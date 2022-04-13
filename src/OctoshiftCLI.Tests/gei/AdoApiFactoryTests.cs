@@ -16,13 +16,13 @@ public class AdoApiFactoryTests
     public void AdoApiFactory_Should_Create_Ado_Api_With_Ado_Pat_From_Environment_If_Not_Provided()
     {
         // Arrange
-        var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object);
+        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
         var result = factory.Create();
 
         // Assert
@@ -38,13 +38,13 @@ public class AdoApiFactoryTests
     public void AdoApiFactory_Should_Create_Ado_Api_With_Provided_Ado_Pat()
     {
         // Arrange
-        var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object);
+        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
         var result = factory.Create(ADO_PAT);
 
         // Assert

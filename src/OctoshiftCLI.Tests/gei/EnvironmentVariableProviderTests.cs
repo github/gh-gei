@@ -1,6 +1,5 @@
 using System;
 using FluentAssertions;
-using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using Xunit;
 
@@ -16,7 +15,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public EnvironmentVariableProviderTests()
         {
-            _environmentVariableProvider = new EnvironmentVariableProvider(new Mock<OctoLogger>().Object);
+            _environmentVariableProvider = new EnvironmentVariableProvider(TestHelpers.CreateMock<OctoLogger>().Object);
         }
 
         [Fact]
