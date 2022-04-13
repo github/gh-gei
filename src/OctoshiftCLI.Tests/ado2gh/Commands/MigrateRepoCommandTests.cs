@@ -118,11 +118,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string adoRepo = "foo-repo";
             const string githubOrg = "foo-gh-org";
             const string githubRepo = "gh-repo";
-            var adoRepoUrl = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_git/{adoRepo}";
             var adoToken = Guid.NewGuid().ToString();
-            var githubOrgId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
-            var migrationId = Guid.NewGuid().ToString();
             var githubPat = Guid.NewGuid().ToString();
             var githubRepos = new List<string> { githubRepo };
 
