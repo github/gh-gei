@@ -36,13 +36,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new ConfigureAutoLinkCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
             mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
@@ -54,13 +54,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
-            var command = new ConfigureAutoLinkCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new ConfigureAutoLinkCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "githubRepo", "adoOrg", "adoTeamProject", githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
@@ -76,17 +76,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                       .Returns(Task.FromResult(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
                           (1, keyPrefix, urlTemplate),
                       }));
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = new Mock<OctoLogger>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
@@ -108,17 +108,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
-            var mockGithub = new Mock<GithubApi>(null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
                           (1, keyPrefix, "SomethingElse"),
                       });
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = new Mock<OctoLogger>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 

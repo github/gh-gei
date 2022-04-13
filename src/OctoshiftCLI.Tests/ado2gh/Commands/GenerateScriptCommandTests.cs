@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -60,7 +59,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false);
 
             script.Should().StartWith("#!/usr/bin/pwsh");
@@ -81,7 +80,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -121,7 +120,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             repos[adoOrg].Add(adoTeamProject, new List<string>());
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, null, null, githubOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -160,7 +159,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 { adoOrg, appId }
             };
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, pipelines, appIds, githubOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -219,7 +218,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var appIds = new Dictionary<string, string>();
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, pipelines, appIds, githubOrg, false);
 
             script = TrimNonExecutableLines(script);
@@ -260,7 +259,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             // The way reposOnly is implemented is kind of hacky, this will change when we refactor all the options in issue #21
             // for now going to leave it as is and use reflection to force the test to work
             var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -290,7 +289,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             repos[adoOrg].Add(adoTeamProject, new List<string>() { repo });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var script = command.GenerateSequentialScript(repos, null, null, githubOrg, true);
 
             script = TrimNonExecutableLines(script);
@@ -324,12 +323,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var org2 = "foo-2";
             var orgs = new List<string>() { org1, org2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
             mockAdo.Setup(x => x.GetOrganizations(userId).Result).Returns(orgs);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetOrgs(mockAdo.Object, null);
 
             Assert.Equal(2, result.Count());
@@ -342,7 +341,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var org1 = "foo-1";
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetOrgs(null, org1);
 
             Assert.Single(result);
@@ -361,13 +360,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProject);
 
             Assert.Single(result[org][teamProject1]);
@@ -388,13 +387,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
 
             Assert.Single(result[org][teamProjectArg]);
@@ -414,13 +413,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repo1 = "foo-repo1";
             var repo2 = "foo-repo2";
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject1).Result).Returns(new List<string>() { repo1 });
             mockAdo.Setup(x => x.GetEnabledRepos(org, teamProject2).Result).Returns(new List<string>() { repo2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetRepos(mockAdo.Object, orgs, teamProjectArg);
 
             Assert.Empty(result[org].Keys);
@@ -440,12 +439,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             repos.Add(org, new Dictionary<string, IEnumerable<string>>());
             repos[org].Add(teamProject, new List<string>() { repo });
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetRepoId(org, teamProject, repo).Result).Returns(repoId);
             mockAdo.Setup(x => x.GetPipelines(org, teamProject, repoId).Result).Returns(new List<string>() { pipeline1, pipeline2 });
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetPipelines(mockAdo.Object, repos);
 
             Assert.Equal(2, result[org][teamProject][repo].Count());
@@ -463,11 +462,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProject2 = "foo-tp2";
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
 
             Assert.Empty(result);
@@ -484,12 +483,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
-            var mockAdo = new Mock<AdoApi>(null);
+            var mockAdo = TestHelpers.CreateMock<AdoApi>();
 
             mockAdo.Setup(x => x.GetTeamProjects(org).Result).Returns(teamProjects);
             mockAdo.Setup(x => x.GetGithubAppId(org, githubOrg, teamProjects).Result).Returns(appId);
 
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var result = await command.GetAppIds(mockAdo.Object, orgs, githubOrg);
 
             Assert.Equal(appId, result[org]);
@@ -640,7 +639,7 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var actual = command.GenerateParallelScript(repos, pipelines, appIds, githubOrg, false);
 
             // Assert
@@ -761,7 +760,7 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             // The way reposOnly is implemented is kind of hacky, this will change when we refactor all the options in issue #21
             // for now going to leave it as is and use reflection to force the test to work
             var reposOnlyField = typeof(GenerateScriptCommand).GetField("_reposOnly", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -909,7 +908,7 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var actual = command.GenerateParallelScript(repos, pipelines, appIds, githubOrg, true);
 
             // Assert
@@ -1039,7 +1038,7 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, null);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
             var actual = command.GenerateParallelScript(repos, pipelines, appIds, githubOrg, false);
 
             // Assert
@@ -1052,12 +1051,12 @@ if ($Failed -ne 0) {
             // Arrange
             const string adoPat = "ado-pat";
 
-            var mockAdoApi = new Mock<AdoApi>(null);
-            var mockAdoApiFactory = new Mock<AdoApiFactory>(null, null, null);
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             // Act
-            var command = new GenerateScriptCommand(new Mock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("githubOrg", "adoOrg", null, null, false, false, adoPat: adoPat);
 
             // Assert

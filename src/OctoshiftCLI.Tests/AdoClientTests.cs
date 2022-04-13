@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
 
-            _loggerMock = new Mock<OctoLogger>();
+            _loggerMock = TestHelpers.CreateMock<OctoLogger>();
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests
             var expectedAuthToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{PERSONAL_ACCESS_TOKEN}"));
 
             // Act
-            _ = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            _ = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Assert
             httpClient.DefaultRequestHeaders.Authorization.Should().NotBeNull();
@@ -58,7 +58,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForGet();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -103,7 +103,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL); // normal call
@@ -119,7 +119,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL);
@@ -133,7 +133,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.GetAsync(URL);
@@ -147,7 +147,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL);
@@ -169,7 +169,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.GetAsync(URL);
                 })
                 .Should()
@@ -181,7 +181,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPost();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -228,7 +228,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody); // normal call
@@ -244,7 +244,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -258,7 +258,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -272,7 +272,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PostAsync(URL, _rawRequestBody);
@@ -286,7 +286,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -308,7 +308,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PostAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -320,7 +320,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPut();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -367,7 +367,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody); // normal call
@@ -383,7 +383,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -397,7 +397,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -411,7 +411,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PutAsync(URL, _rawRequestBody);
@@ -425,7 +425,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -447,7 +447,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PutAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -459,7 +459,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPatch();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -506,7 +506,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody); // normal call
@@ -522,7 +522,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -536,7 +536,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -550,7 +550,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -564,7 +564,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -586,7 +586,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PatchAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -599,7 +599,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForDelete();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -644,7 +644,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL); // normal call
@@ -660,7 +660,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL);
@@ -674,7 +674,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.DeleteAsync(URL);
@@ -688,7 +688,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL);
@@ -710,7 +710,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.DeleteAsync(URL);
                 })
                 .Should()
@@ -723,7 +723,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null);
                     return adoClient.GetWithPagingAsync(null, "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -737,7 +737,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null);
                     return adoClient.GetWithPagingAsync("", "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -751,7 +751,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null);
                     return adoClient.GetWithPagingAsync("  ", "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -769,7 +769,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -795,7 +795,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string continuationToken = "CONTINUATION_TOKEN";
 
@@ -820,7 +820,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             const string url = "http://example.com/resource?existing=param";
             const string continuationToken = "CONTINUATION_TOKEN";
@@ -865,7 +865,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL, null); // normal call
@@ -886,7 +886,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL);
@@ -906,7 +906,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL);
@@ -928,7 +928,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
                     return adoClient.GetWithPagingAsync(URL);
                 })
                 .Should()
@@ -974,7 +974,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(secondHttpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var expectedResult = await adoClient.GetWithPagingAsync(URL);

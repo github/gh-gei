@@ -34,21 +34,21 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var idpGroupId = 42;
             var teamSlug = "foo-slug";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamName).Result).Returns(teamMembers);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamSlug).Result).Returns(teamMembers);
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string>());
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
-            var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new CreateTeamCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, teamName, idpGroup);
 
             mockGithub.Verify(x => x.CreateTeam(githubOrg, teamName));
-            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamName, teamMembers[0]));
-            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamName, teamMembers[1]));
+            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamSlug, teamMembers[0]));
+            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamSlug, teamMembers[1]));
             mockGithub.Verify(x => x.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId));
         }
 
@@ -57,11 +57,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
 
-            var command = new CreateTeamCommand(new Mock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new CreateTeamCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "teamName", "idpGroup", githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
@@ -77,17 +77,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var idpGroupId = 42;
             var teamSlug = "foo-slug";
 
-            var mockGithub = new Mock<GithubApi>(null, null);
-            mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamName).Result).Returns(teamMembers);
+            var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetTeamMembers(githubOrg, teamSlug).Result).Returns(teamMembers);
             mockGithub.Setup(x => x.GetIdpGroupId(githubOrg, idpGroup).Result).Returns(idpGroupId);
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, teamName).Result).Returns(teamSlug);
             mockGithub.Setup(x => x.GetTeams(githubOrg).Result).Returns(new List<string> { teamName });
 
-            var mockGithubApiFactory = new Mock<GithubApiFactory>(null, null, null);
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = new Mock<OctoLogger>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
             mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
@@ -95,8 +95,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(githubOrg, teamName, idpGroup);
 
             mockGithub.Verify(x => x.CreateTeam(githubOrg, teamName), Times.Never);
-            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamName, teamMembers[0]));
-            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamName, teamMembers[1]));
+            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamSlug, teamMembers[0]));
+            mockGithub.Verify(x => x.RemoveTeamMember(githubOrg, teamSlug, teamMembers[1]));
             mockGithub.Verify(x => x.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId));
             actualLogOutput.Contains($"Team '{teamName}' already exists. New team will not be created");
         }

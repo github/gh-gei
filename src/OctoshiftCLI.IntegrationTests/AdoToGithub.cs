@@ -14,6 +14,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         private readonly HttpClient _adoHttpClient;
         private readonly HttpClient _githubHttpClient;
+        private readonly HttpClient _versionClient;
         private bool disposedValue;
 
         public AdoToGithub(ITestOutputHelper output)
@@ -22,15 +23,16 @@ namespace OctoshiftCLI.IntegrationTests
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
+            _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
-            var adoClient = new AdoClient(logger, _adoHttpClient, adoToken);
+            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient), adoToken);
             var adoApi = new AdoApi(adoClient);
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, githubToken);
-            var githubApi = new GithubApi(githubClient, "https://api.github.com");
+            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
+            var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
         }
@@ -70,18 +72,18 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertAdoRepoDisabled(adoOrg, teamProject2, adoRepo2);
             await _helper.AssertAdoRepoLocked(adoOrg, teamProject1, adoRepo1);
             await _helper.AssertAdoRepoLocked(adoOrg, teamProject2, adoRepo2);
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-maintainers");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-admins");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-maintainers");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-admins");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-maintainers", $"{teamProject1}-maintainers");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-admins", $"{teamProject1}-admins");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-maintainers", $"{teamProject2}-maintainers");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-admins", $"{teamProject2}-admins");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-maintainers", $"{teamProject1}-{teamProject1}", "maintain");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-admins", $"{teamProject1}-{teamProject1}", "admin");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-maintainers", $"{teamProject2}-{teamProject2}", "maintain");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-admins", $"{teamProject2}-{teamProject2}", "admin");
+            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Maintainers");
+            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Admins");
+            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Maintainers");
+            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Admins");
+            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-Maintainers");
+            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-Admins");
+            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-Maintainers");
+            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-Admins");
+            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-{teamProject1}", "maintain");
+            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-{teamProject1}", "admin");
+            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-{teamProject2}", "maintain");
+            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-{teamProject2}", "admin");
             await _helper.AssertServiceConnectionWasShared(adoOrg, teamProject1);
             await _helper.AssertServiceConnectionWasShared(adoOrg, teamProject2);
             await _helper.AssertPipelineRewired(adoOrg, teamProject1, pipeline1, githubOrg, $"{teamProject1}-{teamProject1}");
@@ -98,6 +100,7 @@ namespace OctoshiftCLI.IntegrationTests
                 {
                     _adoHttpClient.Dispose();
                     _githubHttpClient.Dispose();
+                    _versionClient.Dispose();
                 }
 
                 disposedValue = true;
