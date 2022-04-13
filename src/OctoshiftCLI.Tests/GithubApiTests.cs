@@ -823,28 +823,29 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{org}/teams";
             const string expectedTeamSlug = "justice-league";
-            var response = $@"
-            [
-              {{
-                ""id"": 1,
-                ""node_id"": ""MDQ6VGVhbTE="",
-                ""url"": ""https://api.github.com/teams/1"",
-                ""html_url"": ""https://github.com/orgs/github/teams/justice-league"",
-                ""name"": ""{teamName}"",
-                ""slug"": ""{expectedTeamSlug}"",
-                ""description"": ""A great team."",
-                ""privacy"": ""closed"",
-                ""permission"": ""admin"",
-                ""members_url"": ""https://api.github.com/teams/1/members/membber"",
-                ""repositories_url"": ""https://api.github.com/teams/1/repos"",
-                ""parent"": null
-              }}
-            ]";
+
+            var response = new[]
+            {
+                new
+                {
+                    id = 1,
+                    node_id = "MDQ6VGVhbTE=",
+                    url = "https://api.github.com/teams/1",
+                    html_url = "https://github.com/orgs/github/teams/justice-league",
+                    name = teamName,
+                    slug = expectedTeamSlug,
+                    description = "A great team.",
+                    privacy = "closed",
+                    permission = "admin",
+                    members_url = "https://api.github.com/teams/1/members/membber",
+                    repositories_url = "https://api.github.com/teams/1/repos",
+                }
+            }.ToAsyncJTokenEnumerable();
 
             var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
-                .Setup(m => m.GetAsync(url))
-                .ReturnsAsync(response);
+                .Setup(m => m.GetAllAsync(url))
+                .Returns(response);
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);

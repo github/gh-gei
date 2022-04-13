@@ -76,21 +76,23 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogSuccess("Successfully created team");
             }
 
+            // TODO: Can improve perf by capturing slug in the response from CreateTeam or GetTeams
+            var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
+
             if (string.IsNullOrWhiteSpace(idpGroup))
             {
                 _log.LogInformation("No IdP Group provided, skipping the IdP linking step");
             }
             else
             {
-                var members = await githubApi.GetTeamMembers(githubOrg, teamName);
+                var members = await githubApi.GetTeamMembers(githubOrg, teamSlug);
 
                 foreach (var member in members)
                 {
-                    await githubApi.RemoveTeamMember(githubOrg, teamName, member);
+                    await githubApi.RemoveTeamMember(githubOrg, teamSlug, member);
                 }
 
                 var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
-                var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
 
                 await githubApi.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
 
