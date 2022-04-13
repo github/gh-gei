@@ -85,12 +85,12 @@ namespace OctoshiftCLI.IntegrationTests
                 await _githubApi.DeleteRepo(githubOrg, repo);
             }
 
-            var githubTeams = await GetTeams(githubOrg);
+            var githubTeams = await GetTeamSlugs(githubOrg);
 
-            foreach (var team in githubTeams)
+            foreach (var teamSlug in githubTeams)
             {
-                _output.WriteLine($"Deleting GitHub team: {team}");
-                await DeleteTeam(githubOrg, team);
+                _output.WriteLine($"Deleting GitHub team: {teamSlug}");
+                await DeleteTeam(githubOrg, teamSlug);
             }
         }
 
@@ -337,7 +337,7 @@ steps:
             return (string)JObject.Parse(response)["status"];
         }
 
-        private async Task<IEnumerable<string>> GetTeams(string org)
+        private async Task<IEnumerable<string>> GetTeamSlugs(string org)
         {
             var url = $"https://api.github.com/orgs/{org}/teams";
 
@@ -347,9 +347,19 @@ steps:
             return data.Children().Select(x => (string)x["slug"]).ToList();
         }
 
-        private async Task DeleteTeam(string org, string team)
+        private async Task<IEnumerable<string>> GetTeamNames(string org)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{team}";
+            var url = $"https://api.github.com/orgs/{org}/teams";
+
+            var response = await _githubClient.GetAsync(url);
+            var data = JArray.Parse(response);
+
+            return data.Children().Select(x => (string)x["name"]).ToList();
+        }
+
+        private async Task DeleteTeam(string org, string teamSlug)
+        {
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}";
             await _githubClient.DeleteAsync(url);
         }
 
@@ -388,9 +398,9 @@ steps:
             return (string)JObject.Parse(response)["groups"].Single()["group_name"];
         }
 
-        private async Task<string> GetTeamRepoRole(string org, string team, string repo)
+        private async Task<string> GetTeamRepoRole(string org, string teamSlug, string repo)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{team}/repos";
+            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/repos";
             var response = await _githubClient.GetAllAsync(url).ToListAsync();
             return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
         }
@@ -519,26 +529,28 @@ steps:
             deny.Should().Be(56828);
         }
 
-        public async Task AssertGithubTeamCreated(string githubOrg, string teamSlug)
+        public async Task AssertGithubTeamCreated(string githubOrg, string teamName)
         {
             _output.WriteLine("Checking that the GitHub teams were created...");
-            var githubTeams = await GetTeams(githubOrg);
+            var githubTeams = await GetTeamNames(githubOrg);
 
-            githubTeams.Should().Contain(teamSlug);
+            githubTeams.Should().Contain(teamName);
         }
 
-        public async Task AssertGithubTeamIdpLinked(string githubOrg, string teamSlug, string idpGroup)
+        public async Task AssertGithubTeamIdpLinked(string githubOrg, string teamName, string idpGroup)
         {
             _output.WriteLine("Checking that the GitHub teams are linked to IdP groups...");
 
+            var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
             var idp = await GetTeamIdPGroup(githubOrg, teamSlug);
-            idp.ToLower().Should().Be(idpGroup);
+            idp.ToLower().Should().Be(idpGroup?.ToLower());
         }
 
-        public async Task AssertGithubTeamHasRepoRole(string githubOrg, string teamSlug, string repo, string role)
+        public async Task AssertGithubTeamHasRepoRole(string githubOrg, string teamName, string repo, string role)
         {
             _output.WriteLine("Checking that the GitHub teams have repo permissions...");
 
+            var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
             var actualRole = await GetTeamRepoRole(githubOrg, teamSlug, repo);
             actualRole.Should().Be(role);
         }

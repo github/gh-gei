@@ -31,16 +31,18 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "foo-org";
             var githubRepo = "foo-repo";
             var team = "foo-team";
+            var teamSlug = "foo-slug";
             var role = "maintain";
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetTeamSlug(githubOrg, team)).ReturnsAsync(teamSlug);
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, team, role);
 
-            mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, team, role));
+            mockGithub.Verify(x => x.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role));
         }
 
         [Fact]
