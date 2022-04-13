@@ -232,25 +232,21 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 repos.Add(org, new Dictionary<string, IEnumerable<string>>());
 
                 var teamProjects = await ado.GetTeamProjects(org);
-                if (string.IsNullOrEmpty(adoTeamProject))
+                if (adoTeamProject.HasValue())
                 {
-                    foreach (var teamProject in teamProjects)
-                    {
-                        teamProjectExists = true;
-                        var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
-                        repos[org].Add(teamProject, projectRepos);
-                    }
+                    teamProjects = teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase))
+                        ? new[] { adoTeamProject }
+                        : Enumerable.Empty<string>();
                 }
-                else
+
+                foreach (var teamProject in teamProjects)
                 {
-                    if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        teamProjectExists = true;
-                        var projectRepos = await GetTeamProjectRepos(ado, org, adoTeamProject);
-                        repos[org].Add(adoTeamProject, projectRepos);
-                    }
+                    teamProjectExists = true;
+                    var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
+                    repos[org].Add(teamProject, projectRepos);
                 }
             }
+
             if (!teamProjectExists)
             {
                 _log.LogWarning($"ADO Team Project provided cannot be found [{adoTeamProject}]");
