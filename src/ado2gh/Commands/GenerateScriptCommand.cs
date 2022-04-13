@@ -65,35 +65,43 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
             var createTeams = new Option("--create-teams")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes create-team scripts that creates admins and maintainers teams."
             };
             var linkIdpGroups = new Option("--link-idp-groups")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Adds --idp-group to the end of create teams scripts that links the created team to an idP group."
             };
             var lockAdoRepos = new Option("--lock-ado-repos")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes lock-ado-repo scripts that lock repos bofore migrating them."
             };
             var disableAdoRepos = new Option("--disable-ado-repos")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes disable-ado-repo scripts that disable repos after migrating them."
             };
             var addTeamsToRepos = new Option("--add-teams-to-repos")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes add-team-to-repo scripts that adds teams to repos."
             };
             var integrateBoards = new Option("--integrate-boards")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes configure-autolink and integrate-boards scripts that configure Azure Boards integrations."
             };
             var rewirePipelines = new Option("--rewire-pipelines")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes share-service-connection and rewire-pipeline scripts that rewire Azure Pipelines to point to GitHub repos."
             };
             var all = new Option("--all")
             {
-                IsRequired = false
+                IsRequired = false,
+                Description = "Includes all script generation options."
             };
 
             AddOption(githubOrgOption);
