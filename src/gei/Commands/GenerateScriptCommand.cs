@@ -126,8 +126,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string adoTeamProject,
           string githubTargetOrg,
           FileInfo output,
-          string ghesApiUrl = "",
-          string azureStorageConnectionString = "",
+          string ghesApiUrl = null,
+          string azureStorageConnectionString = null,
           bool noSslVerify = false,
           bool skipReleases = false,
           bool ssh = false,
@@ -492,7 +492,7 @@ if ($Failed -ne 0) {
         private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait, bool skipReleases)
         {
             var ghesRepoOptions = "";
-            if (!string.IsNullOrWhiteSpace(ghesApiUrl))
+            if (ghesApiUrl.HasValue())
             {
                 ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, noSslVerify);
             }
