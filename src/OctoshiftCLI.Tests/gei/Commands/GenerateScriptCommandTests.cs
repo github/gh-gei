@@ -180,7 +180,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             var repo = "foo-repo";
             var repos = new List<string>() { repo };
-            var ghesApiUrl = "https://api.foo.com";
+            var ghesApiUrl = "https://foo.com/api/v3";
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
@@ -198,7 +198,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             var repo = "foo-repo";
             var repos = new List<string>() { repo };
-            var ghesApiUrl = "https://api.foo.com";
+            var ghesApiUrl = "https://foo.com/api/v3";
             var azureStorageConnectionString = "foo-storage-connection-string";
 
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null);
