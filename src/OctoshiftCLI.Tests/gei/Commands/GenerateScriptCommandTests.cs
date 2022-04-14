@@ -68,13 +68,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().BeNullOrWhiteSpace();
@@ -105,12 +106,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"));
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().BeNullOrWhiteSpace();
@@ -145,13 +148,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().StartWith("#!/usr/bin/pwsh");
@@ -186,12 +190,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"));
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().StartWith("#!/usr/bin/pwsh");
@@ -228,13 +234,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait }}";
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -280,13 +287,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" --wait }}");
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -329,13 +337,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                null,
-                org,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = org,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().NotBeEmpty();
@@ -379,13 +388,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                null,
-                org,
-                adoTeamProject,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = org,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().NotBeEmpty();
@@ -425,13 +436,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                null,
-                org,
-                "NOT_EXISTING_TEAM_PROJECT",
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = org,
+                AdoTeamProject = "NOT_EXISTING_TEAM_PROJECT",
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             TrimNonExecutableLines(script).Should().BeEmpty();
@@ -473,15 +486,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --wait }}";
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                ghesApiUrl,
-                azureStorageConnectionString,
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -523,16 +537,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify --wait }}";
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                ghesApiUrl,
-                azureStorageConnectionString,
-                sequential: true,
-                noSslVerify: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                Sequential = true,
+                NoSslVerify = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -565,13 +580,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                null,
-                SOURCE_ORG,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().BeNullOrWhiteSpace();
@@ -602,12 +618,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             // Act
-            await command.Invoke(
-                null,
-                SOURCE_ORG,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"));
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().BeNullOrWhiteSpace();
@@ -645,13 +662,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}";
 
             // Act
-            await command.Invoke(
-                null,
-                SOURCE_ORG,
-                adoTeamProject,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -697,13 +716,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             expected.Append($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo3}\" --wait }}");
 
             // Act
-            await command.Invoke(
-                null,
-                SOURCE_ORG,
-                adoTeamProject,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -801,12 +822,14 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            await command.Invoke(
-                null,
-                SOURCE_ORG,
-                adoTeamProject,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"));
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -898,12 +921,13 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"));
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -992,14 +1016,15 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                ghesApiUrl,
-                azureStorageConnectionString);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -1088,15 +1113,16 @@ if ($Failed -ne 0) {
             expected.AppendLine();
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                ghesApiUrl,
-                azureStorageConnectionString,
-                true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                NoSslVerify = true
+            };
+            await command.Invoke(args);
 
             // Assert
             script.Should().Be(expected.ToString());
@@ -1117,13 +1143,20 @@ if ($Failed -ne 0) {
             var mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
 
-            // Act
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
-            await command.Invoke("githubSourceOrg", null, null, "githubTargetOrg", null, githubSourcePat: githubSourcePat);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                GithubSourcePat = githubSourcePat
+            };
+            await command.Invoke(args);
 
             // Assert
             mockSourceGithubApiFactory.Verify(m => m.Create(null, githubSourcePat));
@@ -1148,13 +1181,20 @@ if ($Failed -ne 0) {
 
             var mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
-            // Act
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
                 mockEnvironmentVariableProvider.Object);
-            await command.Invoke(null, "adoSourceOrg", null, "githubTargetOrg", null, adoPat: adoPat);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                AdoPat = adoPat
+            };
+            await command.Invoke(args);
 
             // Assert
             mockAdoApiFactory.Verify(m => m.Create(adoPat));
@@ -1192,14 +1232,15 @@ if ($Failed -ne 0) {
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait --skip-releases }}";
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                sequential: true,
-                skipReleases: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                SkipReleases = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script);
 
@@ -1241,13 +1282,14 @@ if ($Failed -ne 0) {
             expected.Append($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
 
             // Act
-            await command.Invoke(
-                SOURCE_ORG,
-                null,
-                null,
-                TARGET_ORG,
-                new FileInfo("unit-test-output"),
-                skipReleases: true);
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                SkipReleases = true
+            };
+            await command.Invoke(args);
 
             script = TrimNonExecutableLines(script, 22, 7);
 

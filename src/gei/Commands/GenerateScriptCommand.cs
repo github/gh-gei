@@ -117,100 +117,91 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, FileInfo, string, string, bool, bool, bool, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<GenerateScriptCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(
-          string githubSourceOrg,
-          string adoSourceOrg,
-          string adoTeamProject,
-          string githubTargetOrg,
-          FileInfo output,
-          string ghesApiUrl = null,
-          string azureStorageConnectionString = null,
-          bool noSslVerify = false,
-          bool skipReleases = false,
-          bool ssh = false,
-          bool sequential = false,
-          string githubSourcePat = null,
-          string adoPat = null,
-          bool verbose = false)
+        public async Task Invoke(GenerateScriptCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Generating Script...");
-            if (githubSourceOrg.HasValue())
+            if (args.GithubSourceOrg.HasValue())
             {
-                _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
+                _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
-            if (adoSourceOrg.HasValue())
+            if (args.AdoSourceOrg.HasValue())
             {
-                _log.LogInformation($"ADO SOURCE ORG: {adoSourceOrg}");
+                _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
             }
 
-            if (adoTeamProject.HasValue())
+            if (args.AdoTeamProject.HasValue())
             {
-                _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
+                _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
 
             // GHES Migration Path
-            if (ghesApiUrl.HasValue())
+            if (args.GhesApiUrl.HasValue())
             {
-                _log.LogInformation($"GHES API URL: {ghesApiUrl}");
+                _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
 
-                if (azureStorageConnectionString.IsNullOrWhiteSpace())
+                if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
                 {
                     _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
-                    azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
+                    args.AzureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
 
-                    if (azureStorageConnectionString.IsNullOrWhiteSpace())
+                    if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
                     {
                         throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                     }
                 }
 
-                if (noSslVerify)
+                if (args.NoSslVerify)
                 {
                     _log.LogInformation("SSL verification disabled");
                 }
             }
 
-            if (skipReleases)
+            if (args.SkipReleases)
             {
                 _log.LogInformation("SKIP RELEASES: true");
             }
 
-            _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
-            _log.LogInformation($"OUTPUT: {output}");
-            if (ssh)
+            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+            _log.LogInformation($"OUTPUT: {args.Output}");
+            if (args.Ssh)
             {
                 _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
             }
-            if (sequential)
+            if (args.Sequential)
             {
                 _log.LogInformation("SEQUENTIAL: true");
             }
-            if (githubSourcePat is not null)
+            if (args.GithubSourcePat is not null)
             {
                 _log.LogInformation("GITHUB SOURCE PAT: ***");
             }
-            if (adoPat is not null)
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            if (githubSourceOrg.IsNullOrWhiteSpace() && adoSourceOrg.IsNullOrWhiteSpace())
+            if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
-            var script = githubSourceOrg.IsNullOrWhiteSpace() ?
-                await InvokeAdo(adoSourceOrg, adoTeamProject, githubTargetOrg, sequential, adoPat) :
-                await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential, githubSourcePat, skipReleases);
+            var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
+                await InvokeAdo(args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat) :
+                await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases);
 
-            if (output != null)
+            if (args.Output.HasValue())
             {
-                await WriteToFile(output.FullName, script);
+                await WriteToFile(args.Output.FullName, script);
             }
         }
 
@@ -541,5 +532,23 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }";
+    }
+
+    public class GenerateScriptCommandArgs
+    {
+        public string GithubSourceOrg { get; set; }
+        public string AdoSourceOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string GithubTargetOrg { get; set; }
+        public FileInfo Output { get; set; }
+        public string GhesApiUrl { get; set; }
+        public string AzureStorageConnectionString { get; set; }
+        public bool NoSslVerify { get; set; }
+        public bool SkipReleases { get; set; }
+        public bool Ssh { get; set; }
+        public bool Sequential { get; set; }
+        public string GithubSourcePat { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }
