@@ -435,8 +435,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
-                        content.AppendLine(WaitForMigrationScript(repoMigrationKey));
-                        content.AppendLine("if ($lastexitcode -eq 0) {");
+                        content.AppendLine("$CanExecuteBatch = $true");
+                        content.AppendLine($"if ($null -ne $RepoMigrations[\"{repoMigrationKey}\"]) {{");
+                        content.AppendLine("    " + WaitForMigrationScript(repoMigrationKey));
+                        content.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
+                        content.AppendLine("}");
+                        content.AppendLine("if ($CanExecuteBatch) {");
                         if (!_reposOnly)
                         {
                             content.AppendLine("    ExecBatch @(");
