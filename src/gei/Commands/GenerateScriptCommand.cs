@@ -122,7 +122,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string adoTeamProject,
           string githubTargetOrg,
           FileInfo output,
-          string ghesApiUrl = "",
+          string ghesApiUrl = null,
           string azureStorageConnectionString = "",
           bool noSslVerify = false,
           bool skipReleases = false,
@@ -212,9 +212,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases)
         {
-            var repos = string.IsNullOrWhiteSpace(ghesApiUrl) ? 
-                await GetGithubRepos(_sourceGithubApiFactory.Create(sourcePersonalAccessToken: githubSourcePat), githubSourceOrg) :
-                await GetGithubRepos(_sourceGithubApiFactory.Create(apiUrl: ghesApiUrl, sourcePersonalAccessToken: githubSourcePat), githubSourceOrg);
+            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(apiUrl: ghesApiUrl, sourcePersonalAccessToken: githubSourcePat), githubSourceOrg);
             return sequential
                 ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases)
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases);
