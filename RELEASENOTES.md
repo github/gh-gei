@@ -1,3 +1,4 @@
 - Add `reclaim-mannequin` command. Reclaims a mannequin, by sending a mannequin attribution invitation to the target user. If the mannequin has been previously mapped (and accepted) it will refuse to do so unless the `--force` flag is set.
 - Sometimes `wait-for-migration` would error with a 502 error, now it will retry automatically when this happens
 - Sometimes `create-team` would error with a 404 error, now it will retry automatically when this happens
+- Add more options (i.e. `--rewire-pipelines`, `--create-teams`, etc.) to configure generate-script command's behaviour in ado2gh. `--all` was also added to opt in for all options.
