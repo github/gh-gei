@@ -1,1 +1,3 @@
 - Add more options (i.e. `--rewire-pipelines`, `--create-teams`, etc.) to configure generate-script command's behaviour in ado2gh. `--all` was also added to opt in for all options.
+- Updates most commands to be idempotent. They will check if there is anything to do, and if not they will print a message to that effect and complete successfully. E.g. create-team will check if the team already exists and if so exit as success (compared to previously where it would crash). The following commands have been updated:
+  - migrate-repo
