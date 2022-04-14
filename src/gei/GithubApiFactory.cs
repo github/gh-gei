@@ -10,20 +10,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private readonly IHttpClientFactory _clientFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private readonly RetryPolicy _retryPolicy;
+        private readonly IVersionProvider _versionProvider;
 
-        public GithubApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, RetryPolicy retryPolicy)
+        public GithubApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, RetryPolicy retryPolicy, IVersionProvider versionProvider)
         {
             _octoLogger = octoLogger;
             _clientFactory = clientFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _retryPolicy = retryPolicy;
+            _versionProvider = versionProvider;
         }
 
         GithubApi ISourceGithubApiFactory.Create(string apiUrl, string sourcePersonalAccessToken)
         {
             apiUrl ??= DEFAULT_API_URL;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), sourcePersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, sourcePersonalAccessToken);
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
 
@@ -31,7 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             apiUrl ??= DEFAULT_API_URL;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), sourcePersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), _versionProvider, sourcePersonalAccessToken);
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
 
@@ -39,7 +41,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             apiUrl ??= DEFAULT_API_URL;
             targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), targetPersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, targetPersonalAccessToken);
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
     }
