@@ -7,6 +7,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -1178,7 +1179,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            script = TrimNonExecutableLines(script, 37);
+            script = TrimNonExecutableLines(script, 35, 6);
 
             // Assert
             script.Should().BeEmpty();
@@ -1512,7 +1513,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1565,7 +1566,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1617,7 +1618,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1671,7 +1672,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1726,7 +1727,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1781,7 +1782,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1845,7 +1846,7 @@ if ($Failed -ne 0) {
             };
             await command.Invoke(args);
 
-            actual = TrimNonExecutableLines(actual, 34, 3);
+            actual = TrimNonExecutableLines(actual, 35, 6);
 
             // Assert
             actual.Should().Be(expected.ToString());
@@ -1881,11 +1882,10 @@ if ($Failed -ne 0) {
             var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
 
             lines = lines
-                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Where(x => x.HasValue())
                 .Where(x => !x.Trim().StartsWith("#"))
-                .Where(x => !x.Trim().StartsWith("Write-Host", StringComparison.OrdinalIgnoreCase));
-            lines = lines.Skip(skipFirst);
-            lines = lines.SkipLast(skipLast);
+                .Skip(skipFirst)
+                .SkipLast(skipLast);
 
             return string.Join(Environment.NewLine, lines);
         }
