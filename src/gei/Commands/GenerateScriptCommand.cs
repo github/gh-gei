@@ -4,14 +4,18 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
+[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommand : Command
     {
+        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
+
         private readonly OctoLogger _log;
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly AdoApiFactory _sourceAdoApiFactory;
@@ -135,31 +139,31 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.Verbose = verbose;
 
             _log.LogInformation("Generating Script...");
-            if (!string.IsNullOrWhiteSpace(githubSourceOrg))
+            if (githubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {githubSourceOrg}");
             }
-            if (!string.IsNullOrWhiteSpace(adoSourceOrg))
+            if (adoSourceOrg.HasValue())
             {
                 _log.LogInformation($"ADO SOURCE ORG: {adoSourceOrg}");
             }
 
-            if (!string.IsNullOrWhiteSpace(adoTeamProject))
+            if (adoTeamProject.HasValue())
             {
                 _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
             }
 
             // GHES Migration Path
-            if (!string.IsNullOrWhiteSpace(ghesApiUrl))
+            if (ghesApiUrl.HasValue())
             {
                 _log.LogInformation($"GHES API URL: {ghesApiUrl}");
 
-                if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+                if (azureStorageConnectionString.IsNullOrWhiteSpace())
                 {
                     _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
                     azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
 
-                    if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+                    if (azureStorageConnectionString.IsNullOrWhiteSpace())
                     {
                         throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                     }
@@ -195,18 +199,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            if (string.IsNullOrWhiteSpace(githubSourceOrg) && string.IsNullOrWhiteSpace(adoSourceOrg))
+            if (githubSourceOrg.IsNullOrWhiteSpace() && adoSourceOrg.IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
-            var script = string.IsNullOrWhiteSpace(githubSourceOrg) ?
+            var script = githubSourceOrg.IsNullOrWhiteSpace() ?
                 await InvokeAdo(adoSourceOrg, adoTeamProject, githubTargetOrg, sequential, adoPat) :
                 await InvokeGithub(githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, sequential, githubSourcePat, skipReleases);
 
             if (output != null)
             {
-                await File.WriteAllTextAsync(output.FullName, script);
+                await WriteToFile(output.FullName, script);
             }
         }
 
@@ -226,65 +230,60 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 : GenerateParallelAdoScript(repos, adoSourceOrg, githubTargetOrg);
         }
 
-        public async Task<IEnumerable<string>> GetGithubRepos(GithubApi github, string githubOrg)
+        private async Task<IEnumerable<string>> GetGithubRepos(GithubApi github, string githubOrg)
         {
-            if (!string.IsNullOrWhiteSpace(githubOrg) && github != null)
+            if (githubOrg.IsNullOrWhiteSpace() || github is null)
             {
-                _log.LogInformation($"GITHUB ORG: {githubOrg}");
-                var repos = await github.GetRepos(githubOrg);
-
-                foreach (var repo in repos)
-                {
-                    _log.LogInformation($"    Repo: {repo}");
-                }
-
-                return repos;
+                throw new ArgumentException("All arguments must be non-null");
             }
 
-            throw new ArgumentException("All arguments must be non-null");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            var repos = await github.GetRepos(githubOrg);
+
+            foreach (var repo in repos)
+            {
+                _log.LogInformation($"    Repo: {repo}");
+            }
+
+            return repos;
         }
 
-        public async Task<IDictionary<string, IEnumerable<string>>> GetAdoRepos(AdoApi adoApi, string adoOrg, string adoTeamProject)
+        private async Task<IDictionary<string, IEnumerable<string>>> GetAdoRepos(AdoApi adoApi, string adoOrg, string adoTeamProject)
         {
+            if (adoOrg.IsNullOrWhiteSpace() || adoApi is null)
+            {
+                throw new ArgumentException("All arguments must be non-null");
+            }
+
             var repos = new Dictionary<string, IEnumerable<string>>();
 
-            if (!string.IsNullOrWhiteSpace(adoOrg) && adoApi != null)
+            var teamProjects = await adoApi.GetTeamProjects(adoOrg);
+            if (adoTeamProject.HasValue())
             {
-                var teamProjects = await adoApi.GetTeamProjects(adoOrg);
-                if (string.IsNullOrEmpty(adoTeamProject))
-                {
-                    foreach (var teamProject in teamProjects)
-                    {
-                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, teamProject);
-                        repos.Add(teamProject, projectRepos);
-                    }
-                }
-                else
-                {
-                    if (teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, adoTeamProject);
-                        repos.Add(adoTeamProject, projectRepos);
-                    }
-                }
-
-                return repos;
+                teamProjects = teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase))
+                    ? new[] { adoTeamProject }
+                    : Enumerable.Empty<string>();
             }
 
-            throw new ArgumentException("All arguments must be non-null");
+            foreach (var teamProject in teamProjects)
+            {
+                var projectRepos = await GetTeamProjectRepos(adoApi, adoOrg, teamProject);
+                repos.Add(teamProject, projectRepos);
+            }
+
+            return repos;
         }
 
-        public string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases)
+        private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases)
         {
-            if (repos == null)
+            if (!repos.Any())
             {
                 return string.Empty;
             }
 
             var content = new StringBuilder();
 
-            content.AppendLine(@"#!/usr/bin/pwsh");
-
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
@@ -297,15 +296,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return content.ToString();
         }
 
-        public string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases)
+        private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases)
         {
-            if (repos == null)
+            if (!repos.Any())
             {
                 return string.Empty;
             }
 
             var content = new StringBuilder();
 
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
@@ -358,15 +358,16 @@ if ($Failed -ne 0) {
             return content.ToString();
         }
 
-        public string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        private string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
         {
-            if (repos == null)
+            if (!repos.Any())
             {
                 return string.Empty;
             }
 
             var content = new StringBuilder();
 
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
@@ -393,15 +394,16 @@ if ($Failed -ne 0) {
             return content.ToString();
         }
 
-        public string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        private string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
         {
-            if (repos == null)
+            if (!repos.Any())
             {
                 return string.Empty;
             }
 
             var content = new StringBuilder();
 
+            content.AppendLine(PWSH_SHEBANG);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
@@ -514,6 +516,8 @@ if ($Failed -ne 0) {
 
         private string Wrap(string script, string outerCommand = "") =>
             script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
 
         private const string EXEC_FUNCTION_BLOCK = @"
 function Exec {
