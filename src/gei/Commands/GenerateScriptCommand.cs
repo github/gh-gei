@@ -20,13 +20,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
         private readonly AdoApiFactory _sourceAdoApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
+        private readonly IVersionProvider _versionProvider;
 
-        public GenerateScriptCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, AdoApiFactory sourceAdoApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-script")
+        public GenerateScriptCommand(
+            OctoLogger log,
+            ISourceGithubApiFactory sourceGithubApiFactory,
+            AdoApiFactory sourceAdoApiFactory,
+            EnvironmentVariableProvider environmentVariableProvider,
+            IVersionProvider versionProvider) : base("generate-script")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _sourceAdoApiFactory = sourceAdoApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
+            _versionProvider = versionProvider;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -275,6 +282,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine();
+            content.AppendLine(VersionComment);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
@@ -297,6 +306,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine();
+            content.AppendLine(VersionComment);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
@@ -359,6 +370,8 @@ if ($Failed -ne 0) {
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine();
+            content.AppendLine(VersionComment);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
 
             content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
@@ -395,6 +408,8 @@ if ($Failed -ne 0) {
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
+            content.AppendLine();
+            content.AppendLine(VersionComment);
             content.AppendLine(EXEC_FUNCTION_BLOCK);
             content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
@@ -507,6 +522,8 @@ if ($Failed -ne 0) {
 
         private string Wrap(string script, string outerCommand = "") =>
             script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
+
+        private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
         private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
 

@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateScriptCommand(null, null, null, null);
+            var command = new GenerateScriptCommand(null, null, null, null, null);
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
@@ -58,7 +58,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -96,7 +97,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -138,7 +140,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -180,7 +183,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -222,7 +226,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -272,7 +277,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -327,7 +333,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -378,7 +385,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -426,7 +434,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -474,7 +483,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -525,7 +535,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -570,7 +581,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -608,7 +620,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -650,7 +663,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -701,7 +715,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -749,12 +764,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.Create(It.IsAny<string>()))
                 .Returns(mockAdoApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string script = null;
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 Mock.Of<ISourceGithubApiFactory>(),
                 mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -765,6 +784,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -849,12 +870,16 @@ if ($Failed -ne 0) {
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string script = null;
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -865,6 +890,8 @@ if ($Failed -ne 0) {
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -950,12 +977,16 @@ if ($Failed -ne 0) {
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string script = null;
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -966,6 +997,8 @@ if ($Failed -ne 0) {
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -1047,12 +1080,16 @@ if ($Failed -ne 0) {
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string script = null;
             var command = new GenerateScriptCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1063,6 +1100,8 @@ if ($Failed -ne 0) {
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -1147,7 +1186,8 @@ if ($Failed -ne 0) {
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
-                mockEnvironmentVariableProvider.Object);
+                mockEnvironmentVariableProvider.Object,
+                Mock.Of<IVersionProvider>());
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1185,7 +1225,8 @@ if ($Failed -ne 0) {
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 mockAdoApiFactory.Object,
-                mockEnvironmentVariableProvider.Object);
+                mockEnvironmentVariableProvider.Object,
+                Mock.Of<IVersionProvider>());
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1220,7 +1261,8 @@ if ($Failed -ne 0) {
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1267,7 +1309,8 @@ if ($Failed -ne 0) {
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockSourceGithubApiFactory.Object,
                 TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1295,6 +1338,197 @@ if ($Failed -ne 0) {
 
             // Assert
             script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Sequential_Github_Contains_Cli_Version()
+        {
+            // Arrange
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(mockGithubApi.Object);
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            string script = null;
+            var command = new GenerateScriptCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                mockSourceGithubApiFactory.Object,
+                TestHelpers.CreateMock<AdoApiFactory>().Object,
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
+
+            // Assert
+            script.Should().Contain(expectedCliVersionComment);
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Contains_Cli_Version()
+        {
+            // Arrange
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { REPO });
+            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+            mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(mockGithubApi.Object);
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            string script = null;
+            var command = new GenerateScriptCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                mockSourceGithubApiFactory.Object,
+                TestHelpers.CreateMock<AdoApiFactory>().Object,
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
+
+            // Assert
+            script.Should().Contain(expectedCliVersionComment);
+        }
+
+        [Fact]
+        public async Task Sequential_Ado_Contains_Cli_Version()
+        {
+            // Arrnage
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+            mockAdoApiFactory
+                .Setup(m => m.Create(It.IsAny<string>()))
+                .Returns(mockAdoApi.Object);
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            string script = null;
+            var command = new GenerateScriptCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                Mock.Of<ISourceGithubApiFactory>(),
+                mockAdoApiFactory.Object,
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
+
+            // Assert
+            script.Should().Contain(expectedCliVersionComment);
+        }
+
+        [Fact]
+        public async Task Parallel_Ado_Contains_Cli_Version()
+        {
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+
+            // Arrange
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { REPO });
+
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+            mockAdoApiFactory
+                .Setup(m => m.Create(It.IsAny<string>()))
+                .Returns(mockAdoApi.Object);
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            string script = null;
+            var command = new GenerateScriptCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                Mock.Of<ISourceGithubApiFactory>(),
+                mockAdoApiFactory.Object,
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                mockVersionProvider.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+            await command.Invoke(args);
+
+            // Assert
+            script.Should().Contain(expectedCliVersionComment);
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
