@@ -267,7 +267,6 @@ namespace OctoshiftCLI.Tests
         public async Task GetGithubHandle_Should_Return_Handle()
         {
             var adoOrg = "FOO-ORG";
-            var adoOrgId = "FOO-ORG-ID";
             var teamProject = "FOO-TEAMPROJECT";
             var githubToken = Guid.NewGuid().ToString();
 
@@ -286,15 +285,9 @@ namespace OctoshiftCLI.Tests
                         accessToken = githubToken,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{adoOrg}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{adoOrgId} ({adoOrg})"
+                                project = teamProject
                             }
                         }
                     }
@@ -308,7 +301,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetGithubHandle(adoOrg, adoOrgId, teamProject, githubToken);
+            var result = await sut.GetGithubHandle(adoOrg, teamProject, githubToken);
 
             result.Should().Be(handle);
         }
@@ -317,7 +310,6 @@ namespace OctoshiftCLI.Tests
         public async Task GetBoardsGithubConnection_Should_Return_Connection_With_All_Repos()
         {
             var teamProject = "FOO-TEAMPROJECT";
-            var orgId = "FOO-ORGID";
             var orgName = "FOO-ORG";
             var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -334,15 +326,9 @@ namespace OctoshiftCLI.Tests
                         includeInvalidConnections = false,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{orgName}/{teamProject}/_settings/work-team",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "work-team",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({orgName})"
+                                project = teamProject
                             }
                         }
                     }
@@ -362,7 +348,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-ORGID", "FOO-TEAMPROJECT");
+            var result = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-TEAMPROJECT");
 
             result.connectionId.Should().Be(connectionId);
             result.endpointId.Should().Be(endpointId);
@@ -421,7 +407,6 @@ namespace OctoshiftCLI.Tests
         public async Task AddRepoToBoardsGithubConnection_Should_Send_Correct_Payload()
         {
             var orgName = "FOO-ORG";
-            var orgId = Guid.NewGuid().ToString();
             var teamProject = "FOO-TEAMPROJECT";
             var connectionId = Guid.NewGuid().ToString();
             var connectionName = "FOO-CONNECTION";
@@ -457,15 +442,9 @@ namespace OctoshiftCLI.Tests
                         },
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{orgName}/{teamProject}/_settings/boards-external-integration",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({orgName})"
+                                project = teamProject
                             }
                         }
                     }
@@ -474,7 +453,7 @@ namespace OctoshiftCLI.Tests
 
             var mockClient = TestHelpers.CreateMock<AdoClient>();
             var sut = new AdoApi(mockClient.Object);
-            await sut.AddRepoToBoardsGithubConnection(orgName, orgId, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
+            await sut.AddRepoToBoardsGithubConnection(orgName, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
 
             mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
@@ -749,7 +728,6 @@ namespace OctoshiftCLI.Tests
         public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
         {
             var orgName = "FOO-ORG";
-            var orgId = Guid.NewGuid().ToString();
             var teamProject = "foo-tp";
             var teamProjectId = Guid.NewGuid().ToString();
             var endpointId = Guid.NewGuid().ToString();
@@ -773,15 +751,9 @@ namespace OctoshiftCLI.Tests
                         serviceEndpointId = endpointId,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{orgName}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({orgName})"
+                                project = teamProject
                             }
                         }
                     }
@@ -795,7 +767,7 @@ namespace OctoshiftCLI.Tests
             mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
             var sut = new AdoApi(mockClient.Object);
-            var result = await sut.GetBoardsGithubRepoId(orgName, orgId, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
+            var result = await sut.GetBoardsGithubRepoId(orgName, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
 
             result.Should().Be(repoId);
         }
@@ -804,7 +776,6 @@ namespace OctoshiftCLI.Tests
         public async Task CreateBoardsGithubConnection_Should_Send_Correct_Payload()
         {
             var orgName = "FOO-ORG";
-            var orgId = Guid.NewGuid().ToString();
             var teamProject = "foo-tp";
             var endpointId = Guid.NewGuid().ToString();
             var repoId = Guid.NewGuid().ToString();
@@ -834,15 +805,9 @@ namespace OctoshiftCLI.Tests
                         },
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{orgName}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({orgName})"
+                                project = teamProject
                             }
                         }
                     }
@@ -852,7 +817,7 @@ namespace OctoshiftCLI.Tests
             var mockClient = TestHelpers.CreateMock<AdoClient>();
 
             var sut = new AdoApi(mockClient.Object);
-            await sut.CreateBoardsGithubConnection(orgName, orgId, teamProject, endpointId, repoId);
+            await sut.CreateBoardsGithubConnection(orgName, teamProject, endpointId, repoId);
 
             mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
