@@ -66,7 +66,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var createTeams = new Option("--create-teams")
             {
                 IsRequired = false,
-                Description = "Includes create-team scripts that creates admins and maintainers teams."
+                Description = "Includes create-team scripts that creates admins and maintainers teams and adds them to repos."
             };
             var linkIdpGroups = new Option("--link-idp-groups")
             {
@@ -82,11 +82,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false,
                 Description = "Includes disable-ado-repo scripts that disable repos after migrating them."
-            };
-            var addTeamsToRepos = new Option("--add-teams-to-repos")
-            {
-                IsRequired = false,
-                Description = "Includes add-team-to-repo scripts that adds teams to repos."
             };
             var integrateBoards = new Option("--integrate-boards")
             {
@@ -116,7 +111,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(linkIdpGroups);
             AddOption(lockAdoRepos);
             AddOption(disableAdoRepos);
-            AddOption(addTeamsToRepos);
             AddOption(integrateBoards);
             AddOption(rewirePipelines);
             AddOption(all);
@@ -143,7 +137,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 LinkIdpGroups = args.All || args.LinkIdpGroups,
                 LockAdoRepos = args.All || args.LockAdoRepos,
                 DisableAdoRepos = args.All || args.DisableAdoRepos,
-                AddTeamsToRepos = args.All || args.AddTeamsToRepos,
                 IntegrateBoards = args.All || args.IntegrateBoards,
                 RewirePipelines = args.All || args.RewirePipelines
             };
@@ -471,7 +464,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
                         AppendLine(content, "}");
                         AppendLine(content, "if ($CanExecuteBatch) {");
-                        if (_generateScriptOptions.DisableAdoRepos || _generateScriptOptions.IntegrateBoards || _generateScriptOptions.RewirePipelines || _generateScriptOptions.AddTeamsToRepos)
+                        if (_generateScriptOptions.CreateTeams || _generateScriptOptions.DisableAdoRepos || _generateScriptOptions.IntegrateBoards || _generateScriptOptions.RewirePipelines)
                         {
                             AppendLine(content, "    ExecBatch @(");
                             AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
@@ -582,12 +575,12 @@ if ($Failed -ne 0) {
                 : null;
 
         private string AddMaintainersToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
-            _generateScriptOptions.AddTeamsToRepos
+            _generateScriptOptions.CreateTeams
                 ? $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
 
         private string AddAdminsToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
-            _generateScriptOptions.AddTeamsToRepos
+            _generateScriptOptions.CreateTeams
                 ? $"./ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}"
                 : null;
 
@@ -653,10 +646,6 @@ if ($Failed -ne 0) {
             {
                 _log.LogInformation("DISABLE ADO REPOS: true");
             }
-            if (args.AddTeamsToRepos)
-            {
-                _log.LogInformation("ADD TEAMS TO REPOS: true");
-            }
             if (args.IntegrateBoards)
             {
                 _log.LogInformation("INTEGRATE BOARDS: true");
@@ -677,7 +666,6 @@ if ($Failed -ne 0) {
             public bool LinkIdpGroups { get; init; }
             public bool LockAdoRepos { get; init; }
             public bool DisableAdoRepos { get; init; }
-            public bool AddTeamsToRepos { get; init; }
             public bool IntegrateBoards { get; init; }
             public bool RewirePipelines { get; init; }
         }
@@ -737,7 +725,6 @@ function ExecBatch {
         public bool LinkIdpGroups { get; set; }
         public bool LockAdoRepos { get; set; }
         public bool DisableAdoRepos { get; set; }
-        public bool AddTeamsToRepos { get; set; }
         public bool IntegrateBoards { get; set; }
         public bool RewirePipelines { get; set; }
         public bool All { get; set; }
