@@ -58,6 +58,7 @@ jobs:
 
     - name: find xml files
       run: gci -recurse -filter *.xml | select FullName
+      shell: pwsh
 
     # This is used by the subsequent publish-test-results.yaml
     - name: Upload Unit Test Results
