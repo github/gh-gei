@@ -42,7 +42,7 @@ jobs:
           files: 'artifacts/Unit Test Results/*.xml'
 
       - name: show event
-        runs: cat 'artifacts/Event File/event.json'
+        run: cat 'artifacts/Event File/event.json'
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
