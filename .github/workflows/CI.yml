@@ -56,23 +56,35 @@ jobs:
         format: 'markdown'
         output: 'both'
 
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request' && matrix.runner-os == 'ubuntu-latest'
-      with:
-        recreate: true
-        path: code-coverage-results.md
-
-    - name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+    # This is used by the subsequent publish-test-results.yaml
+    - name: Upload Unit Test Results
       if: matrix.runner-os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v2
       with:
-        files: "**/*-tests.xml"
-        check_name: "Unit Test Results"
+        name: Unit Test Results
+        path: unit-tests.xml
+
+    # This is used by the subsequent publish-test-results.yaml
+    - name: Upload Code Coverage Report
+      if: matrix.runner-os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: Code Coverage Report
+        path: code-coverage-results.md
     
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
       if: matrix.runner-os == 'ubuntu-latest'
+
+  upload-event-file:
+    runs-on: ubuntu-latest
+    steps:
+    # This is used by the subsequent publish-test-results.yaml
+    - name: Upload Event File
+      uses: actions/upload-artifact@v2
+      with:
+        name: Event File
+        path: ${{ github.event_path }}
 
   integration-test:
     if: true
