@@ -48,6 +48,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubPat = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetRepos(githubOrg).Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
@@ -96,6 +97,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, wait: false);
 
             // Assert
+            mockGithub.Verify(m => m.GetRepos(githubOrg));
             mockGithub.Verify(m => m.GetOrganizationId(githubOrg));
             mockGithub.Verify(m => m.CreateAdoMigrationSource(githubOrgId));
             mockGithub.Verify(m => m.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat, "", "", false));
@@ -105,6 +107,54 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             mockGithub.VerifyNoOtherCalls();
             mockLogger.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task Idempotency_Stop_If_Target_Exists()
+        {
+            // Arrange
+            const string adoOrg = "FooOrg";
+            const string adoTeamProject = "BlahTeamProject";
+            const string adoRepo = "foo-repo";
+            const string githubOrg = "foo-gh-org";
+            const string githubRepo = "gh-repo";
+            var adoToken = Guid.NewGuid().ToString();
+            var githubPat = Guid.NewGuid().ToString();
+            var githubRepos = new List<string> { githubRepo };
+
+            var mockGithub = new Mock<GithubApi>(null, null, null);
+            mockGithub.Setup(x => x.GetRepos(githubOrg).Result).Returns(githubRepos);
+
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock
+                .Setup(m => m.GithubPersonalAccessToken())
+                .Returns(githubPat);
+            environmentVariableProviderMock
+                .Setup(m => m.AdoPersonalAccessToken())
+                .Returns(adoToken);
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = $"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed";
+
+            // Act
+            var command = new MigrateRepoCommand(mockLogger.Object, mockGithubApiFactory.Object,
+                environmentVariableProviderMock.Object);
+            await command.Invoke(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, wait: false);
+
+            // Assert
+            mockGithub.Verify(m => m.GetRepos(githubOrg));
+
+            mockLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
+            actualLogOutput.Should().Contain(expectedLogOutput);
+
+            mockGithub.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -191,6 +241,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string githubPat = "github-pat";
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetRepos("githubOrg").Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);

@@ -63,6 +63,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
+            mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
@@ -103,6 +104,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
+            mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
             mockGithub.Verify(m => m.GetOrganizationId(TARGET_ORG));
             mockGithub.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             mockGithub.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false));
@@ -112,6 +114,58 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             mockGithub.VerifyNoOtherCalls();
             mockLogger.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task Idempotency_Stop_If_Target_Exists()
+        {
+            // Arrange
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
+            var migrationId = Guid.NewGuid().ToString();
+            var githubRepos = new List<string> { TARGET_REPO };
+
+            var mockGithub = new Mock<GithubApi>(null, null, null);
+            mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(githubRepos);
+            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
+
+            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
+            environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
+            environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
+
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = new Mock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogWarningOutput = $"The Org '{TARGET_ORG}' already contains a repository with the name '{TARGET_REPO}'. No operation will be performed";
+
+            // Act
+            var command = new MigrateRepoCommand(mockLogger.Object, null, mockGithubApiFactory.Object, environmentVariableProviderMock.Object, null);
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                Wait = false
+            };
+            await command.Invoke(args);
+
+            // Assert
+            mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
+
+            mockLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
+            actualLogOutput.Should().Contain(expectedLogWarningOutput);
+
+            mockGithub.VerifyNoOtherCalls();
         }
 
         [Fact]
