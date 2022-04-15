@@ -56,6 +56,9 @@ jobs:
         format: 'markdown'
         output: 'both'
 
+    - name: find xml files
+      run: gci -recurse -filter *.xml | select FullName
+
     # This is used by the subsequent publish-test-results.yaml
     - name: Upload Unit Test Results
       if: matrix.runner-os == 'ubuntu-latest'
