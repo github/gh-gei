@@ -165,7 +165,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             LogAndValidateOptions(args);
 
-            if (!string.IsNullOrWhiteSpace(args.GhesApiUrl))
+            if (args.GhesApiUrl.HasValue())
             {
                 (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
                   args.GhesApiUrl,
@@ -180,11 +180,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
+
             if (await RepoExists(githubApi, args.GithubTargetOrg, args.TargetRepo))
             {
                 _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
                 return;
             }
+
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
@@ -423,11 +425,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubTargetOrg { get; set; }
         public string TargetRepo { get; set; }
         public string TargetApiUrl { get; set; }
-        public string GhesApiUrl { get; set; } = "";
-        public string AzureStorageConnectionString { get; set; } = "";
+        public string GhesApiUrl { get; set; }
+        public string AzureStorageConnectionString { get; set; }
         public bool NoSslVerify { get; set; }
-        public string GitArchiveUrl { get; set; } = "";
-        public string MetadataArchiveUrl { get; set; } = "";
+        public string GitArchiveUrl { get; set; }
+        public string MetadataArchiveUrl { get; set; }
         public bool SkipReleases { get; set; }
         public bool Ssh { get; set; }
         public bool Wait { get; set; }
