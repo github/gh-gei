@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -18,6 +19,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
         private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
+        private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
         public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-repo")
         {
@@ -67,7 +69,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
                 IsRequired = false,
-                Description = "Required if migrating from GHES. The api endpoint for the hostname of your GHES instance. For example: http(s)://api.myghes.com"
+                Description = "Required if migrating from GHES. The API endpoint for the hostname of your GHES instance. For example: http(s)://myghes.com/api/v3"
             };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
@@ -245,8 +247,26 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
             args.GithubSourceOrg.HasValue()
-                ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo)
+                ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null)
                 : GetAdoRepoUrl(args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
+
+        private string ExtractGhesBaseUrl(string ghesApiUrl)
+        {
+            // We expect the GHES url template to be either http(s)://hostname/api/v3 or http(s)://api.hostname.com.
+            // We are either going to be able to extract and return the base url based on the above templates or 
+            // will fallback to ghesApiUrl and return it as the base url. 
+
+            ghesApiUrl = ghesApiUrl.Trim().TrimEnd('/');
+
+            var baseUrl = Regex.Match(ghesApiUrl, @"(?<baseUrl>https?:\/\/.+)\/api\/v3", RegexOptions.IgnoreCase).Groups["baseUrl"].Value;
+            if (baseUrl.HasValue())
+            {
+                return baseUrl;
+            }
+
+            var match = Regex.Match(ghesApiUrl, @"(?<scheme>https?):\/\/api\.(?<host>.+)", RegexOptions.IgnoreCase);
+            return match.Success ? $"{match.Groups["scheme"]}://{match.Groups["host"]}" : ghesApiUrl;
+        }
 
         private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
           string ghesApiUrl,
@@ -325,7 +345,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             throw new TimeoutException($"Archive generation timed out after {ARCHIVE_GENERATION_TIMEOUT_IN_HOURS} hours");
         }
 
-        private string GetGithubRepoUrl(string org, string repo) => $"https://github.com/{org}/{repo}".Replace(" ", "%20");
+        private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}/{repo}".Replace(" ", "%20");
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
 

@@ -12,7 +12,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
     public class MigrateRepoCommandTests
     {
         private const string TARGET_API_URL = "https://api.github.com";
-        private const string GHES_API_URL = "https://api.ghes.com";
+        private const string GHES_API_URL = "https://myghes/api/v3";
         private const string AZURE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net";
         private const string SOURCE_ORG = "foo-source-org";
         private const string SOURCE_REPO = "foo-repo-source";
@@ -276,7 +276,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
-            var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
@@ -526,7 +526,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
-            var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
@@ -607,7 +607,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
-            var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
