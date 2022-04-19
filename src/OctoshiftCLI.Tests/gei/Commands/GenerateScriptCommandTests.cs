@@ -475,7 +475,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
             string script = null;
