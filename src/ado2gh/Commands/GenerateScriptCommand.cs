@@ -19,11 +19,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
         private GenerateScriptOptions _generateScriptOptions;
+        private readonly IVersionProvider _versionProvider;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider) : base("generate-script")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
+            _versionProvider = versionProvider;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
@@ -323,6 +325,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var content = new StringBuilder();
 
             AppendLine(content, PWSH_SHEBANG);
+            AppendLine(content);
+            AppendLine(content, VersionComment);
             AppendLine(content, EXEC_FUNCTION_BLOCK);
 
             foreach (var adoOrg in repos.Keys)
@@ -390,6 +394,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var content = new StringBuilder();
             AppendLine(content, PWSH_SHEBANG);
+            AppendLine(content);
+            AppendLine(content, VersionComment);
             AppendLine(content, EXEC_FUNCTION_BLOCK);
             AppendLine(content, EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
             AppendLine(content, EXEC_BATCH_FUNCTION_BLOCK);
@@ -669,6 +675,8 @@ if ($Failed -ne 0) {
             public bool IntegrateBoards { get; init; }
             public bool RewirePipelines { get; init; }
         }
+
+        private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
         private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
 

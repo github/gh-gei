@@ -28,7 +28,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateScriptCommand(null, null);
+            var command = new GenerateScriptCommand(null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
             command.Options.Count.Should().Be(15);
@@ -78,7 +78,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -122,7 +122,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -169,7 +169,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -214,7 +214,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -256,7 +256,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -287,7 +287,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -325,7 +325,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -364,7 +364,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -406,7 +406,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -463,7 +463,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -513,7 +513,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -586,7 +586,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -646,7 +646,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -695,7 +695,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -744,7 +744,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -790,7 +790,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -836,7 +836,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -892,7 +892,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -928,7 +928,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, TestHelpers.CreateMock<AdoApiFactory>().Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -966,7 +966,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1012,8 +1012,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1024,6 +1027,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -1121,7 +1126,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string script = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1175,8 +1180,11 @@ if ($Failed -ne 0) {
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1187,6 +1195,8 @@ if ($Failed -ne 0) {
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -1329,8 +1339,11 @@ if ($Failed -ne 0) {
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockVersionProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1341,6 +1354,8 @@ if ($Failed -ne 0) {
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
 function Exec {
     param (
@@ -1454,7 +1469,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1515,7 +1530,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1576,7 +1591,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1632,7 +1647,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1690,7 +1705,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1758,7 +1773,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdoApi.Object);
 
             string actual = null;
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object)
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -1812,7 +1827,7 @@ if ($Failed -ne 0) {
             mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
 
             // Act
-            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>());
             var args = new GenerateScriptCommandArgs
             {
                 GithubOrg = "githubOrg",
