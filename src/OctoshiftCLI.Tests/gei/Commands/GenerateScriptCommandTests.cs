@@ -456,7 +456,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task Sequential_Github_Ghes_Repo()
         {
             // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string ghesApiUrl = "https://api.foo.com";
             const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -466,7 +466,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
             string script = null;
@@ -507,7 +507,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task Sequential_Github_Ghes_Repo_No_Ssl()
         {
             // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string ghesApiUrl = "https://api.foo.com";
             const string azureStorageConnectionString = "foo-storage-connection-string";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -517,7 +517,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
             string script = null;
@@ -937,7 +937,7 @@ if ($Failed -ne 0) {
         public async Task Parallel_Github_Ghes_Single_Repo()
         {
             // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string ghesApiUrl = "https://api.foo.com";
             const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -947,7 +947,7 @@ if ($Failed -ne 0) {
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
             string script = null;
@@ -1034,7 +1034,7 @@ if ($Failed -ne 0) {
         public async Task Parallel_Github_Ghes_Single_Repo_No_Ssl()
         {
             // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string ghesApiUrl = "https://api.foo.com";
             const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -1044,7 +1044,7 @@ if ($Failed -ne 0) {
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(mockGithubApi.Object);
 
             string script = null;
