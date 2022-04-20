@@ -69,7 +69,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApiUrl = new Option<string>("--ghes-api-url")
             {
                 IsRequired = false,
-                Description = "Required if migrating from GHES. The API endpoint for the hostname of your GHES instance. For example: http(s)://myghes.com/api/v3"
+                Description = "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
             };
             var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
             {
