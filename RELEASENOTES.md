@@ -1,1 +1,1 @@
-
+- `integrate-boards` no longer requires a PAT with the `All Accessible Organizations` setting

@@ -35,8 +35,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoTeamProject = "BlahTeamProject";
             var githubOrg = "foo-gh-org";
             var githubRepo = "foo-repo";
-            var userId = Guid.NewGuid().ToString();
-            var orgId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
             var githubHandle = "foo-handle";
             var endpointId = Guid.NewGuid().ToString();
@@ -44,13 +42,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubToken = Guid.NewGuid().ToString();
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
-            mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, orgId, adoTeamProject, githubToken).Result).Returns(githubHandle);
-            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns(() => default);
+            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, adoTeamProject, githubToken).Result).Returns(githubHandle);
+            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, adoTeamProject).Result).Returns(() => default);
             mockAdo.Setup(x => x.CreateBoardsGithubEndpoint(adoOrg, teamProjectId, githubToken, githubHandle, It.IsAny<string>()).Result).Returns(endpointId);
-            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
+            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -64,7 +60,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 environmentVariableProviderMock.Object);
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
-            mockAdo.Verify(x => x.CreateBoardsGithubConnection(adoOrg, orgId, adoTeamProject, endpointId, newRepoId));
+            mockAdo.Verify(x => x.CreateBoardsGithubConnection(adoOrg, adoTeamProject, endpointId, newRepoId));
         }
 
         [Fact]
@@ -74,8 +70,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoTeamProject = "BlahTeamProject";
             var githubOrg = "foo-gh-org";
             var githubRepo = "foo-repo";
-            var userId = Guid.NewGuid().ToString();
-            var orgId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
             var githubHandle = "foo-handle";
             var connectionId = Guid.NewGuid().ToString();
@@ -86,12 +80,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubToken = Guid.NewGuid().ToString();
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
-            mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, orgId, adoTeamProject, githubToken).Result).Returns(githubHandle);
-            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
-            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
+            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, adoTeamProject, githubToken).Result).Returns(githubHandle);
+            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
+            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -106,7 +98,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
             mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(adoOrg, orgId, adoTeamProject, connectionId, connectionName, endpointId, Moq.It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
+            mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(adoOrg, adoTeamProject, connectionId, connectionName, endpointId, Moq.It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
                                                                                                                                                                                x.Contains(repoIds[1]) &&
                                                                                                                                                                                x.Contains(newRepoId))));
         }
@@ -118,8 +110,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var adoTeamProject = "BlahTeamProject";
             var githubOrg = "foo-gh-org";
             var githubRepo = "foo-repo";
-            var userId = Guid.NewGuid().ToString();
-            var orgId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
             var githubHandle = "foo-handle";
             var connectionId = Guid.NewGuid().ToString();
@@ -130,12 +120,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubToken = Guid.NewGuid().ToString();
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            mockAdo.Setup(x => x.GetUserId().Result).Returns(userId);
-            mockAdo.Setup(x => x.GetOrganizationId(userId, adoOrg).Result).Returns(orgId);
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, orgId, adoTeamProject, githubToken).Result).Returns(githubHandle);
-            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, orgId, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
-            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, orgId, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
+            mockAdo.Setup(x => x.GetGithubHandle(adoOrg, adoTeamProject, githubToken).Result).Returns(githubHandle);
+            mockAdo.Setup(x => x.GetBoardsGithubConnection(adoOrg, adoTeamProject).Result).Returns((connectionId, endpointId, connectionName, repoIds));
+            mockAdo.Setup(x => x.GetBoardsGithubRepoId(adoOrg, adoTeamProject, teamProjectId, endpointId, githubOrg, githubRepo).Result).Returns(newRepoId);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<OctoshiftCLI.AdoToGithub.EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -150,7 +138,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(adoOrg, adoTeamProject, githubOrg, githubRepo);
 
             mockAdo.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
+            mockAdo.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
         }
 
         [Fact]
