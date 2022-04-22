@@ -56,15 +56,15 @@ jobs:
         format: 'markdown'
         output: 'both'
 
-    # This is used by the subsequent publish-test-results.yaml
+    # This is used by the subsequent publish-test-results.yml
     - name: Upload Unit Test Results
       if: matrix.runner-os == 'ubuntu-latest'
       uses: actions/upload-artifact@v2
       with:
         name: Unit Test Results
-        path: unit-tests.xml
+        path: src/OctoshiftCLI.Tests/unit-tests.xml
 
-    # This is used by the subsequent publish-test-results.yaml
+    # This is used by the subsequent publish-test-results.yml
     - name: Upload Code Coverage Report
       if: matrix.runner-os == 'ubuntu-latest'
       uses: actions/upload-artifact@v2
@@ -87,7 +87,7 @@ jobs:
         path: ${{ github.event_path }}
 
   integration-test:
-    if: true
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
     strategy:
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
@@ -162,12 +162,13 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
 
-    - name: Publish Integration Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+    # This is used by the subsequent publish-test-results.yml
+    - name: Upload Integration Test Results
       if: matrix.runner-os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v2
       with:
-        files: "**/*-tests.xml"
-        check_name: "Integration Test Results"
+        name: Integration Test Results
+        path: src/OctoshiftCLI.IntegrationTests/integration-tests.xml
     
     - name: Upload test logs
       uses: actions/upload-artifact@v2

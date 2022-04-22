@@ -1,0 +1,69 @@
+name: Publish Test Results
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  publish-test-results:
+    name: Publish Test Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped' && github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      - name: Download and Extract Artifacts
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          mkdir -p artifacts && cd artifacts
+
+          artifacts_url=${{ github.event.workflow_run.artifacts_url }}
+
+          gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read artifact
+          do
+            IFS=$'\t' read name url <<< "$artifact"
+            gh api $url > "$name.zip"
+            unzip -d "$name" "$name.zip"
+          done
+
+      - name: Extract PR Number
+        run: |
+          eventjson=`cat 'artifacts/Event File/event.json'`
+          prnumber=`echo $(jq -r '.pull_request.number' <<< "$eventjson")`
+          prorg=`echo $(jq -r '.pull_request.head.repo.owner.login' <<< "$eventjson")`
+          echo $prnumber
+          echo "PR_NUMBER=$(echo $prnumber)" >> $GITHUB_ENV
+          echo "PR_ORG=$(echo $prnumber)" >> $GITHUB_ENV
+      
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: 'artifacts/Unit Test Results/*.xml'
+          check_name: "Unit Test Results"
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: artifacts/Code Coverage Report/code-coverage-results.md
+          number: ${{ env.PR_NUMBER }}
+
+      - name: Publish Integration Test Results
+        if: ${{ env.PR_ORG == 'github' }}
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: 'artifacts/Integration Test Results/*.xml'
+          check_name: "Integration Test Results"
