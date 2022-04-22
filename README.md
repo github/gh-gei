@@ -1,4 +1,4 @@
-# GitHub Enterprise Importer CLI
+# GitHub Enterprise Importer CLI (GEI)
 
 [![Actions Status: CI](https://github.com/github/octoshiftcli/workflows/CI/badge.svg)](https://github.com/github/octoshiftcli/actions?query=workflow%3ACI)
 
