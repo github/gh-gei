@@ -1,0 +1,121 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        type: number
+        required: true
+
+jobs:
+  integration-test:
+    strategy:
+      matrix:
+        runner-os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runner-os }}
+    concurrency: integration-test-${{ matrix.runner-os }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
+        fetch-depth: 0
+        
+    - name: Get PR Commit
+      if: always() && matrix.runner-os == 'ubuntu-latest'
+      run: |
+        prsha=`git ls-remote origin refs/pull/${{ github.event.inputs.pr_number }}/head | awk '{ print $1 }'`
+        echo "SHA: $prsha"
+        echo "PR_SHA=$(echo $prsha)" >> $GITHUB_ENV
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build Artifacts
+      if: matrix.runner-os == 'ubuntu-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts
+      if: matrix.runner-os == 'windows-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_LINUX: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts
+      if: matrix.runner-os == 'macos-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_LINUX: "true"
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      if: matrix.runner-os == 'ubuntu-latest'
+      with:
+        name: publish-binaries
+        path: |
+          dist/
+          !dist/*.tar.gz
+          !dist/*.zip
+
+    - name: Copy binary to root (linux)
+      if: matrix.runner-os == 'ubuntu-latest'
+      run: Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei
+      shell: pwsh
+
+    - name: Copy binary to root (windows)
+      if: matrix.runner-os == 'windows-latest'
+      run: Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei.exe
+      shell: pwsh
+
+    - name: Copy binary to root (macos)
+      if: matrix.runner-os == 'macos-latest'
+      run: Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei
+      shell: pwsh
+
+    - name: Install GH extension
+      run: gh extension install .
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Integration Test
+      env: 
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
+
+    - name: Publish Integration Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always() && matrix.runner-os == 'ubuntu-latest'
+      with:
+        files: "**/*-tests.xml"
+        check_name: "Integration Test Results"
+        commit: ${{ env.PR_SHA }}
+    
+    - name: Upload test logs
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: integration-test-logs-${{ matrix.runner-os }}
+        path: dist/**/*.log
+
+    - name: Test Logs
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+      working-directory: ./dist
+      shell: pwsh
+
+    - name: Test Logs (Verbose)
+      if: always()
+      run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+      working-directory: ./dist
+      shell: pwsh
