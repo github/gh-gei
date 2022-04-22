@@ -580,9 +580,7 @@ steps:
         {
             _output.WriteLine("Checking that the boards integration is configured...");
 
-            var userId = await _adoApi.GetUserId();
-            var adoOrgId = await _adoApi.GetOrganizationId(userId, adoOrg);
-            var boardsConnection = await _adoApi.GetBoardsGithubConnection(adoOrg, adoOrgId, teamProject);
+            var boardsConnection = await _adoApi.GetBoardsGithubConnection(adoOrg, teamProject);
 
             boardsConnection.Should().NotBeNull();
             boardsConnection.repoIds.Count().Should().Be(1);

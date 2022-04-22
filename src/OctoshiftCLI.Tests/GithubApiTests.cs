@@ -533,8 +533,8 @@ namespace OctoshiftCLI.Tests
                     $sourceRepositoryUrl: URI!,
                     $repositoryName: String!,
                     $continueOnError: Boolean!,
-                    $gitArchiveUrl: String!,
-                    $metadataArchiveUrl: String!,
+                    $gitArchiveUrl: String,
+                    $metadataArchiveUrl: String,
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean)";

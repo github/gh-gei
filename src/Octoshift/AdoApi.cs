@@ -103,7 +103,7 @@ namespace OctoshiftCLI
             return endpoint != null ? (string)endpoint["id"] : null;
         }
 
-        public virtual async Task<string> GetGithubHandle(string org, string orgId, string teamProject, string githubToken)
+        public virtual async Task<string> GetGithubHandle(string org, string teamProject, string githubToken)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -120,15 +120,9 @@ namespace OctoshiftCLI
                         accessToken = githubToken,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({org})"
+                                project = teamProject
                             }
                         }
                     }
@@ -141,7 +135,7 @@ namespace OctoshiftCLI
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
         }
 
-        public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string orgId, string teamProject)
+        public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string teamProject)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -158,15 +152,9 @@ namespace OctoshiftCLI
                         includeInvalidConnections = false,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/work-team",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "work-team",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({org})"
+                                project = teamProject
                             }
                         }
                     }
@@ -217,7 +205,7 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public virtual async Task AddRepoToBoardsGithubConnection(string org, string orgId, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
+        public virtual async Task AddRepoToBoardsGithubConnection(string org, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -243,15 +231,9 @@ namespace OctoshiftCLI
                         },
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({org})"
+                                project = teamProject
                             }
                         }
                     }
@@ -394,7 +376,7 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, payload.ToObject(typeof(object)));
         }
 
-        public virtual async Task<string> GetBoardsGithubRepoId(string org, string orgId, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
+        public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -413,15 +395,9 @@ namespace OctoshiftCLI
                         serviceEndpointId = endpointId,
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({org})"
+                                project = teamProject
                             }
                         }
                     }
@@ -434,7 +410,7 @@ namespace OctoshiftCLI
             return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
         }
 
-        public virtual async Task CreateBoardsGithubConnection(string org, string orgId, string teamProject, string endpointId, string repoId)
+        public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
         {
             var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -461,15 +437,9 @@ namespace OctoshiftCLI
                         },
                         sourcePage = new
                         {
-                            url = $"https://dev.azure.com/{org}/{teamProject}/_settings/boards-external-integration#",
-                            routeId = "ms.vss-admin-web.project-admin-hub-route",
                             routeValues = new
                             {
-                                project = teamProject,
-                                adminPivot = "boards-external-integration",
-                                controller = "ContributedPage",
-                                action = "Execute",
-                                serviceHost = $"{orgId} ({org})"
+                                project = teamProject
                             }
                         }
                     }
