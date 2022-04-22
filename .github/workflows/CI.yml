@@ -162,13 +162,12 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml"
 
-    # This is used by the subsequent publish-test-results.yml
-    - name: Upload Integration Test Results
+    - name: Publish Integration Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
       if: matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v2
       with:
-        name: Integration Test Results
-        path: src/OctoshiftCLI.IntegrationTests/integration-tests.xml
+        files: "**/*-tests.xml"
+        check_name: "Integration Test Results"
     
     - name: Upload test logs
       uses: actions/upload-artifact@v2
