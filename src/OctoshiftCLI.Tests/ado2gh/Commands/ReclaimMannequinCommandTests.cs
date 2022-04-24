@@ -13,8 +13,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReclaimMannequinCommandTests
     {
-        private const string TARGET_API_URL = "https://api.github.com";
-
         [Fact]
         public void Should_Have_Options()
         {

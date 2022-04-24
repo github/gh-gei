@@ -9,13 +9,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
 
-        private readonly EnvironmentVariableProvider _environmentVariableProvider;
-
-        public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("reclaim-mannequin")
+        public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("reclaim-mannequin")
         {
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
-            _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Reclaims a mannequin user. An invite will be sent and the user will have to accept for the remapping to occur.";
 
@@ -64,8 +61,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           bool force = false,
           bool verbose = false)
         {
-            const string targetApiUrl = "https://api.github.com";
-
             _log.Verbose = verbose;
 
             _log.LogInformation("Reclaming Mannequin...");
@@ -74,7 +69,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"MANNEQUIN: {mannequinUser}");
             _log.LogInformation($"RECLAIMING USER: {targetUser}");
 
-            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
+            var githubApi = _targetGithubApiFactory.Create();
 
             _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
