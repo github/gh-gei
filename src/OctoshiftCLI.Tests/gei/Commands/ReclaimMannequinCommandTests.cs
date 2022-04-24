@@ -88,7 +88,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mannequinUserId = Guid.NewGuid().ToString();
             var targetUser = "mona_emu";
             var targetUserId = Guid.NewGuid().ToString();
-            var targetGithubPat = Guid.NewGuid().ToString();
 
             var mannequinResponse = new Mannequin
             {
