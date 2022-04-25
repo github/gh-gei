@@ -39,12 +39,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var adoServerUrl = new Option<string>("--ado-server-url")
             {
                 IsRequired = false,
-                Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com"
+                IsHidden = true,
+                Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
             };
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
-                Description = "Uses ADO_PAT env variable or --ado-pat option. (Note: If migrating from ADO Server this should be the collection name)"
+                Description = "Uses ADO_PAT env variable or --ado-pat option."
             };
             var adoTeamProject = new Option<string>("--ado-team-project")
             {
