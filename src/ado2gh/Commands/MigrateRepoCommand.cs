@@ -122,7 +122,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
             var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
 
             if (!wait)
