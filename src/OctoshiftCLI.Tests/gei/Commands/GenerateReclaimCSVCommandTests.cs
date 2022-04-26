@@ -9,14 +9,14 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
-    public class GenerateReclaimCSVCommandTests
+    public class GenerateReclaimCsvCommandTests
     {
         private const string TARGET_API_URL = "https://api.github.com";
 
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateReclaimCSVCommand(null, null, null);
+            var command = new GenerateReclaimCsvCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("generate-reclaim-csv", command.Name);
             Assert.Equal(4, command.Options.Count);
@@ -42,7 +42,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCSVCommand(
+            var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockTargetGithubApiFactory.Object,
                 TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
@@ -96,7 +96,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCSVCommand(
+            var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockTargetGithubApiFactory.Object,
                 TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
@@ -151,7 +151,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCSVCommand(
+            var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockTargetGithubApiFactory.Object,
                 TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)

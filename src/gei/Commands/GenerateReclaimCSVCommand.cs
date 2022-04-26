@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
-    public class GenerateReclaimCSVCommand : Command
+    public class GenerateReclaimCsvCommand : Command
     {
         internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
@@ -16,7 +16,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public GenerateReclaimCSVCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-reclaim-csv")
+        public GenerateReclaimCsvCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-reclaim-csv")
         {
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
