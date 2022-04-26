@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async void NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
+        public async Task NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
         {
             const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
@@ -62,7 +62,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async void Mannequins_GenerateCSV_UnreclaimedOnly()
+        public async Task Mannequins_GenerateCSV_UnreclaimedOnly()
         {
             const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async void Mannequins_GenerateCSV_IncludeAlreadyReclaimed()
+        public async Task Mannequins_GenerateCSV_IncludeAlreadyReclaimed()
         {
             const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
