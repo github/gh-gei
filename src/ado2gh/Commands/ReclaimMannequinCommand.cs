@@ -101,16 +101,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
             }
 
-            if (result.Data.CreateAttributionInvitation != null &&
-                result.Data.CreateAttributionInvitation.Source.Id == mannequin.Id &&
-                result.Data.CreateAttributionInvitation.Target.Id == targetUserId)
-            {
-                _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-            }
-            else
+            if (result.Data.CreateAttributionInvitation is null ||
+                result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
+                result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
             {
                 throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             }
+            
+            _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            
         }
     }
 }
