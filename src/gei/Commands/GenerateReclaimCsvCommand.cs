@@ -94,12 +94,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var numberMannequins = 0;
             var contents = new StringBuilder().AppendLine("login,claimantlogin");
-            foreach (var mannequin in mannequins)
+            foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
             {
-                if (mannequin.MappedUser != null && !includeReclaimed)
-                {
-                    continue;
-                }
                 numberMannequins++;
                 contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
             }
