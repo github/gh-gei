@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateReclaimCsvCommand(null, null, null);
+            var command = new GenerateReclaimCsvCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("generate-reclaim-csv", command.Name);
             Assert.Equal(5, command.Options.Count);
@@ -43,8 +43,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                mockTargetGithubApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -100,8 +99,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                mockTargetGithubApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -157,8 +155,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var command = new GenerateReclaimCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object)
+                mockTargetGithubApiFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {

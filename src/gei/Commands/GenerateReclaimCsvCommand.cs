@@ -14,13 +14,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
-        private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public GenerateReclaimCsvCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-reclaim-csv")
+        public GenerateReclaimCsvCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("generate-reclaim-csv")
         {
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
-            _environmentVariableProvider = environmentVariableProvider;
 
             Description = "Generates a CSV with unreclained mannequins to reclaim them in bulk.";
 
