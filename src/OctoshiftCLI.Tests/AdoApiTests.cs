@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests
 {
     public class AdoApiTests
     {
-        private const string ADO_SERVICE_URL = ADO_SERVICE_URL;
+        private const string ADO_SERVICE_URL = "https://dev.azure.com";
 
         [Fact]
         public async Task GetUserId_Should_Return_UserId()
