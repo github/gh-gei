@@ -69,7 +69,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"FILE: {output}");
-            _log.LogInformation($"INCLUDE RECLAIMED: {includeReclaimed}");
+            if (includeReclaimed)
+            {
+                _log.LogInformation("INCLUDING RECLAIMED");
+            }
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
 
