@@ -504,9 +504,7 @@ namespace OctoshiftCLI
                     payload,
                     data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
                     data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
-                .Select(mannequin => MannequinBuilder(mannequin)
-
-                )
+                .Select(mannequin => MannequinBuilder(mannequin))
                 .ToListAsync();
         }
 
