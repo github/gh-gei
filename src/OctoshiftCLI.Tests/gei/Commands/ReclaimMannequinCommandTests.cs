@@ -19,12 +19,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new ReclaimMannequinCommand(null, null);
             Assert.NotNull(command);
             Assert.Equal("reclaim-mannequin", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.Equal(6, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "mannequin-user", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-user", true);
             TestHelpers.VerifyCommandOption(command.Options, "force", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
