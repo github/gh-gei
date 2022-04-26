@@ -13,7 +13,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
-
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
         public GenerateReclaimCsvCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("generate-reclaim-csv")
