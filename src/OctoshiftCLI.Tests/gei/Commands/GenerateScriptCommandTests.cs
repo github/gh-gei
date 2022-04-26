@@ -25,9 +25,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(14);
+            command.Options.Count.Should().Be(15);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
@@ -325,7 +326,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -377,7 +378,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -426,7 +427,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -573,7 +574,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -612,7 +613,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -655,7 +656,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -707,7 +708,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             string script = null;
@@ -761,7 +762,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();
@@ -1211,7 +1212,7 @@ if ($Failed -ne 0) {
 
             var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdoApi.Object);
 
             var mockSourceGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1238,7 +1239,7 @@ if ($Failed -ne 0) {
             await command.Invoke(args);
 
             // Assert
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
             mockEnvironmentVariableProvider.VerifyNoOtherCalls();
         }
 
@@ -1444,7 +1445,7 @@ if ($Failed -ne 0) {
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();
@@ -1494,7 +1495,7 @@ if ($Failed -ne 0) {
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             mockAdoApiFactory
-                .Setup(m => m.Create(It.IsAny<string>()))
+                .Setup(m => m.Create(null, null))
                 .Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();

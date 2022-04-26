@@ -143,7 +143,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 RewirePipelines = args.All || args.RewirePipelines
             };
 
-            var ado = _adoApiFactory.Create(args.AdoPat);
+            var ado = _adoApiFactory.Create(null, args.AdoPat);
 
             var orgs = await GetOrgs(ado, args.AdoOrg);
             var repos = await GetRepos(ado, orgs, args.AdoTeamProject);

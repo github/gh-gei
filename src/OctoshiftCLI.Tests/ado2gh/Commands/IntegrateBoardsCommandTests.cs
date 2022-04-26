@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(githubToken);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
@@ -91,7 +91,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(githubToken);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
@@ -131,7 +131,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(githubToken);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
@@ -154,13 +154,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(githubPat);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "githubOrg", "githubRepo", adoPat, githubPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
         }
 
@@ -177,13 +177,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(githubPat);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdo.Object);
 
             var command = new IntegrateBoardsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object,
                 environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "githubOrg", "githubRepo", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken(), Times.Once);
         }
     }

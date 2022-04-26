@@ -13,8 +13,13 @@ namespace OctoshiftCLI
     public class AdoApi
     {
         private readonly AdoClient _client;
+        private readonly string _adoBaseUrl;
 
-        public AdoApi(AdoClient client) => _client = client;
+        public AdoApi(AdoClient client, string adoServerUrl)
+        {
+            _client = client;
+            _adoBaseUrl = adoServerUrl?.Trim('/');
+        }
 
         public virtual async Task<string> GetUserId()
         {
@@ -59,7 +64,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetTeamProjects(string org)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/projects?api-version=6.1-preview";
+            var url = $"{_adoBaseUrl}/{org}/_apis/projects?api-version=6.1-preview";
             var data = await _client.GetWithPagingAsync(url);
             return data.Select(x => (string)x["name"]).ToList();
         }
@@ -68,7 +73,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<(string Id, string Name, bool IsDisabled)>> GetRepos(string org, string teamProject)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
             return data.Select(x => ((string)x["id"], (string)x["name"], ((string)x["isDisabled"]).ToBool()))
                        .ToList();
@@ -95,7 +100,7 @@ namespace OctoshiftCLI
 
         private async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
             var response = await _client.GetWithPagingAsync(url);
 
             var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
@@ -105,7 +110,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetGithubHandle(string org, string teamProject, string githubToken)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -137,7 +142,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string teamProject)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -178,7 +183,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> CreateBoardsGithubEndpoint(string org, string teamProjectId, string githubToken, string githubHandle, string endpointName)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -207,7 +212,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddRepoToBoardsGithubConnection(string org, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -245,14 +250,14 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
             return (string)JObject.Parse(response)["id"];
         }
 
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
             try
             {
                 var response = await _client.GetAsync(url);
@@ -261,7 +266,7 @@ namespace OctoshiftCLI
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 // The repo may be disabled, can still get the ID by getting it from the repo list
-                url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+                url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
 
                 var response = await _client.GetWithPagingAsync(url);
 
@@ -271,14 +276,14 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
             var response = await _client.GetWithPagingAsync(url);
             return response.Select(x => (string)x["name"]).ToList();
         }
 
         public virtual async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions";
             var response = await _client.GetWithPagingAsync(url);
 
             var result = response.Single(x => ((string)x["name"]).Trim().ToUpper() == pipeline.Trim().ToUpper());
@@ -287,7 +292,7 @@ namespace OctoshiftCLI
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {
-            var url = $"https://dev.azure.com/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var url = $"{_adoBaseUrl}/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
             var payload = new[]
             {
@@ -307,7 +312,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -330,7 +335,7 @@ namespace OctoshiftCLI
 
         public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
         {
-            var url = $"https://dev.azure.com/{adoOrg}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var url = $"{_adoBaseUrl}/{adoOrg}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -378,7 +383,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -412,7 +417,7 @@ namespace OctoshiftCLI
 
         public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -451,7 +456,7 @@ namespace OctoshiftCLI
 
         public virtual async Task DisableRepo(string org, string teamProject, string repoId)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
             var payload = new { isDisabled = true };
             await _client.PatchAsync(url, payload);
@@ -471,7 +476,7 @@ namespace OctoshiftCLI
         {
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
 
-            var url = $"https://dev.azure.com/{org}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
 
             var payload = new
             {

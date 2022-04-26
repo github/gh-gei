@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -36,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
@@ -51,12 +50,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "serviceConnectionId", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
         }
     }
 }

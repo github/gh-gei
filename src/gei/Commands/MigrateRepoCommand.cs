@@ -367,6 +367,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
+            if (!string.IsNullOrWhiteSpace(args.AdoServerUrl))
+            {
+                _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
+            }
             if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
                 _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");

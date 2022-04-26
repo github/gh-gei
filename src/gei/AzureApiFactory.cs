@@ -4,14 +4,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public sealed class AzureApiFactory : IAzureApiFactory
     {
-        private readonly OctoLogger _octoLogger;
         private readonly IHttpClientFactory _clientFactory;
         private readonly IBlobServiceClientFactory _blobServiceClientFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public AzureApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, IBlobServiceClientFactory blobServiceClientFactory)
+        public AzureApiFactory(IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, IBlobServiceClientFactory blobServiceClientFactory)
         {
-            _octoLogger = octoLogger;
             _clientFactory = clientFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _blobServiceClientFactory = blobServiceClientFactory;

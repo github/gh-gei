@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
@@ -59,7 +59,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetRepos(adoOrg, adoTeamProject).Result).Returns(repos);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
 
             var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
@@ -76,12 +76,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
             mockAdo.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdo.Object);
 
             var command = new DisableRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
         }
     }
 }

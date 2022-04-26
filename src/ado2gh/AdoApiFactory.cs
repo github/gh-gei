@@ -4,6 +4,8 @@ namespace OctoshiftCLI.AdoToGithub
 {
     public class AdoApiFactory
     {
+        private const string DEFAULT_API_URL = "https://dev.azure.com";
+
         private readonly OctoLogger _octoLogger;
         private readonly HttpClient _client;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
@@ -17,11 +19,17 @@ namespace OctoshiftCLI.AdoToGithub
             _versionProvider = versionProvider;
         }
 
-        public virtual AdoApi Create(string personalAccessToken = null)
+        public virtual AdoApi Create()
         {
+            return Create(null, null);
+        }
+
+        public virtual AdoApi Create(string adoServerUrl, string personalAccessToken)
+        {
+            adoServerUrl ??= DEFAULT_API_URL;
             personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, personalAccessToken);
-            return new AdoApi(adoClient);
+            return new AdoApi(adoClient, adoServerUrl);
         }
     }
 }

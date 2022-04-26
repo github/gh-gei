@@ -31,7 +31,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             command.Options.Count.Should().Be(20);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
