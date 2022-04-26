@@ -11,8 +11,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateReclaimCsvCommandTests
     {
-        private const string TARGET_API_URL = "https://api.github.com";
-
         [Fact]
         public void Should_Have_Options()
         {
@@ -35,7 +33,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(Array.Empty<Mannequin>());
@@ -91,7 +89,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
@@ -149,7 +148,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
