@@ -18,7 +18,7 @@ namespace OctoshiftCLI
         public AdoApi(AdoClient client, string adoServerUrl)
         {
             _client = client;
-            _adoBaseUrl = adoServerUrl?.Trim('/');
+            _adoBaseUrl = adoServerUrl?.TrimEnd('/');
         }
 
         public virtual async Task<string> GetUserId()
