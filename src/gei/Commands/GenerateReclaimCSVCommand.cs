@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
@@ -80,7 +81,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
 
             var numberMannequins = 0;
-            var contents = "login,claimantlogin\n";
+            var contents = new StringBuilder().AppendLine("login,claimantlogin");
             foreach (var mannequin in mannequins)
             {
                 if (mannequin.MappedUser != null && !includeReclaimed)
@@ -88,10 +89,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     continue;
                 }
                 numberMannequins++;
-                contents += $"{mannequin.Login},{mannequin.MappedUser?.Login}\n";
+                contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
             }
 
-            await WriteToFile(output, contents);
+            await WriteToFile(output, contents.ToString());
 
             _log.LogInformation($"    # Mannequins Included: {numberMannequins}");
         }

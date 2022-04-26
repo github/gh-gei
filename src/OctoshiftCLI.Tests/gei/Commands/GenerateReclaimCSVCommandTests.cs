@@ -54,11 +54,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
+            var expected = "login,claimantlogin" + Environment.NewLine;
+
             // Act
             await command.Invoke("octocat", "unit-test-output", false);
 
             // Assert
-            csvContent.Should().Be("login,claimantlogin\n");
+            csvContent.Should().Be(expected);
         }
 
         [Fact]
@@ -108,11 +110,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
+            var expected = "login,claimantlogin" + Environment.NewLine
+                + "mona," + Environment.NewLine;
+
             // Act
             await command.Invoke(githubOrg, "unit-test-output", false);
 
             // Assert
-            csvContent.Should().Be("login,claimantlogin\nmona,\n");
+            csvContent.Should().Be(expected);
             mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
         }
 
@@ -163,11 +168,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
+            var expected = "login,claimantlogin" + Environment.NewLine
+                + "mona," + Environment.NewLine
+                + "monalisa,monalisa_gh" + Environment.NewLine;
+
             // Act
             await command.Invoke(githubOrg, "unit-test-output", true);
 
             // Assert
-            csvContent.Should().Be("login,claimantlogin\nmona,\nmonalisa,monalisa_gh\n");
+            //csvContent.Should().Be($"login,claimantlogin${Environment.NewLine}mona,${Environment.NewLine}monalisa,monalisa_gh${Environment.NewLine}");
+            csvContent.Should().Be(expected);
+
             mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
         }
     }
