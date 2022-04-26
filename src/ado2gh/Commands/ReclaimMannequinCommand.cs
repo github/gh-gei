@@ -107,9 +107,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             }
-            
+
             _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-            
         }
     }
 }
