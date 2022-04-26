@@ -28,7 +28,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async void NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
         {
-            var githubOrg = "FooOrg";
+            const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -64,7 +64,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async void Mannequins_GenerateCSV_UnreclaimedOnly()
         {
-            var githubOrg = "FooOrg";
+            const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
 
             var mannequinsResponse = new[]
@@ -123,7 +123,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async void Mannequins_GenerateCSV_IncludeAlreadyReclaimed()
         {
-            var githubOrg = "FooOrg";
+            const string githubOrg = "FooOrg";
             var githubOrgId = Guid.NewGuid().ToString();
 
             var mannequinsResponse = new[]
@@ -144,7 +144,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     }
                 }
             };
-
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
@@ -175,7 +174,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(githubOrg, "unit-test-output", true);
 
             // Assert
-            //csvContent.Should().Be($"login,claimantlogin${Environment.NewLine}mona,${Environment.NewLine}monalisa,monalisa_gh${Environment.NewLine}");
             csvContent.Should().Be(expected);
 
             mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
