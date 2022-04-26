@@ -21,11 +21,6 @@ namespace OctoshiftCLI.AdoToGithub
             _versionProvider = versionProvider;
         }
 
-        public virtual GithubApi Create()
-        {
-            return Create(null, null);
-        }
-
         public virtual GithubApi Create(string apiUrl = null, string personalAccessToken = null)
         {
             apiUrl ??= DEFAULT_API_URL;
