@@ -17,11 +17,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new GenerateReclaimCsvCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("generate-reclaim-csv", command.Name);
-            Assert.Equal(4, command.Options.Count);
+            Assert.Equal(5, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "output", true);
             TestHelpers.VerifyCommandOption(command.Options, "include-reclaimed", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 

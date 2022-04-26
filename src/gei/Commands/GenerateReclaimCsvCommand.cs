@@ -47,34 +47,43 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
+            var githubTargetPat = new Option<string>("--github-target-pat")
+            {
+                IsRequired = false
+            };
+
             AddOption(githubTargetOrgOption);
             AddOption(outputOption);
             AddOption(forceOption);
+            AddOption(githubTargetPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, bool, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubTargetOrg,
           string output,
           bool includeReclaimed = false,
+          string githubTargetPat = null,
           bool verbose = false)
         {
-            const string targetApiUrl = "https://api.github.com";
-
             _log.Verbose = verbose;
 
             _log.LogInformation("Generating CSV...");
 
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+            if (githubTargetPat is not null)
+            {
+                _log.LogInformation("GITHUB TARGET PAT: ***");
+            }
             _log.LogInformation($"FILE: {output}");
             if (includeReclaimed)
             {
                 _log.LogInformation("INCLUDING RECLAIMED");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetApiUrl);
+            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
 
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             _log.LogInformation($"    Organization Id: {githubOrgId}");
