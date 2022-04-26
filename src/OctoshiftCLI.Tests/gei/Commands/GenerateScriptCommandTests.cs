@@ -45,6 +45,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
+        {
+            var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null, null);
+            await FluentActions
+                .Invoking(async () => await command.Invoke(new GenerateScriptCommandArgs
+                {
+                    AdoServerUrl = "https://ado.contoso.com",
+                    GithubTargetOrg = TARGET_ORG
+                }
+                ))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task Sequential_Github_No_Data()
         {
             // Arrange
@@ -679,6 +693,57 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             var args = new GenerateScriptCommandArgs
             {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await command.Invoke(args);
+
+            script = TrimNonExecutableLines(script);
+
+            // Assert
+            script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Sequential_AdoServer_Single_Repo()
+        {
+            // Arrnage
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+            const string adoServerUrl = "https://ado.contoso.com";
+
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+
+            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+            mockAdoApiFactory
+                .Setup(m => m.Create(adoServerUrl, null))
+                .Returns(mockAdoApi.Object);
+
+            string script = null;
+            var command = new GenerateScriptCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                Mock.Of<ISourceGithubApiFactory>(),
+                mockAdoApiFactory.Object,
+                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
+                Mock.Of<IVersionProvider>())
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    script = contents;
+                    return Task.CompletedTask;
+                }
+            };
+
+            var expected = $"Exec {{ gh gei migrate-repo --ado-server-url \"{adoServerUrl}\" --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoServerUrl = adoServerUrl,
                 AdoSourceOrg = SOURCE_ORG,
                 AdoTeamProject = adoTeamProject,
                 GithubTargetOrg = TARGET_ORG,

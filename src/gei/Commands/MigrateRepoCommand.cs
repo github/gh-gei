@@ -422,6 +422,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
+            if (args.AdoServerUrl.HasValue() && !args.AdoSourceOrg.HasValue())
+            {
+                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
+            }
+
             if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && !string.IsNullOrWhiteSpace(args.AdoSourceOrg) && string.IsNullOrWhiteSpace(args.AdoTeamProject))
             {
                 throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");

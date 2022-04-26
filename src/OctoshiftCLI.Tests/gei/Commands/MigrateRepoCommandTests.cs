@@ -405,6 +405,23 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
+        {
+            var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null, null, null);
+            await FluentActions
+                .Invoking(async () => await command.Invoke(new MigrateRepoCommandArgs
+                {
+                    AdoServerUrl = "https://ado.contoso.com",
+                    AdoTeamProject = "FooProj",
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO
+                }
+                ))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task Github_With_Archive_Urls()
         {
             var githubOrgId = Guid.NewGuid().ToString();
