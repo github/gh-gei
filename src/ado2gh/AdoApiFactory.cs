@@ -19,9 +19,9 @@ namespace OctoshiftCLI.AdoToGithub
             _versionProvider = versionProvider;
         }
 
-        public virtual AdoApi Create()
+        public virtual AdoApi Create(string personalAccessToken)
         {
-            return Create(null, null);
+            return Create(null, personalAccessToken);
         }
 
         public virtual AdoApi Create(string adoServerUrl, string personalAccessToken)

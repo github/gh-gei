@@ -62,7 +62,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(null, adoPat);
+            var ado = _adoApiFactory.Create(adoPat);
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             // TODO: If the service connection is already shared with this team project this will crash

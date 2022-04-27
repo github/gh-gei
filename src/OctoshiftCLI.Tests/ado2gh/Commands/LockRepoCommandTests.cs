@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null, null)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdo.Object);
 
             var command = new LockRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoRepo);
@@ -54,12 +54,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
 
             var command = new LockRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }

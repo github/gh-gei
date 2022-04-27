@@ -80,7 +80,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(null, adoPat);
+            var ado = _adoApiFactory.Create(adoPat);
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
             var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);

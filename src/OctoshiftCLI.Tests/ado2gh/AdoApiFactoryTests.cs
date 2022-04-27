@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
 
             // Act
             var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
-            var result = factory.Create();
+            var result = factory.Create(null);
 
             // Assert
             result.Should().NotBeNull();
@@ -46,7 +46,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
 
             // Act
             var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
-            var result = factory.Create(null, ADO_PAT);
+            var result = factory.Create(ADO_PAT);
 
             // Assert
             result.Should().NotBeNull();
