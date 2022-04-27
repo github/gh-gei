@@ -73,7 +73,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"MANNEQUIN: {mannequinUser}");
             _log.LogInformation($"RECLAIMING USER: {targetUser}");
-            if (githubPat.HasValue())
+            if (githubPat is not null)
             {
                 _log.LogInformation("GITHUB PAT: ***");
             }
