@@ -19,11 +19,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _versionProvider = versionProvider;
         }
 
-        public virtual AdoApi Create()
-        {
-            return Create(null, null);
-        }
-
         public virtual AdoApi Create(string adoServerUrl, string personalAccessToken)
         {
             adoServerUrl ??= DEFAULT_API_URL;
