@@ -1,7 +1,6 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
-using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
