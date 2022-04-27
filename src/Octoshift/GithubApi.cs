@@ -490,7 +490,7 @@ namespace OctoshiftCLI
                     data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
                 .FirstOrDefaultAsync(jToken => username.Equals((string)jToken["login"], StringComparison.OrdinalIgnoreCase));
 
-            return mannequin is null ? new Mannequin() : MannequinBuilder(mannequin);
+            return mannequin is null ? new Mannequin() : BuildMannequin(mannequin);
         }
 
         public virtual async Task<IEnumerable<Mannequin>> GetMannequins(string orgId)
@@ -504,7 +504,7 @@ namespace OctoshiftCLI
                     payload,
                     data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
                     data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
-                .Select(mannequin => MannequinBuilder(mannequin))
+                .Select(mannequin => BuildMannequin(mannequin))
                 .ToListAsync();
         }
 
@@ -589,7 +589,7 @@ namespace OctoshiftCLI
             };
         }
 
-        private static Mannequin MannequinBuilder(JToken mannequin)
+        private static Mannequin BuildMannequin(JToken mannequin)
         {
             return new Mannequin
             {
