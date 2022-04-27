@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -36,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdo.Object);
 
             var command = new ShareServiceConnectionCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);

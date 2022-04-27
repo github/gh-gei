@@ -42,6 +42,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT if not set."
             };
+            var adoServerUrlOption = new Option<string>("--ado-server-url")
+            {
+                IsRequired = false,
+                IsHidden = true,
+                Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
+            };
             var adoSourceOrgOption = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
@@ -107,6 +113,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrgOption);
+            AddOption(adoServerUrlOption);
             AddOption(adoSourceOrgOption);
             AddOption(adoTeamProject);
             AddOption(githubTargetOrgOption);
@@ -140,6 +147,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (args.GithubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
+            }
+            if (args.AdoServerUrl.HasValue())
+            {
+                _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
             }
             if (args.AdoSourceOrg.HasValue())
             {
@@ -202,8 +213,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
+            if (args.AdoServerUrl.HasValue() && !args.AdoSourceOrg.HasValue())
+            {
+                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
+            }
+
             var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
-                await InvokeAdo(args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat) :
+                await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat) :
                 await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases);
 
             if (args.Output.HasValue())
@@ -220,12 +236,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases);
         }
 
-        private async Task<string> InvokeAdo(string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat)
+        private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat)
         {
-            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoPat), adoSourceOrg, adoTeamProject);
+            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat), adoSourceOrg, adoTeamProject);
             return sequential
-                ? GenerateSequentialAdoScript(repos, adoSourceOrg, githubTargetOrg)
-                : GenerateParallelAdoScript(repos, adoSourceOrg, githubTargetOrg);
+                ? GenerateSequentialAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg)
+                : GenerateParallelAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg);
         }
 
         private async Task<IEnumerable<string>> GetGithubRepos(GithubApi github, string githubOrg)
@@ -360,7 +376,7 @@ if ($Failed -ne 0) {
             return content.ToString();
         }
 
-        private string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        private string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoServerUrl, string adoSourceOrg, string githubTargetOrg)
         {
             if (!repos.Any())
             {
@@ -390,7 +406,7 @@ if ($Failed -ne 0) {
                     foreach (var repo in repos[teamProject])
                     {
                         var githubRepo = GetGithubRepoName(teamProject, repo);
-                        content.AppendLine(Exec(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, true)));
+                        content.AppendLine(Exec(MigrateAdoRepoScript(adoServerUrl, adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, true)));
                     }
                 }
             }
@@ -398,7 +414,7 @@ if ($Failed -ne 0) {
             return content.ToString();
         }
 
-        private string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoSourceOrg, string githubTargetOrg)
+        private string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoServerUrl, string adoSourceOrg, string githubTargetOrg)
         {
             if (!repos.Any())
             {
@@ -436,7 +452,7 @@ if ($Failed -ne 0) {
                 foreach (var repo in repos[teamProject])
                 {
                     var githubRepo = GetGithubRepoName(teamProject, repo);
-                    content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateAdoRepoScript(adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, false))}");
+                    content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateAdoRepoScript(adoServerUrl, adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, false))}");
                     content.AppendLine($"$RepoMigrations[\"{githubRepo}\"] = $MigrationID");
                     content.AppendLine();
                 }
@@ -506,8 +522,10 @@ if ($Failed -ne 0) {
             return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}{(skipReleases ? " --skip-releases" : string.Empty)}";
         }
 
-        private string MigrateAdoRepoScript(string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool wait) =>
-            $"gh gei migrate-repo --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
+        private string MigrateAdoRepoScript(string adoServerUrl, string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool wait)
+        {
+            return $"gh gei migrate-repo{(adoServerUrl.HasValue() ? $" --ado-server-url \"{adoServerUrl}\"" : string.Empty)} --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
+        }
 
         private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
         {
@@ -554,6 +572,7 @@ function ExecAndGetMigrationID {
     public class GenerateScriptCommandArgs
     {
         public string GithubSourceOrg { get; set; }
+        public string AdoServerUrl { get; set; }
         public string AdoSourceOrg { get; set; }
         public string AdoTeamProject { get; set; }
         public string GithubTargetOrg { get; set; }
