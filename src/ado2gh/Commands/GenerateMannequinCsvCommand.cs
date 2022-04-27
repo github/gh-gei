@@ -21,6 +21,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _githubApiFactory = githubApiFactory;
 
             Description = "Generates a CSV with unreclained mannequins to reclaim them in bulk.";
+            IsHidden = true;
 
             var githubOrgOption = new Option<string>("--github-org")
             {
