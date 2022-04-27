@@ -14,9 +14,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateReclaimCsvCommand(null, null);
+            var command = new GenerateMannequinCsvCommand(null, null);
             Assert.NotNull(command);
-            Assert.Equal("generate-reclaim-csv", command.Name);
+            Assert.Equal("generate-mannequin-csv", command.Name);
             Assert.Equal(5, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCsvCommand(
+            var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockGithubApiFactory.Object)
             {
@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCsvCommand(
+            var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockGithubApiFactory.Object)
             {
@@ -153,7 +153,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             string csvContent = null;
 
-            var command = new GenerateReclaimCsvCommand(
+            var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 mockGithubApiFactory.Object)
             {

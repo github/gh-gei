@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class GenerateReclaimCsvCommand : Command
+    public class GenerateMannequinCsvCommand : Command
     {
         internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
 
-        public GenerateReclaimCsvCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("generate-reclaim-csv")
+        public GenerateMannequinCsvCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("generate-mannequin-csv")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;

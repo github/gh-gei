@@ -1,3 +1,3 @@
 - `integrate-boards` no longer requires a PAT with the `All Accessible Organizations` setting
 - Fixed incorrect repo url in migration logs when migrating from GHES
-- Add `generate-reclaim-csv` command to generate a CSV to be used to reclaim mannequins in bulk.
+- Add `generate-mannequin-csv` command to generate a CSV to be used to reclaim mannequins in bulk.
