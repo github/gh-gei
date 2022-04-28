@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
+using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI
@@ -142,12 +143,14 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
             var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
+
+            adoServerUrl = adoServerUrl.HasValue() ? adoServerUrl : "https://dev.azure.com";
 
             var payload = new
             {
@@ -155,7 +158,7 @@ namespace OctoshiftCLI
                 variables = new
                 {
                     name = "Azure DevOps Source",
-                    url = "https://dev.azure.com",
+                    url = adoServerUrl,
                     ownerId = orgId,
                     type = "AZURE_DEVOPS"
                 },

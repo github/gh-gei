@@ -468,7 +468,46 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId);
+            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, null);
+
+            // Assert
+            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateAdoMigrationSource_Uses_Ado_Server_Url()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            const string adoServerUrl = "https://ado.contoso.com";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"{adoServerUrl}\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\"}},\"operationName\":\"createMigrationSource\"}}";
+            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""createMigrationSource"": {{
+                        ""migrationSource"": {{
+                            ""id"": ""{actualMigrationSourceId}"",
+                            ""name"": ""Azure Devops Source"",
+                            ""url"": ""{adoServerUrl}"",
+                            ""type"": ""AZURE_DEVOPS""
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoServerUrl);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);

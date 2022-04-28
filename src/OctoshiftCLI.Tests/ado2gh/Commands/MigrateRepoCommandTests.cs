@@ -50,7 +50,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetRepos(githubOrg).Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, null).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                     migrationSourceId,
@@ -99,7 +99,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithub.Verify(m => m.GetRepos(githubOrg));
             mockGithub.Verify(m => m.GetOrganizationId(githubOrg));
-            mockGithub.Verify(m => m.CreateAdoMigrationSource(githubOrgId));
+            mockGithub.Verify(m => m.CreateAdoMigrationSource(githubOrgId, null));
             mockGithub.Verify(m => m.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoToken, githubPat, null, null, false));
 
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
@@ -174,7 +174,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, null).Result).Returns(migrationSourceId);
             mockGithub
                 .Setup(x => x.StartMigration(
                         migrationSourceId,
