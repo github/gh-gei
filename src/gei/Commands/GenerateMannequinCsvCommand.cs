@@ -88,12 +88,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var mannequins = await githubApi.GetMannequins(githubOrgId);
 
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
+            _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is null)}");
 
-            var numberMannequins = 0;
-            var contents = new StringBuilder().AppendLine("login,claimantlogin");
+            var contents = new StringBuilder().AppendLine("mannequin-user,target-user");
             foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
             {
-                numberMannequins++;
                 contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
             }
 
@@ -101,8 +100,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 await WriteToFile(output.FullName, contents.ToString());
             }
-
-            _log.LogInformation($"    # Mannequins Included: {numberMannequins}");
         }
     }
 }
