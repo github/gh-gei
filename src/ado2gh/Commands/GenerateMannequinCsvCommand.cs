@@ -35,7 +35,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Output filename. Default value mannequins.csv"
             };
 
-            var forceOption = new Option("--include-reclaimed")
+            var includeReclaimedOption = new Option("--include-reclaimed")
             {
                 IsRequired = false,
                 Description = "Map the user even if it was previously mapped"
@@ -53,7 +53,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             AddOption(githubOrgOption);
             AddOption(outputOption);
-            AddOption(forceOption);
+            AddOption(includeReclaimedOption);
             AddOption(githubPat);
             AddOption(verbose);
 
