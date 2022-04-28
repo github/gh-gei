@@ -88,12 +88,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var mannequins = await githubApi.GetMannequins(githubOrgId);
 
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
-            _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is null)}");
+            _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");
 
-            var contents = new StringBuilder().AppendLine("mannequin-user,target-user");
+            var contents = new StringBuilder().AppendLine("mannequin-user,mannequin-id,target-user");
             foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
             {
-                contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
+                contents.AppendLine($"{mannequin.Login},{mannequin.Id},{mannequin.MappedUser?.Login}");
             }
 
             if (output?.FullName is not null)
