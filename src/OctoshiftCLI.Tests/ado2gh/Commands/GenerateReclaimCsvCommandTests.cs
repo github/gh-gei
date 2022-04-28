@@ -53,7 +53,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = "mannequin-user,target-user" + Environment.NewLine;
+            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine;
 
             // Act
             await command.Invoke("octocat", new FileInfo("unit-test-output"), false);
@@ -108,8 +108,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = "mannequin-user,target-user" + Environment.NewLine
-                + "mona," + Environment.NewLine;
+            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine
+                + "mona,monaid," + Environment.NewLine;
 
             // Act
             await command.Invoke(githubOrg, new FileInfo("unit-test-output"), false);
@@ -163,9 +163,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-            var expected = "mannequin-user,target-user" + Environment.NewLine
-                + "mona," + Environment.NewLine
-                + "monalisa,monalisa_gh" + Environment.NewLine;
+            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine
+                + "mona,monaid," + Environment.NewLine
+                + "monalisa,monalisaid,monalisa_gh" + Environment.NewLine;
 
             // Act
             await command.Invoke(githubOrg, new FileInfo("unit-test-output"), true);
