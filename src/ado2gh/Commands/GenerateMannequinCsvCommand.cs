@@ -29,10 +29,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Uses GH_PAT env variable."
             };
 
-            var outputOption = new Option<string>("--output")
+            var outputOption = new Option<string>("--output", () => "./mannequins.csv")
             {
-                IsRequired = true,
-                Description = "Output filename"
+                IsRequired = false,
+                Description = "Output filename. Default value mannequins.csv"
             };
 
             var forceOption = new Option("--include-reclaimed")
