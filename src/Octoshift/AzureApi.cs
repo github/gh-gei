@@ -49,14 +49,14 @@ namespace OctoshiftCLI
                 throw new InvalidOperationException("BlobClient object has not been authorized to generate shared key credentials. Verify --azure-storage-connection-key is valid and has proper permissions.");
             }
 
-            var sasBuilder = new BlobSasBuilder
+            var sasBuilder = new BlobSasBuilder()
             {
                 BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
                 BlobName = blobClient.Name,
-                Resource = "b",  // Resource = "b" for blobs, "c" for containers
-
-                ExpiresOn = DateTimeOffset.UtcNow.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS)
+                Resource = "b"  // Resource = "b" for blobs, "c" for containers
             };
+
+            sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS);
             sasBuilder.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Write);
 
             return blobClient.GenerateSasUri(sasBuilder);
