@@ -173,8 +173,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             csvContent.Should().Be(expected);
-
-            mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
         }
     }
 }

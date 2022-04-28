@@ -86,7 +86,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
@@ -116,7 +115,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             csvContent.Should().Be(expected);
-            mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
         }
 
         [Fact]
@@ -173,8 +171,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             csvContent.Should().Be(expected);
-
-            mockGithubApi.Verify(x => x.GetMannequins(githubOrgId));
         }
     }
 }
