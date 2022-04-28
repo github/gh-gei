@@ -20,7 +20,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
 
-            Description = "Generates a CSV with unreclained mannequins to reclaim them in bulk.";
+            Description = "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.";
             IsHidden = true;
 
             var githubTargetOrgOption = new Option<string>("--github-target-org")
