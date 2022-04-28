@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(Array.Empty<Mannequin>());
 
-            string csvContent = null;
+            string csvContent = "";
 
             var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
@@ -150,7 +150,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
 
-            string csvContent = null;
+            string csvContent = "";
 
             var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
