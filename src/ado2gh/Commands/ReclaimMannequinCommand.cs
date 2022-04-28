@@ -81,7 +81,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            _log.LogInformation($"    Organization Id: {githubOrgId}");
 
             var mannequin = await githubApi.GetMannequin(githubOrgId, mannequinUser);
 
