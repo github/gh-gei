@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -29,7 +30,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 Description = "Uses GH_PAT env variable."
             };
 
-            var outputOption = new Option<string>("--output", () => "./mannequins.csv")
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./mannequins.csv"))
             {
                 IsRequired = false,
                 Description = "Output filename. Default value mannequins.csv"
@@ -38,7 +39,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var includeReclaimedOption = new Option("--include-reclaimed")
             {
                 IsRequired = false,
-                Description = "Map the user even if it was previously mapped"
+                Description = "Include mannequins that have already been reclaimed"
             };
 
             var verbose = new Option("--verbose")
@@ -57,12 +58,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, FileInfo, bool, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubTargetOrg,
-          string output,
+          FileInfo output,
           bool includeReclaimed = false,
           string githubTargetPat = null,
           bool verbose = false)
@@ -85,8 +86,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
 
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
-            _log.LogInformation($"    Organization Id: {githubOrgId}");
-
             var mannequins = await githubApi.GetMannequins(githubOrgId);
 
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
@@ -99,7 +98,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
             }
 
-            await WriteToFile(output, contents.ToString());
+            if (output?.FullName is not null)
+            {
+                await WriteToFile(output.FullName, contents.ToString());
+            }
 
             _log.LogInformation($"    # Mannequins Included: {numberMannequins}");
         }

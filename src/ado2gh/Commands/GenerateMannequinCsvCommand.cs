@@ -29,7 +29,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Uses GH_PAT env variable."
             };
 
-            var outputOption = new Option<string>("--output", () => "./mannequins.csv")
+            var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./mannequins.csv"))
             {
                 IsRequired = false,
                 Description = "Output filename. Default value mannequins.csv"
@@ -38,7 +38,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var includeReclaimedOption = new Option("--include-reclaimed")
             {
                 IsRequired = false,
-                Description = "Map the user even if it was previously mapped"
+                Description = "Include mannequins that have already been reclaimed"
             };
 
             var verbose = new Option("--verbose")
@@ -57,12 +57,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, FileInfo, bool, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubOrg,
-          string output,
+          FileInfo output,
           bool includeReclaimed = false,
           string githubPat = null,
           bool verbose = false)
@@ -85,8 +85,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            _log.LogInformation($"    Organization Id: {githubOrgId}");
-
             var mannequins = await githubApi.GetMannequins(githubOrgId);
 
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
@@ -99,7 +97,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 contents.AppendLine($"{mannequin.Login},{mannequin.MappedUser?.Login}");
             }
 
-            await WriteToFile(output, contents.ToString());
+            if (output?.FullName is not null)
+            {
+                await WriteToFile(output.FullName, contents.ToString());
+            }
 
             _log.LogInformation($"    # Mannequins Included: {numberMannequins}");
         }

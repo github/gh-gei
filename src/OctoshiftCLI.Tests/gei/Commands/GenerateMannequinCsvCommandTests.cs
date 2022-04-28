@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -55,7 +56,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var expected = "login,claimantlogin" + Environment.NewLine;
 
             // Act
-            await command.Invoke("octocat", "unit-test-output", false);
+            await command.Invoke("octocat", new FileInfo("unit-test-output"), false);
 
             // Assert
             csvContent.Should().Be(expected);
@@ -94,7 +95,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
 
-            string csvContent = null;
+            var csvContent = "";
 
             var command = new GenerateMannequinCsvCommand(
                 TestHelpers.CreateMock<OctoLogger>().Object,
@@ -111,7 +112,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 + "mona," + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, "unit-test-output", false);
+            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), false);
 
             // Assert
             csvContent.Should().Be(expected);
@@ -167,7 +168,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 + "monalisa,monalisa_gh" + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, "unit-test-output", true);
+            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), true);
 
             // Assert
             csvContent.Should().Be(expected);

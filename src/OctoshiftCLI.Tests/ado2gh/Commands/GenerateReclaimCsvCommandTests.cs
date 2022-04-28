@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -55,7 +56,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var expected = "login,claimantlogin" + Environment.NewLine;
 
             // Act
-            await command.Invoke("octocat", "unit-test-output", false);
+            await command.Invoke("octocat", new FileInfo("unit-test-output"), false);
 
             // Assert
             csvContent.Should().Be(expected);
@@ -86,7 +87,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 }
             };
 
-
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
@@ -112,7 +112,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 + "mona," + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, "unit-test-output", false);
+            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), false);
 
             // Assert
             csvContent.Should().Be(expected);
@@ -168,7 +168,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 + "monalisa,monalisa_gh" + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, "unit-test-output", true);
+            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), true);
 
             // Assert
             csvContent.Should().Be(expected);
