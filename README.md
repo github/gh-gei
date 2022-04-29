@@ -59,11 +59,6 @@ You'll find videos below to help you quickly get started with the GEI CLI. Be su
 
 >NOTE: We don't update these videos as often as we update the CLI, so they may not exactly match the functionality in the latest release of this CLI.
 
-### Migrating GitHub to GitHub
-The quick start video below will help you start migrating between GitHub organizations. 
-
-* Migrating GitHub to GitHub with the GEI CLI: https://youtu.be/5cQkM_8n5YY
-
 ### Migrating from Azure DevOps to GitHub
 Video guides below will help you get started with your first migration. Then help you build up to orchestrating a complete end-to-end production migration. 
 * Running your first few migrations: https://www.youtube.com/watch?v=yfnXbwtXY80
