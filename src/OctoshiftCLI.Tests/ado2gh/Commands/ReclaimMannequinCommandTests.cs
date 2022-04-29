@@ -85,11 +85,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task SingleReclaiming_Happy_Path()
         {
             var githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
             var mannequinUser = "mona";
-            var mannequinUserId = Guid.NewGuid().ToString();
             var targetUser = "mona_emu";
-            var targetUserId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
@@ -132,11 +129,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task CSV_CSV_TakesPrecedence()
         {
             var githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
             var mannequinUser = "mona";
-            var mannequinUserId = Guid.NewGuid().ToString();
             var targetUser = "mona_emu";
-            var targetUserId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
