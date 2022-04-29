@@ -81,7 +81,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
-            _log.LogInformation($"    Organization Id: {githubOrgId}");
 
             var mannequin = await githubApi.GetMannequin(githubOrgId, mannequinUser);
 
