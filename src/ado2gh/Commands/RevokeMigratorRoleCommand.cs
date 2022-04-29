@@ -75,7 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(githubPat, Name);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.RevokeMigratorRole(githubOrgId, actor, actorType);
 

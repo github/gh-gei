@@ -72,7 +72,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
 
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(githubPat, Name);
 
             var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
             if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))

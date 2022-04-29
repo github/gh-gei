@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests
             var expectedAuthToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{PERSONAL_ACCESS_TOKEN}"));
 
             // Act
-            _ = new AdoClient(_loggerMock.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            _ = new AdoClient(_loggerMock.Object, httpClient, PERSONAL_ACCESS_TOKEN, null);
 
             // Assert
             httpClient.DefaultRequestHeaders.Authorization.Should().NotBeNull();

@@ -75,7 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(githubPat, Name);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 

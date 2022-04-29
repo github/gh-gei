@@ -23,7 +23,7 @@ public class AdoApiFactoryTests
 
         // Act
         var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
-        var result = factory.Create(null, null);
+        var result = factory.Create(null, null, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -45,7 +45,7 @@ public class AdoApiFactoryTests
 
         // Act
         var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
-        var result = factory.Create(null, ADO_PAT);
+        var result = factory.Create(null, ADO_PAT, null);
 
         // Assert
         result.Should().NotBeNull();

@@ -75,7 +75,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _githubApiFactory.Create(githubTargetPat, Name);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.RevokeMigratorRole(githubOrgId, actor, actorType);
 

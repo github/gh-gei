@@ -17,7 +17,7 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, string personalAccessToken)
+        public GithubClient(OctoLogger log, HttpClient httpClient, string personalAccessToken, string productVersion)
         {
             _log = log;
             _httpClient = httpClient;
@@ -25,7 +25,7 @@ namespace OctoshiftCLI
             if (_httpClient != null)
             {
                 _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionProvider?.GetCurrentVersion()));
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", productVersion));
                 _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api,mannequin_claiming");
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
             }

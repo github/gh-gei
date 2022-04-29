@@ -77,7 +77,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            var githubApi = _targetGithubApiFactory.Create(githubPat, Name);
 
             _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);

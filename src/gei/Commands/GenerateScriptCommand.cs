@@ -230,7 +230,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases)
         {
-            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat), githubSourceOrg);
+            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat, Name), githubSourceOrg);
             return sequential
                 ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases)
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases);
@@ -238,7 +238,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat)
         {
-            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat), adoSourceOrg, adoTeamProject);
+            var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat, Name), adoSourceOrg, adoTeamProject);
             return sequential
                 ? GenerateSequentialAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg)
                 : GenerateParallelAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg);

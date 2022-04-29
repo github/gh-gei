@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.CreateClientNoSsl();
+            var githubApi = factory.CreateClientNoSsl(null, null, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -70,7 +70,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.Create();
+            var githubApi = factory.Create(null, null, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -99,7 +99,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.Create(sourcePersonalAccessToken: SOURCE_GH_PAT);
+            var githubApi = factory.Create(null, SOURCE_GH_PAT, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -128,7 +128,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ISourceGithubApiFactory factory =
                 new GithubApiFactory(_logger, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.CreateClientNoSsl(sourcePersonalAccessToken: SOURCE_GH_PAT);
+            var githubApi = factory.CreateClientNoSsl(null, SOURCE_GH_PAT, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -157,7 +157,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ITargetGithubApiFactory factory =
                 new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.Create();
+            var githubApi = factory.Create(null, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -186,7 +186,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             ITargetGithubApiFactory factory =
                 new GithubApiFactory(_logger, _mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null);
-            var githubApi = factory.Create(targetPersonalAccessToken: TARGET_GH_PAT);
+            var githubApi = factory.Create(TARGET_GH_PAT, null);
 
             // Assert
             githubApi.Should().NotBeNull();
@@ -218,7 +218,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ISourceGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null, null, null);
-            var githubApi = factory.Create(null, SOURCE_GH_PAT);
+            var githubApi = factory.Create(null, SOURCE_GH_PAT, null);
             await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
             // Assert
@@ -251,7 +251,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ITargetGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null, null, null);
-            var githubApi = factory.Create(null, TARGET_GH_PAT);
+            var githubApi = factory.Create(TARGET_GH_PAT, null);
             await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
             // Assert
@@ -284,7 +284,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             ISourceGithubApiFactory factory = new GithubApiFactory(_logger, mockHttpClientFactory.Object, null, null, null);
-            var githubApi = factory.CreateClientNoSsl(null, SOURCE_GH_PAT);
+            var githubApi = factory.CreateClientNoSsl(null, SOURCE_GH_PAT, null);
             await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
             // Assert

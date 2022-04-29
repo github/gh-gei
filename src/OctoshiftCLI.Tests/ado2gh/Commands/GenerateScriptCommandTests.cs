@@ -24,6 +24,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string BAR_PIPELINE = "BAR_PIPELINE";
         private const string APP_ID = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
         private const string GITHUB_ORG = "GITHUB_ORG";
+        private const string COMMAND_NAME = "generate-script";
 
         [Fact]
         public void Should_Have_Options()
@@ -75,7 +76,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -119,7 +120,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -166,7 +167,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { BAR_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -211,7 +212,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -253,7 +254,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { ADO_TEAM_PROJECT, anotherTeamProject });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -322,7 +323,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -361,7 +362,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -403,7 +404,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -460,7 +461,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -510,7 +511,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -583,7 +584,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -643,7 +644,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -692,7 +693,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -741,7 +742,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -787,7 +788,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -833,7 +834,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -889,7 +890,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -963,7 +964,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1010,7 +1011,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
@@ -1123,7 +1124,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { ADO_TEAM_PROJECT });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string script = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1178,7 +1179,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
@@ -1337,7 +1338,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_PIPELINE, BAR_PIPELINE });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             var mockVersionProvider = new Mock<IVersionProvider>();
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
@@ -1466,7 +1467,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1527,7 +1528,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1588,7 +1589,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1644,7 +1645,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1702,7 +1703,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { FOO_REPO });
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1770,7 +1771,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(APP_ID);
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, COMMAND_NAME)).Returns(mockAdoApi.Object);
 
             string actual = null;
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>())
@@ -1824,7 +1825,7 @@ if ($Failed -ne 0) {
 
             var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdoApi.Object);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat, null)).Returns(mockAdoApi.Object);
 
             // Act
             var command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, Mock.Of<IVersionProvider>());
@@ -1838,7 +1839,7 @@ if ($Failed -ne 0) {
             await command.Invoke(args);
 
             // Assert
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(adoPat, It.IsAny<string>()));
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)

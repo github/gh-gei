@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "wait-for-migration")).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -90,7 +90,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Failed);
 
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "wait-for-migration")).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -145,7 +145,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithubApi.Object);
+            mockGithubApiFactory.Setup(m => m.Create(githubPat, It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             // Act
             var command = new WaitForMigrationCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object)
@@ -155,7 +155,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await command.Invoke(specifiedMigrationId, githubPat);
 
             // Assert
-            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(githubPat, It.IsAny<string>()));
         }
     }
 }

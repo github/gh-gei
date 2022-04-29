@@ -63,7 +63,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(adoPat, Name);
 
             var allRepos = await ado.GetRepos(adoOrg, adoTeamProject);
             if (allRepos.Any(r => r.Name == adoRepo && r.IsDisabled))

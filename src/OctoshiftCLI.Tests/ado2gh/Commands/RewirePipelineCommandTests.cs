@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -45,7 +46,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(null, "rewire-pipeline")).Returns(mockAdo.Object);
 
             var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
@@ -60,12 +61,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockAdo = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            mockAdoApiFactory.Setup(m => m.Create(adoPat, It.IsAny<string>())).Returns(mockAdo.Object);
 
             var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            mockAdoApiFactory.Verify(m => m.Create(adoPat, It.IsAny<string>()));
         }
     }
 }

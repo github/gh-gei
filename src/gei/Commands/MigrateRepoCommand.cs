@@ -188,7 +188,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
+            var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat, Name);
 
             if (await RepoExists(githubApi, args.GithubTargetOrg, args.TargetRepo))
             {
@@ -301,7 +301,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SSL verification disabled");
             }
 
-            var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
+            var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat, Name) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat, Name);
             var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
             var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);

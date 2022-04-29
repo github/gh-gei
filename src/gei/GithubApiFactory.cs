@@ -21,27 +21,29 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _versionProvider = versionProvider;
         }
 
-        GithubApi ISourceGithubApiFactory.Create(string apiUrl, string sourcePersonalAccessToken)
+        GithubApi ISourceGithubApiFactory.Create(string apiUrl, string sourcePersonalAccessToken, string commandName)
         {
             apiUrl ??= DEFAULT_API_URL;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, sourcePersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), sourcePersonalAccessToken, _versionProvider?.GetProductVersionHeaderValue(commandName));
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
 
-        GithubApi ISourceGithubApiFactory.CreateClientNoSsl(string apiUrl, string sourcePersonalAccessToken)
+        GithubApi ISourceGithubApiFactory.CreateClientNoSsl(string apiUrl, string sourcePersonalAccessToken, string commandName)
         {
             apiUrl ??= DEFAULT_API_URL;
             sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), _versionProvider, sourcePersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), sourcePersonalAccessToken, _versionProvider?.GetProductVersionHeaderValue(commandName));
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
 
-        GithubApi ITargetGithubApiFactory.Create(string apiUrl, string targetPersonalAccessToken)
+        GithubApi ITargetGithubApiFactory.Create(string targetPersonalAccessToken, string commandName) => (this as ITargetGithubApiFactory).Create(null, targetPersonalAccessToken, commandName);
+
+        GithubApi ITargetGithubApiFactory.Create(string apiUrl, string targetPersonalAccessToken, string commandName)
         {
             apiUrl ??= DEFAULT_API_URL;
             targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, targetPersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), targetPersonalAccessToken, _versionProvider?.GetProductVersionHeaderValue(commandName));
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
     }

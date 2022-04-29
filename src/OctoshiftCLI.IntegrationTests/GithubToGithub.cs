@@ -14,7 +14,6 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly TestHelper _helper;
 
         private readonly HttpClient _githubHttpClient;
-        private readonly HttpClient _versionClient;
         private readonly GithubClient _githubClient;
         private bool disposedValue;
 
@@ -26,8 +25,8 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
 
             _githubHttpClient = new HttpClient();
-            _versionClient = new HttpClient();
-            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
+            using var versionClient = new HttpClient();
+            _githubClient = new GithubClient(logger, _githubHttpClient, githubToken, new VersionChecker(versionClient).GetProductVersionHeaderValue("command"));
             _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
@@ -62,7 +61,6 @@ namespace OctoshiftCLI.IntegrationTests
                 if (disposing)
                 {
                     _githubHttpClient.Dispose();
-                    _versionClient.Dispose();
                 }
 
                 disposedValue = true;

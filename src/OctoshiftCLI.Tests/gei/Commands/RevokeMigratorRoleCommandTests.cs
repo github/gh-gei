@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "revoke-migrator-role")).Returns(mockGithub.Object);
 
             var command = new RevokeMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, actor, actorType);
@@ -62,7 +62,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithub.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(githubTargetPat, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -74,7 +74,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
-            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+            mockTargetGithubApiFactory.Verify(m => m.Create(githubTargetPat, It.IsAny<string>()));
         }
     }
 }

@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "wait-for-migration")).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(RepositoryMigrationStatus.Failed);
 
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "wait-for-migration")).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -145,7 +145,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithubApi.Object);
+            mockTargetGithubApiFactory.Setup(m => m.Create(githubTargetPat, It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             var mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -160,7 +160,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
-            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+            mockTargetGithubApiFactory.Verify(m => m.Create(githubTargetPat, It.IsAny<string>()));
         }
     }
 }

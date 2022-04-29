@@ -24,10 +24,9 @@ namespace OctoshiftCLI
             return curVersion == latestVersion;
         }
 
-        public string GetCurrentVersion()
-        {
-            return Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        }
+        public string GetCurrentVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+        public string GetProductVersionHeaderValue(string commandName) => $"{GetCurrentVersion()}/{CliEdition}/{commandName}";
 
         public async Task<string> GetLatestVersion()
         {
@@ -50,5 +49,7 @@ namespace OctoshiftCLI
 
             return _latestVersion;
         }
+
+        private string CliEdition => Assembly.GetEntryAssembly().GetName().Name;
     }
 }

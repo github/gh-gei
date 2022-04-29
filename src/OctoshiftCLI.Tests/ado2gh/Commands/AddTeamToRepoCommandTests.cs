@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetTeamSlug(githubOrg, team)).ReturnsAsync(teamSlug);
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "add-team-to-repo")).Returns(mockGithub.Object);
 
             var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, team, role);
@@ -52,12 +52,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(githubPat, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var command = new AddTeamToRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke("githubOrg", "githubRepo", "team", "role", githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(githubPat, It.IsAny<string>()));
         }
 
         [Fact]

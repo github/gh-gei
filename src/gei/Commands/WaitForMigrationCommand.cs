@@ -52,7 +52,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("GITHUB TARGET PAT: ***");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _targetGithubApiFactory.Create(githubTargetPat, Name);
 
             while (true)
             {

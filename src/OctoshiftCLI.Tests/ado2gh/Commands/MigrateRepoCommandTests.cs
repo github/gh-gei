@@ -66,7 +66,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), "migrate-repo")).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -216,7 +216,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(githubPat, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -229,7 +229,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true, adoPat: adoPat, githubPat: githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(githubPat, It.IsAny<string>()));
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
         }
@@ -244,7 +244,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithub.Setup(x => x.GetRepos("githubOrg").Result).Returns(new List<string>());
             mockGithub.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+            mockGithubApiFactory.Setup(m => m.Create(githubPat, It.IsAny<string>())).Returns(mockGithub.Object);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock
@@ -257,7 +257,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, environmentVariableProviderMock.Object);
             await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", "githubOrg", "githubRepo", wait: true);
 
-            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            mockGithubApiFactory.Verify(m => m.Create(githubPat, It.IsAny<string>()));
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
             environmentVariableProviderMock.Verify(m => m.GithubPersonalAccessToken());
         }

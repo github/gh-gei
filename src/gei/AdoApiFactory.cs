@@ -19,11 +19,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _versionProvider = versionProvider;
         }
 
-        public virtual AdoApi Create(string adoServerUrl, string personalAccessToken)
+        public virtual AdoApi Create(string adoServerUrl, string personalAccessToken, string commandName)
         {
             adoServerUrl ??= DEFAULT_API_URL;
             personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
-            var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, personalAccessToken);
+            var adoClient = new AdoClient(_octoLogger, _client, personalAccessToken, _versionProvider?.GetProductVersionHeaderValue(commandName));
             return new AdoApi(adoClient, adoServerUrl);
         }
     }
