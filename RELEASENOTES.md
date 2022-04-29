@@ -1,0 +1,1 @@
+Add capability to reclaim mannequins in bulk by using a CSV file.
