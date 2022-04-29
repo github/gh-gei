@@ -21,14 +21,11 @@ namespace OctoshiftCLI.AdoToGithub
             _versionProvider = versionProvider;
         }
 
-        public virtual GithubApi Create(string personalAccessToken, string commandName) => Create(null, personalAccessToken, commandName);
-
-        public virtual GithubApi Create(string apiUrl, string personalAccessToken, string commandName)
+        public virtual GithubApi Create(string personalAccessToken, string commandName)
         {
-            apiUrl ??= DEFAULT_API_URL;
             personalAccessToken ??= _environmentVariableProvider.GithubPersonalAccessToken();
             var githubClient = new GithubClient(_octoLogger, _client, personalAccessToken, _versionProvider?.GetProductVersionHeaderValue(commandName));
-            return new GithubApi(githubClient, apiUrl, _retryPolicy);
+            return new GithubApi(githubClient, DEFAULT_API_URL, _retryPolicy);
         }
     }
 }
