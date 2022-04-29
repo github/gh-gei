@@ -26,7 +26,7 @@ namespace OctoshiftCLI
 
         public string GetCurrentVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        public string GetProductVersionHeaderValue(string commandName) => $"{GetCurrentVersion()}/{CliEdition}/{commandName}";
+        public string GetProductVersionHeaderValue(string commandName) => $"{GetCurrentVersion()}__{CliEdition}__{commandName}";
 
         public async Task<string> GetLatestVersion()
         {
