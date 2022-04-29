@@ -1447,6 +1447,141 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetMannequins_Returns_NoMannequins()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload =
+    @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+    $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                    .Returns(Array.Empty<JToken>().ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequins(orgId);
+
+            // Assert
+            result.Count().Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetMannequins_Returns_Mannequins()
+        {
+            // Arrange
+            const string orgId = "ORG_ID";
+            const string login1 = "mona";
+            const string login2 = "monalisa";
+
+            var url = $"https://api.github.com/graphql";
+
+            var payload =
+    @"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+    $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
+
+            var mannequin1 = new
+            {
+                login = "mona",
+                id = "DUMMYID1",
+                claimant = new { }
+            };
+            var mannequin2 = new
+            {
+                login = "monalisa",
+                id = "DUMMYID2",
+                claimant = new
+                {
+                    login = "monareclaimed",
+                    id = "TARGETDUMMYID"
+                }
+            };
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostGraphQLWithPaginationAsync(
+                    url,
+                    It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                    It.IsAny<Func<JObject, JArray>>(),
+                    It.IsAny<Func<JObject, JObject>>(),
+                    It.IsAny<int>(),
+                    null))
+                    .Returns(new[]
+                        {
+                            JToken.FromObject(mannequin1),
+                            JToken.FromObject(mannequin2),
+                        }.ToAsyncEnumerable());
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var result = await githubApi.GetMannequins(orgId);
+
+            // Assert
+            result.Count().Should().Be(2);
+
+            var mannequinsResult = result.ToArray();
+            mannequinsResult[0].Id.Should().Be("DUMMYID1");
+            mannequinsResult[0].Login.Should().Be(login1);
+            mannequinsResult[0].MappedUser.Should().BeNull();
+
+            mannequinsResult[1].Id.Should().Be("DUMMYID2");
+            mannequinsResult[1].Login.Should().Be(login2);
+            mannequinsResult[1].MappedUser.Should().NotBeNull();
+            mannequinsResult[1].MappedUser.Login.Should().Be("monareclaimed");
+            mannequinsResult[1].MappedUser.Id.Should().Be("TARGETDUMMYID");
+        }
+
+
+        [Fact]
         public async Task ReclaimMannequin_Returns_Success()
         {
             // Arrange
