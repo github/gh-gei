@@ -2,24 +2,24 @@
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class ReclaimMannequinCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+        private readonly GithubApiFactory _githubApiFactory;
 
-        public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("reclaim-mannequin")
+        public ReclaimMannequinCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("reclaim-mannequin")
         {
             _log = log;
-            _targetGithubApiFactory = targetGithubApiFactory;
+            _githubApiFactory = githubApiFactory;
 
             Description = "Reclaims a mannequin user. An invite will be sent and the user will have to accept for the remapping to occur.";
 
-            var githubTargetOrgOption = new Option<string>("--github-target-org")
+            var githubOrgOption = new Option<string>("--github-org")
             {
                 IsRequired = true,
-                Description = "Uses GH_PAT env variable."
+                Description = "Uses GH_PAT env variable or --github-pat arg."
             };
 
             var mannequinUsernameOption = new Option<string>("--mannequin-user")
@@ -47,7 +47,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
-            AddOption(githubTargetOrgOption);
+            AddOption(githubOrgOption);
             AddOption(mannequinUsernameOption);
             AddOption(targetUsernameOption);
             AddOption(forceOption);
@@ -58,7 +58,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         }
 
         public async Task Invoke(
-          string githubTargetOrg,
+          string githubOrg,
           string mannequinUser,
           string targetUser,
           bool force = false,
@@ -69,7 +69,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation("Reclaming Mannequin...");
 
-            _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"MANNEQUIN: {mannequinUser}");
             _log.LogInformation($"RECLAIMING USER: {targetUser}");
             if (githubPat is not null)
@@ -77,10 +77,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
-            _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
-            var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
+            _log.LogInformation($"GITHUB ORG: {githubOrg}");
+            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
 
             var mannequin = await githubApi.GetMannequin(githubOrgId, mannequinUser);
 

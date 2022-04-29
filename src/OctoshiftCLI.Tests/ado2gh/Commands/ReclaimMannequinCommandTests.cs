@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Octoshift.Models;
-using OctoshiftCLI.GithubEnterpriseImporter;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.AdoToGithub;
+using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Models;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReclaimMannequinCommandTests
     {
@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             Assert.Equal("reclaim-mannequin", command.Name);
             Assert.Equal(6, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "mannequin-user", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-user", true);
             TestHelpers.VerifyCommandOption(command.Options, "force", false);
@@ -71,7 +71,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -123,7 +123,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, githubPat)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -157,7 +157,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -218,7 +218,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -275,7 +275,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -301,7 +301,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
             mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
@@ -338,7 +338,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);

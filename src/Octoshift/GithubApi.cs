@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
+using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI
@@ -142,12 +143,14 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId)
+        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
             var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
+
+            adoServerUrl = adoServerUrl.HasValue() ? adoServerUrl : "https://dev.azure.com";
 
             var payload = new
             {
@@ -155,7 +158,7 @@ namespace OctoshiftCLI
                 variables = new
                 {
                     name = "Azure DevOps Source",
-                    url = "https://dev.azure.com",
+                    url = adoServerUrl,
                     ownerId = orgId,
                     type = "AZURE_DEVOPS"
                 },
@@ -481,32 +484,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "query($id: ID!, $first: Int, $after: String)";
-            var gql = @"
-                node(id: $id) {
-                    ... on Organization {
-                        mannequins(first: $first, after: $after) {
-                            pageInfo {
-                                endCursor
-                                hasNextPage
-                            }
-                            nodes {
-                                login
-                                id
-                                claimant {
-                                    login
-                                    id
-                                }
-                            }
-                        }
-                    }
-                }";
-
-            var payload = new
-            {
-                query = $"{query} {{ {gql} }}",
-                variables = new { id = orgId }
-            };
+            var payload = GetMannequinsPayload(orgId);
 
             var mannequin = await _client.PostGraphQLWithPaginationAsync(
                     url,
@@ -515,20 +493,22 @@ namespace OctoshiftCLI
                     data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
                 .FirstOrDefaultAsync(jToken => username.Equals((string)jToken["login"], StringComparison.OrdinalIgnoreCase));
 
-            return mannequin is null
-                ? new Mannequin()
-                : new Mannequin
-                {
-                    Id = (string)mannequin["id"],
-                    Login = (string)mannequin["login"],
-                    MappedUser = mannequin["claimant"].Any()
-                    ? new Claimant
-                    {
-                        Id = (string)mannequin["claimant"]["id"],
-                        Login = (string)mannequin["claimant"]["login"]
-                    }
-                    : null
-                };
+            return mannequin is null ? new Mannequin() : BuildMannequin(mannequin);
+        }
+
+        public virtual async Task<IEnumerable<Mannequin>> GetMannequins(string orgId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = GetMannequinsPayload(orgId);
+
+            return await _client.PostGraphQLWithPaginationAsync(
+                    url,
+                    payload,
+                    data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                    data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+                .Select(mannequin => BuildMannequin(mannequin))
+                .ToListAsync();
         }
 
         public virtual async Task<string> GetUserId(string login)
@@ -580,6 +560,52 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return data.ToObject<MannequinReclaimResult>();
+        }
+
+        private static object GetMannequinsPayload(string orgId)
+        {
+            var query = "query($id: ID!, $first: Int, $after: String)";
+            var gql = @"
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }";
+
+            return new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new { id = orgId }
+            };
+        }
+
+        private static Mannequin BuildMannequin(JToken mannequin)
+        {
+            return new Mannequin
+            {
+                Id = (string)mannequin["id"],
+                Login = (string)mannequin["login"],
+                MappedUser = mannequin["claimant"].Any()
+                                    ? new Claimant
+                                    {
+                                        Id = (string)mannequin["claimant"]["id"],
+                                        Login = (string)mannequin["claimant"]["login"]
+                                    }
+                                    : null
+            };
         }
     }
 }

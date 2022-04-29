@@ -1,2 +1,0 @@
-- `integrate-boards` no longer requires a PAT with the `All Accessible Organizations` setting
-- Fixed incorrect repo url in migration logs when migrating from GHES

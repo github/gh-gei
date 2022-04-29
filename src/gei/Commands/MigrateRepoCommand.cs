@@ -36,6 +36,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
             };
+            var adoServerUrl = new Option<string>("--ado-server-url")
+            {
+                IsRequired = false,
+                IsHidden = true,
+                Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
+            };
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
@@ -130,6 +136,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
 
             AddOption(githubSourceOrg);
+            AddOption(adoServerUrl);
             AddOption(adoSourceOrg);
             AddOption(adoTeamProject);
             AddOption(sourceRepo);
@@ -195,7 +202,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var migrationSourceId = args.GithubSourceOrg.HasValue()
                 ? await githubApi.CreateGhecMigrationSource(githubOrgId)
-                : await githubApi.CreateAdoMigrationSource(githubOrgId);
+                : await githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
 
             var migrationId = await githubApi.StartMigration(
                 migrationSourceId,
@@ -248,7 +255,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
             args.GithubSourceOrg.HasValue()
                 ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null)
-                : GetAdoRepoUrl(args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
+                : GetAdoRepoUrl(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
 
         private string ExtractGhesBaseUrl(string ghesApiUrl)
         {
@@ -347,7 +354,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}/{repo}".Replace(" ", "%20");
 
-        private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
+        private string GetAdoRepoUrl(string serverUrl, string org, string project, string repo)
+        {
+            serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
+            return $"{serverUrl}/{org}/{project}/_git/{repo}".Replace(" ", "%20");
+        }
 
         private void LogAndValidateOptions(MigrateRepoCommandArgs args)
         {
@@ -355,6 +366,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
+            }
+            if (!string.IsNullOrWhiteSpace(args.AdoServerUrl))
+            {
+                _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
             }
             if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
@@ -407,6 +422,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
             }
 
+            if (args.AdoServerUrl.HasValue() && !args.AdoSourceOrg.HasValue())
+            {
+                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
+            }
+
             if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && !string.IsNullOrWhiteSpace(args.AdoSourceOrg) && string.IsNullOrWhiteSpace(args.AdoTeamProject))
             {
                 throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
@@ -439,6 +459,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     public class MigrateRepoCommandArgs
     {
         public string GithubSourceOrg { get; set; }
+        public string AdoServerUrl { get; set; }
         public string AdoSourceOrg { get; set; }
         public string AdoTeamProject { get; set; }
         public string SourceRepo { get; set; }
