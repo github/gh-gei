@@ -82,7 +82,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("INCLUDING RECLAIMED");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _targetGithubApiFactory.Create(githubTargetPat, Name);
 
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             var mannequins = await githubApi.GetMannequins(githubOrgId);
