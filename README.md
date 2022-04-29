@@ -8,7 +8,7 @@ The [GitHub Enterprise Importer](https://docs.github.com/en/early-access/github/
 > GEI is in a private preview for GitHub Enterprise Cloud. It needs to be enabled before using this CLI. Please reach out to [GitHub Sales](https://github.com/enterprise/contact) to enquire about getting into the private beta. 
 
 ## Using the GEI CLI
-There are 2 separate CLI's that we ship:
+There are 2 separate CLIs that we ship:
 - `gh gei` - Intended for running migrations from anywhere supported to GitHub.
 - `ado2gh` - Extends the basic migration support in `gh gei` to include extra commands such as re-wiring Azure Pipelines and configure Azure Boards integration post-migration.
 
