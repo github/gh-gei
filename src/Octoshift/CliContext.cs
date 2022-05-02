@@ -15,7 +15,6 @@ namespace OctoshiftCLI
             get => _rootCommand;
         }
 
-
         public static string ExecutingCommand
         {
             set => _executingCommand = _executingCommand is null
