@@ -49,6 +49,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "The login of the mannequin to be remapped."
             };
+            var mannequinIdOption = new Option<string>("--mannequin-id")
+            {
+                IsRequired = false,
+                Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
+            };
+
             var targetUsernameOption = new Option<string>("--target-user")
             {
                 IsRequired = false,
@@ -72,18 +78,20 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubOrgOption);
             AddOption(csvOption);
             AddOption(mannequinUsernameOption);
+            AddOption(mannequinIdOption);
             AddOption(targetUsernameOption);
             AddOption(forceOption);
             AddOption(githubPatOption);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubOrg,
           string csv,
           string mannequinUser,
+          string mannequinId,
           string targetUser,
           bool force = false,
           string githubPat = null,
@@ -126,6 +134,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                 _log.LogInformation($"GITHUB ORG: {githubOrg}");
                 _log.LogInformation($"MANNEQUIN: {mannequinUser}");
+                if (mannequinId != null)
+                {
+                    _log.LogInformation($"MANNEQUIN ID: {mannequinId}");
+                }
                 _log.LogInformation($"RECLAIMING USER: {targetUser}");
                 if (githubPat is not null)
                 {
@@ -133,7 +145,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 }
                 _log.LogInformation($"GITHUB ORG: {githubOrg}");
 
-                await _reclaimService.ReclaimMannequin(mannequinUser, targetUser, githubOrg, force);
+                await _reclaimService.ReclaimMannequin(mannequinUser, mannequinId, targetUser, githubOrg, force);
             }
         }
     }

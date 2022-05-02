@@ -25,9 +25,18 @@ namespace Octoshift
             return _mannequins.FirstOrDefault(m => login.Equals(m.Login, StringComparison.OrdinalIgnoreCase) && userid.Equals(m.Id, StringComparison.OrdinalIgnoreCase));
         }
 
-        internal IEnumerable<Mannequin> GetByLogin(string mannequinUser)
+        /// <summary>
+        /// Gets all mannequins by login and (optionally by login and user id)
+        /// </summary>
+        /// <param name="mannequinUser"></param>
+        /// <param name="mannequinId">null to ignore</param>
+        /// <returns></returns>
+        internal IEnumerable<Mannequin> GetByLogin(string mannequinUser, string mannequinId)
         {
-            return _mannequins.Where(m => mannequinUser.Equals(m.Login, StringComparison.OrdinalIgnoreCase));
+            return _mannequins.Where(
+                    m => mannequinUser.Equals(m.Login, StringComparison.OrdinalIgnoreCase) &&
+                        (mannequinId == null || mannequinId.Equals(m.Id, StringComparison.OrdinalIgnoreCase))
+                );
         }
 
         /// <summary>
@@ -60,15 +69,5 @@ namespace Octoshift
         {
             return _mannequins.DistinctBy(x => $"{x.Id}__{x.Login}");
         }
-
-        //private IEnumerable<string> GetMappedTo(string login, string userid)
-        //{
-        //    return _mannequins.Where(m =>
-        //            login.Equals(m.Login, StringComparison.OrdinalIgnoreCase) &&
-        //            userid.Equals(m.Id, StringComparison.OrdinalIgnoreCase)
-        //            && m.MappedUser != null)
-        //        .Select(m => m.MappedUser.Login)
-        //        .ToList();
-        //}
     }
 }

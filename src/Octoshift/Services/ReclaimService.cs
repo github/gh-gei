@@ -18,11 +18,11 @@ namespace Octoshift.Services
             _githubApi = githubApi;
             _log = logger;
         }
-        public virtual async Task ReclaimMannequin(string mannequinUser, string targetUser, string githubOrg, bool force)
+        public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force)
         {
             var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-            var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser));
+            var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
             if (mannequins.Empty())
             {
                 throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
