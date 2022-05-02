@@ -29,6 +29,11 @@ namespace OctoshiftCLI
             return Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
 
+        public string GetVersionComments() =>
+            CliContext.RootCommand.HasValue() && CliContext.ExecutingCommand.HasValue()
+                ? $"({CliContext.RootCommand}/{CliContext.ExecutingCommand})"
+                : null;
+
         public async Task<string> GetLatestVersion()
         {
             if (_latestVersion.IsNullOrWhiteSpace())

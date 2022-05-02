@@ -59,7 +59,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 Logger.LogVerbose(ex.ToString());
             }
 
+            SetContext(parser.Parse(args));
+
             await parser.InvokeAsync(args);
+        }
+
+        private static void SetContext(ParseResult parseResult)
+        {
+            CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
+            CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
