@@ -11,6 +11,7 @@ namespace Octoshift.Services
     {
         private readonly GithubApi _githubApi;
         private readonly OctoLogger _log;
+        private bool _failed;
 
         public ReclaimService(GithubApi githubApi, OctoLogger logger)
         {
@@ -21,28 +22,37 @@ namespace Octoshift.Services
         {
             var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-            var mannequin = await _githubApi.GetMannequin(githubOrgId, mannequinUser);
-
-            if (mannequin == null || mannequin.Id == null)
+            var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser));
+            if (mannequins.Empty())
             {
                 throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
             }
 
-            if (mannequin.MappedUser != null && force == false)
+            // (Potentially) Save one call to the API to get the targer user
+            // // (it also makes it unnecessary to check for claimed users during reclaiming loop)
+            if (!force && mannequins.IsClaimed(mannequinUser))
             {
-                throw new OctoshiftCliException($"User {mannequinUser} has been already mapped to {mannequin.MappedUser.Login}. Use the force option if you want to reclaim the mannequin again.");
+                throw new OctoshiftCliException($"User {mannequinUser} is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
             }
 
             var targetUserId = await _githubApi.GetUserId(targetUser);
-
             if (targetUserId == null)
             {
                 throw new OctoshiftCliException($"Target user {targetUser} not found.");
             }
 
-            var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
+            _failed = false;
 
-            ProcessResult(mannequinUser, targetUser, mannequin, targetUserId, result, true);
+            // get all unique mannequins by login and id and map them all to the same target
+            foreach (var mannequin in mannequins.UniqueUsers())
+            {
+                var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
+
+                HandleResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+            }
+
+            // Fail if there was at least one error
+            HandleResult();
         }
 
         public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force)
@@ -66,9 +76,7 @@ namespace Octoshift.Services
 
             var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
 
-            var returnedMannequins = await _githubApi.GetMannequins(githubOrgId);
-
-            var mannequins = new Mannequins(returnedMannequins.ToArray());
+            var mannequins = await GetMannequins(githubOrgId);
 
             foreach (var line in lines.Skip(1).Where(l => l != null && l.Trim().Length > 0))
             {
@@ -103,15 +111,23 @@ namespace Octoshift.Services
 
                 var result = await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
 
-                ProcessResult(login, claimantLogin, mannequin, claimantId, result, false);
+                HandleResult(login, claimantLogin, mannequin, claimantId, result);
             }
         }
 
-        private void ProcessResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, MannequinReclaimResult result, bool failOnError)
+        private async Task<Mannequins> GetMannequins(string githubOrgId)
+        {
+            var returnedMannequins = await _githubApi.GetMannequins(githubOrgId);
+
+            return new Mannequins(returnedMannequins);
+        }
+
+        private void HandleResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, MannequinReclaimResult result)
         {
             if (result.Errors != null)
             {
-                ProcessError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}", failOnError);
+                _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+                _failed = true;
                 return;
             }
 
@@ -119,21 +135,20 @@ namespace Octoshift.Services
                 result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
                 result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
             {
-                ProcessError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})", failOnError);
+                _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+                _failed = true;
                 return;
             }
 
             _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
         }
 
-        private void ProcessError(string message, bool failOnError)
+        private void HandleResult()
         {
-            if (failOnError)
+            if (_failed)
             {
-                throw new OctoshiftCliException(message);
+                throw new OctoshiftCliException("Failed to reclaim mannequin(s).");
             }
-
-            _log.LogError(message);
         }
 
         private (string, string, string) ParseLine(string line)

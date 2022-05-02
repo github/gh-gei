@@ -2,11 +2,9 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Octoshift.Models;
 using Octoshift.Services;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Models;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -46,49 +44,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task It_Uses_The_Github_Pat_When_Provided()
         {
             var githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
             var mannequinUser = "mona";
-            var mannequinUserId = Guid.NewGuid().ToString();
-            var targetUser = "mona_emu";
-            var targetUserId = Guid.NewGuid().ToString();
+            var targetUser = "mona_gh";
             var githubPat = "PAT";
 
-            var mannequinResponse = new Mannequin
-            {
-                Id = mannequinUserId,
-                Login = "mona"
-            };
-
-            var reclaimMannequinResponse = new MannequinReclaimResult()
-            {
-                Data = new CreateAttributionInvitationData()
-                {
-                    CreateAttributionInvitation = new CreateAttributionInvitation()
-                    {
-                        Source = new UserInfo()
-                        {
-                            Id = mannequinUserId,
-                            Login = mannequinUser
-                        },
-                        Target = new UserInfo()
-                        {
-                            Id = targetUserId,
-                            Login = targetUser
-                        }
-                    }
-                }
-            };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequin(githubOrgId, mannequinUser).Result).Returns(mannequinResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+
+            var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
+            reclaimServiceMock.Setup(x => x.ReclaimMannequin(mannequinUser, targetUser, githubOrg, false)).Returns(Task.FromResult(default(object)));
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, githubPat)).Returns(mockGithub.Object);
 
-            var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
+            var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object);
             await command.Invoke(githubOrg, mannequinUser, targetUser, null, false, githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));

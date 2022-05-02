@@ -480,22 +480,6 @@ namespace OctoshiftCLI
             return response;
         }
 
-        public virtual async Task<Mannequin> GetMannequin(string orgId, string username)
-        {
-            var url = $"{_apiUrl}/graphql";
-
-            var payload = GetMannequinsPayload(orgId);
-
-            var mannequin = await _client.PostGraphQLWithPaginationAsync(
-                    url,
-                    payload,
-                    data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
-                    data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
-                .FirstOrDefaultAsync(jToken => username.Equals((string)jToken["login"], StringComparison.OrdinalIgnoreCase));
-
-            return mannequin is null ? new Mannequin() : BuildMannequin(mannequin);
-        }
-
         public virtual async Task<IEnumerable<Mannequin>> GetMannequins(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
