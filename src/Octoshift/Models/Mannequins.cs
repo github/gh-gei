@@ -60,7 +60,7 @@ namespace Octoshift.Models
             return _mannequins.Length == 0;
         }
 
-        public IEnumerable<Mannequin> UniqueUsers()
+        public IEnumerable<Mannequin> GetUniqueUsers()
         {
             return _mannequins.DistinctBy(x => $"{x.Id}__{x.Login}");
         }

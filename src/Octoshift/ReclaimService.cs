@@ -46,7 +46,7 @@ namespace Octoshift
             _failed = false;
 
             // get all unique mannequins by login and id and map them all to the same target
-            foreach (var mannequin in mannequins.UniqueUsers())
+            foreach (var mannequin in mannequins.GetUniqueUsers())
             {
                 var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
 
@@ -153,7 +153,7 @@ namespace Octoshift
             }
         }
 
-        private (string, string, string) ParseLine(string line)
+        private (string MannequinUser, string MannequinId, string TargetUser) ParseLine(string line)
         {
             var components = line.Split(',');
 
