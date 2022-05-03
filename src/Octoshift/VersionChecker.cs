@@ -12,20 +12,7 @@ namespace OctoshiftCLI
         private string _latestVersion;
         private readonly HttpClient _httpClient;
 
-        public VersionChecker(HttpClient httpClient)
-        {
-            _httpClient = httpClient;
-
-            if (_httpClient != null)
-            {
-                _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", GetCurrentVersion()));
-                if (GetVersionComments() is { } comments)
-                {
-                    _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
-                }
-            }
-        }
+        public VersionChecker(HttpClient httpClient) => _httpClient = httpClient;
 
         public async Task<bool> IsLatest()
         {
@@ -51,6 +38,13 @@ namespace OctoshiftCLI
         {
             if (_latestVersion.IsNullOrWhiteSpace())
             {
+                _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", GetCurrentVersion()));
+                if (GetVersionComments() is { } comments)
+                {
+                    _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
+                }
+
                 const string url = "https://api.github.com/repos/github/gh-gei/releases/latest";
 
                 var response = await _httpClient.GetAsync(url);
