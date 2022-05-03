@@ -25,7 +25,7 @@ namespace Octoshift
             var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
             var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
-            if (mannequins.Empty())
+            if (mannequins.IsEmpty())
             {
                 throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
             }

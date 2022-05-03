@@ -55,7 +55,7 @@ namespace Octoshift.Models
                 && m.MappedUser != null)?.Login != null;
         }
 
-        public bool Empty()
+        public bool IsEmpty()
         {
             return _mannequins.Length == 0;
         }
