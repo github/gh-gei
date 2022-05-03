@@ -71,9 +71,9 @@ namespace Octoshift.Services
             }
 
             // Validate Header
-            if (!ReclaimService.CSVHEADER.Equals(lines[0], StringComparison.OrdinalIgnoreCase))
+            if (!CSVHEADER.Equals(lines[0], StringComparison.OrdinalIgnoreCase))
             {
-                throw new OctoshiftCliException($"Invalid Header. Should be: {ReclaimService.CSVHEADER}");
+                throw new OctoshiftCliException($"Invalid Header. Should be: {CSVHEADER}");
             }
 
             var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);

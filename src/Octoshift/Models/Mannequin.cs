@@ -11,7 +11,5 @@ namespace OctoshiftCLI.Models
         public string Id { get; set; }
         public string Login { get; set; }
         public Claimant MappedUser { get; set; }
-
-        public bool IsUnclaimed() => MappedUser == null;
     }
 }
