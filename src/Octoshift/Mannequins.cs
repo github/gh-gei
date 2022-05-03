@@ -43,13 +43,13 @@ namespace Octoshift
         /// Checks if the user has been claimed at least once (regardless of the last reclaiming result)
         /// </summary>
         /// <param name="login"></param>
-        /// <param name="userid"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
-        public bool IsClaimed(string login, string userid)
+        public bool IsClaimed(string login, string id)
         {
             return _mannequins.FirstOrDefault(m =>
                 login.Equals(m.Login, StringComparison.OrdinalIgnoreCase) &&
-                userid.Equals(m.Id, StringComparison.OrdinalIgnoreCase)
+                id.Equals(m.Id, StringComparison.OrdinalIgnoreCase)
                 && m.MappedUser != null)?.Login != null;
         }
 
