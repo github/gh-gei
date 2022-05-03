@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Octoshift;
+using Octoshift.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -90,7 +91,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
             _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");
 
-            var contents = new StringBuilder().AppendLine(ReclaimConstants.CSVHEADER);
+            var contents = new StringBuilder().AppendLine(ReclaimService.CSVHEADER);
             foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
             {
                 contents.AppendLine($"{mannequin.Login},{mannequin.Id},{mannequin.MappedUser?.Login}");

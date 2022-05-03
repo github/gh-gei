@@ -13,6 +13,8 @@ namespace Octoshift.Services
         private readonly OctoLogger _log;
         private bool _failed;
 
+        public const string CSVHEADER = "mannequin-user,mannequin-id,target-user";
+
         public ReclaimService(GithubApi githubApi, OctoLogger logger)
         {
             _githubApi = githubApi;
@@ -69,9 +71,9 @@ namespace Octoshift.Services
             }
 
             // Validate Header
-            if (!ReclaimConstants.CSVHEADER.Equals(lines[0], StringComparison.OrdinalIgnoreCase))
+            if (!ReclaimService.CSVHEADER.Equals(lines[0], StringComparison.OrdinalIgnoreCase))
             {
-                throw new OctoshiftCliException($"Invalid Header. Should be: {ReclaimConstants.CSVHEADER}");
+                throw new OctoshiftCliException($"Invalid Header. Should be: {ReclaimService.CSVHEADER}");
             }
 
             var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
