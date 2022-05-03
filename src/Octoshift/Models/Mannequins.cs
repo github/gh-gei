@@ -10,11 +10,6 @@ namespace Octoshift.Models
     {
         private readonly Mannequin[] _mannequins;
 
-        public Mannequins(Mannequin[] mannequins)
-        {
-            _mannequins = mannequins;
-        }
-
         public Mannequins(IEnumerable<Mannequin> mannequins)
         {
             _mannequins = mannequins.ToArray();
