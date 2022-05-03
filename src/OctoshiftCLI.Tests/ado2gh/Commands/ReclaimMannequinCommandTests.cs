@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using Octoshift.Services;
+using Octoshift;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;

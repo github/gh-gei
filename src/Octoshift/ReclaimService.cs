@@ -5,7 +5,7 @@ using Octoshift.Models;
 using OctoshiftCLI;
 using OctoshiftCLI.Models;
 
-namespace Octoshift.Services
+namespace Octoshift
 {
     public class ReclaimService
     {
