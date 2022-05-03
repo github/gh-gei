@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using Octoshift;
+using Octoshift.Models;
 using OctoshiftCLI.Models;
 using Xunit;
 

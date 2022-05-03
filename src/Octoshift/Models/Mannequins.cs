@@ -4,7 +4,7 @@ using System.Linq;
 
 using OctoshiftCLI.Models;
 
-namespace Octoshift
+namespace Octoshift.Models
 {
     public class Mannequins
     {
