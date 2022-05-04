@@ -20,6 +20,7 @@ namespace Octoshift
             _githubApi = githubApi;
             _log = logger;
         }
+
         public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force)
         {
             var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
