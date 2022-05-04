@@ -32,11 +32,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task It_Uses_The_Github_Pat_When_Provided()
         {
             var githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
             var mannequinUser = "mona";
             var mannequinUserId = Guid.NewGuid().ToString();
             var targetUser = "mona_emu";
-            var targetUserId = Guid.NewGuid().ToString();
             var githubPat = "PAT";
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
