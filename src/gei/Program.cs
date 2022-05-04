@@ -49,17 +49,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var parser = BuildParser(serviceProvider);
 
+            SetContext(parser.Parse(args));
+
             try
             {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
-                Logger.LogWarning($"Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade gei");
+                Logger.LogWarning("Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade gei");
                 Logger.LogVerbose(ex.ToString());
             }
 
             await parser.InvokeAsync(args);
+        }
+
+        private static void SetContext(ParseResult parseResult)
+        {
+            CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
+            CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
