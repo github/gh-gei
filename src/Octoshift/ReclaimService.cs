@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Octoshift.Models;
 using OctoshiftCLI;
 using OctoshiftCLI.Models;
 
-[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace Octoshift
 {
     public class ReclaimService
@@ -17,7 +15,7 @@ namespace Octoshift
 
         public const string CSVHEADER = "mannequin-user,mannequin-id,target-user";
 
-        internal class Mannequins
+        private class Mannequins
         {
             private readonly Mannequin[] _mannequins;
 
