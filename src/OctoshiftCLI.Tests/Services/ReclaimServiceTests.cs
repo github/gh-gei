@@ -235,11 +235,7 @@ namespace OctoshiftCLI.Tests
 
             var mannequinsResponse = new[]
             {
-                new Mannequin
-                {
-                    Id = mannequinId,
-                    Login = mannequinLogin
-                }
+                new Mannequin { Id = mannequinId, Login = mannequinLogin }
             };
 
             var reclaimMannequinResponse = new MannequinReclaimResult()
@@ -302,16 +298,8 @@ namespace OctoshiftCLI.Tests
 
             var mannequinsResponse = new[]
             {
-                new Mannequin
-                {
-                    Id = mannequinId,
-                    Login = mannequinLogin
-                },
-                new Mannequin
-                {
-                    Id = mannequinId2,
-                    Login = mannequinLogin2
-                }
+                new Mannequin { Id = mannequinId,Login = mannequinLogin },
+                new Mannequin {Id = mannequinId2, Login = mannequinLogin2 }
             };
 
             var reclaimMannequinResponse = new MannequinReclaimResult()
@@ -320,16 +308,8 @@ namespace OctoshiftCLI.Tests
                 {
                     CreateAttributionInvitation = new CreateAttributionInvitation()
                     {
-                        Source = new UserInfo()
-                        {
-                            Id = mannequinId,
-                            Login = mannequinLogin
-                        },
-                        Target = new UserInfo()
-                        {
-                            Id = reclaimantId,
-                            Login = reclaimantLogin
-                        }
+                        Source = new UserInfo() { Id = mannequinId, Login = mannequinLogin },
+                        Target = new UserInfo() { Id = reclaimantId, Login = reclaimantLogin }
                     }
                 }
             };
@@ -340,16 +320,8 @@ namespace OctoshiftCLI.Tests
                 {
                     CreateAttributionInvitation = new CreateAttributionInvitation()
                     {
-                        Source = new UserInfo()
-                        {
-                            Id = mannequinId2,
-                            Login = mannequinLogin2
-                        },
-                        Target = new UserInfo()
-                        {
-                            Id = reclaimantId2,
-                            Login = reclaimantLogin2
-                        }
+                        Source = new UserInfo() { Id = mannequinId2, Login = mannequinLogin2 },
+                        Target = new UserInfo() { Id = reclaimantId2, Login = reclaimantLogin2 }
                     }
                 }
             };
@@ -400,16 +372,8 @@ namespace OctoshiftCLI.Tests
 
             var mannequinsResponse = new[]
             {
-                new Mannequin
-                {
-                    Id = mannequinId,
-                    Login = mannequinLogin
-                },
-                new Mannequin
-                {
-                    Id = mannequinId2,
-                    Login = mannequinLogin2
-                }
+                new Mannequin { Id = mannequinId, Login = mannequinLogin },
+                new Mannequin { Id = mannequinId2, Login = mannequinLogin2 }
             };
 
             var reclaimMannequinResponse = new MannequinReclaimResult()
@@ -418,16 +382,8 @@ namespace OctoshiftCLI.Tests
                 {
                     CreateAttributionInvitation = new CreateAttributionInvitation()
                     {
-                        Source = new UserInfo()
-                        {
-                            Id = mannequinId,
-                            Login = mannequinLogin
-                        },
-                        Target = new UserInfo()
-                        {
-                            Id = reclaimantId,
-                            Login = reclaimantLogin
-                        }
+                        Source = new UserInfo() { Id = mannequinId, Login = mannequinLogin },
+                        Target = new UserInfo() { Id = reclaimantId, Login = reclaimantLogin }
                     }
                 }
             };
@@ -438,16 +394,8 @@ namespace OctoshiftCLI.Tests
                 {
                     CreateAttributionInvitation = new CreateAttributionInvitation()
                     {
-                        Source = new UserInfo()
-                        {
-                            Id = mannequinId2,
-                            Login = mannequinLogin2
-                        },
-                        Target = new UserInfo()
-                        {
-                            Id = reclaimantId,
-                            Login = reclaimantLogin
-                        }
+                        Source = new UserInfo() { Id = mannequinId2, Login = mannequinLogin2 },
+                        Target = new UserInfo() { Id = reclaimantId, Login = reclaimantLogin }
                     }
                 }
             };
