@@ -990,6 +990,41 @@ namespace OctoshiftCLI.Tests
                 ItExpr.IsAny<CancellationToken>());
         }
 
+        [Fact]
+        public void It_Sets_User_Agent_Header_With_Comments()
+        {
+            // Arrange
+            const string currentVersion = "1.1.1.1";
+            const string versionComments = "(COMMENTS)";
+
+            using var httpClient = new HttpClient();
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
+
+            // Act
+            _ = new AdoClient(null, httpClient, mockVersionProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Assert
+            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
+            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
+        }
+
+        [Fact]
+        public void It_Only_Sets_The_Product_Name_In_User_Agent_Header_When_Version_Provider_Is_Null()
+        {
+            // Arrange
+            using var httpClient = new HttpClient();
+
+            // Act
+            _ = new AdoClient(null, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            // Assert
+            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(1);
+            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be("OctoshiftCLI");
+        }
+
         private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
             MockHttpHandler(req => req.Method == HttpMethod.Get);
 
