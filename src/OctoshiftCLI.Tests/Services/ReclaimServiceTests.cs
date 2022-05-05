@@ -16,8 +16,6 @@ namespace OctoshiftCLI.Tests
         private const string TARGET_ORG = "FOO-TARGET-ORG";
         private const string HEADER = "mannequin-user,mannequin-id,target-user";
 
-
-
         [Fact]
         public async Task ReclaimMannequins_AlreadyMapped_Force_Reclaim()
         {
@@ -196,7 +194,6 @@ namespace OctoshiftCLI.Tests
             octologgerMock.Verify(m => m.LogError("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
-
 
         [Fact]
         public async Task ReclaimMannequins_InvalidCSVContentClaimantLoginNotSpecified_IssuesError()
@@ -563,6 +560,45 @@ namespace OctoshiftCLI.Tests
             mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Never);
             mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Never);
             octologgerMock.Verify(x => x.LogError($"Mannequin {mannequinLogin} not found. Skipping."), Times.Once);
+            mockGithubApi.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ReclaimMannequins_NoTarget_No_Reclaim_IssuesError()
+        {
+            var orgId = Guid.NewGuid().ToString();
+            var mannequinId = Guid.NewGuid().ToString();
+            var mannequinLogin = "mona";
+            var reclaimantId = Guid.NewGuid().ToString();
+            var reclaimantLogin = "mona_gh";
+
+            var mannequinsResponse = new Mannequin[] {
+                new Mannequin { Id = mannequinId, Login = mannequinLogin}
+            };
+
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin)).Returns(Task.FromResult<string>(null));
+
+            var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            var reclaimService = new ReclaimService(mockGithubApi.Object, octologgerMock.Object);
+
+            var csvContent = new string[] {
+                HEADER,
+                $"{mannequinLogin},{mannequinId},{reclaimantLogin}"
+            };
+
+            // Act
+            await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
+
+            // Assert
+            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Once);
+            octologgerMock.Verify(x => x.LogError($"Claimant \"{reclaimantLogin}\" not found. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
 
@@ -1092,26 +1128,118 @@ namespace OctoshiftCLI.Tests
             var mannequinUser = "mona";
             var mannequinUserId = Guid.NewGuid().ToString();
             var targetUser = "mona_emu";
-            var targetUserId = Guid.NewGuid().ToString();
             var mannequinsResponse = new Mannequin[] {
-                new Mannequin { Id = mannequinUserId,Login = mannequinUser,
-                    MappedUser = new Claimant { Id = "claimantId", Login = "claimant" }
-                }
+                new Mannequin { Id = mannequinUserId,Login = mannequinUser }
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
             mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserId(targetUser)).Returns(Task.FromResult<string>(null));
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
-            await FluentActions
+            var exception = await FluentActions
                 .Invoking(async () => await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false))
                 .Should().ThrowAsync<OctoshiftCliException>();
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
-            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
+            exception.WithMessage($"Target user {targetUser} not found.");
+
+            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Once());
+        }
+
+        [Fact]
+        public void Mannequins_Mannequins_No_ClaimedMannequins()
+        {
+            var mannequins = new ReclaimService.Mannequins(
+                new Mannequin[]
+                {
+                    new Mannequin { Id = "id1", Login = "login1" },
+                    new Mannequin { Id = "id2",Login = "login2" }
+                });
+
+            // Act
+            var claimed = mannequins.IsClaimed("login1", "id1");
+
+            // Assert
+            claimed.Should().Be(false);
+        }
+
+        [Fact]
+        public void Mannequins_Mannequins_MultipleClaims_IsClaimed()
+        {
+            var mannequins = new ReclaimService.Mannequins(
+                new Mannequin[]
+                {
+                    new Mannequin { Id = "id1", Login = "login1"},
+                    new Mannequin { Id = "id1", Login = "login1",
+                        MappedUser = new Claimant{ Id = "claimedid", Login = "claimedlogin" }
+                    }
+                });
+
+            // Act
+            var claimed = mannequins.IsClaimed("login1", "id1");
+
+            // Assert
+            claimed.Should().Be(true);
+        }
+
+        [Fact]
+        public void Mannequins_Mannequins_MultipleClaimsLastOneUnclaimed_IsClaimed()
+        {
+            var mannequins = new ReclaimService.Mannequins(
+                new Mannequin[]
+                {
+                    new Mannequin { Id = "id1", Login = "login1",
+                        MappedUser = new Claimant{ Id = "claimedid", Login = "claimedlogin" }
+                    },
+                    new Mannequin { Id = "id1", Login = "login1" }
+                });
+
+            // Act
+            var claimed = mannequins.IsClaimed("login1", "id1");
+
+            // Assert
+            claimed.Should().Be(true);
+        }
+
+        [Fact]
+        public void Mannequins_Mannequins_MultipleClaimsLastOneUnclaimed_IsClaimedByLogin()
+        {
+            var mannequins = new ReclaimService.Mannequins(
+                new Mannequin[]
+                {
+                    new Mannequin { Id = "id1", Login = "login1",
+                        MappedUser = new Claimant{ Id = "claimedid", Login = "claimedlogin" }
+                    },
+                    new Mannequin { Id = "id1", Login = "login1" }
+                });
+
+            // Act
+            var claimed = mannequins.IsClaimed("login1");
+
+            // Assert
+            claimed.Should().Be(true);
+        }
+
+        [Fact]
+        public void Mannequins_Mannequins_SameLoginDifferentID_NotClaimed()
+        {
+            var mannequins = new ReclaimService.Mannequins(
+                new Mannequin[]
+                {
+                    new Mannequin { Id = "id1", Login = "login"},
+                    new Mannequin { Id = "id2", Login = "login",
+                        MappedUser = new Claimant{ Id = "claimedid", Login = "claimedlogin" }
+                    }
+                });
+
+            // Act
+            var claimed = mannequins.IsClaimed("login", "id1");
+
+            // Assert
+            claimed.Should().Be(false);
         }
     }
 }
