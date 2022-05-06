@@ -12,6 +12,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateMannequinCsvCommandTests
     {
+        private const string CSV_HEADER = "mannequin-user,mannequin-id,target-user";
+
         [Fact]
         public void Should_Have_Options()
         {
@@ -52,8 +54,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     return Task.CompletedTask;
                 }
             };
-
-            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine;
+            var expected = CSV_HEADER + Environment.NewLine;
 
             // Act
             await command.Invoke("octocat", new FileInfo("unit-test-output"), false);
@@ -108,7 +109,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine
+            var expected = CSV_HEADER + Environment.NewLine
                 + "mona,monaid," + Environment.NewLine;
 
             // Act
@@ -163,7 +164,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var expected = "mannequin-user,mannequin-id,target-user" + Environment.NewLine
+            var expected = CSV_HEADER + Environment.NewLine
                 + "mona,monaid," + Environment.NewLine
                 + "monalisa,monalisaid,monalisa_gh" + Environment.NewLine;
 

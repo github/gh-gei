@@ -1,0 +1,3 @@
+- Add capability to reclaim mannequins in bulk by using a CSV file
+  - Added new command `generate-mannequin-csv`
+  - Updated `reclaim-mannequin` command to accept `--csv` argument

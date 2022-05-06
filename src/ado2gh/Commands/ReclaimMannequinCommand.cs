@@ -1,6 +1,10 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Octoshift;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
@@ -8,13 +12,25 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     {
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
+        private ReclaimService _reclaimService;
 
-        public ReclaimMannequinCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("reclaim-mannequin")
+        internal Func<string, bool> FileExists = (path) => File.Exists(path);
+        internal Func<string, string[]> GetFileContent = (path) => File.ReadLines(path).ToArray();
+
+        public ReclaimMannequinCommand(OctoLogger log, GithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base("reclaim-mannequin")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
+            _reclaimService = reclaimService;
 
-            Description = "Reclaims a mannequin user. An invite will be sent and the user will have to accept for the remapping to occur.";
+            Description = "Reclaims one or more mannequin user(s). An invite will be sent and the user(s) will have to accept for the remapping to occur."
+              + "You can reclaim a single user by using --mannequin-user and --target-user or reclaim mannequins in bulk by using the --csv parameter"
+              + Environment.NewLine
+              + "The CSV file should contain a column with the user's login name (source) and reclaiming user login (target)."
+              + Environment.NewLine
+              + "The first line is considered the header and is ignored."
+              + Environment.NewLine
+              + "If both options are specified The CSV file takes precedence and other options will be ignored";
 
             var githubOrgOption = new Option<string>("--github-org")
             {
@@ -22,14 +38,26 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Uses GH_PAT env variable or --github-pat arg."
             };
 
+            var csvOption = new Option<string>("--csv")
+            {
+                IsRequired = false,
+                Description = "CSV file path with list of mannequins to be reclaimed."
+            };
+
             var mannequinUsernameOption = new Option<string>("--mannequin-user")
             {
-                IsRequired = true,
+                IsRequired = false,
                 Description = "The login of the mannequin to be remapped."
             };
+            var mannequinIdOption = new Option<string>("--mannequin-id")
+            {
+                IsRequired = false,
+                Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
+            };
+
             var targetUsernameOption = new Option<string>("--target-user")
             {
-                IsRequired = true,
+                IsRequired = false,
                 Description = "The login of the target user to be mapped."
             };
 
@@ -48,18 +76,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
 
             AddOption(githubOrgOption);
+            AddOption(csvOption);
             AddOption(mannequinUsernameOption);
+            AddOption(mannequinIdOption);
             AddOption(targetUsernameOption);
             AddOption(forceOption);
             AddOption(githubPatOption);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, bool>(Invoke);
         }
 
         public async Task Invoke(
           string githubOrg,
+          string csv,
           string mannequinUser,
+          string mannequinId,
           string targetUser,
           bool force = false,
           string githubPat = null,
@@ -67,55 +99,54 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             _log.Verbose = verbose;
 
-            _log.LogInformation("Reclaming Mannequin...");
-
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"MANNEQUIN: {mannequinUser}");
-            _log.LogInformation($"RECLAIMING USER: {targetUser}");
-            if (githubPat is not null)
+            if (string.IsNullOrEmpty(csv) && (string.IsNullOrEmpty(mannequinUser) || string.IsNullOrEmpty(targetUser)))
             {
-                _log.LogInformation("GITHUB PAT: ***");
+                throw new OctoshiftCliException("Either --csv or --mannequin-user and --target-user must be specified");
             }
 
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
-
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-
-            var mannequin = await githubApi.GetMannequin(githubOrgId, mannequinUser);
-
-            if (mannequin == null || mannequin.Id == null)
+            if (_reclaimService == null)
             {
-                throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
+                _reclaimService = new ReclaimService(githubApi, _log);
             }
 
-            if (mannequin.MappedUser != null && force == false)
+            if (!string.IsNullOrEmpty(csv))
             {
-                throw new OctoshiftCliException($"User {mannequinUser} has been already mapped to {mannequin.MappedUser.Login}. Use the force option if you want to reclaim the mannequin again.");
+                _log.LogInformation("Reclaming Mannequins with CSV...");
+
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
+                _log.LogInformation($"FILE: {csv}");
+                if (force)
+                {
+                    _log.LogInformation("MAPPING RECLAIMED");
+                }
+
+                if (!FileExists(csv))
+                {
+                    throw new OctoshiftCliException($"File {csv} does not exist.");
+                }
+
+                await _reclaimService.ReclaimMannequins(GetFileContent(csv), githubOrg, force);
             }
-
-            var targetUserId = await githubApi.GetUserId(targetUser);
-
-            if (targetUserId == null)
+            else
             {
-                throw new OctoshiftCliException($"Target user {targetUser} not found.");
+                _log.LogInformation("Reclaming Mannequin...");
+
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
+                _log.LogInformation($"MANNEQUIN: {mannequinUser}");
+                if (mannequinId != null)
+                {
+                    _log.LogInformation($"MANNEQUIN ID: {mannequinId}");
+                }
+                _log.LogInformation($"RECLAIMING USER: {targetUser}");
+                if (githubPat is not null)
+                {
+                    _log.LogInformation("GITHUB PAT: ***");
+                }
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
+
+                await _reclaimService.ReclaimMannequin(mannequinUser, mannequinId, targetUser, githubOrg, force);
             }
-
-            var result = await githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
-
-            if (result.Errors != null)
-            {
-                throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
-            }
-
-            if (result.Data.CreateAttributionInvitation is null ||
-                result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
-                result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
-            {
-                throw new OctoshiftCliException($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-            }
-
-            _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
         }
     }
 }

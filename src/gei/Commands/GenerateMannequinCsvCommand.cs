@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Octoshift;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -21,7 +22,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _targetGithubApiFactory = targetGithubApiFactory;
 
             Description = "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.";
-            IsHidden = true;
 
             var githubTargetOrgOption = new Option<string>("--github-target-org")
             {
@@ -90,7 +90,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
             _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");
 
-            var contents = new StringBuilder().AppendLine("mannequin-user,mannequin-id,target-user");
+            var contents = new StringBuilder().AppendLine(ReclaimService.CSVHEADER);
             foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
             {
                 contents.AppendLine($"{mannequin.Login},{mannequin.Id},{mannequin.MappedUser?.Login}");
