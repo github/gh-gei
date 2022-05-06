@@ -104,17 +104,17 @@ namespace Octoshift
                 throw new OctoshiftCliException($"Target user {targetUser} not found.");
             }
 
-            var failed = false;
+            var success = true;
 
             // get all unique mannequins by login and id and map them all to the same target
             foreach (var mannequin in mannequins.GetUniqueUsers())
             {
                 var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
 
-                failed |= HandleResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+                success &= HandleResult(mannequinUser, targetUser, mannequin, targetUserId, result);
             }
 
-            if (failed)
+            if (!success)
             {
                 throw new OctoshiftCliException("Failed to reclaim mannequin(s).");
             }
@@ -192,7 +192,7 @@ namespace Octoshift
             if (result.Errors != null)
             {
                 _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
-                return true;
+                return false;
             }
 
             if (result.Data.CreateAttributionInvitation is null ||
@@ -200,12 +200,12 @@ namespace Octoshift
                 result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
             {
                 _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-                return true;
+                return false;
             }
 
             _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
 
-            return false;
+            return true;
         }
 
         private (string MannequinUser, string MannequinId, string TargetUser) ParseLine(string line)
