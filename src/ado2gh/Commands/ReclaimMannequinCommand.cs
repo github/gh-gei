@@ -6,21 +6,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using Octoshift;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class ReclaimMannequinCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+        private readonly GithubApiFactory _githubApiFactory;
         private ReclaimService _reclaimService;
 
         internal Func<string, bool> FileExists = (path) => File.Exists(path);
         internal Func<string, string[]> GetFileContent = (path) => File.ReadLines(path).ToArray();
 
-        public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, ReclaimService reclaimService = null) : base("reclaim-mannequin")
+        public ReclaimMannequinCommand(OctoLogger log, GithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base("reclaim-mannequin")
         {
             _log = log;
-            _targetGithubApiFactory = targetGithubApiFactory;
+            _githubApiFactory = githubApiFactory;
             _reclaimService = reclaimService;
 
             Description = "Reclaims one or more mannequin user(s). An invite will be sent and the user(s) will have to accept for the remapping to occur."
@@ -32,10 +32,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
               + Environment.NewLine
               + "If both options are specified The CSV file takes precedence and other options will be ignored";
 
-            var githubTargetOrgOption = new Option<string>("--github-target-org")
+            var githubOrgOption = new Option<string>("--github-org")
             {
                 IsRequired = true,
-                Description = "Uses GH_PAT env variable."
+                Description = "Uses GH_PAT env variable or --github-pat arg."
             };
 
             var csvOption = new Option<string>("--csv")
@@ -54,6 +54,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
             };
+
             var targetUsernameOption = new Option<string>("--target-user")
             {
                 IsRequired = false,
@@ -74,7 +75,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
-            AddOption(githubTargetOrgOption);
+            AddOption(githubOrgOption);
             AddOption(csvOption);
             AddOption(mannequinUsernameOption);
             AddOption(mannequinIdOption);
@@ -87,11 +88,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         }
 
         public async Task Invoke(
-          string githubTargetOrg,
+          string githubOrg,
+          string csv,
           string mannequinUser,
           string mannequinId,
           string targetUser,
-          string csv,
           bool force = false,
           string githubPat = null,
           bool verbose = false)
@@ -103,7 +104,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException("Either --csv or --mannequin-user and --target-user must be specified");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
             if (_reclaimService == null)
             {
                 _reclaimService = new ReclaimService(githubApi, _log);
@@ -113,7 +114,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("Reclaming Mannequins with CSV...");
 
-                _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
                 _log.LogInformation($"FILE: {csv}");
                 if (force)
                 {
@@ -125,18 +126,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     throw new OctoshiftCliException($"File {csv} does not exist.");
                 }
 
-                await _reclaimService.ReclaimMannequins(GetFileContent(csv), githubTargetOrg, force);
+                await _reclaimService.ReclaimMannequins(GetFileContent(csv), githubOrg, force);
             }
             else
             {
                 _log.LogInformation("Reclaming Mannequin...");
 
-                _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
                 _log.LogInformation($"MANNEQUIN: {mannequinUser}");
                 if (mannequinId != null)
-                {
-                    _log.LogInformation($"MANNEQUIN ID: {mannequinId}");
-                }
                 {
                     _log.LogInformation($"MANNEQUIN ID: {mannequinId}");
                 }
@@ -145,9 +143,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 {
                     _log.LogInformation("GITHUB PAT: ***");
                 }
-                _log.LogInformation($"GITHUB ORG: {githubTargetOrg}");
+                _log.LogInformation($"GITHUB ORG: {githubOrg}");
 
-                await _reclaimService.ReclaimMannequin(mannequinUser, mannequinId, targetUser, githubTargetOrg, force);
+                await _reclaimService.ReclaimMannequin(mannequinUser, mannequinId, targetUser, githubOrg, force);
             }
         }
     }

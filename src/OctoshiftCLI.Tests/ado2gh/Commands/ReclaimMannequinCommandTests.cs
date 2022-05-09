@@ -1,18 +1,15 @@
 using System;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
 using Octoshift;
-using OctoshiftCLI.GithubEnterpriseImporter;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.AdoToGithub;
+using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReclaimMannequinCommandTests
     {
-        private const string TARGET_ORG = "FOO-TARGET-ORG";
-
         [Fact]
         public void Should_Have_Options()
         {
@@ -21,7 +18,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             Assert.Equal("reclaim-mannequin", command.Name);
             Assert.Equal(8, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "csv", false);
             TestHelpers.VerifyCommandOption(command.Options, "mannequin-user", false);
             TestHelpers.VerifyCommandOption(command.Options, "mannequin-id", false);
@@ -32,50 +29,26 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task No_Parameters_Provided_Throws_OctoshiftCliException()
-        {
-            var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, new Mock<ITargetGithubApiFactory>().Object);
-
-            await FluentActions
-                .Invoking(async () => await command.Invoke(TARGET_ORG, null, null, null, null, false))
-                .Should().ThrowAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
         public async Task It_Uses_The_Github_Pat_When_Provided()
         {
             var githubOrg = "FooOrg";
             var mannequinUser = "mona";
-            string mannequinUserId = null;
-            var targetUser = "mona_gh";
+            var mannequinUserId = Guid.NewGuid().ToString();
+            var targetUser = "mona_emu";
             var githubPat = "PAT";
-
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
             var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
             reclaimServiceMock.Setup(x => x.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false)).Returns(Task.FromResult(default(object)));
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, githubPat)).Returns(mockGithub.Object);
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object);
-            await command.Invoke(githubOrg, mannequinUser, null, targetUser, mannequinUserId, false, githubPat);
+            await command.Invoke(githubOrg, null, mannequinUser, mannequinUserId, targetUser, false, githubPat);
 
             mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
-        }
-
-        [Fact]
-        public async Task CSV_CSVFileDoesNotExist_OctoshiftCliException()
-        {
-            var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, new Mock<ITargetGithubApiFactory>().Object)
-            {
-                FileExists = (_) => false
-            };
-
-            await FluentActions
-                .Invoking(async () => await command.Invoke("dummy", null, null, null, "I_DO_NOT_EXIST_CSV_PATH"))
-                .Should().ThrowAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -88,20 +61,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
             reclaimServiceMock.Setup(x => x.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false)).Returns(Task.FromResult(default(object)));
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object);
-            await command.Invoke(githubOrg, mannequinUser, mannequinUserId, targetUser, null, false);
+            await command.Invoke(githubOrg, null, mannequinUser, mannequinUserId, targetUser, false);
 
             reclaimServiceMock.Verify(x => x.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false), Times.Once);
         }
 
         [Fact]
-        public async Task SingleReclaiming_WithIdSpecifiedHappy_Path()
+        public async Task SingleReclaiming_WithIDSpecified_Happy_Path()
         {
             var githubOrg = "FooOrg";
             var mannequinUser = "mona";
@@ -110,14 +83,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
             reclaimServiceMock.Setup(x => x.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false)).Returns(Task.FromResult(default(object)));
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object);
-            await command.Invoke(githubOrg, mannequinUser, mannequinUserId, targetUser, null, false);
+            await command.Invoke(githubOrg, null, mannequinUser, mannequinUserId, targetUser, false);
 
             reclaimServiceMock.Verify(x => x.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false), Times.Once);
         }
@@ -129,17 +102,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
+            reclaimServiceMock.Setup(x => x.ReclaimMannequins(Array.Empty<string>(), githubOrg, false)).Returns(Task.FromResult(default(object)));
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object)
             {
                 FileExists = (s) => true,
                 GetFileContent = (s) => Array.Empty<string>()
             };
-            await command.Invoke(githubOrg, null, null, null, "file.csv", false);
+            await command.Invoke(githubOrg, "file.csv", null, null, null, false);
 
             reclaimServiceMock.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), githubOrg, false), Times.Once);
         }
@@ -153,17 +127,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
 
-            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
 
             var reclaimServiceMock = TestHelpers.CreateMock<ReclaimService>();
+            reclaimServiceMock.Setup(x => x.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false)).Returns(Task.FromResult(default(object)));
 
             var command = new ReclaimMannequinCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, reclaimServiceMock.Object)
             {
                 FileExists = (s) => true,
                 GetFileContent = (s) => Array.Empty<string>()
             };
-            await command.Invoke(githubOrg, mannequinUser, null, targetUser, "file.csv", false); // All parameters passed. CSV has precedence
+            await command.Invoke(githubOrg, "file.csv", mannequinUser, null, targetUser, false); // All parameters passed. CSV has precedence
 
             reclaimServiceMock.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), githubOrg, false), Times.Once);
         }

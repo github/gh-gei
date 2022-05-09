@@ -32,17 +32,25 @@ namespace OctoshiftCLI.AdoToGithub
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var parser = BuildParser(serviceProvider);
 
+            SetContext(parser.Parse(args));
+
             try
             {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
-                Logger.LogWarning($"Could not retrieve latest ado2gh version from github.com, please ensure you are using the latest version by downloading it from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogWarning("Could not retrieve latest ado2gh version from github.com, please ensure you are using the latest version by downloading it from https://github.com/github/gh-gei/releases/latest");
                 Logger.LogVerbose(ex.ToString());
             }
 
             await parser.InvokeAsync(args);
+        }
+
+        private static void SetContext(ParseResult parseResult)
+        {
+            CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
+            CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
