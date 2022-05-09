@@ -9,7 +9,7 @@ using System.IO;
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
-    public class DownloadLogs : Command
+    public class DownloadLogsCommand : Command
     {
         private readonly OctoLogger _log;
 
