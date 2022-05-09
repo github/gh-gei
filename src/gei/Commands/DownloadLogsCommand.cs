@@ -13,7 +13,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     {
         private readonly OctoLogger _log;
 
-        public DownloadLogs(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("download-logs")
+        public DownloadLogsCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("download-logs")
         {
             _log = log;
 
