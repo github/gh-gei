@@ -63,11 +63,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var adoOrg = "FooOrg";
             var orgs = new List<string>() { adoOrg };
-            var userId = Guid.NewGuid().ToString();
             var csvContent = "csv stuff";
 
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns((AdoApi)null);
+            mockAdoApiFactory.Setup(m => m.Create(null)).Returns<AdoApi>(null);
 
             var mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
             mockOrgsCsvGenerator.Setup(m => m.Generate(null, orgs)).ReturnsAsync(csvContent);
@@ -93,7 +92,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdo = TestHelpers.CreateMock<AdoApi>();
             var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
             var mockOrgsCsvGeneratorService = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
 
