@@ -21,7 +21,7 @@ namespace OctoshiftCLI
             _adoBaseUrl = adoServerUrl?.TrimEnd('/');
         }
 
-        public async Task<string> GetOrgOwner(string org)
+        public virtual async Task<string> GetOrgOwner(string org)
         {
             var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
