@@ -21,6 +21,40 @@ namespace OctoshiftCLI
             _adoBaseUrl = adoServerUrl?.TrimEnd('/');
         }
 
+        public async Task<string> GetOrgOwner(string org)
+        {
+            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        sourcePage = new
+                        {
+                            routeValues = new
+                            {
+                                adminPivot = "organizationOverview"
+                            }
+                        }
+                    }
+                }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            var ownerName = (string)data["dataProviders"]["ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"]["currentOwner"]["name"];
+            var ownerEmail = (string)data["dataProviders"]["ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"]["currentOwner"]["email"];
+
+            return $"{ownerName} ({ownerEmail})";
+        }
+
         public virtual async Task<string> GetUserId()
         {
             var url = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
