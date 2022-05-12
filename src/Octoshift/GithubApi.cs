@@ -356,7 +356,7 @@ namespace OctoshiftCLI
               }
             ";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login = login, repositoryName = repositoryName } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login, repositoryName } };
 
             var response = await _retryPolicy.Retry(
               async () => await _client.PostAsync(url, payload),
@@ -366,11 +366,7 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
             var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-            if (nodes.Count == 0) {
-              return null;
-            }
-
-            return (string)nodes[0]["migrationLogUrl"];
+            return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
         }
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
