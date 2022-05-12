@@ -3,8 +3,8 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Octoshift;
 using System.IO;
+using Octoshift;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
