@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Net.Http;
+using Octoshift;
 using System.IO;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
@@ -112,25 +112,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            HttpClient client = new HttpClient();
+            var downloadSuccessful = await HttpDownloadService.Download(logUrl, logFile);
 
-            try
+            if (!downloadSuccessful)
             {
-                using HttpResponseMessage response = await client.GetAsync(logUrl, HttpCompletionOption.ResponseHeadersRead);
-                using Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
-                using Stream streamToWriteTo = File.Open(logFile, FileMode.Create);
-                await streamToReadFrom.CopyToAsync(streamToWriteTo);
+                _log.LogError($"Could not download log for repository {targetRepo}!");
+                return;
+            }
 
-                _log.LogInformation($"Downloaded {targetRepo} log to {logFile}.");
-            }
-            catch (HttpRequestException)
-            {
-                _log.LogInformation($"Could not download log for repository {targetRepo}!");
-            }
-            finally
-            {
-                client.Dispose();
-            }
+            _log.LogInformation($"Downloaded {targetRepo} log to {logFile}.");
         }
     }
 }
