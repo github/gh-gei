@@ -1,10 +1,11 @@
 using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.IO;
 using Octoshift;
+using OctoshiftCLI.Extensions;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
@@ -13,14 +14,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     {
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+        private readonly HttpDownloadService _httpDownloadService;
+
+        internal Func<string, bool> FileExists = path => File.Exists(path);
 
         public DownloadLogsCommand(
             OctoLogger log,
-            ITargetGithubApiFactory targetGithubApiFactory
+            ITargetGithubApiFactory targetGithubApiFactory,
+            HttpDownloadService httpDownloadService
         ) : base("download-logs")
         {
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
+            _httpDownloadService = httpDownloadService;
 
             Description = "Downloads migration logs for migrations.";
 
@@ -48,16 +54,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 Description = "Personal access token of the GitHub target.  Overrides GH_PAT environment variable."
             };
 
-            var logFile = new Option<string>("--log-file")
+            var migrationLogFile = new Option<string>("--migration-log-file")
             {
                 IsRequired = false,
-                Description = "Local file to write log to (default: migration-log-ORG-REPO.log)."
+                Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
             };
 
             var overwrite = new Option("--overwrite")
             {
                 IsRequired = false,
-                Description = "Overwrite log file if it exists."
+                Description = "Overwrite migration log file if it exists."
             };
 
             var verbose = new Option("--verbose")
@@ -70,63 +76,67 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(targetRepo);
             AddOption(targetApiUrl);
             AddOption(githubTargetPat);
-            AddOption(logFile);
+            AddOption(migrationLogFile);
             AddOption(overwrite);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubTargetOrg, string targetRepo, string targetApiUrl = null, string githubTargetPat = null, string logFile = null, bool overwrite = false, bool verbose = false)
+        public async Task Invoke(string githubTargetOrg, string targetRepo, string targetApiUrl = null, string githubTargetPat = null, string migrationLogFile = null, bool overwrite = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation($"Downloading logs for organization {githubTargetOrg}...");
 
-            if (githubTargetPat is not null)
+            _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
+            _log.LogInformation($"TARGET REPO: {targetRepo}");
+
+            if (targetApiUrl.HasValue())
+            {
+                _log.LogInformation($"TARGET API URL: {targetApiUrl}");
+            }
+
+            if (githubTargetPat.HasValue())
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
             }
 
-            logFile ??= $"migration-log-{githubTargetOrg}-{targetRepo}.log";
+            if (migrationLogFile.HasValue())
+            {
+                _log.LogInformation($"MIGRATION LOG FILE: {migrationLogFile}");
+            }
 
-            if (File.Exists(logFile))
+            migrationLogFile ??= $"migration-log-{githubTargetOrg}-{targetRepo}.log";
+
+            if (FileExists(migrationLogFile))
             {
                 if (!overwrite)
                 {
-                    _log.LogError($"File {logFile} already exists!  Use --overwrite to overwite this file.");
-                    return;
+                    throw new OctoshiftCliException($"File {migrationLogFile} already exists!  Use --overwrite to overwite this file.");
                 }
 
-                _log.LogWarning($"Overwriting {logFile} due to --overwrite option.");
+                _log.LogWarning($"Overwriting {migrationLogFile} due to --overwrite option.");
             }
 
-            _log.LogInformation($"Downloading log for repository {targetRepo} to {logFile}...");
+            _log.LogInformation($"Downloading log for repository {targetRepo} to {migrationLogFile}...");
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
             var logUrl = await githubApi.GetMigrationLogUrl(githubTargetOrg, targetRepo);
 
             if (logUrl == null)
             {
-                _log.LogError($"Migration not found for repository {targetRepo}!");
-                return;
+                throw new OctoshiftCliException($"Migration not found for repository {targetRepo}!");
             }
 
-            if (logUrl.Length == 0)
+            if (!logUrl.HasValue())
             {
-                _log.LogError($"Migration log not available for migration for repository {targetRepo}!");
-                return;
+                throw new OctoshiftCliException($"Migration found for repository {targetRepo}, but migration log not available yet!");
             }
 
-            var downloadSuccessful = await HttpDownloadService.Download(logUrl, logFile);
+            await _httpDownloadService.Download(logUrl, migrationLogFile);
 
-            if (!downloadSuccessful)
-            {
-                _log.LogError($"Could not download log for repository {targetRepo}!");
-                return;
-            }
-
-            _log.LogInformation($"Downloaded {targetRepo} log to {logFile}.");
+            _log.LogSuccess($"Downloaded {targetRepo} log to {migrationLogFile}.");
         }
     }
 }

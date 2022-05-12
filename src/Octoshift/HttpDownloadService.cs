@@ -1,33 +1,25 @@
 ﻿using System;
-using System.Threading.Tasks;
-using System.Net.Http;
 using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 
-namespace Octoshift
+namespace OctoshiftCLI
 {
     public class HttpDownloadService
     {
-        public static async Task<bool> Download(string url, string file)
+        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
+
+        private readonly HttpClient _httpClient;
+
+        public HttpDownloadService(HttpClient httpClient) => _httpClient = httpClient;
+
+        public async Task Download(string url, string file)
         {
-            HttpClient client = new HttpClient();
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
 
-            try
-            {
-                using HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                using Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
-                using Stream streamToWriteTo = File.Open(file, FileMode.Create);
-                await streamToReadFrom.CopyToAsync(streamToWriteTo);
-            }
-            catch (HttpRequestException)
-            {
-                return false;
-            }
-            finally
-            {
-                client.Dispose();
-            }
-
-            return true;
+            var contents = await response.Content.ReadAsStringAsync();
+            await WriteToFile(file, contents);
         }
     }
 }
