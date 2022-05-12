@@ -13,7 +13,7 @@ namespace OctoshiftCLI
 
         public HttpDownloadService(HttpClient httpClient) => _httpClient = httpClient;
 
-        public async Task Download(string url, string file)
+        public virtual async Task Download(string url, string file)
         {
             using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
