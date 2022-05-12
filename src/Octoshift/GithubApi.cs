@@ -341,6 +341,38 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["failureReason"];
         }
 
+        public virtual async Task<string> GetMigrationLogUrl(string login, string repositoryName)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query ($login: String!, $repositoryName: String!)";
+            var gql = @"
+              organization(login: $login) {
+                repositoryMigrations(last: 1, repositoryName: $repositoryName) {
+                  nodes {
+                    migrationLogUrl
+                  }
+                }
+              }
+            ";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login = login, repositoryName = repositoryName } };
+
+            var response = await _retryPolicy.Retry(
+              async () => await _client.PostAsync(url, payload),
+              ex => ex.StatusCode == HttpStatusCode.BadGateway
+            );
+
+            var data = JObject.Parse(response);
+            var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
+
+            if (nodes.Count == 0) {
+              return null;
+            }
+
+            return (string)nodes[0]["migrationLogUrl"];
+        }
+
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
         {
             var url = $"{_apiUrl}/orgs/{org}/external-groups";
