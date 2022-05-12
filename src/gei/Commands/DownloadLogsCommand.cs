@@ -112,6 +112,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
+            if (logUrl.Length == 0)
+            {
+                _log.LogError($"Migration log not available for migration for repository {targetRepo}!");
+                return;
+            }
+
             var downloadSuccessful = await HttpDownloadService.Download(logUrl, logFile);
 
             if (!downloadSuccessful)
