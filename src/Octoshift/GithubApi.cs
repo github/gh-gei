@@ -341,7 +341,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["failureReason"];
         }
 
-        public virtual async Task<string> GetMigrationLogUrl(string login, string repositoryName)
+        public virtual async Task<string> GetMigrationLogUrl(string orgLogin, string repositoryName)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -356,7 +356,7 @@ namespace OctoshiftCLI
               }
             ";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login, repositoryName } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { orgLogin, repositoryName } };
 
             var response = await _retryPolicy.Retry(
               async () => await _client.PostAsync(url, payload),
