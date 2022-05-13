@@ -816,6 +816,85 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetMigrationLogUrl_Returns_The_Migration_Log_URL()
+        {
+            // Arrange
+            const string orgLogin = "ORG_LOGIN";
+            const string repositoryName = "REPOSITORY_NAME";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($login: String!, $repositoryName: String!) " +
+                "{ organization(login: $login) { repositoryMigrations(last: 1, repositoryName: $repositoryName) { nodes { migrationLogUrl } } } }" +
+                $",\"variables\":{{\"login\":\"{orgLogin}\",\"repositoryName\":\"{repositoryName}\"}}}}";
+            const string migrationLogUrl = "MIGRATION_LOG_URL";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""organization"": {{
+                        ""repositoryMigrations"": {{
+                            ""nodes"": [
+                                {{
+                                    ""migrationLogUrl"": ""{migrationLogUrl}""
+                                }}
+                            ]
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationLog = await githubApi.GetMigrationLogUrl(orgLogin, repositoryName);
+
+            // Assert
+            expectedMigrationLog.Should().Be(migrationLogUrl);
+        }
+
+        [Fact]
+        public async Task GetMigrationLogUrl_Returns_Null_When_No_Migration()
+        {
+            // Arrange
+            const string orgLogin = "ORG_LOGIN";
+            const string repositoryName = "REPOSITORY_NAME";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($login: String!, $repositoryName: String!) " +
+                "{ organization(login: $login) { repositoryMigrations(last: 1, repositoryName: $repositoryName) { nodes { migrationLogUrl } } } }" +
+                $",\"variables\":{{\"login\":\"{orgLogin}\",\"repositoryName\":\"{repositoryName}\"}}}}";
+            const string migrationLogUrl = "MIGRATION_LOG_URL";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""organization"": {{
+                        ""repositoryMigrations"": {{
+                            ""nodes"": [
+                            ]
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationLog = await githubApi.GetMigrationLogUrl(orgLogin, repositoryName);
+
+            // Assert
+            expectedMigrationLog.Should().Be(migrationLogUrl);
+        }
+
+        [Fact]
         public async Task GetIdpGroupId_Returns_The_Idp_Group_Id()
         {
             // Arrange
