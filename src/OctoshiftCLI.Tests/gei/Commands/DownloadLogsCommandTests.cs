@@ -191,7 +191,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var githubOrg = "FooOrg";
             var repo = "foo-repo";
-            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
             // Act
             var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null)
@@ -199,6 +198,53 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 FileExists = _ => true
             };
 
+            // Assert
+            await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, repo))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Throw_OctoshiftCliException_When_No_Migration()
+        {
+            // Arrange
+            var githubOrg = "FooOrg";
+            var repo = "foo-repo";
+            var logUrl = (string)null;
+
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
+
+            // Act
+            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null);
+
+            // Assert
+            await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, repo))
+                .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Throw_OctoshiftCliException_When_Migration_Log_URL_Empty()
+        {
+            // Arrange
+            var githubOrg = "FooOrg";
+            var repo = "foo-repo";
+            var logUrl = "";
+
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
+
+            // Act
+            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null);
+
+            // Assert
             await FluentActions
                 .Invoking(async () => await command.Invoke(githubOrg, repo))
                 .Should().ThrowAsync<OctoshiftCliException>();
