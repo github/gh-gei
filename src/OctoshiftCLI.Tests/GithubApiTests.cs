@@ -874,25 +874,33 @@ namespace OctoshiftCLI.Tests
             const string repositoryName = "REPOSITORY_NAME";
             const string url = "https://api.github.com/graphql";
 
-            var payload =
-                "{\"query\":\"query($login: String!, $repositoryName: String!) " +
-                "{ organization(login: $login) { repositoryMigrations(last: 1, repositoryName: $repositoryName) { nodes { migrationLogUrl } } } }" +
-                $",\"variables\":{{\"login\":\"{orgLogin}\",\"repositoryName\":\"{repositoryName}\"}}}}";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""organization"": {{
-                        ""repositoryMigrations"": {{
+            var query = "query ($orgLogin: String!, $repositoryName: String!)";
+            var gql = @"
+              organization(login: $orgLogin) {
+                repositoryMigrations(last: 1, repositoryName: $repositoryName) {
+                  nodes {
+                    migrationLogUrl
+                  }
+                }
+              }
+            ";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { orgLogin, repositoryName } };
+            var response = @"
+            {
+                ""data"": {
+                    ""organization"": {
+                        ""repositoryMigrations"": {
                             ""nodes"": [
                             ]
-                        }}
-                    }}
-                }}
-            }}";
+                        }
+                    }
+                }
+            }";
 
             var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
                 .ReturnsAsync(response);
 
             // Act
