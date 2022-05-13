@@ -349,7 +349,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
 
             var mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
-            mockAdoInspectorService.Setup(m => m.GetOrgs(mockAdoApi.Object, null)).ReturnsAsync(ADO_ORGS);
+            mockAdoInspectorService.Setup(m => m.GetOrgs(mockAdoApi.Object, ADO_ORG)).ReturnsAsync(ADO_ORGS);
             mockAdoInspectorService.Setup(m => m.GetTeamProjects(mockAdoApi.Object, ADO_ORGS, null)).ReturnsAsync(ADO_TEAM_PROJECTS);
             mockAdoInspectorService.Setup(m => m.GetRepos(mockAdoApi.Object, ADO_TEAM_PROJECTS, null)).ReturnsAsync(ADO_REPOS);
 
