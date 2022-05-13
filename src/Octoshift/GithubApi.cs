@@ -345,9 +345,9 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "query ($login: String!, $repositoryName: String!)";
+            var query = "query ($orgLogin: String!, $repositoryName: String!)";
             var gql = @"
-              organization(login: $login) {
+              organization(login: $orgLogin) {
                 repositoryMigrations(last: 1, repositoryName: $repositoryName) {
                   nodes {
                     migrationLogUrl
@@ -356,7 +356,7 @@ namespace OctoshiftCLI
               }
             ";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login = orgLogin, repositoryName } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { orgLogin, repositoryName } };
 
             var response = await _retryPolicy.Retry(
               async () => await _client.PostAsync(url, payload),
