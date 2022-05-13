@@ -356,7 +356,7 @@ namespace OctoshiftCLI
               }
             ";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { orgLogin, repositoryName } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { login = orgLogin, repositoryName } };
 
             var response = await _retryPolicy.Retry(
               async () => await _client.PostAsync(url, payload),
