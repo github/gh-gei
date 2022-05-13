@@ -868,7 +868,6 @@ namespace OctoshiftCLI.Tests
                 "{\"query\":\"query($login: String!, $repositoryName: String!) " +
                 "{ organization(login: $login) { repositoryMigrations(last: 1, repositoryName: $repositoryName) { nodes { migrationLogUrl } } } }" +
                 $",\"variables\":{{\"login\":\"{orgLogin}\",\"repositoryName\":\"{repositoryName}\"}}}}";
-            const string migrationLogUrl = "MIGRATION_LOG_URL";
             var response = $@"
             {{
                 ""data"": {{
@@ -891,7 +890,7 @@ namespace OctoshiftCLI.Tests
             var expectedMigrationLog = await githubApi.GetMigrationLogUrl(orgLogin, repositoryName);
 
             // Assert
-            expectedMigrationLog.Should().Be(migrationLogUrl);
+            expectedMigrationLog.Should().Be(null);
         }
 
         [Fact]
