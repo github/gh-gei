@@ -14,7 +14,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests
 {
-    public class HttpDownloadService
+    public class HttpDownloadServiceTests
     {
         [Fact]
         public async Task Downloads_File()
