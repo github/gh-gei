@@ -7,7 +7,7 @@ namespace OctoshiftCLI
 {
     public class HttpDownloadService
     {
-        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
+        internal readonly Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
         private readonly HttpClient _httpClient;
 
