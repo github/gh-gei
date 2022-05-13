@@ -242,7 +242,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             // Act
-            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null);
+            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, null);
 
             // Assert
             await FluentActions
