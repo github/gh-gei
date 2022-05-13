@@ -82,7 +82,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubTargetOrg, string targetRepo, string targetApiUrl = null, string githubTargetPat = null, string migrationLogFile = null, bool overwrite = false, bool verbose = false)
+        public async Task Invoke(
+            string githubTargetOrg,
+            string targetRepo,
+            string targetApiUrl = null,
+            string githubTargetPat = null,
+            string migrationLogFile = null,
+            bool overwrite = false,
+            bool verbose = false
+        )
         {
             _log.Verbose = verbose;
 
