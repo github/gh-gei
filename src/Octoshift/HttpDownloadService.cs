@@ -2,12 +2,14 @@
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI
 {
     public class HttpDownloadService
     {
-        internal readonly Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
+        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
         private readonly HttpClient _httpClient;
 
