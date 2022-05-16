@@ -43,7 +43,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var command = new HttpDownloadService(httpClient) {
+            var httpDownloadService = new HttpDownloadService(httpClient) {
                 WriteToFile = (_, contents) =>
                 {
                     fileContents = contents;
@@ -51,7 +51,7 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            await command.Download(url, filePath);
+            await httpDownloadService.Download(url, filePath);
 
             // Assert
             fileContents.Should().Be(expectedFileContents);
