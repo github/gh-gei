@@ -347,20 +347,20 @@ namespace OctoshiftCLI
 
             var query = "query ($org: String!, $repo: String!)";
             var gql = @"
-              organization(login: $org) {
-                repositoryMigrations(last: 1, repositoryName: $repo) {
-                  nodes {
-                    migrationLogUrl
-                  }
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
                 }
-              }
             ";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
 
             var response = await _retryPolicy.Retry(
-              async () => await _client.PostAsync(url, payload),
-              ex => ex.StatusCode == HttpStatusCode.BadGateway
+                async () => await _client.PostAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadGateway
             );
 
             var data = JObject.Parse(response);

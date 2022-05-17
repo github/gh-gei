@@ -826,13 +826,13 @@ namespace OctoshiftCLI.Tests
 
             var query = "query ($org: String!, $repo: String!)";
             var gql = @"
-              organization(login: $org) {
-                repositoryMigrations(last: 1, repositoryName: $repo) {
-                  nodes {
-                    migrationLogUrl
-                  }
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
                 }
-              }
             ";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
@@ -876,13 +876,13 @@ namespace OctoshiftCLI.Tests
 
             var query = "query ($org: String!, $repo: String!)";
             var gql = @"
-              organization(login: $org) {
-                repositoryMigrations(last: 1, repositoryName: $repo) {
-                  nodes {
-                    migrationLogUrl
-                  }
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
                 }
-              }
             ";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
