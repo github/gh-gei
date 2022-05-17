@@ -44,7 +44,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
-                Description = "Target GitHub API URL if not migrating to github.com (default: https://api.github.com)."
+                Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
             };
 
             var githubTargetPat = new Option<string>("--github-target-pat")
