@@ -825,6 +825,47 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetOrgOwner_Returns_Owner()
+        {
+            var orgName = "FOO-ORG";
+            var ownerName = "Dave";
+            var ownerEmail = "dave@gmail.com";
+
+            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+            var payload = new
+            {
+                contributionIds = new[]
+                {
+                    "ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"
+                },
+                dataProviderContext = new
+                {
+                    properties = new
+                    {
+                        sourcePage = new
+                        {
+                            routeValues = new
+                            {
+                                adminPivot = "organizationOverview"
+                            }
+                        }
+                    }
+                }
+            };
+
+            var json = $@"{{ dataProviders: {{ ""ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"": {{ currentOwner: {{ name: '{ownerName}', email: '{ownerEmail}' }} }} }} }}";
+
+            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            mockClient.Setup(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson()))).ReturnsAsync(json);
+
+            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL);
+            var result = await sut.GetOrgOwner(orgName);
+
+            result.Should().Be($"{ownerName} ({ownerEmail})");
+        }
+
+        [Fact]
         public async Task DisableRepo_Should_Send_Correct_Payload()
         {
             var orgName = "foo-org";
