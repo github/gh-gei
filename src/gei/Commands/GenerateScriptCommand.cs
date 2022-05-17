@@ -321,7 +321,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (downloadMigrationLogs)
                 {
-                    content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, repo));
+                    content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, repo)));
                 }
             }
 
@@ -432,7 +432,7 @@ if ($Failed -ne 0) {
 
                         if (downloadMigrationLogs)
                         {
-                            content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, githubRepo));
+                            content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, githubRepo)));
                         }
                     }
                 }
