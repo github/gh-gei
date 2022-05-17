@@ -38,7 +38,8 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(httpClient) {
+            var httpDownloadService = new HttpDownloadService(httpClient)
+            {
                 WriteToFile = (_, contents) =>
                 {
                     fileContents = contents;
@@ -75,7 +76,8 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(httpClient) {
+            var httpDownloadService = new HttpDownloadService(httpClient)
+            {
                 WriteToFile = (_, contents) =>
                 {
                     fileContents = contents;
