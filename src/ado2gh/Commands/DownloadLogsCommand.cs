@@ -12,7 +12,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class DownloadLogsCommand : Command
     {
         private readonly OctoLogger _log;
-        private readonly GithubApiFactory _targetGithubApiFactory;
+        private readonly GithubApiFactory _githubApiFactory;
         private readonly HttpDownloadService _httpDownloadService;
 
         internal Func<string, bool> FileExists = path => File.Exists(path);
@@ -24,7 +24,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         ) : base("download-logs")
         {
             _log = log;
-            _targetGithubApiFactory = targetGithubApiFactory;
+            _githubApiFactory = targetGithubApiFactory;
             _httpDownloadService = httpDownloadService;
 
             Description = "Downloads migration logs for migrations.";
@@ -128,7 +128,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
 
-            var githubApi = _targetGithubApiFactory.Create(githubApiUrl, githubPat);
+            var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
             var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
 
             if (logUrl == null)
