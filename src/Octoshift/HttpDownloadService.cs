@@ -17,7 +17,7 @@ namespace OctoshiftCLI
 
         public virtual async Task Download(string url, string file)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             var contents = await response.Content.ReadAsStringAsync();
