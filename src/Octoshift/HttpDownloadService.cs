@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI
