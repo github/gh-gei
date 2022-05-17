@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,7 +6,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
-using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
