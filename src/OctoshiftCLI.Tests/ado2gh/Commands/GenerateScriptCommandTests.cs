@@ -1212,7 +1212,7 @@ if ($Failed -ne 0) {
             await command.Invoke(args);
 
             // Assert
-            actual.Should().Be(expected.ToString());
+            expected.ToString().Should().Be(actual);
         }
 
         [Fact]
