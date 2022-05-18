@@ -29,7 +29,7 @@ namespace OctoshiftCLI
 
         public OctoLogger()
         {
-            var logStartTime = DateTime.Now;
+            var logStartTime = DateTime.UtcNow;
             _logFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.log";
             _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
 
@@ -63,7 +63,7 @@ namespace OctoshiftCLI
             _writeToVerboseLog(output);
         }
 
-        private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+        private string FormatMessage(string msg, string level) => $"[{DateTime.UtcNow.ToShortTimeString()}] [{level}] {msg}\n";
 
         private string MaskSecrets(string msg)
         {

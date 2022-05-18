@@ -314,7 +314,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
             _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
 
-            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            var timeNow = $"{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}";
 
             var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
@@ -334,8 +334,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
         {
-            var timeout = DateTime.Now.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
-            while (DateTime.Now < timeout)
+            var timeout = DateTime.UtcNow.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
+            while (DateTime.UtcNow < timeout)
             {
                 var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
                 _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
