@@ -4,12 +4,10 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
-[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class GenerateScriptCommand : Command
