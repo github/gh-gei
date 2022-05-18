@@ -480,13 +480,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, "$CanExecuteBatch = $true");
                         AppendLine(content, $"if ($null -ne $RepoMigrations[\"{repoMigrationKey}\"]) {{");
                         AppendLine(content, "    " + WaitForMigrationScript(repoMigrationKey));
+                        AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
 
                         if (downloadMigrationLogs)
                         {
-                            AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
+                            AppendLine(content, "    " + DownloadMigrationLogScript(githubOrg, githubRepo));
                         }
 
-                        AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
                         AppendLine(content, "}");
                         AppendLine(content, "if ($CanExecuteBatch) {");
                         if (_generateScriptOptions.CreateTeams || _generateScriptOptions.DisableAdoRepos || _generateScriptOptions.IntegrateBoards || _generateScriptOptions.RewirePipelines)
