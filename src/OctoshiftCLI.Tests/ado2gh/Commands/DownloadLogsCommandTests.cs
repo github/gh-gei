@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "migration-log-file", false);
             TestHelpers.VerifyCommandOption(command.Options, "overwrite", false);
