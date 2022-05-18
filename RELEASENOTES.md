@@ -1,1 +1,2 @@
+- Add `download-logs` command to download migration logs
 - Add `--download-migration-logs` option to `generate-script` command
