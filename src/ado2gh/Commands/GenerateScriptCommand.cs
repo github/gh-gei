@@ -65,6 +65,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var downloadMigrationLogs = new Option("--download-migration-logs")
+            {
+                IsRequired = false,
+                Description = "Downloads the migration log for for each repostiory migration."
+            };
+
             var createTeams = new Option("--create-teams")
             {
                 IsRequired = false,
@@ -109,6 +115,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(sequential);
             AddOption(adoPat);
             AddOption(verbose);
+            AddOption(downloadMigrationLogs);
             AddOption(createTeams);
             AddOption(linkIdpGroups);
             AddOption(lockAdoRepos);
@@ -153,8 +160,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             CheckForDuplicateRepoNames(repos);
 
             var script = args.Sequential
-                ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg)
-                : GenerateParallelScript(repos, pipelines, appIds, args.GithubOrg);
+                ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg, args.DownloadMigrationLogs)
+                : GenerateParallelScript(repos, pipelines, appIds, args.GithubOrg, args.DownloadMigrationLogs);
 
             if (args.Output.HasValue())
             {
@@ -315,7 +322,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private string GenerateSequentialScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
-            string githubOrg)
+            string githubOrg, bool downloadMigrationLogs)
         {
             if (!repos.Any())
             {
@@ -362,6 +369,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content);
                         AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
+
+                        if (downloadMigrationLogs)
+                        {
+                            AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
+                        }
+
                         AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                         AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
@@ -385,7 +398,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
-            string githubOrg)
+            string githubOrg, bool downloadMigrationLogs)
         {
             if (!repos.Any())
             {
@@ -467,6 +480,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, "$CanExecuteBatch = $true");
                         AppendLine(content, $"if ($null -ne $RepoMigrations[\"{repoMigrationKey}\"]) {{");
                         AppendLine(content, "    " + WaitForMigrationScript(repoMigrationKey));
+
+                        if (downloadMigrationLogs)
+                        {
+                            AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
+                        }
+
                         AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
                         AppendLine(content, "}");
                         AppendLine(content, "if ($CanExecuteBatch) {");
@@ -602,6 +621,11 @@ if ($Failed -ne 0) {
 
         private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
+        private string DownloadMigrationLogScript(string githubOrg, string githubRepo)
+        {
+            return $"./ado2gh download-logs --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
+        }
+
         private string Exec(string script) => Wrap(script, "Exec");
 
         private string ExecAndGetMigrationId(string script) => Wrap(script, "ExecAndGetMigrationID");
@@ -729,6 +753,7 @@ function ExecBatch {
         public bool Sequential { get; set; }
         public string AdoPat { get; set; }
         public bool Verbose { get; set; }
+        public bool DownloadMigrationLogs { get; set; }
         public bool CreateTeams { get; set; }
         public bool LinkIdpGroups { get; set; }
         public bool LockAdoRepos { get; set; }
