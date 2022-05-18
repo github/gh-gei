@@ -16,7 +16,7 @@ namespace OctoshiftCLI
     public class OctoLogger
     {
         public bool Verbose { get; set; }
-        private readonly HashSet<string> _secrets = new HashSet<string>();
+        private readonly HashSet<string> _secrets = new();
         private readonly string _logFilePath;
         private readonly string _verboseFilePath;
 
