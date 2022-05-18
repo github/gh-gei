@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -63,7 +63,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), null)).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -115,7 +115,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, It.IsAny<string>())).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -141,7 +141,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -167,7 +167,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -215,7 +215,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             // Act
@@ -238,7 +238,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
 
-            var mockGithubApiFactory = new TestHelpers.CreateMock<GithubApiFactory>();
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
             // Act
