@@ -159,8 +159,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             CheckForDuplicateRepoNames(repos);
 
             var script = args.Sequential
-                ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg, args.DownloadMigrationLogs)
-                : GenerateParallelScript(repos, pipelines, appIds, args.GithubOrg, args.DownloadMigrationLogs);
+                ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg)
+                : GenerateParallelScript(repos, pipelines, appIds, args.GithubOrg);
 
             if (args.Output.HasValue())
             {
@@ -321,7 +321,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private string GenerateSequentialScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
-            string githubOrg, bool downloadMigrationLogs)
+            string githubOrg)
         {
             if (!repos.Any())
             {
@@ -392,7 +392,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
             IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
             IDictionary<string, string> appIds,
-            string githubOrg, bool downloadMigrationLogs)
+            string githubOrg)
         {
             if (!repos.Any())
             {
