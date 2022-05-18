@@ -19,12 +19,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         public DownloadLogsCommand(
             OctoLogger log,
-            GithubApiFactory targetGithubApiFactory,
+            GithubApiFactory githubApiFactory,
             HttpDownloadService httpDownloadService
         ) : base("download-logs")
         {
             _log = log;
-            _githubApiFactory = targetGithubApiFactory;
+            _githubApiFactory = githubApiFactory;
             _httpDownloadService = httpDownloadService;
 
             Description = "Downloads migration logs for migrations.";
