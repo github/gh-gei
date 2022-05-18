@@ -145,7 +145,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 LockAdoRepos = args.All || args.LockAdoRepos,
                 DisableAdoRepos = args.All || args.DisableAdoRepos,
                 IntegrateBoards = args.All || args.IntegrateBoards,
-                RewirePipelines = args.All || args.RewirePipelines
+                RewirePipelines = args.All || args.RewirePipelines,
+                DownloadMigrationLogs = args.DownloadMigrationLogs
             };
 
             var ado = _adoApiFactory.Create(args.AdoPat);
@@ -367,12 +368,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content);
                         AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
-
-                        if (downloadMigrationLogs)
-                        {
-                            AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
-                        }
-
+                        AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
                         AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                         AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
@@ -480,7 +476,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, "    " + WaitForMigrationScript(repoMigrationKey));
                         AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
 
-                        if (downloadMigrationLogs)
+                        if (_generateScriptOptions.DownloadMigrationLogs)
                         {
                             AppendLine(content, "    " + DownloadMigrationLogScript(githubOrg, githubRepo));
                         }
@@ -619,10 +615,10 @@ if ($Failed -ne 0) {
 
         private string WaitForMigrationScript(string repoMigrationKey) => $"./ado2gh wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
-        private string DownloadMigrationLogScript(string githubOrg, string githubRepo)
-        {
-            return $"./ado2gh download-logs --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"";
-        }
+        private string DownloadMigrationLogScript(string githubOrg, string githubRepo) =>
+            _generateScriptOptions.DownloadMigrationLogs
+            ? $"./ado2gh download-logs --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\""
+            : null;
 
         private string Exec(string script) => Wrap(script, "Exec");
 
@@ -696,6 +692,7 @@ if ($Failed -ne 0) {
             public bool DisableAdoRepos { get; init; }
             public bool IntegrateBoards { get; init; }
             public bool RewirePipelines { get; init; }
+            public bool DownloadMigrationLogs { get; init; }
         }
 
         private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
