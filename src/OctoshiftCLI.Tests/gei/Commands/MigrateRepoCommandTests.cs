@@ -64,10 +64,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(new List<string>());
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.GetReposAsync(TARGET_ORG).Result).Returns(new List<string>());
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.StartMigrationAsync(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false).Result).Returns(migrationId);
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -105,10 +105,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
-            mockGithub.Verify(m => m.GetOrganizationId(TARGET_ORG));
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
-            mockGithub.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
+            mockGithub.Verify(m => m.GetReposAsync(TARGET_ORG));
+            mockGithub.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG));
+            mockGithub.Verify(m => m.CreateGhecMigrationSourceAsync(githubOrgId));
+            mockGithub.Verify(m => m.StartMigrationAsync(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
 
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
@@ -130,8 +130,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepos = new List<string> { TARGET_REPO };
 
             var mockGithub = new Mock<GithubApi>(null, null, null);
-            mockGithub.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(githubRepos);
-            mockGithub.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
+            mockGithub.Setup(x => x.GetReposAsync(TARGET_ORG).Result).Returns(githubRepos);
+            mockGithub.Setup(x => x.StartMigrationAsync(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
 
             var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(null);
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -161,7 +161,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            mockGithub.Verify(m => m.GetRepos(TARGET_ORG));
+            mockGithub.Verify(m => m.GetReposAsync(TARGET_ORG));
 
             mockLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
             actualLogOutput.Should().Contain(expectedLogWarningOutput);
@@ -180,10 +180,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -194,7 +194,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     null,
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -215,7 +215,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -231,10 +231,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, null).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSourceAsync(githubOrgId, null).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     adoRepoUrl,
                     githubOrgId,
@@ -245,7 +245,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     null,
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(sourceAdoPat);
@@ -267,7 +267,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -284,10 +284,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoServerUrl).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateAdoMigrationSourceAsync(githubOrgId, adoServerUrl).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     adoRepoUrl,
                     githubOrgId,
@@ -298,7 +298,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     null,
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(sourceAdoPat);
@@ -321,7 +321,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -344,10 +344,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -358,15 +358,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     authenticatedMetadataArchiveUrl.ToString(),
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.StartGitArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
             mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
@@ -401,7 +401,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -435,10 +435,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = "https://example.com/metadata_archive.tar.gz";
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -449,7 +449,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     metadataArchiveUrl,
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -472,7 +472,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -537,10 +537,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -551,7 +551,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     null,
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
             environmentVariableProviderMock.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -570,7 +570,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await command.Invoke(args);
 
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -611,10 +611,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -625,15 +625,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     authenticatedMetadataArchiveUrl.ToString(),
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.StartGitArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
             mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
@@ -669,7 +669,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             mockAzureApiFactory.Verify(x => x.Create(azureConnectionStringEnv));
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -692,10 +692,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.CreateGhecMigrationSourceAsync(githubOrgId).Result).Returns(migrationSourceId);
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     migrationSourceId,
                     githubRepoUrl,
                     githubOrgId,
@@ -706,15 +706,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     authenticatedMetadataArchiveUrl.ToString(),
                     false).Result)
                 .Returns(migrationId);
-            mockGithub.Setup(x => x.GetMigrationState(migrationId).Result).Returns("SUCCEEDED");
+            mockGithub.Setup(x => x.GetMigrationStateAsync(migrationId).Result).Returns("SUCCEEDED");
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.StartGitArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationUrlAsync(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
             mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
@@ -751,7 +751,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             mockAzureApiFactory.Verify(x => x.CreateClientNoSsl(AZURE_CONNECTION_STRING));
-            mockGithub.Verify(x => x.GetMigrationState(migrationId));
+            mockGithub.Verify(x => x.GetMigrationStateAsync(migrationId));
         }
 
         [Fact]
@@ -761,9 +761,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveId = 2;
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Failed);
+            mockGhesGithubApi.Setup(x => x.StartGitArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            mockGhesGithubApi.Setup(x => x.StartMetadataArchiveGenerationAsync(SOURCE_ORG, SOURCE_REPO).Result).Returns(metadataArchiveId);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Failed);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
 
@@ -823,8 +823,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), null));
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.CreateAdoMigrationSourceAsync(It.IsAny<string>(), null));
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -871,8 +871,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.CreateGhecMigrationSourceAsync(It.IsAny<string>()));
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -891,8 +891,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
-            mockGithub.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGithub.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGithub.Setup(x => x.GetArchiveMigrationStatusAsync(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_SOURCE_PAT)).Returns(mockGithub.Object);
@@ -930,8 +930,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken());
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.CreateGhecMigrationSourceAsync(It.IsAny<string>()));
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -977,8 +977,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             environmentVariableProviderMock.Verify(m => m.SourceGithubPersonalAccessToken(), Times.Never);
             environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(), Times.Never);
-            mockGithub.Verify(m => m.CreateGhecMigrationSource(It.IsAny<string>()));
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.CreateGhecMigrationSourceAsync(It.IsAny<string>()));
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -1019,7 +1019,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             actualLogOutput.Should().Contain("SKIP RELEASES: true");
 
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -1040,7 +1040,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     It.IsAny<string>(),
                     expectedGithubRepoUrl,
                     It.IsAny<string>(),
@@ -1053,7 +1053,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns("migrationId");
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
             mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://blob-url"));
@@ -1087,7 +1087,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 expectedGithubRepoUrl,
                 It.IsAny<string>(),
@@ -1108,7 +1108,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
             mockGithub
-                .Setup(x => x.StartMigration(
+                .Setup(x => x.StartMigrationAsync(
                     It.IsAny<string>(),
                     expectedGithubRepoUrl,
                     It.IsAny<string>(),
@@ -1121,7 +1121,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns("migrationId");
 
             var mockGhesGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            mockGhesGithubApi.Setup(x => x.GetArchiveMigrationStatusAsync(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
             var mockAzureApi = TestHelpers.CreateMock<AzureApi>();
             mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://blob-url"));
@@ -1155,7 +1155,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            mockGithub.Verify(m => m.StartMigration(
+            mockGithub.Verify(m => m.StartMigrationAsync(
                 It.IsAny<string>(),
                 expectedGithubRepoUrl,
                 It.IsAny<string>(),

@@ -47,10 +47,10 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin).Result).Returns(reclaimantId);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin).Result).Returns(reclaimantId);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
 
             var csvContent = new string[] {
                 HEADER,
@@ -63,10 +63,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, true);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Once);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
 
@@ -77,7 +77,7 @@ namespace OctoshiftCLI.Tests
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -99,7 +99,7 @@ namespace OctoshiftCLI.Tests
             var orgId = Guid.NewGuid().ToString();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -114,10 +114,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(It.IsAny<string>()), Times.Never);
             octologgerMock.Verify(m => m.LogError($"Invalid line: \"login\". Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -131,7 +131,7 @@ namespace OctoshiftCLI.Tests
                 "INVALID_HEADER"
             };
 
-            // Act
+            // Act & Assert
             await FluentActions
                 .Invoking(async () => await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false))
                 .Should().ThrowAsync<OctoshiftCliException>();
@@ -143,7 +143,7 @@ namespace OctoshiftCLI.Tests
             var orgId = Guid.NewGuid().ToString();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -158,10 +158,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(It.IsAny<string>()), Times.Never);
             octologgerMock.Verify(m => m.LogError($"Invalid line: \",,mona_gh\". Mannequin login is not defined. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -172,7 +172,7 @@ namespace OctoshiftCLI.Tests
             var orgId = Guid.NewGuid().ToString();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -187,10 +187,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(It.IsAny<string>()), Times.Never);
             octologgerMock.Verify(m => m.LogError("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -201,7 +201,7 @@ namespace OctoshiftCLI.Tests
             var orgId = Guid.NewGuid().ToString();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -216,10 +216,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(It.IsAny<string>()), Times.Never);
             octologgerMock.Verify(m => m.LogError($"Invalid line: \"mona,,\". Mannequin Id is not defined. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -259,10 +259,10 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin).Result).Returns(reclaimantId);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin).Result).Returns(reclaimantId);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithubApi.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -275,10 +275,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Once);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
 
@@ -327,12 +327,12 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin).Result).Returns(reclaimantId);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin2).Result).Returns(reclaimantId2);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId2, reclaimantId2).Result).Returns(reclaimMannequinResponse2);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin).Result).Returns(reclaimantId);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin2).Result).Returns(reclaimantId2);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId2, reclaimantId2).Result).Returns(reclaimMannequinResponse2);
 
             var reclaimService = new ReclaimService(mockGithubApi.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -348,13 +348,13 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId2, reclaimantId2), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin2), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin2), Times.Once);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId2, reclaimantId2), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin2), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin2), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
 
@@ -401,11 +401,11 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin).Result).Returns(reclaimantId);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
-            mockGithubApi.Setup(x => x.ReclaimMannequin(orgId, mannequinId2, reclaimantId).Result).Returns(reclaimMannequinResponse2);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin).Result).Returns(reclaimantId);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId).Result).Returns(reclaimMannequinResponse);
+            mockGithubApi.Setup(x => x.ReclaimMannequinAsync(orgId, mannequinId2, reclaimantId).Result).Returns(reclaimMannequinResponse2);
 
             var reclaimService = new ReclaimService(mockGithubApi.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -419,11 +419,11 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId2, reclaimantId), Times.Once);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Exactly(2));
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId2, reclaimantId), Times.Once);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Exactly(2));
             mockGithubApi.VerifyNoOtherCalls();
         }
 
@@ -451,8 +451,8 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -467,10 +467,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Never);
             octologgerMock.Verify(x => x.LogError($"{mannequinLogin} is already claimed. Skipping (use force if you want to reclaim)"), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -487,8 +487,8 @@ namespace OctoshiftCLI.Tests
             var mannequinsResponse = Array.Empty<Mannequin>();
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -503,10 +503,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Never);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Never);
             octologgerMock.Verify(x => x.LogError($"Mannequin {mannequinLogin} not found. Skipping."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -525,9 +525,9 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(orgId);
-            mockGithubApi.Setup(x => x.GetMannequins(orgId).Result).Returns(mannequinsResponse);
-            mockGithubApi.Setup(x => x.GetUserId(reclaimantLogin)).Returns(Task.FromResult<string>(null));
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(TARGET_ORG).Result).Returns(orgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(orgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetUserIdAsync(reclaimantLogin)).Returns(Task.FromResult<string>(null));
 
             var octologgerMock = TestHelpers.CreateMock<OctoLogger>();
 
@@ -542,10 +542,10 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequins(csvContent, TARGET_ORG, false);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-            mockGithubApi.Verify(m => m.GetMannequins(orgId), Times.Once);
-            mockGithubApi.Verify(x => x.ReclaimMannequin(orgId, mannequinId, reclaimantId), Times.Never);
-            mockGithubApi.Verify(x => x.GetUserId(reclaimantLogin), Times.Once);
+            mockGithubApi.Verify(m => m.GetOrganizationIdAsync(TARGET_ORG), Times.Once);
+            mockGithubApi.Verify(m => m.GetMannequinsAsync(orgId), Times.Once);
+            mockGithubApi.Verify(x => x.ReclaimMannequinAsync(orgId, mannequinId, reclaimantId), Times.Never);
+            mockGithubApi.Verify(x => x.GetUserIdAsync(reclaimantLogin), Times.Once);
             octologgerMock.Verify(x => x.LogError($"Claimant \"{reclaimantLogin}\" not found. Will ignore it."), Times.Once);
             mockGithubApi.VerifyNoOtherCalls();
         }
@@ -591,11 +591,11 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -603,9 +603,9 @@ namespace OctoshiftCLI.Tests
             await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false);
 
             // Assert
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId), Times.Once);
-            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.GetUserIdAsync(targetUser), Times.Once);
         }
 
         [Fact]
@@ -635,17 +635,17 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
             await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false);
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
         }
 
         [Fact]
@@ -676,17 +676,17 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
             await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false);
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
         }
 
         [Fact]
@@ -729,19 +729,19 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
             await reclaimService.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, false);
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId), Times.Never);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId), Times.Never);
         }
 
 
@@ -774,17 +774,17 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
             await reclaimService.ReclaimMannequin(mannequinUser, mannequinUserId, targetUser, githubOrg, true);
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
         }
 
         [Fact]
@@ -818,10 +818,10 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, null, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, null, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -830,7 +830,7 @@ namespace OctoshiftCLI.Tests
                 .Should().ThrowAsync<OctoshiftCliException>();
             exception.WithMessage("User mona is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Never);
         }
 
         [Fact]
@@ -850,8 +850,8 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
@@ -863,8 +863,8 @@ namespace OctoshiftCLI.Tests
                 .Invoking(async () => await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false))
                 .Should().ThrowAsync<OctoshiftCliException>();
 
-            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
+            mockGithub.Verify(x => x.GetUserIdAsync(targetUser), Times.Never());
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Never());
             exception.WithMessage("User mona is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
         }
 
@@ -904,17 +904,17 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             // Act
             await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, true);
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId));
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId));
         }
 
         [Fact]
@@ -948,10 +948,10 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
@@ -1015,11 +1015,11 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
-            mockGithub.Setup(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId).Result).Returns(reclaimMannequinResponse);
+            mockGithub.Setup(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId).Result).Returns(reclaimMannequinResponse2);
 
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithub.Object);
@@ -1034,8 +1034,8 @@ namespace OctoshiftCLI.Tests
                 .Should().ThrowAsync<OctoshiftCliException>();
             exception.WithMessage("Failed to reclaim mannequin(s).");
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Once);
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId2, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Once);
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId2, targetUserId), Times.Once);
 
             octologgerMock.Verify(m => m.LogError($"Failed to reclaim {mannequinUser} ({mannequinUserId}) to {targetUser} ({targetUserId}) Reason: {failureMessage}"), Times.Once);
         }
@@ -1053,9 +1053,9 @@ namespace OctoshiftCLI.Tests
             var mannequinsResponse = Array.Empty<Mannequin>();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser).Result).Returns(targetUserId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser).Result).Returns(targetUserId);
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -1064,8 +1064,8 @@ namespace OctoshiftCLI.Tests
                 .Invoking(async () => await reclaimService.ReclaimMannequin(mannequinUser, null, targetUser, githubOrg, false))
                 .Should().ThrowAsync<OctoshiftCliException>();
 
-            mockGithub.Verify(x => x.ReclaimMannequin(githubOrgId, mannequinUserId, targetUserId), Times.Never());
-            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Never());
+            mockGithub.Verify(x => x.ReclaimMannequinAsync(githubOrgId, mannequinUserId, targetUserId), Times.Never());
+            mockGithub.Verify(x => x.GetUserIdAsync(targetUser), Times.Never());
         }
 
         [Fact]
@@ -1081,9 +1081,9 @@ namespace OctoshiftCLI.Tests
             };
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithub.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-            mockGithub.Setup(x => x.GetUserId(targetUser)).Returns(Task.FromResult<string>(null));
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithub.Setup(x => x.GetUserIdAsync(targetUser)).Returns(Task.FromResult<string>(null));
 
             var reclaimService = new ReclaimService(mockGithub.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
@@ -1094,7 +1094,7 @@ namespace OctoshiftCLI.Tests
 
             exception.WithMessage($"Target user {targetUser} not found.");
 
-            mockGithub.Verify(x => x.GetUserId(targetUser), Times.Once());
+            mockGithub.Verify(x => x.GetUserIdAsync(targetUser), Times.Once());
         }
     }
 }

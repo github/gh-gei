@@ -39,8 +39,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(Array.Empty<Mannequin>());
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(Array.Empty<Mannequin>());
 
             var csvContent = "";
 
@@ -94,8 +94,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
 
             var csvContent = "";
 
@@ -149,8 +149,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
+            mockGithubApi.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
+            mockGithubApi.Setup(x => x.GetMannequinsAsync(githubOrgId).Result).Returns(mannequinsResponse);
 
             var csvContent = "";
 

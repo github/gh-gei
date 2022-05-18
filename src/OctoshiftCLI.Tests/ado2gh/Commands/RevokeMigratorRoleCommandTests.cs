@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrgId = Guid.NewGuid().ToString();
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
+            mockGithub.Setup(x => x.GetOrganizationIdAsync(githubOrg).Result).Returns(githubOrgId);
 
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new RevokeMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, actor, actorType);
 
-            mockGithub.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
+            mockGithub.Verify(x => x.RevokeMigratorRoleAsync(githubOrgId, actor, actorType));
         }
 
         [Fact]

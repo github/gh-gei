@@ -84,8 +84,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
-            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var mannequins = await githubApi.GetMannequins(githubOrgId);
+            var githubOrgId = await githubApi.GetOrganizationIdAsync(githubOrg);
+            var mannequins = await githubApi.GetMannequinsAsync(githubOrgId);
 
             _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
             _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");

@@ -77,12 +77,12 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetGithubTestEnvironment(string githubOrg)
         {
-            var githubRepos = await _githubApi.GetRepos(githubOrg);
+            var githubRepos = await _githubApi.GetReposAsync(githubOrg);
 
             foreach (var repo in githubRepos)
             {
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubApi.DeleteRepo(githubOrg, repo);
+                await _githubApi.DeleteRepoAsync(githubOrg, repo);
             }
 
             var githubTeams = await GetTeamSlugs(githubOrg);
@@ -488,7 +488,7 @@ steps:
         public async Task AssertGithubRepoExists(string githubOrg, string repo)
         {
             _output.WriteLine("Checking that the repos in GitHub exist...");
-            var repos = await _githubApi.GetRepos(githubOrg);
+            var repos = await _githubApi.GetReposAsync(githubOrg);
             repos.Should().Contain(repo);
         }
 
@@ -541,7 +541,7 @@ steps:
         {
             _output.WriteLine("Checking that the GitHub teams are linked to IdP groups...");
 
-            var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
+            var teamSlug = await _githubApi.GetTeamSlugAsync(githubOrg, teamName);
             var idp = await GetTeamIdPGroup(githubOrg, teamSlug);
             idp.ToLower().Should().Be(idpGroup?.ToLower());
         }
@@ -550,7 +550,7 @@ steps:
         {
             _output.WriteLine("Checking that the GitHub teams have repo permissions...");
 
-            var teamSlug = await _githubApi.GetTeamSlug(githubOrg, teamName);
+            var teamSlug = await _githubApi.GetTeamSlugAsync(githubOrg, teamName);
             var actualRole = await GetTeamRepoRole(githubOrg, teamSlug, repo);
             actualRole.Should().Be(role);
         }

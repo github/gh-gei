@@ -196,15 +196,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
+            var githubOrgId = await githubApi.GetOrganizationIdAsync(args.GithubTargetOrg);
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
             var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
             var migrationSourceId = args.GithubSourceOrg.HasValue()
-                ? await githubApi.CreateGhecMigrationSource(githubOrgId)
-                : await githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
+                ? await githubApi.CreateGhecMigrationSourceAsync(githubOrgId)
+                : await githubApi.CreateAdoMigrationSourceAsync(githubOrgId, args.AdoServerUrl);
 
-            var migrationId = await githubApi.StartMigration(
+            var migrationId = await githubApi.StartMigrationAsync(
                 migrationSourceId,
                 sourceRepoUrl,
                 githubOrgId,
@@ -221,20 +221,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var migrationState = await githubApi.GetMigrationStateAsync(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                migrationState = await githubApi.GetMigrationStateAsync(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
 
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
+                var failureReason = await githubApi.GetMigrationFailureReasonAsync(migrationId);
                 throw new OctoshiftCliException(failureReason);
             }
 
@@ -243,7 +243,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
         {
-            var repos = await githubApi.GetRepos(org);
+            var repos = await githubApi.GetReposAsync(org);
             return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 
@@ -304,9 +304,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
             var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
-            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+            var gitDataArchiveId = await ghesApi.StartGitArchiveGenerationAsync(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGenerationAsync(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
@@ -337,11 +337,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var timeout = DateTime.Now.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
             while (DateTime.Now < timeout)
             {
-                var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
+                var archiveStatus = await githubApi.GetArchiveMigrationStatusAsync(githubSourceOrg, archiveId);
                 _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
                 if (archiveStatus == ArchiveMigrationStatus.Exported)
                 {
-                    return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
+                    return await githubApi.GetArchiveMigrationUrlAsync(githubSourceOrg, archiveId);
                 }
                 if (archiveStatus == ArchiveMigrationStatus.Failed)
                 {

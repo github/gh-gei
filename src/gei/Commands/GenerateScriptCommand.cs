@@ -252,7 +252,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            var repos = await github.GetRepos(githubOrg);
+            var repos = await github.GetReposAsync(githubOrg);
 
             foreach (var repo in repos)
             {

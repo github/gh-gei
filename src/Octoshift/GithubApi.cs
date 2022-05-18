@@ -24,7 +24,7 @@ namespace OctoshiftCLI
             _retryPolicy = retryPolicy;
         }
 
-        public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
+        public virtual async Task AddAutoLinkAsync(string org, string repo, string keyPrefix, string urlTemplate)
         {
             if (string.IsNullOrWhiteSpace(keyPrefix))
             {
@@ -46,7 +46,7 @@ namespace OctoshiftCLI
             await _client.PostAsync(url, payload);
         }
 
-        public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinks(string org, string repo)
+        public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinksAsync(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
 
@@ -55,14 +55,14 @@ namespace OctoshiftCLI
                                 .ToListAsync();
         }
 
-        public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
+        public virtual async Task DeleteAutoLinkAsync(string org, string repo, int autoLinkId)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks/{autoLinkId}";
 
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<string> CreateTeam(string org, string teamName)
+        public virtual async Task<string> CreateTeamAsync(string org, string teamName)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
             var payload = new { name = teamName, privacy = "closed" };
@@ -73,7 +73,7 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public virtual async Task<IEnumerable<string>> GetTeams(string org)
+        public virtual async Task<IEnumerable<string>> GetTeamsAsync(string org)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
 
@@ -82,7 +82,7 @@ namespace OctoshiftCLI
                 .ToListAsync();
         }
 
-        public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamSlug)
+        public virtual async Task<IEnumerable<string>> GetTeamMembersAsync(string org, string teamSlug)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
 
@@ -90,21 +90,21 @@ namespace OctoshiftCLI
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
-        public virtual async Task<IEnumerable<string>> GetRepos(string org)
+        public virtual async Task<IEnumerable<string>> GetReposAsync(string org)
         {
             var url = $"{_apiUrl}/orgs/{org}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
-        public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
+        public virtual async Task RemoveTeamMemberAsync(string org, string teamSlug, string member)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
+        public virtual async Task AddTeamSyncAsync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
             var payload = new
@@ -118,7 +118,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task AddTeamToRepo(string org, string repo, string teamSlug, string role)
+        public virtual async Task AddTeamToRepoAsync(string org, string repo, string teamSlug, string role)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/repos/{org}/{repo}";
             var payload = new { permission = role };
@@ -126,7 +126,7 @@ namespace OctoshiftCLI
             await _client.PutAsync(url, payload);
         }
 
-        public virtual async Task<string> GetOrganizationId(string org)
+        public virtual async Task<string> GetOrganizationIdAsync(string org)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -143,7 +143,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
+        public virtual async Task<string> CreateAdoMigrationSourceAsync(string orgId, string adoServerUrl)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -171,7 +171,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> CreateGhecMigrationSource(string orgId)
+        public virtual async Task<string> CreateGhecMigrationSourceAsync(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -197,7 +197,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false)
+        public virtual async Task<string> StartMigrationAsync(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -266,7 +266,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
-        public virtual async Task<string> GetMigrationState(string migrationId)
+        public virtual async Task<string> GetMigrationStateAsync(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -282,7 +282,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["state"];
         }
 
-        public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
+        public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStatesAsync(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -325,7 +325,7 @@ namespace OctoshiftCLI
                 .ToListAsync();
         }
 
-        public virtual async Task<string> GetMigrationFailureReason(string migrationId)
+        public virtual async Task<string> GetMigrationFailureReasonAsync(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -341,7 +341,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["node"]["failureReason"];
         }
 
-        public virtual async Task<int> GetIdpGroupId(string org, string groupName)
+        public virtual async Task<int> GetIdpGroupIdAsync(string org, string groupName)
         {
             var url = $"{_apiUrl}/orgs/{org}/external-groups";
 
@@ -352,7 +352,7 @@ namespace OctoshiftCLI
             return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
         }
 
-        public virtual async Task<string> GetTeamSlug(string org, string teamName)
+        public virtual async Task<string> GetTeamSlugAsync(string org, string teamName)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
 
@@ -362,7 +362,7 @@ namespace OctoshiftCLI
             return (string)response["slug"];
         }
 
-        public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
+        public virtual async Task AddEmuGroupToTeamAsync(string org, string teamSlug, int groupId)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
@@ -370,7 +370,7 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<bool> GrantMigratorRoleAsync(string org, string actor, string actorType)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -397,7 +397,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<bool> RevokeMigratorRole(string org, string actor, string actorType)
+        public virtual async Task<bool> RevokeMigratorRoleAsync(string org, string actor, string actorType)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -424,13 +424,13 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task DeleteRepo(string org, string repo)
+        public virtual async Task DeleteRepoAsync(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}";
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
+        public virtual async Task<int> StartGitArchiveGenerationAsync(string org, string repo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
@@ -445,7 +445,7 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
+        public virtual async Task<int> StartMetadataArchiveGenerationAsync(string org, string repo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
@@ -462,7 +462,7 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationStatus(string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationStatusAsync(string org, int migrationId)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations/{migrationId}";
 
@@ -472,7 +472,7 @@ namespace OctoshiftCLI
             return (string)data["state"];
         }
 
-        public virtual async Task<string> GetArchiveMigrationUrl(string org, int migrationId)
+        public virtual async Task<string> GetArchiveMigrationUrlAsync(string org, int migrationId)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations/{migrationId}/archive";
 
@@ -480,7 +480,7 @@ namespace OctoshiftCLI
             return response;
         }
 
-        public virtual async Task<IEnumerable<Mannequin>> GetMannequins(string orgId)
+        public virtual async Task<IEnumerable<Mannequin>> GetMannequinsAsync(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -495,7 +495,7 @@ namespace OctoshiftCLI
                 .ToListAsync();
         }
 
-        public virtual async Task<string> GetUserId(string login)
+        public virtual async Task<string> GetUserIdAsync(string login)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -511,7 +511,7 @@ namespace OctoshiftCLI
             return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
         }
 
-        public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
+        public virtual async Task<MannequinReclaimResult> ReclaimMannequinAsync(string orgId, string mannequinId, string targetUserId)
         {
             var url = $"{_apiUrl}/graphql";
             var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";

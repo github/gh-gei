@@ -121,9 +121,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
             adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
-            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
-            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
+            var githubOrgId = await githubApi.GetOrganizationIdAsync(githubOrg);
+            var migrationSourceId = await githubApi.CreateAdoMigrationSourceAsync(githubOrgId, null);
+            var migrationId = await githubApi.StartMigrationAsync(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
 
             if (!wait)
             {
@@ -131,20 +131,20 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return;
             }
 
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var migrationState = await githubApi.GetMigrationStateAsync(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                migrationState = await githubApi.GetMigrationStateAsync(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
 
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
+                var failureReason = await githubApi.GetMigrationFailureReasonAsync(migrationId);
                 throw new OctoshiftCliException(failureReason);
             }
 
@@ -153,7 +153,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
         {
-            var repos = await githubApi.GetRepos(org);
+            var repos = await githubApi.GetReposAsync(org);
             return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 

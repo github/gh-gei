@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests
         private readonly RetryPolicy _retryPolicy = new RetryPolicy(TestHelpers.CreateMock<OctoLogger>().Object);
 
         [Fact]
-        public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
+        public async Task AddAutoLinkAsync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -43,14 +43,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
+            await githubApi.AddAutoLinkAsync(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
-        public async Task AddAutoLink_Replaces_Spaces_In_Url_Tempalte()
+        public async Task AddAutoLinkAsync_Replaces_Spaces_In_Url_Tempalte()
         {
             // Arrange
             const string org = "ORG";
@@ -73,14 +73,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.AddAutoLink(org, repo, keyPrefix, urlTemplate);
+            await githubApi.AddAutoLinkAsync(org, repo, keyPrefix, urlTemplate);
 
             // Assert
             githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
-        public async Task GetAutoLinks_Calls_The_Right_Endpoint()
+        public async Task GetAutoLinksAsync_Calls_The_Right_Endpoint()
         {
             // Arrange
             const string org = "ORG";
@@ -92,14 +92,14 @@ namespace OctoshiftCLI.Tests
             githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.GetAutoLinks(org, repo);
+            await githubApi.GetAutoLinksAsync(org, repo);
 
             // Assert
             githubClientMock.Verify(m => m.GetAllAsync(url));
         }
 
         [Fact]
-        public async Task DeleteAutoLink_Calls_The_Right_Endpoint()
+        public async Task DeleteAutoLinkAsync_Calls_The_Right_Endpoint()
         {
             // Arrange
             const string org = "ORG";
@@ -111,14 +111,14 @@ namespace OctoshiftCLI.Tests
             var githubClientMock = TestHelpers.CreateMock<GithubClient>();
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.DeleteAutoLink(org, repo, autoLinkId);
+            await githubApi.DeleteAutoLinkAsync(org, repo, autoLinkId);
 
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
 
         [Fact]
-        public async Task CreateTeam_Returns_Created_Team_Id()
+        public async Task CreateTeamAsync_Returns_Created_Team_Id()
         {
             // Arrange
             const string org = "ORG";
@@ -137,14 +137,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.CreateTeam(org, teamName);
+            var result = await githubApi.CreateTeamAsync(org, teamName);
 
             // Assert
             result.Should().Be(teamId);
         }
 
         [Fact]
-        public async Task GetTeams_Returns_All_Teams()
+        public async Task GetTeamsAsync_Returns_All_Teams()
         {
             // Arrange
             const string org = "ORG";
@@ -171,7 +171,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = (await githubApi.GetTeams(org)).ToArray();
+            var result = (await githubApi.GetTeamsAsync(org)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);
@@ -179,7 +179,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetTeamMembers_Returns_Team_Members()
+        public async Task GetTeamMembersAsync_Returns_Team_Members()
         {
             // Arrange
             const string org = "ORG";
@@ -235,7 +235,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
+            var result = (await githubApi.GetTeamMembersAsync(org, teamName)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);
@@ -243,7 +243,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetTeamMembers_Retries_On_404()
+        public async Task GetTeamMembersAsync_Retries_On_404()
         {
             // Arrange
             const string org = "ORG";
@@ -263,14 +263,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = (await githubApi.GetTeamMembers(org, teamName)).ToArray();
+            var result = (await githubApi.GetTeamMembersAsync(org, teamName)).ToArray();
 
             // Assert
             result.Should().HaveCount(1);
         }
 
         [Fact]
-        public async Task GetRepos_Returns_Names_Of_All_Repositories()
+        public async Task GetReposAsync_Returns_Names_Of_All_Repositories()
         {
             // Arrange
             const string org = "ORG";
@@ -324,7 +324,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = (await githubApi.GetRepos(org)).ToArray();
+            var result = (await githubApi.GetReposAsync(org)).ToArray();
 
             // Assert
             result.Should().HaveCount(4);
@@ -332,7 +332,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RemoveTeamMember_Calls_The_Right_Endpoint()
+        public async Task RemoveTeamMemberAsync_Calls_The_Right_Endpoint()
         {
             // Arrange
             const string org = "ORG";
@@ -346,14 +346,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.RemoveTeamMember(org, teamName, member);
+            await githubApi.RemoveTeamMemberAsync(org, teamName, member);
 
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
 
         [Fact]
-        public async Task AddTeamSync_Calls_The_Right_Endpoint_With_Payload()
+        public async Task AddTeamSyncAsync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -372,14 +372,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.AddTeamSync(org, teamName, groupId, groupName, groupDesc);
+            await githubApi.AddTeamSyncAsync(org, teamName, groupId, groupName, groupDesc);
 
             // Assert
             githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
-        public async Task AddTeamToRepo_Calls_The_Right_Endpoint_With_Payload()
+        public async Task AddTeamToRepoAsync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -394,14 +394,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.AddTeamToRepo(org, repo, teamName, role);
+            await githubApi.AddTeamToRepoAsync(org, repo, teamName, role);
 
             // Assert
             githubClientMock.Verify(m => m.PutAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
-        public async Task GetOrganizationId_Returns_The_Org_Id()
+        public async Task GetOrganizationIdAsync_Returns_The_Org_Id()
         {
             // Arrange
             const string org = "ORG";
@@ -430,7 +430,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.GetOrganizationId(org);
+            var result = await githubApi.GetOrganizationIdAsync(org);
 
             // Assert
             result.Should().Be(orgId);
@@ -468,14 +468,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, null);
+            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSourceAsync(orgId, null);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
         }
 
         [Fact]
-        public async Task CreateAdoMigrationSource_Uses_Ado_Server_Url()
+        public async Task CreateAdoMigrationSourceAsync_Uses_Ado_Server_Url()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -507,14 +507,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSource(orgId, adoServerUrl);
+            var expectedMigrationSourceId = await githubApi.CreateAdoMigrationSourceAsync(orgId, adoServerUrl);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
         }
 
         [Fact]
-        public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
+        public async Task CreateGhecMigrationSourceAsync_Returns_New_Migration_Source_Id()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -545,14 +545,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSource(orgId);
+            var expectedMigrationSourceId = await githubApi.CreateGhecMigrationSourceAsync(orgId);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
         }
 
         [Fact]
-        public async Task StartMigration_Returns_New_Repository_Migration_Id()
+        public async Task StartMigrationAsync_Returns_New_Repository_Migration_Id()
         {
             // Arrange
             const string migrationSourceId = "MIGRATION_SOURCE_ID";
@@ -649,14 +649,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedRepositoryMigrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, repo, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
+            var expectedRepositoryMigrationId = await githubApi.StartMigrationAsync(migrationSourceId, adoRepoUrl, orgId, repo, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
 
             // Assert
             expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
         }
 
         [Fact]
-        public async Task GetMigrationState_Returns_The_Migration_State()
+        public async Task GetMigrationStateAsync_Returns_The_Migration_State()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
@@ -688,14 +688,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
+            var expectedMigrationState = await githubApi.GetMigrationStateAsync(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
         }
 
         [Fact]
-        public async Task GetMigrationState_Retries_On_502()
+        public async Task GetMigrationStateAsync_Retries_On_502()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
@@ -729,14 +729,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedMigrationState = await githubApi.GetMigrationState(migrationId);
+            var expectedMigrationState = await githubApi.GetMigrationStateAsync(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
         }
 
         [Fact]
-        public async Task GetMigrationFailureReason_Returns_The_Migration_Failure_Reason()
+        public async Task GetMigrationFailureReasonAsync_Returns_The_Migration_Failure_Reason()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
@@ -768,14 +768,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
+            var expectedFailureReason = await githubApi.GetMigrationFailureReasonAsync(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
         }
 
         [Fact]
-        public async Task GetMigrationFailureReason_Retries_On_502()
+        public async Task GetMigrationFailureReasonAsync_Retries_On_502()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
@@ -809,14 +809,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var expectedFailureReason = await githubApi.GetMigrationFailureReason(migrationId);
+            var expectedFailureReason = await githubApi.GetMigrationFailureReasonAsync(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
         }
 
         [Fact]
-        public async Task GetIdpGroupId_Returns_The_Idp_Group_Id()
+        public async Task GetIdpGroupIdAsync_Returns_The_Idp_Group_Id()
         {
             // Arrange
             const string org = "ORG";
@@ -847,14 +847,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualGroupId = await githubApi.GetIdpGroupId(org, groupName);
+            var actualGroupId = await githubApi.GetIdpGroupIdAsync(org, groupName);
 
             // Assert
             actualGroupId.Should().Be(expectedGroupId);
         }
 
         [Fact]
-        public async Task GetTeamSlug_Returns_The_Team_Slug()
+        public async Task GetTeamSlugAsync_Returns_The_Team_Slug()
         {
             // Arrange
             const string org = "ORG";
@@ -888,14 +888,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualTeamSlug = await githubApi.GetTeamSlug(org, teamName);
+            var actualTeamSlug = await githubApi.GetTeamSlugAsync(org, teamName);
 
             // Assert
             actualTeamSlug.Should().Be(expectedTeamSlug);
         }
 
         [Fact]
-        public async Task AddEmuGroupToTeam_Calls_The_Right_Endpoint_With_Payload()
+        public async Task AddEmuGroupToTeamAsync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
             const string org = "ORG";
@@ -909,14 +909,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.AddEmuGroupToTeam(org, teamSlug, groupId);
+            await githubApi.AddEmuGroupToTeamAsync(org, teamSlug, groupId);
 
             // Assert
             githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
         [Fact]
-        public async Task GrantMigratorRole_Returns_True_On_Success()
+        public async Task GrantMigratorRoleAsync_Returns_True_On_Success()
         {
             // Arrange
             const string org = "ORG";
@@ -946,14 +946,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
+            var actualSuccessState = await githubApi.GrantMigratorRoleAsync(org, actor, actorType);
 
             // Assert
             actualSuccessState.Should().BeTrue();
         }
 
         [Fact]
-        public async Task GrantMigratorRole_Returns_False_On_HttpRequestException()
+        public async Task GrantMigratorRoleAsync_Returns_False_On_HttpRequestException()
         {
             // Arrange
             const string org = "ORG";
@@ -974,14 +974,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualSuccessState = await githubApi.GrantMigratorRole(org, actor, actorType);
+            var actualSuccessState = await githubApi.GrantMigratorRoleAsync(org, actor, actorType);
 
             // Assert
             actualSuccessState.Should().BeFalse();
         }
 
         [Fact]
-        public async Task RevokeMigratorRole_Returns_True_On_Success()
+        public async Task RevokeMigratorRoleAsync_Returns_True_On_Success()
         {
             // Arrange
             const string org = "ORG";
@@ -1011,14 +1011,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
+            var actualSuccessState = await githubApi.RevokeMigratorRoleAsync(org, actor, actorType);
 
             // Assert
             actualSuccessState.Should().BeTrue();
         }
 
         [Fact]
-        public async Task RevokeMigratorRole_Returns_False_On_HttpRequestException()
+        public async Task RevokeMigratorRoleAsync_Returns_False_On_HttpRequestException()
         {
             // Arrange
             const string org = "ORG";
@@ -1039,14 +1039,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var actualSuccessState = await githubApi.RevokeMigratorRole(org, actor, actorType);
+            var actualSuccessState = await githubApi.RevokeMigratorRoleAsync(org, actor, actorType);
 
             // Assert
             actualSuccessState.Should().BeFalse();
         }
 
         [Fact]
-        public async Task DeleteRepo_Calls_The_Right_Endpoint()
+        public async Task DeleteRepoAsync_Calls_The_Right_Endpoint()
         {
             // Arrange
             const string org = "FOO-ORG";
@@ -1058,14 +1058,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            await githubApi.DeleteRepo(org, repo);
+            await githubApi.DeleteRepoAsync(org, repo);
 
             // Assert
             githubClientMock.Verify(m => m.DeleteAsync(url));
         }
 
         [Fact]
-        public async Task GetMigrationStates_Returns_All_Migration_States_For_An_Org()
+        public async Task GetMigrationStatesAsync_Returns_All_Migration_States_For_An_Org()
         {
             // Arrange
             const string url = "https://api.github.com/graphql";
@@ -1152,7 +1152,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var migrationStates = (await githubApi.GetMigrationStates(orgId)).ToArray();
+            var migrationStates = (await githubApi.GetMigrationStatesAsync(orgId)).ToArray();
 
             // Assert
             migrationStates.Should().HaveCount(4);
@@ -1166,7 +1166,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetUserId_Returns_The_User_Id()
+        public async Task GetUserIdAsync_Returns_The_User_Id()
         {
             // Arrange
             const string login = "mona";
@@ -1195,14 +1195,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.GetUserId(login);
+            var result = await githubApi.GetUserIdAsync(login);
 
             // Assert
             result.Should().Be(userId);
         }
 
         [Fact]
-        public async Task GetUserId_For_No_Existant_User_Returns_Null()
+        public async Task GetUserIdAsync_For_No_Existant_User_Returns_Null()
         {
             // Arrange
             const string login = "idonotexist";
@@ -1239,14 +1239,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.GetUserId(login);
+            var result = await githubApi.GetUserIdAsync(login);
 
             // Assert
             result.Should().BeNull();
         }
 
         [Fact]
-        public async Task ReclaimMannequin_Returns_Error()
+        public async Task ReclaimMannequinAsync_Returns_Error()
         {
             // Arrange
             const string orgId = "dummyorgid";
@@ -1320,14 +1320,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+            var result = await githubApi.ReclaimMannequinAsync(orgId, mannequinId, targetUserId);
 
             // Assert
             result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
         }
 
         [Fact]
-        public async Task GetMannequins_Returns_NoMannequins()
+        public async Task GetMannequinsAsync_Returns_NoMannequins()
         {
             // Arrange
             const string orgId = "ORG_ID";
@@ -1370,14 +1370,14 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.GetMannequins(orgId);
+            var result = await githubApi.GetMannequinsAsync(orgId);
 
             // Assert
             result.Count().Should().Be(0);
         }
 
         [Fact]
-        public async Task GetMannequins_Returns_Mannequins()
+        public async Task GetMannequinsAsync_Returns_Mannequins()
         {
             // Arrange
             const string orgId = "ORG_ID";
@@ -1443,7 +1443,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.GetMannequins(orgId);
+            var result = await githubApi.GetMannequinsAsync(orgId);
 
             // Assert
             result.Count().Should().Be(2);
@@ -1462,7 +1462,7 @@ namespace OctoshiftCLI.Tests
 
 
         [Fact]
-        public async Task ReclaimMannequin_Returns_Success()
+        public async Task ReclaimMannequinAsync_Returns_Success()
         {
             // Arrange
             const string orgId = "dummyorgid";
@@ -1536,7 +1536,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
-            var result = await githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+            var result = await githubApi.ReclaimMannequinAsync(orgId, mannequinId, targetUserId);
 
             // Assert
             result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);

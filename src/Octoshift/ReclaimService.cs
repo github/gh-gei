@@ -83,7 +83,7 @@ namespace Octoshift
 
         public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force)
         {
-            var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
+            var githubOrgId = await _githubApi.GetOrganizationIdAsync(githubOrg);
 
             var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
             if (mannequins.IsEmpty())
@@ -98,7 +98,7 @@ namespace Octoshift
                 throw new OctoshiftCliException($"User {mannequinUser} is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
             }
 
-            var targetUserId = await _githubApi.GetUserId(targetUser);
+            var targetUserId = await _githubApi.GetUserIdAsync(targetUser);
             if (targetUserId == null)
             {
                 throw new OctoshiftCliException($"Target user {targetUser} not found.");
@@ -109,7 +109,7 @@ namespace Octoshift
             // get all unique mannequins by login and id and map them all to the same target
             foreach (var mannequin in mannequins.GetUniqueUsers())
             {
-                var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
+                var result = await _githubApi.ReclaimMannequinAsync(githubOrgId, mannequin.Id, targetUserId);
 
                 success &= HandleResult(mannequinUser, targetUser, mannequin, targetUserId, result);
             }
@@ -139,7 +139,7 @@ namespace Octoshift
                 throw new OctoshiftCliException($"Invalid Header. Should be: {CSVHEADER}");
             }
 
-            var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
+            var githubOrgId = await _githubApi.GetOrganizationIdAsync(githubTargetOrg);
 
             var mannequins = await GetMannequins(githubOrgId);
 
@@ -166,7 +166,7 @@ namespace Octoshift
                     continue;
                 }
 
-                var claimantId = await _githubApi.GetUserId(claimantLogin);
+                var claimantId = await _githubApi.GetUserIdAsync(claimantLogin);
 
                 if (claimantId == null)
                 {
@@ -174,7 +174,7 @@ namespace Octoshift
                     continue;
                 }
 
-                var result = await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
+                var result = await _githubApi.ReclaimMannequinAsync(githubOrgId, userid, claimantId);
 
                 HandleResult(login, claimantLogin, mannequin, claimantId, result);
             }
@@ -182,7 +182,7 @@ namespace Octoshift
 
         private async Task<Mannequins> GetMannequins(string githubOrgId)
         {
-            var returnedMannequins = await _githubApi.GetMannequins(githubOrgId);
+            var returnedMannequins = await _githubApi.GetMannequinsAsync(githubOrgId);
 
             return new Mannequins(returnedMannequins);
         }

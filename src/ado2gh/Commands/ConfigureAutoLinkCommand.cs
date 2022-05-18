@@ -74,7 +74,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
 
-            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
+            var autoLinks = await githubApi.GetAutoLinksAsync(githubOrg, githubRepo);
             if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
             {
                 _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
@@ -86,10 +86,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
                 _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
-                await githubApi.DeleteAutoLink(githubOrg, githubRepo, autoLink.Id);
+                await githubApi.DeleteAutoLinkAsync(githubOrg, githubRepo, autoLink.Id);
             }
 
-            await githubApi.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate);
+            await githubApi.AddAutoLinkAsync(githubOrg, githubRepo, keyPrefix, urlTemplate);
 
             _log.LogSuccess("Successfully configured autolink references");
         }

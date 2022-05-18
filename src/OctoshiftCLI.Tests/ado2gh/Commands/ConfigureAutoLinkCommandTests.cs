@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+            mockGithub.Setup(x => x.GetAutoLinksAsync(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
@@ -45,8 +45,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new ConfigureAutoLinkCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
-            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate));
+            mockGithub.Verify(x => x.DeleteAutoLinkAsync(githubOrg, githubRepo, 1), Times.Never);
+            mockGithub.Verify(x => x.AddAutoLinkAsync(githubOrg, githubRepo, keyPrefix, urlTemplate));
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             const string githubPat = "github-pat";
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+            mockGithub.Setup(x => x.GetAutoLinksAsync(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
@@ -77,7 +77,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+            mockGithub.Setup(x => x.GetAutoLinksAsync(It.IsAny<string>(), It.IsAny<string>()))
                       .Returns(Task.FromResult(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
                           (1, keyPrefix, urlTemplate),
@@ -93,8 +93,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new ConfigureAutoLinkCommand(mockLogger.Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1), Times.Never);
-            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Never);
+            mockGithub.Verify(x => x.DeleteAutoLinkAsync(githubOrg, githubRepo, 1), Times.Never);
+            mockGithub.Verify(x => x.AddAutoLinkAsync(githubOrg, githubRepo, keyPrefix, urlTemplate), Times.Never);
             actualLogOutput.Should().Contain($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
         }
 
@@ -109,7 +109,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/".Replace(" ", "%20");
 
             var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
+            mockGithub.Setup(x => x.GetAutoLinksAsync(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>
                       {
                           (1, keyPrefix, "SomethingElse"),
@@ -125,8 +125,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new ConfigureAutoLinkCommand(mockLogger.Object, mockGithubApiFactory.Object);
             await command.Invoke(githubOrg, githubRepo, adoOrg, adoTeamProject);
 
-            mockGithub.Verify(x => x.DeleteAutoLink(githubOrg, githubRepo, 1));
-            mockGithub.Verify(x => x.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate));
+            mockGithub.Verify(x => x.DeleteAutoLinkAsync(githubOrg, githubRepo, 1));
+            mockGithub.Verify(x => x.AddAutoLinkAsync(githubOrg, githubRepo, keyPrefix, urlTemplate));
             actualLogOutput.Should().Contain($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
             actualLogOutput.Should().Contain($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
         }

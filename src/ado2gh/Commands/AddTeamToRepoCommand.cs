@@ -70,8 +70,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var github = _githubApiFactory.Create(personalAccessToken: githubPat);
-            var teamSlug = await github.GetTeamSlug(githubOrg, team);
-            await github.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role);
+            var teamSlug = await github.GetTeamSlugAsync(githubOrg, team);
+            await github.AddTeamToRepoAsync(githubOrg, githubRepo, teamSlug, role);
 
             _log.LogSuccess("Successfully added team to repo");
         }

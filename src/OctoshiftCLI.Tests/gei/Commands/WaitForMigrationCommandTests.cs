@@ -31,7 +31,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const int waitIntervalInSeconds = 1;
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
+            mockGithubApi.SetupSequence(x => x.GetMigrationStateAsync(specifiedMigrationId).Result)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.Succeeded);
@@ -65,7 +65,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
             mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
+            mockGithubApi.Verify(m => m.GetMigrationStateAsync(specifiedMigrationId), Times.Exactly(3));
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -82,8 +82,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const int waitIntervalInSeconds = 1;
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(m => m.GetMigrationFailureReason(specifiedMigrationId).Result).Returns(failureReason);
-            mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
+            mockGithubApi.Setup(m => m.GetMigrationFailureReasonAsync(specifiedMigrationId).Result).Returns(failureReason);
+            mockGithubApi.SetupSequence(x => x.GetMigrationStateAsync(specifiedMigrationId).Result)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.Failed);
@@ -122,8 +122,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
             mockLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
-            mockGithubApi.Verify(m => m.GetMigrationFailureReason(specifiedMigrationId), Times.Once);
+            mockGithubApi.Verify(m => m.GetMigrationStateAsync(specifiedMigrationId), Times.Exactly(3));
+            mockGithubApi.Verify(m => m.GetMigrationFailureReasonAsync(specifiedMigrationId), Times.Once);
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -141,7 +141,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(x => x.GetMigrationState(specifiedMigrationId).Result)
+                .Setup(x => x.GetMigrationStateAsync(specifiedMigrationId).Result)
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();

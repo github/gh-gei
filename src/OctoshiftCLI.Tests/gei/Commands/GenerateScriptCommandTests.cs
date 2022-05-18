@@ -142,7 +142,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -185,7 +185,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -228,7 +228,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -279,7 +279,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { repo1, repo2, repo3 });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -485,7 +485,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -537,7 +537,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -930,7 +930,7 @@ if ($Failed -ne 0) {
             const string repo2 = "FOO-REPO-2";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { repo1, repo2 });
+            mockGithubApi.Setup(m => m.GetReposAsync(SOURCE_ORG)).ReturnsAsync(new[] { repo1, repo2 });
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
@@ -1035,7 +1035,7 @@ if ($Failed -ne 0) {
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1138,7 +1138,7 @@ if ($Failed -ne 0) {
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1314,7 +1314,7 @@ if ($Failed -ne 0) {
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1362,7 +1362,7 @@ if ($Failed -ne 0) {
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1412,7 +1412,7 @@ if ($Failed -ne 0) {
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .Setup(m => m.GetReposAsync(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
@@ -1459,7 +1459,7 @@ if ($Failed -ne 0) {
         {
             // Arrange
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { REPO });
+            mockGithubApi.Setup(m => m.GetReposAsync(SOURCE_ORG)).ReturnsAsync(new[] { REPO });
             var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
             mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))

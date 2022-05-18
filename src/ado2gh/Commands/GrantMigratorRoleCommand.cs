@@ -76,8 +76,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
-            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
+            var githubOrgId = await githubApi.GetOrganizationIdAsync(githubOrg);
+            var success = await githubApi.GrantMigratorRoleAsync(githubOrgId, actor, actorType);
 
             if (success)
             {
