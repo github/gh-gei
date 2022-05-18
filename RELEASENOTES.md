@@ -1,1 +1,1 @@
-
+- Add `download-logs` command to download migration logs

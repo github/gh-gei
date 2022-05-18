@@ -764,6 +764,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+
             const string actualFailureReason = "FAILURE_REASON";
             var response = $@"
             {{
@@ -792,6 +793,101 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
+        }
+
+        [Fact]
+        public async Task GetMigrationLogUrl_Returns_The_Migration_Log_URL()
+        {
+            // Arrange
+            const string org = "ORG_LOGIN";
+            const string repo = "REPOSITORY_NAME";
+            const string url = "https://api.github.com/graphql";
+
+            var query = "query ($org: String!, $repo: String!)";
+            var gql = @"
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
+                }
+            ";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
+
+            const string migrationLogUrl = "MIGRATION_LOG_URL";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""organization"": {{
+                        ""repositoryMigrations"": {{
+                            ""nodes"": [
+                                {{
+                                    ""migrationLogUrl"": ""{migrationLogUrl}""
+                                }}
+                            ]
+                        }}
+                    }}
+                }}
+            }}";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationLog = await githubApi.GetMigrationLogUrl(org, repo);
+
+            // Assert
+            expectedMigrationLog.Should().Be(migrationLogUrl);
+        }
+
+        [Fact]
+        public async Task GetMigrationLogUrl_Returns_Null_When_No_Migration()
+        {
+            // Arrange
+            const string org = "ORG_LOGIN";
+            const string repo = "REPOSITORY_NAME";
+            const string url = "https://api.github.com/graphql";
+
+            var query = "query ($org: String!, $repo: String!)";
+            var gql = @"
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
+                }
+            ";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
+            var response = @"
+            {
+                ""data"": {
+                    ""organization"": {
+                        ""repositoryMigrations"": {
+                            ""nodes"": [
+                            ]
+                        }
+                    }
+                }
+            }";
+
+            var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+            githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .ReturnsAsync(response);
+
+            // Act
+            var githubApi = new GithubApi(githubClientMock.Object, Api_Url, _retryPolicy);
+            var expectedMigrationLog = await githubApi.GetMigrationLogUrl(org, repo);
+
+            // Assert
+            expectedMigrationLog.Should().Be(null);
         }
 
         [Fact]
