@@ -617,7 +617,7 @@ if ($Failed -ne 0) {
 
         private string DownloadMigrationLogScript(string githubOrg, string githubRepo) =>
             _generateScriptOptions.DownloadMigrationLogs
-            ? $"./ado2gh download-logs --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\""
+            ? $"./ado2gh download-logs --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --wait"
             : null;
 
         private string Exec(string script) => Wrap(script, "Exec");
