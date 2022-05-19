@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -15,13 +16,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new DownloadLogsCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("download-logs", command.Name);
-            Assert.Equal(7, command.Options.Count);
+            Assert.Equal(8, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "migration-log-file", false);
+            TestHelpers.VerifyCommandOption(command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(command.Options, "overwrite", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
@@ -156,6 +158,62 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public async Task Waits_For_URL_To_Populate_When_Wait_Requested()
+        {
+            // Arrange
+            var githubOrg = "FooOrg";
+            var repo = "foo-repo";
+            var logUrlEmpty = "";
+            var logUrlPopulated = "some-url";
+            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
+            const int waitIntervalInSeconds = 1;
+
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.SetupSequence(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(logUrlEmpty)
+                .ReturnsAsync(logUrlEmpty)
+                .ReturnsAsync(logUrlPopulated);
+
+            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
+
+            var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
+            mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                $"Downloading logs for organization {githubOrg}...",
+                $"GITHUB ORG: {githubOrg}",
+                $"GITHUB REPO: {repo}",
+                $"Waiting {waitIntervalInSeconds} more seconds for log to populate...",
+                $"Waiting {waitIntervalInSeconds} more seconds for log to populate...",
+                $"Downloading log for repository {repo} to {defaultFileName}...",
+                $"Downloaded {repo} log to {defaultFileName}."
+            };
+
+            // Act
+            var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
+            {
+                WaitIntervalInSeconds = waitIntervalInSeconds
+            };
+
+            await command.Invoke(githubOrg, repo, null, null, null, true);
+
+            // Assert
+            mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(3));
+            mockHttpDownloadService.Verify(m => m.Download(logUrlPopulated, defaultFileName));
+
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
+            mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
+            actualLogOutput.Should().Equal(expectedLogOutput);
+        }
+
+        [Fact]
         public async Task Calls_Download_When_File_Exists_AndOverwrite_Requested()
         {
             // Arrange
@@ -179,7 +237,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 FileExists = _ => true
             };
 
-            await command.Invoke(githubOrg, repo, null, null, null, overwrite);
+            await command.Invoke(githubOrg, repo, null, null, null, false, overwrite);
 
             // Assert
             mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));

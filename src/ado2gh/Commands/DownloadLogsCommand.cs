@@ -11,6 +11,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class DownloadLogsCommand : Command
     {
+        internal int WaitIntervalInSeconds = 10;
+
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
         private readonly HttpDownloadService _httpDownloadService;
@@ -59,6 +61,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
             };
 
+            var wait = new Option("--wait")
+            {
+                IsRequired = false,
+                Description = "Waits for log to be ready to download."
+            };
+
             var overwrite = new Option("--overwrite")
             {
                 IsRequired = false,
@@ -76,10 +84,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubApiUrl);
             AddOption(githubPat);
             AddOption(migrationLogFile);
+            AddOption(wait);
             AddOption(overwrite);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -88,6 +97,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             string githubApiUrl = null,
             string githubPat = null,
             string migrationLogFile = null,
+            bool wait = false,
             bool overwrite = false,
             bool verbose = false
         )
@@ -126,21 +136,36 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogWarning($"Overwriting {migrationLogFile} due to --overwrite option.");
             }
 
-            _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
-
             var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
-            var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
+            var logUrl = (string)null;
 
-            if (logUrl == null)
+            while (true)
             {
-                throw new OctoshiftCliException($"Migration not found for repository {githubRepo}!");
+                logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
+
+                if (logUrl.HasValue())
+                {
+                    break;
+                }
+
+                if (logUrl == null)
+                {
+                    throw new OctoshiftCliException($"Migration not found for repository {githubRepo}!");
+                }
+
+                if (!logUrl.HasValue())
+                {
+                    if(!wait)
+                    {
+                        throw new OctoshiftCliException($"Migration found for repository {githubRepo}, but migration log not available yet!");
+                    }
+
+                    _log.LogInformation($"Waiting {WaitIntervalInSeconds} more seconds for log to populate...");
+                    await Task.Delay(WaitIntervalInSeconds * 1000);
+                }
             }
 
-            if (!logUrl.HasValue())
-            {
-                throw new OctoshiftCliException($"Migration found for repository {githubRepo}, but migration log not available yet!");
-            }
-
+            _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
             await _httpDownloadService.Download(logUrl, migrationLogFile);
 
             _log.LogSuccess($"Downloaded {githubRepo} log to {migrationLogFile}.");
