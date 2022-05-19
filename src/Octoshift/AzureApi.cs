@@ -20,7 +20,10 @@ namespace OctoshiftCLI
             _client = client;
             _blobServiceClient = blobServiceClient;
 
-            _client.Timeout = new TimeSpan(1, 0, 0);
+            if (_client is not null)
+            {
+                _client.Timeout = new TimeSpan(1, 0, 0);
+            }
         }
 
         public virtual async Task<byte[]> DownloadArchive(string fromUrl)
