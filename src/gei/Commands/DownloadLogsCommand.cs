@@ -155,7 +155,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (!logUrl.HasValue())
                 {
-                    if(!wait)
+                    if (!wait)
                     {
                         throw new OctoshiftCliException($"Migration found for repository {targetRepo}, but migration log not available yet!");
                     }

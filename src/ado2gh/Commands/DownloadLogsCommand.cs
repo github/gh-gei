@@ -155,7 +155,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                 if (!logUrl.HasValue())
                 {
-                    if(!wait)
+                    if (!wait)
                     {
                         throw new OctoshiftCliException($"Migration found for repository {githubRepo}, but migration log not available yet!");
                     }
