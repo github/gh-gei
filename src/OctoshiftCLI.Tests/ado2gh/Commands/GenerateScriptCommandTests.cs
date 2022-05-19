@@ -18,28 +18,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string ADO_ORG = "ADO_ORG";
         private const string ADO_TEAM_PROJECT = "ADO_TEAM_PROJECT";
         private const string FOO_REPO = "FOO_REPO";
-        private const string FOO_REPO_ID = "FOO_REPO_ID";
         private const string FOO_PIPELINE = "FOO_PIPELINE";
         private const string BAR_REPO = "BAR_REPO";
-        private const string BAR_REPO_ID = "BAR_REPO_ID";
         private const string BAR_PIPELINE = "BAR_PIPELINE";
         private const string APP_ID = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
         private const string GITHUB_ORG = "GITHUB_ORG";
 
-        private IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
-        private IDictionary<string, IEnumerable<string>> ADO_TEAM_PROJECTS = new Dictionary<string, IEnumerable<string>>() { { ADO_ORG, new List<string>() { ADO_TEAM_PROJECT } } };
-        private IDictionary<string, IDictionary<string, IEnumerable<string>>> ADO_REPOS = new Dictionary<string, IDictionary<string, IEnumerable<string>>>() { { ADO_ORG, new Dictionary<string, IEnumerable<string>>() { { ADO_TEAM_PROJECT, new List<string>() { FOO_REPO } } } } };
-        private IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> ADO_PIPELINES =
+        private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
+        private readonly IDictionary<string, IEnumerable<string>> ADO_TEAM_PROJECTS = new Dictionary<string, IEnumerable<string>>() { { ADO_ORG, new List<string>() { ADO_TEAM_PROJECT } } };
+        private readonly IDictionary<string, IDictionary<string, IEnumerable<string>>> ADO_REPOS = new Dictionary<string, IDictionary<string, IEnumerable<string>>>() { { ADO_ORG, new Dictionary<string, IEnumerable<string>>() { { ADO_TEAM_PROJECT, new List<string>() { FOO_REPO } } } } };
+        private readonly IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> ADO_PIPELINES =
             new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>()
             { { ADO_ORG, new Dictionary<string, IDictionary<string, IEnumerable<string>>>()
                          { { ADO_TEAM_PROJECT, new Dictionary<string, IEnumerable<string>>()
                                                { { FOO_REPO, new List<string>()
                                                              { FOO_PIPELINE } } } } } } };
 
-        private IEnumerable<string> EMPTY_ORGS = new List<string>();
-        private IDictionary<string, IEnumerable<string>> EMPTY_TEAM_PROJECTS = new Dictionary<string, IEnumerable<string>>();
-        private IDictionary<string, IDictionary<string, IEnumerable<string>>> EMPTY_REPOS = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
-        private IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> EMPTY_PIPELINES = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
+        private readonly IEnumerable<string> EMPTY_ORGS = new List<string>();
+        private readonly IDictionary<string, IEnumerable<string>> EMPTY_TEAM_PROJECTS = new Dictionary<string, IEnumerable<string>>();
+        private readonly IDictionary<string, IDictionary<string, IEnumerable<string>>> EMPTY_REPOS = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
+        private readonly IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> EMPTY_PIPELINES = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
 
         [Fact]
         public void Should_Have_Options()

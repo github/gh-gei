@@ -10,10 +10,7 @@ namespace OctoshiftCLI.AdoToGithub
     {
         private readonly OctoLogger _log;
 
-        public AdoInspectorService(OctoLogger log)
-        {
-            _log = log;
-        }
+        public AdoInspectorService(OctoLogger log) => _log = log;
 
         public virtual async Task<IEnumerable<string>> GetOrgs(AdoApi api, string org = null)
         {
