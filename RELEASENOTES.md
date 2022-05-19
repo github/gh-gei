@@ -1,2 +1,3 @@
 - Add `download-logs` command to download migration logs
 - Add `--download-migration-logs` option to `generate-script` command
+- Increased download/upload timeouts when migrating from GHES (some customers were hitting timeout errors with large repos and/or slow connections)
