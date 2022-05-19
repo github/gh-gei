@@ -569,7 +569,7 @@ if ($Failed -ne 0) {
 
         private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo)
         {
-            return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
+            return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\" --wait";
         }
 
         private string Exec(string script) => Wrap(script, "Exec");
