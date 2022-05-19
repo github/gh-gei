@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
@@ -18,6 +19,8 @@ namespace OctoshiftCLI
         {
             _client = client;
             _blobServiceClient = blobServiceClient;
+
+            _client.Timeout = new TimeSpan(1, 0, 0);
         }
 
         public virtual async Task<byte[]> DownloadArchive(string fromUrl)
@@ -31,8 +34,17 @@ namespace OctoshiftCLI
             var containerClient = await CreateBlobContainerAsync();
             var blobClient = containerClient.GetBlobClient(fileName);
 
+            var options = new BlobUploadOptions
+            {
+                TransferOptions = new Azure.Storage.StorageTransferOptions()
+                {
+                    InitialTransferSize = 4 * 1024 * 1024,
+                    MaximumTransferSize = 4 * 1024 * 1024
+                },
+            };
+
             var binaryDataContent = new BinaryData(content);
-            await blobClient.UploadAsync(binaryDataContent, true);
+            await blobClient.UploadAsync(binaryDataContent, options);
             return GetServiceSasUriForBlob(blobClient);
         }
 
