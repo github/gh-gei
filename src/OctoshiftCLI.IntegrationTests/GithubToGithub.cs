@@ -53,6 +53,9 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+
+            await _helper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
+            await _helper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
         }
 
         protected virtual void Dispose(bool disposing)
