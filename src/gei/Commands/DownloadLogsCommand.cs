@@ -137,7 +137,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
-            var logUrl = (string)null;
+            string logUrl;
 
             while (true)
             {

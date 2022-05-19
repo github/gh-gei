@@ -137,7 +137,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
-            var logUrl = (string)null;
+            string logUrl;
 
             while (true)
             {
