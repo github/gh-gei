@@ -30,7 +30,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _httpDownloadService = httpDownloadService;
 
             Description = "Downloads migration logs for migrations.";
-            IsHidden = true;
 
             var githubOrg = new Option<string>("--github-org")
             {

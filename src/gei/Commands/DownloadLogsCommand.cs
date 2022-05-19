@@ -30,7 +30,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _httpDownloadService = httpDownloadService;
 
             Description = "Downloads migration logs for migrations.";
-            IsHidden = true;
 
             var githubTargetOrg = new Option<string>("--github-target-org")
             {
