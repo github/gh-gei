@@ -1,1 +1,2 @@
 - Add `download-logs` command to download migration logs
+- Increased download/upload timeouts when migrating from GHES (some customers were hitting timeout errors with large repos and/or slow connections)
