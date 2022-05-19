@@ -585,5 +585,14 @@ steps:
             boardsConnection.Should().NotBeNull();
             boardsConnection.repoIds.Count().Should().Be(1);
         }
+
+        public async Task AssertMigrationLogFileExists(string githubOrg, string repo)
+        {
+            _output.WriteLine("Checking that the boards integration is configured...");
+
+            var migrationLogExists = File.Exists($"migration-log-{githubOrg}-{repo}.log");
+
+            migrationLogExists.Should().Be(true);
+        }
     }
 }
