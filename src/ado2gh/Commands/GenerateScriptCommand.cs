@@ -146,7 +146,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 DisableAdoRepos = args.All || args.DisableAdoRepos,
                 IntegrateBoards = args.All || args.IntegrateBoards,
                 RewirePipelines = args.All || args.RewirePipelines,
-                DownloadMigrationLogs = args.DownloadMigrationLogs
+                DownloadMigrationLogs = args.All || args.DownloadMigrationLogs
             };
 
             var ado = _adoApiFactory.Create(args.AdoPat);
