@@ -590,7 +590,8 @@ steps:
         {
             _output.WriteLine("Checking that the migration log was downloaded...");
 
-            var migrationLogExists = File.Exists($"migration-log-{githubOrg}-{repo}.log");
+            var migrationLogFile = $"migration-log-{githubOrg}-{repo}.log";
+            var migrationLogExists = await Task.Run(() => File.Exists(migrationLogFile));
 
             migrationLogExists.Should().Be(true);
         }
