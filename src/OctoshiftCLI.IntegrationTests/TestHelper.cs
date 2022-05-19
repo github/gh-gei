@@ -588,7 +588,7 @@ steps:
 
         public async Task AssertMigrationLogFileExists(string githubOrg, string repo)
         {
-            _output.WriteLine("Checking that the boards integration is configured...");
+            _output.WriteLine("Checking that the migration log was downloaded...");
 
             var migrationLogExists = File.Exists($"migration-log-{githubOrg}-{repo}.log");
 
