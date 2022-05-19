@@ -64,11 +64,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var ado = _adoApiFactory.Create(adoPat);
 
-            var teamProjectIdTask = ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var repoIdTask = ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
-
-            var teamProjectId = await teamProjectIdTask;
-            var repoId = await repoIdTask;
+            var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
 
             var identityDescriptor = await ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
             await ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
