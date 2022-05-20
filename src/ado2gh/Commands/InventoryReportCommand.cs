@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
