@@ -124,5 +124,23 @@ namespace OctoshiftCLI.AdoToGithub
 
             return pipelines;
         }
+
+        public virtual void OutputRepoListToLog(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        {
+            foreach (var org in repos?.Keys)
+            {
+                _log.LogInformation($"ADO Org: {org}");
+
+                foreach (var teamProject in repos[org].Keys)
+                {
+                    _log.LogInformation($"  Team Project: {teamProject}");
+
+                    foreach (var repo in repos[org][teamProject])
+                    {
+                        _log.LogInformation($"    Repo: {repo}");
+                    }
+                }
+            }
+        }
     }
 }
