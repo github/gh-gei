@@ -151,6 +151,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var pipelines = _generateScriptOptions.RewirePipelines ? await _adoInspectorService.GetPipelines(ado, repos) : new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
             var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, orgs, args.GithubOrg) : new Dictionary<string, string>();
 
+            OutputRepoListToLog(repos);
+
             CheckForDuplicateRepoNames(repos);
 
             var script = args.Sequential
@@ -160,6 +162,24 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (args.Output.HasValue())
             {
                 await WriteToFile(args.Output.FullName, script);
+            }
+        }
+
+        private void OutputRepoListToLog(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        {
+            foreach (var org in repos.Keys)
+            {
+                _log.LogInformation($"ADO Org: {org}");
+
+                foreach (var teamProject in repos[org].Keys)
+                {
+                    _log.LogInformation($"  Team Project: {teamProject}");
+
+                    foreach (var repo in repos[org][teamProject])
+                    {
+                        _log.LogInformation($"Repo: {repo}");
+                    }
+                }
             }
         }
 
