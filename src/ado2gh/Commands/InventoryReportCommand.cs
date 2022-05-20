@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -14,13 +12,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
+        private readonly AdoInspectorService _adoInspectorService;
         private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
 
-        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, OrgsCsvGeneratorService orgsCsvGeneratorService) : base("inventory-report")
+        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService) : base("inventory-report")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
             _orgsCsvGenerator = orgsCsvGeneratorService;
+            _adoInspectorService = adoInspectorService;
 
             Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations. The repos.csv can be fed as an input into other commands to help splitting large migrations up into batches.";
             Description += Environment.NewLine;
@@ -49,7 +49,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             Handler = CommandHandler.Create<string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoPat, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -66,14 +66,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var ado = _adoApiFactory.Create(adoPat);
-
-            var orgs = new List<string>() { adoOrg };
-
-            if (string.IsNullOrWhiteSpace(adoOrg))
-            {
-                var userId = await ado.GetUserId();
-                orgs = (await ado.GetOrganizations(userId)).ToList();
-            }
+            var orgs = await _adoInspectorService.GetOrgs(ado, adoOrg);
 
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado, orgs);
 

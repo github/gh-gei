@@ -18,12 +18,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly AdoApiFactory _adoApiFactory;
         private GenerateScriptOptions _generateScriptOptions;
         private readonly IVersionProvider _versionProvider;
+        private readonly AdoInspectorService _adoInspectorService;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorService adoInspectorService) : base("generate-script")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
             _versionProvider = versionProvider;
+            _adoInspectorService = adoInspectorService;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
@@ -143,10 +145,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var ado = _adoApiFactory.Create(args.AdoPat);
 
-            var orgs = await GetOrgs(ado, args.AdoOrg);
-            var repos = await GetRepos(ado, orgs, args.AdoTeamProject);
-            var pipelines = await GetPipelines(ado, repos);
-            var appIds = await GetAppIds(ado, orgs, args.GithubOrg);
+            var orgs = await _adoInspectorService.GetOrgs(ado, args.AdoOrg);
+            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs, args.AdoTeamProject);
+            var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
+            var pipelines = _generateScriptOptions.RewirePipelines ? await _adoInspectorService.GetPipelines(ado, repos) : new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
+            var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, orgs, args.GithubOrg) : new Dictionary<string, string>();
+
+            _adoInspectorService.OutputRepoListToLog(repos);
 
             CheckForDuplicateRepoNames(repos);
 
@@ -164,131 +169,25 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             var appIds = new Dictionary<string, string>();
 
-            if (!_generateScriptOptions.RewirePipelines || orgs is null || ado is null)
-            {
-                return appIds;
-            }
+            // can't use the previously fetched list of team projects, because the previous one was possibly limited to a single TP
+            // Here we want all TP's for the org, regardless of the value of --ado-team-project
+            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
 
             foreach (var org in orgs)
             {
-                var teamProjects = await ado.GetTeamProjects(org);
-                var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects);
+                var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects[org]);
 
-                if (appId.IsNullOrWhiteSpace())
+                if (appId.HasValue())
                 {
-                    _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
+                    appIds.Add(org, appId);
                 }
                 else
                 {
-                    appIds.Add(org, appId);
+                    _log.LogWarning($"CANNOT FIND GITHUB APP SERVICE CONNECTION IN ADO ORGANIZATION: {org}. You must install the Pipelines app in GitHub and connect it to any Team Project in this ADO Org first.");
                 }
             }
 
             return appIds;
-        }
-
-        private async Task<IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>> GetPipelines(AdoApi ado, IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
-        {
-            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
-
-            if (!_generateScriptOptions.RewirePipelines || repos is null || ado is null)
-            {
-                return pipelines;
-            }
-
-            foreach (var org in repos.Keys)
-            {
-                pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
-
-                foreach (var teamProject in repos[org].Keys)
-                {
-                    pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
-
-                    foreach (var repo in repos[org][teamProject])
-                    {
-                        var repoId = await ado.GetRepoId(org, teamProject, repo);
-                        var repoPipelines = await ado.GetPipelines(org, teamProject, repoId);
-
-                        pipelines[org][teamProject].Add(repo, repoPipelines);
-                    }
-                }
-            }
-
-            return pipelines;
-        }
-
-        private async Task<IDictionary<string, IDictionary<string, IEnumerable<string>>>> GetRepos(AdoApi ado, IEnumerable<string> orgs, string adoTeamProject)
-        {
-            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
-
-            if (orgs is null || ado is null)
-            {
-                return repos;
-            }
-
-            var teamProjectExists = false;
-            foreach (var org in orgs)
-            {
-                _log.LogInformation($"ADO ORG: {org}");
-                repos.Add(org, new Dictionary<string, IEnumerable<string>>());
-
-                var teamProjects = await ado.GetTeamProjects(org);
-                if (adoTeamProject.HasValue())
-                {
-                    teamProjects = teamProjects.Any(o => o.Equals(adoTeamProject, StringComparison.OrdinalIgnoreCase))
-                        ? new[] { adoTeamProject }
-                        : Enumerable.Empty<string>();
-                }
-
-                foreach (var teamProject in teamProjects)
-                {
-                    teamProjectExists = true;
-                    var projectRepos = await GetTeamProjectRepos(ado, org, teamProject);
-                    repos[org].Add(teamProject, projectRepos);
-                }
-            }
-
-            if (!teamProjectExists)
-            {
-                _log.LogWarning($"ADO Team Project provided cannot be found [{adoTeamProject}]");
-            }
-
-            return repos;
-        }
-
-        private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi ado, string org, string teamProject)
-        {
-            _log.LogInformation($"  Team Project: {teamProject}");
-            var projectRepos = await ado.GetEnabledRepos(org, teamProject);
-
-            foreach (var repo in projectRepos)
-            {
-                _log.LogInformation($"    Repo: {repo}");
-            }
-            return projectRepos;
-        }
-
-        private async Task<IEnumerable<string>> GetOrgs(AdoApi ado, string adoOrg)
-        {
-            var orgs = new List<string>();
-
-            if (adoOrg.HasValue())
-            {
-                _log.LogInformation($"ADO Org provided, only processing repos for {adoOrg}");
-                orgs.Add(adoOrg);
-            }
-            else
-            {
-                if (ado != null)
-                {
-                    _log.LogInformation($"No ADO Org provided, retrieving list of all Orgs PAT has access to...");
-                    // TODO: Check if the PAT has the proper permissions to retrieve list of ADO orgs, needs the All Orgs scope
-                    var userId = await ado.GetUserId();
-                    orgs = (await ado.GetOrganizations(userId)).ToList();
-                }
-            }
-
-            return orgs;
         }
 
         private void CheckForDuplicateRepoNames(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
