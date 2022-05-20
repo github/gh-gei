@@ -51,6 +51,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public void Should_Have_Options()
         {
             var command = new InventoryReportCommand(null, null, null, null, null);
+
             Assert.NotNull(command);
             Assert.Equal("inventory-report", command.Name);
             Assert.Equal(3, command.Options.Count);
