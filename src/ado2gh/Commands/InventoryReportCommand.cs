@@ -14,13 +14,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly AdoApiFactory _adoApiFactory;
         private readonly AdoInspectorService _adoInspectorService;
         private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
+        private readonly TeamProjectsCsvGeneratorService _teamProjectsCsvGenerator;
 
-        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService) : base("inventory-report")
+        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService, TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService) : base("inventory-report")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
-            _orgsCsvGenerator = orgsCsvGeneratorService;
             _adoInspectorService = adoInspectorService;
+            _orgsCsvGenerator = orgsCsvGeneratorService;
+            _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
 
             Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations. The repos.csv can be fed as an input into other commands to help splitting large migrations up into batches.";
             Description += Environment.NewLine;
@@ -67,11 +69,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var ado = _adoApiFactory.Create(adoPat);
             var orgs = await _adoInspectorService.GetOrgs(ado, adoOrg);
+            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
 
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado, orgs);
+            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(ado, teamProjects);
 
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
+
+            await WriteToFile("team-projects.csv", teamProjectsCsvText);
+            _log.LogSuccess("team-projects.csv generated");
         }
     }
 }

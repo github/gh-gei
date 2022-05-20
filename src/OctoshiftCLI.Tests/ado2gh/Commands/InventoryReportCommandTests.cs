@@ -10,10 +10,47 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class InventoryReportCommandTests
     {
+        private const string ADO_ORG = "foo-org";
+        private const string ADO_TEAM_PROJECT = "foo-tp";
+        private readonly IList<string> ADO_ORGS = new List<string>() { ADO_ORG };
+        private readonly IDictionary<string, IEnumerable<string>> ADO_TEAM_PROJECTS = new Dictionary<string, IEnumerable<string>>() { { ADO_ORG, new List<string>() { ADO_TEAM_PROJECT } } };
+
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
+        private readonly Mock<OrgsCsvGeneratorService> _mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
+        private readonly Mock<TeamProjectsCsvGeneratorService> _mockTeamProjectsCsvGenerator = TestHelpers.CreateMock<TeamProjectsCsvGeneratorService>();
+
+        private string _orgsCsvOutput = "";
+        private string _teamProjectsCsvOutput = "";
+
+        private readonly InventoryReportCommand _command;
+
+        public InventoryReportCommandTests()
+        {
+            _command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, _mockAdoInspector.Object, _mockOrgsCsvGenerator.Object, _mockTeamProjectsCsvGenerator.Object)
+            {
+                WriteToFile = (path, contents) =>
+                {
+                    if (path == "orgs.csv")
+                    {
+                        _orgsCsvOutput = contents;
+                    }
+
+                    if (path == "team-projects.csv")
+                    {
+                        _teamProjectsCsvOutput = contents;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        }
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new InventoryReportCommand(null, null, null, null);
+            var command = new InventoryReportCommand(null, null, null, null, null);
             Assert.NotNull(command);
             Assert.Equal("inventory-report", command.Name);
             Assert.Equal(3, command.Options.Count);
@@ -26,67 +63,42 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Happy_Path()
         {
-            var adoOrg = "FooOrg";
-            var orgs = new List<string>() { adoOrg };
-            var csvContent = "csv stuff";
+            var expectedOrgsCsv = "csv stuff";
+            var expectedTeamProjectsCsv = "more csv stuff";
 
-            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            var mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
-            mockAdoInspectorService.Setup(m => m.GetOrgs(mockAdoApi.Object, null)).ReturnsAsync(orgs);
+            _mockAdoInspector.Setup(m => m.GetOrgs(_mockAdoApi.Object, null)).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspector.Setup(m => m.GetTeamProjects(_mockAdoApi.Object, ADO_ORGS, null)).ReturnsAsync(ADO_TEAM_PROJECTS);
 
-            var mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
-            mockOrgsCsvGenerator.Setup(m => m.Generate(mockAdoApi.Object, orgs)).ReturnsAsync(csvContent);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_ORGS)).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_TEAM_PROJECTS)).Returns(expectedTeamProjectsCsv);
 
-            var script = "";
+            await _command.Invoke(null, null);
 
-            var command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockAdoInspectorService.Object, mockOrgsCsvGenerator.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
-
-            await command.Invoke(null, null);
-
-            script.Should().Be(csvContent);
+            _orgsCsvOutput.Should().Be(expectedOrgsCsv);
+            _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
         }
 
         [Fact]
         public async Task Scoped_To_Single_Org()
         {
-            var adoOrg = "FooOrg";
-            var orgs = new List<string>() { adoOrg };
-            var csvContent = "csv stuff";
+            var expectedOrgsCsv = "csv stuff";
+            var expectedTeamProjectsCsv = "more csv stuff";
 
-            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdoApi.Object);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            var mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
-            mockAdoInspectorService.Setup(m => m.GetOrgs(mockAdoApi.Object, adoOrg)).ReturnsAsync(orgs);
+            _mockAdoInspector.Setup(m => m.GetOrgs(_mockAdoApi.Object, ADO_ORG)).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspector.Setup(m => m.GetTeamProjects(_mockAdoApi.Object, ADO_ORGS, null)).ReturnsAsync(ADO_TEAM_PROJECTS);
 
-            var mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
-            mockOrgsCsvGenerator.Setup(m => m.Generate(mockAdoApi.Object, orgs)).ReturnsAsync(csvContent);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_ORGS)).ReturnsAsync(expectedOrgsCsv);
 
-            var script = "";
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_TEAM_PROJECTS)).Returns(expectedTeamProjectsCsv);
 
-            var command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockAdoInspectorService.Object, mockOrgsCsvGenerator.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            await _command.Invoke(ADO_ORG, null);
 
-            await command.Invoke(adoOrg, null);
-
-            script.Should().Be(csvContent);
+            _orgsCsvOutput.Should().Be(expectedOrgsCsv);
+            _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
         }
 
         [Fact]
@@ -94,14 +106,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            var mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
-            var mockOrgsCsvGeneratorService = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
-
-            var command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object, mockAdoInspectorService.Object, mockOrgsCsvGeneratorService.Object);
+            var command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, _mockAdoInspector.Object, _mockOrgsCsvGenerator.Object, _mockTeamProjectsCsvGenerator.Object);
             await command.Invoke("some org", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }
