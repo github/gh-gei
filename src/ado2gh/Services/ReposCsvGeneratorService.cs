@@ -5,13 +5,13 @@ namespace OctoshiftCLI.AdoToGithub
 {
     public class ReposCsvGeneratorService
     {
-        public virtual string Generate(AdoApi ado, IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        public virtual string Generate(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
         {
             var result = new StringBuilder();
 
             result.AppendLine("org,teamproject,repo");
 
-            if (ado != null && repos != null)
+            if (repos != null)
             {
                 foreach (var org in repos.Keys)
                 {

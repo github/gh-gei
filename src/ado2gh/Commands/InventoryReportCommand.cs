@@ -17,8 +17,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
         private readonly TeamProjectsCsvGeneratorService _teamProjectsCsvGenerator;
         private readonly ReposCsvGeneratorService _reposCsvGenerator;
+        private readonly PipelinesCsvGeneratorService _pipelinesCsvGenerator;
 
-        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService, TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService, ReposCsvGeneratorService reposCsvGeneratorService) : base("inventory-report")
+        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService, TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService, ReposCsvGeneratorService reposCsvGeneratorService, PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base("inventory-report")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
@@ -26,6 +27,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _orgsCsvGenerator = orgsCsvGeneratorService;
             _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
             _reposCsvGenerator = reposCsvGeneratorService;
+            _pipelinesCsvGenerator = pipelinesCsvGeneratorService;
 
             Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations. The repos.csv can be fed as an input into other commands to help splitting large migrations up into batches.";
             Description += Environment.NewLine;
@@ -54,7 +56,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             Handler = CommandHandler.Create<string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoPat, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -81,9 +83,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
             _log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
 
+            var pipelines = await _adoInspectorService.GetPipelines(ado, repos);
+            _log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
+
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado, orgs);
-            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(ado, teamProjects);
-            var reposCsvText = _reposCsvGenerator.Generate(ado, repos);
+            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(teamProjects);
+            var reposCsvText = _reposCsvGenerator.Generate(repos);
+            var pipelinesCsvText = _pipelinesCsvGenerator.Generate(pipelines);
 
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
@@ -93,6 +99,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
+
+            await WriteToFile("pipelines.csv", pipelinesCsvText);
+            _log.LogSuccess("pipelines.csv generated");
         }
     }
 }
