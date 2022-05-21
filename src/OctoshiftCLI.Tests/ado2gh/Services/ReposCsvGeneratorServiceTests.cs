@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
@@ -11,7 +12,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count";
 
         [Fact]
-        public void Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
+        public async Task Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
         {
             // Arrange
             var org = "my org";
@@ -24,9 +25,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                                                    { { repo, new List<string>()
                                                                  { pipeline } } } } } } };
 
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+
             // Act
             var service = new ReposCsvGeneratorService();
-            var result = service.Generate(pipelines);
+            var result = await service.Generate(mockAdoApi.Object, pipelines);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
@@ -36,11 +39,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public void Generate_Should_Return_Correct_Csv_When_Passed_Null_Orgs()
+        public async Task Generate_Should_Return_Correct_Csv_When_Passed_Null_Orgs()
         {
             // Act
             var service = new ReposCsvGeneratorService();
-            var result = service.Generate(null);
+            var result = await service.Generate(null, null);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";

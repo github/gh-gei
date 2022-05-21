@@ -55,6 +55,13 @@ namespace OctoshiftCLI
             return $"{ownerName} ({ownerEmail})";
         }
 
+        public virtual async Task<IEnumerable<int>> GetPullRequests(string org, string teamProject, string repoId)
+        {
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repoId}/pullrequests?api-version=7.1-preview.1";
+            var data = await _client.GetWithPagingAsync(url);
+            return data.Select(x => (int)x["pullRequestId"]).ToList();
+        }
+
         public virtual async Task<string> GetUserId()
         {
             var url = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
