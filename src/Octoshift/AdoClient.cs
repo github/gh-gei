@@ -110,7 +110,7 @@ namespace OctoshiftCLI
             }
 
             await ApplyRetryDelayAsync();
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP GET: {updatedUrl}");
             var response = await _httpClient.GetAsync(updatedUrl);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
