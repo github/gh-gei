@@ -8,23 +8,29 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class TeamProjectsCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject";
+        private const string CSV_HEADER = "org,teamproject,repo-count,pipeline-count";
 
         [Fact]
         public void Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
         {
             // Arrange
-            var orgName = "my-org";
+            var org = "my-org";
             var teamProject = "foo-tp";
-            var teamProjects = new Dictionary<string, IEnumerable<string>>() { { orgName, new List<string>() { teamProject } } };
+            var repo = "foo-repo";
+            var pipeline = "foo-pipeline";
+            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>()
+                { { org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>()
+                             { { teamProject, new Dictionary<string, IEnumerable<string>>()
+                                                   { { repo, new List<string>()
+                                                                 { pipeline } } } } } } };
 
             // Act
             var service = new TeamProjectsCsvGeneratorService();
-            var result = service.Generate(teamProjects);
+            var result = service.Generate(pipelines);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"{orgName},{teamProject}{Environment.NewLine}";
+            expected += $"{org},{teamProject},1,1{Environment.NewLine}";
 
             result.Should().Be(expected);
         }

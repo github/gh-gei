@@ -86,9 +86,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var pipelines = await _adoInspectorService.GetPipelines(ado, repos);
             _log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
 
-            var orgsCsvText = await _orgsCsvGenerator.Generate(ado, orgs);
-            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(teamProjects);
-            var reposCsvText = _reposCsvGenerator.Generate(repos);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(ado, pipelines);
+            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
+            var reposCsvText = _reposCsvGenerator.Generate(pipelines);
             var pipelinesCsvText = _pipelinesCsvGenerator.Generate(pipelines);
 
             await WriteToFile("orgs.csv", orgsCsvText);
