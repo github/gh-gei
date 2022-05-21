@@ -8,7 +8,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class TeamProjectsCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo-count,pipeline-count";
+        private const string CSV_HEADER = "org,teamproject,url,repo-count,pipeline-count";
 
         [Fact]
         public void Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"{org},{teamProject},1,1{Environment.NewLine}";
+            expected += $"{org},{teamProject},https://dev.azure.com/{org}/{teamProject},1,1{Environment.NewLine}";
 
             result.Should().Be(expected);
         }

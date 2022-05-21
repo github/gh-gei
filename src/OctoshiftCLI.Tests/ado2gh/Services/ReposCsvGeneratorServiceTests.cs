@@ -8,15 +8,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,pipeline-count";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count";
 
         [Fact]
         public void Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
         {
             // Arrange
-            var org = "my-org";
-            var teamProject = "foo-tp";
-            var repo = "foo-repo";
+            var org = "my org";
+            var teamProject = "foo tp";
+            var repo = "foo repo";
             var pipeline = "foo-pipeline";
             var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>()
                 { { org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>()
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"{org},{teamProject},{repo},1{Environment.NewLine}";
+            expected += $"{org},{teamProject},{repo},https://dev.azure.com/my%20org/foo%20tp/_git/foo%20repo,1{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
