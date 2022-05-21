@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspector.Setup(m => m.GetRepos(_mockAdoApi.Object, ADO_TEAM_PROJECTS, null)).ReturnsAsync(ADO_REPOS);
             _mockAdoInspector.Setup(m => m.GetPipelines(_mockAdoApi.Object, ADO_REPOS)).ReturnsAsync(ADO_PIPELINES);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_ORGS)).ReturnsAsync(expectedOrgsCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_PIPELINES)).ReturnsAsync(expectedOrgsCsv);
             _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(ADO_TEAM_PROJECTS)).Returns(expectedTeamProjectsCsv);
             _mockReposCsvGenerator.Setup(m => m.Generate(ADO_REPOS)).Returns(expectedReposCsv);
             _mockPipelinesCsvGenerator.Setup(m => m.Generate(ADO_PIPELINES)).Returns(expectedPipelinesCsv);
@@ -116,22 +116,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var expectedOrgsCsv = "csv stuff";
             var expectedTeamProjectsCsv = "more csv stuff";
             var expectedReposCsv = "repo csv stuff";
+            var expectedPipelinesCsv = "pipelines csv stuff";
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             _mockAdoInspector.Setup(m => m.GetOrgs(_mockAdoApi.Object, ADO_ORG)).ReturnsAsync(ADO_ORGS);
             _mockAdoInspector.Setup(m => m.GetTeamProjects(_mockAdoApi.Object, ADO_ORGS, null)).ReturnsAsync(ADO_TEAM_PROJECTS);
             _mockAdoInspector.Setup(m => m.GetRepos(_mockAdoApi.Object, ADO_TEAM_PROJECTS, null)).ReturnsAsync(ADO_REPOS);
+            _mockAdoInspector.Setup(m => m.GetPipelines(_mockAdoApi.Object, ADO_REPOS)).ReturnsAsync(ADO_PIPELINES);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_ORGS)).ReturnsAsync(expectedOrgsCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object, ADO_PIPELINES)).ReturnsAsync(expectedOrgsCsv);
             _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(ADO_TEAM_PROJECTS)).Returns(expectedTeamProjectsCsv);
             _mockReposCsvGenerator.Setup(m => m.Generate(ADO_REPOS)).Returns(expectedReposCsv);
+            _mockPipelinesCsvGenerator.Setup(m => m.Generate(ADO_PIPELINES)).Returns(expectedPipelinesCsv);
 
             await _command.Invoke(ADO_ORG, null);
 
             _orgsCsvOutput.Should().Be(expectedOrgsCsv);
             _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
             _reposCsvOutput.Should().Be(expectedReposCsv);
+            _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
         }
 
         [Fact]
