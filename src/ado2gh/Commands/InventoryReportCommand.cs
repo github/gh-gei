@@ -89,7 +89,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado, pipelines);
             var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
             var reposCsvText = _reposCsvGenerator.Generate(pipelines);
-            var pipelinesCsvText = _pipelinesCsvGenerator.Generate(pipelines);
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado, pipelines);
 
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");

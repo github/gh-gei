@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -10,7 +11,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,repo,pipeline-count");
+            result.AppendLine("org,teamproject,repo,url,pipeline-count");
 
             if (pipelines != null)
             {
@@ -20,8 +21,9 @@ namespace OctoshiftCLI.AdoToGithub
                     {
                         foreach (var repo in pipelines[org][teamProject].Keys)
                         {
+                            var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo)}";
                             var pipelineCount = pipelines[org][teamProject][repo].Count();
-                            result.AppendLine($"{org},{teamProject},{repo},{pipelineCount}");
+                            result.AppendLine($"{org},{teamProject},{repo},{url},{pipelineCount}");
                         }
                     }
                 }
