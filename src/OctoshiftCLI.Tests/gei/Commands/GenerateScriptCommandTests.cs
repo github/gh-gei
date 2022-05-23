@@ -176,7 +176,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            script.Should().StartWith("#!/usr/bin/pwsh");
+            script.Should().StartWith("#!/usr/bin/env pwsh");
         }
 
         [Fact]
@@ -219,7 +219,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await command.Invoke(args);
 
             // Assert
-            script.Should().StartWith("#!/usr/bin/pwsh");
+            script.Should().StartWith("#!/usr/bin/env pwsh");
         }
 
         [Fact]
@@ -849,7 +849,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
@@ -955,7 +955,7 @@ if ($Failed -ne 0) {
             };
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
@@ -1062,7 +1062,7 @@ if ($Failed -ne 0) {
             };
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
@@ -1165,7 +1165,7 @@ if ($Failed -ne 0) {
             };
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"

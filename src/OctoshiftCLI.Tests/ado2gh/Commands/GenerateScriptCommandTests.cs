@@ -134,7 +134,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke(args);
 
             // Assert
-            _scriptOutput.Should().StartWith("#!/usr/bin/pwsh");
+            _scriptOutput.Should().StartWith("#!/usr/bin/env pwsh");
         }
 
         [Fact]
@@ -582,7 +582,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke(args);
 
             // Assert
-            _scriptOutput.Should().StartWith("#!/usr/bin/pwsh");
+            _scriptOutput.Should().StartWith("#!/usr/bin/env pwsh");
         }
 
         [Fact]
@@ -596,7 +596,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspector.Setup(m => m.GetRepos(_mockAdoApi.Object, ADO_TEAM_PROJECTS, null)).ReturnsAsync(ADO_REPOS);
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
@@ -725,7 +725,7 @@ if ($Failed -ne 0) {
             _mockAdoInspector.Setup(m => m.GetPipelines(_mockAdoApi.Object, ADO_REPOS)).ReturnsAsync(ADO_PIPELINES);
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
@@ -863,7 +863,7 @@ if ($Failed -ne 0) {
             _mockAdoInspector.Setup(m => m.GetPipelines(_mockAdoApi.Object, ADO_REPOS)).ReturnsAsync(ADO_PIPELINES);
 
             var expected = new StringBuilder();
-            expected.AppendLine("#!/usr/bin/pwsh");
+            expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
