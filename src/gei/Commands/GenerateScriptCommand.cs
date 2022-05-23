@@ -543,7 +543,7 @@ if ($Failed -ne 0) {
 
         private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
-        private const string PWSH_SHEBANG = "#!/usr/bin/pwsh";
+        private const string PWSH_SHEBANG = "#!/usr/bin/env pwsh";
 
         private const string EXEC_FUNCTION_BLOCK = @"
 function Exec {
