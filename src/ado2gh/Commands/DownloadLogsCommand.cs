@@ -19,7 +19,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly HttpDownloadService _httpDownloadService;
 
         internal Func<string, bool> FileExists = path => File.Exists(path);
-        internal Func<DateTime> DateTimeNow = () => DateTime.Now;
+        internal readonly Func<DateTime> DateTimeNow = () => DateTime.Now;
 
         public DownloadLogsCommand(
             OctoLogger log,
