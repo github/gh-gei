@@ -80,7 +80,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Calls_GithubApiFactory_With_Expected_Target_API_URL()
+        public async Task Calls_GithubApiFactory_With_Expected_Target_Api_Url()
         {
             // Arrange
             var githubOrg = "FooOrg";
@@ -158,7 +158,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Waits_For_URL_To_Populate()
+        public async Task Waits_For_Url_To_Populate()
         {
             // Arrange
             var githubOrg = "FooOrg";
@@ -286,7 +286,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Throw_OctoshiftCliException_When_Migration_Log_URL_Empty()
+        public async Task Throw_OctoshiftCliException_When_Migration_Log_Url_Empty()
         {
             // Arrange
             var githubOrg = "FooOrg";
