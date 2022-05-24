@@ -140,7 +140,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
             string logUrl;
-            DateTime timeoutAt = DateTime.Now.AddMinutes(timeoutMinutes);
+            var timeoutAt = DateTime.Now.AddMinutes(timeoutMinutes);
 
             while (true)
             {
