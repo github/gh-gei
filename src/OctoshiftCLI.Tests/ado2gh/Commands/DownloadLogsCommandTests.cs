@@ -158,7 +158,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Waits_For_URL_To_Populate_When_Wait_Requested()
+        public async Task Waits_For_URL_To_Populate()
         {
             // Arrange
             var githubOrg = "FooOrg";
@@ -202,7 +202,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 WaitIntervalInSeconds = waitIntervalInSeconds
             };
 
-            await command.Invoke(githubOrg, repo, null, null, null, true);
+            await command.Invoke(githubOrg, repo, null, null, null);
 
             // Assert
             mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(3));
@@ -237,7 +237,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 FileExists = _ => true
             };
 
-            await command.Invoke(githubOrg, repo, null, null, null, false, overwrite);
+            await command.Invoke(githubOrg, repo, null, null, null, 1, overwrite);
 
             // Assert
             mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
@@ -292,6 +292,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var githubOrg = "FooOrg";
             var repo = "foo-repo";
             var logUrl = "";
+            var timeoutMinutes = 0;  // Skip the retry logic so this test doesn't take a long time sleeping.
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -304,7 +305,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             await FluentActions
-                .Invoking(async () => await command.Invoke(githubOrg, repo))
+                .Invoking(async () => await command.Invoke(githubOrg, repo, null, null, null, timeoutMinutes))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
     }
