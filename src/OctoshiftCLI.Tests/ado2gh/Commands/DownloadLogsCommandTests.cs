@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "github-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "migration-log-file", false);
-            TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "timeout-minutes", false);
             TestHelpers.VerifyCommandOption(command.Options, "overwrite", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
