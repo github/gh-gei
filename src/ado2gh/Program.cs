@@ -30,6 +30,10 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<OrgsCsvGeneratorService>()
+                .AddSingleton<TeamProjectsCsvGeneratorService>()
+                .AddSingleton<ReposCsvGeneratorService>()
+                .AddSingleton<PipelinesCsvGeneratorService>()
+                .AddSingleton<AdoInspectorService>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddHttpClient();
 
