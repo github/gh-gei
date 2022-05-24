@@ -292,7 +292,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubOrg = "FooOrg";
             var repo = "foo-repo";
             var logUrl = "";
-            var timeoutMinutes = 0;
+            var timeoutMinutes = 0;  // Skip the retry logic so this test doesn't take a long time sleeping.
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
