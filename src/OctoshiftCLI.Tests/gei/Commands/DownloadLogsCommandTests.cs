@@ -214,7 +214,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Calls_Download_When_File_Exists_AndOverwrite_Requested()
+        public async Task Calls_Download_When_File_Exists_And_Overwrite_Requested()
         {
             // Arrange
             var githubOrg = "FooOrg";
