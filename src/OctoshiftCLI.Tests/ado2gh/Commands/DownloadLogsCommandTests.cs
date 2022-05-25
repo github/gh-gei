@@ -223,7 +223,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var expectedLogOutput = new List<string>
             {
-                $"Downloading logs for organization {githubOrg}...",
+                "Downloading migration logs...",
                 $"GITHUB ORG: {githubOrg}",
                 $"GITHUB REPO: {repo}",
                 $"Waiting 10 more seconds for log to populate...",
@@ -347,7 +347,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             var expectedLogOutput = new List<string>
             {
-                $"Downloading logs for organization {githubOrg}...",
+                "Downloading migration logs...",
                 $"GITHUB ORG: {githubOrg}",
                 $"GITHUB REPO: {repo}",
                 "Waiting 10 more seconds for log to populate...",

@@ -100,7 +100,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
-            _log.LogInformation($"Downloading logs for organization {githubTargetOrg}...");
+            _log.LogInformation($"Downloading migration logs...");
             _log.LogInformation($"GITHUB TARGET ORG: {githubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {targetRepo}");
 
