@@ -138,7 +138,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                 if (logUrl == null)
                 {
-                    throw new OctoshiftCliException($"Migration not found for repository {githubRepo}!");
+                    throw new OctoshiftCliException($"Migration for repository {githubRepo} not found!");
                 }
 
                 if (logUrl.HasValue())

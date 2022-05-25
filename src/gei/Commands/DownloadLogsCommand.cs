@@ -138,7 +138,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (logUrl == null)
                 {
-                    throw new OctoshiftCliException($"Migration not found for repository {targetRepo}!");
+                    throw new OctoshiftCliException($"Migration for repository {targetRepo} not found!");
                 }
 
                 if (logUrl.HasValue())
