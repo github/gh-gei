@@ -321,6 +321,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 "Waiting 10 more seconds for log to populate...",
                 "Waiting 10 more seconds for log to populate...",
             };
+
             // Act
             var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
             {
