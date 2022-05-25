@@ -90,8 +90,8 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertPipelineRewired(adoOrg, teamProject2, pipeline2, githubOrg, $"{teamProject2}-{teamProject2}");
             await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject1);
             await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject2);
-            await _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
-            await _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
+            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
+            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
         }
 
         protected virtual void Dispose(bool disposing)

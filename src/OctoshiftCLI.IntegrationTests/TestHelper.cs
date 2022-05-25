@@ -586,14 +586,13 @@ steps:
             boardsConnection.repoIds.Count().Should().Be(1);
         }
 
-        public async Task AssertMigrationLogFileExists(string githubOrg, string repo)
+        public void AssertMigrationLogFileExists(string githubOrg, string repo)
         {
             _output.WriteLine("Checking that the migration log was downloaded...");
 
             var migrationLogFile = $"migration-log-{githubOrg}-{repo}.log";
-            var migrationLogExists = await Task.Run(() => File.Exists(migrationLogFile));
 
-            migrationLogExists.Should().Be(true);
+            File.Exists(migrationLogFile).Should().Be(true);
         }
     }
 }
