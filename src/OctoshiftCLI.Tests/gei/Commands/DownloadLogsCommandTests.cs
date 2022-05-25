@@ -16,14 +16,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new DownloadLogsCommand(null, null, null);
             Assert.NotNull(command);
             Assert.Equal("download-logs", command.Name);
-            Assert.Equal(8, command.Options.Count);
+            Assert.Equal(7, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "migration-log-file", false);
-            TestHelpers.VerifyCommandOption(command.Options, "timeout-minutes", false);
             TestHelpers.VerifyCommandOption(command.Options, "overwrite", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
@@ -166,10 +165,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var logUrlEmpty = "";
             var logUrlPopulated = "some-url";
             var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
-            const int waitIntervalInSeconds = 1;
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.SetupSequence(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(logUrlEmpty)
+                .ReturnsAsync(logUrlEmpty)
+                .ReturnsAsync(logUrlEmpty)
                 .ReturnsAsync(logUrlEmpty)
                 .ReturnsAsync(logUrlEmpty)
                 .ReturnsAsync(logUrlPopulated);
@@ -190,8 +191,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 $"Downloading logs for organization {githubOrg}...",
                 $"GITHUB TARGET ORG: {githubOrg}",
                 $"TARGET REPO: {repo}",
-                $"Waiting {waitIntervalInSeconds} more seconds for log to populate...",
-                $"Waiting {waitIntervalInSeconds} more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
                 $"Downloading log for repository {repo} to {defaultFileName}...",
                 $"Downloaded {repo} log to {defaultFileName}."
             };
@@ -199,16 +203,16 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
             {
-                WaitIntervalInSeconds = waitIntervalInSeconds
+                Delay = _ => Task.CompletedTask
             };
 
             await command.Invoke(githubOrg, repo, null, null, null);
 
             // Assert
-            mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(3));
+            mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
             mockHttpDownloadService.Verify(m => m.Download(logUrlPopulated, defaultFileName));
 
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(9));
             mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
             actualLogOutput.Should().Equal(expectedLogOutput);
         }
@@ -237,7 +241,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 FileExists = _ => true
             };
 
-            await command.Invoke(githubOrg, repo, null, null, null, 1, overwrite);
+            await command.Invoke(githubOrg, repo, null, null, null, overwrite);
 
             // Assert
             mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
@@ -286,13 +290,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Throw_OctoshiftCliException_When_Migration_Log_Url_Empty()
+        public async Task Throws_OctoshiftCliException_When_Migration_Log_Url_Doesnt_Populate_After_6_Attempts()
         {
             // Arrange
             var githubOrg = "FooOrg";
             var repo = "foo-repo";
             var logUrl = "";
-            var timeoutMinutes = 0;  // Skip the retry logic so this test doesn't take a long time sleeping.
+            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -300,13 +304,41 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
             mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
 
+            var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
+            mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+
+            var actualLogOutput = new List<string>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
+            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                $"Downloading logs for organization {githubOrg}...",
+                $"GITHUB TARGET ORG: {githubOrg}",
+                $"TARGET REPO: {repo}",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+                "Waiting 10 more seconds for log to populate...",
+            };
             // Act
-            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, null);
+            var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
+            {
+                Delay = _ => Task.CompletedTask
+            };
 
             // Assert
-            await FluentActions
-                .Invoking(async () => await command.Invoke(githubOrg, repo, null, null, null, timeoutMinutes))
+            var exception = await FluentActions
+                .Invoking(async () => await command.Invoke(githubOrg, repo))
                 .Should().ThrowAsync<OctoshiftCliException>();
+            exception.WithMessage($"Migration log for repository {repo} still unavailable after one minute!");
+
+            mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
+            mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
+
+            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+            actualLogOutput.Should().Equal(expectedLogOutput);
         }
     }
 }
