@@ -11,15 +11,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class DownloadLogsCommand : Command
     {
-        internal int WaitIntervalInSeconds = 10;
-        internal const int TimeoutMinutes = 1;
+        internal const int WaitIntervalInSeconds = 10;
+        internal const int RetryMaxCount = 6;
 
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
         private readonly HttpDownloadService _httpDownloadService;
 
         internal Func<string, bool> FileExists = path => File.Exists(path);
-        internal readonly Func<DateTime> DateTimeNow = () => DateTime.Now;
+        internal Func<int, Task> Delay = milliSeconds => Task.Delay(milliSeconds);
 
         public DownloadLogsCommand(
             OctoLogger log,
@@ -63,12 +63,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
             };
 
-            var timeoutMinutes = new Option<int>("--timeout-minutes")
-            {
-                IsRequired = false,
-                Description = "Wait for log to be ready to download until this timeout, in minutes (default: 1; -1 for no timeout)."
-            };
-
             var overwrite = new Option("--overwrite")
             {
                 IsRequired = false,
@@ -86,11 +80,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubApiUrl);
             AddOption(githubPat);
             AddOption(migrationLogFile);
-            AddOption(timeoutMinutes);
             AddOption(overwrite);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, int, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -99,7 +92,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             string githubApiUrl = null,
             string githubPat = null,
             string migrationLogFile = null,
-            int timeoutMinutes = TimeoutMinutes,
             bool overwrite = false,
             bool verbose = false
         )
@@ -139,12 +131,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
-            string logUrl;
-            var timeoutAt = DateTime.Now.AddMinutes(timeoutMinutes);
 
-            while (true)
+            for (int attempt = 1; attempt <= RetryMaxCount; attempt++)
             {
-                logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
+                var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
 
                 if (logUrl == null)
                 {
@@ -160,14 +150,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     break;
                 }
 
-                if (timeoutMinutes != -1 && DateTimeNow() >= timeoutAt)
+                if (attempt == RetryMaxCount)
                 {
-                    var minutesText = timeoutMinutes == 1 ? "minute" : "minutes";
-                    throw new OctoshiftCliException($"Migration log for repository {githubRepo} still unavailable after {timeoutMinutes} {minutesText}!");
+                    throw new OctoshiftCliException($"Migration log for repository {githubRepo} still unavailable after one minute!");
                 }
 
                 _log.LogInformation($"Waiting {WaitIntervalInSeconds} more seconds for log to populate...");
-                await Task.Delay(WaitIntervalInSeconds * 1000);
+                await Delay(WaitIntervalInSeconds * 1000);
             }
         }
     }
