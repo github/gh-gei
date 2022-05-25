@@ -539,6 +539,10 @@ if ($Failed -ne 0) {
             {
                 _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
+            if (args.DownloadMigrationLogs)
+            {
+                _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
+            }
             if (args.Output.HasValue())
             {
                 _log.LogInformation($"OUTPUT: {args.Output}");
