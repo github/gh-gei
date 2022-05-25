@@ -134,12 +134,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             for (int attempt = 1; attempt <= RetryMaxCount; attempt++)
             {
-                var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
-
-                if (logUrl == null)
-                {
-                    throw new OctoshiftCliException($"Migration for repository {githubRepo} not found!");
-                }
+                var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo) ?? throw new OctoshiftCliException($"Migration for repository {githubRepo} not found!");
 
                 if (logUrl.HasValue())
                 {
