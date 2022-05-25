@@ -267,12 +267,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content);
                         AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
-                        AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
                         AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
                         AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                         AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+                        AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
                         foreach (var adoPipeline in GetAdoRepoPipelines(pipelines, adoOrg, adoTeamProject, adoRepo))
                         {
@@ -375,14 +375,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, "    " + WaitForMigrationScript(repoMigrationKey));
                         AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
 
-                        if (_generateScriptOptions.DownloadMigrationLogs)
-                        {
-                            AppendLine(content, "    " + DownloadMigrationLogScript(githubOrg, githubRepo));
-                        }
-
                         AppendLine(content, "}");
                         AppendLine(content, "if ($CanExecuteBatch) {");
-                        if (_generateScriptOptions.CreateTeams || _generateScriptOptions.DisableAdoRepos || _generateScriptOptions.IntegrateBoards || _generateScriptOptions.RewirePipelines)
+                        if (
+                            _generateScriptOptions.CreateTeams ||
+                            _generateScriptOptions.DisableAdoRepos ||
+                            _generateScriptOptions.IntegrateBoards ||
+                            _generateScriptOptions.RewirePipelines ||
+                            _generateScriptOptions.DownloadMigrationLogs
+                        )
                         {
                             AppendLine(content, "    ExecBatch @(");
                             AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
@@ -390,6 +391,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                             AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                             AppendLine(content, "        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
+                            AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
                             appIds.TryGetValue(adoOrg, out var appId);
                             foreach (var adoPipeline in GetAdoRepoPipelines(pipelines, adoOrg, adoTeamProject, adoRepo))
