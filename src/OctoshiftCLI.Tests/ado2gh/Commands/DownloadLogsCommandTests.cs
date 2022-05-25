@@ -216,27 +216,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
             mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
-            var actualLogOutput = new List<string>();
-            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
-            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            var expectedLogOutput = new List<string>
-            {
-                "Downloading migration logs...",
-                $"GITHUB ORG: {githubOrg}",
-                $"GITHUB REPO: {repo}",
-                $"Waiting 10 more seconds for log to populate...",
-                $"Waiting 10 more seconds for log to populate...",
-                $"Waiting 10 more seconds for log to populate...",
-                $"Waiting 10 more seconds for log to populate...",
-                $"Waiting 10 more seconds for log to populate...",
-                $"Downloading log for repository {repo} to {defaultFileName}...",
-                $"Downloaded {repo} log to {defaultFileName}."
-            };
-
             // Act
-            var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
+            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
             {
                 Delay = _ => Task.CompletedTask
             };
@@ -246,10 +227,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
             mockHttpDownloadService.Verify(m => m.Download(logUrlPopulated, defaultFileName));
-
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(9));
-            mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
-            actualLogOutput.Should().Equal(expectedLogOutput);
         }
 
         [Fact]
@@ -341,39 +318,18 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
             mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
-            var actualLogOutput = new List<string>();
-            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
-            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            var expectedLogOutput = new List<string>
-            {
-                "Downloading migration logs...",
-                $"GITHUB ORG: {githubOrg}",
-                $"GITHUB REPO: {repo}",
-                "Waiting 10 more seconds for log to populate...",
-                "Waiting 10 more seconds for log to populate...",
-                "Waiting 10 more seconds for log to populate...",
-                "Waiting 10 more seconds for log to populate...",
-                "Waiting 10 more seconds for log to populate...",
-            };
-
             // Act
-            var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
+            var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object)
             {
                 Delay = _ => Task.CompletedTask
             };
 
-            // Assert
-            var exception = await FluentActions
+            await FluentActions
                 .Invoking(async () => await command.Invoke(githubOrg, repo))
                 .Should().ThrowAsync<OctoshiftCliException>();
-            exception.WithMessage($"Migration log for repository {repo} still unavailable after one minute!");
 
             mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
             mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
-
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
-            actualLogOutput.Should().Equal(expectedLogOutput);
         }
     }
 }
