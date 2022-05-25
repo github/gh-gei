@@ -54,6 +54,41 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Logs_24_Hour_Availability_Warning()
+        {
+            // Arrange
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+
+            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+            mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+
+            var mockGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+            mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(mockGithubApi.Object);
+
+            var mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
+            mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+
+            var actualLogWarnings = new List<string>();
+            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
+            mockLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogWarnings.Add(s));
+
+            var expectedLogWarnings = new List<string>
+            {
+                "Migration logs are only available for 24 hours after a migration finishes!"
+            };
+
+            // Act
+            var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object);
+
+            await command.Invoke(githubOrg, repo, null, null, null);
+
+            // Assert
+            actualLogWarnings.Should().Equal(expectedLogWarnings);
+        }
+
+        [Fact]
         public async Task Calls_GetMigrationLogUrl_With_Expected_Org_And_Repo()
         {
             // Arrange
