@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -14,11 +15,13 @@ namespace OctoshiftCLI
     {
         private readonly AdoClient _client;
         private readonly string _adoBaseUrl;
+        private readonly OctoLogger _log;
 
-        public AdoApi(AdoClient client, string adoServerUrl)
+        public AdoApi(AdoClient client, string adoServerUrl, OctoLogger log)
         {
             _client = client;
             _adoBaseUrl = adoServerUrl?.TrimEnd('/');
+            _log = log;
         }
 
         public virtual async Task<string> GetOrgOwner(string org)
@@ -289,40 +292,158 @@ namespace OctoshiftCLI
             return (string)JObject.Parse(response)["id"];
         }
 
+        private readonly IDictionary<(string org, string teamProject), IDictionary<string, string>> _repoIds = new Dictionary<(string org, string teamProject), IDictionary<string, string>>();
+
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
-            try
+            if (!_repoIds.ContainsKey((org, teamProject)))
             {
-                var response = await _client.GetAsync(url);
-                return (string)JObject.Parse(response)["id"];
+                var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+
+                try
+                {
+                    var response = await _client.GetAsync(url);
+                    return (string)JObject.Parse(response)["id"];
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // The repo may be disabled, can still get the ID by getting it from the repo list
+                    await PopulateRepoIdCache(org, teamProject);
+                }
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+
+            return _repoIds[(org, teamProject)][repo];
+        }
+
+        public virtual async Task PopulateRepoIdCache(string org, string teamProject)
+        {
+            if (_repoIds.ContainsKey((org, teamProject)))
             {
-                // The repo may be disabled, can still get the ID by getting it from the repo list
-                url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
-
-                var response = await _client.GetWithPagingAsync(url);
-
-                return (string)response.Single(x => ((string)x["name"]) == repo)["id"];
+                return;
             }
+
+            var ids = new Dictionary<string, string>();
+
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+
+            var response = await _client.GetWithPagingAsync(url);
+
+            foreach (var item in response)
+            {
+                var name = (string)item["name"];
+                var id = (string)item["id"];
+
+                var success = ids.TryAdd(name, id);
+
+                if (!success)
+                {
+                    _log.LogWarning($"Multiple repos with the same name were found [{name}]. Ignoring repo ID {id}");
+                }
+            }
+
+            _repoIds.Add((org, teamProject), ids);
         }
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
             var response = await _client.GetWithPagingAsync(url);
-            return response.Select(x => (string)x["name"]).ToList();
+
+            var result = response.Select(x =>
+            {
+                var path = (string)x["path"];
+                path = path == "\\" ? string.Empty : path;
+                var name = (string)x["name"];
+
+                return $"{path}\\{name}";
+            });
+
+            return result;
         }
+
+        private IDictionary<(string org, string teamProject, string pipelinePath), int> _pipelineIds = new Dictionary<(string org, string teamProject, string pipelinePath), int>();
 
         public virtual async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
         {
+            if (pipeline is null)
+            {
+                throw new ArgumentNullException(nameof(pipeline));
+            }
+
+            var pipelinePath = NormalizePipelinePath(pipeline);
+
+            if (_pipelineIds.ContainsKey((org, teamProject, pipelinePath)))
+            {
+                return _pipelineIds[(org, teamProject, pipelinePath)];
+            }
+
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions";
             var response = await _client.GetWithPagingAsync(url);
 
-            var result = response.Single(x => ((string)x["name"]).Trim().ToUpper() == pipeline.Trim().ToUpper());
-            return (int)result["id"];
+            foreach (var item in response)
+            {
+                var path = NormalizePipelinePath((string)item["path"], (string)item["name"]);
+                var id = (int)item["id"];
+
+                _pipelineIds.Add((org, teamProject, path), id);
+            }
+
+            return _pipelineIds[(org, teamProject, pipelinePath)];
         }
+
+        private string NormalizePipelinePath(string path, string name)
+        {
+            var parts = path.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+
+            var result = new StringBuilder("\\");
+
+            for (var i = 0; i < parts.Length; i++)
+            {
+                result.Append(parts[i]);
+                result.Append('\\');
+            }
+
+            result.Append(name);
+
+            return result.ToString();
+        }
+
+        private string NormalizePipelinePath(string pipeline)
+        {
+            var parts = pipeline.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+
+            var result = new StringBuilder("\\");
+
+            for (var i = 0; i < parts.Length - 1; i++)
+            {
+                result.Append(parts[i]);
+                result.Append('\\');
+            }
+
+            result.Append(parts.Last());
+
+            return result.ToString();
+        }
+
+        //private (string path, string name) ParsePipeline(string pipeline)
+        //{
+        //    if (!pipeline.Contains('\\'))
+        //    {
+        //        return (@"\\", pipeline);
+        //    }
+
+        //    var parts = pipeline.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+
+        //    var result = new StringBuilder("\\");
+
+        //    for (var i = 0; i < parts.Length - 1; i++)
+        //    {
+        //        result.Append(parts[i]);
+        //        result.Append('\\');
+        //    }
+
+        //    return (result.ToString(), parts.Last());
+        //}
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {

@@ -111,6 +111,7 @@ namespace OctoshiftCLI.AdoToGithub
                     foreach (var teamProject in repos[org].Keys)
                     {
                         pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
+                        await api.PopulateRepoIdCache(org, teamProject);
 
                         foreach (var repo in repos[org][teamProject])
                         {

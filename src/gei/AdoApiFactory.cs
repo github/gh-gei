@@ -24,7 +24,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             adoServerUrl ??= DEFAULT_API_URL;
             personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, personalAccessToken);
-            return new AdoApi(adoClient, adoServerUrl);
+            return new AdoApi(adoClient, adoServerUrl, _octoLogger);
         }
     }
 }
