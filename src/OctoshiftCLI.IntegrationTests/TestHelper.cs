@@ -592,7 +592,7 @@ steps:
 
             var migrationLogFile = $"migration-log-{githubOrg}-{repo}.log";
 
-            File.Exists(migrationLogFile).Should().Be(true);
+            File.Exists(migrationLogFile).Should().BeTrue();
         }
     }
 }
