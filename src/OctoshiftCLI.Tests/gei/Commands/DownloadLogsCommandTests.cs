@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Act
             var command = new DownloadLogsCommand(mockLogger.Object, mockGithubApiFactory.Object, mockHttpDownloadService.Object);
 
-            await command.Invoke(githubOrg, repo, null, null, null);
+            await command.Invoke(githubOrg, repo);
 
             // Assert
             actualLogWarnings.Should().Equal(expectedLogWarnings);
@@ -241,7 +241,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Delay = _ => Task.CompletedTask
             };
 
-            await command.Invoke(githubOrg, repo, null, null, null);
+            await command.Invoke(githubOrg, repo);
 
             // Assert
             mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
