@@ -98,8 +98,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             _log.Verbose = verbose;
 
-            _log.LogInformation($"Downloading logs for organization {githubOrg}...");
+            _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
+            _log.LogInformation($"Downloading logs for organization {githubOrg}...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
