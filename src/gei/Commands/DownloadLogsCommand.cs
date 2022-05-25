@@ -132,7 +132,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
 
-            for (int attempt = 1; attempt <= RetryMaxCount; attempt++)
+            for (var attempt = 1; attempt <= RetryMaxCount; attempt++)
             {
                 var logUrl = await githubApi.GetMigrationLogUrl(githubTargetOrg, targetRepo) ?? throw new OctoshiftCliException($"Migration for repository {targetRepo} not found!");
 
