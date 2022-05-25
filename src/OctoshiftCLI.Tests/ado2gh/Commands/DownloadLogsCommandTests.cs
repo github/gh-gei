@@ -31,10 +31,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Happy_Path()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
-            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+            const string defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -57,9 +57,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Calls_GetMigrationLogUrl_With_Expected_Org_And_Repo()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -82,10 +82,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Calls_GithubApiFactory_With_Expected_Target_Api_Url()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
-            var targetApiUrl = "api-url";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+            const string targetApiUrl = "api-url";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -108,10 +108,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Calls_GithubApiFactory_With_Expected_Target_GitHub_PAT()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
-            var githubTargetPat = "github-target-pat";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+            const string githubTargetPat = "github-target-pat";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -134,10 +134,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Calls_Download_With_Expected_Migration_Log_File()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
-            var migrationLogFile = "migration-log-file";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+            const string migrationLogFile = "migration-log-file";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -160,11 +160,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Waits_For_Url_To_Populate()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrlEmpty = "";
-            var logUrlPopulated = "some-url";
-            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrlEmpty = "";
+            const string logUrlPopulated = "some-url";
+            const string defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.SetupSequence(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()))
@@ -221,10 +221,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Calls_Download_When_File_Exists_And_Overwrite_Requested()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "some-url";
-            var overwrite = true;
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "some-url";
+            const bool overwrite = true;
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -251,8 +251,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task File_Already_Exists_No_Overwrite_Flag_Should_Throw_OctoshiftCliException()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
 
             // Act
             var command = new DownloadLogsCommand(TestHelpers.CreateMock<OctoLogger>().Object, null, null)
@@ -270,9 +270,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Throw_OctoshiftCliException_When_No_Migration()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = (string)null;
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = (string)null;
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
@@ -293,9 +293,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Throws_OctoshiftCliException_When_Migration_Log_Url_Doesnt_Populate_After_6_Attempts()
         {
             // Arrange
-            var githubOrg = "FooOrg";
-            var repo = "foo-repo";
-            var logUrl = "";
+            const string githubOrg = "FooOrg";
+            const string repo = "foo-repo";
+            const string logUrl = "";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
