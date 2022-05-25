@@ -296,7 +296,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubOrg = "FooOrg";
             var repo = "foo-repo";
             var logUrl = "";
-            var defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
             var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
             mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
