@@ -337,7 +337,7 @@ namespace OctoshiftCLI
 
                 if (!success)
                 {
-                    _log.LogWarning($"Multiple repos with the same name were found [{name}]. Ignoring repo ID {id}");
+                    _log.LogWarning($"Multiple repos with the same name were found [org: {org} project: {teamProject} repo: {name}]. Ignoring repo ID {id}");
                 }
             }
 
@@ -384,11 +384,6 @@ namespace OctoshiftCLI
             {
                 var path = NormalizePipelinePath((string)item["path"], (string)item["name"]);
                 var id = (int)item["id"];
-
-                //if (_pipelineIds.ContainsKey((org, teamProject, path)))
-                //{
-                //    var foo = 12;
-                //}
 
                 var success = _pipelineIds.TryAdd((org.ToUpper(), teamProject.ToUpper(), path.ToUpper()), id);
 
