@@ -406,7 +406,13 @@ namespace OctoshiftCLI
             var parts = path.Split('\\', StringSplitOptions.RemoveEmptyEntries);
 
             var result = string.Join('\\', parts);
-            return $"\\{result}\\{name}";
+
+            if (result.Length > 0)
+            {
+                return $"\\{result}\\{name}";
+            }
+
+            return $"\\{name}";
         }
 
         private string NormalizePipelinePath(string pipeline)
