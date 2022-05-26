@@ -526,6 +526,31 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetRepoId_Should_Ignore_Duplicate_Repo_Names()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var repo = "foo-repo";
+            var repoId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var response = new[] {
+                new { name = repo, id = repoId },
+                new { name = repo, id = Guid.NewGuid().ToString() }
+            };
+
+            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            mockClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+            mockClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
+
+            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
+            var result = await sut.GetRepoId(org, teamProject, repo);
+
+            result.Should().Be(repoId);
+        }
+
+        [Fact]
         public async Task GetPipelines_Should_Return_All_Pipelines()
         {
             var org = "foo-org";
@@ -541,7 +566,7 @@ namespace OctoshiftCLI.Tests
                 {
                     id = "whatever",
                     name = pipeline1,
-                    path = "\\"
+                    path = "\\some-folder"
                 },
                 new
                 {
@@ -557,7 +582,7 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetPipelines(org, teamProject, repoId);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { $"\\{pipeline1}", $"\\{pipeline2}" });
+            result.Should().Contain(new[] { $"\\some-folder\\{pipeline1}", $"\\{pipeline2}" });
         }
 
         [Fact]
@@ -582,6 +607,74 @@ namespace OctoshiftCLI.Tests
                     id = pipelineId,
                     name = pipeline.ToUpper(),
                     path = "\\"
+                }
+            };
+
+            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+
+            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
+            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+
+            result.Should().Be(pipelineId);
+        }
+
+        [Fact]
+        public async Task GetPipelineId_With_Pipeline_Path_Should_Return_PipelineId()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var pipeline = "\\some-folder\\another\\foo-pipe";
+            var pipelineId = 36383;
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var response = new object[]
+            {
+                new
+                {
+                    id = 123,
+                    name = "wrong",
+                    path = "\\"
+                },
+                new
+                {
+                    id = pipelineId,
+                    name = "FOO-PIPE",
+                    path = "\\some-folder\\another"
+                }
+            };
+
+            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+
+            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
+            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+
+            result.Should().Be(pipelineId);
+        }
+
+        [Fact]
+        public async Task GetPipelineId_When_Duplicate_Pipeline_Name_And_Path_Should_Ignore_Second_Pipeline()
+        {
+            var org = "foo-org";
+            var teamProject = "foo-tp";
+            var pipeline = "\\some-folder\\foo-pipe";
+            var pipelineId = 36383;
+
+            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var response = new object[]
+            {
+                new
+                {
+                    id = pipelineId,
+                    name = "FOO-PIPE",
+                    path = "\\some-folder"
+                },
+                new
+                {
+                    id = 123,
+                    name = "FOO-PIPE",
+                    path = "\\some-folder"
                 }
             };
 
