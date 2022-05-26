@@ -296,7 +296,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
-            if (!_repoIds.ContainsKey((org, teamProject)))
+            if (!_repoIds.ContainsKey((org.ToUpper(), teamProject.ToUpper())))
             {
                 var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
 
@@ -312,12 +312,12 @@ namespace OctoshiftCLI
                 }
             }
 
-            return _repoIds[(org, teamProject)][repo];
+            return _repoIds[(org.ToUpper(), teamProject.ToUpper())][repo?.ToUpper()];
         }
 
         public virtual async Task PopulateRepoIdCache(string org, string teamProject)
         {
-            if (_repoIds.ContainsKey((org, teamProject)))
+            if (_repoIds.ContainsKey((org?.ToUpper(), teamProject?.ToUpper())))
             {
                 return;
             }
@@ -333,7 +333,7 @@ namespace OctoshiftCLI
                 var name = (string)item["name"];
                 var id = (string)item["id"];
 
-                var success = ids.TryAdd(name, id);
+                var success = ids.TryAdd(name.ToUpper(), id);
 
                 if (!success)
                 {
@@ -341,7 +341,7 @@ namespace OctoshiftCLI
                 }
             }
 
-            _repoIds.Add((org, teamProject), ids);
+            _repoIds.Add((org.ToUpper(), teamProject.ToUpper()), ids);
         }
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
@@ -429,26 +429,6 @@ namespace OctoshiftCLI
 
             return result.ToString();
         }
-
-        //private (string path, string name) ParsePipeline(string pipeline)
-        //{
-        //    if (!pipeline.Contains('\\'))
-        //    {
-        //        return (@"\\", pipeline);
-        //    }
-
-        //    var parts = pipeline.Split('\\', StringSplitOptions.RemoveEmptyEntries);
-
-        //    var result = new StringBuilder("\\");
-
-        //    for (var i = 0; i < parts.Length - 1; i++)
-        //    {
-        //        result.Append(parts[i]);
-        //        result.Append('\\');
-        //    }
-
-        //    return (result.ToString(), parts.Last());
-        //}
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {
