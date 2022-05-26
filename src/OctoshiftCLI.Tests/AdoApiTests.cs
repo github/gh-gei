@@ -540,11 +540,13 @@ namespace OctoshiftCLI.Tests
                 new
                 {
                     id = "whatever",
-                    name = pipeline1
+                    name = pipeline1,
+                    path = "\\"
                 },
                 new
                 {
-                    name = pipeline2
+                    name = pipeline2,
+                    path = "\\"
                 }
             };
 
@@ -555,7 +557,7 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetPipelines(org, teamProject, repoId);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { pipeline1, pipeline2 });
+            result.Should().Contain(new[] { $"\\{pipeline1}", $"\\{pipeline2}" });
         }
 
         [Fact]
@@ -572,12 +574,14 @@ namespace OctoshiftCLI.Tests
                 new
                 {
                     id = 123,
-                    name = "wrong"
+                    name = "wrong",
+                    path = "\\"
                 },
                 new
                 {
                     id = pipelineId,
-                    name = pipeline.ToUpper()
+                    name = pipeline.ToUpper(),
+                    path = "\\"
                 }
             };
 

@@ -372,9 +372,9 @@ namespace OctoshiftCLI
 
             var pipelinePath = NormalizePipelinePath(pipeline);
 
-            if (_pipelineIds.ContainsKey((org, teamProject, pipelinePath)))
+            if (_pipelineIds.ContainsKey((org?.ToUpper(), teamProject?.ToUpper(), pipelinePath?.ToUpper())))
             {
-                return _pipelineIds[(org, teamProject, pipelinePath)];
+                return _pipelineIds[(org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())];
             }
 
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions";
@@ -390,7 +390,7 @@ namespace OctoshiftCLI
                 //    var foo = 12;
                 //}
 
-                var success = _pipelineIds.TryAdd((org, teamProject, path), id);
+                var success = _pipelineIds.TryAdd((org.ToUpper(), teamProject.ToUpper(), path.ToUpper()), id);
 
                 if (!success)
                 {
@@ -398,7 +398,7 @@ namespace OctoshiftCLI
                 }
             }
 
-            return _pipelineIds[(org, teamProject, pipelinePath)];
+            return _pipelineIds[(org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())];
         }
 
         private string NormalizePipelinePath(string path, string name)
