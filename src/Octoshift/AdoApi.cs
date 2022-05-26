@@ -414,17 +414,8 @@ namespace OctoshiftCLI
         {
             var parts = pipeline.Split('\\', StringSplitOptions.RemoveEmptyEntries);
 
-            var result = new StringBuilder("\\");
-
-            for (var i = 0; i < parts.Length - 1; i++)
-            {
-                result.Append(parts[i]);
-                result.Append('\\');
-            }
-
-            result.Append(parts.Last());
-
-            return result.ToString();
+            var result = string.Join('\\', parts);
+            return $"\\{result}";
         }
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
