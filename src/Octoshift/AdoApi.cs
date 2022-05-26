@@ -296,6 +296,10 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetRepoId(string org, string teamProject, string repo)
         {
+            org = org ?? throw new ArgumentNullException(nameof(org));
+            teamProject = teamProject ?? throw new ArgumentNullException(nameof(teamProject));
+            repo = repo ?? throw new ArgumentNullException(nameof(repo));
+
             if (!_repoIds.ContainsKey((org.ToUpper(), teamProject.ToUpper())))
             {
                 var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
@@ -312,12 +316,15 @@ namespace OctoshiftCLI
                 }
             }
 
-            return _repoIds[(org.ToUpper(), teamProject.ToUpper())][repo?.ToUpper()];
+            return _repoIds[(org.ToUpper(), teamProject.ToUpper())][repo.ToUpper()];
         }
 
         public virtual async Task PopulateRepoIdCache(string org, string teamProject)
         {
-            if (_repoIds.ContainsKey((org?.ToUpper(), teamProject?.ToUpper())))
+            org = org ?? throw new ArgumentNullException(nameof(org));
+            teamProject = teamProject ?? throw new ArgumentNullException(nameof(teamProject));
+
+            if (_repoIds.ContainsKey((org.ToUpper(), teamProject.ToUpper())))
             {
                 return;
             }
@@ -365,14 +372,13 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
         {
-            if (pipeline is null)
-            {
-                throw new ArgumentNullException(nameof(pipeline));
-            }
+            org = org ?? throw new ArgumentNullException(nameof(org));
+            teamProject = teamProject ?? throw new ArgumentNullException(nameof(teamProject));
+            pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
 
             var pipelinePath = NormalizePipelinePath(pipeline);
 
-            if (_pipelineIds.ContainsKey((org?.ToUpper(), teamProject?.ToUpper(), pipelinePath?.ToUpper())))
+            if (_pipelineIds.ContainsKey((org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())))
             {
                 return _pipelineIds[(org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())];
             }
