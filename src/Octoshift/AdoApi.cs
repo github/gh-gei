@@ -361,7 +361,7 @@ namespace OctoshiftCLI
             return result;
         }
 
-        private IDictionary<(string org, string teamProject, string pipelinePath), int> _pipelineIds = new Dictionary<(string org, string teamProject, string pipelinePath), int>();
+        private readonly IDictionary<(string org, string teamProject, string pipelinePath), int> _pipelineIds = new Dictionary<(string org, string teamProject, string pipelinePath), int>();
 
         public virtual async Task<int> GetPipelineId(string org, string teamProject, string pipeline)
         {
