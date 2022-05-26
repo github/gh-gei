@@ -23,7 +23,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, personalAccessToken);
-            return new AdoApi(adoClient, DEFAULT_API_URL);
+            return new AdoApi(adoClient, DEFAULT_API_URL, _octoLogger);
         }
     }
 }
