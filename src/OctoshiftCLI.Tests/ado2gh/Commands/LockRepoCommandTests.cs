@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -8,43 +9,50 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class LockRepoCommandTests
     {
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
+        private readonly LockRepoCommand _command;
+
+        private const string ADO_ORG = "FooOrg";
+        private const string ADO_TEAM_PROJECT = "BlahTeamProject";
+        private const string ADO_REPO = "foo-repo";
+        private readonly string REPO_ID = Guid.NewGuid().ToString();
+        private const string IDENTITY_DESCRIPTOR = "foo-id";
+        private readonly string TEAM_PROJECT_ID = Guid.NewGuid().ToString();
+
+        public LockRepoCommandTests()
+        {
+            _command = new LockRepoCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+        }
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new LockRepoCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("lock-ado-repo", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.NotNull(_command);
+            Assert.Equal("lock-ado-repo", _command.Name);
+            Assert.Equal(5, _command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-repo", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
         public async Task Happy_Path()
         {
-            var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
-            var adoRepo = "foo-repo";
-            var repoId = Guid.NewGuid().ToString();
-            var identityDescriptor = "foo-id";
-            var teamProjectId = Guid.NewGuid().ToString();
+            _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
+            _mockAdoApi.Setup(x => x.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO).Result).Returns(REPO_ID);
+            _mockAdoApi.Setup(x => x.GetIdentityDescriptor(ADO_ORG, TEAM_PROJECT_ID, "Project Valid Users").Result).Returns(IDENTITY_DESCRIPTOR);
 
-            var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            mockAdo.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            mockAdo.Setup(x => x.GetRepoId(adoOrg, adoTeamProject, adoRepo).Result).Returns(repoId);
-            mockAdo.Setup(x => x.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users").Result).Returns(identityDescriptor);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdo.Object);
+            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
-            var command = new LockRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
-            await command.Invoke(adoOrg, adoTeamProject, adoRepo);
-
-            mockAdo.Verify(x => x.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor));
+            _mockAdoApi.Verify(x => x.LockRepo(ADO_ORG, TEAM_PROJECT_ID, REPO_ID, IDENTITY_DESCRIPTOR));
         }
 
         [Fact]
@@ -52,14 +60,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            var command = new LockRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
-            await command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
+            await _command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }
