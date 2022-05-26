@@ -385,7 +385,17 @@ namespace OctoshiftCLI
                 var path = NormalizePipelinePath((string)item["path"], (string)item["name"]);
                 var id = (int)item["id"];
 
-                _pipelineIds.Add((org, teamProject, path), id);
+                //if (_pipelineIds.ContainsKey((org, teamProject, path)))
+                //{
+                //    var foo = 12;
+                //}
+
+                var success = _pipelineIds.TryAdd((org, teamProject, path), id);
+
+                if (!success)
+                {
+                    _log.LogWarning($"Multiple pipelines with the same path/name were found [org: {org} project: {teamProject} pipeline: {path}]. Ignoring pipeline ID {id}");
+                }
             }
 
             return _pipelineIds[(org, teamProject, pipelinePath)];
