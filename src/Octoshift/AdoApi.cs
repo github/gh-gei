@@ -407,12 +407,7 @@ namespace OctoshiftCLI
 
             var result = string.Join('\\', parts);
 
-            if (result.Length > 0)
-            {
-                return $"\\{result}\\{name}";
-            }
-
-            return $"\\{name}";
+            return result.Length > 0 ? $"\\{result}\\{name}" : $"\\{name}";
         }
 
         private string NormalizePipelinePath(string pipeline)
