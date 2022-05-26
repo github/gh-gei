@@ -378,9 +378,9 @@ namespace OctoshiftCLI
 
             var pipelinePath = NormalizePipelinePath(pipeline);
 
-            if (_pipelineIds.ContainsKey((org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())))
+            if (_pipelineIds.TryGetValue((org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper()), out var result))
             {
-                return _pipelineIds[(org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())];
+                return result;
             }
 
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions";
