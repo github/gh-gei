@@ -10,19 +10,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
 
 public class AdoApiFactoryTests
 {
+    private readonly Mock<EnvironmentVariableProvider> _environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+
     private const string ADO_PAT = "ADO_PAT";
 
     [Fact]
     public void AdoApiFactory_Should_Create_Ado_Api_With_Ado_Pat_From_Environment_If_Not_Provided()
     {
         // Arrange
-        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-        environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
+        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null);
         var result = factory.Create(null, null);
 
         // Assert
@@ -31,20 +32,19 @@ public class AdoApiFactoryTests
         httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
         httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-        environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
+        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
     }
 
     [Fact]
     public void AdoApiFactory_Should_Create_Ado_Api_With_Provided_Ado_Pat()
     {
         // Arrange
-        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-        environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, environmentVariableProviderMock.Object, null);
+        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null);
         var result = factory.Create(null, ADO_PAT);
 
         // Assert
@@ -53,6 +53,6 @@ public class AdoApiFactoryTests
         httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
         httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-        environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
     }
 }
