@@ -15,64 +15,71 @@ namespace OctoshiftCLI.Tests
 {
     public class AdoApiTests
     {
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+        private readonly Mock<AdoClient> _mockAdoClient = TestHelpers.CreateMock<AdoClient>();
+
+        private readonly AdoApi sut;
+
         private const string ADO_SERVICE_URL = "https://dev.azure.com";
-        private readonly OctoLogger logger = new();
+        private const string USER_ID = "foo-user-id";
+        private const string ADO_ORG = "foo-org";
+        private const string ADO_ORG_ID = "blah";
+        private const string ADO_TEAM_PROJECT = "foo-tp";
+        private readonly string ADO_TEAM_PROJECT_ID = Guid.NewGuid().ToString();
+        private const string ADO_REPO = "repo-1";
+        private const string GITHUB_ORG = "foo-gh-org";
+
+        public AdoApiTests()
+        {
+            sut = new AdoApi(_mockAdoClient.Object, ADO_SERVICE_URL, _mockOctoLogger.Object);
+        }
 
         [Fact]
         public async Task GetUserId_Should_Return_UserId()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
-            var userId = "foo";
             var userJson = new
             {
                 coreAttributes = new
                 {
                     PublicAlias = new
                     {
-                        value = userId
+                        value = USER_ID
                     }
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson.ToJson());
 
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson.ToJson());
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
             var result = await sut.GetUserId();
 
-            result.Should().Be(userId);
+            result.Should().Be(USER_ID);
         }
 
         [Fact]
         public async Task GetUserId_Invalid_Json_Should_Throw_InvalidDataException()
         {
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
-            var userId = "foo";
             var userJson = new
             {
                 invalid = new
                 {
                     PublicAlias = new
                     {
-                        value = userId
+                        value = USER_ID
                     }
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson.ToJson());
 
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson.ToJson());
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
             await Assert.ThrowsAsync<InvalidDataException>(async () => await sut.GetUserId());
         }
 
         [Fact]
         public async Task GetOrganizations_Should_Return_All_Orgs()
         {
-            var userId = "foo";
-            var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
+            var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={USER_ID}?api-version=5.0-preview.1";
             var accountsJson = new object[]
             {
                 new
@@ -86,12 +93,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(accountsJson.ToJson());
 
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(accountsJson.ToJson());
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetOrganizations(userId);
+            var result = await sut.GetOrganizations(USER_ID);
 
             result.Count().Should().Be(2);
             result.Should().Contain(new[] { "foo", "foo2" });
@@ -100,16 +104,13 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetOrganizationId_Should_Return_OrgId()
         {
-            var userId = "foo";
-            var adoOrg = "foo-org";
-            var orgId = "blah";
-            var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}&api-version=5.0-preview.1";
+            var endpoint = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={USER_ID}&api-version=5.0-preview.1";
             var accountsJson = new object[]
             {
                 new
                 {
-                    accountId = orgId,
-                    accountName = adoOrg
+                    accountId = ADO_ORG_ID,
+                    accountName = ADO_ORG
                 },
                 new
                 {
@@ -120,29 +121,24 @@ namespace OctoshiftCLI.Tests
 
             var response = JArray.Parse(accountsJson.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
+            var result = await sut.GetOrganizationId(USER_ID, ADO_ORG);
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetOrganizationId(userId, adoOrg);
-
-            result.Should().Be(orgId);
+            result.Should().Be(ADO_ORG_ID);
         }
 
         [Fact]
         public async Task GetTeamProjects_Should_Return_All_Team_Projects()
         {
-            var adoOrg = "foo-org";
-            var teamProject1 = "foo-tp";
             var teamProject2 = "foo-tp2";
-            var endpoint = $"https://dev.azure.com/{adoOrg}/_apis/projects?api-version=6.1-preview";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/projects?api-version=6.1-preview";
             var json = new object[]
             {
                 new
                 {
                     somethingElse = false,
-                    name = teamProject1
+                    name = ADO_TEAM_PROJECT
                 },
                 new
                 {
@@ -152,25 +148,19 @@ namespace OctoshiftCLI.Tests
             };
             var response = JArray.Parse(json.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetTeamProjects(adoOrg);
+            var result = await sut.GetTeamProjects(ADO_ORG);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { teamProject1, teamProject2 });
+            result.Should().Contain(new[] { ADO_TEAM_PROJECT, teamProject2 });
         }
 
         [Fact]
         public async Task GetRepos_Should_Not_Return_Disabled_Repos()
         {
-            var adoOrg = "foo-org";
-            var teamProject = "foo-tp";
-            var repo1 = "foo-repo";
             var repo2 = "foo-repo2";
-            var endpoint = $"https://dev.azure.com/{adoOrg}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=6.1-preview.1";
             var json = new object[]
             {
                 new
@@ -181,7 +171,7 @@ namespace OctoshiftCLI.Tests
                 new
                 {
                     isDisabled = false,
-                    name = repo1
+                    name = ADO_REPO
                 },
                 new
                 {
@@ -191,25 +181,19 @@ namespace OctoshiftCLI.Tests
             };
             var response = JArray.Parse(json.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
 
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(response);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetEnabledRepos(adoOrg, teamProject);
+            var result = await sut.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { repo1, repo2 });
+            result.Should().Contain(new[] { ADO_REPO, repo2 });
         }
 
         [Fact]
         public async Task GetGithubAppId_Should_Skip_Team_Projects_With_No_Endpoints()
         {
-            var adoOrg = "foo-org";
-            var githubOrg = "foo-gh-org";
-            var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var teamProjects = new List<string>() { ADO_TEAM_PROJECT, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
             var json = new object[]
@@ -217,19 +201,16 @@ namespace OctoshiftCLI.Tests
                 new
                 {
                     type = "GitHub",
-                    name = githubOrg,
+                    name = GITHUB_ORG,
                     id = appId
                 }
             };
             var response = JArray.Parse(json.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
-            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
-            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
+            var result = await sut.GetGithubAppId(ADO_ORG, GITHUB_ORG, teamProjects);
 
             result.Should().Be(appId);
         }
@@ -237,11 +218,8 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetGithubAppId_Should_Return_Null_When_No_Team_Projects_Have_Endpoint()
         {
-            var adoOrg = "foo-org";
-            var githubOrg = "foo-gh-org";
-            var teamProject1 = "foo-tp1";
             var teamProject2 = "foo-tp2";
-            var teamProjects = new List<string>() { teamProject1, teamProject2 };
+            var teamProjects = new List<string>() { ADO_TEAM_PROJECT, teamProject2 };
             var appId = Guid.NewGuid().ToString();
 
             var json = new object[]
@@ -255,13 +233,10 @@ namespace OctoshiftCLI.Tests
             };
             var response = JArray.Parse(json.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
-            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject1}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
-            mockClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{adoOrg}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetGithubAppId(adoOrg, githubOrg, teamProjects);
+            var result = await sut.GetGithubAppId(ADO_ORG, GITHUB_ORG, teamProjects);
 
             result.Should().BeNull();
         }
@@ -269,12 +244,10 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetGithubHandle_Should_Return_Handle()
         {
-            var adoOrg = "FOO-ORG";
-            var teamProject = "FOO-TEAMPROJECT";
             var githubToken = Guid.NewGuid().ToString();
 
             var handle = "FOO-LOGIN";
-            var endpoint = $"https://dev.azure.com/{adoOrg}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
             var payload = new
             {
                 contributionIds = new[]
@@ -290,7 +263,7 @@ namespace OctoshiftCLI.Tests
                         {
                             routeValues = new
                             {
-                                project = teamProject
+                                project = ADO_TEAM_PROJECT
                             }
                         }
                     }
@@ -299,12 +272,9 @@ namespace OctoshiftCLI.Tests
 
             var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.github-user-data-provider\": {{ \"login\": '{handle}' }} }} }}";
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetGithubHandle(adoOrg, teamProject, githubToken);
+            var result = await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, githubToken);
 
             result.Should().Be(handle);
         }
@@ -312,9 +282,11 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetBoardsGithubConnection_Should_Return_Connection_With_All_Repos()
         {
-            var teamProject = "FOO-TEAMPROJECT";
-            var orgName = "FOO-ORG";
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var connectionId = "foo-id";
+            var endpointId = "foo-endpoint-id";
+            var connectionName = "foo-name";
+            var repo2 = "repo-2";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -331,45 +303,34 @@ namespace OctoshiftCLI.Tests
                         {
                             routeValues = new
                             {
-                                project = teamProject
+                                project = ADO_TEAM_PROJECT
                             }
                         }
                     }
                 }
             };
 
-            var connectionId = "foo-id";
-            var endpointId = "foo-endpoint-id";
-            var connectionName = "foo-name";
-            var repo1 = "repo-1";
-            var repo2 = "repo-2";
+            var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.azure-boards-external-connection-data-provider\": {{ \"externalConnections\": [ {{ id: '{connectionId}', serviceEndpoint: {{ id: '{endpointId}' }}, name: '{connectionName}', externalGitRepos: [ {{ id: '{ADO_REPO}' }}, {{ id: '{repo2}' }} ] }}, {{ thisIsIgnored: true }} ]  }} }} }}";
 
-            var json = $"{{ \"dataProviders\": {{ \"ms.vss-work-web.azure-boards-external-connection-data-provider\": {{ \"externalConnections\": [ {{ id: '{connectionId}', serviceEndpoint: {{ id: '{endpointId}' }}, name: '{connectionName}', externalGitRepos: [ {{ id: '{repo1}' }}, {{ id: '{repo2}' }} ] }}, {{ thisIsIgnored: true }} ]  }} }} }}";
+            _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetBoardsGithubConnection("FOO-ORG", "FOO-TEAMPROJECT");
+            var result = await sut.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT);
 
             result.connectionId.Should().Be(connectionId);
             result.endpointId.Should().Be(endpointId);
             result.connectionName.Should().Be(connectionName);
             result.repoIds.Count().Should().Be(2);
-            result.repoIds.Should().Contain(new[] { repo1, repo2 });
+            result.repoIds.Should().Contain(new[] { ADO_REPO, repo2 });
         }
 
         [Fact]
         public async Task CreateBoardsGithubEndpoint_Should_Return_EndpointId()
         {
-            var orgName = "FOO-ORG";
-            var teamProjectId = Guid.NewGuid().ToString();
             var githubToken = Guid.NewGuid().ToString();
             var githubHandle = "foo-handle";
             var endpointName = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{orgName}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT_ID}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -397,11 +358,9 @@ namespace OctoshiftCLI.Tests
                 name = "something"
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json.ToJson());
+            _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json.ToJson());
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.CreateBoardsGithubEndpoint(orgName, teamProjectId, githubToken, githubHandle, endpointName);
+            var result = await sut.CreateBoardsGithubEndpoint(ADO_ORG, ADO_TEAM_PROJECT_ID, githubToken, githubHandle, endpointName);
 
             result.Should().Be(endpointId);
         }
@@ -409,15 +368,12 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task AddRepoToBoardsGithubConnection_Should_Send_Correct_Payload()
         {
-            var orgName = "FOO-ORG";
-            var teamProject = "FOO-TEAMPROJECT";
             var connectionId = Guid.NewGuid().ToString();
             var connectionName = "FOO-CONNECTION";
             var endpointId = Guid.NewGuid().ToString();
-            var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -437,7 +393,7 @@ namespace OctoshiftCLI.Tests
                             operation = 1,
                             externalRepositoryExternalIds = new[]
                             {
-                                repo1,
+                                ADO_REPO,
                                 repo2
                             },
                             providerKey = "github.com",
@@ -447,55 +403,42 @@ namespace OctoshiftCLI.Tests
                         {
                             routeValues = new
                             {
-                                project = teamProject
+                                project = ADO_TEAM_PROJECT
                             }
                         }
                     }
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.AddRepoToBoardsGithubConnection(orgName, teamProject, connectionId, connectionName, endpointId, new List<string>() { repo1, repo2 });
+            await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, connectionId, connectionName, endpointId, new List<string>() { ADO_REPO, repo2 });
 
-            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+            _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
 
         [Fact]
         public async Task GetTeamProjectId_Should_Return_TeamProjectId()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
-            var teamProjectId = Guid.NewGuid().ToString();
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/projects/{ADO_TEAM_PROJECT}?api-version=5.0-preview.1";
+            var response = new { id = ADO_TEAM_PROJECT_ID };
 
-            var endpoint = $"https://dev.azure.com/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
-            var response = new { id = teamProjectId };
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+            var result = await sut.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT);
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetTeamProjectId(org, teamProject);
-
-            result.Should().Be(teamProjectId);
+            result.Should().Be(ADO_TEAM_PROJECT_ID);
         }
 
         [Fact]
         public async Task GetRepoId_Should_Return_RepoId()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
-            var repo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
             var response = new { id = repoId };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetRepoId(org, teamProject, repo);
+            var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
             result.Should().Be(repoId);
         }
@@ -503,24 +446,19 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetRepoId_Should_Work_On_Disabled_Repo()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
-            var repo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
-            var allReposEndpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=4.1";
             var response = new[] {
                 new { name = "blah", id = Guid.NewGuid().ToString() },
-                new { name = repo, id = repoId }
+                new { name = ADO_REPO, id = repoId }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
-            mockClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetRepoId(org, teamProject, repo);
+            var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
             result.Should().Be(repoId);
         }
@@ -528,24 +466,19 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetRepoId_Should_Ignore_Duplicate_Repo_Names()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
-            var repo = "foo-repo";
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
-            var allReposEndpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=4.1";
             var response = new[] {
-                new { name = repo, id = repoId },
-                new { name = repo, id = Guid.NewGuid().ToString() }
+                new { name = ADO_REPO, id = repoId },
+                new { name = ADO_REPO, id = Guid.NewGuid().ToString() }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
-            mockClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetRepoId(org, teamProject, repo);
+            var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
             result.Should().Be(repoId);
         }
@@ -553,13 +486,11 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPipelines_Should_Return_All_Pipelines()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
             var repoId = Guid.NewGuid().ToString();
             var pipeline1 = "foo-pipe-1";
             var pipeline2 = "foo-pipe-2";
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
             var response = new object[]
             {
                 new
@@ -575,11 +506,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetPipelines(org, teamProject, repoId);
+            var result = await sut.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, repoId);
 
             result.Count().Should().Be(2);
             result.Should().Contain(new[] { $"\\some-folder\\{pipeline1}", $"\\{pipeline2}" });
@@ -588,12 +517,10 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPipelineId_Should_Return_PipelineId()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
             var pipeline = "foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -610,11 +537,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+            var result = await sut.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, pipeline);
 
             result.Should().Be(pipelineId);
         }
@@ -622,12 +547,10 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPipelineId_With_Pipeline_Path_Should_Return_PipelineId()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
             var pipeline = "\\some-folder\\another\\foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -644,11 +567,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+            var result = await sut.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, pipeline);
 
             result.Should().Be(pipelineId);
         }
@@ -656,12 +577,10 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPipelineId_When_Duplicate_Pipeline_Name_And_Path_Should_Ignore_Second_Pipeline()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
             var pipeline = "\\some-folder\\foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -678,11 +597,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetPipelineId(org, teamProject, pipeline);
+            var result = await sut.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, pipeline);
 
             result.Should().Be(pipelineId);
         }
@@ -690,44 +607,37 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task ShareServiceConnection_Should_Send_Correct_Payload()
         {
-            var org = "FOO-ORG";
-            var teamProject = "foo-teamproject";
-            var teamProjectId = Guid.NewGuid().ToString();
             var serviceConnectionId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{org}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
             var payload = new[]
             {
                 new
                 {
-                    name = $"{org}-{teamProject}",
+                    name = $"{ADO_ORG}-{ADO_TEAM_PROJECT}",
                     projectReference = new
                     {
-                        id = teamProjectId,
-                        name = teamProject
+                        id = ADO_TEAM_PROJECT_ID,
+                        name = ADO_TEAM_PROJECT
                     }
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.ShareServiceConnection(org, teamProject, teamProjectId, serviceConnectionId);
+            await sut.ShareServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, serviceConnectionId);
 
-            mockClient.Verify(m => m.PatchAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())));
+            _mockAdoClient.Verify(m => m.PatchAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())));
         }
 
         [Fact]
         public async Task GetPipeline_Should_Return_Pipeline()
         {
-            var org = "foo-org";
-            var teamProject = "foo-tp";
             var pipelineId = 826263;
             var branchName = "foo-branch";
             var defaultBranch = $"refs/heads/{branchName}";
             var clean = "True";
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions/{pipelineId}?api-version=6.0";
             var response = new
             {
                 repository = new
@@ -738,11 +648,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var (DefaultBranch, Clean, CheckoutSubmodules) = await sut.GetPipeline(org, teamProject, pipelineId);
+            var (DefaultBranch, Clean, CheckoutSubmodules) = await sut.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId);
 
             DefaultBranch.Should().Be(branchName);
             Clean.Should().Be("true");
@@ -752,10 +660,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task ChangePipelineRepo_Should_Send_Correct_Payload()
         {
-            var org = "foo-org";
-            var githubOrg = "foo-org";
             var githubRepo = "foo-repo";
-            var teamProject = "foo-tp";
             var serviceConnectionId = Guid.NewGuid().ToString();
             var defaultBranch = "foo-branch";
             var pipelineId = 123;
@@ -778,7 +683,7 @@ namespace OctoshiftCLI.Tests
                 oneLastThing = false
             };
 
-            var endpoint = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var newJson = new
             {
@@ -792,23 +697,23 @@ namespace OctoshiftCLI.Tests
                 {
                     properties = new
                     {
-                        apiUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}",
-                        branchesUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/branches",
-                        cloneUrl = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                        apiUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}",
+                        branchesUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/branches",
+                        cloneUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
                         connectedServiceId = serviceConnectionId,
                         defaultBranch,
-                        fullName = $"{githubOrg}/{githubRepo}",
-                        manageUrl = $"https://github.com/{githubOrg}/{githubRepo}",
-                        orgName = githubOrg,
-                        refsUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/git/refs",
-                        safeRepository = $"{githubOrg}/{githubRepo}",
+                        fullName = $"{GITHUB_ORG}/{githubRepo}",
+                        manageUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}",
+                        orgName = GITHUB_ORG,
+                        refsUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/git/refs",
+                        safeRepository = $"{GITHUB_ORG}/{githubRepo}",
                         shortName = githubRepo,
                         reportBuildStatus = true
                     },
-                    id = $"{githubOrg}/{githubRepo}",
+                    id = $"{GITHUB_ORG}/{githubRepo}",
                     type = "GitHub",
-                    name = $"{githubOrg}/{githubRepo}",
-                    url = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                    name = $"{GITHUB_ORG}/{githubRepo}",
+                    url = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
                     defaultBranch,
                     clean,
                     checkoutSubmodules
@@ -816,25 +721,19 @@ namespace OctoshiftCLI.Tests
                 oneLastThing = false
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.ChangePipelineRepo(org, teamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
+            await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId);
 
-            mockClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
+            _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
         }
 
         [Fact]
         public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
         {
-            var orgName = "FOO-ORG";
-            var teamProject = "foo-tp";
-            var teamProjectId = Guid.NewGuid().ToString();
             var endpointId = Guid.NewGuid().ToString();
-            var githubOrg = "foo-github-org";
             var githubRepo = "foo-repo";
 
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -846,14 +745,14 @@ namespace OctoshiftCLI.Tests
                 {
                     properties = new
                     {
-                        projectId = teamProjectId,
-                        repoWithOwnerName = $"{githubOrg}/{githubRepo}",
+                        projectId = ADO_TEAM_PROJECT_ID,
+                        repoWithOwnerName = $"{GITHUB_ORG}/{githubRepo}",
                         serviceEndpointId = endpointId,
                         sourcePage = new
                         {
                             routeValues = new
                             {
-                                project = teamProject
+                                project = ADO_TEAM_PROJECT
                             }
                         }
                     }
@@ -863,11 +762,9 @@ namespace OctoshiftCLI.Tests
             var repoId = Guid.NewGuid().ToString();
             var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
+            _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetBoardsGithubRepoId(orgName, teamProject, teamProjectId, endpointId, githubOrg, githubRepo);
+            var result = await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, endpointId, GITHUB_ORG, githubRepo);
 
             result.Should().Be(repoId);
         }
@@ -875,12 +772,10 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task CreateBoardsGithubConnection_Should_Send_Correct_Payload()
         {
-            var orgName = "FOO-ORG";
-            var teamProject = "foo-tp";
             var endpointId = Guid.NewGuid().ToString();
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -907,29 +802,25 @@ namespace OctoshiftCLI.Tests
                         {
                             routeValues = new
                             {
-                                project = teamProject
+                                project = ADO_TEAM_PROJECT
                             }
                         }
                     }
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, endpointId, repoId);
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.CreateBoardsGithubConnection(orgName, teamProject, endpointId, repoId);
-
-            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+            _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
 
         [Fact]
         public async Task GetOrgOwner_Returns_Owner()
         {
-            var orgName = "FOO-ORG";
             var ownerName = "Dave";
             var ownerEmail = "dave@gmail.com";
 
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -954,11 +845,9 @@ namespace OctoshiftCLI.Tests
 
             var json = $@"{{ dataProviders: {{ ""ms.vss-admin-web.organization-admin-overview-delay-load-data-provider"": {{ currentOwner: {{ name: '{ownerName}', email: '{ownerEmail}' }} }} }} }}";
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            mockClient.Setup(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson()))).ReturnsAsync(json);
+            _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson()))).ReturnsAsync(json);
 
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetOrgOwner(orgName);
+            var result = await sut.GetOrgOwner(ADO_ORG);
 
             result.Should().Be($"{ownerName} ({ownerEmail})");
         }
@@ -966,38 +855,29 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task DisableRepo_Should_Send_Correct_Payload()
         {
-            var orgName = "foo-org";
-            var teamProject = "foo-tp";
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{orgName}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.DisableRepo(orgName, teamProject, repoId);
+            await sut.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, repoId);
 
             var payload = new { isDisabled = true };
 
-            mockClient.Verify(m => m.PatchAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+            _mockAdoClient.Verify(m => m.PatchAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
 
         [Fact]
         public async Task GetIdentityDescriptor_Should_Return_IdentityDescriptor()
         {
-            var orgName = "foo-org";
-            var teamProjectId = Guid.NewGuid().ToString();
             var groupName = "foo-group";
             var identityDescriptor = "foo-id";
 
-            var endpoint = $"https://vssps.dev.azure.com/{orgName}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
-            var response = $@"[{{ properties: {{ LocalScopeId: {{ $value: ""wrong"" }} }}, descriptor: ""blah"" }}, {{ descriptor: ""{identityDescriptor}"", properties: {{ LocalScopeId: {{ $value: ""{teamProjectId}"" }} }} }}]";
+            var endpoint = $"https://vssps.dev.azure.com/{ADO_ORG}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
+            var response = $@"[{{ properties: {{ LocalScopeId: {{ $value: ""wrong"" }} }}, descriptor: ""blah"" }}, {{ descriptor: ""{identityDescriptor}"", properties: {{ LocalScopeId: {{ $value: ""{ADO_TEAM_PROJECT_ID}"" }} }} }}]";
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
 
-            mockClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
-
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            var result = await sut.GetIdentityDescriptor(orgName, teamProjectId, groupName);
+            var result = await sut.GetIdentityDescriptor(ADO_ORG, ADO_TEAM_PROJECT_ID, groupName);
 
             result.Should().Be(identityDescriptor);
         }
@@ -1005,17 +885,15 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task LockRepo_Should_Send_Correct_Payload()
         {
-            var orgName = "FOO-ORG";
-            var teamProjectId = Guid.NewGuid().ToString();
             var repoId = Guid.NewGuid().ToString();
             var identityDescriptor = "foo-id";
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
 
-            var endpoint = $"https://dev.azure.com/{orgName}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
 
             var payload = new
             {
-                token = $"repoV2/{teamProjectId}/{repoId}",
+                token = $"repoV2/{ADO_TEAM_PROJECT_ID}/{repoId}",
                 merge = true,
                 accessControlEntries = new[]
                 {
@@ -1035,11 +913,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var mockClient = TestHelpers.CreateMock<AdoClient>();
-            var sut = new AdoApi(mockClient.Object, ADO_SERVICE_URL, logger);
-            await sut.LockRepo(orgName, teamProjectId, repoId, identityDescriptor);
+            await sut.LockRepo(ADO_ORG, ADO_TEAM_PROJECT_ID, repoId, identityDescriptor);
 
-            mockClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+            _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
     }
 }

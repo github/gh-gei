@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -8,22 +9,32 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class RewirePipelineCommandTests
     {
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
+        private readonly RewirePipelineCommand _command;
+
+        public RewirePipelineCommandTests()
+        {
+            _command = new RewirePipelineCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+        }
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new RewirePipelineCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("rewire-pipeline", command.Name);
-            Assert.Equal(8, command.Options.Count);
+            Assert.NotNull(_command);
+            Assert.Equal("rewire-pipeline", _command.Name);
+            Assert.Equal(8, _command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-pipeline", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
@@ -40,17 +51,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var clean = "true";
             var checkoutSubmodules = "null";
 
-            var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            mockAdo.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
-            mockAdo.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
+            _mockAdoApi.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
+            _mockAdoApi.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(null)).Returns(mockAdo.Object);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
-            await command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
+            await _command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
 
-            mockAdo.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
+            _mockAdoApi.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
         }
 
         [Fact]
@@ -58,14 +66,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var mockAdo = TestHelpers.CreateMock<AdoApi>();
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(mockAdo.Object);
+            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            var command = new RewirePipelineCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockAdoApiFactory.Object);
-            await command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
+            await _command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
 
-            mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }
