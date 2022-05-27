@@ -22,8 +22,6 @@ namespace OctoshiftCLI.Tests
 
         private readonly GithubApi _githubApi;
 
-        //private const string GITHUB_ORG = "foo-org";
-        //private const string GITHUB_REPO = "foo-repo";
         private const string GITHUB_ORG = "ORG_LOGIN";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
 

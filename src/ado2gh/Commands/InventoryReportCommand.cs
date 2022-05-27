@@ -74,32 +74,39 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var ado = _adoApiFactory.Create(adoPat);
 
+            _log.LogInformation("Finding Orgs...");
             var orgs = await _adoInspectorService.GetOrgs(ado, adoOrg);
             _log.LogInformation($"Found {orgs?.Count()} Orgs");
 
+            _log.LogInformation("Finding Team Projects...");
             var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
             _log.LogInformation($"Found {teamProjects?.Sum(org => org.Value.Count())} Team Projects");
 
+            _log.LogInformation("Finding Repos...");
             var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
             _log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
 
+            _log.LogInformation("Finding Pipelines...");
             var pipelines = await _adoInspectorService.GetPipelines(ado, repos);
             _log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
 
+            _log.LogInformation("Generating orgs.csv...");
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado, pipelines);
-            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
-            var reposCsvText = await _reposCsvGenerator.Generate(ado, pipelines);
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado, pipelines);
-
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
+            _log.LogInformation("Generating teamprojects.csv...");
+            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
+            _log.LogInformation("Generating repos.csv...");
+            var reposCsvText = await _reposCsvGenerator.Generate(ado, pipelines);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
+            _log.LogInformation("Generating pipelines.csv...");
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado, pipelines);
             await WriteToFile("pipelines.csv", pipelinesCsvText);
             _log.LogSuccess("pipelines.csv generated");
         }

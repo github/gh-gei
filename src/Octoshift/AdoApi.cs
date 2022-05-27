@@ -57,11 +57,11 @@ namespace OctoshiftCLI
             return $"{ownerName} ({ownerEmail})";
         }
 
-        public virtual async Task<IEnumerable<int>> GetPullRequests(string org, string teamProject, string repoId)
+        public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repoId}/pullrequests?api-version=7.1-preview.1";
-            var data = await _client.GetWithPagingAsync(url);
-            return data.Select(x => (int)x["pullRequestId"]).ToList();
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
+            var count = await _client.GetCountUsingSkip(url);
+            return count;
         }
 
         public virtual async Task<string> GetUserId()
