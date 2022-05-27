@@ -12,63 +12,63 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateMannequinCsvCommandTests
     {
+        private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+        private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
+        private readonly GenerateMannequinCsvCommand _command;
+
         private const string CSV_HEADER = "mannequin-user,mannequin-id,target-user";
+        private const string GITHUB_ORG = "FooOrg";
+        private readonly string GITHUB_ORG_ID = Guid.NewGuid().ToString();
+        private string _csvContent = string.Empty;
+
+        public GenerateMannequinCsvCommandTests()
+        {
+            _command = new GenerateMannequinCsvCommand(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object)
+            {
+                WriteToFile = (_, contents) =>
+                {
+                    _csvContent = contents;
+                    return Task.CompletedTask;
+                }
+            };
+        }
 
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new GenerateMannequinCsvCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("generate-mannequin-csv", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.NotNull(_command);
+            Assert.Equal("generate-mannequin-csv", _command.Name);
+            Assert.Equal(5, _command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(command.Options, "include-reclaimed", false);
-            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "output", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "include-reclaimed", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
         public async Task NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
         {
-            const string githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(Array.Empty<Mannequin>());
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(Array.Empty<Mannequin>());
-
-            var csvContent = "";
-
-            var command = new GenerateMannequinCsvCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    csvContent = contents;
-                    return Task.CompletedTask;
-                }
-            };
             var expected = CSV_HEADER + Environment.NewLine;
 
             // Act
-            await command.Invoke("octocat", new FileInfo("unit-test-output"), false);
+            await _command.Invoke("octocat", new FileInfo("unit-test-output"), false);
 
             // Assert
-            csvContent.Should().Be(expected);
+            _csvContent.Should().Be(expected);
         }
 
         [Fact]
         public async Task Mannequins_GenerateCSV_UnreclaimedOnly()
         {
-            const string githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
-
             var mannequinsResponse = new[]
             {
                 new Mannequin
@@ -88,43 +88,25 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-
-            var csvContent = "";
-
-            var command = new GenerateMannequinCsvCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    csvContent = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);
 
             var expected = CSV_HEADER + Environment.NewLine
                 + "mona,monaid," + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), false);
+            await _command.Invoke(GITHUB_ORG, new FileInfo("unit-test-output"), false);
 
             // Assert
-            csvContent.Should().Be(expected);
+            _csvContent.Should().Be(expected);
         }
 
         [Fact]
         public async Task Mannequins_GenerateCSV_IncludeAlreadyReclaimed()
         {
-            const string githubOrg = "FooOrg";
-            var githubOrgId = Guid.NewGuid().ToString();
-
             var mannequinsResponse = new[]
             {
                 new Mannequin
@@ -144,35 +126,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-            mockGithubApi.Setup(x => x.GetMannequins(githubOrgId).Result).Returns(mannequinsResponse);
-
-            var csvContent = "";
-
-            var command = new GenerateMannequinCsvCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                mockTargetGithubApiFactory.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    csvContent = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);
 
             var expected = CSV_HEADER + Environment.NewLine
                 + "mona,monaid," + Environment.NewLine
                 + "monalisa,monalisaid,monalisa_gh" + Environment.NewLine;
 
             // Act
-            await command.Invoke(githubOrg, new FileInfo("unit-test-output"), true);
+            await _command.Invoke(GITHUB_ORG, new FileInfo("unit-test-output"), true);
 
             // Assert
-            csvContent.Should().Be(expected);
+            _csvContent.Should().Be(expected);
         }
     }
 }
