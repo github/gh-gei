@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Moq;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
 
@@ -9,7 +10,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count";
 
         [Fact]
         public async Task Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
@@ -26,6 +27,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                                                                  { pipeline } } } } } } };
 
             var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            mockAdoApi.Setup(m => m.GetPullRequestCount(org, teamProject, repo)).ReturnsAsync(3);
 
             // Act
             var service = new ReposCsvGeneratorService();
@@ -33,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"{org},{teamProject},{repo},https://dev.azure.com/my%20org/foo%20tp/_git/foo%20repo,1{Environment.NewLine}";
+            expected += $"{org},{teamProject},{repo},https://dev.azure.com/my%20org/foo%20tp/_git/foo%20repo,1,3{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
