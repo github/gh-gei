@@ -35,10 +35,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public MigrateRepoCommandTests()
         {
             _command = new MigrateRepoCommand(
-                _mockOctoLogger.Object, 
-                _mockSourceGithubApiFactory.Object, 
-                _mockTargetGithubApiFactory.Object, 
-                _mockEnvironmentVariableProvider.Object, 
+                _mockOctoLogger.Object,
+                _mockSourceGithubApiFactory.Object,
+                _mockTargetGithubApiFactory.Object,
+                _mockEnvironmentVariableProvider.Object,
                 _mockAzureApiFactory.Object);
         }
 
