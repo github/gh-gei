@@ -43,10 +43,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task With_Migration_ID_That_Succeeds()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
-            const int waitIntervalInSeconds = 1;
-
-            _mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
+            _mockGithubApi.SetupSequence(x => x.GetMigrationState(MIGRATION_ID).Result)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.Succeeded);
@@ -59,22 +56,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var expectedLogOutput = new List<string>
             {
-                $"Waiting for migration {specifiedMigrationId} to finish...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration succeeded for migration {specifiedMigrationId}"
+                $"Waiting for migration {MIGRATION_ID} to finish...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration succeeded for migration {MIGRATION_ID}"
             };
 
             // Act
-            await _command.Invoke(specifiedMigrationId);
+            await _command.Invoke(MIGRATION_ID);
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
             _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-            _mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
+            _mockGithubApi.Verify(m => m.GetMigrationState(MIGRATION_ID), Times.Exactly(3));
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -86,12 +83,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task With_Migration_ID_That_Fails()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
             const string failureReason = "FAILURE_REASON";
-            const int waitIntervalInSeconds = 1;
 
-            _mockGithubApi.Setup(m => m.GetMigrationFailureReason(specifiedMigrationId).Result).Returns(failureReason);
-            _mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
+            _mockGithubApi.Setup(m => m.GetMigrationFailureReason(MIGRATION_ID).Result).Returns(failureReason);
+            _mockGithubApi.SetupSequence(x => x.GetMigrationState(MIGRATION_ID).Result)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.InProgress)
                 .Returns(RepositoryMigrationStatus.Failed);
@@ -104,17 +99,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var expectedLogOutput = new List<string>
             {
-                $"Waiting for migration {specifiedMigrationId} to finish...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration failed for migration {specifiedMigrationId}"
+                $"Waiting for migration {MIGRATION_ID} to finish...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration failed for migration {MIGRATION_ID}"
             };
 
             // Act
             await FluentActions
-                .Invoking(async () => await _command.Invoke(specifiedMigrationId))
+                .Invoking(async () => await _command.Invoke(MIGRATION_ID))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage(failureReason);
@@ -124,8 +119,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
             _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-            _mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
-            _mockGithubApi.Verify(m => m.GetMigrationFailureReason(specifiedMigrationId), Times.Once);
+            _mockGithubApi.Verify(m => m.GetMigrationState(MIGRATION_ID), Times.Exactly(3));
+            _mockGithubApi.Verify(m => m.GetMigrationFailureReason(MIGRATION_ID), Times.Once);
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -137,12 +132,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task It_Uses_Github_Target_Pat_When_Provided()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
-            const int waitIntervalInSeconds = 1;
             const string githubTargetPat = "github-target-pat";
 
             _mockGithubApi
-                .Setup(x => x.GetMigrationState(specifiedMigrationId).Result)
+                .Setup(x => x.GetMigrationState(MIGRATION_ID).Result)
                 .Returns(RepositoryMigrationStatus.Succeeded);
 
             _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(_mockGithubApi.Object);
@@ -151,7 +144,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
-            await _command.Invoke(specifiedMigrationId, githubTargetPat);
+            await _command.Invoke(MIGRATION_ID, githubTargetPat);
 
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
