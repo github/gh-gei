@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 $AssemblyVersion = "9.9"
 
 if ((Test-Path env:CLI_VERSION) -And $env:CLI_VERSION.StartsWith("refs/tags/v")) {
