@@ -484,6 +484,19 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetPullRequestCount_Should_Return_Count()
+        {
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
+            var expectedCount = 12;
+
+            _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
+
+            var result = await sut.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+
+            result.Should().Be(expectedCount);
+        }
+
+        [Fact]
         public async Task GetPipelines_Should_Return_All_Pipelines()
         {
             var repoId = Guid.NewGuid().ToString();

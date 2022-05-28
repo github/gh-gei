@@ -110,7 +110,7 @@ namespace OctoshiftCLI
             }
 
             await ApplyRetryDelayAsync();
-            _log.LogVerbose($"HTTP GET: {url}");
+            _log.LogVerbose($"HTTP GET: {updatedUrl}");
             var response = await _httpClient.GetAsync(updatedUrl);
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
@@ -131,6 +131,66 @@ namespace OctoshiftCLI
             }
 
             return data;
+        }
+
+        public virtual async Task<int> GetCountUsingSkip(string url)
+        {
+            if (!await DoesSkipExist(url, 0))
+            {
+                return 0;
+            }
+
+            var minCount = 1;
+            var maxCount = 500;
+
+            while (await DoesSkipExist(url, maxCount))
+            {
+                maxCount *= 2;
+            }
+
+            var skip = 500;
+
+            while (minCount < maxCount)
+            {
+                if (await DoesSkipExist(url, skip))
+                {
+                    minCount = skip + 1;
+                }
+                else
+                {
+                    maxCount = skip;
+                }
+
+                skip = ((maxCount - minCount) / 2) + minCount;
+            }
+
+            return minCount;
+        }
+
+        private async Task<bool> DoesSkipExist(string url, int skip)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
+            var updatedUrl = url.Replace(" ", "%20");
+
+            if (!updatedUrl.Contains('?'))
+            {
+                updatedUrl += "?";
+            }
+            else
+            {
+                updatedUrl += "&";
+            }
+
+            updatedUrl += $"$top=1&$skip={skip}";
+
+            var content = await SendAsync(HttpMethod.Get, updatedUrl);
+            var count = (int)JObject.Parse(content)["count"];
+
+            return count > 0;
         }
 
         private void CheckForRetryDelay(HttpResponseMessage response)

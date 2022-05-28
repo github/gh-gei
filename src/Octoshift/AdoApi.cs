@@ -57,6 +57,13 @@ namespace OctoshiftCLI
             return $"{ownerName} ({ownerEmail})";
         }
 
+        public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
+        {
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
+            var count = await _client.GetCountUsingSkip(url);
+            return count;
+        }
+
         public virtual async Task<string> GetUserId()
         {
             var url = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
