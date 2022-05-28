@@ -486,8 +486,6 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPullRequestCount_Should_Return_Count()
         {
-            var repoId = Guid.NewGuid().ToString();
-
             var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
             var expectedCount = 12;
 
