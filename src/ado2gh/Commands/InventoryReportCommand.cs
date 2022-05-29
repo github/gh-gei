@@ -2,8 +2,8 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
@@ -62,7 +62,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             _log.LogInformation("Creating inventory report...");
 
-            if (!string.IsNullOrWhiteSpace(adoOrg))
+            if (adoOrg.HasValue())
             {
                 _log.LogInformation($"ADO ORG: {adoOrg}");
             }
@@ -73,40 +73,42 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var ado = _adoApiFactory.Create(adoPat);
+            _adoInspectorService.AdoApi = ado;
+            _adoInspectorService.OrgFilter = adoOrg;
 
-            _log.LogInformation("Finding Orgs...");
-            var orgs = await _adoInspectorService.GetOrgs(ado, adoOrg);
-            _log.LogInformation($"Found {orgs?.Count()} Orgs");
+            //_log.LogInformation("Finding Orgs...");
+            //var orgs = await _adoInspectorService.GetOrgs();
+            //_log.LogInformation($"Found {orgs?.Count()} Orgs");
 
-            _log.LogInformation("Finding Team Projects...");
-            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
-            _log.LogInformation($"Found {teamProjects?.Sum(org => org.Value.Count())} Team Projects");
+            //_log.LogInformation("Finding Team Projects...");
+            //var teamProjects = await _adoInspectorService.GetTeamProjects(orgs);
+            //_log.LogInformation($"Found {teamProjects?.Sum(org => org.Value.Count())} Team Projects");
 
-            _log.LogInformation("Finding Repos...");
-            var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
-            _log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
+            //_log.LogInformation("Finding Repos...");
+            //var repos = await _adoInspectorService.GetRepos(teamProjects);
+            //_log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
 
-            _log.LogInformation("Finding Pipelines...");
-            var pipelines = await _adoInspectorService.GetPipelines(ado, repos);
-            _log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
+            //_log.LogInformation("Finding Pipelines...");
+            //var pipelines = await _adoInspectorService.GetPipelines(repos);
+            //_log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(ado, pipelines);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(ado);
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
             _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
+            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(ado);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
             _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(ado, pipelines);
+            var reposCsvText = await _reposCsvGenerator.Generate(ado);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
             _log.LogInformation("Generating pipelines.csv...");
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado, pipelines);
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado);
             await WriteToFile("pipelines.csv", pipelinesCsvText);
             _log.LogSuccess("pipelines.csv generated");
         }

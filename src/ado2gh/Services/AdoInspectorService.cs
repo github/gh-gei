@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -9,134 +7,125 @@ namespace OctoshiftCLI.AdoToGithub
     public class AdoInspectorService
     {
         private readonly OctoLogger _log;
+        public AdoApi AdoApi { get; set; }
 
-        public AdoInspectorService(OctoLogger log) => _log = log;
+        private IEnumerable<string> _orgs;
+        private readonly IDictionary<string, IEnumerable<string>> _teamProjects = new Dictionary<string, IEnumerable<string>>();
+        private readonly IDictionary<string, IDictionary<string, IEnumerable<string>>> _repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
+        private readonly IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> _pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
+        private readonly IDictionary<string, IDictionary<string, IDictionary<string, int>>> _prCounts = new Dictionary<string, IDictionary<string, IDictionary<string, int>>>();
 
-        public virtual async Task<IEnumerable<string>> GetOrgs(AdoApi api, string org = null)
+        public AdoInspectorService(OctoLogger log)
         {
-            var orgs = new List<string>();
-
-            if (org.HasValue())
-            {
-                orgs.Add(org);
-            }
-            else
-            {
-                if (api != null)
-                {
-                    _log.LogInformation($"Retrieving list of all Orgs PAT has access to...");
-                    var userId = await api.GetUserId();
-                    orgs = (await api.GetOrganizations(userId)).ToList();
-                }
-            }
-
-            return orgs;
+            _log = log;
         }
 
-        public virtual async Task<IDictionary<string, IEnumerable<string>>> GetTeamProjects(AdoApi api, IEnumerable<string> orgs, string teamProject = null)
+        public string OrgFilter { get; set; }
+        public string TeamProjectFilter { get; set; }
+        public string RepoFilter { get; set; }
+
+        public virtual async Task<IEnumerable<string>> GetOrgs()
         {
-            var teamProjects = new Dictionary<string, IEnumerable<string>>();
-
-            if (teamProject.HasValue())
+            if (_orgs is null)
             {
-                if (orgs.Count() != 1)
+                if (OrgFilter.HasValue())
                 {
-                    throw new ArgumentException($"{nameof(orgs)} must contain exactly one item when passing teamProject", nameof(orgs));
+                    _orgs = new List<string>() { OrgFilter };
                 }
-
-                teamProjects.Add(orgs.First(), new List<string>() { teamProject });
-
-                return teamProjects;
+                else
+                {
+                    _log.LogInformation($"Retrieving list of all Orgs PAT has access to...");
+                    var userId = await AdoApi.GetUserId();
+                    _orgs = await AdoApi.GetOrganizations(userId);
+                }
             }
 
-            if (api != null && orgs != null)
+            return _orgs;
+        }
+
+        public virtual async Task<IEnumerable<string>> GetTeamProjects(string org)
+        {
+            if (!_teamProjects.TryGetValue(org, out var teamProjects))
             {
-                foreach (var org in orgs)
-                {
-                    var projects = await api.GetTeamProjects(org);
-                    teamProjects.Add(org, projects);
-                }
+                teamProjects = TeamProjectFilter.HasValue() ? new List<string>() { TeamProjectFilter } : await AdoApi.GetTeamProjects(org);
+                _teamProjects.Add(org, teamProjects);
             }
 
             return teamProjects;
         }
 
-        public virtual async Task<IDictionary<string, IDictionary<string, IEnumerable<string>>>> GetRepos(AdoApi api, IDictionary<string, IEnumerable<string>> teamProjects, string repo = null)
+        public virtual async Task<IEnumerable<string>> GetRepos(string org, string teamProject)
         {
-            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
-
-            if (repo.HasValue())
+            if (!_repos.ContainsKey(org))
             {
-                if (teamProjects is null || teamProjects.Count != 1 || teamProjects.First().Value.Count() != 1)
-                {
-                    throw new ArgumentException($"{nameof(teamProjects)} must contain exactly one org and one team project when passing {nameof(repo)}", nameof(teamProjects));
-                }
-                var teamProjectRepos = new Dictionary<string, IEnumerable<string>>
-                {
-                    { teamProjects.First().Value.First(), new List<string>() { repo } }
-                };
-
-                repos.Add(teamProjects.First().Key, teamProjectRepos);
-
-                return repos;
+                _repos.Add(org, new Dictionary<string, IEnumerable<string>>());
             }
 
-            if (api != null && teamProjects != null)
+            if (!_repos[org].TryGetValue(teamProject, out var repos))
             {
-                foreach (var org in teamProjects.Keys)
-                {
-                    repos.Add(org, new Dictionary<string, IEnumerable<string>>());
-
-                    foreach (var teamProject in teamProjects[org])
-                    {
-                        var teamProjectRepos = await api.GetEnabledRepos(org, teamProject);
-                        repos[org].Add(teamProject, teamProjectRepos);
-                    }
-                }
+                repos = await AdoApi.GetEnabledRepos(org, teamProject);
+                _repos[org].Add(teamProject, repos);
             }
 
             return repos;
         }
 
-        public virtual async Task<IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>> GetPipelines(AdoApi api, IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repo)
         {
-            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
-
-            if (api != null && repos != null)
+            if (!_pipelines.ContainsKey(org))
             {
-                foreach (var org in repos.Keys)
-                {
-                    pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
+                _pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
+            }
 
-                    foreach (var teamProject in repos[org].Keys)
-                    {
-                        pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
-                        await api.PopulateRepoIdCache(org, teamProject);
+            if (!_pipelines[org].ContainsKey(teamProject))
+            {
+                _pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
+            }
 
-                        foreach (var repo in repos[org][teamProject])
-                        {
-                            var repoId = await api.GetRepoId(org, teamProject, repo);
-                            var repoPipelines = await api.GetPipelines(org, teamProject, repoId);
-                            pipelines[org][teamProject].Add(repo, repoPipelines);
-                        }
-                    }
-                }
+            if (!_pipelines[org][teamProject].TryGetValue(repo, out var pipelines))
+            {
+                await AdoApi.PopulateRepoIdCache(org, teamProject);
+                var repoId = await AdoApi.GetRepoId(org, teamProject, repo);
+                pipelines = await AdoApi.GetPipelines(org, teamProject, repoId);
+
+                _pipelines[org][teamProject].Add(repo, pipelines);
             }
 
             return pipelines;
         }
 
-        public virtual void OutputRepoListToLog(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
-            foreach (var org in repos?.Keys)
+            if (!_prCounts.ContainsKey(org))
+            {
+                _prCounts.Add(org, new Dictionary<string, IDictionary<string, int>>());
+            }
+
+            if (!_prCounts[org].ContainsKey(teamProject))
+            {
+                _prCounts[org].Add(teamProject, new Dictionary<string, int>());
+            }
+
+            if (!_prCounts[org][teamProject].TryGetValue(repo, out var prCount))
+            {
+                prCount = await AdoApi.GetPullRequestCount(org, teamProject, repo);
+                _prCounts[org][teamProject][repo] = prCount;
+            }
+
+            return prCount;
+        }
+
+        public virtual void OutputRepoListToLog()
+        {
+            foreach (var org in _repos.Keys)
             {
                 _log.LogInformation($"ADO Org: {org}");
 
-                foreach (var teamProject in repos[org].Keys)
+                foreach (var teamProject in _repos[org].Keys)
                 {
                     _log.LogInformation($"  Team Project: {teamProject}");
 
-                    foreach (var repo in repos[org][teamProject])
+                    foreach (var repo in _repos[org][teamProject])
                     {
                         _log.LogInformation($"    Repo: {repo}");
                     }

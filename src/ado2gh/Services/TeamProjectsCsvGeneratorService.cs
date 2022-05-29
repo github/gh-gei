@@ -1,29 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub
 {
     public class TeamProjectsCsvGeneratorService
     {
-        public virtual string Generate(IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines)
+        private readonly AdoInspectorService _adoInspectorService;
+
+        public TeamProjectsCsvGeneratorService(AdoInspectorService adoInspectorService)
         {
+            _adoInspectorService = adoInspectorService;
+        }
+
+        public virtual async Task<string> Generate(AdoApi adoApi)
+        {
+            if (adoApi is null)
+            {
+                throw new ArgumentNullException(nameof(adoApi));
+            }
+
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,url,repo-count,pipeline-count");
+            result.AppendLine("org,teamproject,url,repo-count,pipeline-count,pr-count");
 
-            if (pipelines != null)
+            foreach (var org in await _adoInspectorService.GetOrgs())
             {
-                foreach (var org in pipelines.Keys)
+                foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
                 {
-                    foreach (var teamProject in pipelines[org].Keys)
-                    {
-                        var repoCount = pipelines[org][teamProject].Count;
-                        var pipelineCount = pipelines[org][teamProject].Sum(repo => repo.Value.Count());
-                        var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}";
-                        result.AppendLine($"{org},{teamProject},{url},{repoCount},{pipelineCount}");
-                    }
+                    var repos = await _adoInspectorService.GetRepos(org, teamProject);
+                    var repoCount = repos.Count();
+                    var pipelineCount = repos.SelectMany(r => _adoInspectorService.GetPipelines(org, teamProject, r).Result).Count();
+                    var prCount = repos.Sum(r => _adoInspectorService.GetPullRequestCount(org, teamProject, r).Result);
+                    var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}";
+                    result.AppendLine($"\"{org}\",\"{teamProject}\",\"{url}\",\"{repoCount}\",\"{pipelineCount}\",\"{prCount}\"");
                 }
             }
 
