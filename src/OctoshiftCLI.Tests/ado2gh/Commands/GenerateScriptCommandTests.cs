@@ -24,15 +24,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string APP_ID = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
         private const string GITHUB_ORG = "GITHUB_ORG";
 
-        private IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
-        private IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
+        private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
+        private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
         private IEnumerable<string> ADO_REPOS = new List<string>() { FOO_REPO };
         private IEnumerable<string> ADO_PIPELINES = new List<string>() { FOO_PIPELINE };
-
-        private IEnumerable<string> EMPTY_ORGS = new List<string>();
-        private IEnumerable<string> EMPTY_TEAM_PROJECTS = new List<string>();
-        private IEnumerable<string> EMPTY_REPOS = new List<string>();
-        private IEnumerable<string> EMPTY_PIPELINES = new List<string>();
+        private readonly IEnumerable<string> EMPTY_PIPELINES = new List<string>();
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
