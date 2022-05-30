@@ -82,8 +82,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             var orgs = new List<string>();
-            var teamProjects = new Dictionary<string, IEnumerable<string>>();
-            var repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
