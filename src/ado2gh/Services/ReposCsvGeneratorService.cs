@@ -34,7 +34,7 @@ namespace OctoshiftCLI.AdoToGithub
                         var pipelineCount = await _adoInspectorService.GetPipelineCount(org, teamProject, repo);
                         var prCount = await _adoInspectorService.GetPullRequestCount(org, teamProject, repo);
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",\"{pipelineCount}\",\"{prCount}\"");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount}");
                     }
                 }
             }

@@ -1,57 +1,64 @@
-//using System;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
-//using FluentAssertions;
-//using Moq;
-//using OctoshiftCLI.AdoToGithub;
-//using Xunit;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Moq;
+using OctoshiftCLI.AdoToGithub;
+using Xunit;
 
-//namespace OctoshiftCLI.Tests.AdoToGithub.Commands
-//{
-//    public class OrgsCsvGeneratorServiceTests
-//    {
-//        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count";
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands
+{
+    public class OrgsCsvGeneratorServiceTests
+    {
+        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count";
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
 
-//        [Fact]
-//        public async Task Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
-//        {
-//            // Arrange
-//            var org = "my-org";
-//            var teamProject = "foo-tp";
-//            var repo = "foo-repo";
-//            var pipeline = "foo-pipeline";
-//            var pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>()
-//                { { org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>()
-//                             { { teamProject, new Dictionary<string, IEnumerable<string>>()
-//                                                   { { repo, new List<string>()
-//                                                                 { pipeline } } } } } } };
-//            var ownerName = "Suzy";
-//            var ownerEmail = "Suzy (suzy@gmail.com)";
-//            var adoApi = TestHelpers.CreateMock<AdoApi>();
+        private const string ADO_ORG = "foo-org";
+        private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
 
-//            adoApi.Setup(m => m.GetOrgOwner(org)).ReturnsAsync($"{ownerName} ({ownerEmail})");
+        private readonly OrgsCsvGeneratorService _service;
 
-//            // Act
-//            var service = new OrgsCsvGeneratorService();
-//            var result = await service.Generate(adoApi.Object, pipelines);
+        public OrgsCsvGeneratorServiceTests()
+        {
+            _service = new OrgsCsvGeneratorService(_mockAdoInspectorService.Object);
+        }
 
-//            // Assert
-//            var expected = $"{CSV_HEADER}{Environment.NewLine}";
-//            expected += $"{org},https://dev.azure.com/{org},{ownerName} ({ownerEmail}),1,1,1{Environment.NewLine}";
+        [Fact]
+        public async Task Generate_Should_Return_Correct_Csv_For_One_Org()
+        {
+            // Arrange
+            var projectCount = 11;
+            var repoCount = 82;
+            var pipelineCount = 41;
+            var prCount = 822;
+            var owner = "Suzy (suzy@gmail.com)";
 
-//            result.Should().Be(expected);
-//        }
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspectorService.Setup(m => m.GetTeamProjectCount(ADO_ORG)).ReturnsAsync(projectCount);
+            _mockAdoInspectorService.Setup(m => m.GetRepoCount(ADO_ORG)).ReturnsAsync(repoCount);
+            _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG)).ReturnsAsync(pipelineCount);
+            _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG)).ReturnsAsync(prCount);
 
-//        [Fact]
-//        public async Task Generate_Should_Return_Correct_Csv_When_Passed_Null_Orgs()
-//        {
-//            // Act
-//            var service = new OrgsCsvGeneratorService();
-//            var result = await service.Generate(null, null);
+            _mockAdoApi.Setup(m => m.GetOrgOwner(ADO_ORG)).ReturnsAsync(owner);
 
-//            // Assert
-//            var expected = $"{CSV_HEADER}{Environment.NewLine}";
-//            result.Should().Be(expected);
-//        }
-//    }
-//}
+            // Act
+            var result = await _service.Generate(_mockAdoApi.Object);
+
+            // Assert
+            var expected = $"{CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"https://dev.azure.com/{ADO_ORG}\",\"{owner}\",{projectCount},{repoCount},{pipelineCount},{prCount}{Environment.NewLine}";
+
+            result.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Generate_Should_Throw_Exception_When_Passed_Null_AdoApi()
+        {
+            await FluentActions
+                .Invoking(async () => await _service.Generate(null))
+                .Should()
+                .ThrowAsync<ArgumentNullException>();
+        }
+    }
+}

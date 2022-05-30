@@ -29,10 +29,10 @@ namespace OctoshiftCLI.AdoToGithub
                 foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
                 {
                     var repoCount = await _adoInspectorService.GetRepoCount(org, teamProject);
-                    var pipelineCount = _adoInspectorService.GetPipelineCount(org, teamProject);
-                    var prCount = _adoInspectorService.GetPullRequestCount(org, teamProject);
+                    var pipelineCount = await _adoInspectorService.GetPipelineCount(org, teamProject);
+                    var prCount = await _adoInspectorService.GetPullRequestCount(org, teamProject);
                     var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}";
-                    result.AppendLine($"\"{org}\",\"{teamProject}\",\"{url}\",\"{repoCount}\",\"{pipelineCount}\",\"{prCount}\"");
+                    result.AppendLine($"\"{org}\",\"{teamProject}\",\"{url}\",{repoCount},{pipelineCount},{prCount}");
                 }
             }
 
