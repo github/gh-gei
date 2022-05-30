@@ -20,9 +20,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly IVersionProvider _versionProvider;
         private readonly AdoInspectorService _adoInspectorService;
 
-        //private string _orgFilter;
-        //private string _teamProjectFilter;
-
         public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorService adoInspectorService) : base("generate-script")
         {
             _log = log;
@@ -150,13 +147,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _adoInspectorService.AdoApi = ado;
             _adoInspectorService.OrgFilter = args.AdoOrg;
             _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
-            //_orgFilter = args.AdoOrg;
-            //_teamProjectFilter = args.AdoTeamProject;
 
-            //var orgs = await _adoInspectorService.GetOrgs(ado, args.AdoOrg);
-            //var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs, args.AdoTeamProject);
-            //var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
-            //var pipelines = _generateScriptOptions.RewirePipelines ? await _adoInspectorService.GetPipelines(ado, repos) : new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
             var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, args.GithubOrg) : new Dictionary<string, string>();
 
             var script = args.Sequential
@@ -173,23 +164,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
         }
 
-        //private async Task<IEnumerable<string>> GetOrgs()
-        //{
-        //    return _orgFilter.HasValue() ? new List<string>() { _orgFilter } : await _adoInspectorService.GetOrgs();
-        //}
-
-        //private async Task<IEnumerable<string>> GetTeamProjects(string org)
-        //{
-        //    return _teamProjectFilter.HasValue() ? new List<string>() { _teamProjectFilter } : await _adoInspectorService.GetTeamProjects(org);
-        //}
-
         private async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, string githubOrg)
         {
             var appIds = new Dictionary<string, string>();
 
             foreach (var org in await _adoInspectorService.GetOrgs())
             {
-                var appId = await ado.GetGithubAppId(org, githubOrg, await _adoInspectorService.GetTeamProjects(org));
+                // Not using AdoInspector here because we want all team projects here, even if we are filtering to a specific one
+                var appId = await ado.GetGithubAppId(org, githubOrg, await ado.GetTeamProjects(org));
 
                 if (appId.HasValue())
                 {
@@ -229,6 +211,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private async Task<string> GenerateSequentialScript(IDictionary<string, string> appIds, string githubOrg)
         {
+            if ((await _adoInspectorService.GetRepoCount()) == 0)
+            {
+                return string.Empty;
+            }
+
             var content = new StringBuilder();
 
             AppendLine(content, PWSH_SHEBANG);
@@ -291,6 +278,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private async Task<string> GenerateParallelScript(IDictionary<string, string> appIds, string githubOrg)
         {
+            if ((await _adoInspectorService.GetRepoCount()) == 0)
+            {
+                return string.Empty;
+            }
+
             var content = new StringBuilder();
             AppendLine(content, PWSH_SHEBANG);
             AppendLine(content);
@@ -415,21 +407,6 @@ if ($Failed -ne 0) {
 
             return content.ToString();
         }
-
-        //private IEnumerable<string> GetAdoRepoPipelines(
-        //    IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-        //    string adoOrg,
-        //    string adoTeamProject,
-        //    string adoRepo)
-        //{
-        //    IEnumerable<string> repoPipelines = null;
-
-        //    _ = pipelines.TryGetValue(adoOrg, out var teamProjects)
-        //        && teamProjects.TryGetValue(adoTeamProject, out var repos)
-        //        && repos.TryGetValue(adoRepo, out repoPipelines);
-
-        //    return repoPipelines ?? Enumerable.Empty<string>();
-        //}
 
         private void AppendLine(StringBuilder sb, string content)
         {

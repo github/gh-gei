@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -26,6 +28,11 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual async Task<IEnumerable<string>> GetOrgs()
         {
+            if (AdoApi is null)
+            {
+                throw new InvalidOperationException("You must set AdoInspectorService.AdoApi");
+            }
+
             if (_orgs is null)
             {
                 if (OrgFilter.HasValue())
@@ -43,8 +50,64 @@ namespace OctoshiftCLI.AdoToGithub
             return _orgs;
         }
 
+        public virtual async Task<int> GetRepoCount()
+        {
+            var orgs = await GetOrgs();
+            return orgs.Sum(org => GetRepoCount(org).Result);
+        }
+
+        public virtual async Task<int> GetRepoCount(string org)
+        {
+            var teamProjects = await GetTeamProjects(org);
+            return teamProjects.Sum(tp => GetRepoCount(org, tp).Result);
+        }
+
+        public virtual async Task<int> GetRepoCount(string org, string teamProject)
+        {
+            return (await GetRepos(org, teamProject)).Count();
+        }
+
+        public virtual async Task<int> GetTeamProjectCount(string org)
+        {
+            return (await GetTeamProjects(org)).Count();
+        }
+
+        public virtual async Task<int> GetPipelineCount(string org)
+        {
+            var teamProjects = await GetTeamProjects(org);
+            return teamProjects.Sum(tp => GetPipelineCount(org, tp).Result);
+        }
+
+        public virtual async Task<int> GetPipelineCount(string org, string teamProject)
+        {
+            var repos = await GetRepos(org, teamProject);
+            return repos.Sum(r => GetPipelineCount(org, teamProject, r).Result);
+        }
+
+        public virtual async Task<int> GetPipelineCount(string org, string teamProject, string repo)
+        {
+            return (await GetPipelines(org, teamProject, repo)).Count();
+        }
+
+        public virtual async Task<int> GetPullRequestCount(string org, string teamProject)
+        {
+            var repos = await GetRepos(org, teamProject);
+            return repos.Sum(r => GetPullRequestCount(org, teamProject, r).Result);
+        }
+
+        public virtual async Task<int> GetPullRequestCount(string org)
+        {
+            var teamProjects = await GetTeamProjects(org);
+            return teamProjects.Sum(tp => GetPullRequestCount(org, tp).Result);
+        }
+
         public virtual async Task<IEnumerable<string>> GetTeamProjects(string org)
         {
+            if (AdoApi is null)
+            {
+                throw new InvalidOperationException("You must set AdoInspectorService.AdoApi");
+            }
+
             if (!_teamProjects.TryGetValue(org, out var teamProjects))
             {
                 teamProjects = TeamProjectFilter.HasValue() ? new List<string>() { TeamProjectFilter } : await AdoApi.GetTeamProjects(org);
@@ -56,6 +119,11 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org, string teamProject)
         {
+            if (AdoApi is null)
+            {
+                throw new InvalidOperationException("You must set AdoInspectorService.AdoApi");
+            }
+
             if (!_repos.ContainsKey(org))
             {
                 _repos.Add(org, new Dictionary<string, IEnumerable<string>>());
@@ -72,6 +140,11 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repo)
         {
+            if (AdoApi is null)
+            {
+                throw new InvalidOperationException("You must set AdoInspectorService.AdoApi");
+            }
+
             if (!_pipelines.ContainsKey(org))
             {
                 _pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
@@ -96,6 +169,11 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
+            if (AdoApi is null)
+            {
+                throw new InvalidOperationException("You must set AdoInspectorService.AdoApi");
+            }
+
             if (!_prCounts.ContainsKey(org))
             {
                 _prCounts.Add(org, new Dictionary<string, IDictionary<string, int>>());
