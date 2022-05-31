@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -11,10 +10,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
     public class InventoryReportCommandTests
     {
         private const string ADO_ORG = "foo-org";
-        private const string ADO_TEAM_PROJECT = "foo-tp";
-        private const string FOO_REPO = "foo-repo";
-        private const string FOO_PIPELINE = "foo-pipeline";
-
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
