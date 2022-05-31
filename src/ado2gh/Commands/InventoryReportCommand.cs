@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -76,21 +77,21 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _adoInspectorService.AdoApi = ado;
             _adoInspectorService.OrgFilter = adoOrg;
 
-            //_log.LogInformation("Finding Orgs...");
-            //var orgs = await _adoInspectorService.GetOrgs();
-            //_log.LogInformation($"Found {orgs?.Count()} Orgs");
+            _log.LogInformation("Finding Orgs...");
+            var orgs = await _adoInspectorService.GetOrgs();
+            _log.LogInformation($"Found {orgs.Count()} Orgs");
 
-            //_log.LogInformation("Finding Team Projects...");
-            //var teamProjects = await _adoInspectorService.GetTeamProjects(orgs);
-            //_log.LogInformation($"Found {teamProjects?.Sum(org => org.Value.Count())} Team Projects");
+            _log.LogInformation("Finding Team Projects...");
+            var teamProjectCount = await _adoInspectorService.GetTeamProjectCount();
+            _log.LogInformation($"Found {teamProjectCount} Team Projects");
 
-            //_log.LogInformation("Finding Repos...");
-            //var repos = await _adoInspectorService.GetRepos(teamProjects);
-            //_log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
+            _log.LogInformation("Finding Repos...");
+            var repoCount = await _adoInspectorService.GetRepoCount();
+            _log.LogInformation($"Found {repoCount} Repos");
 
-            //_log.LogInformation("Finding Pipelines...");
-            //var pipelines = await _adoInspectorService.GetPipelines(repos);
-            //_log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
+            _log.LogInformation("Finding Pipelines...");
+            var pipelineCount = await _adoInspectorService.GetPipelineCount();
+            _log.LogInformation($"Found {pipelineCount} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
             var orgsCsvText = await _orgsCsvGenerator.Generate(ado);

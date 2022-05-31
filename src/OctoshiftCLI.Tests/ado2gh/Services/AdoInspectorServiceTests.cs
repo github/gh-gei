@@ -18,7 +18,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string ADO_ORG = "ADO_ORG";
         private const string ADO_TEAM_PROJECT = "ADO_TEAM_PROJECT";
         private const string FOO_REPO = "FOO_REPO";
-        private readonly IEnumerable<string> ADO_REPOS = new List<string>() { FOO_REPO };
 
         public AdoInspectorServiceTests() => _service = new(_logger);
 

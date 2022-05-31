@@ -72,6 +72,18 @@ namespace OctoshiftCLI.AdoToGithub
             return (await GetTeamProjects(org)).Count();
         }
 
+        public virtual async Task<int> GetTeamProjectCount()
+        {
+            var orgs = await GetOrgs();
+            return orgs.Sum(o => GetTeamProjectCount(o).Result);
+        }
+
+        public virtual async Task<int> GetPipelineCount()
+        {
+            var orgs = await GetOrgs();
+            return orgs.Sum(o => GetPipelineCount(o).Result);
+        }
+
         public virtual async Task<int> GetPipelineCount(string org)
         {
             var teamProjects = await GetTeamProjects(org);
