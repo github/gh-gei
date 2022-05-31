@@ -57,6 +57,17 @@ namespace OctoshiftCLI
             return $"{ownerName} ({ownerEmail})";
         }
 
+        public Task GetLastPushDate(string org, string teamProject, string repo)
+        {
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?$top=1&api-version=7.1-preview.2";
+            var response = await _client.GetAsync(url);
+
+            var data = JObject.Parse(response);
+            var pushDate = (string)data["value"].First()["date"];
+
+            return DateTime.
+        }
+
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";

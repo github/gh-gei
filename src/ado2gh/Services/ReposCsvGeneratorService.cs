@@ -22,7 +22,7 @@ namespace OctoshiftCLI.AdoToGithub
 
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count");
+            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date");
 
             foreach (var org in await _adoInspectorService.GetOrgs())
             {
@@ -33,8 +33,9 @@ namespace OctoshiftCLI.AdoToGithub
                         var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo)}";
                         var pipelineCount = await _adoInspectorService.GetPipelineCount(org, teamProject, repo);
                         var prCount = await _adoInspectorService.GetPullRequestCount(org, teamProject, repo);
+                        var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo);
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount}");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate.ToString("dd-MMM-yyyy hh:mm")}\"");
                     }
                 }
             }
