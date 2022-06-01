@@ -33,6 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
+        private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private string _scriptOutput = "";
         private readonly GenerateScriptCommand _command;
@@ -41,8 +42,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var mockVersionProvider = new Mock<IVersionProvider>();
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspector.Object)
+            _command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -84,7 +86,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var orgs = new List<string>();
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
             _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(orgs);
 
             // Act

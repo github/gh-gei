@@ -13,6 +13,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
+        private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
         private readonly Mock<OrgsCsvGeneratorService> _mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
         private readonly Mock<TeamProjectsCsvGeneratorService> _mockTeamProjectsCsvGenerator = TestHelpers.CreateMock<TeamProjectsCsvGeneratorService>();
         private readonly Mock<ReposCsvGeneratorService> _mockReposCsvGenerator = TestHelpers.CreateMock<ReposCsvGeneratorService>();
@@ -27,9 +28,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public InventoryReportCommandTests()
         {
-            _mockAdoInspector.SetupAllProperties();
+            _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new InventoryReportCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, _mockAdoInspector.Object, _mockOrgsCsvGenerator.Object, _mockTeamProjectsCsvGenerator.Object, _mockReposCsvGenerator.Object, _mockPipelinesCsvGenerator.Object)
+            _command = new InventoryReportCommand(
+                TestHelpers.CreateMock<OctoLogger>().Object,
+                _mockAdoApiFactory.Object,
+                _mockAdoInspectorServiceFactory.Object,
+                _mockOrgsCsvGenerator.Object,
+                _mockTeamProjectsCsvGenerator.Object,
+                _mockReposCsvGenerator.Object,
+                _mockPipelinesCsvGenerator.Object)
             {
                 WriteToFile = (path, contents) =>
                 {
@@ -91,8 +99,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
             _reposCsvOutput.Should().Be(expectedReposCsv);
             _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
-
-            _mockAdoInspector.Object.AdoApi.Should().Be(_mockAdoApi.Object);
         }
 
         [Fact]
@@ -124,6 +130,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task It_Uses_The_Ado_Pat_When_Provided()
         {
             const string adoPat = "ado-pat";
+            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
             await _command.Invoke("some org", adoPat);
 

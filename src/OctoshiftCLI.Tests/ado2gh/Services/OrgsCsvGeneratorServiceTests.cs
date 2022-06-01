@@ -13,6 +13,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count";
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
+        private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private const string ADO_ORG = "foo-org";
         private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
@@ -21,7 +22,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public OrgsCsvGeneratorServiceTests()
         {
-            _service = new OrgsCsvGeneratorService(_mockAdoInspectorService.Object);
+            _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspectorService.Object);
+            _service = new OrgsCsvGeneratorService(_mockAdoInspectorServiceFactory.Object);
         }
 
         [Fact]

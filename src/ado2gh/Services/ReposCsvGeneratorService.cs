@@ -6,12 +6,9 @@ namespace OctoshiftCLI.AdoToGithub
 {
     public class ReposCsvGeneratorService
     {
-        private readonly AdoInspectorService _adoInspectorService;
+        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
 
-        public ReposCsvGeneratorService(AdoInspectorService adoInspectorService)
-        {
-            _adoInspectorService = adoInspectorService;
-        }
+        public ReposCsvGeneratorService(AdoInspectorServiceFactory adoInspectorServiceFactory) => _adoInspectorServiceFactory = adoInspectorServiceFactory;
 
         public virtual async Task<string> Generate(AdoApi adoApi)
         {
@@ -20,19 +17,20 @@ namespace OctoshiftCLI.AdoToGithub
                 throw new ArgumentNullException(nameof(adoApi));
             }
 
+            var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
             result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count");
 
-            foreach (var org in await _adoInspectorService.GetOrgs())
+            foreach (var org in await inspector.GetOrgs())
             {
-                foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
+                foreach (var teamProject in await inspector.GetTeamProjects(org))
                 {
-                    foreach (var repo in await _adoInspectorService.GetRepos(org, teamProject))
+                    foreach (var repo in await inspector.GetRepos(org, teamProject))
                     {
                         var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo)}";
-                        var pipelineCount = await _adoInspectorService.GetPipelineCount(org, teamProject, repo);
-                        var prCount = await _adoInspectorService.GetPullRequestCount(org, teamProject, repo);
+                        var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo);
+                        var prCount = await inspector.GetPullRequestCount(org, teamProject, repo);
 
                         result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount}");
                     }
