@@ -68,6 +68,12 @@ namespace OctoshiftCLI
             return DateTime.Parse(pushDate);
         }
 
+        public virtual async Task<int> GetCommitCountSince(string org, string teamProject, string repo, DateTime fromDate)
+        {
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/commits?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            return await _client.GetCountUsingSkip(url);
+        }
+
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";

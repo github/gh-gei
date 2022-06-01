@@ -20,7 +20,7 @@ namespace OctoshiftCLI.AdoToGithub
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date");
+            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year");
 
             foreach (var org in await inspector.GetOrgs())
             {
@@ -32,8 +32,9 @@ namespace OctoshiftCLI.AdoToGithub
                         var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo);
                         var prCount = await inspector.GetPullRequestCount(org, teamProject, repo);
                         var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo);
+                        var commitsPastYear = await adoApi.GetCommitCountSince(org, teamProject, repo, DateTime.Today.AddYears(-1));
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\"");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\",{commitsPastYear}");
                     }
                 }
             }
