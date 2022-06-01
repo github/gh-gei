@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year";
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
@@ -37,6 +37,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var pipelineCount = 41;
             var prCount = 822;
             var lastPushDate = DateTime.Now;
+            var commitCount = 183;
 
             _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -45,13 +46,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(prCount);
 
             _mockAdoApi.Setup(m => m.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(lastPushDate);
+            _mockAdoApi.Setup(m => m.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, DateTime.Today.AddYears(-1))).ReturnsAsync(commitCount);
 
             // Act
             var result = await _service.Generate(_mockAdoApi.Object);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\",{commitCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
