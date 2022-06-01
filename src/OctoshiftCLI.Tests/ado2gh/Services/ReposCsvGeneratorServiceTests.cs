@@ -51,7 +51,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm}\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\"{Environment.NewLine}";
 
             result.Should().Be(expected);
         }

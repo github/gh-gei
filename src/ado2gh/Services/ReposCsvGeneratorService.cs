@@ -33,7 +33,7 @@ namespace OctoshiftCLI.AdoToGithub
                         var prCount = await inspector.GetPullRequestCount(org, teamProject, repo);
                         var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo);
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm}\"");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\"");
                     }
                 }
             }
