@@ -141,7 +141,7 @@ namespace OctoshiftCLI
             }
             else if (response.StatusCode != status)
             {
-                throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}");
+                throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}", null, response.StatusCode);
             }
 
             return (content, response.Headers.ToArray());
