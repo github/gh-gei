@@ -18,14 +18,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly AdoApiFactory _adoApiFactory;
         private GenerateScriptOptions _generateScriptOptions;
         private readonly IVersionProvider _versionProvider;
-        private readonly AdoInspectorService _adoInspectorService;
+        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorService adoInspectorService) : base("generate-script")
+        private AdoInspectorService _adoInspectorService;
+
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorServiceFactory adoInspectorServiceFactory) : base("generate-script")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
             _versionProvider = versionProvider;
-            _adoInspectorService = adoInspectorService;
+            _adoInspectorServiceFactory = adoInspectorServiceFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
@@ -144,7 +146,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
 
             var ado = _adoApiFactory.Create(args.AdoPat);
-            _adoInspectorService.AdoApi = ado;
+            _adoInspectorService = _adoInspectorServiceFactory.Create(ado);
             _adoInspectorService.OrgFilter = args.AdoOrg;
             _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
 

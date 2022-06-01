@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string ADO_TEAM_PROJECT = "ADO_TEAM_PROJECT";
         private const string FOO_REPO = "FOO_REPO";
 
-        public AdoInspectorServiceTests() => _service = new(_logger);
+        public AdoInspectorServiceTests() => _service = new(_logger, _mockAdoApi.Object);
 
         [Fact]
         public async Task GetOrgs_Should_Return_All_Orgs()
@@ -33,8 +33,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(m => m.GetUserId()).ReturnsAsync(userId);
             _mockAdoApi.Setup(m => m.GetOrganizations(userId)).ReturnsAsync(orgs);
 
-            _service.AdoApi = _mockAdoApi.Object;
-
             // Act
             var result = await _service.GetOrgs();
 
@@ -47,7 +45,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             // Arrange
             _service.OrgFilter = ADO_ORG;
-            _service.AdoApi = _mockAdoApi.Object;
 
             // Act
             var result = await _service.GetOrgs();
@@ -60,15 +57,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task GetOrgs_Should_Throw_Exception_When_AdoApi_Not_Set()
-        {
-            await FluentActions
-                .Invoking(async () => await _service.GetOrgs())
-                .Should()
-                .ThrowAsync<Exception>();
-        }
-
-        [Fact]
         public async Task GetTeamProjects_Should_Return_All_TeamProjects()
         {
             // Arrange
@@ -77,7 +65,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProjects = new List<string>() { teamProject1, teamProject2 };
 
             _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(teamProjects);
-            _service.AdoApi = _mockAdoApi.Object;
 
             // Act
             var result = await _service.GetTeamProjects(ADO_ORG);
@@ -89,22 +76,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task GetTeamProjects_Should_Return_Single_TeamProject_When_TeamProjectFilter_Set()
         {
-            _service.AdoApi = _mockAdoApi.Object;
             _service.TeamProjectFilter = ADO_TEAM_PROJECT;
 
             var result = await _service.GetTeamProjects(ADO_ORG);
 
             result.Count().Should().Be(1);
             result.First().Should().Be(ADO_TEAM_PROJECT);
-        }
-
-        [Fact]
-        public async Task GetTeamProjects_Should_Throw_Exception_When_AdoApi_Not_Set()
-        {
-            await FluentActions
-                .Invoking(async () => await _service.GetTeamProjects(ADO_ORG))
-                .Should()
-                .ThrowAsync<Exception>();
         }
 
         [Fact]
@@ -116,22 +93,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var repos = new List<string>() { repo1, repo2 };
 
             _mockAdoApi.Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(repos);
-            _service.AdoApi = _mockAdoApi.Object;
 
             // Act
             var result = await _service.GetRepos(ADO_ORG, ADO_TEAM_PROJECT);
 
             // Assert
             result.Should().BeEquivalentTo(repos);
-        }
-
-        [Fact]
-        public async Task GetRepos_Should_Throw_Exception_When_AdoApi_Not_Set()
-        {
-            await FluentActions
-                .Invoking(async () => await _service.GetRepos(ADO_ORG, ADO_TEAM_PROJECT))
-                .Should()
-                .ThrowAsync<Exception>();
         }
 
         [Fact]
@@ -146,22 +113,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(m => m.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO)).ReturnsAsync(repoId);
             _mockAdoApi.Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, repoId)).ReturnsAsync(pipelines);
 
-            _service.AdoApi = _mockAdoApi.Object;
-
             // Act
             var result = await _service.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO);
 
             // Assert
             result.Should().BeEquivalentTo(pipelines);
-        }
-
-        [Fact]
-        public async Task GetPipelines_Should_Throw_Exception_When_AdoApi_Not_Set()
-        {
-            await FluentActions
-                .Invoking(async () => await _service.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO))
-                .Should()
-                .ThrowAsync<Exception>();
         }
     }
 }
