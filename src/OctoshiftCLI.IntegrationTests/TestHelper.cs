@@ -590,7 +590,7 @@ steps:
         {
             _output.WriteLine("Checking that the migration log was downloaded...");
 
-            var migrationLogFile = $"migration-log-{githubOrg}-{repo}.log";
+            var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
 
             File.Exists(migrationLogFile).Should().BeTrue();
         }
