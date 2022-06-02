@@ -874,29 +874,12 @@ if ($Failed -ne 0) {
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string adoServerUrl = "https://ado.contoso.com";
 
-            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory
+            _mockAdoApiFactory
                 .Setup(m => m.Create(adoServerUrl, null))
-                .Returns(mockAdoApi.Object);
-
-            string script = null;
-            var command = new GenerateScriptCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                Mock.Of<ISourceGithubApiFactory>(),
-                mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
-                Mock.Of<IVersionProvider>())
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+                .Returns(_mockAdoApi.Object);
 
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-server-url \"{adoServerUrl}\" --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}");
@@ -913,12 +896,12 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 DownloadMigrationLogs = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
-            script = TrimNonExecutableLines(script);
+            _script = TrimNonExecutableLines(_script);
 
             // Assert
-            script.Should().Be(expected.ToString());
+            _script.Should().Be(expected.ToString());
         }
 
         [Fact]
