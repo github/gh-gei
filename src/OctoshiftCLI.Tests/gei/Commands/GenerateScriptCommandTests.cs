@@ -907,35 +907,18 @@ if ($Failed -ne 0) {
         [Fact]
         public async Task Sequential_Ado_Multiple_Repos_With_Download_Migration_Logs()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
             const string repo3 = "FOO-REPO-3";
 
-            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2, repo3 });
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2, repo3 });
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory
+            _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
-                .Returns(mockAdoApi.Object);
-
-            string script = null;
-            var command = new GenerateScriptCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                Mock.Of<ISourceGithubApiFactory>(),
-                mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
-                Mock.Of<IVersionProvider>())
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+                .Returns(_mockAdoApi.Object);
 
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" --wait }}");
@@ -955,12 +938,12 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 DownloadMigrationLogs = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
-            script = TrimNonExecutableLines(script);
+            _script = TrimNonExecutableLines(_script);
 
             // Assert
-            script.Should().Be(expected.ToString());
+            _script.Should().Be(expected.ToString());
         }
 
         [Fact]
@@ -971,32 +954,14 @@ if ($Failed -ne 0) {
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
 
-            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-            mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2 });
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { repo1, repo2 });
 
-            var mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-            mockAdoApiFactory
+            _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
-                .Returns(mockAdoApi.Object);
+                .Returns(_mockAdoApi.Object);
 
-            var mockVersionProvider = new Mock<IVersionProvider>();
-            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-
-            string script = null;
-            var command = new GenerateScriptCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                Mock.Of<ISourceGithubApiFactory>(),
-                mockAdoApiFactory.Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
-                mockVersionProvider.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1069,10 +1034,10 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 DownloadMigrationLogs = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
             // Assert
-            script.Should().Be(expected.ToString());
+            _script.Should().Be(expected.ToString());
         }
 
         [Fact]
@@ -1082,30 +1047,15 @@ if ($Failed -ne 0) {
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { repo1, repo2 });
-            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
-            mockSourceGithubApiFactory
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { repo1, repo2 });
+
+            _mockSourceGithubApiFactory
                 .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(mockGithubApi.Object);
+                .Returns(_mockGithubApi.Object);
 
-            var mockVersionProvider = new Mock<IVersionProvider>();
-            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-
-            string script = null;
-            var command = new GenerateScriptCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                mockSourceGithubApiFactory.Object,
-                TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
-                mockVersionProvider.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1176,10 +1126,10 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 DownloadMigrationLogs = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
             // Assert
-            script.Should().Be(expected.ToString());
+            _script.Should().Be(expected.ToString());
         }
 
         [Fact]
@@ -1189,33 +1139,15 @@ if ($Failed -ne 0) {
             const string ghesApiUrl = "https://foo.com/api/v3";
             const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi
+            _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            var mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
-            mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
-                .Returns(mockGithubApi.Object);
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
 
-            var mockVersionProvider = new Mock<IVersionProvider>();
-            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-
-            string script = null;
-            var command = new GenerateScriptCommand(
-                TestHelpers.CreateMock<OctoLogger>().Object,
-                mockSourceGithubApiFactory.Object,
-                TestHelpers.CreateMock<AdoApiFactory>().Object,
-                TestHelpers.CreateMock<EnvironmentVariableProvider>().Object,
-                mockVersionProvider.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    script = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1281,10 +1213,10 @@ if ($Failed -ne 0) {
                 AzureStorageConnectionString = azureStorageConnectionString,
                 DownloadMigrationLogs = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
             // Assert
-            script.Should().Be(expected.ToString());
+            _script.Should().Be(expected.ToString());
         }
 
         [Fact]
