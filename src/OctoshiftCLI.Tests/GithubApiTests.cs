@@ -16,7 +16,7 @@ namespace OctoshiftCLI.Tests
 {
     public class GithubApiTests
     {
-        private const string Api_Url = $"https://api.github.com";
+        private const string API_URL = "https://api.github.com";
         private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object);
         private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Tests
 
         public GithubApiTests()
         {
-            _githubApi = new GithubApi(_githubClientMock.Object, Api_Url, _retryPolicy);
+            _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
         }
 
         [Fact]
@@ -320,7 +320,7 @@ namespace OctoshiftCLI.Tests
             _githubClientMock.Setup(m => m.DeleteAsync(url));
 
             // Act
-            var githubApi = new GithubApi(_githubClientMock.Object, Api_Url, _retryPolicy);
+            var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
             await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
             // Assert
@@ -1453,7 +1453,6 @@ namespace OctoshiftCLI.Tests
             mannequinsResult[1].MappedUser.Id.Should().Be("TARGETDUMMYID");
         }
 
-
         [Fact]
         public async Task ReclaimMannequin_Returns_Success()
         {
@@ -1531,6 +1530,73 @@ namespace OctoshiftCLI.Tests
             // Assert
             result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
         }
+
+        [Fact]
+        public async Task RepoExists_Should_Return_True_If_Repo_Exists()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock.Setup(m => m.GetAsync(url)).ReturnsAsync("{ \"id\": 12345 }");
+
+            // Act
+            var result = await _githubApi.RepoExists(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+
+            // Act
+            var result = await _githubApi.RepoExists(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .Throws(new HttpRequestException(null, null, HttpStatusCode.Moved));
+
+            // Act, Assert
+            await _githubApi
+                .Invoking(async client => await client.RepoExists(GITHUB_ORG, GITHUB_REPO))
+                .Should()
+                .ThrowAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task RepoExists_Does_Not_Swallow_Exceptions()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .Throws(new InvalidOperationException());
+
+            // Act, Assert
+            await _githubApi
+                .Invoking(async client => await client.RepoExists(GITHUB_ORG, GITHUB_REPO))
+                .Should()
+                .ThrowAsync<InvalidOperationException>();
+        }
+
         private string Compact(string source) =>
             source
                 .Replace("\r", "")

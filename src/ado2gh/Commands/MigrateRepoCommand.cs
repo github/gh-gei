@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -112,7 +111,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
-            if (await RepoExists(githubApi, githubOrg, githubRepo))
+            if (await githubApi.RepoExists(githubOrg, githubRepo))
             {
                 _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
                 return;
@@ -149,12 +148,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
-        {
-            var repos = await githubApi.GetRepos(org);
-            return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
