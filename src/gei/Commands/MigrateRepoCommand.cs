@@ -332,18 +332,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, lockRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
-            var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
-            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
-            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
-            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
-
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
-
             var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
 
+            var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
+            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
+
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
+
+            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
+            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
