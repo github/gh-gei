@@ -141,7 +141,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
-            var githubRepos = new List<string> { TARGET_REPO };
 
             _mockGithubApi.Setup(x => x.RepoExists(TARGET_ORG, TARGET_REPO).Result).Returns(true);
             _mockGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
