@@ -27,7 +27,7 @@ namespace OctoshiftCLI.IntegrationTests
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
             var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient), adoToken);
-            var adoApi = new AdoApi(adoClient, "https://dev.azure.com");
+            var adoApi = new AdoApi(adoClient, "https://dev.azure.com", logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _githubHttpClient = new HttpClient();

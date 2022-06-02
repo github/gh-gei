@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
+using Moq;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
 
@@ -8,10 +10,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count";
 
         [Fact]
-        public void Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
+        public async Task Generate_Should_Return_Correct_Csv_When_Passed_One_Org()
         {
             // Arrange
             var org = "my org";
@@ -24,23 +26,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                                                    { { repo, new List<string>()
                                                                  { pipeline } } } } } } };
 
+            var mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+            mockAdoApi.Setup(m => m.GetPullRequestCount(org, teamProject, repo)).ReturnsAsync(3);
+
             // Act
             var service = new ReposCsvGeneratorService();
-            var result = service.Generate(pipelines);
+            var result = await service.Generate(mockAdoApi.Object, pipelines);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"{org},{teamProject},{repo},https://dev.azure.com/my%20org/foo%20tp/_git/foo%20repo,1{Environment.NewLine}";
+            expected += $"{org},{teamProject},{repo},https://dev.azure.com/my%20org/foo%20tp/_git/foo%20repo,1,3{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
 
         [Fact]
-        public void Generate_Should_Return_Correct_Csv_When_Passed_Null_Orgs()
+        public async Task Generate_Should_Return_Correct_Csv_When_Passed_Null_Orgs()
         {
             // Act
             var service = new ReposCsvGeneratorService();
-            var result = service.Generate(null);
+            var result = await service.Generate(null, null);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";

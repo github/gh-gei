@@ -11,26 +11,31 @@ namespace OctoshiftCLI.Tests
         private string _consoleOutput;
         private string _consoleError;
 
+        private readonly OctoLogger _octoLogger;
+
+        public OctoLoggerTests()
+        {
+            _octoLogger = new OctoLogger(CaptureLogOutput, CaptureVerboseLogOutput, CaptureConsoleOutput, CaptureConsoleError);
+        }
+
         [Fact]
         public void Secrets_Should_Be_Masked_From_Logs_And_Console()
         {
             var secret = "purplemonkeydishwasher";
 
-            var sut = new OctoLogger(CaptureLogOutput, CaptureVerboseLogOutput, CaptureConsoleOutput, CaptureConsoleError);
+            _octoLogger.RegisterSecret(secret);
 
-            sut.RegisterSecret(secret);
+            _octoLogger.Verbose = false;
+            _octoLogger.LogInformation($"Don't tell anybody that {secret} is my password");
+            _octoLogger.LogVerbose($"Don't tell anybody that {secret} is my password");
+            _octoLogger.LogWarning($"Don't tell anybody that {secret} is my password");
+            _octoLogger.LogSuccess($"Don't tell anybody that {secret} is my password");
+            _octoLogger.LogError($"Don't tell anybody that {secret} is my password");
+            _octoLogger.LogError(new OctoshiftCliException($"Don't tell anybody that {secret} is my password"));
+            _octoLogger.LogError(new InvalidOperationException($"Don't tell anybody that {secret} is my password"));
 
-            sut.Verbose = false;
-            sut.LogInformation($"Don't tell anybody that {secret} is my password");
-            sut.LogVerbose($"Don't tell anybody that {secret} is my password");
-            sut.LogWarning($"Don't tell anybody that {secret} is my password");
-            sut.LogSuccess($"Don't tell anybody that {secret} is my password");
-            sut.LogError($"Don't tell anybody that {secret} is my password");
-            sut.LogError(new OctoshiftCliException($"Don't tell anybody that {secret} is my password"));
-            sut.LogError(new InvalidOperationException($"Don't tell anybody that {secret} is my password"));
-
-            sut.Verbose = true;
-            sut.LogVerbose($"Don't tell anybody that {secret} is my password");
+            _octoLogger.Verbose = true;
+            _octoLogger.LogVerbose($"Don't tell anybody that {secret} is my password");
 
             _consoleOutput.Should().NotContain(secret);
             _logOutput.Should().NotContain(secret);
@@ -42,34 +47,24 @@ namespace OctoshiftCLI.Tests
         public void LogError_For_OctoshiftCliException_Should_Log_Exception_Message_In_Non_Verbose_Mode()
         {
             // Arrange
-            string console = null;
-            string log = null;
-            string verbose = null;
-            string error = null;
-
-            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg, msg => error = msg)
-            {
-                Verbose = false
-            };
-
             const string userFriendlyMessage = "A user friendly message";
             const string exceptionDetails = "exception details";
             var octoshiftCliException = new OctoshiftCliException(userFriendlyMessage,
                 new ArgumentNullException("arg", exceptionDetails));
 
             // Act
-            logger.LogError(octoshiftCliException);
+            _octoLogger.LogError(octoshiftCliException);
 
             // Assert
-            console.Should().BeNull();
+            _consoleOutput.Should().BeNull();
 
-            error.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
-            error.Should().NotContain(exceptionDetails);
+            _consoleError.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
+            _consoleError.Should().NotContain(exceptionDetails);
 
-            log.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
-            log.Should().NotContain(exceptionDetails);
+            _logOutput.Trim().Should().EndWith($"[ERROR] {userFriendlyMessage}");
+            _logOutput.Should().NotContain(exceptionDetails);
 
-            verbose.Trim().Should().EndWith($"[ERROR] {octoshiftCliException}");
+            _verboseLogOutput.Trim().Should().EndWith($"[ERROR] {octoshiftCliException}");
         }
 
         [Fact]
@@ -77,38 +72,27 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             const string genericErrorMessage = "An unexpected error happened. Please see the logs for details.";
-
-            string console = null;
-            string log = null;
-            string verbose = null;
-            string error = null;
-
-            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg, msg => error = msg)
-            {
-                Verbose = false
-            };
-
             const string userEnemyMessage = "Some user enemy error message!";
             const string exceptionDetails = "exception details";
             var unexpectedException = new InvalidOperationException(userEnemyMessage,
                 new ArgumentNullException("arg", exceptionDetails));
 
             // Act
-            logger.LogError(unexpectedException);
+            _octoLogger.LogError(unexpectedException);
 
             // Assert
-            console.Should().BeNull();
+            _consoleOutput.Should().BeNull();
 
-            error.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
-            error.Should().NotContain(userEnemyMessage);
-            error.Should().NotContain(exceptionDetails);
+            _consoleError.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
+            _consoleError.Should().NotContain(userEnemyMessage);
+            _consoleError.Should().NotContain(exceptionDetails);
 
-            log.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
-            log.Should().NotContain(userEnemyMessage);
-            log.Should().NotContain(exceptionDetails);
+            _logOutput.Trim().Should().EndWith($"[ERROR] {genericErrorMessage}");
+            _logOutput.Should().NotContain(userEnemyMessage);
+            _logOutput.Should().NotContain(exceptionDetails);
 
-            verbose.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
-            verbose.Should().NotContain(genericErrorMessage);
+            _verboseLogOutput.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            _verboseLogOutput.Should().NotContain(genericErrorMessage);
         }
 
         [Fact]
@@ -117,121 +101,83 @@ namespace OctoshiftCLI.Tests
             // Arrange
             const string genericErrorMessage = "An unexpected error happened. Please see the logs for details.";
 
-            string console = null;
-            string log = null;
-            string verbose = null;
-            string error = null;
-
-            var logger = new OctoLogger(msg => log = msg, msg => verbose = msg, msg => console = msg, msg => error = msg)
-            {
-                Verbose = true
-            };
+            _octoLogger.Verbose = true;
 
             var unexpectedException =
                 new InvalidOperationException("Some user enemy error message!", new ArgumentNullException("arg"));
 
             // Act
-            logger.LogError(unexpectedException);
+            _octoLogger.LogError(unexpectedException);
 
             // Assert
-            console.Should().BeNull();
+            _consoleOutput.Should().BeNull();
 
-            error.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
-            error.Should().NotContain(genericErrorMessage);
+            _consoleError.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            _consoleError.Should().NotContain(genericErrorMessage);
 
-            log.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
-            log.Should().NotContain(genericErrorMessage);
+            _logOutput.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            _logOutput.Should().NotContain(genericErrorMessage);
 
-            verbose.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
-            verbose.Should().NotContain(genericErrorMessage);
+            _verboseLogOutput.Trim().Should().EndWith($"[ERROR] {unexpectedException}");
+            _verboseLogOutput.Should().NotContain(genericErrorMessage);
         }
 
         [Fact]
         public void LogError_With_Message_Should_Write_To_Console_Error()
         {
-            // Arrange
-            string console = null;
-            string error = null;
-
-            var logger = new OctoLogger(_ => { }, _ => { }, msg => console = msg, msg => error = msg);
-
             // Act
-            logger.LogError("message");
+            _octoLogger.LogError("message");
 
             // Assert
-            console.Should().BeNull();
-            error.Should().NotBeNull();
+            _consoleOutput.Should().BeNull();
+            _consoleError.Should().NotBeNull();
         }
 
         [Fact]
         public void LogError_With_Exception_Should_Write_To_Console_Error()
         {
-            // Arrange
-            string console = null;
-            string error = null;
-
-            var logger = new OctoLogger(_ => { }, _ => { }, msg => console = msg, msg => error = msg);
-
             // Act
-            logger.LogError(new ArgumentNullException("arg"));
+            _octoLogger.LogError(new ArgumentNullException("arg"));
 
             // Assert
-            console.Should().BeNull();
-            error.Should().NotBeNull();
+            _consoleOutput.Should().BeNull();
+            _consoleError.Should().NotBeNull();
         }
 
         [Fact]
         public void LogInformation_Should_Write_To_Console_Out()
         {
-            // Arrange
-            string console = null;
-            string error = null;
-
-            var logger = new OctoLogger(_ => { }, _ => { }, msg => console = msg, msg => error = msg);
-
             // Act
-            logger.LogInformation("message");
+            _octoLogger.LogInformation("message");
 
             // Assert
-            console.Should().NotBeNull();
-            error.Should().BeNull();
+            _consoleOutput.Should().NotBeNull();
+            _consoleError.Should().BeNull();
         }
 
         [Fact]
         public void LogWarning_Should_Write_To_Console_Out()
         {
-            // Arrange
-            string console = null;
-            string error = null;
-
-            var logger = new OctoLogger(_ => { }, _ => { }, msg => console = msg, msg => error = msg);
-
             // Act
-            logger.LogWarning("message");
+            _octoLogger.LogWarning("message");
 
             // Assert
-            console.Should().NotBeNull();
-            error.Should().BeNull();
+            _consoleOutput.Should().NotBeNull();
+            _consoleError.Should().BeNull();
         }
 
         [Fact]
         public void LogVerbose_Should_Write_To_Console_Out_In_Verbose_Mode()
         {
             // Arrange
-            string console = null;
-            string error = null;
-
-            var logger = new OctoLogger(_ => { }, _ => { }, msg => console = msg, msg => error = msg)
-            {
-                Verbose = true
-            };
+            _octoLogger.Verbose = true;
 
             // Act
-            logger.LogVerbose("message");
+            _octoLogger.LogVerbose("message");
 
             // Assert
-            console.Should().NotBeNull();
-            error.Should().BeNull();
+            _consoleOutput.Should().NotBeNull();
+            _consoleError.Should().BeNull();
         }
 
         private void CaptureLogOutput(string msg) => _logOutput += msg;
