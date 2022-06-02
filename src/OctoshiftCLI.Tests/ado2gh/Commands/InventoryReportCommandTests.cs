@@ -88,10 +88,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedOrgsCsv);
-            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedTeamProjectsCsv);
-            _mockReposCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedReposCsv);
-            _mockPipelinesCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedPipelinesCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedTeamProjectsCsv);
+            _mockReposCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedReposCsv);
+            _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
 
             await _command.Invoke(null);
 
@@ -111,10 +111,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedOrgsCsv);
-            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedTeamProjectsCsv);
-            _mockReposCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedReposCsv);
-            _mockPipelinesCsvGenerator.Setup(m => m.Generate(_mockAdoApi.Object)).ReturnsAsync(expectedPipelinesCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedTeamProjectsCsv);
+            _mockReposCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedReposCsv);
+            _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
 
             await _command.Invoke(ADO_ORG);
 
@@ -135,6 +135,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke("some org", adoPat);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockOrgsCsvGenerator.Verify(m => m.Generate(adoPat));
+            _mockTeamProjectsCsvGenerator.Verify(m => m.Generate(adoPat));
+            _mockReposCsvGenerator.Verify(m => m.Generate(adoPat));
+            _mockPipelinesCsvGenerator.Verify(m => m.Generate(adoPat));
         }
     }
 }

@@ -101,22 +101,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"Found {pipelineCount} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(ado);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat);
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
             _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(ado);
+            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
             _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(ado);
+            var reposCsvText = await _reposCsvGenerator.Generate(adoPat);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
             _log.LogInformation("Generating pipelines.csv...");
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado);
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(adoPat);
             await WriteToFile("pipelines.csv", pipelinesCsvText);
             _log.LogSuccess("pipelines.csv generated");
         }

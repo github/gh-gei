@@ -12,6 +12,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
     {
         private const string CSV_HEADER = "org,teamproject,repo,pipeline,url";
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
@@ -29,7 +30,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public PipelinesCsvGeneratorServiceTests()
         {
             _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspectorService.Object);
-            _service = new PipelinesCsvGeneratorService(_mockAdoInspectorServiceFactory.Object);
+            _service = new PipelinesCsvGeneratorService(_mockAdoInspectorServiceFactory.Object, _mockAdoApiFactory.Object);
         }
 
         [Fact]
@@ -39,6 +40,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var pipelineId = 123;
 
             _mockAdoApi.Setup(m => m.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE)).ReturnsAsync(pipelineId);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -46,7 +48,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspectorService.Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(ADO_PIPELINES);
 
             // Act
-            var result = await _service.Generate(_mockAdoApi.Object);
+            var result = await _service.Generate(null);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
@@ -56,12 +58,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Generate_Should_Throw_Exception_When_Passed_Null_AdoApi()
+        public async Task Generate_Should_Use_Pat_When_Passed()
         {
-            await FluentActions
-                .Invoking(async () => await _service.Generate(null))
-                .Should()
-                .ThrowAsync<ArgumentNullException>();
+            var adoPat = Guid.NewGuid().ToString();
+
+            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
+
+            await _service.Generate(adoPat);
+
+            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
     }
 }

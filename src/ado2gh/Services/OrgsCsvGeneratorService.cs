@@ -7,16 +7,17 @@ namespace OctoshiftCLI.AdoToGithub
     public class OrgsCsvGeneratorService
     {
         private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
+        private readonly AdoApiFactory _adoApiFactory;
 
-        public OrgsCsvGeneratorService(AdoInspectorServiceFactory adoInspectorServiceFactory) => _adoInspectorServiceFactory = adoInspectorServiceFactory;
-
-        public virtual async Task<string> Generate(AdoApi adoApi)
+        public OrgsCsvGeneratorService(AdoInspectorServiceFactory adoInspectorServiceFactory, AdoApiFactory adoApiFactory)
         {
-            if (adoApi is null)
-            {
-                throw new ArgumentNullException(nameof(adoApi));
-            }
+            _adoInspectorServiceFactory = adoInspectorServiceFactory;
+            _adoApiFactory = adoApiFactory;
+        }
 
+        public virtual async Task<string> Generate(string adoPat)
+        {
+            var adoApi = _adoApiFactory.Create(adoPat);
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
