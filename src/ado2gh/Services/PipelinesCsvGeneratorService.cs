@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -7,26 +6,34 @@ namespace OctoshiftCLI.AdoToGithub
 {
     public class PipelinesCsvGeneratorService
     {
-        public virtual async Task<string> Generate(AdoApi ado, IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines)
+        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
+        private readonly AdoApiFactory _adoApiFactory;
+
+        public PipelinesCsvGeneratorService(AdoInspectorServiceFactory adoInspectorServiceFactory, AdoApiFactory adoApiFactory)
         {
+            _adoInspectorServiceFactory = adoInspectorServiceFactory;
+            _adoApiFactory = adoApiFactory;
+        }
+
+        public virtual async Task<string> Generate(string adoPat)
+        {
+            var adoApi = _adoApiFactory.Create(adoPat);
+            var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
             result.AppendLine("org,teamproject,repo,pipeline,url");
 
-            if (ado != null & pipelines != null)
+            foreach (var org in await inspector.GetOrgs())
             {
-                foreach (var org in pipelines.Keys)
+                foreach (var teamProject in await inspector.GetTeamProjects(org))
                 {
-                    foreach (var teamProject in pipelines[org].Keys)
+                    foreach (var repo in await inspector.GetRepos(org, teamProject))
                     {
-                        foreach (var repo in pipelines[org][teamProject].Keys)
+                        foreach (var pipeline in await inspector.GetPipelines(org, teamProject, repo))
                         {
-                            foreach (var pipeline in pipelines[org][teamProject][repo])
-                            {
-                                var pipelineId = await ado.GetPipelineId(org, teamProject, pipeline);
-                                var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_build?definitionId={pipelineId}";
-                                result.AppendLine($"{org},{teamProject},{repo},{pipeline},{url}");
-                            }
+                            var pipelineId = await adoApi.GetPipelineId(org, teamProject, pipeline);
+                            var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_build?definitionId={pipelineId}";
+                            result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{pipeline}\",\"{url}\"");
                         }
                     }
                 }
