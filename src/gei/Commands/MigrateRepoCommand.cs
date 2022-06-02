@@ -135,6 +135,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
+            var archiveGhRepo = new Option("--archive-gh-repo")
+            {
+                IsRequired = false,
+                Description = "Only effective if migrating from GitHub Cloud. This will place the source repository into an archive state to prevent changes while the migration is taking place."
+            };
+
             AddOption(githubSourceOrg);
             AddOption(adoServerUrl);
             AddOption(adoSourceOrg);
@@ -160,6 +166,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
+            AddOption(archiveGhRepo);
+
             Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
         }
 
@@ -182,6 +190,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   args.SourceRepo,
                   args.AzureStorageConnectionString,
                   args.GithubSourcePat,
+                  args.ArchiveGhRepo,
                   args.NoSslVerify
                 );
 
@@ -203,6 +212,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var migrationSourceId = args.GithubSourceOrg.HasValue()
                 ? await githubApi.CreateGhecMigrationSource(githubOrgId)
                 : await githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
+
+            if (!args.GhesApiUrl.HasValue() && args.GithubSourceOrg.HasValue() && args.ArchiveGhRepo)
+            {
+                _log.LogInformation($"Locking source repo '{sourceRepoUrl}'...");
+                var sourceGitHubApi = _sourceGithubApiFactory.Create(sourcePersonalAccessToken: args.GithubSourcePat);
+                var (successful, message) = await sourceGitHubApi.ArchiveRepository(args.GithubSourceOrg, args.SourceRepo);
+
+                if (!successful)
+                {
+                    _log.LogError($"Unable to put the {args.SourceRepo} into an archive state. Reason: {message}");
+                    return;
+                }
+            }
 
             var migrationId = await githubApi.StartMigration(
                 migrationSourceId,
@@ -281,6 +303,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string sourceRepo,
           string azureStorageConnectionString,
           string githubSourcePat,
+          bool lockRepo,
           bool noSslVerify = false)
         {
             _log.LogInformation($"GHES API URL: {ghesApiUrl}");
@@ -304,9 +327,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
             var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
-            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo, lockRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, lockRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
@@ -478,5 +501,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }
+        public bool ArchiveGhRepo { get; set; }
     }
 }

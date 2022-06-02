@@ -143,6 +143,23 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
+        public virtual async Task<string> GetRepositoryId(string org, string repo)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = new
+            {
+                // TODO: this is super ugly, need to find a graphql library to make this code nicer
+                query = "query repository($owner: String!, $name: String!) { repository(name: $name, owner: $owner) { id } }",
+                variables = new { owner = org, name = repo }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["repository"]["id"];
+        }
+
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
         {
             var url = $"{_apiUrl}/graphql";
@@ -430,13 +447,14 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
+        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo, bool lockRepo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
                 repositories = new[] { repo },
+                lock_repositories = lockRepo,
                 exclude_metadata = true
             };
 
@@ -445,13 +463,14 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool lockRepo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
                 repositories = new[] { repo },
+                lock_repositories = lockRepo,
                 exclude_git_data = true,
                 exclude_releases = true,
                 exclude_owner_projects = true
@@ -590,6 +609,40 @@ namespace OctoshiftCLI
                                     }
                                     : null
             };
+        }
+
+        public virtual async Task<(bool successful, string message)> ArchiveRepository(string sourceOrg, string sourceRepo)
+        {
+            var repositoryId = await GetRepositoryId(sourceOrg, sourceRepo);
+
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "mutation archiveRepository($repoId: ID!)";
+            var gql = "archiveRepository(input: {repositoryId: $repoId}) { clientMutationId }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    repoId = repositoryId
+                },
+                operationName = "archiveRepository"
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            var successful = true;
+            var message = string.Empty;
+
+            if (data.ContainsKey("errors") && data["errors"]!.HasValues)
+            {
+                successful = false;
+                message = data["errors"][0]!["message"]!.ToString();
+            }
+
+            return (successful, message);
         }
     }
 }
