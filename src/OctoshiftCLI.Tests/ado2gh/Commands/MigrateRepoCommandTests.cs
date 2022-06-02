@@ -58,7 +58,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Happy_Path()
         {
             // Arrange
-            _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<string>());
+            _mockGithubApi.Setup(x => x.RepoExists(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
@@ -102,7 +102,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: false);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetRepos(GITHUB_ORG));
+            _mockGithubApi.Verify(m => m.RepoExists(GITHUB_ORG, GITHUB_REPO));
             _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
             _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
             _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false));
@@ -118,9 +118,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Idempotency_Stop_If_Target_Exists()
         {
             // Arrange
-            var githubRepos = new List<string> { GITHUB_REPO };
-
-            _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(githubRepos);
+            _mockGithubApi.Setup(x => x.RepoExists(GITHUB_ORG, GITHUB_REPO).Result).Returns(true);
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             _mockEnvironmentVariableProvider
@@ -140,7 +138,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: false);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetRepos(GITHUB_ORG));
+            _mockGithubApi.Verify(m => m.RepoExists(GITHUB_ORG, GITHUB_REPO));
 
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
             actualLogOutput.Should().Contain(expectedLogOutput);
