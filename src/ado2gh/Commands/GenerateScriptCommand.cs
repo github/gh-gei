@@ -18,14 +18,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly AdoApiFactory _adoApiFactory;
         private GenerateScriptOptions _generateScriptOptions;
         private readonly IVersionProvider _versionProvider;
-        private readonly AdoInspectorService _adoInspectorService;
+        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorService adoInspectorService) : base("generate-script")
+        private AdoInspectorService _adoInspectorService;
+
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorServiceFactory adoInspectorServiceFactory) : base("generate-script")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
             _versionProvider = versionProvider;
-            _adoInspectorService = adoInspectorService;
+            _adoInspectorServiceFactory = adoInspectorServiceFactory;
 
             Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
             Description += Environment.NewLine;
@@ -152,20 +154,19 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
 
             var ado = _adoApiFactory.Create(args.AdoPat);
+            _adoInspectorService = _adoInspectorServiceFactory.Create(ado);
+            _adoInspectorService.OrgFilter = args.AdoOrg;
+            _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
 
-            var orgs = await _adoInspectorService.GetOrgs(ado, args.AdoOrg);
-            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs, args.AdoTeamProject);
-            var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
-            var pipelines = _generateScriptOptions.RewirePipelines ? await _adoInspectorService.GetPipelines(ado, repos) : new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
-            var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, orgs, args.GithubOrg) : new Dictionary<string, string>();
-
-            _adoInspectorService.OutputRepoListToLog(repos);
-
-            CheckForDuplicateRepoNames(repos);
+            var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, args.GithubOrg) : new Dictionary<string, string>();
 
             var script = args.Sequential
-                ? GenerateSequentialScript(repos, pipelines, appIds, args.GithubOrg)
-                : GenerateParallelScript(repos, pipelines, appIds, args.GithubOrg);
+                ? await GenerateSequentialScript(appIds, args.GithubOrg)
+                : await GenerateParallelScript(appIds, args.GithubOrg);
+
+            _adoInspectorService.OutputRepoListToLog();
+
+            await CheckForDuplicateRepoNames();
 
             if (args.Output.HasValue())
             {
@@ -173,17 +174,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
         }
 
-        private async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, IEnumerable<string> orgs, string githubOrg)
+        private async Task<IDictionary<string, string>> GetAppIds(AdoApi ado, string githubOrg)
         {
             var appIds = new Dictionary<string, string>();
 
-            // can't use the previously fetched list of team projects, because the previous one was possibly limited to a single TP
-            // Here we want all TP's for the org, regardless of the value of --ado-team-project
-            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
-
-            foreach (var org in orgs)
+            foreach (var org in await _adoInspectorService.GetOrgs())
             {
-                var appId = await ado.GetGithubAppId(org, githubOrg, teamProjects[org]);
+                // Not using AdoInspector here because we want all team projects here, even if we are filtering to a specific one
+                var appId = await ado.GetGithubAppId(org, githubOrg, await ado.GetTeamProjects(org));
 
                 if (appId.HasValue())
                 {
@@ -198,18 +196,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return appIds;
         }
 
-        private void CheckForDuplicateRepoNames(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos)
+        private async Task CheckForDuplicateRepoNames()
         {
-            var duplicateRepoNames = repos.SelectMany(x => x.Value)
-                                          .SelectMany(x => x.Value.Select(y => GetGithubRepoName(x.Key, y)))
-                                          .GroupBy(x => x)
-                                          .Where(x => x.Count() > 1)
-                                          .Select(x => x.Key)
-                                          .ToList();
+            var seen = new HashSet<string>();
 
-            foreach (var duplicate in duplicateRepoNames)
+            foreach (var org in await _adoInspectorService.GetOrgs())
             {
-                _log.LogWarning($"DUPLICATE REPO NAME: {duplicate}");
+                foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
+                {
+                    foreach (var repo in await _adoInspectorService.GetRepos(org, teamProject))
+                    {
+                        if (!seen.Add(GetGithubRepoName(teamProject, repo)))
+                        {
+                            _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo)}");
+                        }
+                    }
+                }
             }
         }
 
@@ -217,12 +219,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private string GetRepoMigrationKey(string adoOrg, string githubRepoName) => $"{adoOrg}/{githubRepoName}";
 
-        private string GenerateSequentialScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
-            IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-            IDictionary<string, string> appIds,
-            string githubOrg)
+        private async Task<string> GenerateSequentialScript(IDictionary<string, string> appIds, string githubOrg)
         {
-            if (!repos.Any())
+            if ((await _adoInspectorService.GetRepoCount()) == 0)
             {
                 return string.Empty;
             }
@@ -234,7 +233,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AppendLine(content, VersionComment);
             AppendLine(content, EXEC_FUNCTION_BLOCK);
 
-            foreach (var adoOrg in repos.Keys)
+            foreach (var adoOrg in await _adoInspectorService.GetOrgs())
             {
                 AppendLine(content, $"# =========== Organization: {adoOrg} ===========");
 
@@ -245,12 +244,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     AppendLine(content, "# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
                 }
 
-                foreach (var adoTeamProject in repos[adoOrg].Keys)
+                foreach (var adoTeamProject in await _adoInspectorService.GetTeamProjects(adoOrg))
                 {
                     AppendLine(content);
                     AppendLine(content, $"# === Team Project: {adoOrg}/{adoTeamProject} ===");
 
-                    if (!repos[adoOrg][adoTeamProject].Any())
+                    if (!(await _adoInspectorService.GetRepos(adoOrg, adoTeamProject)).Any())
                     {
                         AppendLine(content, "# Skipping this Team Project because it has no git repos");
                         continue;
@@ -260,7 +259,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     AppendLine(content, Exec(CreateGithubAdminsTeamScript(adoTeamProject, githubOrg, _generateScriptOptions.LinkIdpGroups)));
                     AppendLine(content, Exec(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId)));
 
-                    foreach (var adoRepo in repos[adoOrg][adoTeamProject])
+                    foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
 
@@ -274,7 +273,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         AppendLine(content, Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
-                        foreach (var adoPipeline in GetAdoRepoPipelines(pipelines, adoOrg, adoTeamProject, adoRepo))
+                        foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo))
                         {
                             AppendLine(content, Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                         }
@@ -288,12 +287,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return content.ToString();
         }
 
-        private string GenerateParallelScript(IDictionary<string, IDictionary<string, IEnumerable<string>>> repos,
-            IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-            IDictionary<string, string> appIds,
-            string githubOrg)
+        private async Task<string> GenerateParallelScript(IDictionary<string, string> appIds, string githubOrg)
         {
-            if (!repos.Any())
+            if ((await _adoInspectorService.GetRepoCount()) == 0)
             {
                 return string.Empty;
             }
@@ -312,7 +308,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AppendLine(content, "$RepoMigrations = [ordered]@{}");
 
             // Queueing migrations
-            foreach (var adoOrg in repos.Keys)
+            foreach (var adoOrg in await _adoInspectorService.GetOrgs())
             {
                 AppendLine(content);
                 AppendLine(content, $"# =========== Queueing migration for Organization: {adoOrg} ===========");
@@ -325,12 +321,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     AppendLine(content, "# No GitHub App in this org, skipping the re-wiring of Azure Pipelines to GitHub repos");
                 }
 
-                foreach (var adoTeamProject in repos[adoOrg].Keys)
+                foreach (var adoTeamProject in await _adoInspectorService.GetTeamProjects(adoOrg))
                 {
                     AppendLine(content);
                     AppendLine(content, $"# === Queueing repo migrations for Team Project: {adoOrg}/{adoTeamProject} ===");
 
-                    if (!repos[adoOrg][adoTeamProject].Any())
+                    if (!(await _adoInspectorService.GetRepos(adoOrg, adoTeamProject)).Any())
                     {
                         AppendLine(content, "# Skipping this Team Project because it has no git repos");
                         continue;
@@ -341,7 +337,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     AppendLine(content, Exec(ShareServiceConnectionScript(adoOrg, adoTeamProject, appId)));
 
                     // queue up repo migration for each ADO repo
-                    foreach (var adoRepo in repos[adoOrg][adoTeamProject])
+                    foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
 
                         var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
@@ -355,14 +351,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             // Waiting for migrations
-            foreach (var adoOrg in repos.Keys)
+            foreach (var adoOrg in await _adoInspectorService.GetOrgs())
             {
                 AppendLine(content);
                 AppendLine(content, $"# =========== Waiting for all migrations to finish for Organization: {adoOrg} ===========");
 
-                foreach (var adoTeamProject in repos[adoOrg].Keys)
+                foreach (var adoTeamProject in await _adoInspectorService.GetTeamProjects(adoOrg))
                 {
-                    foreach (var adoRepo in repos[adoOrg][adoTeamProject])
+                    foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
                         AppendLine(content);
                         AppendLine(content, $"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo}. Will then complete the below post migration steps. ===");
@@ -394,7 +390,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
                             appIds.TryGetValue(adoOrg, out var appId);
-                            foreach (var adoPipeline in GetAdoRepoPipelines(pipelines, adoOrg, adoTeamProject, adoRepo))
+                            foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo))
                             {
                                 AppendLine(content, "        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                             }
@@ -429,21 +425,6 @@ if ($Failed -ne 0) {
             AppendLine(content);
 
             return content.ToString();
-        }
-
-        private IEnumerable<string> GetAdoRepoPipelines(
-            IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> pipelines,
-            string adoOrg,
-            string adoTeamProject,
-            string adoRepo)
-        {
-            IEnumerable<string> repoPipelines = null;
-
-            _ = pipelines.TryGetValue(adoOrg, out var teamProjects)
-                && teamProjects.TryGetValue(adoTeamProject, out var repos)
-                && repos.TryGetValue(adoRepo, out repoPipelines);
-
-            return repoPipelines ?? Enumerable.Empty<string>();
         }
 
         private void AppendLine(StringBuilder sb, string content)

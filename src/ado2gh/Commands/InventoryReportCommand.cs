@@ -4,6 +4,7 @@ using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
@@ -13,17 +14,24 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
-        private readonly AdoInspectorService _adoInspectorService;
+        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
         private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
         private readonly TeamProjectsCsvGeneratorService _teamProjectsCsvGenerator;
         private readonly ReposCsvGeneratorService _reposCsvGenerator;
         private readonly PipelinesCsvGeneratorService _pipelinesCsvGenerator;
 
-        public InventoryReportCommand(OctoLogger log, AdoApiFactory adoApiFactory, AdoInspectorService adoInspectorService, OrgsCsvGeneratorService orgsCsvGeneratorService, TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService, ReposCsvGeneratorService reposCsvGeneratorService, PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base("inventory-report")
+        public InventoryReportCommand(
+            OctoLogger log,
+            AdoApiFactory adoApiFactory,
+            AdoInspectorServiceFactory adoInspectorServiceFactory,
+            OrgsCsvGeneratorService orgsCsvGeneratorService,
+            TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService,
+            ReposCsvGeneratorService reposCsvGeneratorService,
+            PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base("inventory-report")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
-            _adoInspectorService = adoInspectorService;
+            _adoInspectorServiceFactory = adoInspectorServiceFactory;
             _orgsCsvGenerator = orgsCsvGeneratorService;
             _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
             _reposCsvGenerator = reposCsvGeneratorService;
@@ -62,7 +70,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             _log.LogInformation("Creating inventory report...");
 
-            if (!string.IsNullOrWhiteSpace(adoOrg))
+            if (adoOrg.HasValue())
             {
                 _log.LogInformation($"ADO ORG: {adoOrg}");
             }
@@ -73,40 +81,42 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var ado = _adoApiFactory.Create(adoPat);
+            var inspector = _adoInspectorServiceFactory.Create(ado);
+            inspector.OrgFilter = adoOrg;
 
             _log.LogInformation("Finding Orgs...");
-            var orgs = await _adoInspectorService.GetOrgs(ado, adoOrg);
-            _log.LogInformation($"Found {orgs?.Count()} Orgs");
+            var orgs = await inspector.GetOrgs();
+            _log.LogInformation($"Found {orgs.Count()} Orgs");
 
             _log.LogInformation("Finding Team Projects...");
-            var teamProjects = await _adoInspectorService.GetTeamProjects(ado, orgs);
-            _log.LogInformation($"Found {teamProjects?.Sum(org => org.Value.Count())} Team Projects");
+            var teamProjectCount = await inspector.GetTeamProjectCount();
+            _log.LogInformation($"Found {teamProjectCount} Team Projects");
 
             _log.LogInformation("Finding Repos...");
-            var repos = await _adoInspectorService.GetRepos(ado, teamProjects);
-            _log.LogInformation($"Found {repos?.Sum(org => org.Value.Sum(tp => tp.Value.Count()))} Repos");
+            var repoCount = await inspector.GetRepoCount();
+            _log.LogInformation($"Found {repoCount} Repos");
 
             _log.LogInformation("Finding Pipelines...");
-            var pipelines = await _adoInspectorService.GetPipelines(ado, repos);
-            _log.LogInformation($"Found {pipelines?.Sum(org => org.Value.Sum(tp => tp.Value.Sum(repo => repo.Value.Count())))} Pipelines");
+            var pipelineCount = await inspector.GetPipelineCount();
+            _log.LogInformation($"Found {pipelineCount} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(ado, pipelines);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat);
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
             _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = _teamProjectsCsvGenerator.Generate(pipelines);
+            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
             _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(ado, pipelines);
+            var reposCsvText = await _reposCsvGenerator.Generate(adoPat);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
             _log.LogInformation("Generating pipelines.csv...");
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(ado, pipelines);
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(adoPat);
             await WriteToFile("pipelines.csv", pipelinesCsvText);
             _log.LogSuccess("pipelines.csv generated");
         }
