@@ -128,7 +128,7 @@ namespace OctoshiftCLI.AdoToGithub
 
             if (!_repos[org].TryGetValue(teamProject, out var repos))
             {
-                repos = await _adoApi.GetEnabledRepos(org, teamProject);
+                repos = (await _adoApi.GetEnabledRepos(org, teamProject));
                 _repos[org].Add(teamProject, repos);
             }
 

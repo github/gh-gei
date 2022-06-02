@@ -63,7 +63,7 @@ namespace OctoshiftCLI
             var response = await _client.GetAsync(url);
 
             var data = JObject.Parse(response);
-            var pushDate = (string)data["value"].First()["date"];
+            var pushDate = data["value"].Any() ? (string)data["value"].First()["date"] : DateTime.MinValue.ToString();
 
             return DateTime.Parse(pushDate);
         }
@@ -72,6 +72,14 @@ namespace OctoshiftCLI
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/commits?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
             return await _client.GetCountUsingSkip(url);
+        }
+
+        public virtual async Task<IEnumerable<string>> GetPushersSince(string org, string teamProject, string repo, DateTime fromDate)
+        {
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            var response = await _client.GetWithPagingTopSkipAsync(url, x => $"{x["pushedBy"]["displayName"]} ({x["pushedBy"]["uniqueName"]})");
+
+            return response;
         }
 
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
@@ -376,7 +384,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
             var response = await _client.GetWithPagingAsync(url);
 
             var result = response.Select(x =>
