@@ -14,7 +14,8 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private readonly HttpClient _httpClient;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient) {
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient)
+        {
             _log = log;
             _httpClient = httpClient;
         }
