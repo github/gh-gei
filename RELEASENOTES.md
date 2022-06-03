@@ -1,1 +1,1 @@
-- Log GitHub request id into the verbose log for each GitHub API call.
+- Log GitHub request id into the verbose log for each GitHub API call (this can be useful for GitHub support if something goes wrong)
