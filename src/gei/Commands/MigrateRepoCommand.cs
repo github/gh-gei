@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
@@ -190,7 +189,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
 
-            if (await RepoExists(githubApi, args.GithubTargetOrg, args.TargetRepo))
+            if (await githubApi.RepoExists(args.GithubTargetOrg, args.TargetRepo))
             {
                 _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
                 return;
@@ -239,12 +238,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
-        {
-            var repos = await githubApi.GetRepos(org);
-            return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 
         private string GetSourceToken(MigrateRepoCommandArgs args) =>

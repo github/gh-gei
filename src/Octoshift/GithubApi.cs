@@ -97,6 +97,21 @@ namespace OctoshiftCLI
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
+        public virtual async Task<bool> RepoExists(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            try
+            {
+                await _client.GetAsync(url);
+                return true;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+            {
+                return false;
+            }
+        }
+
         public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
