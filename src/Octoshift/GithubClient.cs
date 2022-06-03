@@ -132,6 +132,7 @@ namespace OctoshiftCLI
                 "PATCH" => await _httpClient.PatchAsync(url, payload),
                 _ => throw new ArgumentOutOfRangeException($"{httpMethod} is not supported.")
             };
+            _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
@@ -166,7 +167,10 @@ namespace OctoshiftCLI
             return nextUrl;
         }
 
-        private string ExtractLinkHeader(KeyValuePair<string, IEnumerable<string>>[] headers) =>
-            headers.SingleOrDefault(kvp => kvp.Key == "Link").Value?.FirstOrDefault();
+        private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+            ExtractHeaderValue("Link", headers);
+
+        private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+            headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
     }
 }
