@@ -321,7 +321,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Happy_Path_GithubSource_GHES()
+        public async Task Happy_Path_GithubSource_Ghes()
         {
             var githubOrgId = Guid.NewGuid().ToString();
             var migrationSourceId = Guid.NewGuid().ToString();
@@ -390,6 +390,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.GetMigrationState(migrationId));
+            _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
+            _mockOctoLogger.Verify(x => x.LogInformation($"AZURE STORAGE CONNECTION STRING: {AZURE_CONNECTION_STRING}"), Times.Once);
         }
 
         [Fact]
@@ -708,6 +710,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAzureApiFactory.Verify(x => x.CreateClientNoSsl(AZURE_CONNECTION_STRING));
             _mockGithubApi.Verify(x => x.GetMigrationState(migrationId));
+            _mockOctoLogger.Verify(x => x.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
