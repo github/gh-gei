@@ -13,7 +13,7 @@ namespace OctoshiftCLI
 
         public static bool IsPending(string migrationState)
         {
-            string[] pendingStates = new string[]
+            var pendingStates = new string[]
             {
                 Queued, InProgress, PendingValidation
             };
@@ -22,7 +22,7 @@ namespace OctoshiftCLI
         }
         public static bool IsFailed(string migrationState)
         {
-            string[] failedStates = new string[]
+            var failedStates = new string[]
             {
                 Failed,
                 FailedValidation
