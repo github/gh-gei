@@ -32,11 +32,10 @@ namespace OctoshiftCLI
         {
             _log.LogVerbose($"HTTP GET: {fromUrl}");
             using var response = await _client.GetAsync(fromUrl);
-            var content = await response.Content.ReadAsByteArrayAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
             response.EnsureSuccessStatusCode();
-
-            return content;
+            
+            return await response.Content.ReadAsByteArrayAsync();
         }
 
         public virtual async Task<Uri> UploadToBlob(string fileName, byte[] content)
