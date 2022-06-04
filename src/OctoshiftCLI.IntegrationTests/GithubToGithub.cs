@@ -47,12 +47,15 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreateGithubRepo(githubSourceOrg, repo1);
             await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
-            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
         }
 
         protected virtual void Dispose(bool disposing)

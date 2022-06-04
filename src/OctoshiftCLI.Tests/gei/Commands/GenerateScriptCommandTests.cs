@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(15);
+            _command.Options.Count.Should().Be(16);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -63,6 +63,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "download-migration-logs", false);
             TestHelpers.VerifyCommandOption(_command.Options, "output", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
@@ -822,6 +823,395 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
                 AzureStorageConnectionString = azureStorageConnectionString
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        // start of log download
+
+        [Fact]
+        public async Task Sequential_Ado_Single_Repo_With_Download_Migration_Logs()
+        {
+            // Arrange
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { REPO });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(null, null))
+                .Returns(_mockAdoApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}");
+            expected.Append($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" }}");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                DownloadMigrationLogs = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Sequential_AdoServer_Single_Repo_With_Download_Migration_Logs()
+        {
+            // Arrnage
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+            const string adoServerUrl = "https://ado.contoso.com";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(adoServerUrl, null))
+                .Returns(_mockAdoApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-server-url \"{adoServerUrl}\" --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}");
+            expected.Append($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" }}");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoServerUrl = adoServerUrl,
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                DownloadMigrationLogs = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Sequential_Ado_Multiple_Repos_With_Download_Migration_Logs()
+        {
+            // Arrange
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+            const string repo1 = "FOO-REPO-1";
+            const string repo2 = "FOO-REPO-2";
+            const string repo3 = "FOO-REPO-3";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2, repo3 });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(null, null))
+                .Returns(_mockAdoApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" --wait }}");
+            expected.AppendLine($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" --wait }}");
+            expected.AppendLine($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo3}\" --wait }}");
+            expected.Append($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo3}\" }}");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                DownloadMigrationLogs = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Parallel_Ado_Multiple_Repos_With_Download_Migration_Logs()
+        {
+            // Arrange
+            const string adoTeamProject = "ADO-TEAM-PROJECT";
+            const string repo1 = "FOO-REPO-1";
+            const string repo2 = "FOO-REPO-2";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { repo1, repo2 });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(null, null))
+                .Returns(_mockAdoApi.Object);
+
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            var expected = new StringBuilder();
+            expected.AppendLine("#!/usr/bin/env pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+            expected.AppendLine(@"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}");
+            expected.AppendLine();
+            expected.AppendLine("$Succeeded = 0");
+            expected.AppendLine("$Failed = 0");
+            expected.AppendLine("$RepoMigrations = [ordered]@{}");
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine($"# === Queuing repo migrations for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{adoTeamProject}-{repo1}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{adoTeamProject}-{repo2}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine($"# === Migration stauts for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
+            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
+            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\"");
+            expected.AppendLine();
+            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"]");
+            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\"");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
+            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
+            expected.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+            expected.AppendLine();
+            expected.AppendLine();
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                DownloadMigrationLogs = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Multiple_Repos_With_Download_Migration_Logs()
+        {
+            // Arrange
+            const string repo1 = "FOO-REPO-1";
+            const string repo2 = "FOO-REPO-2";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { repo1, repo2 });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            var expected = new StringBuilder();
+            expected.AppendLine("#!/usr/bin/env pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+            expected.AppendLine(@"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}");
+            expected.AppendLine();
+            expected.AppendLine("$Succeeded = 0");
+            expected.AppendLine("$Failed = 0");
+            expected.AppendLine("$RepoMigrations = [ordered]@{}");
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine("# === Queuing repo migrations ===");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{repo1}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{repo2}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"]");
+            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\"");
+            expected.AppendLine();
+            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"]");
+            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\"");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
+            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
+            expected.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+            expected.AppendLine();
+            expected.AppendLine();
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                DownloadMigrationLogs = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Ghes_Single_Repo_With_Download_Migration_Logs()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            var expected = new StringBuilder();
+            expected.AppendLine("#!/usr/bin/env pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine(@"
+function Exec {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    & @ScriptBlock
+    if ($lastexitcode -ne 0) {
+        exit $lastexitcode
+    }
+}");
+            expected.AppendLine(@"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}");
+            expected.AppendLine();
+            expected.AppendLine("$Succeeded = 0");
+            expected.AppendLine("$Failed = 0");
+            expected.AppendLine("$RepoMigrations = [ordered]@{}");
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine("# === Queuing repo migrations ===");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
+            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\"");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
+            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
+            expected.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+            expected.AppendLine();
+            expected.AppendLine();
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                DownloadMigrationLogs = true
             };
             await _command.Invoke(args);
 

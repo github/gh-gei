@@ -86,7 +86,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
 
-            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+            return await _retryPolicy.HttpRetry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
@@ -290,7 +290,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
                                                     ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
@@ -349,7 +349,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
                                                     ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
