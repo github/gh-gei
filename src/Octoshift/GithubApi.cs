@@ -281,6 +281,25 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
+        public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } }";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadGateway);
+            var data = JObject.Parse(response);
+
+            return (
+                State: (string)data["data"]["node"]["state"],
+                RepositoryName: (string)data["data"]["node"]["repositoryName"],
+                FailureReason: (string)data["data"]["node"]["failureReason"]);
+        }
+
         public virtual async Task<string> GetMigrationState(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
