@@ -34,7 +34,7 @@ namespace OctoshiftCLI
             using var response = await _client.GetAsync(fromUrl);
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
             response.EnsureSuccessStatusCode();
-            
+
             return await response.Content.ReadAsByteArrayAsync();
         }
 
