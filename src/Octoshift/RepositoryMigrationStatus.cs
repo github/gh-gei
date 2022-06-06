@@ -11,26 +11,8 @@ namespace OctoshiftCLI
         public const string PendingValidation = "PENDING_VALIDATION";
         public const string FailedValidation = "FAILED_VALIDATION";
 
-        public static bool IsPending(string migrationState)
-        {
-            var pendingStates = new string[]
-            {
-                Queued, InProgress, PendingValidation
-            };
+        public static bool IsPending(string migrationState) => migrationState?.Trim().ToUpper() is Queued or InProgress or PendingValidation;
 
-            return Array.Exists(pendingStates, e => e == migrationState.Trim().ToUpper());
-        }
-        public static bool IsFailed(string migrationState)
-        {
-            var failedStates = new string[]
-            {
-                Failed,
-                FailedValidation
-            };
-
-            return Array.Exists(failedStates, e => e == migrationState.Trim()
-                                                     .ToUpper());
-
-        }
+        public static bool IsFailed(string migrationState) => migrationState?.Trim().ToUpper() is Failed or FailedValidation;
     }
 }
