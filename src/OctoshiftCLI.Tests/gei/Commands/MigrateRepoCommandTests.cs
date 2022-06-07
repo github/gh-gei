@@ -84,7 +84,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
 
-            _mockGithubApi.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(new List<string>());
+            _mockGithubApi.Setup(x => x.RepoExists(TARGET_ORG, TARGET_REPO).Result).Returns(false);
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false).Result).Returns(migrationId);
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetRepos(TARGET_ORG));
+            _mockGithubApi.Verify(m => m.RepoExists(TARGET_ORG, TARGET_REPO));
             _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG));
             _mockGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
@@ -143,9 +143,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
-            var githubRepos = new List<string> { TARGET_REPO };
 
-            _mockGithubApi.Setup(x => x.GetRepos(TARGET_ORG).Result).Returns(githubRepos);
+            _mockGithubApi.Setup(x => x.RepoExists(TARGET_ORG, TARGET_REPO).Result).Returns(true);
             _mockGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
@@ -172,7 +171,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetRepos(TARGET_ORG));
+            _mockGithubApi.Verify(m => m.RepoExists(TARGET_ORG, TARGET_REPO));
 
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
             actualLogOutput.Should().Contain(expectedLogWarningOutput);
@@ -324,7 +323,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Happy_Path_GithubSource_GHES()
+        public async Task Happy_Path_GithubSource_Ghes()
         {
             var githubOrgId = Guid.NewGuid().ToString();
             var migrationSourceId = Guid.NewGuid().ToString();
@@ -395,6 +394,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.GetMigrationState(migrationId));
+            _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
+            _mockOctoLogger.Verify(x => x.LogInformation($"AZURE STORAGE CONNECTION STRING: {AZURE_CONNECTION_STRING}"), Times.Once);
         }
 
         [Fact]
@@ -731,6 +732,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAzureApiFactory.Verify(x => x.CreateClientNoSsl(AZURE_CONNECTION_STRING));
             _mockGithubApi.Verify(x => x.GetMigrationState(migrationId));
+            _mockOctoLogger.Verify(x => x.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
