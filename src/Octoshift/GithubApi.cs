@@ -300,22 +300,6 @@ namespace OctoshiftCLI
                 FailureReason: (string)data["data"]["node"]["failureReason"]);
         }
 
-        public virtual async Task<string> GetMigrationState(string migrationId)
-        {
-            var url = $"{_apiUrl}/graphql";
-
-            var query = "query($id: ID!)";
-            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
-
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
-
-            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
-                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
-            var data = JObject.Parse(response);
-
-            return (string)data["data"]["node"]["state"];
-        }
-
         public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
@@ -357,22 +341,6 @@ namespace OctoshiftCLI
                     5)
                 .Select(jToken => ((string)jToken["id"], (string)jToken["state"]))
                 .ToListAsync();
-        }
-
-        public virtual async Task<string> GetMigrationFailureReason(string migrationId)
-        {
-            var url = $"{_apiUrl}/graphql";
-
-            var query = "query($id: ID!)";
-            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
-
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
-
-            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
-                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
-            var data = JObject.Parse(response);
-
-            return (string)data["data"]["node"]["failureReason"];
         }
 
         public virtual async Task<string> GetMigrationLogUrl(string org, string repo)

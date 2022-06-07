@@ -220,20 +220,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
                 throw new OctoshiftCliException(failureReason);
             }
 
