@@ -1,0 +1,25 @@
+{
+  "src/Octoshift/*.cs": {
+    "alternate": "src/OctoshiftCLI.Tests/{}Tests.cs"
+  },
+
+  "src/OctoshiftCLI.Tests/*Tests.cs": {
+    "alternate": "src/Octoshift/{}.cs"
+  },
+
+  "src/gei/*.cs": {
+    "alternate": "src/OctoshiftCLI.Tests/gei/{}Tests.cs"
+  },
+
+  "src/OctoshiftCLI.Tests/gei/*Tests.cs": {
+    "alternate": "src/gei/{}.cs"
+  },
+
+  "src/ado2gh/*.cs": {
+    "alternate": "src/OctoshiftCLI.Tests/ado2gh/{}Tests.cs"
+  },
+
+  "src/OctoshiftCLI.Tests/ado2gh/*Tests.cs": {
+    "alternate": "src/ado2gh/{}.cs"
+  }
+}
