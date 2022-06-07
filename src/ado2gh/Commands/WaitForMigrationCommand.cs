@@ -49,7 +49,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
 
             _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
-            
+
             if (githubPat is not null)
             {
                 _log.LogInformation("GITHUB PAT: ***");

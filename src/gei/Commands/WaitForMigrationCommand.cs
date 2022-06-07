@@ -47,9 +47,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
             var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
-            
+
             _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
-            
+
             if (githubTargetPat is not null)
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
