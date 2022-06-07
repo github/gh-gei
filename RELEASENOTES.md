@@ -1,1 +1,1 @@
-
+- `wait-for-migration` progress report in both `ado2gh` and `gh gei` now logs the target repository name in addition to migration id for more readability. 
