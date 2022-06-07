@@ -86,7 +86,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
 
-            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+            return await _retryPolicy.HttpRetry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
@@ -95,6 +95,21 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
+        }
+
+        public virtual async Task<bool> RepoExists(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            try
+            {
+                await _client.GetAsync(url);
+                return true;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+            {
+                return false;
+            }
         }
 
         public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
@@ -292,7 +307,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
                                                     ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
@@ -351,7 +366,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
                                                     ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
