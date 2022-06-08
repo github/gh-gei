@@ -102,7 +102,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var skipReleases = new Option("--skip-releases")
             {
-                IsHidden = true,
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
