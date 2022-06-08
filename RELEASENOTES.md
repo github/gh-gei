@@ -1,1 +1,1 @@
-
+- Support excluding releases when `--skip-releases` flag is provided in `gh gei migrate-repo` command for GHES migration path.
