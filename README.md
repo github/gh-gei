@@ -27,7 +27,7 @@ To see the available commands and options run:
 >`gh gei --help`
 
 ### GitHub to GitHub Usage (GHEC -> GHEC)
-1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer)).
+1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation]([https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer/running-a-migration-with-github-enterprise-importer/running-a-migration-to-github-enterprise-cloud#step-3-grant-the-migrator-role))).
 
 2. Set the GH_SOURCE_PAT and GH_PAT environment variables.
 
