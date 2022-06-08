@@ -152,7 +152,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<T>> GetWithPagingTopSkipAsync<T>(string url, int skip, Func<JToken, T> selector)
         {
-            if (string.IsNullOrWhiteSpace(url))
+            if (url.IsNullOrWhiteSpace())
             {
                 throw new ArgumentNullException(nameof(url));
             }
