@@ -11,6 +11,8 @@ namespace OctoshiftCLI.Tests
 {
     public class HttpDownloadServiceTests
     {
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
         [Fact]
         public async Task Downloads_File()
         {
@@ -38,7 +40,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -76,7 +78,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
             {
                 WriteToFile = (_, contents) =>
                 {

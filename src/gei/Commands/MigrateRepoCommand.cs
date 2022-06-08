@@ -288,6 +288,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                 }
             }
+            else
+            {
+                _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {azureStorageConnectionString}");
+            }
 
             if (noSslVerify)
             {
