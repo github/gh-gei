@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
+using Polly;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -14,21 +15,23 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
         private readonly HttpDownloadService _httpDownloadService;
+        private readonly RetryPolicy _retryPolicy;
 
         internal Func<string, bool> FileExists = path => File.Exists(path);
 
         public DownloadLogsCommand(
             OctoLogger log,
             GithubApiFactory githubApiFactory,
-            HttpDownloadService httpDownloadService
+            HttpDownloadService httpDownloadService,
+            RetryPolicy retryPolicy
         ) : base("download-logs")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
             _httpDownloadService = httpDownloadService;
+            _retryPolicy = retryPolicy;
 
             Description = "Downloads migration logs for migrations.";
-            IsHidden = true;
 
             var githubOrg = new Option<string>("--github-org")
             {
@@ -95,8 +98,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         {
             _log.Verbose = verbose;
 
-            _log.LogInformation($"Downloading logs for organization {githubOrg}...");
+            _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
+            _log.LogInformation($"Downloading migration logs...");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
 
@@ -127,21 +131,23 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogWarning($"Overwriting {migrationLogFile} due to --overwrite option.");
             }
 
-            _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
-
             var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
-            var logUrl = await githubApi.GetMigrationLogUrl(githubOrg, githubRepo);
 
-            if (logUrl == null)
+            var result = await _retryPolicy.RetryOnResult(async () => await githubApi.GetMigrationLogUrl(githubOrg, githubRepo), string.Empty, "Waiting for migration log to populate...");
+
+            if (result.Outcome == OutcomeType.Successful && result.Result is null)
             {
-                throw new OctoshiftCliException($"Migration not found for repository {githubRepo}!");
+                throw new OctoshiftCliException($"Migration for repository {githubRepo} not found!");
             }
 
-            if (!logUrl.HasValue())
+            if (result.Outcome == OutcomeType.Failure)
             {
-                throw new OctoshiftCliException($"Migration found for repository {githubRepo}, but migration log not available yet!");
+                throw new OctoshiftCliException($"Migration log for repository {githubRepo} unavailable!");
             }
 
+            var logUrl = result.Result;
+
+            _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
             await _httpDownloadService.Download(logUrl, migrationLogFile);
 
             _log.LogSuccess($"Downloaded {githubRepo} log to {migrationLogFile}.");
