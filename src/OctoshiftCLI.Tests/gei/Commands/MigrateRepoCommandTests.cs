@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(_command.Options, "git-archive-url", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "metadata-archive-url", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);

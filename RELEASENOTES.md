@@ -1,1 +1,1 @@
-
+- Add `--skip-releases` flag to `gh gei` for `migrate-repo` and `generate-script` commands to support skipping releases when migrating. 
