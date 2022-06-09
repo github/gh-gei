@@ -1,3 +1,3 @@
 - Add `--skip-releases` flag to `gh gei` for `migrate-repo` and `generate-script` commands to support skipping releases when migrating. 
 - `wait-for-migration` progress report in both `ado2gh` and `gh gei` now logs the target repository name in addition to migration id for more readability. 
-- Support excluding releases when `--skip-releases` flag is provided in `gh gei migrate-repo` command for GHES migration path.
+- Support excluding releases when `--skip-releases` flag is provided in `gh gei migrate-repo` command for GHES migration path. Previously releases were excluded by default but now they are going to be included unless `--skip-releases` is provided. 
