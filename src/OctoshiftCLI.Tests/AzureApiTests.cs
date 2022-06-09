@@ -40,14 +40,17 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var blobServiceClient = new Mock<BlobServiceClient>();
+            var octoLoggerMock = TestHelpers.CreateMock<OctoLogger>();
 
-            var azureApi = new AzureApi(httpClient, blobServiceClient.Object);
+            var azureApi = new AzureApi(httpClient, blobServiceClient.Object, octoLoggerMock.Object);
 
             // Act
             var archiveContent = await azureApi.DownloadArchive(url);
 
             // Assert
             Encoding.UTF8.GetString(archiveContent).Should().Be(EXPECTED_RESPONSE_CONTENT);
+            octoLoggerMock.Verify(m => m.LogVerbose($"HTTP GET: {url}"));
+            octoLoggerMock.Verify(m => m.LogVerbose("RESPONSE (OK): <truncated>"));
         }
 
         [Fact]
@@ -61,7 +64,7 @@ namespace OctoshiftCLI.Tests
             var fileName = "file.zip";
             var content = Encoding.UTF8.GetBytes("Upload content").ToArray();
 
-            var azureApi = new AzureApi(client.Object, blobServiceClient.Object);
+            var azureApi = new AzureApi(client.Object, blobServiceClient.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
             var response = new Mock<Azure.Response<BlobContainerClient>>();
 
@@ -85,6 +88,33 @@ namespace OctoshiftCLI.Tests
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await azureApi.UploadToBlob(fileName, content));
+        }
+
+        [Fact]
+        public async Task DownloadArchive_Should_Throw_HttpRequestException_On_Non_Success_Response()
+        {
+            // Arrnage
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var octoLoggerMock = TestHelpers.CreateMock<OctoLogger>();
+            var azureApi = new AzureApi(httpClient, null, octoLoggerMock.Object);
+
+            // Act, Assert
+            await azureApi
+                .Invoking(api => api.DownloadArchive("https://example.com/resource"))
+                .Should()
+                .ThrowAsync<HttpRequestException>();
+
+            octoLoggerMock.Verify(m => m.LogVerbose("RESPONSE (InternalServerError): <truncated>"));
         }
     }
 }

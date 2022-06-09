@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests
             CliContext.RootCommand = rootCommand;
             CliContext.ExecutingCommand = executingCommand;
 
-            var versionChecker = new VersionChecker(null);
+            var versionChecker = new VersionChecker(null, null);
 
             // Act
             var comments = versionChecker.GetVersionComments();
