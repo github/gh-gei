@@ -73,7 +73,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     null,
                     false).Result)
                 .Returns(MIGRATION_ID);
-            _mockGithubApi.Setup(x => x.GetMigrationState(MIGRATION_ID).Result).Returns("SUCCEEDED");
+            _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
 
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
@@ -163,7 +163,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                         null,
                         false).Result)
                 .Returns(MIGRATION_ID);
-            _mockGithubApi.Setup(x => x.GetMigrationState(MIGRATION_ID).Result).Returns("SUCCEEDED");
+            _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
 
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
@@ -176,13 +176,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: true);
 
-            _mockGithubApi.Verify(x => x.GetMigrationState(MIGRATION_ID));
+            _mockGithubApi.Verify(x => x.GetMigration(MIGRATION_ID));
         }
 
         [Fact]
         public async Task It_Uses_Ado_And_Github_Pats_When_Provided()
         {
-            _mockGithubApi.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
+            _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TOKEN)).Returns(_mockGithubApi.Object);
 
             _mockEnvironmentVariableProvider
@@ -203,7 +203,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task It_Falls_Back_To_Ado_And_Github_Pats_From_Environment_When_Not_Provided()
         {
             _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<string>());
-            _mockGithubApi.Setup(x => x.GetMigrationState(It.IsAny<string>()).Result).Returns("SUCCEEDED");
+            _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TOKEN)).Returns(_mockGithubApi.Object);
 
             _mockEnvironmentVariableProvider

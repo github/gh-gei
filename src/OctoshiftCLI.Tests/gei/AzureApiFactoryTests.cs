@@ -16,10 +16,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         private readonly IAzureApiFactory _azureApiFactory;
 
-        public AzureApiFactoryTests()
-        {
-            _azureApiFactory = new AzureApiFactory(_mockHttpClientFactory.Object, _mockEnvironmentVariableProvider.Object, _mockBlobServiceClientFactory.Object);
-        }
+        public AzureApiFactoryTests() => _azureApiFactory = new AzureApiFactory(
+            _mockHttpClientFactory.Object,
+            _mockEnvironmentVariableProvider.Object,
+            _mockBlobServiceClientFactory.Object,
+            TestHelpers.CreateMock<OctoLogger>().Object);
 
         [Fact]
         public void AzureApiFactory_Should_Create_With_NoSSL()
