@@ -1,5 +1,3 @@
-using System;
-
 namespace OctoshiftCLI
 {
     public static class RepositoryMigrationStatus
@@ -11,8 +9,8 @@ namespace OctoshiftCLI
         public const string PendingValidation = "PENDING_VALIDATION";
         public const string FailedValidation = "FAILED_VALIDATION";
 
+        public static bool IsSucceeded(string migrationState) => migrationState?.Trim().ToUpper() is Succeeded;
         public static bool IsPending(string migrationState) => migrationState?.Trim().ToUpper() is Queued or InProgress or PendingValidation;
-
-        public static bool IsFailed(string migrationState) => migrationState?.Trim().ToUpper() is Failed or FailedValidation;
+        public static bool IsFailed(string migrationState) => !(IsPending(migrationState) || IsSucceeded(migrationState));
     }
 }

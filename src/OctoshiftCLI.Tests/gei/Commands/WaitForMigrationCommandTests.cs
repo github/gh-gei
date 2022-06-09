@@ -129,6 +129,55 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task With_Migration_ID_That_Fails_Validation()
+        {
+            // Arrange
+            const string failureReason = "FAILURE_REASON";
+
+            _mockGithubApi.Setup(m => m.GetMigrationFailureReason(MIGRATION_ID).Result).Returns(failureReason);
+            _mockGithubApi.SetupSequence(x => x.GetMigrationState(MIGRATION_ID).Result)
+                .Returns(RepositoryMigrationStatus.PendingValidation)
+                .Returns(RepositoryMigrationStatus.PendingValidation)
+                .Returns(RepositoryMigrationStatus.FailedValidation);
+
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>
+            {
+                $"Waiting for migration {MIGRATION_ID} to finish...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.PendingValidation}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} is {RepositoryMigrationStatus.PendingValidation}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration failed for migration {MIGRATION_ID}"
+            };
+
+            // Act
+            await FluentActions
+                .Invoking(async () => await _command.Invoke(MIGRATION_ID))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(failureReason);
+
+            // Assert
+
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
+
+            _mockGithubApi.Verify(m => m.GetMigrationState(MIGRATION_ID), Times.Exactly(3));
+            _mockGithubApi.Verify(m => m.GetMigrationFailureReason(MIGRATION_ID), Times.Once);
+
+            actualLogOutput.Should().Equal(expectedLogOutput);
+
+            _mockOctoLogger.VerifyNoOtherCalls();
+            _mockGithubApi.VerifyNoOtherCalls();
+        }
+
+        [Fact]
         public async Task It_Uses_Github_Target_Pat_When_Provided()
         {
             // Arrange
