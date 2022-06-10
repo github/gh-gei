@@ -9,19 +9,29 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class RevokeMigratorRoleCommandTests
     {
+        private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+        private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
+        private readonly RevokeMigratorRoleCommand _command;
+
+        public RevokeMigratorRoleCommandTests()
+        {
+            _command = new RevokeMigratorRoleCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        }
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new RevokeMigratorRoleCommand(null, null);
-            Assert.NotNull(command);
-            Assert.Equal("revoke-migrator-role", command.Name);
-            Assert.Equal(5, command.Options.Count);
+            Assert.NotNull(_command);
+            Assert.Equal("revoke-migrator-role", _command.Name);
+            Assert.Equal(5, _command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(command.Options, "actor", true);
-            TestHelpers.VerifyCommandOption(command.Options, "actor-type", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "actor", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "actor-type", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
@@ -32,16 +42,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var actorType = "TEAM";
             var githubOrgId = Guid.NewGuid().ToString();
 
-            var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            mockGithub.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithub.Object);
+            await _command.Invoke(githubOrg, actor, actorType);
 
-            var command = new RevokeMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
-            await command.Invoke(githubOrg, actor, actorType);
-
-            mockGithub.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
+            _mockGithubApi.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
         }
 
         [Fact]
@@ -49,22 +55,17 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string githubPat = "github-pat";
 
-            var mockGithub = TestHelpers.CreateMock<GithubApi>();
-            var mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-            mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(mockGithub.Object);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-            var command = new RevokeMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, mockGithubApiFactory.Object);
-            await command.Invoke("githubOrg", "actor", "TEAM", githubPat);
+            await _command.Invoke("githubOrg", "actor", "TEAM", githubPat);
 
-            mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
 
         [Fact]
         public async Task Invalid_Actor_Type()
         {
-            var command = new RevokeMigratorRoleCommand(TestHelpers.CreateMock<OctoLogger>().Object, null);
-
-            await command.Invoke("foo", "foo", "foo");
+            await _command.Invoke("foo", "foo", "foo");
         }
     }
 }

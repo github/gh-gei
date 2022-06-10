@@ -27,7 +27,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             _githubHttpClient = new HttpClient();
             _versionClient = new HttpClient();
-            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
+            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), githubToken);
             _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
@@ -47,12 +47,15 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreateGithubRepo(githubSourceOrg, repo1);
             await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
-            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg}");
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs");
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
         }
 
         protected virtual void Dispose(bool disposing)

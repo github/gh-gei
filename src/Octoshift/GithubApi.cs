@@ -86,7 +86,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
 
-            return await _retryPolicy.Retry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
+            return await _retryPolicy.HttpRetry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
         }
 
@@ -95,6 +95,21 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
+        }
+
+        public virtual async Task<bool> RepoExists(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            try
+            {
+                await _client.GetAsync(url);
+                return true;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+            {
+                return false;
+            }
         }
 
         public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
@@ -266,20 +281,23 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
-        public virtual async Task<string> GetMigrationState(string migrationId)
+        public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
-            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
+            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } }";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
-                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
-            return (string)data["data"]["node"]["state"];
+            return (
+                State: (string)data["data"]["node"]["state"],
+                RepositoryName: (string)data["data"]["node"]["repositoryName"],
+                FailureReason: (string)data["data"]["node"]["failureReason"]);
         }
 
         public virtual async Task<IEnumerable<(string MigrationId, string State)>> GetMigrationStates(string orgId)
@@ -325,20 +343,28 @@ namespace OctoshiftCLI
                 .ToListAsync();
         }
 
-        public virtual async Task<string> GetMigrationFailureReason(string migrationId)
+        public virtual async Task<string> GetMigrationLogUrl(string org, string repo)
         {
             var url = $"{_apiUrl}/graphql";
 
-            var query = "query($id: ID!)";
-            var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } }";
+            var query = "query ($org: String!, $repo: String!)";
+            var gql = @"
+                organization(login: $org) {
+                    repositoryMigrations(last: 1, repositoryName: $repo) {
+                        nodes {
+                            migrationLogUrl
+                        }
+                    }
+                }
+            ";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
+            var response = await _client.PostAsync(url, payload);
 
-            var response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, payload),
-                                                    ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
+            var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-            return (string)data["data"]["node"]["failureReason"];
+            return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
         }
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)

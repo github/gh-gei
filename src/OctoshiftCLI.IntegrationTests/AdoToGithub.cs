@@ -26,12 +26,12 @@ namespace OctoshiftCLI.IntegrationTests
             _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
-            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient), adoToken);
-            var adoApi = new AdoApi(adoClient, "https://dev.azure.com");
+            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), adoToken);
+            var adoApi = new AdoApi(adoClient, "https://dev.azure.com", logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
+            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
@@ -90,6 +90,8 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.AssertPipelineRewired(adoOrg, teamProject2, pipeline2, githubOrg, $"{teamProject2}-{teamProject2}");
             await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject1);
             await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject2);
+            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
+            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
         }
 
         protected virtual void Dispose(bool disposing)

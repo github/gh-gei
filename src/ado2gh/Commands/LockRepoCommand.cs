@@ -66,6 +66,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
             var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+
             var identityDescriptor = await ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
             await ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -112,7 +111,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
-            if (await RepoExists(githubApi, githubOrg, githubRepo))
+            if (await githubApi.RepoExists(githubOrg, githubRepo))
             {
                 _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
                 return;
@@ -131,30 +130,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 return;
             }
 
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
                 throw new OctoshiftCliException(failureReason);
             }
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
-        {
-            var repos = await githubApi.GetRepos(org);
-            return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 
         private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");

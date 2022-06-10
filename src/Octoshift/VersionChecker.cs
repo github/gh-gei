@@ -11,8 +11,13 @@ namespace OctoshiftCLI
     {
         private string _latestVersion;
         private readonly HttpClient _httpClient;
+        private readonly OctoLogger _log;
 
-        public VersionChecker(HttpClient httpClient) => _httpClient = httpClient;
+        public VersionChecker(HttpClient httpClient, OctoLogger log)
+        {
+            _httpClient = httpClient;
+            _log = log;
+        }
 
         public async Task<bool> IsLatest()
         {
@@ -47,9 +52,11 @@ namespace OctoshiftCLI
 
                 const string url = "https://api.github.com/repos/github/gh-gei/releases/latest";
 
+                _log.LogVerbose($"HTTP GET: {url}");
                 var response = await _httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
+                _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+                response.EnsureSuccessStatusCode();
                 var data = JObject.Parse(content);
 
                 var latestTag = (string)data["tag_name"];

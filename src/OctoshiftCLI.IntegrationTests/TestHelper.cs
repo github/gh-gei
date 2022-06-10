@@ -585,5 +585,14 @@ steps:
             boardsConnection.Should().NotBeNull();
             boardsConnection.repoIds.Count().Should().Be(1);
         }
+
+        public void AssertMigrationLogFileExists(string githubOrg, string repo)
+        {
+            _output.WriteLine("Checking that the migration log was downloaded...");
+
+            var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
+
+            File.Exists(migrationLogFile).Should().BeTrue();
+        }
     }
 }

@@ -9,12 +9,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class AzureApiFactoryTests
     {
-        private readonly OctoLogger _logger;
+        private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        private readonly Mock<BlobServiceClient> _mockBlobServiceClient = new Mock<BlobServiceClient>();
+        private readonly Mock<IBlobServiceClientFactory> _mockBlobServiceClientFactory = new Mock<IBlobServiceClientFactory>();
 
-        public AzureApiFactoryTests()
-        {
-            _logger = TestHelpers.CreateMock<OctoLogger>().Object;
-        }
+        private readonly IAzureApiFactory _azureApiFactory;
+
+        public AzureApiFactoryTests() => _azureApiFactory = new AzureApiFactory(
+            _mockHttpClientFactory.Object,
+            _mockEnvironmentVariableProvider.Object,
+            _mockBlobServiceClientFactory.Object,
+            TestHelpers.CreateMock<OctoLogger>().Object);
 
         [Fact]
         public void AzureApiFactory_Should_Create_With_NoSSL()
@@ -22,26 +28,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
-            environmentVariableProviderMock
+            _mockEnvironmentVariableProvider
                 .Setup(m => m.AzureStorageConnectionString())
                 .Returns(_connectionString);
 
             using var httpClient = new HttpClient();
 
-            var _mockHttpClientFactory = new Mock<IHttpClientFactory>();
             _mockHttpClientFactory
                 .Setup(x => x.CreateClient("NoSSL"))
                 .Returns(httpClient);
 
-            var mockBlob = new Mock<BlobServiceClient>();
-            var blob = new Mock<IBlobServiceClientFactory>();
-            blob.Setup(x => x.Create(_connectionString)).Returns(mockBlob.Object);
+            _mockBlobServiceClientFactory.Setup(x => x.Create(_connectionString)).Returns(_mockBlobServiceClient.Object);
 
             // Act
-            IAzureApiFactory factory =
-                new AzureApiFactory(_mockHttpClientFactory.Object, environmentVariableProviderMock.Object, blob.Object);
-            var azureApi = factory.CreateClientNoSsl(_connectionString);
+            var azureApi = _azureApiFactory.CreateClientNoSsl(_connectionString);
 
             // Assert
             azureApi.Should().NotBeNull();
@@ -53,30 +53,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
-            var environmentVariableProviderMock = new Mock<EnvironmentVariableProvider>(_logger);
-
-            environmentVariableProviderMock
+            _mockEnvironmentVariableProvider
                 .Setup(m => m.AzureStorageConnectionString())
                 .Returns(_connectionString);
 
             using var httpClient = new HttpClient();
 
-            var _mockHttpClientFactory = new Mock<IHttpClientFactory>();
             _mockHttpClientFactory
                 .Setup(x => x.CreateClient("Default"))
                 .Returns(httpClient);
 
-
-            var mockBlob = new Mock<BlobServiceClient>();
-            var blob = new Mock<IBlobServiceClientFactory>();
-            blob
+            _mockBlobServiceClientFactory
                 .Setup(x => x.Create(_connectionString))
-                .Returns(mockBlob.Object);
+                .Returns(_mockBlobServiceClient.Object);
 
             // Act
-            IAzureApiFactory factory =
-                new AzureApiFactory(_mockHttpClientFactory.Object, environmentVariableProviderMock.Object, blob.Object);
-            var azureApi = factory.Create(_connectionString);
+            var azureApi = _azureApiFactory.Create(_connectionString);
 
             // Assert
             azureApi.Should().NotBeNull();

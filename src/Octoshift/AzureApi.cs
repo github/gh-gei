@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
@@ -11,18 +12,29 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _client;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly OctoLogger _log;
         private const string CONTAINER_PREFIX = "migration-archives";
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
 
-        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient)
+        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
         {
             _client = client;
             _blobServiceClient = blobServiceClient;
+            _log = log;
+
+            if (_client is not null)
+            {
+                _client.Timeout = new TimeSpan(1, 0, 0);
+            }
         }
 
         public virtual async Task<byte[]> DownloadArchive(string fromUrl)
         {
+            _log.LogVerbose($"HTTP GET: {fromUrl}");
             using var response = await _client.GetAsync(fromUrl);
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+            response.EnsureSuccessStatusCode();
+
             return await response.Content.ReadAsByteArrayAsync();
         }
 
@@ -31,8 +43,17 @@ namespace OctoshiftCLI
             var containerClient = await CreateBlobContainerAsync();
             var blobClient = containerClient.GetBlobClient(fileName);
 
+            var options = new BlobUploadOptions
+            {
+                TransferOptions = new Azure.Storage.StorageTransferOptions()
+                {
+                    InitialTransferSize = 4 * 1024 * 1024,
+                    MaximumTransferSize = 4 * 1024 * 1024
+                },
+            };
+
             var binaryDataContent = new BinaryData(content);
-            await blobClient.UploadAsync(binaryDataContent, true);
+            await blobClient.UploadAsync(binaryDataContent, options);
             return GetServiceSasUriForBlob(blobClient);
         }
 

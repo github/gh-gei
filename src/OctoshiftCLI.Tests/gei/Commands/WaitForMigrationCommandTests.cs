@@ -10,157 +10,143 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class WaitForMigrationCommandTests
     {
+        private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
+        private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
+        private readonly WaitForMigrationCommand _command;
+
+        private const string MIGRATION_ID = "MIGRATION_ID";
+        private const string TARGET_REPO = "TARGET_REPO";
+        private const int WAIT_INTERVAL = 1;
+
+        public WaitForMigrationCommandTests()
+        {
+            _command = new WaitForMigrationCommand(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object)
+            {
+                WaitIntervalInSeconds = WAIT_INTERVAL
+            };
+        }
+
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new WaitForMigrationCommand(null, null);
-            command.Should().NotBeNull();
-            command.Name.Should().Be("wait-for-migration");
-            command.Options.Count.Should().Be(3);
+            _command.Should().NotBeNull();
+            _command.Name.Should().Be("wait-for-migration");
+            _command.Options.Count.Should().Be(3);
 
-            TestHelpers.VerifyCommandOption(command.Options, "migration-id", true);
-            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "migration-id", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
         public async Task With_Migration_ID_That_Succeeds()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
-            const int waitIntervalInSeconds = 1;
+            _mockGithubApi.SetupSequence(x => x.GetMigration(MIGRATION_ID).Result)
+                .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
+                .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
+                .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
-                .Returns(RepositoryMigrationStatus.InProgress)
-                .Returns(RepositoryMigrationStatus.InProgress)
-                .Returns(RepositoryMigrationStatus.Succeeded);
-
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
-            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-            mockLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             var expectedLogOutput = new List<string>
             {
-                $"Waiting for migration {specifiedMigrationId} to finish...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration succeeded for migration {specifiedMigrationId}"
+                $"Waiting for {TARGET_REPO} migration (ID: {MIGRATION_ID}) to finish...",
+                $"Migration {MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} succeeded for {TARGET_REPO}"
             };
 
             // Act
-            var command = new WaitForMigrationCommand(mockLogger.Object, mockTargetGithubApiFactory.Object)
-            {
-                WaitIntervalInSeconds = waitIntervalInSeconds
-            };
-            await command.Invoke(specifiedMigrationId);
+            await _command.Invoke(MIGRATION_ID);
 
             // Assert
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
-            mockLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
+            _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
+            _mockGithubApi.Verify(m => m.GetMigration(MIGRATION_ID), Times.Exactly(3));
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
-            mockLogger.VerifyNoOtherCalls();
-            mockGithubApi.VerifyNoOtherCalls();
+            _mockOctoLogger.VerifyNoOtherCalls();
+            _mockGithubApi.VerifyNoOtherCalls();
         }
 
         [Fact]
         public async Task With_Migration_ID_That_Fails()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
             const string failureReason = "FAILURE_REASON";
-            const int waitIntervalInSeconds = 1;
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi.Setup(m => m.GetMigrationFailureReason(specifiedMigrationId).Result).Returns(failureReason);
-            mockGithubApi.SetupSequence(x => x.GetMigrationState(specifiedMigrationId).Result)
-                .Returns(RepositoryMigrationStatus.InProgress)
-                .Returns(RepositoryMigrationStatus.InProgress)
-                .Returns(RepositoryMigrationStatus.Failed);
+            _mockGithubApi.SetupSequence(x => x.GetMigration(MIGRATION_ID).Result)
+                .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
+                .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
+                .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, FailureReason: failureReason));
 
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
-            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-            mockLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             var expectedLogOutput = new List<string>
             {
-                $"Waiting for migration {specifiedMigrationId} to finish...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration {specifiedMigrationId} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {waitIntervalInSeconds} seconds...",
-                $"Migration failed for migration {specifiedMigrationId}"
+                $"Waiting for {TARGET_REPO} migration (ID: {MIGRATION_ID}) to finish...",
+                $"Migration {MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
+                $"Waiting {WAIT_INTERVAL} seconds...",
+                $"Migration {MIGRATION_ID} failed for {TARGET_REPO}"
             };
 
             // Act
-            var command = new WaitForMigrationCommand(mockLogger.Object, mockTargetGithubApiFactory.Object)
-            {
-                WaitIntervalInSeconds = waitIntervalInSeconds
-            };
             await FluentActions
-                .Invoking(async () => await command.Invoke(specifiedMigrationId))
+                .Invoking(async () => await _command.Invoke(MIGRATION_ID))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage(failureReason);
 
             // Assert
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-            mockLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
-            mockLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
-
-            mockGithubApi.Verify(m => m.GetMigrationState(specifiedMigrationId), Times.Exactly(3));
-            mockGithubApi.Verify(m => m.GetMigrationFailureReason(specifiedMigrationId), Times.Once);
+            _mockGithubApi.Verify(m => m.GetMigration(MIGRATION_ID), Times.Exactly(3));
 
             actualLogOutput.Should().Equal(expectedLogOutput);
 
-            mockLogger.VerifyNoOtherCalls();
-            mockGithubApi.VerifyNoOtherCalls();
+            _mockOctoLogger.VerifyNoOtherCalls();
+            _mockGithubApi.VerifyNoOtherCalls();
         }
 
         [Fact]
         public async Task It_Uses_Github_Target_Pat_When_Provided()
         {
             // Arrange
-            const string specifiedMigrationId = "MIGRATION_ID";
-            const int waitIntervalInSeconds = 1;
             const string githubTargetPat = "github-target-pat";
 
-            var mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-            mockGithubApi
-                .Setup(x => x.GetMigrationState(specifiedMigrationId).Result)
-                .Returns(RepositoryMigrationStatus.Succeeded);
+            _mockGithubApi
+                .Setup(x => x.GetMigration(MIGRATION_ID).Result)
+                .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
 
-            var mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
-            mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubTargetPat)).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
-            var mockLogger = TestHelpers.CreateMock<OctoLogger>();
-            mockLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
-            var command = new WaitForMigrationCommand(mockLogger.Object, mockTargetGithubApiFactory.Object)
-            {
-                WaitIntervalInSeconds = waitIntervalInSeconds
-            };
-            await command.Invoke(specifiedMigrationId, githubTargetPat);
+            await _command.Invoke(MIGRATION_ID, githubTargetPat);
 
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
-            mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+            _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
         }
     }
 }

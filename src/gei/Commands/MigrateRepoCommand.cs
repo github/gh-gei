@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
@@ -103,7 +102,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var skipReleases = new Option("--skip-releases")
             {
-                IsHidden = true,
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
@@ -190,7 +188,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
 
-            if (await RepoExists(githubApi, args.GithubTargetOrg, args.TargetRepo))
+            if (await githubApi.RepoExists(args.GithubTargetOrg, args.TargetRepo))
             {
                 _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
                 return;
@@ -221,30 +219,22 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var migrationState = await githubApi.GetMigrationState(migrationId);
+            var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
 
             while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
-                migrationState = await githubApi.GetMigrationState(migrationId);
+                (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
             }
 
             if (migrationState.Trim().ToUpper() == "FAILED")
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-
-                var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
                 throw new OctoshiftCliException(failureReason);
             }
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private async Task<bool> RepoExists(GithubApi githubApi, string org, string repo)
-        {
-            var repos = await githubApi.GetRepos(org);
-            return repos.Contains(repo, StringComparer.OrdinalIgnoreCase);
         }
 
         private string GetSourceToken(MigrateRepoCommandArgs args) =>
@@ -295,6 +285,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                 }
             }
+            else
+            {
+                _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {azureStorageConnectionString}");
+            }
 
             if (noSslVerify)
             {
@@ -309,18 +303,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
-            var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
-            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
-            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
-            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
-
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
-
             var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
 
+            var gitArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, gitDataArchiveId);
+            _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
+
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
+
+            var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
+            _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
