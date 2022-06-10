@@ -425,6 +425,17 @@ namespace OctoshiftCLI
             return $"\\{result}";
         }
 
+        public virtual async Task<bool> ContainsServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
+        {
+            var url = $"{_adoBaseUrl}/{adoOrg}/{adoTeamProject}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+
+            var response = await _client.GetAsync(url);
+
+            var serviceConnection = JObject.Parse(response);
+
+            return serviceConnection["serviceEndpointProjectReferences"].Any(projRef => (string)projRef["projectReference"]["id"] == adoTeamProjectId);
+        }
+
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {
             var url = $"{_adoBaseUrl}/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
