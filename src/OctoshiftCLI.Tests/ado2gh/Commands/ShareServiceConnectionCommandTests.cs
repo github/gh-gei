@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ShareServiceConnectionCommandTests
     {
-        private readonly Mock<AdoClient> _mockAdoClient = TestHelpers.CreateMock<AdoClient>();
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
@@ -37,48 +37,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Happy_Path()
         {
-            var _mockAdoApi = new Mock<AdoApi>(_mockAdoClient.Object, null, null) { CallBase = true };
-
             var adoOrg = "FooOrg";
             var adoTeamProject = "BlahTeamProject";
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
-            var serviceConnection = @$"
-            {{
-                ""data"": {{}},
-                ""id"": ""{serviceConnectionId}"",
-                ""name"": ""MyNewServiceEndpoint"",
-                ""type"": ""Generic"",
-                ""url"": ""https://myserver"",
-                ""createdBy"": {{
-                    ""displayName"": ""Chuck Reinhart"",
-                    ""url"": ""https://vssps.dev.azure.com/fabrikam/_apis/Identities/e18a1f0a-b112-67fd-a9e0-e3bb081da49e"",
-                    ""_links"": {{
-                        ""avatar"": {{
-                            ""href"": ""https://dev.azure.com/fabrikam/_apis/GraphProfile/MemberAvatars/msa.ZTE4YTFmMGEtYjExMi03N2ZkLWE5ZTAtZTNiYjA4MWRhNDll""
-                        }}
-                    }},
-                  ""id"": ""e18a1f0a-b112-67fd-a9e0-e3bb081da49e"",
-                  ""uniqueName"": ""fabfiber@outlook.com"",
-                  ""imageUrl"": ""https://dev.azure.com/fabrikam/_apis/GraphProfile/MemberAvatars/msa.ZTE4YTFmMGEtYjExMi03N2ZkLWE5ZTAtZTNiYjA4MWRhNDll"",
-                  ""descriptor"": """"
-                }},
-                ""description"": """",
-                ""authorization"": {{
-                    ""parameters"": {{
-                        ""username"": ""myusername"",
-                        ""password"": null
-                    }},
-                    ""scheme"": ""UsernamePassword""
-                }},
-                ""isShared"": false,
-                ""isReady"": true,
-                ""owner"": ""Library"",
-                ""serviceEndpointProjectReferences"": []
-              }}";
 
-            _mockAdoClient.Setup(x => x.GetAsync(It.IsAny<string>()).Result).Returns(serviceConnection);
             _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(false);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
@@ -94,53 +59,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var serviceConnectionId = Guid.NewGuid().ToString();
             var teamProjectId = Guid.NewGuid().ToString();
 
-            var _mockAdoApi = new Mock<AdoApi>(_mockAdoClient.Object, null, null) { CallBase = true };
-
-            var serviceConnection = @$"
-            {{
-                ""data"": {{}},
-                ""id"": ""{serviceConnectionId}"",
-                ""name"": ""MyNewServiceEndpoint"",
-                ""type"": ""Generic"",
-                ""url"": ""https://myserver"",
-                ""createdBy"": {{
-                    ""displayName"": ""Chuck Reinhart"",
-                    ""url"": ""https://vssps.dev.azure.com/fabrikam/_apis/Identities/e18a1f0a-b112-67fd-a9e0-e3bb081da49e"",
-                    ""_links"": {{
-                        ""avatar"": {{
-                            ""href"": ""https://dev.azure.com/fabrikam/_apis/GraphProfile/MemberAvatars/msa.ZTE4YTFmMGEtYjExMi03N2ZkLWE5ZTAtZTNiYjA4MWRhNDll""
-                        }}
-                    }},
-                  ""id"": ""e18a1f0a-b112-67fd-a9e0-e3bb081da49e"",
-                  ""uniqueName"": ""fabfiber@outlook.com"",
-                  ""imageUrl"": ""https://dev.azure.com/fabrikam/_apis/GraphProfile/MemberAvatars/msa.ZTE4YTFmMGEtYjExMi03N2ZkLWE5ZTAtZTNiYjA4MWRhNDll"",
-                  ""descriptor"": """"
-                }},
-                ""description"": """",
-                ""authorization"": {{
-                    ""parameters"": {{
-                        ""username"": ""myusername"",
-                        ""password"": null
-                    }},
-                    ""scheme"": ""UsernamePassword""
-                }},
-                ""isShared"": false,
-                ""isReady"": true,
-                ""owner"": ""Library"",
-                ""serviceEndpointProjectReferences"": [
-                  {{
-                    ""projectReference"": {{
-                        ""id"": ""{teamProjectId}"",
-                        ""name"": ""{adoTeamProject}""
-                    }},
-                    ""name"": ""MyNewServiceEndpoint""
-                  }}
-                ]
-              }}";
-
-            _mockAdoClient.Setup(x => x.GetAsync(It.IsAny<string>()).Result).Returns(serviceConnection);
             _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            //_mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId).Result).Returns(true);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(true);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);

@@ -66,16 +66,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
 
-            if (await ado.ContainsServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId))
+            if (await ado.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId))
             {
                 _log.LogInformation("Service connection already shared with team project");
+                return;
             }
-            else
-            {
-                await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
-                _log.LogSuccess("Successfully shared service connection");
-            }
+            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+
+            _log.LogSuccess("Successfully shared service connection");
         }
     }
 }
