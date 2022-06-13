@@ -71,8 +71,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task It_Uses_The_Ado_Pat_When_Provided()
         {
-            var _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-
             const string adoPat = "ado-pat";
 
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
