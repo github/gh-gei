@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
     public class ReposCsvGeneratorServiceTests
     {
         private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year";
-      
+
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
