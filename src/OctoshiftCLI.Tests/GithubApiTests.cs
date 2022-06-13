@@ -610,14 +610,14 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetMigrationState_Returns_The_Migration_State()
+        public async Task GetMigration_Returns_The_Migration_State_And_Repository_Name()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
             var response = $@"
@@ -630,7 +630,8 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""failureReason"": """"
+                        ""failureReason"": """",
+                        ""repositoryName"": ""{GITHUB_REPO}""
                     }}
                 }}
             }}";
@@ -640,21 +641,23 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var expectedMigrationState = await _githubApi.GetMigrationState(migrationId);
+            var (expectedMigrationState, expectedRepositoryName, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
+            expectedRepositoryName.Should().Be(GITHUB_REPO);
+            expectedFailureReason.Should().BeEmpty();
         }
 
         [Fact]
-        public async Task GetMigrationState_Retries_On_502()
+        public async Task GetMigration_Retries_On_502()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
             var response = $@"
@@ -679,21 +682,21 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var expectedMigrationState = await _githubApi.GetMigrationState(migrationId);
+            var (expectedMigrationState, _, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
         }
 
         [Fact]
-        public async Task GetMigrationFailureReason_Returns_The_Migration_Failure_Reason()
+        public async Task GetMigration_Returns_The_Migration_Failure_Reason()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualFailureReason = "FAILURE_REASON";
             var response = $@"
@@ -706,7 +709,8 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""FAILED"",
-                        ""failureReason"": ""{actualFailureReason}""
+                        ""failureReason"": ""{actualFailureReason}"",
+                        ""repositoryName"": ""{GITHUB_REPO}""
                     }}
                 }}
             }}";
@@ -716,47 +720,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var expectedFailureReason = await _githubApi.GetMigrationFailureReason(migrationId);
-
-            // Assert
-            expectedFailureReason.Should().Be(actualFailureReason);
-        }
-
-        [Fact]
-        public async Task GetMigrationFailureReason_Retries_On_502()
-        {
-            // Arrange
-            const string migrationId = "MIGRATION_ID";
-            const string url = "https://api.github.com/graphql";
-
-            var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason } } }\"" +
-                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
-
-            const string actualFailureReason = "FAILURE_REASON";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""node"": {{
-                        ""id"": ""RM_kgC4NjFhNmE2ZWY1NmE4MjAwMDA4NjA5NTZi"",
-                        ""sourceUrl"": ""https://github.com/import-testing/archive-export-testing"",
-                        ""migrationSource"": {{
-                            ""name"": ""GHEC Archive Source""
-                        }},
-                        ""state"": ""FAILED"",
-                        ""failureReason"": ""{actualFailureReason}""
-                    }}
-                }}
-            }}";
-
-            _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
-                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
-                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
-                .ReturnsAsync(response);
-
-            // Act
-            var expectedFailureReason = await _githubApi.GetMigrationFailureReason(migrationId);
+            var (_, _, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
