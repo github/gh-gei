@@ -432,7 +432,7 @@ namespace OctoshiftCLI
             var response = await _client.GetAsync(url);
 
             // When the service connection isn't shared with this team project, the response is always 'null'
-            return !string.IsNullOrWhiteSpace(response) && !response.Equals("null", StringComparison.OrdinalIgnoreCase);
+            return response.HasValue() && !response.Equals("null", StringComparison.OrdinalIgnoreCase);
         }
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
