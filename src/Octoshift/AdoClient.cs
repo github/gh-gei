@@ -39,7 +39,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetAsync(string url)
         {
-            return await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url),
+            return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url),
                                             ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable);
         }
 
@@ -120,7 +120,7 @@ namespace OctoshiftCLI
             await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP GET: {updatedUrl}");
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.HttpRetry(async () =>
             {
                 var httpResponse = await _httpClient.GetAsync(updatedUrl);
                 var httpContent = await httpResponse.Content.ReadAsStringAsync();
