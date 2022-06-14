@@ -1,2 +1,3 @@
 - Add `--skip-releases` flag to `gh gei` for `migrate-repo` and `generate-script` commands to support skipping releases when migrating. 
 - `wait-for-migration` progress report in both `ado2gh` and `gh gei` now logs the target repository name in addition to migration id for more readability. 
+- Added `inventory-report` command to `ado2gh`. This command will generate a few CSV reports of all the orgs, team projects, repos and pipelines it can access. Along with some extra information that can be useful when planning a large migration (e.g. PR count per repo, most active contributer, pushes in past year, last push date, etc)
