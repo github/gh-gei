@@ -618,6 +618,21 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task ContainsServiceConnections_When_ServiceConnection_Not_Shared_Should_Return_False()
+        {
+            var serviceConnectionId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns("null");
+
+            var result = await sut.ContainsServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, serviceConnectionId);
+
+            result.Should().BeFalse();
+        }
+
+
+        [Fact]
         public async Task ShareServiceConnection_Should_Send_Correct_Payload()
         {
             var serviceConnectionId = Guid.NewGuid().ToString();
