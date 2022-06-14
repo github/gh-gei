@@ -63,7 +63,7 @@ namespace OctoshiftCLI
             var response = await _client.GetAsync(url);
 
             var data = JObject.Parse(response);
-            var pushDate = data["value"].Any() ? (string)data["value"].First()["date"] : DateTime.MinValue.ToString();
+            var pushDate = data.ContainsKey("value") && data["value"].Any() ? (string)data["value"].First()["date"] : DateTime.MinValue.ToString();
 
             return DateTime.Parse(pushDate);
         }
