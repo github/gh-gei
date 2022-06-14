@@ -41,8 +41,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             Description += Environment.NewLine;
             Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
-            IsHidden = true;
-
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = false,
