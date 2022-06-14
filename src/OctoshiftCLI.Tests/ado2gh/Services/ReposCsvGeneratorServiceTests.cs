@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor";
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
@@ -40,6 +40,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var prCount = 822;
             var lastPushDate = DateTime.Now;
             var commitCount = 183;
+            var pushers = new List<string>() { "Dylan", "Arin", "Arin", "Max" };
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
@@ -48,6 +49,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspectorService.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
             _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(pipelineCount);
             _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(prCount);
+            _mockAdoApi.Setup(m => m.GetPushersSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, It.IsAny<DateTime>())).ReturnsAsync(pushers);
 
             _mockAdoApi.Setup(m => m.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(lastPushDate);
             _mockAdoApi.Setup(m => m.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, DateTime.Today.AddYears(-1))).ReturnsAsync(commitCount);
@@ -57,10 +59,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy h:mm tt}\",{commitCount}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Arin\"{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
+
+        // TODO: Add a test for filtering out service accounts
 
         [Fact]
         public async Task Generate_Should_Use_Pat_When_Passed()

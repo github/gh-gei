@@ -503,7 +503,7 @@ namespace OctoshiftCLI.Tests
             var pipeline1 = "foo-pipe-1";
             var pipeline2 = "foo-pipe-2";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
             var response = new object[]
             {
                 new
