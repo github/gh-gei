@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
@@ -33,6 +34,7 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly GithubApi _githubApi;
         private readonly AdoClient _adoClient;
         private readonly GithubClient _githubClient;
+        private readonly BlobServiceClient _blobServiceClient;
 
         public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi, AdoClient adoClient, GithubClient githubClient)
         {
@@ -43,12 +45,15 @@ namespace OctoshiftCLI.IntegrationTests
             _githubClient = githubClient;
         }
 
-        public TestHelper(ITestOutputHelper output, GithubApi githubTargetApi, GithubClient githubClient)
+        public TestHelper(ITestOutputHelper output, GithubApi githubTargetApi, GithubClient githubClient, BlobServiceClient blobServiceClient = null)
         {
             _output = output;
             _githubApi = githubTargetApi;
             _githubClient = githubClient;
+            _blobServiceClient = blobServiceClient;
         }
+
+        public string GithubApiBaseUrl { get; init; } = "https://api.github.com";
 
         public async Task ResetAdoTestEnvironment(string adoOrg)
         {
@@ -339,7 +344,7 @@ steps:
 
         private async Task<IEnumerable<string>> GetTeamSlugs(string org)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/teams";
 
             var response = await _githubClient.GetAsync(url);
             var data = JArray.Parse(response);
@@ -349,7 +354,7 @@ steps:
 
         private async Task<IEnumerable<string>> GetTeamNames(string org)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/teams";
 
             var response = await _githubClient.GetAsync(url);
             var data = JArray.Parse(response);
@@ -359,13 +364,13 @@ steps:
 
         private async Task DeleteTeam(string org, string teamSlug)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/teams/{teamSlug}";
             await _githubClient.DeleteAsync(url);
         }
 
         private async Task CreateRepo(string org, string repo, bool isPrivate, bool isInitialized)
         {
-            var url = $"https://api.github.com/orgs/{org}/repos";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/repos";
 
             var payload = new
             {
@@ -379,28 +384,28 @@ steps:
 
         private async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
         {
-            var url = $"https://api.github.com/repos/{org}/{repo}/commits";
+            var url = $"{GithubApiBaseUrl}/repos/{org}/{repo}/commits";
             var commits = await _githubClient.GetAllAsync(url).ToListAsync();
             return commits.Select(x => (string)x["sha"]).ToList();
         }
 
         private async Task<IEnumerable<(string id, string key, string url)>> GetAutolinks(string org, string repo)
         {
-            var url = $"https://api.github.com/repos/{org}/{repo}/autolinks";
+            var url = $"{GithubApiBaseUrl}/repos/{org}/{repo}/autolinks";
             var autolinks = await _githubClient.GetAllAsync(url).ToListAsync();
             return autolinks.Select(x => ((string)x["id"], (string)x["key_prefix"], (string)x["url_template"])).ToList();
         }
 
         private async Task<string> GetTeamIdPGroup(string org, string teamSlug)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/external-groups";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var response = await _githubClient.GetAsync(url);
             return (string)JObject.Parse(response)["groups"].Single()["group_name"];
         }
 
         private async Task<string> GetTeamRepoRole(string org, string teamSlug, string repo)
         {
-            var url = $"https://api.github.com/orgs/{org}/teams/{teamSlug}/repos";
+            var url = $"{GithubApiBaseUrl}/orgs/{org}/teams/{teamSlug}/repos";
             var response = await _githubClient.GetAllAsync(url).ToListAsync();
             return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
         }
@@ -593,6 +598,16 @@ steps:
             var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
 
             File.Exists(migrationLogFile).Should().BeTrue();
+        }
+
+        public async Task ResetBlobContainers()
+        {
+            _output.WriteLine($"Deleting all blob containers...");
+            await foreach (var blobContainer in _blobServiceClient.GetBlobContainersAsync())
+            {
+                _output.WriteLine($"Deleting blob container: {blobContainer.Name}");
+                await _blobServiceClient.DeleteBlobContainerAsync(blobContainer.Name);
+            }
         }
     }
 }
