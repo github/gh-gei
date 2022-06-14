@@ -1,2 +1,3 @@
 - Add `--skip-releases` flag to `gh gei` for `migrate-repo` and `generate-script` commands to support skipping releases when migrating. 
 - `wait-for-migration` progress report in both `ado2gh` and `gh gei` now logs the target repository name in addition to migration id for more readability. 
+- Update share-service-connection command to be idempotent. If you try to share a service connection with a Team Project where it has been previously shared, the command will now do nothing and return success (previously it would error and fail).
