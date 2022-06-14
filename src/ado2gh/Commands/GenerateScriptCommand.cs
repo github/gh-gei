@@ -215,7 +215,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
         }
 
-        private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo.Replace(" ", "-")}";
+        private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo}".Clean();
 
         private string GetRepoMigrationKey(string adoOrg, string githubRepoName) => $"{adoOrg}/{githubRepoName}";
 
