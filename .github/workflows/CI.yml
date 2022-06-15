@@ -159,8 +159,8 @@ jobs:
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
-        GH_PAT: ${{ secrets.GH_PAT }}
-        GH_SOURCE_PAT: ${{ secrets.GH_SOURCE_PAT }}
+        GHEC_PAT: ${{ secrets.GHEC_PAT }}
+        GHES_PAT: ${{ secrets.GHES_PAT }}
         AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
         AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
         AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
