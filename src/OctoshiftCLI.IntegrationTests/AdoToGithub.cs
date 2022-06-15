@@ -40,8 +40,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Basic()
         {
-            var adoOrg = $"gei-e2e-testing-{_helper.GetOsName()}";
-            var githubOrg = $"e2e-testing-{_helper.GetOsName()}";
+            var adoOrg = $"gei-e2e-testing-{TestHelper.GetOsName()}";
+            var githubOrg = $"e2e-testing-{TestHelper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;

@@ -23,6 +23,7 @@ public sealed class GhesToGithub : IDisposable
     private readonly GithubClient _sourceGithubClient;
     private readonly GithubApi _sourceGithubApi;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly string _azureStorageConnectionString;
 
     public GhesToGithub(ITestOutputHelper output)
     {
@@ -31,7 +32,7 @@ public sealed class GhesToGithub : IDisposable
         var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
         var sourceGithubToken = Environment.GetEnvironmentVariable("GH_SOURCE_PAT");
         var targetGithubToken = Environment.GetEnvironmentVariable("GH_PAT");
-        var azureStorageConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
 
         _versionClient = new HttpClient();
 
@@ -43,7 +44,7 @@ public sealed class GhesToGithub : IDisposable
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), targetGithubToken);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger));
 
-        _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
+        _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 
         _sourceHelper = new TestHelper(_output, _sourceGithubApi, _sourceGithubClient) { GithubApiBaseUrl = GHES_API_URL };
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
@@ -52,8 +53,8 @@ public sealed class GhesToGithub : IDisposable
     [Fact]
     public async Task Basic()
     {
-        var githubSourceOrg = $"e2e-testing-{_targetHelper.GetOsName()}";
-        var githubTargetOrg = $"e2e-testing-{_targetHelper.GetOsName()}";
+        var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
+        var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         const string repo1 = "repo-1";
         const string repo2 = "repo-2";
 
@@ -65,7 +66,7 @@ public sealed class GhesToGithub : IDisposable
         await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
         await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
 
-        await _targetHelper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs");
+        await _targetHelper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --azure-storage-connection-string {_azureStorageConnectionString} --download-migration-logs");
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo1);
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo2);

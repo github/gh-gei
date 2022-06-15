@@ -410,7 +410,7 @@ steps:
             return (string)response.Single(x => (string)x["name"] == repo)["role_name"];
         }
 
-        public string GetOsName()
+        public static string GetOsName()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 ? "linux"
