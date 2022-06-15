@@ -144,6 +144,32 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetAsync_Retries_On_503()
+        {
+            // Arrange
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.ServiceUnavailable))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.ServiceUnavailable))
+                .ReturnsAsync(_httpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var actualContent = await adoClient.GetAsync(URL);
+
+            // Assert
+            actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
         public async Task GetAsync_Logs_The_Response_Status_Code_And_Content()
         {
             // Arrange
@@ -989,6 +1015,209 @@ namespace OctoshiftCLI.Tests
                 Times.Exactly(2),
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_Null()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync(null, x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_Empty()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync("", x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_WhiteSpace()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync("  ", x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Adds_Top_And_Skip_As_Query_Parameters()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ count: 0, value: [] }")
+            };
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.GetWithPagingTopSkipAsync(URL, x => (string)x);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Appends_Top_And_Skip_To_Existing_Query_Parameters()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ count: 0, value: [] }")
+            };
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "http://example.com/resource?existing=param";
+
+            // Act
+            await adoClient.GetWithPagingTopSkipAsync(url, x => x);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{url}&$skip=0&$top=1000"),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Gets_All_Pages()
+        {
+            // Arrange
+            var firstResult = new[] { "item1", "item2", "item3" };
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = firstResult }.ToJson())
+            };
+
+            var secondResult = new[] { "item4", "item5" };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = secondResult }.ToJson())
+            };
+
+            using var thirdHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ value: [] }")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=1000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=2000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(thirdHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var expectedResult = await adoClient.GetWithPagingTopSkipAsync(URL, x => x);
+
+            // Assert
+            expectedResult.Should().HaveCount(5);
+            expectedResult.Select(x => (string)x).Should().Equal(firstResult.Concat(secondResult));
+
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(3),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Applies_Selector()
+        {
+            // Arrange
+            var firstResponse = new[] { "item1", "item2", "item3" };
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = firstResponse }.ToJson())
+            };
+
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ value: [] }")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=1000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await adoClient.GetWithPagingTopSkipAsync(URL, x => (string)x + "foo");
+
+            // Assert
+            var expectedResult = firstResponse.Select(x => x + "foo");
+            result.Should().BeEquivalentTo(expectedResult);
         }
 
         [Fact]

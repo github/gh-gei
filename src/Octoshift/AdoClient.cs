@@ -158,16 +158,7 @@ namespace OctoshiftCLI
             }
 
             var pageSize = 1000;
-            var updatedUrl = url.Replace(" ", "%20");
-
-            if (!updatedUrl.Contains('?'))
-            {
-                updatedUrl += "?";
-            }
-            else
-            {
-                updatedUrl += "&";
-            }
+            var updatedUrl = url.Contains('?') ? url + "&" : url + "?";
 
             updatedUrl += $"$skip={skip}&$top={pageSize}";
 
