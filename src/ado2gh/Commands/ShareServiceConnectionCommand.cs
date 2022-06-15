@@ -65,7 +65,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var ado = _adoApiFactory.Create(adoPat);
 
             var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            // TODO: If the service connection is already shared with this team project this will crash
+
+            if (await ado.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId))
+            {
+                _log.LogInformation("Service connection already shared with team project");
+                return;
+            }
+
             await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
 
             _log.LogSuccess("Successfully shared service connection");
