@@ -64,7 +64,37 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             result.Should().Be(expected);
         }
 
-        // TODO: Add a test for filtering out service accounts
+        [Fact]
+        public async Task Generate_Should_Filter_Out_ActiveContributor_With_Service_In_The_Name()
+        {
+            // Arrange
+            var pipelineCount = 41;
+            var prCount = 822;
+            var lastPushDate = DateTime.Now;
+            var commitCount = 183;
+            var pushers = new List<string>() { "BuildServiceAccount", "BuildServiceAccount", "Max" };
+
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+            _mockAdoInspectorService.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+            _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(pipelineCount);
+            _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(prCount);
+            _mockAdoApi.Setup(m => m.GetPushersSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, It.IsAny<DateTime>())).ReturnsAsync(pushers);
+
+            _mockAdoApi.Setup(m => m.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(lastPushDate);
+            _mockAdoApi.Setup(m => m.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, DateTime.Today.AddYears(-1))).ReturnsAsync(commitCount);
+
+            // Act
+            var result = await _service.Generate(null);
+
+            // Assert
+            var expected = $"{CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Max\"{Environment.NewLine}";
+
+            result.Should().Be(expected);
+        }
 
         [Fact]
         public async Task Generate_Should_Use_Pat_When_Passed()
