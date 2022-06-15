@@ -221,14 +221,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
 
-            while (migrationState.Trim().ToUpper() is "IN_PROGRESS" or "QUEUED")
+            while (RepositoryMigrationStatus.IsPending(migrationState))
             {
                 _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
                 await Task.Delay(10000);
                 (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
             }
 
-            if (migrationState.Trim().ToUpper() == "FAILED")
+            if (RepositoryMigrationStatus.IsFailed(migrationState))
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
                 throw new OctoshiftCliException(failureReason);
