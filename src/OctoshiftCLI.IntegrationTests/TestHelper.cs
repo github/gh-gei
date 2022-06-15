@@ -440,7 +440,7 @@ steps:
                     }
                     else
                     {
-                        startInfo.EnvironmentVariables.Add("ADO_PAT", token.Value);
+                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
                     }
                 }
             }
@@ -462,22 +462,11 @@ steps:
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
 
-        public async Task RunAdoToGithubCliMigration(string generateScriptCommand)
-        {
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-            var tokens = new Dictionary<string, string>() { { "ADO_PAT", adoToken }, { "GH_PAT", githubToken } };
-
+        public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
-        }
 
-        public async Task RunGeiCliMigration(string generateScriptCommand)
-        {
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
-            var tokens = new Dictionary<string, string>() { { "GH_PAT", githubToken } };
-
+        public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
-        }
 
         private string GetOsDistPath()
         {
