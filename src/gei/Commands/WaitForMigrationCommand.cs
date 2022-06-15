@@ -57,19 +57,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             while (true)
             {
-                switch (state)
+                if (RepositoryMigrationStatus.IsSucceeded(state))
                 {
-                    case RepositoryMigrationStatus.Failed:
-                        _log.LogError($"Migration {migrationId} failed for {repositoryName}");
-                        throw new OctoshiftCliException(failureReason);
-                    case RepositoryMigrationStatus.Succeeded:
-                        _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
-                        return;
-                    default: // IN_PROGRESS, QUEUED
-                        _log.LogInformation($"Migration {migrationId} for {repositoryName} is {state}");
-                        break;
+                    _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                    return;
+                }
+                else if (RepositoryMigrationStatus.IsFailed(state))
+                {
+                    _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                    throw new OctoshiftCliException(failureReason);
                 }
 
+                _log.LogInformation($"Migration {migrationId} for {repositoryName} is {state}");
                 _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
                 await Task.Delay(WaitIntervalInSeconds * 1000);
 
