@@ -273,8 +273,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string githubSourcePat,
           bool noSslVerify = false)
         {
-            _log.LogInformation($"GHES API URL: {ghesApiUrl}");
-
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
             {
                 _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
@@ -284,15 +282,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 {
                     throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                 }
-            }
-            else
-            {
-                _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {azureStorageConnectionString}");
-            }
-
-            if (noSslVerify)
-            {
-                _log.LogInformation("SSL verification disabled");
             }
 
             var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
@@ -411,7 +400,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
-
             if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
                 throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
@@ -431,6 +419,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
                 args.TargetRepo = args.SourceRepo;
+            }
+
+            if (args.GhesApiUrl.HasValue())
+            {
+                _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+            }
+
+            if (args.AzureStorageConnectionString.HasValue())
+            {
+                _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
+            }
+
+            if (args.NoSslVerify)
+            {
+                _log.LogInformation("SSL verification disabled");
             }
 
             if (args.SkipReleases)
