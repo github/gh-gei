@@ -28,7 +28,8 @@ namespace OctoshiftCLI.IntegrationTests
             _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
-            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), adoToken);
+            var retryPolicy = new RetryPolicy(logger);
+            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), retryPolicy, adoToken);
             var adoApi = new AdoApi(adoClient, "https://dev.azure.com", logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");

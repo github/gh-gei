@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -14,11 +16,13 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
         private double _retryDelay;
+        private readonly RetryPolicy _retryPolicy;
 
-        public AdoClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, string personalAccessToken)
+        public AdoClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+            _retryPolicy = retryPolicy;
 
             if (_httpClient != null)
             {
@@ -33,7 +37,11 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetAsync(string url) => await SendAsync(HttpMethod.Get, url);
+        public virtual async Task<string> GetAsync(string url)
+        {
+            return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url),
+                                            ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable);
+        }
 
         public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
 
@@ -111,10 +119,17 @@ namespace OctoshiftCLI
 
             await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP GET: {updatedUrl}");
-            var response = await _httpClient.GetAsync(updatedUrl);
+
+            var response = await _retryPolicy.HttpRetry(async () =>
+            {
+                var httpResponse = await _httpClient.GetAsync(updatedUrl);
+                var httpContent = await httpResponse.Content.ReadAsStringAsync();
+                _log.LogVerbose($"RESPONSE ({httpResponse.StatusCode}): {httpContent}");
+                httpResponse.EnsureSuccessStatusCode();
+                return httpResponse;
+            }, ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable);
+
             var content = await response.Content.ReadAsStringAsync();
-            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
-            response.EnsureSuccessStatusCode();
             CheckForRetryDelay(response);
 
             var data = (JArray)JObject.Parse(content)["value"];
@@ -131,6 +146,35 @@ namespace OctoshiftCLI
             }
 
             return data;
+        }
+
+        public virtual async Task<IEnumerable<T>> GetWithPagingTopSkipAsync<T>(string url, Func<JToken, T> selector) => await GetWithPagingTopSkipAsync(url, 0, selector);
+
+        public virtual async Task<IEnumerable<T>> GetWithPagingTopSkipAsync<T>(string url, int skip, Func<JToken, T> selector)
+        {
+            if (url.IsNullOrWhiteSpace())
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
+            var pageSize = 1000;
+            var updatedUrl = url.Contains('?') ? url + "&" : url + "?";
+
+            updatedUrl += $"$skip={skip}&$top={pageSize}";
+
+            var content = await GetAsync(updatedUrl);
+
+            var data = (JArray)JObject.Parse(content)["value"];
+            var result = data.Select(selector);
+
+            if (data.Count > 0)
+            {
+                var nextPages = await GetWithPagingTopSkipAsync(url, skip + pageSize, selector);
+
+                result = result.Concat(nextPages);
+            }
+
+            return result;
         }
 
         public virtual async Task<int> GetCountUsingSkip(string url)
@@ -187,7 +231,7 @@ namespace OctoshiftCLI
 
             updatedUrl += $"$top=1&$skip={skip}";
 
-            var content = await SendAsync(HttpMethod.Get, updatedUrl);
+            var content = await GetAsync(updatedUrl);
             var count = (int)JObject.Parse(content)["count"];
 
             return count > 0;

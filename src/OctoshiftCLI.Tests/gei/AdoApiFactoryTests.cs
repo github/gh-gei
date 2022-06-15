@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
 public class AdoApiFactoryTests
 {
     private readonly Mock<EnvironmentVariableProvider> _environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+    private readonly Mock<RetryPolicy> _retryPolicyMock = TestHelpers.CreateMock<RetryPolicy>();
 
     private const string ADO_PAT = "ADO_PAT";
 
@@ -23,7 +24,7 @@ public class AdoApiFactoryTests
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null);
+        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null, _retryPolicyMock.Object);
         var result = factory.Create(null, null);
 
         // Assert
@@ -44,7 +45,7 @@ public class AdoApiFactoryTests
         using var httpClient = new HttpClient();
 
         // Act
-        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null);
+        var factory = new AdoApiFactory(null, httpClient, _environmentVariableProviderMock.Object, null, _retryPolicyMock.Object);
         var result = factory.Create(null, ADO_PAT);
 
         // Assert
