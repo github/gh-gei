@@ -86,6 +86,9 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var repo in githubRepos)
             {
+                _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
+                DeleteMigrationLog(githubOrg, repo);
+
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
                 await _githubApi.DeleteRepo(githubOrg, repo);
             }
@@ -596,6 +599,15 @@ steps:
             {
                 _output.WriteLine($"Deleting blob container: {blobContainer.Name}");
                 await _blobServiceClient.DeleteBlobContainerAsync(blobContainer.Name);
+            }
+        }
+
+        private static void DeleteMigrationLog(string githubOrg, string githubRepo)
+        {
+            var migrationLogFileName = $"migration-log-{githubOrg}-{githubRepo}.log";
+            if (File.Exists(migrationLogFileName))
+            {
+                File.Delete(migrationLogFileName);
             }
         }
     }
