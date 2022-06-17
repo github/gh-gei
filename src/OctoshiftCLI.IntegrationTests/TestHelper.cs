@@ -471,7 +471,7 @@ steps:
         public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
 
-        private string GetOsDistPath()
+        private static string GetOsDistPath()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64")
@@ -590,6 +590,25 @@ steps:
             var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
 
             File.Exists(migrationLogFile).Should().BeTrue();
+        }
+
+        public void AssertNoErrorInLogs(DateTime after)
+        {
+            var directoryInfo = new DirectoryInfo(GetOsDistPath());
+
+            var firstLogFileWithErrors = directoryInfo.GetFiles("*.octoshift.log")
+                .Select(fi => (Timestamp: DateTime.ParseExact(fi.Name.Split('.').First(), "yyyyMMddHHmmss", null), FileInfo: fi))
+                .Where(x => x.Timestamp >= after)
+                .OrderBy(x => x.Timestamp)
+                .Select(x => x.FileInfo)
+                .FirstOrDefault(fi => File.ReadAllLines(fi.FullName).Any(line => line.Contains("[ERROR]")));
+
+            if (firstLogFileWithErrors is not null)
+            {
+                _output.WriteLine($"Log file {firstLogFileWithErrors.Name} contains error(s).");
+            }
+
+            firstLogFileWithErrors.Should().BeNull();
         }
 
         public async Task ResetBlobContainers()

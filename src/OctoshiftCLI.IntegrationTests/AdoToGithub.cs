@@ -18,9 +18,11 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly HttpClient _versionClient;
         private bool disposedValue;
         private readonly Dictionary<string, string> _tokens;
+        private readonly DateTime _startTime;
 
         public AdoToGithub(ITestOutputHelper output)
         {
+            _startTime = DateTime.Now;
             _output = output;
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
@@ -70,6 +72,8 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
 
             await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all", _tokens);
+
+            _helper.AssertNoErrorInLogs(_startTime);
 
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
