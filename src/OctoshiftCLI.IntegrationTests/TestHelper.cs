@@ -594,21 +594,22 @@ steps:
 
         public void AssertNoErrorInLogs(DateTime after)
         {
+            _output.WriteLine("Checking that CLI logs have no errors...");
+            
             var directoryInfo = new DirectoryInfo(GetOsDistPath());
 
-            var firstLogFileWithErrors = directoryInfo.GetFiles("*.octoshift.log")
+            var firstLogFileWithError = directoryInfo.GetFiles("*.octoshift.log")
                 .Select(fi => (Timestamp: DateTime.ParseExact(fi.Name.Split('.').First(), "yyyyMMddHHmmss", null), FileInfo: fi))
                 .Where(x => x.Timestamp >= after)
                 .OrderBy(x => x.Timestamp)
                 .Select(x => x.FileInfo)
                 .FirstOrDefault(fi => File.ReadAllLines(fi.FullName).Any(line => line.Contains("[ERROR]")));
 
-            if (firstLogFileWithErrors is not null)
-            {
-                _output.WriteLine($"Log file {firstLogFileWithErrors.Name} contains error(s).");
-            }
+            var firstError = firstLogFileWithError is not null
+                ? File.ReadAllLines(firstLogFileWithError.FullName).First(line => line.Contains("[ERROR]"))
+                : null; 
 
-            firstLogFileWithErrors.Should().BeNull();
+            firstError.Should().BeNull();
         }
 
         public async Task ResetBlobContainers()
