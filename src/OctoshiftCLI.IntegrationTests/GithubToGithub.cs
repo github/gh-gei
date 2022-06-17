@@ -38,6 +38,38 @@ namespace OctoshiftCLI.IntegrationTests
         }
 
         [Fact]
+        public async Task ArchiveSourceGhecRepo()
+        {
+            var githubSourceOrg = $"e2e-testing-source-{TestHelper.GetOsName()}";
+            var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
+            var repo1 = "repo-1";
+            var repo2 = "repo-2";
+
+            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
+            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
+
+            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --archive-source-gh-repos --download-migration-logs", _tokens);
+
+            await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
+            await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);
+
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
+            await _helper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
+            _helper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
+
+            // Doing this last ensures enough time has passed since
+            // the generate-script command started to allow for the
+            // archive repo API call to run and complete
+            await _helper.AssertGithubRepoIsArchived(githubSourceOrg, repo1);
+            await _helper.AssertGithubRepoIsArchived(githubSourceOrg, repo2);
+        }
+
+        [Fact]
         public async Task Basic()
         {
             var githubSourceOrg = $"e2e-testing-source-{TestHelper.GetOsName()}";

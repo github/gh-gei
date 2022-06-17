@@ -589,6 +589,15 @@ steps:
             File.Exists(migrationLogFile).Should().BeTrue();
         }
 
+        public async Task AssertGithubRepoIsArchived(string githubOrg, string repo)
+        {
+            _output.WriteLine("Checking that the repo is archived...");
+
+            var isRepoArchived = await _githubApi.IsRepoArchived(githubOrg, repo);
+
+            isRepoArchived.Should().BeTrue();
+        }
+
         public async Task ResetBlobContainers()
         {
             _output.WriteLine($"Deleting all blob containers...");

@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(16);
+            _command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -70,6 +70,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "archive-source-gh-repos", false);
         }
 
         [Fact]

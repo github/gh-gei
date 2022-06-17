@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
@@ -172,7 +173,9 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
-            return (string)data["data"]["repository"]["id"];
+            CheckForErrors(data);
+
+            return (string)data["data"]!["repository"]!["id"];
         }
 
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
@@ -473,14 +476,13 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo, bool lockRepo)
+        public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
                 repositories = new[] { repo },
-                lock_repositories = lockRepo,
                 exclude_metadata = true
             };
 
@@ -489,14 +491,13 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool lockRepo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
             var options = new
             {
                 repositories = new[] { repo },
-                lock_repositories = lockRepo,
                 exclude_git_data = true,
                 exclude_releases = true,
                 exclude_owner_projects = true
@@ -637,7 +638,7 @@ namespace OctoshiftCLI
             };
         }
 
-        public virtual async Task<(bool successful, string message)> ArchiveRepository(string sourceOrg, string sourceRepo)
+        public virtual async Task ArchiveRepository(string sourceOrg, string sourceRepo)
         {
             var repositoryId = await GetRepositoryId(sourceOrg, sourceRepo);
 
@@ -659,16 +660,50 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
-            var successful = true;
-            var message = string.Empty;
+            CheckForErrors(data);
+        }
 
-            if (data.ContainsKey("errors") && data["errors"]!.HasValues)
+        public virtual async Task<bool> IsRepoArchived(string org, string repo)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = new
             {
-                successful = false;
-                message = data["errors"][0]!["message"]!.ToString();
+                // TODO: this is super ugly, need to find a graphql library to make this code nicer
+                query = "query repository($owner: String!, $name: String!) { repository(name: $name, owner: $owner) { isArchived } }",
+                variables = new { owner = org, name = repo }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            CheckForErrors(data);
+
+            return (bool)data["data"]!["repository"]!["isArchived"];
+        }
+
+        protected void CheckForErrors(JObject responseJObject)
+        {
+            if (responseJObject == null || !responseJObject.ContainsKey("errors") || !responseJObject["errors"]!.HasValues)
+            {
+                return;
             }
 
-            return (successful, message);
+            var errorMessageStringBuilder = new StringBuilder();
+
+            foreach (var error in responseJObject["errors"])
+            {
+                var message = error["message"];
+
+                if (message == null)
+                {
+                    continue;
+                }
+
+                errorMessageStringBuilder.AppendLine(message.ToString());
+            }
+
+            throw new OctoshiftCliException(errorMessageStringBuilder.ToString());
         }
     }
 }
