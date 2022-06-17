@@ -45,34 +45,34 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             _log.Verbose = verbose;
 
-            _log.LogInformation($"Waiting for migration {migrationId} to finish...");
+            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
+
+            _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
 
             if (githubTargetPat is not null)
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
-
             while (true)
             {
-                var specifiedMigrationState = await githubApi.GetMigrationState(migrationId);
-                switch (specifiedMigrationState)
+                if (RepositoryMigrationStatus.IsSucceeded(state))
                 {
-                    case RepositoryMigrationStatus.Failed:
-                        var failureReason = await githubApi.GetMigrationFailureReason(migrationId);
-                        _log.LogError($"Migration failed for migration {migrationId}");
-                        throw new OctoshiftCliException(failureReason);
-                    case RepositoryMigrationStatus.Succeeded:
-                        _log.LogSuccess($"Migration succeeded for migration {migrationId}");
-                        return;
-                    default: // IN_PROGRESS, QUEUED
-                        _log.LogInformation($"Migration {migrationId} is {specifiedMigrationState}");
-                        break;
+                    _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                    return;
+                }
+                else if (RepositoryMigrationStatus.IsFailed(state))
+                {
+                    _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                    throw new OctoshiftCliException(failureReason);
                 }
 
+                _log.LogInformation($"Migration {migrationId} for {repositoryName} is {state}");
                 _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
                 await Task.Delay(WaitIntervalInSeconds * 1000);
+
+                (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
             }
         }
     }

@@ -43,11 +43,29 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var teamProjectId = Guid.NewGuid().ToString();
 
             _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(false);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
 
             _mockAdoApi.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
+        }
+
+        [Fact]
+        public async Task It_Skips_When_Already_Shared()
+        {
+            var adoOrg = "FooOrg";
+            var adoTeamProject = "BlahTeamProject";
+            var serviceConnectionId = Guid.NewGuid().ToString();
+            var teamProjectId = Guid.NewGuid().ToString();
+
+            _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(true);
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
+
+            _mockAdoApi.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId), Times.Never);
         }
 
         [Fact]

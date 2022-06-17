@@ -497,13 +497,95 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetLastPushDate_Should_Return_LastPushDate()
+        {
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?$top=1&api-version=7.1-preview.2";
+            var expectedDate = new DateTime(2022, 2, 14);
+
+            var response = new
+            {
+                value = new[]
+                {
+                    new { date = expectedDate.ToShortDateString() }
+                }
+            };
+
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(response.ToJson());
+
+            var result = await sut.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+
+            result.Should().Be(expectedDate);
+        }
+
+        [Fact]
+        public async Task GetLastPushDate_Should_Return_MinDate_When_No_Pushes()
+        {
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?$top=1&api-version=7.1-preview.2";
+
+            var response = "{ count: 0, value: [] }";
+
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(response);
+
+            var result = await sut.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+
+            result.Should().Be(DateTime.MinValue);
+        }
+
+        [Fact]
+        public async Task GetCommitCountSince_Should_Return_Commit_Count()
+        {
+            var fromDate = new DateTime(2022, 2, 14);
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/commits?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            var expectedCount = 12;
+
+            _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
+
+            var result = await sut.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
+
+            result.Should().Be(expectedCount);
+        }
+
+        [Fact]
+        public async Task GetPushersSince_Should_Return_Pushers()
+        {
+            var fromDate = new DateTime(2022, 2, 14);
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            var pusher1DisplayName = "Dylan";
+            var pusher1UniqueName = "dsmith";
+            var pusher2DisplayName = "Tom";
+            var pusher2UniqueName = "tcruise";
+
+            var response = new[]
+            {
+                new
+                {
+                    pushedBy = new { displayName = pusher1DisplayName, uniqueName = pusher1UniqueName }
+                },
+                new
+                {
+                    pushedBy = new { displayName = pusher2DisplayName, uniqueName = pusher2UniqueName }
+                }
+            }.ToJson();
+
+            var responseArray = JArray.Parse(response);
+
+            _mockAdoClient.Setup(x => x.GetWithPagingTopSkipAsync(endpoint, It.IsAny<Func<JToken, string>>()))
+                .ReturnsAsync((string url, Func<JToken, string> selector) => responseArray.Select(selector));
+
+            var result = await sut.GetPushersSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
+
+            result.First().Should().Be("Dylan (dsmith)");
+            result.Last().Should().Be("Tom (tcruise)");
+        }
+
+        [Fact]
         public async Task GetPipelines_Should_Return_All_Pipelines()
         {
             var repoId = Guid.NewGuid().ToString();
             var pipeline1 = "foo-pipe-1";
             var pipeline2 = "foo-pipe-2";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
             var response = new object[]
             {
                 new
@@ -616,6 +698,21 @@ namespace OctoshiftCLI.Tests
 
             result.Should().Be(pipelineId);
         }
+
+        [Fact]
+        public async Task ContainsServiceConnections_When_ServiceConnection_Not_Shared_Should_Return_False()
+        {
+            var serviceConnectionId = Guid.NewGuid().ToString();
+
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+
+            _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns("null");
+
+            var result = await sut.ContainsServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, serviceConnectionId);
+
+            result.Should().BeFalse();
+        }
+
 
         [Fact]
         public async Task ShareServiceConnection_Should_Send_Correct_Payload()

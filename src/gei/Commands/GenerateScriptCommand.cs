@@ -85,7 +85,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var skipReleases = new Option("--skip-releases")
             {
-                IsHidden = true,
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
@@ -189,6 +188,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     {
                         throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                     }
+                }
+                else
+                {
+                    _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
                 }
 
                 if (args.NoSslVerify)

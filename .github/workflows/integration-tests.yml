@@ -90,7 +90,11 @@ jobs:
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
-        GH_PAT: ${{ secrets.GH_PAT }}
+        GHEC_PAT: ${{ secrets.GHEC_PAT }}
+        GHES_PAT: ${{ secrets.GHES_PAT }}
+        AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
+        AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
+        AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
