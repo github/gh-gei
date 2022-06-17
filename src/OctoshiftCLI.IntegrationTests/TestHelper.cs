@@ -595,7 +595,7 @@ steps:
         public void AssertNoErrorInLogs(DateTime after)
         {
             _output.WriteLine("Checking that CLI logs have no errors...");
-            
+
             var directoryInfo = new DirectoryInfo(GetOsDistPath());
 
             var firstLogFileWithError = directoryInfo.GetFiles("*.octoshift.log")
@@ -607,7 +607,7 @@ steps:
 
             var firstError = firstLogFileWithError is not null
                 ? File.ReadAllLines(firstLogFileWithError.FullName).First(line => line.Contains("[ERROR]"))
-                : null; 
+                : null;
 
             firstError.Should().BeNull();
         }
