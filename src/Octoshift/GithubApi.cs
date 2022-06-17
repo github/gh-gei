@@ -684,22 +684,27 @@ namespace OctoshiftCLI
 
         protected void CheckForErrors(JObject responseJObject)
         {
-            if (responseJObject == null || !responseJObject.ContainsKey("errors") || !responseJObject["errors"]!.HasValues)
+            if (responseJObject == null)
+            {
+                throw new OctoshiftCliException("Response from API was not valid");
+            }
+
+            responseJObject.TryGetValue("errors", StringComparison.InvariantCultureIgnoreCase, out var errors);
+
+            if (errors == null)
             {
                 return;
             }
 
             var errorMessageStringBuilder = new StringBuilder();
 
-            foreach (var error in responseJObject["errors"])
+            var messages = errors
+                .Where(error => error["message"] != null)
+                .Select(error => error["message"])
+                .ToList();
+
+            foreach (var message in messages)
             {
-                var message = error["message"];
-
-                if (message == null)
-                {
-                    continue;
-                }
-
                 errorMessageStringBuilder.AppendLine(message.ToString());
             }
 
