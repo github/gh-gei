@@ -624,10 +624,10 @@ steps:
 
         private static void DeleteMigrationLog(string githubOrg, string githubRepo)
         {
-            var migrationLogFileName = $"migration-log-{githubOrg}-{githubRepo}.log";
-            if (File.Exists(migrationLogFileName))
+            var migrationLogFileFullName = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{githubRepo}.log");
+            if (File.Exists(migrationLogFileFullName))
             {
-                File.Delete(migrationLogFileName);
+                File.Delete(migrationLogFileFullName);
             }
         }
     }
