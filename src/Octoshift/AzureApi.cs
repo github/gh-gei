@@ -12,13 +12,15 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _client;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly OctoLogger _log;
         private const string CONTAINER_PREFIX = "migration-archives";
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
 
-        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient)
+        public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
         {
             _client = client;
             _blobServiceClient = blobServiceClient;
+            _log = log;
 
             if (_client is not null)
             {
@@ -28,7 +30,11 @@ namespace OctoshiftCLI
 
         public virtual async Task<byte[]> DownloadArchive(string fromUrl)
         {
+            _log.LogVerbose($"HTTP GET: {fromUrl}");
             using var response = await _client.GetAsync(fromUrl);
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+            response.EnsureSuccessStatusCode();
+
             return await response.Content.ReadAsByteArrayAsync();
         }
 

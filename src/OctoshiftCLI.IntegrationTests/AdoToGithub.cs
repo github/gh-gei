@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
@@ -16,6 +17,7 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly HttpClient _githubHttpClient;
         private readonly HttpClient _versionClient;
         private bool disposedValue;
+        private readonly Dictionary<string, string> _tokens;
 
         public AdoToGithub(ITestOutputHelper output)
         {
@@ -26,13 +28,20 @@ namespace OctoshiftCLI.IntegrationTests
             _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
             _adoHttpClient = new HttpClient();
-            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient), adoToken);
+            var retryPolicy = new RetryPolicy(logger);
+            var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), retryPolicy, adoToken);
             var adoApi = new AdoApi(adoClient, "https://dev.azure.com", logger);
 
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+            var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient), githubToken);
+            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
+
+            _tokens = new Dictionary<string, string>
+            {
+                ["GH_PAT"] = githubToken,
+                ["ADO_PAT"] = adoToken
+            };
 
             _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
         }
@@ -40,8 +49,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Basic()
         {
-            var adoOrg = $"gei-e2e-testing-{_helper.GetOsName()}";
-            var githubOrg = $"e2e-testing-{_helper.GetOsName()}";
+            var adoOrg = $"gei-e2e-testing-{TestHelper.GetOsName()}";
+            var githubOrg = $"e2e-testing-{TestHelper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
@@ -60,7 +69,7 @@ namespace OctoshiftCLI.IntegrationTests
             commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
             await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
 
-            await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all");
+            await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all", _tokens);
 
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
             await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
