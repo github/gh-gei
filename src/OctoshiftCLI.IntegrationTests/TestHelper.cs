@@ -86,6 +86,9 @@ namespace OctoshiftCLI.IntegrationTests
 
             foreach (var repo in githubRepos)
             {
+                _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
+                DeleteMigrationLog(githubOrg, repo);
+
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
                 await _githubApi.DeleteRepo(githubOrg, repo);
             }
@@ -468,7 +471,7 @@ steps:
         public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
 
-        private string GetOsDistPath()
+        private static string GetOsDistPath()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64")
@@ -589,6 +592,26 @@ steps:
             File.Exists(migrationLogFile).Should().BeTrue();
         }
 
+        public void AssertNoErrorInLogs(DateTime after)
+        {
+            _output.WriteLine("Checking that CLI logs have no errors...");
+
+            var directoryInfo = new DirectoryInfo(GetOsDistPath());
+
+            var firstLogFileWithError = directoryInfo.GetFiles("*.octoshift.log")
+                .Select(fi => (Timestamp: DateTime.ParseExact(fi.Name.Split('.').First(), "yyyyMMddHHmmss", null), FileInfo: fi))
+                .Where(x => x.Timestamp >= after)
+                .OrderBy(x => x.Timestamp)
+                .Select(x => x.FileInfo)
+                .FirstOrDefault(fi => File.ReadAllLines(fi.FullName).Any(line => line.Contains("[ERROR]")));
+
+            var firstError = firstLogFileWithError is not null
+                ? File.ReadAllLines(firstLogFileWithError.FullName).First(line => line.Contains("[ERROR]"))
+                : null;
+
+            firstError.Should().BeNull();
+        }
+
         public async Task ResetBlobContainers()
         {
             _output.WriteLine($"Deleting all blob containers...");
@@ -596,6 +619,15 @@ steps:
             {
                 _output.WriteLine($"Deleting blob container: {blobContainer.Name}");
                 await _blobServiceClient.DeleteBlobContainerAsync(blobContainer.Name);
+            }
+        }
+
+        private static void DeleteMigrationLog(string githubOrg, string githubRepo)
+        {
+            var migrationLogFileFullName = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{githubRepo}.log");
+            if (File.Exists(migrationLogFileFullName))
+            {
+                File.Delete(migrationLogFileFullName);
             }
         }
     }

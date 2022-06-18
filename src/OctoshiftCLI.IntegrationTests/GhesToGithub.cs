@@ -25,9 +25,11 @@ public sealed class GhesToGithub : IDisposable
     private readonly GithubApi _sourceGithubApi;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
+    private readonly DateTime _startTime;
 
     public GhesToGithub(ITestOutputHelper output)
     {
+        _startTime = DateTime.Now;
         _output = output;
 
         var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
@@ -76,6 +78,8 @@ public sealed class GhesToGithub : IDisposable
 
         await _targetHelper.RunGeiCliMigration(
             $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs", _tokens);
+
+        _targetHelper.AssertNoErrorInLogs(_startTime);
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo1);
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo2);
