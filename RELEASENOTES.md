@@ -1,1 +1,1 @@
-
+- fixed a bug where `generate-script` would not properly handle Team Projects with spaces (or other invalid for github chars) in the name
