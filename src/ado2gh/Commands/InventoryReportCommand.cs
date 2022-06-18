@@ -37,11 +37,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _reposCsvGenerator = reposCsvGeneratorService;
             _pipelinesCsvGenerator = pipelinesCsvGeneratorService;
 
-            Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations. The repos.csv can be fed as an input into other commands to help splitting large migrations up into batches.";
+            Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations.";
             Description += Environment.NewLine;
             Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
-
-            IsHidden = true;
 
             var adoOrg = new Option<string>("--ado-org")
             {

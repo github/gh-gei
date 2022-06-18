@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
@@ -17,13 +18,18 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly HttpClient _versionClient;
         private readonly GithubClient _githubClient;
         private bool disposedValue;
+        private readonly Dictionary<string, string> _tokens;
+        private readonly DateTime _startTime;
 
         public GithubToGithub(ITestOutputHelper output)
         {
+            _startTime = DateTime.Now;
             _output = output;
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
-            var githubToken = Environment.GetEnvironmentVariable("GH_PAT");
+
+            var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
+            _tokens = new Dictionary<string, string> { ["GH_PAT"] = githubToken };
 
             _githubHttpClient = new HttpClient();
             _versionClient = new HttpClient();
@@ -36,8 +42,8 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Basic()
         {
-            var githubSourceOrg = $"e2e-testing-source-{_helper.GetOsName()}";
-            var githubTargetOrg = $"e2e-testing-{_helper.GetOsName()}";
+            var githubSourceOrg = $"e2e-testing-source-{TestHelper.GetOsName()}";
+            var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
@@ -47,7 +53,9 @@ namespace OctoshiftCLI.IntegrationTests
             await _helper.CreateGithubRepo(githubSourceOrg, repo1);
             await _helper.CreateGithubRepo(githubSourceOrg, repo2);
 
-            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs");
+            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs", _tokens);
+
+            _helper.AssertNoErrorInLogs(_startTime);
 
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo1);
             await _helper.AssertGithubRepoExists(githubTargetOrg, repo2);

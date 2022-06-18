@@ -391,7 +391,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi.Verify(x => x.GetMigration(migrationId));
             _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
-            _mockOctoLogger.Verify(x => x.LogInformation($"AZURE STORAGE CONNECTION STRING: {AZURE_CONNECTION_STRING}"), Times.Once);
+            _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
         }
 
         [Fact]

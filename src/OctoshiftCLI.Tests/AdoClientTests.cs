@@ -18,6 +18,7 @@ namespace OctoshiftCLI.Tests
     {
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly HttpResponseMessage _httpResponse;
+        private readonly RetryPolicy _retryPolicy;
         private readonly object _rawRequestBody;
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
@@ -32,6 +33,8 @@ namespace OctoshiftCLI.Tests
             {
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
+
+            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object);
         }
 
         [Fact]
@@ -42,7 +45,7 @@ namespace OctoshiftCLI.Tests
             var expectedAuthToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{PERSONAL_ACCESS_TOKEN}"));
 
             // Act
-            _ = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            _ = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Assert
             httpClient.DefaultRequestHeaders.Authorization.Should().NotBeNull();
@@ -56,7 +59,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForGet();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -101,7 +104,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL); // normal call
@@ -117,7 +120,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL);
@@ -131,7 +134,33 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var actualContent = await adoClient.GetAsync(URL);
+
+            // Assert
+            actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
+        public async Task GetAsync_Retries_On_503()
+        {
+            // Arrange
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.ServiceUnavailable))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.ServiceUnavailable))
+                .ReturnsAsync(_httpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.GetAsync(URL);
@@ -145,7 +174,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetAsync(URL);
@@ -167,7 +196,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.GetAsync(URL);
                 })
                 .Should()
@@ -179,7 +208,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPost();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -226,7 +255,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody); // normal call
@@ -242,7 +271,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -256,7 +285,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -270,7 +299,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PostAsync(URL, _rawRequestBody);
@@ -284,7 +313,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PostAsync(URL, _rawRequestBody);
@@ -306,7 +335,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PostAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -318,7 +347,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPut();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -365,7 +394,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody); // normal call
@@ -381,7 +410,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -395,7 +424,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -409,7 +438,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PutAsync(URL, _rawRequestBody);
@@ -423,7 +452,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PutAsync(URL, _rawRequestBody);
@@ -445,7 +474,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PutAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -457,7 +486,7 @@ namespace OctoshiftCLI.Tests
         {
             var handlerMock = MockHttpHandlerForPatch();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -504,7 +533,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody); // normal call
@@ -520,7 +549,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -534,7 +563,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -548,7 +577,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -562,7 +591,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.PatchAsync(URL, _rawRequestBody);
@@ -584,7 +613,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.PatchAsync(URL, _rawRequestBody);
                 })
                 .Should()
@@ -597,7 +626,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var handlerMock = MockHttpHandlerForDelete();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -642,7 +671,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL); // normal call
@@ -658,7 +687,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL);
@@ -672,7 +701,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await adoClient.DeleteAsync(URL);
@@ -686,7 +715,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.DeleteAsync(URL);
@@ -708,7 +737,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.DeleteAsync(URL);
                 })
                 .Should()
@@ -721,7 +750,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null, null);
                     return adoClient.GetWithPagingAsync(null, "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -735,7 +764,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null, null);
                     return adoClient.GetWithPagingAsync("", "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -749,7 +778,7 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(() => // Arrange, Act
                 {
-                    var adoClient = new AdoClient(null, null, null, null);
+                    var adoClient = new AdoClient(null, null, null, null, null);
                     return adoClient.GetWithPagingAsync("  ", "CONTINUATION_TOKEN");
                 })
                 .Should()
@@ -767,7 +796,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string actualUrl = "http://example.com/param with space";
             const string expectedUrl = "http://example.com/param%20with%20space";
@@ -793,7 +822,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string continuationToken = "CONTINUATION_TOKEN";
 
@@ -818,7 +847,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             const string url = "http://example.com/resource?existing=param";
             const string continuationToken = "CONTINUATION_TOKEN";
@@ -863,7 +892,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(thirdResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL, null); // normal call
@@ -884,7 +913,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL);
@@ -904,7 +933,7 @@ namespace OctoshiftCLI.Tests
             };
             var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             await adoClient.GetWithPagingAsync(URL);
@@ -926,7 +955,7 @@ namespace OctoshiftCLI.Tests
                 .Invoking(() =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
-                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+                    var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
                     return adoClient.GetWithPagingAsync(URL);
                 })
                 .Should()
@@ -972,7 +1001,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(secondHttpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var expectedResult = await adoClient.GetWithPagingAsync(URL);
@@ -989,6 +1018,209 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_Null()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync(null, x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_Empty()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync("", x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Throws_If_Url_Is_WhiteSpace()
+        {
+            await FluentActions
+                .Invoking(() => // Arrange, Act
+                {
+                    var adoClient = new AdoClient(null, null, null, null, null);
+                    return adoClient.GetWithPagingTopSkipAsync("  ", x => x);
+                })
+                .Should()
+                .ThrowExactlyAsync<ArgumentNullException>() // Assert
+                .WithParameterName("url");
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Adds_Top_And_Skip_As_Query_Parameters()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ count: 0, value: [] }")
+            };
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await adoClient.GetWithPagingTopSkipAsync(URL, x => (string)x);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Appends_Top_And_Skip_To_Existing_Query_Parameters()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ count: 0, value: [] }")
+            };
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "http://example.com/resource?existing=param";
+
+            // Act
+            await adoClient.GetWithPagingTopSkipAsync(url, x => x);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == $"{url}&$skip=0&$top=1000"),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Gets_All_Pages()
+        {
+            // Arrange
+            var firstResult = new[] { "item1", "item2", "item3" };
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = firstResult }.ToJson())
+            };
+
+            var secondResult = new[] { "item4", "item5" };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = secondResult }.ToJson())
+            };
+
+            using var thirdHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ value: [] }")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=1000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=2000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(thirdHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var expectedResult = await adoClient.GetWithPagingTopSkipAsync(URL, x => x);
+
+            // Assert
+            expectedResult.Should().HaveCount(5);
+            expectedResult.Select(x => (string)x).Should().Equal(firstResult.Concat(secondResult));
+
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(3),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetWithPagingTopSkipAsync_Applies_Selector()
+        {
+            // Arrange
+            var firstResponse = new[] { "item1", "item2", "item3" };
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new { value = firstResponse }.ToJson())
+            };
+
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{ value: [] }")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=0&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse);
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.AbsoluteUri == $"{URL}?$skip=1000&$top=1000"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await adoClient.GetWithPagingTopSkipAsync(URL, x => (string)x + "foo");
+
+            // Assert
+            var expectedResult = firstResponse.Select(x => x + "foo");
+            result.Should().BeEquivalentTo(expectedResult);
+        }
+
+        [Fact]
         public void It_Sets_User_Agent_Header_With_Comments()
         {
             // Arrange
@@ -1002,7 +1234,7 @@ namespace OctoshiftCLI.Tests
             mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
 
             // Act
-            _ = new AdoClient(null, httpClient, mockVersionProvider.Object, PERSONAL_ACCESS_TOKEN);
+            _ = new AdoClient(null, httpClient, mockVersionProvider.Object, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Assert
             httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
@@ -1016,7 +1248,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient();
 
             // Act
-            _ = new AdoClient(null, httpClient, null, PERSONAL_ACCESS_TOKEN);
+            _ = new AdoClient(null, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
             // Assert
             httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(1);
