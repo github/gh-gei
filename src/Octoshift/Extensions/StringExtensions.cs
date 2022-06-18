@@ -14,6 +14,7 @@ namespace OctoshiftCLI.Extensions
 
         public static bool ToBool(this string s) => bool.TryParse(s, out var result) && result;
 
-        public static string Clean(this string s) => s.HasValue() ? Regex.Replace(s, @"[^a-z0-9_.-]+", "-", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase) : string.Empty;
+        public static string ReplaceInvalidCharactersWithDash(this string s) => s.HasValue() ? Regex.Replace(s, @"[^\w.-]+", "-", RegexOptions.Compiled | RegexOptions.CultureInvariant) : string.Empty;
+
     }
 }

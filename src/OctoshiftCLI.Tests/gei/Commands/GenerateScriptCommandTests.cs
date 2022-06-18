@@ -497,6 +497,39 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Sequential_Ado_With_Spaces()
+        {
+            // Arrnage
+            const string adoTeamProject = "ADO TEAM PROJECT";
+            const string adoRepo = "SOME REPO";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { adoRepo });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(null, null))
+                .Returns(_mockAdoApi.Object);
+
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"ADO-TEAM-PROJECT-SOME-REPO\" --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
         public async Task Sequential_AdoServer_Single_Repo()
         {
             // Arrnage

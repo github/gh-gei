@@ -11,9 +11,9 @@ namespace OctoshiftCLI.Tests
         [InlineData("Parts Unlimited", "Parts-Unlimited")]
         [InlineData("Parts-Unlimited", "Parts-Unlimited")]
         [InlineData("Parts@@@@Unlimited", "Parts-Unlimited")]
-        public void Clean_Returns_Valid_String(string value, string expectedValue)
+        public void ReplaceInvalidCharactersWithDash_Returns_Valid_String(string value, string expectedValue)
         {
-            var normalizedValue = value.Clean();
+            var normalizedValue = value.ReplaceInvalidCharactersWithDash();
 
             normalizedValue.Should().Be(expectedValue);
         }
