@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -63,20 +64,20 @@ namespace OctoshiftCLI
             var response = await _client.GetAsync(url);
 
             var data = JObject.Parse(response);
-            var pushDate = data.TryGetValue("value", out var dataValue) && dataValue.Any() ? (string)dataValue.First()["date"] : DateTime.MinValue.ToString();
+            var pushDate = data.TryGetValue("value", out var dataValue) && dataValue.Any() ? (DateTime)dataValue.First()["date"] : DateTime.MinValue;
 
-            return DateTime.Parse(pushDate);
+            return pushDate.Date;
         }
 
         public virtual async Task<int> GetCommitCountSince(string org, string teamProject, string repo, DateTime fromDate)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/commits?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/commits?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
             return await _client.GetCountUsingSkip(url);
         }
 
         public virtual async Task<IEnumerable<string>> GetPushersSince(string org, string teamProject, string repo, DateTime fromDate)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?searchCriteria.fromDate={fromDate.ToShortDateString()}&api-version=7.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
             var response = await _client.GetWithPagingTopSkipAsync(url, x => $"{x["pushedBy"]["displayName"]} ({x["pushedBy"]["uniqueName"]})");
 
             return response;
