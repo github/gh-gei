@@ -1,2 +1,2 @@
 - fixed a bug where `generate-script` would not properly handle Team Projects with spaces (or other invalid for github chars) in the name
-- fixed bug where `inventory-report` would fail if your computers datetime format settings were dd/mm/yyyy
+- fixed bug where `inventory-report` would fail if your computer's datetime format settings were dd/mm/yyyy
