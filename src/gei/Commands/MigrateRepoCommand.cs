@@ -180,6 +180,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   args.SourceRepo,
                   args.AzureStorageConnectionString,
                   args.GithubSourcePat,
+                  args.SkipReleases,
                   args.NoSslVerify
                 );
 
@@ -271,6 +272,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string sourceRepo,
           string azureStorageConnectionString,
           string githubSourcePat,
+          bool skipReleases,
           bool noSslVerify = false)
         {
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
@@ -289,7 +291,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo);
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
