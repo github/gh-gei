@@ -1561,6 +1561,79 @@ namespace OctoshiftCLI.Tests
                 .ThrowAsync<InvalidOperationException>();
         }
 
+        [Fact]
+        public async Task StartMetadataArchiveGeneration_Returns_The_Initiated_Migration_Id()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_git_data = true,
+                exclude_releases = false,
+                exclude_owner_projects = true
+            };
+            const int expectedMigrationId = 1;
+            var response = new { id = expectedMigrationId };
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .ReturnsAsync(response.ToJson());
+
+            // Act
+            var actualMigrationId = await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, false);
+
+            // Assert
+            actualMigrationId.Should().Be(expectedMigrationId);
+        }
+
+        [Fact]
+        public async Task StartMetadataArchiveGeneration_Excludes_Releases_When_Skip_Releases_Is_True()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_git_data = true,
+                exclude_releases = true,
+                exclude_owner_projects = true
+            };
+            var response = new { id = 1 };
+
+            _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>())).ReturnsAsync(response.ToJson());
+
+            // Act
+            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+        }
+
+        [Fact]
+        public async Task StartGitArchiveGeneration_Returns_The_Initiated_Migration_Id()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_metadata = true
+            };
+            const int expectedMigrationId = 1;
+            var response = new { id = expectedMigrationId };
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .ReturnsAsync(response.ToJson());
+
+            // Act
+            var actualMigrationId = await _githubApi.StartGitArchiveGeneration(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            actualMigrationId.Should().Be(expectedMigrationId);
+        }
+
         private string Compact(string source) =>
             source
                 .Replace("\r", "")

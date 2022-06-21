@@ -471,7 +471,7 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
@@ -479,7 +479,7 @@ namespace OctoshiftCLI
             {
                 repositories = new[] { repo },
                 exclude_git_data = true,
-                exclude_releases = true,
+                exclude_releases = skipReleases,
                 exclude_owner_projects = true
             };
 
