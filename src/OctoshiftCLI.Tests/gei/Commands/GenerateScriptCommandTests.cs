@@ -383,6 +383,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().Be(expected);
+            _mockOctoLogger.Verify(m => m.LogInformation("AZURE STORAGE CONNECTION STRING: ***"));
+            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
         [Fact]
@@ -419,6 +421,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().Be(expected);
+            _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
@@ -478,6 +481,39 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(_mockAdoApi.Object);
 
             var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                AdoSourceOrg = SOURCE_ORG,
+                AdoTeamProject = adoTeamProject,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Sequential_Ado_With_Spaces()
+        {
+            // Arrnage
+            const string adoTeamProject = "ADO TEAM PROJECT";
+            const string adoRepo = "SOME REPO";
+
+            _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { adoRepo });
+
+            _mockAdoApiFactory
+                .Setup(m => m.Create(null, null))
+                .Returns(_mockAdoApi.Object);
+
+            var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"ADO-TEAM-PROJECT-SOME-REPO\" --wait }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -828,9 +864,9 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
+            _mockOctoLogger.Verify(m => m.LogInformation("AZURE STORAGE CONNECTION STRING: ***"));
+            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
-
-        // start of log download
 
         [Fact]
         public async Task Sequential_Ado_Single_Repo_With_Download_Migration_Logs()
@@ -1303,6 +1339,7 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
+            _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
         }
 
         [Fact]

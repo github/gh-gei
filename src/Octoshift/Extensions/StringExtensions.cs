@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OctoshiftCLI.Extensions
 {
@@ -12,5 +13,8 @@ namespace OctoshiftCLI.Extensions
         public static bool HasValue(this string s) => !s.IsNullOrWhiteSpace();
 
         public static bool ToBool(this string s) => bool.TryParse(s, out var result) && result;
+
+        public static string ReplaceInvalidCharactersWithDash(this string s) => s.HasValue() ? Regex.Replace(s, @"[^\w.-]+", "-", RegexOptions.Compiled | RegexOptions.CultureInvariant) : string.Empty;
+
     }
 }
