@@ -29,7 +29,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             };
             var adoPipeline = new Option<string>("--ado-pipeline")
             {
-                IsRequired = true
+                IsRequired = true,
+                Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline)"
             };
             var githubOrg = new Option<string>("--github-org")
             {
