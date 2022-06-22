@@ -779,6 +779,37 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetPipelineId_With_Name_And_No_Path_Should_Fail_When_Multiple_Matches()
+        {
+            var pipeline = "foo-pipe";
+            var pipelineId = 36383;
+
+            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var response = new object[]
+            {
+                new
+                {
+                    id = 123,
+                    name = "foo-pipe",
+                    path = "\\some-other-folder"
+                },
+                new
+                {
+                    id = pipelineId,
+                    name = "FOO-PIPE",
+                    path = "\\some-folder"
+                }
+            };
+
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response.ToJson()));
+
+            await FluentActions
+                .Invoking(async () => await sut.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, pipeline))
+                .Should()
+                .ThrowExactlyAsync<ArgumentException>();
+        }
+
+        [Fact]
         public async Task GetPipelineId_When_Duplicate_Pipeline_Name_And_Path_Should_Ignore_Second_Pipeline()
         {
             var pipeline = "\\some-folder\\foo-pipe";
