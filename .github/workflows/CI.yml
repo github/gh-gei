@@ -50,7 +50,7 @@ jobs:
 
     - name: Code Coverage Summary Report
       uses: irongut/CodeCoverageSummary@v1.1.0
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: always() && matrix.runner-os == 'ubuntu-latest'
       with:
         filename: coverage/coverage.cobertura.xml
         badge: true
@@ -59,7 +59,7 @@ jobs:
 
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Unit Test Results
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: always() && matrix.runner-os == 'ubuntu-latest'
       uses: actions/upload-artifact@v2
       with:
         name: Unit Test Results
@@ -67,7 +67,7 @@ jobs:
 
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Code Coverage Report
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: always() && matrix.runner-os == 'ubuntu-latest'
       uses: actions/upload-artifact@v2
       with:
         name: Code Coverage Report
