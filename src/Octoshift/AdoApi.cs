@@ -431,7 +431,14 @@ namespace OctoshiftCLI
                 }
             }
 
-            return _pipelineIds[(org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper())];
+            if (_pipelineIds.TryGetValue((org.ToUpper(), teamProject.ToUpper(), pipelinePath.ToUpper()), out result))
+            {
+                return result;
+            }
+
+            return response.Count(x => ((string)x["name"]).ToUpper() == pipeline.ToUpper()) == 1
+                ? (int)response.Single(x => ((string)x["name"]).ToUpper() == pipeline.ToUpper())["id"]
+                : throw new ArgumentException("Unable to find the specified pipeline", nameof(pipeline));
         }
 
         private string NormalizePipelinePath(string path, string name)
