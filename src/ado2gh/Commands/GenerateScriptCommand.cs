@@ -160,7 +160,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             if (await _adoInspectorService.GetRepoCount() == 0)
             {
-                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled and TFVC repos.");
+                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos.");
                 return;
             }
 
