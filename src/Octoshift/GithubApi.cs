@@ -619,7 +619,7 @@ namespace OctoshiftCLI
                                     : null
             };
         }
-        
+
         private void EnsureSuccessGraphQLResponse(JObject response)
         {
             if (response.ContainsKey("errors") && response["errors"] is JArray { Count: > 0 } errors)
