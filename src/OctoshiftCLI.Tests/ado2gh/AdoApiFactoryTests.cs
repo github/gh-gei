@@ -34,6 +34,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
             environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
+            false.Should().BeTrue();
         }
 
         [Fact]
