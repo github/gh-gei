@@ -45,7 +45,7 @@ jobs:
       run: dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
     - name: Copy Coverage To Predictable Location
-      if: always()
+      if: always() && matrix.runner-os == 'ubuntu-latest'
       run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
     - name: Code Coverage Summary Report
