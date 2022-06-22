@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string SOURCE_ORG = "FOO-SOURCE-ORG";
         private const string TARGET_ORG = "FOO-TARGET-ORG";
         private const string REPO = "REPO";
-        private string _script = "";
+        private string _script;
 
         public GenerateScriptCommandTests()
         {
@@ -104,7 +104,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _script.Should().BeNullOrWhiteSpace();
+            _script.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found."));
         }
 
         [Fact]
@@ -126,7 +127,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _script.Should().BeNullOrWhiteSpace();
+            _script.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found."));
         }
 
         [Fact]
@@ -345,7 +347,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            TrimNonExecutableLines(_script).Should().BeEmpty();
+            _script.Should().BeNull();
             _mockAdoApi.Verify(m => m.GetTeamProjects(org), Times.Once);
             _mockAdoApi.VerifyNoOtherCalls();
         }
@@ -443,7 +445,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _script.Should().BeNullOrWhiteSpace();
+            _script.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled and TFVC repos."));
         }
 
         [Fact]
@@ -464,7 +467,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _script.Should().BeNullOrWhiteSpace();
+            _script.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled and TFVC repos."));
         }
 
         [Fact]

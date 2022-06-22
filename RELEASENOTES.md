@@ -1,1 +1,1 @@
-
+- `generate-script` command in `ado2gh` and `gh gei` will no longer generate an empty script if no migratable repos were found.

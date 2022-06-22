@@ -236,7 +236,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat, args.DownloadMigrationLogs) :
                 await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases, args.DownloadMigrationLogs);
 
-            if (args.Output.HasValue())
+            if (script.HasValue() && args.Output.HasValue())
             {
                 await WriteToFile(args.Output.FullName, script);
             }
@@ -245,6 +245,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool downloadMigrationLogs)
         {
             var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat), githubSourceOrg);
+            if (!repos.Any())
+            {
+                _log.LogError("A migration script could not be generated because no migratable repos were found.");
+                return string.Empty;
+            }
+
             return sequential
                 ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs)
                 : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs);
@@ -253,6 +259,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat, bool downloadMigrationLogs)
         {
             var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat), adoSourceOrg, adoTeamProject);
+            if (!repos.Any())
+            {
+                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled and TFVC repos.");
+                return string.Empty;
+            }
+
             return sequential
                 ? GenerateSequentialAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg, downloadMigrationLogs)
                 : GenerateParallelAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg, downloadMigrationLogs);
@@ -304,11 +316,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
         {
-            if (!repos.Any())
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
@@ -333,11 +340,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
         {
-            if (!repos.Any())
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
@@ -403,11 +405,6 @@ if ($Failed -ne 0) {
 
         private string GenerateSequentialAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoServerUrl, string adoSourceOrg, string githubTargetOrg, bool downloadMigrationLogs)
         {
-            if (!repos.Any())
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
@@ -446,11 +443,6 @@ if ($Failed -ne 0) {
 
         private string GenerateParallelAdoScript(IDictionary<string, IEnumerable<string>> repos, string adoServerUrl, string adoSourceOrg, string githubTargetOrg, bool downloadMigrationLogs)
         {
-            if (!repos.Any())
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
 
             content.AppendLine(PWSH_SHEBANG);
