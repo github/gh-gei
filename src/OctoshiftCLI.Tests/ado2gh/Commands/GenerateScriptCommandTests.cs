@@ -794,7 +794,7 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public async Task PatallelScript_Skips_Team_Project_With_No_Repos()
+        public async Task ParallelScript_Skips_Team_Project_With_No_Repos()
         {
             // Arrange
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
