@@ -10,10 +10,10 @@ namespace OctoshiftCLI.AdoToGithub
         private readonly OctoLogger _log;
         private readonly AdoApi _adoApi;
 
-        private IEnumerable<string> _orgs;
-        private readonly IDictionary<string, IEnumerable<string>> _teamProjects = new Dictionary<string, IEnumerable<string>>();
-        private readonly IDictionary<string, IDictionary<string, IEnumerable<string>>> _repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
-        private readonly IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> _pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
+        private IList<string> _orgs;
+        private readonly IDictionary<string, IList<string>> _teamProjects = new Dictionary<string, IList<string>>();
+        private readonly IDictionary<string, IDictionary<string, IList<string>>> _repos = new Dictionary<string, IDictionary<string, IList<string>>>();
+        private readonly IDictionary<string, IDictionary<string, IDictionary<string, IList<string>>>> _pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IList<string>>>>();
         private readonly IDictionary<string, IDictionary<string, IDictionary<string, int>>> _prCounts = new Dictionary<string, IDictionary<string, IDictionary<string, int>>>();
 
         public AdoInspectorService(OctoLogger log, AdoApi adoApi)
@@ -25,6 +25,51 @@ namespace OctoshiftCLI.AdoToGithub
         public string OrgFilter { get; set; }
         public string TeamProjectFilter { get; set; }
         public string RepoFilter { get; set; }
+
+        public virtual void LoadReposCsv(string csvContents)
+        {
+            var lines = csvContents.Lines().Skip(1);
+            _orgs = new List<string>();
+
+            foreach (var line in lines)
+            {
+                var fields = line.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+
+                var org = fields[0];
+                var teamProject = fields[1];
+                var repo = fields[2];
+
+                if (!_orgs.Any(x => x == org))
+                {
+                    _orgs.Add(org);
+                }
+
+                if (!_teamProjects.ContainsKey(org))
+                {
+                    _teamProjects.Add(org, new List<string>());
+                }
+
+                if (!_repos.ContainsKey(org))
+                {
+                    _repos.Add(org, new Dictionary<string, IList<string>>());
+                }
+
+                if (!_teamProjects[org].Any(x => x == teamProject))
+                {
+                    _teamProjects[org].Add(teamProject);
+                }
+
+                if (!_repos[org].ContainsKey(teamProject))
+                {
+                    _repos[org].Add(teamProject, new List<string>());
+                }
+
+                if (!_repos[org][teamProject].Any(x => x == repo))
+                {
+                    _repos[org][teamProject].Add(repo);
+                }
+            }
+        }
 
         public virtual async Task<IEnumerable<string>> GetOrgs()
         {
@@ -38,7 +83,7 @@ namespace OctoshiftCLI.AdoToGithub
                 {
                     _log.LogInformation($"Retrieving list of all Orgs PAT has access to...");
                     var userId = await _adoApi.GetUserId();
-                    _orgs = await _adoApi.GetOrganizations(userId);
+                    _orgs = (await _adoApi.GetOrganizations(userId)).ToList();
                 }
             }
 
@@ -112,7 +157,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             if (!_teamProjects.TryGetValue(org, out var teamProjects))
             {
-                teamProjects = TeamProjectFilter.HasValue() ? new List<string>() { TeamProjectFilter } : await _adoApi.GetTeamProjects(org);
+                teamProjects = TeamProjectFilter.HasValue() ? new List<string>() { TeamProjectFilter } : (await _adoApi.GetTeamProjects(org)).ToList();
                 _teamProjects.Add(org, teamProjects);
             }
 
@@ -123,12 +168,12 @@ namespace OctoshiftCLI.AdoToGithub
         {
             if (!_repos.ContainsKey(org))
             {
-                _repos.Add(org, new Dictionary<string, IEnumerable<string>>());
+                _repos.Add(org, new Dictionary<string, IList<string>>());
             }
 
             if (!_repos[org].TryGetValue(teamProject, out var repos))
             {
-                repos = await _adoApi.GetEnabledRepos(org, teamProject);
+                repos = (await _adoApi.GetEnabledRepos(org, teamProject)).ToList();
                 _repos[org].Add(teamProject, repos);
             }
 
@@ -139,19 +184,19 @@ namespace OctoshiftCLI.AdoToGithub
         {
             if (!_pipelines.ContainsKey(org))
             {
-                _pipelines.Add(org, new Dictionary<string, IDictionary<string, IEnumerable<string>>>());
+                _pipelines.Add(org, new Dictionary<string, IDictionary<string, IList<string>>>());
             }
 
             if (!_pipelines[org].ContainsKey(teamProject))
             {
-                _pipelines[org].Add(teamProject, new Dictionary<string, IEnumerable<string>>());
+                _pipelines[org].Add(teamProject, new Dictionary<string, IList<string>>());
             }
 
             if (!_pipelines[org][teamProject].TryGetValue(repo, out var pipelines))
             {
                 await _adoApi.PopulateRepoIdCache(org, teamProject);
                 var repoId = await _adoApi.GetRepoId(org, teamProject, repo);
-                pipelines = await _adoApi.GetPipelines(org, teamProject, repoId);
+                pipelines = (await _adoApi.GetPipelines(org, teamProject, repoId)).ToList();
 
                 _pipelines[org][teamProject].Add(repo, pipelines);
             }

@@ -108,6 +108,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Includes all script generation options."
             };
+            var repoList = new Option<FileInfo>("--repo-list", () => new FileInfo("./repos.csv"))
+            {
+                IsRequired = false,
+                Description = "Path to a repos.csv file that contains a list of repos to generate a script for. The CSV file should be generated using the inventory-report command."
+            };
 
             AddOption(githubOrgOption);
             AddOption(adoOrgOption);
@@ -125,6 +130,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(integrateBoards);
             AddOption(rewirePipelines);
             AddOption(all);
+            AddOption(repoList);
 
             Handler = CommandHandler.Create<GenerateScriptCommandArgs>(Invoke);
         }
@@ -157,6 +163,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _adoInspectorService = _adoInspectorServiceFactory.Create(ado);
             _adoInspectorService.OrgFilter = args.AdoOrg;
             _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
+
+            if (args.RepoList.HasValue())
+            {
+                _log.LogInformation($"Loading Repo CSV File...");
+                var csv = File.ReadAllText(args.RepoList.FullName);
+                _adoInspectorService.LoadReposCsv(csv);
+            }
 
             var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, args.GithubOrg) : new Dictionary<string, string>();
 
@@ -568,6 +581,10 @@ if ($Failed -ne 0) {
             {
                 _log.LogInformation("ALL: true");
             }
+            if (args.RepoList.HasValue())
+            {
+                _log.LogInformation($"REPO LIST: {args.RepoList}");
+            }
         }
 
         private class GenerateScriptOptions
@@ -642,5 +659,6 @@ function ExecBatch {
         public bool IntegrateBoards { get; set; }
         public bool RewirePipelines { get; set; }
         public bool All { get; set; }
+        public FileInfo RepoList { get; set; }
     }
 }
