@@ -465,6 +465,37 @@ steps:
             p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
         }
 
+        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                WorkingDirectory = GetOsDistPath(),
+                FileName = $"{cliName}",
+                Arguments = command
+            };
+
+            if (tokens != null)
+            {
+                foreach (var token in tokens)
+                {
+                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
+                    {
+                        startInfo.EnvironmentVariables[token.Key] = token.Value;
+                    }
+                    else
+                    {
+                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
+                    }
+                }
+            }
+
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+            var p = Process.Start(startInfo);
+            await p.WaitForExitAsync();
+
+            p.ExitCode.Should().Be(0, $"{cliName} should return an exit code of 0");
+        }
+
         public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
 
