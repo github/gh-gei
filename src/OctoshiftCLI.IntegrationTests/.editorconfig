@@ -1,0 +1,22 @@
+[*.cs]
+
+# CA1707: Identifiers should not contain underscores
+dotnet_diagnostic.CA1707.severity = none
+
+# Naming rules
+
+dotnet_naming_rule.public_methods_should_be_snake_case.severity = suggestion
+dotnet_naming_rule.public_methods_should_be_snake_case.symbols = public_methods
+dotnet_naming_rule.public_methods_should_be_snake_case.style = snake_case
+
+# Symbol specifications
+
+dotnet_naming_symbols.public_methods.applicable_kinds =  method
+dotnet_naming_symbols.public_methods.applicable_accessibilities = public
+
+# Naming styles
+
+dotnet_naming_style.snake_case.capitalization = pascal_case
+dotnet_naming_style.snake_case.word_separator = _
+dotnet_naming_style.snake_case.required_prefix =
+dotnet_naming_style.snake_case.required_suffix =
