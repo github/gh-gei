@@ -622,7 +622,7 @@ namespace OctoshiftCLI
 
         private void EnsureSuccessGraphQLResponse(JObject response)
         {
-            if (response.ContainsKey("errors") && response["errors"] is JArray { Count: > 0 } errors)
+            if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
             {
                 var error = (JObject)errors[0];
                 var errorType = error.TryGetValue("type", out var jType) ? (string)jType : null;
