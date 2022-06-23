@@ -1,1 +1,1 @@
-
+- `--ado-pipeline` arg in the `ado2gh rewire-pipeline` command will now accept a pipeline name without the full pipeline path, so long as there is only one pipeline found that matches that name. If there are multiple pipelines with the same name (in different pipeline folders), you will need to provide the full pipeline path.
