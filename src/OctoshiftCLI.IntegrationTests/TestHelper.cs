@@ -426,43 +426,27 @@ steps:
 
         public async Task RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
+            await RunCliCommand(generateScriptCommand, cliName, tokens);
+            await RunPowershellScript("migrate.ps1");
+        }
+
+        public async Task RunPowershellScript(string script)
+        {
+            var scriptPath = Path.Join(GetOsDistPath(), script);
+
             var startInfo = new ProcessStartInfo
             {
                 WorkingDirectory = GetOsDistPath(),
-                FileName = $"{cliName}",
-                Arguments = generateScriptCommand
+                FileName = "pwsh",
+                Arguments = $"-File {scriptPath}"
             };
 
-            if (tokens != null)
-            {
-                foreach (var token in tokens)
-                {
-                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
-                    {
-                        startInfo.EnvironmentVariables[token.Key] = token.Value;
-                    }
-                    else
-                    {
-                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
-                    }
-                }
-            }
-
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
 
-            p.ExitCode.Should().Be(0, "generate-script should return an exit code of 0");
-
-            startInfo.FileName = "pwsh";
-            var scriptPath = Path.Join(startInfo.WorkingDirectory, "migrate.ps1");
-            startInfo.Arguments = $"-File {scriptPath}";
-
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-            p = Process.Start(startInfo);
-            await p.WaitForExitAsync();
-
-            p.ExitCode.Should().Be(0, "migrate.ps1 should return an exit code of 0");
+            p.ExitCode.Should().Be(0, $"{script} should return an exit code of 0");
         }
 
         public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens)
