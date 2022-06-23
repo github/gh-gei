@@ -261,7 +261,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat), adoSourceOrg, adoTeamProject);
             if (!repos.Any())
             {
-                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled and TFVC repos.");
+                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos.");
                 return string.Empty;
             }
 
