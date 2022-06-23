@@ -13,6 +13,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class GenerateScriptCommand : Command
     {
         internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
+        internal Func<string, Task<string>> ReadFromFile = async (path) => await File.ReadAllTextAsync(path);
 
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
@@ -167,7 +168,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (args.RepoList.HasValue())
             {
                 _log.LogInformation($"Loading Repo CSV File...");
-                var csv = File.ReadAllText(args.RepoList.FullName);
+                var csv = await ReadFromFile(args.RepoList.FullName);
                 _adoInspectorService.LoadReposCsv(csv);
             }
 
