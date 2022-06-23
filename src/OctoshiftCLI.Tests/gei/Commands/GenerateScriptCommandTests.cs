@@ -105,7 +105,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().BeNull();
-            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found."));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().BeNull();
-            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found."));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]
@@ -446,7 +446,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().BeNull();
-            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos."));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]
@@ -468,7 +468,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().BeNull();
-            _mockOctoLogger.Verify(m => m.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos."));
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]
