@@ -427,10 +427,10 @@ steps:
         public async Task RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
             await RunCliCommand(generateScriptCommand, cliName, tokens);
-            await RunPowershellScript("migrate.ps1");
+            await RunPowershellScript("migrate.ps1", tokens);
         }
 
-        public async Task RunPowershellScript(string script)
+        public async Task RunPowershellScript(string script, IDictionary<string, string> tokens)
         {
             var scriptPath = Path.Join(GetOsDistPath(), script);
 
@@ -440,6 +440,21 @@ steps:
                 FileName = "pwsh",
                 Arguments = $"-File {scriptPath}"
             };
+
+            if (tokens != null)
+            {
+                foreach (var token in tokens)
+                {
+                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
+                    {
+                        startInfo.EnvironmentVariables[token.Key] = token.Value;
+                    }
+                    else
+                    {
+                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
+                    }
+                }
+            }
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
 
