@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor";
+        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor,compressed-repo-size-in-bytes";
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string ADO_TEAM_PROJECT = "foo-tp";
         private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
         private const string ADO_REPO = "foo-repo";
-        private readonly IEnumerable<AdoRepository> ADO_REPOS = new List<AdoRepository> { new() { Name = ADO_REPO } };
+        private readonly IEnumerable<AdoRepository> ADO_REPOS = new List<AdoRepository> { new() { Name = ADO_REPO, Size = 12345 } };
 
         private readonly ReposCsvGeneratorService _service;
 
@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Arin\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Arin\",\"12,345\"{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -92,7 +92,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Max\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Max\",\"12,345\"{Environment.NewLine}";
 
             result.Should().Be(expected);
         }

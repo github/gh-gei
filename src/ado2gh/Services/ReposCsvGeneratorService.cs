@@ -22,7 +22,7 @@ namespace OctoshiftCLI.AdoToGithub
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor");
+            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor,compressed-repo-size-in-bytes");
 
             foreach (var org in await inspector.GetOrgs())
             {
@@ -37,7 +37,7 @@ namespace OctoshiftCLI.AdoToGithub
                         var commitsPastYear = await adoApi.GetCommitCountSince(org, teamProject, repo.Name, DateTime.Today.AddYears(-1));
                         var mostActiveContributor = await GetMostActiveContributor(org, teamProject, repo.Name, adoApi);
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitsPastYear},\"{mostActiveContributor}\"");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitsPastYear},\"{mostActiveContributor}\",\"{repo.Size:N0}\"");
                     }
                 }
             }
