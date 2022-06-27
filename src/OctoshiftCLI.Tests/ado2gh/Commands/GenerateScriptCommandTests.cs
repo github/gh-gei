@@ -34,8 +34,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
+        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private string _scriptOutput = "";
+        private string _scriptOutput;
         private readonly GenerateScriptCommand _command;
 
         public GenerateScriptCommandTests()
@@ -44,7 +45,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new GenerateScriptCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
+            _command = new GenerateScriptCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -78,28 +79,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "integrate-boards", false);
             TestHelpers.VerifyCommandOption(command.Options, "rewire-pipelines", false);
             TestHelpers.VerifyCommandOption(command.Options, "all", false);
-        }
-
-        [Fact]
-        public async Task SequentialScript_No_Data()
-        {
-            // Arrange
-            var orgs = new List<string>();
-
-            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-            _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(orgs);
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubOrg = GITHUB_ORG,
-                Sequential = true,
-                Output = new FileInfo("unit-test-output")
-            };
-            await _command.Invoke(args);
-
-            // Assert
-            _scriptOutput.Should().BeNullOrWhiteSpace();
         }
 
         [Fact]
@@ -288,10 +267,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             };
             await _command.Invoke(args);
 
-            _scriptOutput = TrimNonExecutableLines(_scriptOutput);
-
             // Assert
-            _scriptOutput.Should().BeEmpty();
+            _scriptOutput.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]
@@ -594,26 +572,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task ParallelScript_No_Data()
-        {
-            // Arrange
-            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
-            _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(0);
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubOrg = GITHUB_ORG,
-                Output = new FileInfo("unit-test-output")
-            };
-            await _command.Invoke(args);
-
-            // Assert
-            _scriptOutput.Should().BeEmpty();
-        }
-
-        [Fact]
         public async Task ParallelScript_StartsWith_Shebang()
         {
             // Arrange
@@ -836,7 +794,7 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
-        public async Task PatallelScript_Skips_Team_Project_With_No_Repos()
+        public async Task ParallelScript_Skips_Team_Project_With_No_Repos()
         {
             // Arrange
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
@@ -852,10 +810,9 @@ if ($Failed -ne 0) {
             };
             await _command.Invoke(args);
 
-            _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
-
             // Assert
-            _scriptOutput.Should().BeEmpty();
+            _scriptOutput.Should().BeNull();
+            _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()));
         }
 
         [Fact]

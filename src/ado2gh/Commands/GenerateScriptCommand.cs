@@ -158,6 +158,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _adoInspectorService.OrgFilter = args.AdoOrg;
             _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
 
+            if (await _adoInspectorService.GetRepoCount() == 0)
+            {
+                _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos.");
+                return;
+            }
+
             var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, args.GithubOrg) : new Dictionary<string, string>();
 
             var script = args.Sequential
@@ -221,11 +227,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private async Task<string> GenerateSequentialScript(IDictionary<string, string> appIds, string githubOrg)
         {
-            if ((await _adoInspectorService.GetRepoCount()) == 0)
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
 
             AppendLine(content, PWSH_SHEBANG);
@@ -289,11 +290,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private async Task<string> GenerateParallelScript(IDictionary<string, string> appIds, string githubOrg)
         {
-            if ((await _adoInspectorService.GetRepoCount()) == 0)
-            {
-                return string.Empty;
-            }
-
             var content = new StringBuilder();
             AppendLine(content, PWSH_SHEBANG);
             AppendLine(content);
