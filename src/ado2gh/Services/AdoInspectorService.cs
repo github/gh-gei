@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub
@@ -12,7 +13,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         private IEnumerable<string> _orgs;
         private readonly IDictionary<string, IEnumerable<string>> _teamProjects = new Dictionary<string, IEnumerable<string>>();
-        private readonly IDictionary<string, IDictionary<string, IEnumerable<string>>> _repos = new Dictionary<string, IDictionary<string, IEnumerable<string>>>();
+        private readonly IDictionary<string, IDictionary<string, IEnumerable<AdoRepository>>> _repos = new Dictionary<string, IDictionary<string, IEnumerable<AdoRepository>>>();
         private readonly IDictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>> _pipelines = new Dictionary<string, IDictionary<string, IDictionary<string, IEnumerable<string>>>>();
         private readonly IDictionary<string, IDictionary<string, IDictionary<string, int>>> _prCounts = new Dictionary<string, IDictionary<string, IDictionary<string, int>>>();
 
@@ -88,7 +89,7 @@ namespace OctoshiftCLI.AdoToGithub
         public virtual async Task<int> GetPipelineCount(string org, string teamProject)
         {
             var repos = await GetRepos(org, teamProject);
-            return await repos.Sum(async r => await GetPipelineCount(org, teamProject, r));
+            return await repos.Sum(async r => await GetPipelineCount(org, teamProject, r.Name));
         }
 
         public virtual async Task<int> GetPipelineCount(string org, string teamProject, string repo)
@@ -99,7 +100,7 @@ namespace OctoshiftCLI.AdoToGithub
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject)
         {
             var repos = await GetRepos(org, teamProject);
-            return await repos.Sum(async r => await GetPullRequestCount(org, teamProject, r));
+            return await repos.Sum(async r => await GetPullRequestCount(org, teamProject, r.Name));
         }
 
         public virtual async Task<int> GetPullRequestCount(string org)
@@ -119,11 +120,11 @@ namespace OctoshiftCLI.AdoToGithub
             return teamProjects;
         }
 
-        public virtual async Task<IEnumerable<string>> GetRepos(string org, string teamProject)
+        public virtual async Task<IEnumerable<AdoRepository>> GetRepos(string org, string teamProject)
         {
             if (!_repos.ContainsKey(org))
             {
-                _repos.Add(org, new Dictionary<string, IEnumerable<string>>());
+                _repos.Add(org, new Dictionary<string, IEnumerable<AdoRepository>>());
             }
 
             if (!_repos[org].TryGetValue(teamProject, out var repos))

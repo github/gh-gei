@@ -167,17 +167,20 @@ namespace OctoshiftCLI.Tests
                 new
                 {
                     isDisabled = true,
-                    name = "testing"
+                    name = "testing",
+                    size = 1234
                 },
                 new
                 {
                     isDisabled = false,
-                    name = ADO_REPO
+                    name = ADO_REPO,
+                    size = 123
                 },
                 new
                 {
                     isDisabled = "FALSE",
-                    name = repo2
+                    name = repo2,
+                    size = 5678
                 }
             };
             var response = JArray.Parse(json.ToJson());
@@ -187,7 +190,7 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { ADO_REPO, repo2 });
+            result.Select(r => r.Name).Should().Contain(new[] { ADO_REPO, repo2 });
         }
 
         [Fact]

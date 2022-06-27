@@ -30,14 +30,14 @@ namespace OctoshiftCLI.AdoToGithub
                 {
                     foreach (var repo in await inspector.GetRepos(org, teamProject))
                     {
-                        var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo)}";
-                        var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo);
-                        var prCount = await inspector.GetPullRequestCount(org, teamProject, repo);
-                        var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo);
-                        var commitsPastYear = await adoApi.GetCommitCountSince(org, teamProject, repo, DateTime.Today.AddYears(-1));
-                        var mostActiveContributor = await GetMostActiveContributor(org, teamProject, repo, adoApi);
+                        var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo.Name)}";
+                        var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo.Name);
+                        var prCount = await inspector.GetPullRequestCount(org, teamProject, repo.Name);
+                        var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo.Name);
+                        var commitsPastYear = await adoApi.GetCommitCountSince(org, teamProject, repo.Name, DateTime.Today.AddYears(-1));
+                        var mostActiveContributor = await GetMostActiveContributor(org, teamProject, repo.Name, adoApi);
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitsPastYear},\"{mostActiveContributor}\"");
+                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitsPastYear},\"{mostActiveContributor}\"");
                     }
                 }
             }

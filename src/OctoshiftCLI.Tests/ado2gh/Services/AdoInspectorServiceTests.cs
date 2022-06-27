@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
 
@@ -90,7 +91,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Arrange
             var repo1 = "foo";
             var repo2 = "bar";
-            var repos = new List<string>() { repo1, repo2 };
+            var repos = new List<AdoRepository> { new() { Name = repo1 }, new() { Name = repo2 } };
 
             _mockAdoApi.Setup(m => m.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(repos);
 

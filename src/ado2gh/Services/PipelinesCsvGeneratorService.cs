@@ -29,11 +29,11 @@ namespace OctoshiftCLI.AdoToGithub
                 {
                     foreach (var repo in await inspector.GetRepos(org, teamProject))
                     {
-                        foreach (var pipeline in await inspector.GetPipelines(org, teamProject, repo))
+                        foreach (var pipeline in await inspector.GetPipelines(org, teamProject, repo.Name))
                         {
                             var pipelineId = await adoApi.GetPipelineId(org, teamProject, pipeline);
                             var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_build?definitionId={pipelineId}";
-                            result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo}\",\"{pipeline}\",\"{url}\"");
+                            result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{pipeline}\",\"{url}\"");
                         }
                     }
                 }

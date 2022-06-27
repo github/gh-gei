@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using Xunit;
 
@@ -21,7 +22,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private const string ADO_TEAM_PROJECT = "foo-tp";
         private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
         private const string ADO_REPO = "foo-repo";
-        private readonly IEnumerable<string> ADO_REPOS = new List<string>() { ADO_REPO };
+        private readonly IEnumerable<AdoRepository> ADO_REPOS = new List<AdoRepository> { new() { Name = ADO_REPO } };
         private const string ADO_PIPELINE = "foo-pipeline";
         private readonly IEnumerable<string> ADO_PIPELINES = new List<string>() { ADO_PIPELINE };
 

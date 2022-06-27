@@ -212,9 +212,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 {
                     foreach (var repo in await _adoInspectorService.GetRepos(org, teamProject))
                     {
-                        if (!seen.Add(GetGithubRepoName(teamProject, repo)))
+                        if (!seen.Add(GetGithubRepoName(teamProject, repo.Name)))
                         {
-                            _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo)}");
+                            _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo.Name)}");
                         }
                     }
                 }
@@ -262,19 +262,19 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
                     foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
-                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo.Name);
 
                         AppendLine(content);
-                        AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                        AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, true)));
-                        AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                        AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
+                        AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, true)));
+                        AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
                         AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                         AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
-                        foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo))
+                        foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
                         {
                             AppendLine(content, Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                         }
@@ -336,11 +336,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
 
-                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo.Name);
 
                         AppendLine(content);
-                        AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
-                        AppendLine(content, QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo));
+                        AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
+                        AppendLine(content, QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo));
                         AppendLine(content, $"$RepoMigrations[\"{GetRepoMigrationKey(adoOrg, githubRepo)}\"] = $MigrationID");
                     }
                 }
@@ -357,9 +357,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                     foreach (var adoRepo in await _adoInspectorService.GetRepos(adoOrg, adoTeamProject))
                     {
                         AppendLine(content);
-                        AppendLine(content, $"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo}. Will then complete the below post migration steps. ===");
+                        AppendLine(content, $"# === Waiting for repo migration to finish for Team Project: {adoTeamProject} and Repo: {adoRepo.Name}. Will then complete the below post migration steps. ===");
 
-                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo);
+                        var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo.Name);
                         var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
                         AppendLine(content, "$CanExecuteBatch = $true");
@@ -378,7 +378,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                         )
                         {
                             AppendLine(content, "    ExecBatch @(");
-                            AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo)));
+                            AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
                             AppendLine(content, "        " + Wrap(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                             AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                             AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
@@ -386,7 +386,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                             AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo)));
 
                             appIds.TryGetValue(adoOrg, out var appId);
-                            foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo))
+                            foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
                             {
                                 AppendLine(content, "        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
                             }
