@@ -625,9 +625,8 @@ namespace OctoshiftCLI
             if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
             {
                 var error = (JObject)errors[0];
-                var errorType = error.TryGetValue("type", out var jType) ? (string)jType : null;
                 var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
-                throw new OctoshiftCliException($"GraphQL response does not indicate success. Error Type: {errorType ?? "UNKNOWN"}, Error Message: {errorMessage ?? "UNKNOWN"}");
+                throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
             }
         }
     }

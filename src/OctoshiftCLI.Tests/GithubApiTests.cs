@@ -613,75 +613,28 @@ namespace OctoshiftCLI.Tests
         public async Task StartMigration_Throws_When_GraphQL_Response_Has_Errors()
         {
             // Arrange
-            const string response = @"
-            {
-                ""data"": { 
+            const string expectedErrorMessage = "Please make sure that githubPat includes the workflow scope";
+            const string response = $@"
+            {{
+                ""data"": {{ 
                     ""startRepositoryMigration"": null
-                 },
+                 }},
                 ""errors"": [
-                     {
+                     {{
                         ""type"": ""FORBIDDEN"",
                         ""path"": [
                             ""startRepositoryMigration""
                          ],
                         ""locations"": [
-                            {
+                            {{
                                 ""line"": 13,
                                 ""column"": 17
-                            }
+                            }}
                          ],
-                        ""message"": ""Please make sure that githubPat includes the workflow scope""
-                     }
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
                  ]
-            }";
-
-            const string expectedErrorMessage =
-                "GraphQL response does not indicate success. Error Type: FORBIDDEN, Error Message: Please make sure that githubPat includes the workflow scope";
-
-            _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
-                .ReturnsAsync(response);
-
-            // Act, Assert
-            await _githubApi.Invoking(api => api.StartMigration(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>()))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage(expectedErrorMessage);
-        }
-
-        [Fact]
-        public async Task StartMigration_Does_Not_Include_Error_Type_If_Missing()
-        {
-            // Arrange
-            const string response = @"
-            {
-                ""data"": { 
-                    ""startRepositoryMigration"": null
-                 },
-                ""errors"": [
-                     {
-                        ""path"": [
-                            ""startRepositoryMigration""
-                         ],
-                        ""locations"": [
-                            {
-                                ""line"": 13,
-                                ""column"": 17
-                            }
-                         ],
-                        ""message"": ""Please make sure that githubPat includes the workflow scope""
-                     }
-                 ]
-            }";
-
-            const string expectedErrorMessage =
-                "GraphQL response does not indicate success. Error Type: UNKNOWN, Error Message: Please make sure that githubPat includes the workflow scope";
+            }}";
 
             _githubClientMock
                 .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
@@ -725,8 +678,7 @@ namespace OctoshiftCLI.Tests
                  ]
             }";
 
-            const string expectedErrorMessage =
-                "GraphQL response does not indicate success. Error Type: FORBIDDEN, Error Message: UNKNOWN";
+            const string expectedErrorMessage = "UNKNOWN";
 
             _githubClientMock
                 .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
