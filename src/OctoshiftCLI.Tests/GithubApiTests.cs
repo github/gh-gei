@@ -1511,7 +1511,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist()
+        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist_404()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
@@ -1528,7 +1528,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound()
+        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist_301()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
@@ -1536,6 +1536,23 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .Throws(new HttpRequestException(null, null, HttpStatusCode.Moved));
+
+            // Act
+            var result = await _githubApi.RepoExists(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound_Or_Moved()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .Throws(new HttpRequestException(null, null, HttpStatusCode.MultipleChoices));
 
             // Act, Assert
             await _githubApi
