@@ -106,7 +106,7 @@ namespace OctoshiftCLI
                 await _client.GetAsync(url);
                 return true;
             }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Moved)
             {
                 return false;
             }
