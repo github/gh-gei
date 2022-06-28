@@ -145,13 +145,14 @@ namespace OctoshiftCLI
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
-            return data.Select(x => new AdoRepository
-            {
-                Id = (string)x["id"],
-                Name = (string)x["name"],
-                Size = (uint)x["size"],
-                IsDisabled = ((string)x["isDisabled"]).ToBool()
-            })
+            return data
+                .Select(x => new AdoRepository
+                {
+                    Id = (string)x["id"],
+                    Name = (string)x["name"],
+                    Size = ((string)x["size"]).ToULongOrNull(),
+                    IsDisabled = ((string)x["isDisabled"]).ToBool()
+                })
                 .ToList();
         }
 
