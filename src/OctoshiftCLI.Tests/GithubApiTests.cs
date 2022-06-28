@@ -610,6 +610,126 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task StartMigration_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Please make sure that githubPat includes the workflow scope";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""startRepositoryMigration"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""startRepositoryMigration""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task StartMigration_Does_Not_Include_Error_Message_If_Missing()
+        {
+            // Arrange
+            const string response = @"
+            {
+                ""data"": { 
+                    ""startRepositoryMigration"": null
+                 },
+                ""errors"": [
+                     {
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""startRepositoryMigration""
+                         ],
+                        ""locations"": [
+                            {
+                                ""line"": 13,
+                                ""column"": 17
+                            }
+                         ]
+                     }
+                 ]
+            }";
+
+            const string expectedErrorMessage = "UNKNOWN";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task StartMigration_Does_Not_Throw_When_Errors_Is_Empty()
+        {
+            // Arrange
+            const string response = @"
+            {
+                ""data"": { 
+                    ""startRepositoryMigration"": {
+                        ""repositoryMigration"": {
+                            ""id"": ""RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi""
+                         }
+                     }
+                 },
+                ""errors"": []
+            }";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .NotThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task GetMigration_Returns_The_Migration_State_And_Repository_Name()
         {
             // Arrange
@@ -1511,7 +1631,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist()
+        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist_404()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
@@ -1528,7 +1648,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound()
+        public async Task RepoExists_Should_Return_False_If_Repo_Does_Not_Exist_301()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
@@ -1536,6 +1656,23 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAsync(url))
                 .Throws(new HttpRequestException(null, null, HttpStatusCode.Moved));
+
+            // Act
+            var result = await _githubApi.RepoExists(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound_Or_Moved()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url))
+                .Throws(new HttpRequestException(null, null, HttpStatusCode.MultipleChoices));
 
             // Act, Assert
             await _githubApi
