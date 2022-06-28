@@ -610,6 +610,126 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task StartMigration_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Please make sure that githubPat includes the workflow scope";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""startRepositoryMigration"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""startRepositoryMigration""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task StartMigration_Does_Not_Include_Error_Message_If_Missing()
+        {
+            // Arrange
+            const string response = @"
+            {
+                ""data"": { 
+                    ""startRepositoryMigration"": null
+                 },
+                ""errors"": [
+                     {
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""startRepositoryMigration""
+                         ],
+                        ""locations"": [
+                            {
+                                ""line"": 13,
+                                ""column"": 17
+                            }
+                         ]
+                     }
+                 ]
+            }";
+
+            const string expectedErrorMessage = "UNKNOWN";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task StartMigration_Does_Not_Throw_When_Errors_Is_Empty()
+        {
+            // Arrange
+            const string response = @"
+            {
+                ""data"": { 
+                    ""startRepositoryMigration"": {
+                        ""repositoryMigration"": {
+                            ""id"": ""RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi""
+                         }
+                     }
+                 },
+                ""errors"": []
+            }";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Should()
+                .NotThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task GetMigration_Returns_The_Migration_State_And_Repository_Name()
         {
             // Arrange
