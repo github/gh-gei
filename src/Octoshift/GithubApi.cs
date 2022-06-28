@@ -278,6 +278,8 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
+            EnsureSuccessGraphQLResponse(data);
+
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
@@ -616,6 +618,16 @@ namespace OctoshiftCLI
                                     }
                                     : null
             };
+        }
+
+        private void EnsureSuccessGraphQLResponse(JObject response)
+        {
+            if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
+            {
+                var error = (JObject)errors[0];
+                var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
+                throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
+            }
         }
     }
 }
