@@ -109,7 +109,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Includes all script generation options."
             };
-            var repoList = new Option<FileInfo>("--repo-list", () => new FileInfo("./repos.csv"))
+            var repoList = new Option<FileInfo>("--repo-list")
             {
                 IsRequired = false,
                 Description = "Path to a repos.csv file that contains a list of repos to generate a script for. The CSV file should be generated using the inventory-report command."
