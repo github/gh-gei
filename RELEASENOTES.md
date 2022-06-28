@@ -1,4 +1,4 @@
 - `generate-script` command in `ado2gh` and `gh gei` will no longer generate an empty script if no migratable repos were found.
 - `--ado-pipeline` arg in the `ado2gh rewire-pipeline` command will now accept a pipeline name without the full pipeline path, so long as there is only one pipeline found that matches that name. If there are multiple pipelines with the same name (in different pipeline folders), you will need to provide the full pipeline path.
 - Resolved a bug where the `migrate-repo` command wouldn't queue a migration if the target repo had recently been renamed.
-- `repos.csv` now also reports the compressed size of each repo.
+- `ado2gh inventory-report` command now also reports the compressed size of each repo in `repos.csv`.
