@@ -104,7 +104,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Waits for each migration to finish before moving on to the next one."
             };
-            var githubSourcePath = new Option<string>("--github-source-pat")
+            var githubSourcePat = new Option<string>("--github-source-pat")
             {
                 IsRequired = false
             };
@@ -133,7 +133,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(outputOption);
             AddOption(ssh);
             AddOption(sequential);
-            AddOption(githubSourcePath);
+            AddOption(githubSourcePat);
             AddOption(adoPat);
             AddOption(verbose);
 
