@@ -244,7 +244,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool downloadMigrationLogs)
         {
-            var repos = await GetGithubRepos(_sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat), githubSourceOrg);
+            var client = (!ghesApiUrl.IsNullOrWhiteSpace() && noSslVerify) ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
+
+            var repos = await GetGithubRepos(client, githubSourceOrg);
             if (!repos.Any())
             {
                 _log.LogError("A migration script could not be generated because no migratable repos were found.");
@@ -252,8 +254,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             return sequential
-                ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs)
-                : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs);
+                ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubSourcePat, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs)
+                : GenerateParallelGithubScript(repos, githubSourceOrg, githubSourcePat, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs);
         }
 
         private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat, bool downloadMigrationLogs)
@@ -314,7 +316,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return repos;
         }
 
-        private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg,string githubSourcePat, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
+        private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubSourcePat, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
         {
             var content = new StringBuilder();
 
@@ -327,7 +329,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             foreach (var repo in repos)
             {
-                content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg,githubSourcePat, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases)));
+                content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubSourcePat, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases)));
 
                 if (downloadMigrationLogs)
                 {
@@ -338,7 +340,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return content.ToString();
         }
 
-        private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
+        private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubSourcePat, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
         {
             var content = new StringBuilder();
 
@@ -362,7 +364,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // Queuing migrations
             foreach (var repo in repos)
             {
-                content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases))}");
+                content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubSourcePat, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases))}");
                 content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
                 content.AppendLine();
             }
