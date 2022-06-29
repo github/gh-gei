@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic.FileIO;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub
@@ -26,14 +27,18 @@ namespace OctoshiftCLI.AdoToGithub
         public string TeamProjectFilter { get; set; }
         public string RepoFilter { get; set; }
 
-        public virtual void LoadReposCsv(string csvContents)
+        public virtual void LoadReposCsv(string csvPath)
         {
-            var lines = csvContents.Lines().Skip(1);
+            //var lines = csvContents.Lines().Skip(1);
             _orgs = new List<string>();
 
-            foreach (var line in lines)
+            using var csvParser = new TextFieldParser(csvPath);
+            csvParser.ReadFields(); // skip the header row
+
+            //foreach (var line in lines)
+            while (!csvParser.EndOfData)
             {
-                var fields = line.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+                var fields = csvParser.ReadFields();
 
                 var org = fields[0];
                 var teamProject = fields[1];
