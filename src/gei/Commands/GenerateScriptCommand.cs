@@ -245,6 +245,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool downloadMigrationLogs)
         {
             var client = (!ghesApiUrl.IsNullOrWhiteSpace() && noSslVerify) ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
+
+            var repos = await GetGithubRepos(client, githubSourceOrg);
             if (!repos.Any())
             {
                 _log.LogError("A migration script could not be generated because no migratable repos were found.");
