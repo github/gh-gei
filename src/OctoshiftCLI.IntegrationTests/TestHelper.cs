@@ -466,12 +466,10 @@ steps:
 
         public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens)
         {
-            var cliPath = Path.Combine(GetOsDistPath(), cliName);
-
             var startInfo = new ProcessStartInfo
             {
                 WorkingDirectory = GetOsDistPath(),
-                FileName = cliPath,
+                FileName = cliName,
                 Arguments = command
             };
 
@@ -498,12 +496,12 @@ steps:
         }
 
         public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
-            await RunCliMigration(generateScriptCommand, "ado2gh", tokens);
+            await RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
 
         public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
 
-        private static string GetOsDistPath()
+        public static string GetOsDistPath()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 ? Path.Join(Directory.GetCurrentDirectory(), "../../../../../dist/linux-x64")
