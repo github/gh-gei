@@ -29,14 +29,12 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual void LoadReposCsv(string csvPath)
         {
-            //var lines = csvContents.Lines().Skip(1);
             _orgs = new List<string>();
 
             using var csvParser = new TextFieldParser(csvPath);
             csvParser.SetDelimiters(",");
             csvParser.ReadFields(); // skip the header row
 
-            //foreach (var line in lines)
             while (!csvParser.EndOfData)
             {
                 var fields = csvParser.ReadFields();

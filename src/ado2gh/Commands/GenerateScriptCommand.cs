@@ -168,7 +168,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (args.RepoList.HasValue())
             {
                 _log.LogInformation($"Loading Repo CSV File...");
-                //var csv = await ReadFromFile(args.RepoList.FullName);
                 _adoInspectorService.LoadReposCsv(args.RepoList.FullName);
             }
 
