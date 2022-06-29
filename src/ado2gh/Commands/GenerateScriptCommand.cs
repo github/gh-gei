@@ -112,7 +112,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var repoList = new Option<FileInfo>("--repo-list")
             {
                 IsRequired = false,
-                Description = "Path to a repos.csv file that contains a list of repos to generate a script for. The CSV file should be generated using the inventory-report command."
+                Description = "Path to a csv file that contains a list of repos to generate a script for. The CSV file should be generated using the inventory-report command."
             };
 
             AddOption(githubOrgOption);
