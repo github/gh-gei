@@ -319,7 +319,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().NotBeEmpty();
-            _mockSourceGithubApiFactory.Verify(m => CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()), Times.Once);
+            _mockSourceGithubApiFactory.Verify(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()), Times.Once);
             _mockGithubApi.Verify(m => m.GetRepos(args.GithubSourceOrg), Times.Once);
         }
 
