@@ -1,1 +1,1 @@
-
+- `--gh-pat` arg in the `gei reclaim-mannequin` was renamed to `--github-target-pat` to follow the same naming convention for other commands like ` gei migrate-repo` or `gei generate-mannequin-csv` 
