@@ -65,7 +65,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Map the user even if it was previously mapped"
             };
-            var githubPatOption = new Option<string>("--github-pat")
+            var githubTargetPatOption = new Option<string>("--github-target-pat")
             {
                 IsRequired = false
             };
@@ -80,7 +80,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(mannequinIdOption);
             AddOption(targetUsernameOption);
             AddOption(forceOption);
-            AddOption(githubPatOption);
+            AddOption(githubTargetPatOption);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<string, string, string, string, string, bool, string, bool>(Invoke);
