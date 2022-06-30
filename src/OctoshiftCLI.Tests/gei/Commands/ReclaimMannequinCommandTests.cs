@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "mannequin-id", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-user", false);
             TestHelpers.VerifyCommandOption(_command.Options, "force", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -60,14 +60,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task It_Uses_The_Github_Pat_When_Provided()
         {
             string mannequinUserId = null;
-            var githubPat = "PAT";
+            var githubTargetPat = "PAT";
 
             _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
-            _mockTargetGithubApiFactory.Setup(m => m.Create(null, githubPat)).Returns(_mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(null, githubTargetPat)).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke(GITHUB_ORG, MANNEQUIN_USER, null, TARGET_USER, mannequinUserId, false, githubPat);
+            await _command.Invoke(GITHUB_ORG, MANNEQUIN_USER, null, TARGET_USER, mannequinUserId, false, githubTargetPat);
 
-            _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
         }
 
         [Fact]
