@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using Xunit;
@@ -43,7 +44,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Happy_Path()
         {
-            var repos = new List<(string Id, string Name, bool IsDisabled)> { (REPO_ID, ADO_REPO, false) };
+            var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, IsDisabled = false } };
 
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
@@ -56,7 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Idempotency_Repo_Disabled()
         {
-            var repos = new List<(string Id, string Name, bool IsDisabled)> { (REPO_ID, ADO_REPO, true) };
+            var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, IsDisabled = true } };
 
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
@@ -71,11 +72,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             const string adoPat = "ado-pat";
 
-            var repos = new[] { ("repoId", "adoRepo", true) };
+            var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, Size = 1234, IsDisabled = true } };
             _mockAdoApi.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
+            await _command.Invoke("adoOrg", "adoTeamProject", ADO_REPO, adoPat);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }

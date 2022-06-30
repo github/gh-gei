@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private const string ADO_ORG = "foo-org";
-        private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
+        private readonly IEnumerable<string> _adoOrgs = new List<string>() { ADO_ORG };
 
         private readonly OrgsCsvGeneratorService _service;
 
@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjectCount(ADO_ORG)).ReturnsAsync(projectCount);
             _mockAdoInspectorService.Setup(m => m.GetRepoCount(ADO_ORG)).ReturnsAsync(repoCount);
             _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG)).ReturnsAsync(pipelineCount);
