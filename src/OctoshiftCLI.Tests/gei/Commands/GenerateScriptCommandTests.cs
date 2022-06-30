@@ -287,7 +287,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Invoke_Returns_For_Ghas_NoSsl_Client_When_NoSsl_Parameter_Is_Provided()
+        public async Task Invoke_Returns_For_Ghes_NoSsl_Client_When_NoSsl_Parameter_Is_Provided()
         {
 
             // Arrange
