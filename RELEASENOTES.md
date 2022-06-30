@@ -1,2 +1,2 @@
 - `ado2gh inventory-report` command now also reports the compressed size of each repo in `repos.csv`.
-- fixed bug in gh gei generate-script so that it properly respects the --no-ssl-verify argument
+- fixed bug in `gh gei generate-script` so that it properly respects the `--no-ssl-verify` argument
