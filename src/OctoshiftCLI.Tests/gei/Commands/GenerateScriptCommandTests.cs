@@ -437,7 +437,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify --wait }}";
@@ -1307,7 +1307,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
