@@ -528,7 +528,7 @@ if ($Failed -ne 0) {
         private async Task<IEnumerable<string>> GetTeamProjectRepos(AdoApi adoApi, string adoOrg, string teamProject)
         {
             _log.LogInformation($"Team Project: {teamProject}");
-            var projectRepos = await adoApi.GetEnabledRepos(adoOrg, teamProject);
+            var projectRepos = (await adoApi.GetEnabledRepos(adoOrg, teamProject)).Select(repo => repo.Name);
 
             foreach (var repo in projectRepos)
             {

@@ -1,1 +1,2 @@
 - `--gh-pat` arg in the `gei reclaim-mannequin` was renamed to `--github-target-pat` to follow the same naming convention for other commands like ` gei migrate-repo` or `gei generate-mannequin-csv` 
+- `ado2gh inventory-report` command now also reports the compressed size of each repo in `repos.csv`.
