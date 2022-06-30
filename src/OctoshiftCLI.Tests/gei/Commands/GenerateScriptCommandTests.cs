@@ -287,6 +287,44 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Invoke_Returns_For_Ghas_NoSsl_Client_When_NoSsl_Parameter_is_Provided()
+        {
+
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                NoSslVerify = true,
+                Sequential = true
+            };
+
+          
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().NotBeEmpty();
+            _mockGithubApi.Verify(m=> m.GetRepos(args.GithubSourceOrg), Times.Once);
+        }
+
+
+        [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Provided_Team_Project()
         {
             // Arrnage
