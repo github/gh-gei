@@ -50,6 +50,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var minimal = new Option<bool>("--minimal")
+            {
+                IsRequired = false,
+                Description = "Significantly increases the generation speed of the CSV files by including the bare minimum info."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -57,12 +62,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             AddOption(adoOrg);
             AddOption(adoPat);
+            AddOption(minimal);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoPat = null, bool minimal = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -76,6 +82,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             if (adoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
+            }
+
+            if (minimal)
+            {
+                _log.LogInformation("MINIMAL: true");
             }
 
             var ado = _adoApiFactory.Create(adoPat);
@@ -99,17 +110,17 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"Found {pipelineCount} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat, minimal);
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
             _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat);
+            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat, minimal);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
             _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(adoPat);
+            var reposCsvText = await _reposCsvGenerator.Generate(adoPat, minimal);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
