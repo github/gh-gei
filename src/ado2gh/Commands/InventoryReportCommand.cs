@@ -53,7 +53,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var minimal = new Option<bool>("--minimal")
             {
                 IsRequired = false,
-                Description = "Significantly increases the generation speed of the CSV files by including the bare minimum info."
+                Description = "Significantly speeds up the generation of the CSV files by including the bare minimum info."
             };
             var verbose = new Option("--verbose")
             {
