@@ -1183,10 +1183,10 @@ namespace OctoshiftCLI.Tests
             const string responseJson = "{\"count\":1,\"value\":[true]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
-            
+
             // Act
             var result = await sut.IsCallerOrgAdmin(ADO_ORG);
-            
+
             // Assert
             result.Should().BeTrue();
         }
@@ -1199,10 +1199,10 @@ namespace OctoshiftCLI.Tests
             const string responseJson = "{\"count\":1,\"value\":[false]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
-            
+
             // Act
             var result = await sut.IsCallerOrgAdmin(ADO_ORG);
-            
+
             // Assert
             result.Should().BeFalse();
         }
@@ -1215,10 +1215,10 @@ namespace OctoshiftCLI.Tests
             const string responseJson = "{\"count\":3,\"value\":[true, false, false]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
-            
+
             // Act
             var result = await sut.IsCallerOrgAdmin(ADO_ORG);
-            
+
             // Assert
             result.Should().BeTrue();
         }
@@ -1231,10 +1231,10 @@ namespace OctoshiftCLI.Tests
             const string responseJson = "{\"count\":0,\"value\":[]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
-            
+
             // Act
             var result = await sut.IsCallerOrgAdmin(ADO_ORG);
-            
+
             // Assert
             result.Should().BeFalse();
         }
@@ -1247,10 +1247,10 @@ namespace OctoshiftCLI.Tests
             const string responseJson = "{}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
-            
+
             // Act
             var result = await sut.IsCallerOrgAdmin(ADO_ORG);
-            
+
             // Assert
             result.Should().BeFalse();
         }
