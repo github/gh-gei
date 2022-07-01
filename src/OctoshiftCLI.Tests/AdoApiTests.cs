@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -158,26 +159,32 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetRepos_Should_Not_Return_Disabled_Repos()
+        public async Task GetEnabledRepos_Should_Not_Return_Disabled_Repos()
         {
-            var repo2 = "foo-repo2";
             var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=6.1-preview.1";
+            var repo1 = new AdoRepository { Id = "1", Name = ADO_REPO, Size = 123, IsDisabled = false };
+            var repo2 = new AdoRepository { Id = "2", Name = "foo-repo2", Size = 5678, IsDisabled = false };
             var json = new object[]
             {
                 new
                 {
                     isDisabled = true,
-                    name = "testing"
+                    name = "testing",
+                    size = 1234
                 },
                 new
                 {
-                    isDisabled = false,
-                    name = ADO_REPO
+                    id = repo1.Id,
+                    isDisabled = repo1.IsDisabled,
+                    name = repo1.Name,
+                    size = repo1.Size
                 },
                 new
                 {
+                    id = repo2.Id,
                     isDisabled = "FALSE",
-                    name = repo2
+                    name = repo2.Name,
+                    size = repo2.Size
                 }
             };
             var response = JArray.Parse(json.ToJson());
@@ -187,7 +194,7 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { ADO_REPO, repo2 });
+            result.Should().BeEquivalentTo(new[] { repo1, repo2 });
         }
 
         [Fact]

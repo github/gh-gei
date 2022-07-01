@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
@@ -261,8 +262,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string repo2 = "foo-repo2";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(org)).ReturnsAsync(new[] { teamProject1, teamProject2 });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject1)).ReturnsAsync(new[] { repo1 });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject2)).ReturnsAsync(new[] { repo2 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject1)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 } });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject2)).ReturnsAsync(new[] { new AdoRepository { Name = repo2 } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -287,6 +288,43 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Invoke_Returns_For_Ghes_NoSsl_Client_When_NoSsl_Parameter_Is_Provided()
+        {
+
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                NoSslVerify = true,
+                Sequential = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().NotBeEmpty();
+            _mockSourceGithubApiFactory.Verify(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()), Times.Once);
+            _mockGithubApi.Verify(m => m.GetRepos(args.GithubSourceOrg), Times.Once);
+        }
+
+
+        [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Provided_Team_Project()
         {
             // Arrnage
@@ -297,7 +335,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string repo2 = "FOO-REPO2";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(org)).ReturnsAsync(new[] { adoTeamProject, anotherTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(org, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -401,7 +439,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify --wait }}";
@@ -478,7 +516,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string adoTeamProject = "ADO-TEAM-PROJECT";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -511,7 +549,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string adoRepo = "SOME REPO";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { adoRepo });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = adoRepo } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -544,7 +582,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string adoServerUrl = "https://ado.contoso.com";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(adoServerUrl, null))
@@ -580,7 +618,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string repo3 = "FOO-REPO-3";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2, repo3 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[]
+            {
+                new AdoRepository { Name = repo1 },
+                new AdoRepository { Name = repo2 },
+                new AdoRepository { Name = repo3 }
+            });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -617,7 +660,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             const string repo2 = "FOO-REPO-2";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -879,7 +922,7 @@ if ($Failed -ne 0) {
             const string adoTeamProject = "ADO-TEAM-PROJECT";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -915,7 +958,7 @@ if ($Failed -ne 0) {
             const string adoServerUrl = "https://ado.contoso.com";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(adoServerUrl, null))
@@ -954,7 +997,12 @@ if ($Failed -ne 0) {
             const string repo3 = "FOO-REPO-3";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { repo1, repo2, repo3 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[]
+            {
+                new AdoRepository { Name = repo1},
+                new AdoRepository { Name = repo2},
+                new AdoRepository { Name = repo3}
+            });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -995,7 +1043,7 @@ if ($Failed -ne 0) {
             const string repo2 = "FOO-REPO-2";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { repo1, repo2 });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -1271,7 +1319,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
@@ -1523,7 +1571,7 @@ if ($Failed -ne 0) {
             const string adoTeamProject = "ADO-TEAM-PROJECT";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))
@@ -1555,7 +1603,7 @@ if ($Failed -ne 0) {
 
             // Arrange
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
-            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { REPO });
+            _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
             _mockAdoApiFactory
                 .Setup(m => m.Create(null, null))

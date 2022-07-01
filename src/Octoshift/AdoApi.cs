@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
@@ -138,14 +139,21 @@ namespace OctoshiftCLI
             return data.Select(x => (string)x["name"]).ToList();
         }
 
-        public virtual async Task<IEnumerable<string>> GetEnabledRepos(string org, string teamProject) => (await GetRepos(org, teamProject)).Where(x => !x.IsDisabled).Select(x => x.Name).ToList();
+        public virtual async Task<IEnumerable<AdoRepository>> GetEnabledRepos(string org, string teamProject) => (await GetRepos(org, teamProject)).Where(x => !x.IsDisabled).ToList();
 
-        public virtual async Task<IEnumerable<(string Id, string Name, bool IsDisabled)>> GetRepos(string org, string teamProject)
+        public virtual async Task<IEnumerable<AdoRepository>> GetRepos(string org, string teamProject)
         {
             var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
-            return data.Select(x => ((string)x["id"], (string)x["name"], ((string)x["isDisabled"]).ToBool()))
-                       .ToList();
+            return data
+                .Select(x => new AdoRepository
+                {
+                    Id = (string)x["id"],
+                    Name = (string)x["name"],
+                    Size = ((string)x["size"]).ToULongOrNull(),
+                    IsDisabled = ((string)x["isDisabled"]).ToBool()
+                })
+                .ToList();
         }
 
         public virtual async Task<string> GetGithubAppId(string org, string githubOrg, IEnumerable<string> teamProjects)
