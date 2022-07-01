@@ -27,6 +27,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         private const string SOURCE_ORG = "FOO-SOURCE-ORG";
         private const string TARGET_ORG = "FOO-TARGET-ORG";
+        private const string SOURCE_PAT = "FOO-SOURCE-PAT";
+        private const string TARGET_PAT = "FOO-TARGET-PAT";
         private const string REPO = "REPO";
         private string _script;
 
@@ -53,7 +55,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(16);
+            _command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -69,6 +71,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
@@ -250,6 +253,79 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             _script.Should().Be(expected.ToString());
         }
+
+
+        [Fact]
+        public async Task Sequential_Github_Single_Repo_With_Tokens()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --github-source-pat {SOURCE_PAT} --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --github-target-pat {TARGET_PAT} --target-repo \"{REPO}\" --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                GithubSourcePat = SOURCE_PAT,
+                GithubTargetPat = TARGET_PAT
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Sequential_Github_Multiple_Repos_With_Tokens()
+        {
+            // Arrange
+            const string repo1 = "FOO-REPO-1";
+            const string repo2 = "FOO-REPO-2";
+            const string repo3 = "FOO-REPO-3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { repo1, repo2, repo3 });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --github-source-pat {SOURCE_PAT} --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --github-target-pat {TARGET_PAT} --target-repo \"{repo1}\" --wait }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --github-source-pat {SOURCE_PAT} --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --github-target-pat {TARGET_PAT} --target-repo \"{repo2}\" --wait }}");
+            expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --github-source-pat {SOURCE_PAT} --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --github-target-pat {TARGET_PAT} --target-repo \"{repo3}\" --wait }}");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                GithubSourcePat = SOURCE_PAT,
+                GithubTargetPat = TARGET_PAT
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
 
         [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Each_Team_Projects_When_Ado_Team_Project_Is_Not_Provided()
