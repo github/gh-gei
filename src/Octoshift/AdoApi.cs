@@ -685,5 +685,18 @@ namespace OctoshiftCLI
 
             await _client.PostAsync(url, payload);
         }
+
+        public virtual async Task<bool> IsCallerOrgAdmin(string org)
+        {
+            const string collectionSecurityNamespaceId = "3e65f728-f8bc-4ecd-8764-7e378b19bfa7";
+            const int genericWritePermissionBitMaskValue = 2;
+            return await HasPermission(org, collectionSecurityNamespaceId, genericWritePermissionBitMaskValue);
+        }
+
+        private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)
+        {
+            var response = await _client.GetAsync($"{_adoBaseUrl}/{org}/_apis/permissions/{securityNamespaceId}/{permission}?api-version=6.0");
+            return ((string)JObject.Parse(response)["value"]?.FirstOrDefault()).ToBool();
+        }
     }
 }
