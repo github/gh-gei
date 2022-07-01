@@ -15,23 +15,25 @@ namespace OctoshiftCLI.AdoToGithub
             _adoApiFactory = adoApiFactory;
         }
 
-        public virtual async Task<string> Generate(string adoPat)
+        public virtual async Task<string> Generate(string adoPat, bool minimal = false)
         {
             var adoApi = _adoApiFactory.Create(adoPat);
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,url,repo-count,pipeline-count,pr-count");
+            result.Append("org,teamproject,url");
+            result.AppendLine(!minimal ? ",repo-count,pipeline-count,pr-count" : null);
 
             foreach (var org in await inspector.GetOrgs())
             {
                 foreach (var teamProject in await inspector.GetTeamProjects(org))
                 {
-                    var repoCount = await inspector.GetRepoCount(org, teamProject);
-                    var pipelineCount = await inspector.GetPipelineCount(org, teamProject);
-                    var prCount = await inspector.GetPullRequestCount(org, teamProject);
                     var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}";
-                    result.AppendLine($"\"{org}\",\"{teamProject}\",\"{url}\",{repoCount},{pipelineCount},{prCount}");
+                    var repoCount = !minimal ? await inspector.GetRepoCount(org, teamProject) : 0;
+                    var pipelineCount = !minimal ? await inspector.GetPipelineCount(org, teamProject) : 0;
+                    var prCount = !minimal ? await inspector.GetPullRequestCount(org, teamProject) : 0;
+                    result.Append($"\"{org}\",\"{teamProject}\",\"{url}\"");
+                    result.AppendLine(!minimal ? $",{repoCount},{pipelineCount},{prCount}" : null);
                 }
             }
 

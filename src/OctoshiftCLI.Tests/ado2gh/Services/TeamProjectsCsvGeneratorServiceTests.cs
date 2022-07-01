@@ -10,7 +10,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class TeamProjectsCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,url,repo-count,pipeline-count,pr-count";
+        private const string FULL_CSV_HEADER = "org,teamproject,url,repo-count,pipeline-count,pr-count";
+        private const string MINIMAL_CSV_HEADER = "org,teamproject,url";
+
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
@@ -49,7 +51,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var result = await _service.Generate(null);
 
             // Assert
-            var expected = $"{CSV_HEADER}{Environment.NewLine}";
+            var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
             expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}\",{repoCount},{pipelineCount},{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
@@ -65,6 +67,28 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _service.Generate(adoPat);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+        }
+
+        [Fact]
+        public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
+        {
+            // Arrange
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
+            _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(_adoTeamProjects);
+
+            // Act
+            var result = await _service.Generate(null, true);
+
+            // Assert
+            var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}\"{Environment.NewLine}";
+
+            result.Should().Be(expected);
+            _mockAdoInspectorService.Verify(m => m.GetRepoCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
+            _mockAdoInspectorService.Verify(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
+            _mockAdoInspectorService.Verify(m => m.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
         }
     }
 }
