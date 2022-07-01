@@ -21,7 +21,7 @@ namespace OctoshiftCLI.AdoToGithub
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.AppendLine("name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count");
+            result.AppendLine("name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count,is-pat-org-admin");
 
             foreach (var org in await inspector.GetOrgs())
             {
@@ -30,9 +30,10 @@ namespace OctoshiftCLI.AdoToGithub
                 var repoCount = await inspector.GetRepoCount(org);
                 var pipelineCount = await inspector.GetPipelineCount(org);
                 var prCount = await inspector.GetPullRequestCount(org);
+                var isOrgAdmin = await adoApi.IsCallerOrgAdmin(org);
                 var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}";
 
-                result.AppendLine($"\"{org}\",\"{url}\",\"{owner}\",{teamProjectCount},{repoCount},{pipelineCount},{prCount}");
+                result.AppendLine($"\"{org}\",\"{url}\",\"{owner}\",{teamProjectCount},{repoCount},{pipelineCount},{prCount},{isOrgAdmin}");
             }
 
             return result.ToString();
