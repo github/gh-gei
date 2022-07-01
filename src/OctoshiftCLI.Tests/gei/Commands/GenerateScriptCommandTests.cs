@@ -288,6 +288,43 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Invoke_Returns_For_Ghes_NoSsl_Client_When_NoSsl_Parameter_Is_Provided()
+        {
+
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AzureStorageConnectionString = azureStorageConnectionString,
+                NoSslVerify = true,
+                Sequential = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _script.Should().NotBeEmpty();
+            _mockSourceGithubApiFactory.Verify(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()), Times.Once);
+            _mockGithubApi.Verify(m => m.GetRepos(args.GithubSourceOrg), Times.Once);
+        }
+
+
+        [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Provided_Team_Project()
         {
             // Arrnage
@@ -402,7 +439,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify --wait }}";
@@ -1282,7 +1319,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
+                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
                 .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
