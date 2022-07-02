@@ -11,7 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
     public class TeamProjectsCsvGeneratorServiceTests
     {
         private const string FULL_CSV_HEADER = "org,teamproject,url,repo-count,pipeline-count,pr-count";
-        private const string MINIMAL_CSV_HEADER = "org,teamproject,url";
+        private const string MINIMAL_CSV_HEADER = "org,teamproject,url,repo-count,pipeline-count";
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
@@ -73,21 +73,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
         {
             // Arrange
+            const int repoCount = 82;
+            const int pipelineCount = 41;
+
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
             _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(_adoTeamProjects);
+            _mockAdoInspectorService.Setup(m => m.GetRepoCount(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(repoCount);
+            _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(pipelineCount);
 
             // Act
             var result = await _service.Generate(null, true);
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}\",{repoCount},{pipelineCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
-            _mockAdoInspectorService.Verify(m => m.GetRepoCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
-            _mockAdoInspectorService.Verify(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
             _mockAdoInspectorService.Verify(m => m.GetPullRequestCount(ADO_ORG, ADO_TEAM_PROJECT), Times.Never);
         }
     }

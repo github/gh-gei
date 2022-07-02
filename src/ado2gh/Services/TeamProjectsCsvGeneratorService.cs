@@ -21,19 +21,19 @@ namespace OctoshiftCLI.AdoToGithub
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.Append("org,teamproject,url");
-            result.AppendLine(!minimal ? ",repo-count,pipeline-count,pr-count" : null);
+            result.Append("org,teamproject,url,repo-count,pipeline-count");
+            result.AppendLine(!minimal ? ",pr-count" : null);
 
             foreach (var org in await inspector.GetOrgs())
             {
                 foreach (var teamProject in await inspector.GetTeamProjects(org))
                 {
                     var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}";
-                    var repoCount = !minimal ? await inspector.GetRepoCount(org, teamProject) : 0;
-                    var pipelineCount = !minimal ? await inspector.GetPipelineCount(org, teamProject) : 0;
+                    var repoCount = await inspector.GetRepoCount(org, teamProject);
+                    var pipelineCount = await inspector.GetPipelineCount(org, teamProject);
                     var prCount = !minimal ? await inspector.GetPullRequestCount(org, teamProject) : 0;
-                    result.Append($"\"{org}\",\"{teamProject}\",\"{url}\"");
-                    result.AppendLine(!minimal ? $",{repoCount},{pipelineCount},{prCount}" : null);
+                    result.Append($"\"{org}\",\"{teamProject}\",\"{url}\",{repoCount},{pipelineCount}");
+                    result.AppendLine(!minimal ? $",{prCount}" : null);
                 }
             }
 

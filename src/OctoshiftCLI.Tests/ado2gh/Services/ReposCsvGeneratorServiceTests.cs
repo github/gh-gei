@@ -11,8 +11,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string FULL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,compressed-repo-size-in-bytes,most-active-contributor,pipeline-count,pr-count,commits-past-year";
-        private const string MINIMAL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,compressed-repo-size-in-bytes";
+        private const string FULL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,pipeline-count,compressed-repo-size-in-bytes,most-active-contributor,pr-count,commits-past-year";
+        private const string MINIMAL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,pipeline-count,compressed-repo-size-in-bytes";
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
@@ -61,7 +61,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",\"12,345\",\"Arin\",{pipelineCount},{prCount},{commitCount}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\",\"Arin\",{prCount},{commitCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -93,7 +93,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",\"12,345\",\"Max\",{pipelineCount},{prCount},{commitCount}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\",\"Max\",{prCount},{commitCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -114,6 +114,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
         {
             // Arrange
+            const int pipelineCount = 41;
             var lastPushDate = DateTime.Now;
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
@@ -121,6 +122,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(_adoTeamProjects);
             _mockAdoInspectorService.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(_adoRepos);
+            _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(pipelineCount);
 
             _mockAdoApi.Setup(m => m.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(lastPushDate);
 
@@ -129,7 +131,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",\"12,345\"{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\"{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockAdoInspectorService.Verify(m => m.GetPipelineCount(It.IsAny<string>()), Times.Never);
