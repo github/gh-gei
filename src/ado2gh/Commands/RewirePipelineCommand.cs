@@ -48,6 +48,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
+            var defaultBranch = new Option<string>("--default-branch")
+            {
+                IsRequired = false,
+                Description = "Change the default branch. Useful for rewiring repos from a repo with master to one with main"
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -60,12 +65,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubRepo);
             AddOption(serviceConnectionId);
             AddOption(adoPat);
+            AddOption(defaultBranch);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, string adoPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, string defaultBranch = null, string adoPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -84,7 +90,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var ado = _adoApiFactory.Create(adoPat);
 
             var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
+            var (currentDefaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
+
+            defaultBranch ??= currentDefaultBranch;
+            _log.LogInformation($"DEFAULT BRANCH: {defaultBranch}");
+
             await ado.ChangePipelineRepo(adoOrg, adoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
 
             _log.LogSuccess("Successfully rewired pipeline");
