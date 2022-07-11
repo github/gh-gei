@@ -40,8 +40,8 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetUserId_Should_Return_UserId()
         {
-            foreach (DictionaryEntry de in Environment.GetEnvironmentVariables())
-                   Console.WriteLine("  {0} = {1}", de.Key, de.Value);
+            foreach (DictionaryEntry de in Environment.GetEnvironmentVariables()) {
+                   Console.WriteLine("{0} = {1}", de.Key, de.Value);
             }
             
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
