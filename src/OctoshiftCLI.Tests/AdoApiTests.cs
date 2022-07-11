@@ -39,6 +39,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetUserId_Should_Return_UserId()
         {
+            `test`
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userJson = new
             {
