@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -41,7 +40,7 @@ namespace OctoshiftCLI.Tests
         public async Task GetUserId_Should_Return_UserId()
         {
             Console.WriteLine("Hello world");
-            
+
             var endpoint = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=5.0-preview.1";
             var userJson = new
             {
