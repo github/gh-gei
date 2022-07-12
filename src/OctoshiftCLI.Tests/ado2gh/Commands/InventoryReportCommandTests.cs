@@ -167,9 +167,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _reposCsvOutput.Should().Be(expectedReposCsv);
             _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(null, true));
-            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null, true));
-            _mockReposCsvGenerator.Setup(m => m.Generate(null, true));
+            _mockOrgsCsvGenerator.Verify(m => m.Generate(null, true));
+            _mockTeamProjectsCsvGenerator.Verify(m => m.Generate(null, true));
+            _mockReposCsvGenerator.Verify(m => m.Generate(null, true));
         }
     }
 }
