@@ -1174,5 +1174,85 @@ namespace OctoshiftCLI.Tests
 
             _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
         }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_True_When_Caller_Is_Org_Admin()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":1,\"value\":[true]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Caller_Is_Not_Org_Admin()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":1,\"value\":[false]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_First_Value_From_Value_Array()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":3,\"value\":[true, false, false]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_Empty_Value_Array()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":0,\"value\":[]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_No_Value()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
     }
 }
