@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
@@ -158,26 +159,32 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetRepos_Should_Not_Return_Disabled_Repos()
+        public async Task GetEnabledRepos_Should_Not_Return_Disabled_Repos()
         {
-            var repo2 = "foo-repo2";
             var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=6.1-preview.1";
+            var repo1 = new AdoRepository { Id = "1", Name = ADO_REPO, Size = 123, IsDisabled = false };
+            var repo2 = new AdoRepository { Id = "2", Name = "foo-repo2", Size = 5678, IsDisabled = false };
             var json = new object[]
             {
                 new
                 {
                     isDisabled = true,
-                    name = "testing"
+                    name = "testing",
+                    size = 1234
                 },
                 new
                 {
-                    isDisabled = false,
-                    name = ADO_REPO
+                    id = repo1.Id,
+                    isDisabled = repo1.IsDisabled,
+                    name = repo1.Name,
+                    size = repo1.Size
                 },
                 new
                 {
+                    id = repo2.Id,
                     isDisabled = "FALSE",
-                    name = repo2
+                    name = repo2.Name,
+                    size = repo2.Size
                 }
             };
             var response = JArray.Parse(json.ToJson());
@@ -187,7 +194,7 @@ namespace OctoshiftCLI.Tests
             var result = await sut.GetEnabledRepos(ADO_ORG, ADO_TEAM_PROJECT);
 
             result.Count().Should().Be(2);
-            result.Should().Contain(new[] { ADO_REPO, repo2 });
+            result.Should().BeEquivalentTo(new[] { repo1, repo2 });
         }
 
         [Fact]
@@ -1166,6 +1173,86 @@ namespace OctoshiftCLI.Tests
             await sut.LockRepo(ADO_ORG, ADO_TEAM_PROJECT_ID, repoId, identityDescriptor);
 
             _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_True_When_Caller_Is_Org_Admin()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":1,\"value\":[true]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Caller_Is_Not_Org_Admin()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":1,\"value\":[false]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_First_Value_From_Value_Array()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":3,\"value\":[true, false, false]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_Empty_Value_Array()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{\"count\":0,\"value\":[]}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_No_Value()
+        {
+            // Arrnage
+            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            const string responseJson = "{}";
+
+            _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
+
+            // Act
+            var result = await sut.IsCallerOrgAdmin(ADO_ORG);
+
+            // Assert
+            result.Should().BeFalse();
         }
     }
 }

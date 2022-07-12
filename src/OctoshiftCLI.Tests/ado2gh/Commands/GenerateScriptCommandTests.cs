@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Extensions;
@@ -26,7 +27,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
         private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
-        private IEnumerable<string> ADO_REPOS = new List<string>() { FOO_REPO };
+        private IEnumerable<AdoRepository> ADO_REPOS = new List<AdoRepository> { new() { Name = FOO_REPO } };
         private IEnumerable<string> ADO_PIPELINES = new List<string>() { FOO_PIPELINE };
         private readonly IEnumerable<string> EMPTY_PIPELINES = new List<string>();
 
@@ -212,7 +213,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var cleanedAdoTeamProject = "Parts-Unlimited";
             var adoTeamProjects = new List<string>() { adoTeamProject };
             var adoRepo = "Some Repo";
-            var adoRepos = new List<string>() { adoRepo };
+            var adoRepos = new List<AdoRepository> { new() { Name = adoRepo } };
             var expectedGithubRepoName = "Parts-Unlimited-Some-Repo";
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
@@ -852,7 +853,7 @@ if ($Failed -ne 0) {
         public async Task ParallelScript_Two_Repos_Two_Pipelines_All_Options()
         {
             // Arrange
-            ADO_REPOS = new List<string> { FOO_REPO, BAR_REPO };
+            ADO_REPOS = new List<AdoRepository> { new() { Name = FOO_REPO }, new() { Name = BAR_REPO } };
 
             _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
             _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);

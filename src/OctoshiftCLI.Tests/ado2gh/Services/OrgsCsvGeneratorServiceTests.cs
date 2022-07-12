@@ -10,14 +10,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class OrgsCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count";
+        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count,is-pat-org-admin";
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private const string ADO_ORG = "foo-org";
-        private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
+        private readonly IEnumerable<string> _adoOrgs = new List<string>() { ADO_ORG };
 
         private readonly OrgsCsvGeneratorService _service;
 
@@ -39,20 +39,21 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
             _mockAdoInspectorService.Setup(m => m.GetTeamProjectCount(ADO_ORG)).ReturnsAsync(projectCount);
             _mockAdoInspectorService.Setup(m => m.GetRepoCount(ADO_ORG)).ReturnsAsync(repoCount);
             _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG)).ReturnsAsync(pipelineCount);
             _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG)).ReturnsAsync(prCount);
 
             _mockAdoApi.Setup(m => m.GetOrgOwner(ADO_ORG)).ReturnsAsync(owner);
+            _mockAdoApi.Setup(m => m.IsCallerOrgAdmin(ADO_ORG)).ReturnsAsync(true);
 
             // Act
             var result = await _service.Generate(null);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"https://dev.azure.com/{ADO_ORG}\",\"{owner}\",{projectCount},{repoCount},{pipelineCount},{prCount}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"https://dev.azure.com/{ADO_ORG}\",\"{owner}\",{projectCount},{repoCount},{pipelineCount},{prCount},{true}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
