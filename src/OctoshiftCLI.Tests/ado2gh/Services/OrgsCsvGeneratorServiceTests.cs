@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class OrgsCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count";
+        private const string CSV_HEADER = "name,url,owner,teamproject-count,repo-count,pipeline-count,pr-count,is-pat-org-admin";
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
@@ -46,13 +46,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoInspectorService.Setup(m => m.GetPullRequestCount(ADO_ORG)).ReturnsAsync(prCount);
 
             _mockAdoApi.Setup(m => m.GetOrgOwner(ADO_ORG)).ReturnsAsync(owner);
+            _mockAdoApi.Setup(m => m.IsCallerOrgAdmin(ADO_ORG)).ReturnsAsync(true);
 
             // Act
             var result = await _service.Generate(null);
 
             // Assert
             var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"https://dev.azure.com/{ADO_ORG}\",\"{owner}\",{projectCount},{repoCount},{pipelineCount},{prCount}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"https://dev.azure.com/{ADO_ORG}\",\"{owner}\",{projectCount},{repoCount},{pipelineCount},{prCount},{true}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
