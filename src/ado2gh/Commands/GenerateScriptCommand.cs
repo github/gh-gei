@@ -13,7 +13,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
     public class GenerateScriptCommand : Command
     {
         internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
-        internal Func<string, Task<string>> ReadFromFile = async (path) => await File.ReadAllTextAsync(path);
 
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;

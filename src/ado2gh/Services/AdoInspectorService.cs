@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.FileIO;
@@ -10,6 +12,8 @@ namespace OctoshiftCLI.AdoToGithub
     {
         private readonly OctoLogger _log;
         private readonly AdoApi _adoApi;
+
+        internal Func<string, Stream> OpenFileStream = path => File.OpenRead(path);
 
         private IList<string> _orgs;
         private readonly IDictionary<string, IList<string>> _teamProjects = new Dictionary<string, IList<string>>();
@@ -31,7 +35,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             _orgs = new List<string>();
 
-            using var csvParser = new TextFieldParser(csvPath);
+            using var csvParser = new TextFieldParser(OpenFileStream(csvPath));
             csvParser.SetDelimiters(",");
             csvParser.ReadFields(); // skip the header row
 
