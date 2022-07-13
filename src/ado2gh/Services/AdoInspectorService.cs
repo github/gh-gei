@@ -246,7 +246,7 @@ namespace OctoshiftCLI.AdoToGithub
 
                     foreach (var repo in _repos[org][teamProject])
                     {
-                        _log.LogInformation($"    Repo: {repo}");
+                        _log.LogInformation($"    Repo: {repo.Name}");
                     }
                 }
             }
