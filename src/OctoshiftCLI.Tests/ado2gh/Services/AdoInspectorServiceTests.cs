@@ -166,7 +166,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _service.LoadReposCsv(csvPath);
 
             // Assert
-            (await _service.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).Should().BeEquivalentTo(new List<string>() { FOO_REPO });
+            (await _service.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).Single().Name.Should().Be(FOO_REPO);
         }
     }
 }

@@ -60,7 +60,7 @@ namespace OctoshiftCLI.AdoToGithub
 
                 if (!_repos.ContainsKey(org))
                 {
-                    _repos.Add(org, new Dictionary<string, IList<string>>());
+                    _repos.Add(org, new Dictionary<string, IList<AdoRepository>>());
                 }
 
                 if (!_teamProjects[org].Any(x => x == teamProject))
@@ -70,12 +70,12 @@ namespace OctoshiftCLI.AdoToGithub
 
                 if (!_repos[org].ContainsKey(teamProject))
                 {
-                    _repos[org].Add(teamProject, new List<string>());
+                    _repos[org].Add(teamProject, new List<AdoRepository>());
                 }
 
-                if (!_repos[org][teamProject].Any(x => x == repo))
+                if (!_repos[org][teamProject].Any(x => x.Name == repo))
                 {
-                    _repos[org][teamProject].Add(repo);
+                    _repos[org][teamProject].Add(new AdoRepository() { Name = repo });
                 }
             }
         }
