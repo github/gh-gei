@@ -62,7 +62,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(16);
+            command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -80,6 +80,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(command.Options, "integrate-boards", false);
             TestHelpers.VerifyCommandOption(command.Options, "rewire-pipelines", false);
             TestHelpers.VerifyCommandOption(command.Options, "all", false);
+            TestHelpers.VerifyCommandOption(command.Options, "repo-list", false);
         }
 
         [Fact]
@@ -129,6 +130,38 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Assert
             _scriptOutput.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task SequentialScript_With_RepoList()
+        {
+            // Arrange
+            var repoList = new FileInfo("repos.csv");
+
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+            _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+            _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+            _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                AdoOrg = ADO_ORG,
+                Sequential = true,
+                Output = new FileInfo("unit-test-output"),
+                RepoList = repoList
+            };
+            await _command.Invoke(args);
+
+            _scriptOutput = TrimNonExecutableLines(_scriptOutput);
+            var expected = $"Exec {{ ./ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
+
+            // Assert
+            _scriptOutput.Should().Be(expected);
+            _mockAdoInspector.Verify(m => m.LoadReposCsv(repoList.FullName));
         }
 
         [Fact]

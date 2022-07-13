@@ -120,5 +120,53 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             result.Should().BeEquivalentTo(pipelines);
         }
+
+        [Fact]
+        public async Task LoadReposCsv_Should_Set_Orgs()
+        {
+            // Arrange
+            var csvPath = "repos.csv";
+            var csvContents = $"org,teamproject,repo{Environment.NewLine}\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{FOO_REPO}\"";
+
+            _service.OpenFileStream = _ => csvContents.ToStream();
+
+            // Act
+            _service.LoadReposCsv(csvPath);
+
+            // Assert
+            (await _service.GetOrgs()).Should().BeEquivalentTo(new List<string>() { ADO_ORG });
+        }
+
+        [Fact]
+        public async Task LoadReposCsv_Should_Set_TeamProjects()
+        {
+            // Arrange
+            var csvPath = "repos.csv";
+            var csvContents = $"org,teamproject,repo{Environment.NewLine}\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{FOO_REPO}\"";
+
+            _service.OpenFileStream = _ => csvContents.ToStream();
+
+            // Act
+            _service.LoadReposCsv(csvPath);
+
+            // Assert
+            (await _service.GetTeamProjects(ADO_ORG)).Should().BeEquivalentTo(new List<string>() { ADO_TEAM_PROJECT });
+        }
+
+        [Fact]
+        public async Task LoadReposCsv_Should_Set_Repos()
+        {
+            // Arrange
+            var csvPath = "repos.csv";
+            var csvContents = $"org,teamproject,repo{Environment.NewLine}\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{FOO_REPO}\"";
+
+            _service.OpenFileStream = _ => csvContents.ToStream();
+
+            // Act
+            _service.LoadReposCsv(csvPath);
+
+            // Assert
+            (await _service.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).Single().Name.Should().Be(FOO_REPO);
+        }
     }
 }
