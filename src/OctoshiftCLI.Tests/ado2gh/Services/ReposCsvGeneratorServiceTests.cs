@@ -11,7 +11,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string CSV_HEADER = "org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor,compressed-repo-size-in-bytes";
+        private const string FULL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,pipeline-count,compressed-repo-size-in-bytes,most-active-contributor,pr-count,commits-past-year";
+        private const string MINIMAL_CSV_HEADER = "org,teamproject,repo,url,last-push-date,pipeline-count,compressed-repo-size-in-bytes";
 
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
@@ -59,8 +60,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var result = await _service.Generate(null);
 
             // Assert
-            var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Arin\",\"12,345\"{Environment.NewLine}";
+            var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\",\"Arin\",{prCount},{commitCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -91,8 +92,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var result = await _service.Generate(null);
 
             // Assert
-            var expected = $"{CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitCount},\"Max\",\"12,345\"{Environment.NewLine}";
+            var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\",\"Max\",{prCount},{commitCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -107,6 +108,36 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _service.Generate(adoPat);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+        }
+
+        [Fact]
+        public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
+        {
+            // Arrange
+            const int pipelineCount = 41;
+            var lastPushDate = DateTime.Now;
+
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            _mockAdoInspectorService.Setup(m => m.GetOrgs()).ReturnsAsync(_adoOrgs);
+            _mockAdoInspectorService.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(_adoTeamProjects);
+            _mockAdoInspectorService.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(_adoRepos);
+            _mockAdoInspectorService.Setup(m => m.GetPipelineCount(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(pipelineCount);
+
+            _mockAdoApi.Setup(m => m.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO)).ReturnsAsync(lastPushDate);
+
+            // Act
+            var result = await _service.Generate(null, true);
+
+            // Assert
+            var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
+            expected += $"\"{ADO_ORG}\",\"{ADO_TEAM_PROJECT}\",\"{ADO_REPO}\",\"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"12,345\"{Environment.NewLine}";
+
+            result.Should().Be(expected);
+            _mockAdoInspectorService.Verify(m => m.GetPipelineCount(It.IsAny<string>()), Times.Never);
+            _mockAdoInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
+            _mockAdoApi.Verify(m => m.GetPushersSince(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
+            _mockAdoApi.Verify(m => m.GetCommitCountSince(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
         }
     }
 }

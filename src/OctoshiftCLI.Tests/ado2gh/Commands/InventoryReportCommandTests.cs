@@ -71,10 +71,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             Assert.NotNull(_command);
             Assert.Equal("inventory-report", _command.Name);
-            Assert.Equal(3, _command.Options.Count);
+            Assert.Equal(4, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "minimal", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -88,9 +89,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedOrgsCsv);
-            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedTeamProjectsCsv);
-            _mockReposCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedReposCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedTeamProjectsCsv);
+            _mockReposCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedReposCsv);
             _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
 
             await _command.Invoke(null);
@@ -111,9 +112,9 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            _mockOrgsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedOrgsCsv);
-            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedTeamProjectsCsv);
-            _mockReposCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedReposCsv);
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedTeamProjectsCsv);
+            _mockReposCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedReposCsv);
             _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
 
             await _command.Invoke(ADO_ORG);
@@ -135,10 +136,40 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             await _command.Invoke("some org", adoPat);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
-            _mockOrgsCsvGenerator.Verify(m => m.Generate(adoPat));
-            _mockTeamProjectsCsvGenerator.Verify(m => m.Generate(adoPat));
-            _mockReposCsvGenerator.Verify(m => m.Generate(adoPat));
+            _mockOrgsCsvGenerator.Verify(m => m.Generate(adoPat, It.IsAny<bool>()));
+            _mockTeamProjectsCsvGenerator.Verify(m => m.Generate(adoPat, It.IsAny<bool>()));
+            _mockReposCsvGenerator.Verify(m => m.Generate(adoPat, It.IsAny<bool>()));
             _mockPipelinesCsvGenerator.Verify(m => m.Generate(adoPat));
+        }
+
+        [Fact]
+        public async Task It_Generates_Minimal_Csvs_When_Requested()
+        {
+            // Arrange
+            var expectedOrgsCsv = "csv stuff";
+            var expectedTeamProjectsCsv = "more csv stuff";
+            var expectedReposCsv = "repo csv stuff";
+            var expectedPipelinesCsv = "pipelines csv stuff";
+
+            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
+
+            _mockOrgsCsvGenerator.Setup(m => m.Generate(null, It.IsAny<bool>())).ReturnsAsync(expectedOrgsCsv);
+            _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null, It.IsAny<bool>())).ReturnsAsync(expectedTeamProjectsCsv);
+            _mockReposCsvGenerator.Setup(m => m.Generate(null, It.IsAny<bool>())).ReturnsAsync(expectedReposCsv);
+            _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
+
+            // Act
+            await _command.Invoke(null, minimal: true);
+
+            // Assert
+            _orgsCsvOutput.Should().Be(expectedOrgsCsv);
+            _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
+            _reposCsvOutput.Should().Be(expectedReposCsv);
+            _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
+
+            _mockOrgsCsvGenerator.Verify(m => m.Generate(null, true));
+            _mockTeamProjectsCsvGenerator.Verify(m => m.Generate(null, true));
+            _mockReposCsvGenerator.Verify(m => m.Generate(null, true));
         }
     }
 }

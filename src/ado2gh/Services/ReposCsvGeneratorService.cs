@@ -16,13 +16,14 @@ namespace OctoshiftCLI.AdoToGithub
             _adoApiFactory = adoApiFactory;
         }
 
-        public virtual async Task<string> Generate(string adoPat)
+        public virtual async Task<string> Generate(string adoPat, bool minimal = false)
         {
             var adoApi = _adoApiFactory.Create(adoPat);
             var inspector = _adoInspectorServiceFactory.Create(adoApi);
             var result = new StringBuilder();
 
-            result.AppendLine("org,teamproject,repo,url,pipeline-count,pr-count,last-push-date,commits-past-year,most-active-contributor,compressed-repo-size-in-bytes");
+            result.Append("org,teamproject,repo,url,last-push-date,pipeline-count,compressed-repo-size-in-bytes");
+            result.AppendLine(!minimal ? ",most-active-contributor,pr-count,commits-past-year" : null);
 
             foreach (var org in await inspector.GetOrgs())
             {
@@ -31,13 +32,14 @@ namespace OctoshiftCLI.AdoToGithub
                     foreach (var repo in await inspector.GetRepos(org, teamProject))
                     {
                         var url = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(teamProject)}/_git/{Uri.EscapeDataString(repo.Name)}";
-                        var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo.Name);
-                        var prCount = await inspector.GetPullRequestCount(org, teamProject, repo.Name);
                         var lastPushDate = await adoApi.GetLastPushDate(org, teamProject, repo.Name);
-                        var commitsPastYear = await adoApi.GetCommitCountSince(org, teamProject, repo.Name, DateTime.Today.AddYears(-1));
-                        var mostActiveContributor = await GetMostActiveContributor(org, teamProject, repo.Name, adoApi);
+                        var pipelineCount = await inspector.GetPipelineCount(org, teamProject, repo.Name);
+                        var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, teamProject, repo.Name, adoApi) : null;
+                        var prCount = !minimal ? await inspector.GetPullRequestCount(org, teamProject, repo.Name) : 0;
+                        var commitsPastYear = !minimal ? await adoApi.GetCommitCountSince(org, teamProject, repo.Name, DateTime.Today.AddYears(-1)) : 0;
 
-                        result.AppendLine($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{url}\",{pipelineCount},{prCount},\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{commitsPastYear},\"{mostActiveContributor}\",\"{repo.Size:N0}\"");
+                        result.Append($"\"{org}\",\"{teamProject}\",\"{repo.Name}\",\"{url}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",{pipelineCount},\"{repo.Size:N0}\"");
+                        result.AppendLine(!minimal ? $",\"{mostActiveContributor}\",{prCount},{commitsPastYear}" : null);
                     }
                 }
             }
