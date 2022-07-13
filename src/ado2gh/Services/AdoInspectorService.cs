@@ -36,7 +36,8 @@ namespace OctoshiftCLI.AdoToGithub
         {
             _orgs = new List<string>();
 
-            using var csvParser = new TextFieldParser(OpenFileStream(csvPath));
+            using var csvStream = OpenFileStream(csvPath);
+            using var csvParser = new TextFieldParser(csvStream);
             csvParser.SetDelimiters(",");
             csvParser.ReadFields(); // skip the header row
 
