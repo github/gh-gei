@@ -37,10 +37,8 @@ jobs:
         run: |
           eventjson=`cat 'artifacts/Event File/event.json'`
           prnumber=`echo $(jq -r '.pull_request.number' <<< "$eventjson")`
-          prorg=`echo $(jq -r '.pull_request.head.repo.owner.login' <<< "$eventjson")`
           echo $prnumber
-          echo "PR_NUMBER=$(echo $prnumber)" >> $GITHUB_ENV
-          echo "PR_ORG=$(echo $prnumber)" >> $GITHUB_ENV
+          echo "PR_NUMBER=$(echo $prnumber | sed 's/[^0-9]*//g' | tr -d '\n')" >> $GITHUB_ENV
       
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
@@ -57,13 +55,3 @@ jobs:
           recreate: true
           path: artifacts/Code Coverage Report/code-coverage-results.md
           number: ${{ env.PR_NUMBER }}
-
-      - name: Publish Integration Test Results
-        if: ${{ env.PR_ORG == 'github' }}
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          event_file: artifacts/Event File/event.json
-          event_name: ${{ github.event.workflow_run.event }}
-          files: 'artifacts/Integration Test Results/*.xml'
-          check_name: "Integration Test Results"
