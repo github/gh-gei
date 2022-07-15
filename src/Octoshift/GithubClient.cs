@@ -138,7 +138,7 @@ namespace OctoshiftCLI
 
             foreach (var header in response.Headers)
             {
-                _log.LogVerbose($"RESPONSE HEADER: {header.Key} = {header.Value}");
+                _log.LogVerbose($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
             }
 
             if (status == HttpStatusCode.OK)
