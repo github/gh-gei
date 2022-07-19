@@ -46,7 +46,7 @@ Refer to the [official documentation](https://docs.github.com/en/early-access/gi
 2. Set the ADO_PAT and GH_PAT environment variables.
 
 3. Run the `generate-script` command to generate a migration script.
->`ado2gh generate-script --ado-org ORGNAME --github-org ORGNAME --all`
+>`ado2gh generate-script --ado-source-org ORGNAME --github-target-org ORGNAME --all`
 
 4. The previous command will have created a migrate.ps1 script. Review the steps in the generated script and tweak if necessary.
 
