@@ -37,7 +37,6 @@ jobs:
         run: |
           eventjson=`cat 'artifacts/Event File/event.json'`
           prnumber=`echo $(jq -r '.pull_request.number' <<< "$eventjson")`
-          echo $prnumber
           echo "PR_NUMBER=$(echo $prnumber | sed 's/[^0-9]*//g' | tr -d '\n')" >> $GITHUB_ENV
       
       - name: Publish Unit Test Results
