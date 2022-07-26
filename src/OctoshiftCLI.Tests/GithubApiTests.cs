@@ -56,7 +56,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task AddAutoLink_Replaces_Spaces_In_Url_Tempalte()
+        public async Task AddAutoLink_Replaces_Spaces_In_Url_Template()
         {
             // Arrange
             const string adoOrg = "ADO_ORG";
