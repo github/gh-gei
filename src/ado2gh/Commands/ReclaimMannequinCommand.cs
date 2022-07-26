@@ -112,7 +112,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             if (!string.IsNullOrEmpty(csv))
             {
-                _log.LogInformation("Reclaming Mannequins with CSV...");
+                _log.LogInformation("Reclaiming Mannequins with CSV...");
 
                 _log.LogInformation($"GITHUB ORG: {githubOrg}");
                 _log.LogInformation($"FILE: {csv}");
@@ -130,7 +130,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
             else
             {
-                _log.LogInformation("Reclaming Mannequin...");
+                _log.LogInformation("Reclaiming Mannequin...");
 
                 _log.LogInformation($"GITHUB ORG: {githubOrg}");
                 _log.LogInformation($"MANNEQUIN: {mannequinUser}");
