@@ -1665,7 +1665,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound_Or_Moved()
+        public async Task RepoExists_Throws_When_Underlying_HttpRepsponseException_Status_Is_Not_NotFound_Or_Moved()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
