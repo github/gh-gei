@@ -87,7 +87,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var downloadMigrationLogs = new Option("--download-migration-logs")
             {
                 IsRequired = false,
-                Description = "Downloads the migration log for for each repostiory migration."
+                Description = "Downloads the migration log for each repostiory migration."
             };
 
             var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
