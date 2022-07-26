@@ -492,7 +492,7 @@ if ($Failed -ne 0) {
                 if (repos[teamProject].Any())
                 {
                     content.AppendLine();
-                    content.AppendLine($"# === Migration stauts for Team Project: {adoSourceOrg}/{teamProject} ===");
+                    content.AppendLine($"# === Migration status for Team Project: {adoSourceOrg}/{teamProject} ===");
                 }
 
                 foreach (var repo in repos[teamProject])
