@@ -745,7 +745,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task ReclaimMannequin_FailtToReclaim_LogsError_Throws_OctoshiftCliException()
+        public async Task ReclaimMannequin_FailedToReclaim_LogsError_Throws_OctoshiftCliException()
         {
             var failureMessage = "Target must be a member of the octocat organization";
             var mannequinsResponse = new Mannequin[] {
@@ -783,7 +783,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task ReclaimMannequin_TwoMannequins_FailtToReclaimOne_LogsError_Throws_OctoshiftCliException()
+        public async Task ReclaimMannequin_TwoMannequins_FailedToReclaimOne_LogsError_Throws_OctoshiftCliException()
         {
             var mannequinUser2 = "mona";
             var mannequinUserId2 = "modaId2";
