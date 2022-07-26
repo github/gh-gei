@@ -125,7 +125,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 if (!overwrite)
                 {
-                    throw new OctoshiftCliException($"File {migrationLogFile} already exists!  Use --overwrite to overwite this file.");
+                    throw new OctoshiftCliException($"File {migrationLogFile} already exists!  Use --overwrite to overwrite this file.");
                 }
 
                 _log.LogWarning($"Overwriting {migrationLogFile} due to --overwrite option.");

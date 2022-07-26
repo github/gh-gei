@@ -254,7 +254,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Each_Team_Projects_When_Ado_Team_Project_Is_Not_Provided()
         {
-            // Arrnage
+            // Arrange
             const string org = "foo-org";
             const string teamProject1 = "foo-tp1";
             const string teamProject2 = "foo-tp2";
@@ -327,7 +327,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Provided_Team_Project()
         {
-            // Arrnage
+            // Arrange
             const string org = "FOO-ORG";
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string anotherTeamProject = "ANOTHER_TEAM_PROJECT";
@@ -362,7 +362,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Invoke_Gets_No_Repos_When_Provided_Team_Project_Does_Not_Exist()
         {
-            // Arrnage
+            // Arrange
             const string org = "FOO-ORG";
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string anotherTeamProject = "ANOTHER_TEAM_PROJECT";
@@ -512,7 +512,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Sequential_Ado_Single_Repo()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
@@ -544,7 +544,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Sequential_Ado_With_Spaces()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO TEAM PROJECT";
             const string adoRepo = "SOME REPO";
 
@@ -577,7 +577,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Sequential_AdoServer_Single_Repo()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string adoServerUrl = "https://ado.contoso.com";
 
@@ -611,7 +611,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Sequential_Ado_Multiple_Repos()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
@@ -710,7 +710,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Migration stauts for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
+            expected.AppendLine($"# === Migration status for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
             expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine();
@@ -953,7 +953,7 @@ if ($Failed -ne 0) {
         [Fact]
         public async Task Sequential_AdoServer_Single_Repo_With_Download_Migration_Logs()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
             const string adoServerUrl = "https://ado.contoso.com";
 
@@ -1093,7 +1093,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"# === Migration stauts for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
+            expected.AppendLine($"# === Migration status for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
             expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
             expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\"");
@@ -1567,7 +1567,7 @@ if ($Failed -ne 0) {
         [Fact]
         public async Task Sequential_Ado_Contains_Cli_Version()
         {
-            // Arrnage
+            // Arrange
             const string adoTeamProject = "ADO-TEAM-PROJECT";
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });

@@ -70,7 +70,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var downloadMigrationLogs = new Option("--download-migration-logs")
             {
                 IsRequired = false,
-                Description = "Downloads the migration log for for each repostiory migration."
+                Description = "Downloads the migration log for each repository migration."
             };
 
             var createTeams = new Option("--create-teams")
@@ -86,7 +86,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var lockAdoRepos = new Option("--lock-ado-repos")
             {
                 IsRequired = false,
-                Description = "Includes lock-ado-repo scripts that lock repos bofore migrating them."
+                Description = "Includes lock-ado-repo scripts that lock repos before migrating them."
             };
             var disableAdoRepos = new Option("--disable-ado-repos")
             {

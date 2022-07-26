@@ -87,7 +87,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var downloadMigrationLogs = new Option("--download-migration-logs")
             {
                 IsRequired = false,
-                Description = "Downloads the migration log for for each repostiory migration."
+                Description = "Downloads the migration log for each repository migration."
             };
 
             var outputOption = new Option<FileInfo>("--output", () => new FileInfo("./migrate.ps1"))
@@ -492,7 +492,7 @@ if ($Failed -ne 0) {
                 if (repos[teamProject].Any())
                 {
                     content.AppendLine();
-                    content.AppendLine($"# === Migration stauts for Team Project: {adoSourceOrg}/{teamProject} ===");
+                    content.AppendLine($"# === Migration status for Team Project: {adoSourceOrg}/{teamProject} ===");
                 }
 
                 foreach (var repo in repos[teamProject])
