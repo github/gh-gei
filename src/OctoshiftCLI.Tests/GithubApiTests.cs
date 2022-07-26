@@ -990,7 +990,7 @@ namespace OctoshiftCLI.Tests
                     description = "A great team.",
                     privacy = "closed",
                     permission = "admin",
-                    members_url = "https://api.github.com/teams/1/members/membber",
+                    members_url = "https://api.github.com/teams/1/members/member",
                     repositories_url = "https://api.github.com/teams/1/repos",
                 }
             }.ToAsyncJTokenEnumerable();
