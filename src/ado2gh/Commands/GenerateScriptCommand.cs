@@ -70,7 +70,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var downloadMigrationLogs = new Option("--download-migration-logs")
             {
                 IsRequired = false,
-                Description = "Downloads the migration log for each repostiory migration."
+                Description = "Downloads the migration log for each repository migration."
             };
 
             var createTeams = new Option("--create-teams")
