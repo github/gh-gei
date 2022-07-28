@@ -36,7 +36,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             Assert.NotNull(_command);
             Assert.Equal("reclaim-mannequin", _command.Name);
-            Assert.Equal(8, _command.Options.Count);
+            Assert.Equal(9, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "csv", false);
@@ -45,6 +45,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "target-user", false);
             TestHelpers.VerifyCommandOption(_command.Options, "force", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -68,6 +69,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(GITHUB_ORG, MANNEQUIN_USER, null, TARGET_USER, mannequinUserId, false, githubTargetPat);
 
             _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+        }
+
+        [Fact]
+        public async Task It_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, null, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
+            _mockTargetGithubApiFactory.Setup(m => m.Create(targetApiUrl, null)).Returns(_mockGithubApi.Object);
+
+            // Act
+            await _command.Invoke(GITHUB_ORG, MANNEQUIN_USER, null, TARGET_USER, null, targetApiUrl: targetApiUrl);
+
+            // Assert
+            _mockTargetGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
         }
 
         [Fact]

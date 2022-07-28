@@ -33,10 +33,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("wait-for-migration");
-            _command.Options.Count.Should().Be(3);
+            _command.Options.Count.Should().Be(4);
 
             TestHelpers.VerifyCommandOption(_command.Options, "migration-id", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -194,6 +195,29 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
             _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+        }
+
+        [Fact]
+        public async Task It_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockGithubApi
+                .Setup(x => x.GetMigration(MIGRATION_ID).Result)
+                .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
+
+            _mockTargetGithubApiFactory.Setup(m => m.Create(targetApiUrl, null)).Returns(_mockGithubApi.Object);
+
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            // Act
+            await _command.Invoke(MIGRATION_ID, targetApiUrl: targetApiUrl);
+
+            // Assert
+            actualLogOutput.Should().Contain($"TARGET API URL: {targetApiUrl}");
+            _mockTargetGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
         }
     }
 }

@@ -35,6 +35,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var targetApiUrl = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com)."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -44,12 +49,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(actor);
             AddOption(actorType);
             AddOption(githubTargetPat);
+            AddOption(targetApiUrl);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string actor, string actorType, string githubTargetPat = null, bool verbose = false)
+        public async Task Invoke(string githubOrg, string actor, string actorType, string githubTargetPat = null, string targetApiUrl = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -59,6 +65,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (githubTargetPat is not null)
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
+            }
+            if (targetApiUrl is not null)
+            {
+                _log.LogInformation($"TARGET API URL: {targetApiUrl}");
             }
 
             actorType = actorType?.ToUpper();
@@ -74,7 +84,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 return;
             }
 
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _githubApiFactory.Create(targetApiUrl, githubTargetPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
 

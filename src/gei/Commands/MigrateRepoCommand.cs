@@ -67,7 +67,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
-                Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com)."
             };
 
             // GHES migration path

@@ -53,7 +53,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(16);
+            _command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -70,6 +70,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -1625,6 +1626,74 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Contain(expectedCliVersionComment);
+        }
+
+        [Fact]
+        public async Task Sequential_Github_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait --target-api-url \"{targetApiUrl}\" }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                TargetApiUrl = targetApiUrl
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --target-api-url \"{targetApiUrl}\" }}");
+            expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
+            expected.Append($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] --target-api-url \"{targetApiUrl}\"");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                TargetApiUrl = targetApiUrl
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script, 22, 7);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)

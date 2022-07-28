@@ -32,20 +32,26 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var targetApiUrl = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com)."
+            };
             var verbose = new Option("--verbose") { IsRequired = false };
 
             AddOption(migrationId);
             AddOption(githubTargetPat);
+            AddOption(targetApiUrl);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string migrationId, string githubTargetPat = null, bool verbose = false)
+        public async Task Invoke(string migrationId, string githubTargetPat = null, string targetApiUrl = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
             var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
 
             _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
@@ -53,6 +59,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (githubTargetPat is not null)
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
+            }
+
+            if (targetApiUrl is not null)
+            {
+                _log.LogInformation($"TARGET API URL: {targetApiUrl}");
             }
 
             while (true)

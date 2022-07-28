@@ -48,13 +48,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
-                Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
+                Description = "The URL of the target API, if not migrating to github.com (default: to https://api.github.com)."
             };
 
             var githubTargetPat = new Option<string>("--github-target-pat")
             {
                 IsRequired = false,
-                Description = "Personal access token of the GitHub target.  Overrides GH_PAT environment variable."
+                Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
             };
 
             var migrationLogFile = new Option<string>("--migration-log-file")

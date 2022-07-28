@@ -112,6 +112,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var targetApiUrl = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com). It will be ignored for ADO to GitHub migration path."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -135,6 +140,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(sequential);
             AddOption(githubSourcePath);
             AddOption(adoPat);
+            AddOption(targetApiUrl);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<GenerateScriptCommandArgs>(Invoke);
@@ -221,6 +227,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("ADO PAT: ***");
             }
+            if (args.TargetApiUrl is not null)
+            {
+                _log.LogInformation($"TARGET API URL: {args.TargetApiUrl}");
+            }
 
             if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
             {
@@ -234,7 +244,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
                 await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat, args.DownloadMigrationLogs) :
-                await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases, args.DownloadMigrationLogs);
+                await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases, args.DownloadMigrationLogs, args.TargetApiUrl);
 
             if (script.HasValue() && args.Output.HasValue())
             {
@@ -242,7 +252,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool downloadMigrationLogs)
+        private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool downloadMigrationLogs, string targetApiUrl)
         {
             var client = (ghesApiUrl.HasValue() && noSslVerify) ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
 
@@ -254,8 +264,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             return sequential
-                ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs)
-                : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs);
+                ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs, targetApiUrl)
+                : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, downloadMigrationLogs, targetApiUrl);
         }
 
         private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat, bool downloadMigrationLogs)
@@ -316,7 +326,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return repos;
         }
 
-        private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
+        private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs, string targetApiUrl)
         {
             var content = new StringBuilder();
 
@@ -329,18 +339,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             foreach (var repo in repos)
             {
-                content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases)));
+                content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases, targetApiUrl)));
 
                 if (downloadMigrationLogs)
                 {
-                    content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, repo)));
+                    content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, repo, targetApiUrl)));
                 }
             }
 
             return content.ToString();
         }
 
-        private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs)
+        private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool downloadMigrationLogs, string targetApiUrl)
         {
             var content = new StringBuilder();
 
@@ -364,7 +374,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // Queuing migrations
             foreach (var repo in repos)
             {
-                content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases))}");
+                content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases, targetApiUrl))}");
                 content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
                 content.AppendLine();
             }
@@ -377,12 +387,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // Query each migration's status
             foreach (var repo in repos)
             {
-                content.AppendLine(WaitForMigrationScript(repo));
+                content.AppendLine(WaitForMigrationScript(repo, targetApiUrl));
                 content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
 
                 if (downloadMigrationLogs)
                 {
-                    content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, repo));
+                    content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, repo, targetApiUrl));
                 }
 
                 content.AppendLine();
@@ -434,7 +444,7 @@ if ($Failed -ne 0) {
 
                         if (downloadMigrationLogs)
                         {
-                            content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, githubRepo)));
+                            content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, githubRepo, null)));
                         }
                     }
                 }
@@ -498,12 +508,12 @@ if ($Failed -ne 0) {
                 foreach (var repo in repos[teamProject])
                 {
                     var githubRepo = GetGithubRepoName(teamProject, repo);
-                    content.AppendLine(WaitForMigrationScript(githubRepo));
+                    content.AppendLine(WaitForMigrationScript(githubRepo, null));
                     content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
 
                     if (downloadMigrationLogs)
                     {
-                        content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, githubRepo));
+                        content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, githubRepo, null));
                     }
 
                     content.AppendLine();
@@ -541,7 +551,7 @@ if ($Failed -ne 0) {
 
         private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo}".ReplaceInvalidCharactersWithDash();
 
-        private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait, bool skipReleases)
+        private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait, bool skipReleases, string targetApiUrl)
         {
             var ghesRepoOptions = "";
             if (ghesApiUrl.HasValue())
@@ -549,7 +559,7 @@ if ($Failed -ne 0) {
                 ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, noSslVerify);
             }
 
-            return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}{(skipReleases ? " --skip-releases" : string.Empty)}";
+            return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}{(skipReleases ? " --skip-releases" : string.Empty)}{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)}";
         }
 
         private string MigrateAdoRepoScript(string adoServerUrl, string adoSourceOrg, string teamProject, string adoRepo, string githubTargetOrg, string githubRepo, bool wait)
@@ -562,11 +572,11 @@ if ($Failed -ne 0) {
             return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
         }
 
-        private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+        private string WaitForMigrationScript(string repoMigrationKey, string targetApiUrl) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)}";
 
-        private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo)
+        private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo, string targetApiUrl)
         {
-            return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
+            return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)}";
         }
 
         private string Exec(string script) => Wrap(script, "Exec");
@@ -621,6 +631,7 @@ function ExecAndGetMigrationID {
         public bool Sequential { get; set; }
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }
+        public string TargetApiUrl { get; set; }
         public bool Verbose { get; set; }
     }
 }

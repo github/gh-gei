@@ -40,12 +40,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             Assert.NotNull(_command);
             Assert.Equal("generate-mannequin-csv", _command.Name);
-            Assert.Equal(5, _command.Options.Count);
+            Assert.Equal(6, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "output", false);
             TestHelpers.VerifyCommandOption(_command.Options, "include-reclaimed", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -140,6 +141,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _csvContent.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task It_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockTargetGithubApiFactory.Setup(m => m.Create(targetApiUrl, It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            // Act
+            await _command.Invoke(GITHUB_ORG, new FileInfo("unit-test-output"), targetApiUrl: targetApiUrl);
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogInformation($"TARGET API URL: {targetApiUrl}"));
+            _mockTargetGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
         }
     }
 }

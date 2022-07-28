@@ -69,6 +69,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var targetApiUrlOption = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com)."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
@@ -81,9 +86,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(targetUsernameOption);
             AddOption(forceOption);
             AddOption(githubTargetPatOption);
+            AddOption(targetApiUrlOption);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, string, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -94,6 +100,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string csv,
           bool force = false,
           string githubPat = null,
+          string targetApiUrl = null,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -103,7 +110,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 throw new OctoshiftCliException("Either --csv or --mannequin-user and --target-user must be specified");
             }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            if (targetApiUrl is not null)
+            {
+                _log.LogInformation($"TARGET API URL: {targetApiUrl}");
+            }
+
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubPat);
             if (_reclaimService == null)
             {
                 _reclaimService = new ReclaimService(githubApi, _log);

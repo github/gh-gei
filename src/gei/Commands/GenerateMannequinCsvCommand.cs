@@ -51,13 +51,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false
             };
 
+            var targetApiUrl = new Option<string>("--target-api-url")
+            {
+                IsRequired = false,
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com)."
+            };
+
             AddOption(githubTargetOrgOption);
             AddOption(outputOption);
             AddOption(includeReclaimedOption);
             AddOption(githubTargetPat);
+            AddOption(targetApiUrl);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, FileInfo, bool, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, FileInfo, bool, string, string, bool>(Invoke);
         }
 
         public async Task Invoke(
@@ -65,6 +72,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           FileInfo output,
           bool includeReclaimed = false,
           string githubTargetPat = null,
+          string targetApiUrl = null,
           bool verbose = false)
         {
             _log.Verbose = verbose;
@@ -81,8 +89,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("INCLUDING RECLAIMED");
             }
+            if (targetApiUrl is not null)
+            {
+                _log.LogInformation($"TARGET API URL: {targetApiUrl}");
+            }
 
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubTargetPat);
+            var githubApi = _targetGithubApiFactory.Create(targetApiUrl, githubTargetPat);
 
             var githubOrgId = await githubApi.GetOrganizationId(githubTargetOrg);
             var mannequins = await githubApi.GetMannequins(githubOrgId);

@@ -27,12 +27,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             Assert.NotNull(_command);
             Assert.Equal("grant-migrator-role", _command.Name);
-            Assert.Equal(5, _command.Options.Count);
+            Assert.Equal(6, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "actor", true);
             TestHelpers.VerifyCommandOption(_command.Options, "actor-type", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -75,6 +76,25 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
             _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
+        }
+
+        [Fact]
+        public async Task It_Uses_Target_Api_Url_When_Provided()
+        {
+            // Arrange
+            const string targetApiUrl = "https://api.contoso.com";
+
+            _mockTargetGithubApiFactory.Setup(m => m.Create(targetApiUrl, null)).Returns(_mockGithubApi.Object);
+
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            // Act
+            await _command.Invoke("githubOrg", "actor", "TEAM", targetApiUrl: targetApiUrl);
+
+            // Assert
+            actualLogOutput.Should().Contain($"TARGET API URL: {targetApiUrl}");
+            _mockTargetGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
         }
     }
 }
