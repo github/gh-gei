@@ -155,6 +155,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForGet();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.GetAsync(url);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
         public async Task PostAsync_Returns_String_Response()
         {
             // Arrange
@@ -290,6 +311,49 @@ namespace OctoshiftCLI.Tests
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task PostAsync_Removes_V3_From_GraphQL_Url_For_GraphQL_Requests()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForPost();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string actualUrl = "https://example.com/V3/GraphQL";
+            const string expectedUrl = "https://example.com/graphql";
+
+            // Act
+            await githubClient.PostAsync(actualUrl, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PostAsync_Does_Not_Remove_V3_From_Url_For_Non_GraphQL_Requests()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForPost();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3/";
+
+            // Act
+            await githubClient.PostAsync(url, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -431,6 +495,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PutAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForPut();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.PutAsync(url, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
         public async Task PatchAsync_Returns_String_Response()
         {
             // Arrange
@@ -569,6 +654,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PatchAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForPatch();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.PatchAsync(url, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
         public async Task DeleteAsync_Returns_String_Response()
         {
             // Arrange
@@ -643,6 +749,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task DeleteAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForDelete();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.DeleteAsync(url);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
         public async Task GetNonSuccessAsync_Is_Unsuccessful()
         {
             // Arrange
@@ -705,6 +832,27 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose($"GITHUB REQUEST ID: {githubRequestId}"));
+        }
+
+        [Fact]
+        public async Task GetNonSuccessAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForGet();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.GetNonSuccessAsync(url, HttpStatusCode.OK);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -1041,6 +1189,35 @@ namespace OctoshiftCLI.Tests
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Does_Not_Remove_V3_From_Url()
+        {
+            // Arrange
+            using var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[\"firs\"]") };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "https://example.com/v3";
+
+            // Act
+            await githubClient.GetAllAsync(url).ToListAsync();
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == url),
+                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -1688,6 +1865,54 @@ query($id: ID!, $first: Int, $after: String) {
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose($"GITHUB REQUEST ID: {firstGithubRequestId}"));
             _mockOctoLogger.Verify(m => m.LogVerbose($"GITHUB REQUEST ID: {secondGithubRequestId}"));
+        }
+
+        [Fact]
+        public async Task PostGraphQLWithPaginationAsync_Removes_V3_From_GraphQL_Url_For_GraphQL_Requests()
+        {
+            // Arrange
+            const string actualUrl = "https://example.com/V3/GraphQL";
+            const string expectedUrl = "https://example.com/graphql";
+            const string query = "QUERY";
+
+            var requestBody = new { query };
+            var responseContent = new
+            {
+                data = new
+                {
+                    node = new
+                    {
+                        repositoryMigrations = new
+                        {
+                            nodes = new[] { 1 }
+                        }
+                    }
+                }
+            };
+            using var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent.ToJson())
+            };
+
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post, response);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await githubClient.PostGraphQLWithPaginationAsync(
+                    actualUrl,
+                    requestBody,
+                    obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
+                    obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"], 2)
+                .ToListAsync();
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]

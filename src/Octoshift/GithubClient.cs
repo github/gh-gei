@@ -115,6 +115,11 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
+            if (httpMethod == HttpMethod.Post && url is not null && url.Trim().EndsWith("/v3/graphql", StringComparison.OrdinalIgnoreCase))
+            {
+                url = url.Replace("/v3/graphql", "/graphql", StringComparison.OrdinalIgnoreCase);
+            }
+
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
             if (body != null)
