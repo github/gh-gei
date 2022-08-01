@@ -20,7 +20,7 @@ namespace OctoshiftCLI
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
-            _apiUrl = apiUrl;
+            _apiUrl = apiUrl?.TrimEnd('/');
             _retryPolicy = retryPolicy;
         }
 
