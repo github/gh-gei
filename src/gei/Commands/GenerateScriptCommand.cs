@@ -115,7 +115,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
-                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com). It will be ignored for ADO to GitHub migration path."
+                Description = "The URL of the target API, if not migrating to github.com (default: https://api.github.com). It is useful when migrating to GHAE."
             };
             var verbose = new Option("--verbose")
             {
