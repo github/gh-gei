@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {

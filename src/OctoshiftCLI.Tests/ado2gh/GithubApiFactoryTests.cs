@@ -42,7 +42,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             // Act
             var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null, null);
-            var result = factory.Create(personalAccessToken: GH_PAT);
+            var result = factory.Create(targetPersonalAccessToken: GH_PAT);
 
             // Assert
             result.Should().NotBeNull();

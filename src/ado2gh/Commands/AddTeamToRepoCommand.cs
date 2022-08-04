@@ -69,7 +69,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
-            var github = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var github = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
             var teamSlug = await github.GetTeamSlug(githubOrg, team);
             await github.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role);
 

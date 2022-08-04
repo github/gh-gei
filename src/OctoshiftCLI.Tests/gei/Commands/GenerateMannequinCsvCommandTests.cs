@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.Models;
 using Xunit;

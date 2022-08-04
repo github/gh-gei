@@ -104,7 +104,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 throw new OctoshiftCliException("Either --csv or --mannequin-user and --target-user must be specified");
             }
 
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
             if (_reclaimService == null)
             {
                 _reclaimService = new ReclaimService(githubApi, _log);

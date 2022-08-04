@@ -110,7 +110,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(personalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
             if (await githubApi.RepoExists(githubOrg, githubRepo))
             {
                 _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
