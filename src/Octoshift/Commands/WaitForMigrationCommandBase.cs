@@ -54,7 +54,7 @@ public class WaitForMigrationCommandBase : Command
 
         if (githubPat is not null)
         {
-            _log.LogInformation($"{GithubPat.ArgumentHelpName.SanitizeForLog()}: ***");
+            _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
         while (true)
