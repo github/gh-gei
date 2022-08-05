@@ -195,7 +195,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    # if: startsWith(github.ref, 'refs/tags/v')
     needs: [ build ]
     environment: PUBLISH_RELEASE
 
@@ -205,20 +205,20 @@ jobs:
         token: ${{ secrets.RELEASE_NOTES_PAT }}
         fetch-depth: 0
 
-    - name: Validate tag on main
-      shell: pwsh
-      run: |
-        git checkout main
-        $mainsha = $(git show-ref refs/heads/main --hash)
-        $tagsha = $(git show-ref ${{ github.ref }} --hash)
-
-        Write-Output "refs/heads/main: $mainsha"
-        Write-Output "${{ github.ref }}: $tagsha"
-
-        if ($mainsha -ne $tagsha) {
-          Write-Error "tag must match HEAD of main"
-          exit 1
-        }
+#    - name: Validate tag on main
+#      shell: pwsh
+#      run: |
+#        git checkout main
+#        $mainsha = $(git show-ref refs/heads/main --hash)
+#        $tagsha = $(git show-ref ${{ github.ref }} --hash)
+#
+#        Write-Output "refs/heads/main: $mainsha"
+#        Write-Output "${{ github.ref }}: $tagsha"
+#
+#        if ($mainsha -ne $tagsha) {
+#          Write-Error "tag must match HEAD of main"
+#          exit 1
+#        }
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -231,17 +231,17 @@ jobs:
       env:
         CLI_VERSION: ${{ github.ref }}
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        body_path: ./RELEASENOTES.md
-        files: |
-          ./dist/ado2gh.*.win-x64.zip
-          ./dist/ado2gh.*.linux-x64.tar.gz
-          ./dist/ado2gh.*.osx-x64.tar.gz
-          ./dist/win-x64/gei-windows-amd64.exe
-          ./dist/linux-x64/gei-linux-amd64
-          ./dist/osx-x64/gei-darwin-amd64
+#    - name: Create Release
+#      uses: softprops/action-gh-release@v1
+#      with:
+#        body_path: ./RELEASENOTES.md
+#        files: |
+#          ./dist/ado2gh.*.win-x64.zip
+#          ./dist/ado2gh.*.linux-x64.tar.gz
+#          ./dist/ado2gh.*.osx-x64.tar.gz
+#          ./dist/win-x64/gei-windows-amd64.exe
+#          ./dist/linux-x64/gei-linux-amd64
+#          ./dist/osx-x64/gei-darwin-amd64
     
     - name: Publish ado2gh Extension
       uses: softprops/action-gh-release@v1
@@ -261,9 +261,9 @@ jobs:
         Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
         
-    - name: Commit Archived Release Notes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Automated commit of archived release notes [skip ci]
-        file_pattern: RELEASENOTES.md releasenotes/*.md
-        branch: main
+#    - name: Commit Archived Release Notes
+#      uses: stefanzweifel/git-auto-commit-action@v4
+#      with:
+#        commit_message: Automated commit of archived release notes [skip ci]
+#        file_pattern: RELEASENOTES.md releasenotes/*.md
+#        branch: main
