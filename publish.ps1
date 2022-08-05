@@ -20,6 +20,12 @@ else {
     }
 
     Compress-Archive -Path ./dist/win-x64/ado2gh.exe -DestinationPath ./dist/ado2gh.$AssemblyVersion.win-x64.zip -Force
+    
+    if (Test-Path -Path ./dist/win-x64/ado2gh-windows-amd64.exe) {
+        Remove-Item ./dist/win-x64/ado2gh-windows-amd64.exe
+    }
+
+    Rename-Item ./dist/win-x64/ado2gh.exe ado2gh-windows-amd64.exe
 }
 
 if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
@@ -33,6 +39,12 @@ else {
     }
 
     tar -cvzf ./dist/ado2gh.$AssemblyVersion.linux-x64.tar.gz -C ./dist/linux-x64 ado2gh
+    
+    if (Test-Path -Path ./dist/linux-x64/ado2gh-linux-amd64.exe) {
+        Remove-Item ./dist/linux-x64/ado2gh-linux-amd64.exe
+    }
+
+    Rename-Item ./dist/linux-x64/ado2gh.exe ado2gh-linux-amd64.exe
 }
 
 if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
@@ -46,6 +58,12 @@ else {
     }
 
     tar -cvzf ./dist/ado2gh.$AssemblyVersion.osx-x64.tar.gz -C ./dist/osx-x64 ado2gh
+    
+    if (Test-Path -Path ./dist/osx-x64/ado2gh-darwin-amd64.exe) {
+        Remove-Item ./dist/osx-x64/ado2gh-darwin-amd64.exe
+    }
+
+    Rename-Item ./dist/osx-x64/ado2gh.exe ado2gh-darwin-amd64.exe
 }  
 
 
