@@ -63,7 +63,8 @@ namespace OctoshiftCLI
             _writeToVerboseLog(output);
         }
 
-        private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+        //private string FormatMessage(string msg, string level) => $"[{DateTime.Now:H:mm:ss.ffffff}] [{level}] {msg}\n";
+        private string FormatMessage(string msg, string level) => $"[{DateTime.Now:o}] [{level}] {msg}\n";
 
         private string MaskSecrets(string msg)
         {
