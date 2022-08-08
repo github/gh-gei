@@ -44,7 +44,7 @@ else {
         Remove-Item ./dist/linux-x64/ado2gh-linux-amd64.exe
     }
 
-    Rename-Item ./dist/linux-x64/ado2gh.exe ado2gh-linux-amd64.exe
+    Rename-Item ./dist/linux-x64/ado2gh ado2gh-linux-amd64
 }
 
 if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
@@ -63,7 +63,7 @@ else {
         Remove-Item ./dist/osx-x64/ado2gh-darwin-amd64.exe
     }
 
-    Rename-Item ./dist/osx-x64/ado2gh.exe ado2gh-darwin-amd64.exe
+    Rename-Item ./dist/osx-x64/ado2gh ado2gh-darwin-amd64
 }  
 
 
