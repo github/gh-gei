@@ -1,15 +1,16 @@
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 
 public class WaitForMigrationCommandTests
 {
     private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+
     private readonly WaitForMigrationCommand _command;
 
     public WaitForMigrationCommandTests()
@@ -25,7 +26,7 @@ public class WaitForMigrationCommandTests
         _command.Options.Count.Should().Be(3);
 
         TestHelpers.VerifyCommandOption(_command.Options, "migration-id", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
     }
 }

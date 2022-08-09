@@ -1,6 +1,4 @@
-using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
@@ -23,14 +21,6 @@ public class WaitForMigrationCommandBase : Command
         _githubApiFactory = githubApiFactory;
 
         Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
-        Description += Environment.NewLine;
-        Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
-
-        AddOption(MigrationId);
-        AddOption(GithubPat);
-        AddOption(Verbose);
-
-        Handler = CommandHandler.Create<string, string, bool>(Invoke);
     }
 
     protected virtual Option<string> MigrationId { get; } = new("--migration-id")
@@ -43,7 +33,14 @@ public class WaitForMigrationCommandBase : Command
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
-    public async Task Invoke(string migrationId, string githubPat = null, bool verbose = false)
+    protected void RegisterOptions()
+    {
+        AddOption(MigrationId);
+        AddOption(GithubPat);
+        AddOption(Verbose);
+    }
+
+    public async Task Handle(string migrationId, string githubPat = null, bool verbose = false)
     {
         _log.Verbose = verbose;
 

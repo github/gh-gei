@@ -29,18 +29,6 @@ public class WaitForMigrationCommandBaseTests
     }
 
     [Fact]
-    public void Should_Have_Options()
-    {
-        _command.Should().NotBeNull();
-        _command.Name.Should().Be("wait-for-migration");
-        _command.Options.Count.Should().Be(3);
-
-        TestHelpers.VerifyCommandOption(_command.Options, "migration-id", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
-    }
-
-    [Fact]
     public async Task With_Migration_ID_That_Succeeds()
     {
         // Arrange
@@ -66,7 +54,7 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
-        await _command.Invoke(MIGRATION_ID);
+        await _command.Handle(MIGRATION_ID);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
@@ -109,7 +97,7 @@ public class WaitForMigrationCommandBaseTests
 
         // Act
         await FluentActions
-            .Invoking(async () => await _command.Invoke(MIGRATION_ID))
+            .Invoking(async () => await _command.Handle(MIGRATION_ID))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage(failureReason);
@@ -155,7 +143,7 @@ public class WaitForMigrationCommandBaseTests
 
         // Act
         await FluentActions
-            .Invoking(async () => await _command.Invoke(MIGRATION_ID))
+            .Invoking(async () => await _command.Handle(MIGRATION_ID))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage(failureReason);
@@ -186,10 +174,11 @@ public class WaitForMigrationCommandBaseTests
         _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
         // Act
-        await _command.Invoke(MIGRATION_ID, githubPat);
+        await _command.Handle(MIGRATION_ID, githubPat);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation("GITHUB PAT: ***"));
         _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
 }
+
