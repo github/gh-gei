@@ -1,0 +1,28 @@
+{
+	"name": "C# (.NET)",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": { 
+			// Update 'VARIANT' to pick a .NET Core version: 3.1, 6.0
+			// Append -bullseye or -focal to pin to an OS version.
+			"VARIANT": "6.0-bullseye"
+		}
+	},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {	
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"formulahendry.dotnet-test-explorer",
+				"github.copilot"
+			]
+		}
+	},
+	"remoteUser": "vscode",
+
+	// Setup ssh mount
+	"mounts": ["source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"]
+}
