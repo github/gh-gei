@@ -105,10 +105,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             }
 
             var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            if (_reclaimService == null)
-            {
-                _reclaimService = new ReclaimService(githubApi, _log);
-            }
+            _reclaimService ??= new ReclaimService(githubApi, _log);
 
             if (!string.IsNullOrEmpty(csv))
             {
