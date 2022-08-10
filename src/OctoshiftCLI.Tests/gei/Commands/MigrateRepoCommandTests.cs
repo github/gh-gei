@@ -6,6 +6,7 @@ using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
+using System.IO;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
@@ -367,8 +368,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
+            var migrationArchive = new byte[] {};
+            try
+            {
+                migrationArchive= File.ReadAllBytes("../../../ActionsDesk_MigrationArchive_04042022.tar.gz");
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine(e.ToString());
+            }
             _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(migrationArchive);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
 
@@ -390,7 +400,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
+                Wait = true,
+                LfsMappingFile = LFS_MAPPING_FILE
             };
             await _command.Invoke(args);
 
