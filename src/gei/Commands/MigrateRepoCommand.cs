@@ -132,6 +132,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
+            var lfsMappingFile = new Option<string>("--lfs-mapping-file")
+            {
+                IsRequired = false,
+                Description = "Rewrite PR SHAs using lfs mapping file during migration."
+            };
 
             AddOption(githubSourceOrg);
             AddOption(adoServerUrl);
@@ -157,6 +162,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetPat);
             AddOption(adoPat);
             AddOption(verbose);
+            AddOption(lfsMappingFile);
 
             Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
         }
@@ -180,6 +186,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   args.SourceRepo,
                   args.AzureStorageConnectionString,
                   args.GithubSourcePat,
+                  args.LfsMappingFile,
                   args.SkipReleases,
                   args.NoSslVerify
                 );
@@ -272,6 +279,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string sourceRepo,
           string azureStorageConnectionString,
           string githubSourcePat,
+          string lfsMappingFile,
           bool skipReleases,
           bool noSslVerify = false)
         {
@@ -304,6 +312,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
 
+            if (lfsMappingFile != "")
+            {
+                // Use the lfs mapping file to modify the pull_requests_*.json files in the archive
+            }
             var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
             _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
 
@@ -453,6 +465,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
                 _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
+            if (args.LfsMappingFile != "")
+            {
+                _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
+            }
         }
     }
 
@@ -478,5 +494,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }
+        public string LfsMappingFile { get; set; }
     }
 }

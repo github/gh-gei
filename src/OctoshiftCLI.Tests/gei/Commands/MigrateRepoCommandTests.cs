@@ -32,6 +32,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
 
+        private const string LFS_MAPPING_FILE = "lfs-mapping.csv";
+
         public MigrateRepoCommandTests()
         {
             _command = new MigrateRepoCommand(
@@ -47,7 +49,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(20);
+            _command.Options.Count.Should().Be(21);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -69,6 +71,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "lfs-mapping-file", false);
         }
 
         [Fact]
@@ -103,6 +106,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 $"GITHUB TARGET ORG: {TARGET_ORG}",
                 $"TARGET REPO: {TARGET_REPO}",
                 $"TARGET API URL: {TARGET_API_URL}",
+                $"LFS MAPPING FILE: {LFS_MAPPING_FILE}",
                 $"A repository migration (ID: {migrationId}) was successfully queued."
             };
 
@@ -114,7 +118,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = false
+                Wait = false,
+                LfsMappingFile = LFS_MAPPING_FILE
             };
             await _command.Invoke(args);
 
@@ -124,7 +129,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
 
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockGithubApi.VerifyNoOtherCalls();
