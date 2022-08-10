@@ -4,6 +4,7 @@ using System.CommandLine.Invocation;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
+using ICSharpCode.SharpZipLib.Tar;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -312,16 +313,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
 
-            if (!String.IsNullOrEmpty(lfsMappingFile))
-            {
-                // Use the lfs mapping file to modify the pull_requests_*.json files in the archive
-            }
             var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
             _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
+            if (!String.IsNullOrEmpty(lfsMappingFile))
+            {
+                // Use the lfs mapping file to modify the pull_requests_*.json files in the archive
+            }
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
             var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
