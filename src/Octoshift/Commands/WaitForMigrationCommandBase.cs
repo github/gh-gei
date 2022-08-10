@@ -33,7 +33,7 @@ public class WaitForMigrationCommandBase : Command
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
-    protected void RegisterOptions()
+    protected void AddOptions()
     {
         AddOption(MigrationId);
         AddOption(GithubPat);
