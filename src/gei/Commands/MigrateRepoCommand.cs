@@ -312,7 +312,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
 
-            if (lfsMappingFile != "")
+            if (!String.IsNullOrEmpty(lfsMappingFile))
             {
                 // Use the lfs mapping file to modify the pull_requests_*.json files in the archive
             }
