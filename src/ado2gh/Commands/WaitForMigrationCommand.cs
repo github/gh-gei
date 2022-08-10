@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine.Invocation;
-using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 
@@ -14,8 +13,6 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<string, string, bool>(Invoke);
+        Handler = CommandHandler.Create<string, string, bool>(Handle);
     }
-
-    public async Task Invoke(string migrationId, string githubPat = null, bool verbose = false) => await Handle(migrationId, githubPat, verbose);
 }
