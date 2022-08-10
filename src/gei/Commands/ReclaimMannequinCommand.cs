@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -104,10 +105,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
 
             var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            if (_reclaimService == null)
-            {
-                _reclaimService = new ReclaimService(githubApi, _log);
-            }
+            _reclaimService ??= new ReclaimService(githubApi, _log);
 
             if (!string.IsNullOrEmpty(csv))
             {

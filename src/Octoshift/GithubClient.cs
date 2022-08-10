@@ -4,10 +4,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI

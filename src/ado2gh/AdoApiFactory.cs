@@ -1,4 +1,5 @@
 using System.Net.Http;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.AdoToGithub
 {

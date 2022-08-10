@@ -4,6 +4,7 @@ using System.CommandLine.Invocation;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Polly;
 
