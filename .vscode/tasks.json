@@ -7,19 +7,31 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/OctoshiftCLI/OctoshiftCLI.csproj",
+                "${workspaceFolder}/src/gei/gei.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "publish",
+            "label": "build-ado2gh",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "publish",
-                "${workspaceFolder}/src/OctoshiftCLI/OctoshiftCLI.csproj",
+                "build",
+                "${workspaceFolder}/src/ado2gh/ado2gh.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/src/OctoshiftCLI.Tests",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -32,9 +44,8 @@
             "args": [
                 "watch",
                 "run",
-                "${workspaceFolder}/src/OctoshiftCLI/OctoshiftCLI.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "--project",
+                "${workspaceFolder}/src/gei/gei.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
