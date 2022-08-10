@@ -25,22 +25,6 @@ public class DownloadLogsCommandBaseTests
     }
 
     [Fact]
-    public void Should_Have_Options()
-    {
-        Assert.NotNull(_command);
-        Assert.Equal("download-logs", _command.Name);
-        Assert.Equal(7, _command.Options.Count);
-
-        TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-api-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "migration-log-file", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "overwrite", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
-    }
-
-    [Fact]
     public async Task Happy_Path()
     {
         // Arrange
@@ -54,7 +38,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo);
+        await _command.Handle(githubOrg, repo);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(logUrl, defaultFileName));
@@ -73,7 +57,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo);
+        await _command.Handle(githubOrg, repo);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo));
@@ -95,7 +79,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo, targetApiUrl);
+        await _command.Handle(githubOrg, repo, targetApiUrl);
 
         // Assert
         _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
@@ -115,7 +99,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo, null, githubTargetPat);
+        await _command.Handle(githubOrg, repo, null, githubTargetPat);
 
         // Assert
         _mockGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
@@ -135,7 +119,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo, null, null, migrationLogFile);
+        await _command.Handle(githubOrg, repo, null, null, migrationLogFile);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), migrationLogFile));
@@ -163,7 +147,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo);
+        await _command.Handle(githubOrg, repo);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
@@ -184,7 +168,7 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Invoke(githubOrg, repo, null, null, null, overwrite);
+        await _command.Handle(githubOrg, repo, null, null, null, overwrite);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
@@ -202,7 +186,7 @@ public class DownloadLogsCommandBaseTests
 
         // Assert
         await FluentActions
-            .Invoking(async () => await _command.Invoke(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(githubOrg, repo))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -220,7 +204,7 @@ public class DownloadLogsCommandBaseTests
 
         // Assert
         await FluentActions
-            .Invoking(async () => await _command.Invoke(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(githubOrg, repo))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -238,7 +222,7 @@ public class DownloadLogsCommandBaseTests
 
         // Act
         await FluentActions
-            .Invoking(async () => await _command.Invoke(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(githubOrg, repo))
             .Should().ThrowAsync<OctoshiftCliException>();
 
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));

@@ -1,3 +1,4 @@
+using System.CommandLine.Invocation;
 using System.Runtime.CompilerServices;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
@@ -14,5 +15,7 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         HttpDownloadService httpDownloadService,
         RetryPolicy retryPolicy) : base(log, githubApiFactory, httpDownloadService, retryPolicy)
     {
+        AddOptions();
+        Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Handle);
     }
 }

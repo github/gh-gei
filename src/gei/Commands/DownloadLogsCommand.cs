@@ -1,5 +1,7 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 
@@ -15,6 +17,8 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         HttpDownloadService httpDownloadService,
         RetryPolicy retryPolicy) : base(log, targetGithubApiFactory, httpDownloadService, retryPolicy)
     {
+        AddOptions();
+        Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat")
@@ -40,4 +44,13 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         IsRequired = true,
         Description = "Target GitHub organization to download logs from."
     };
+
+    public async Task Invoke(
+        string githubTargetOrg,
+        string targetRepo,
+        string targetApiUrl = null,
+        string githubTargetPat = null,
+        string migrationLogFile = null,
+        bool overwrite = false,
+        bool verbose = false) => await Handle(githubTargetOrg, targetRepo, targetApiUrl, githubTargetPat, migrationLogFile, overwrite, verbose);
 }

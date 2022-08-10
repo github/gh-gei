@@ -1,9 +1,9 @@
 using Moq;
+using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 
 public class DownloadLogsCommandTests
 {
@@ -28,10 +28,10 @@ public class DownloadLogsCommandTests
         Assert.Equal("download-logs", _command.Name);
         Assert.Equal(7, _command.Options.Count);
 
-        TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "target-repo", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-api-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
         TestHelpers.VerifyCommandOption(_command.Options, "migration-log-file", false);
         TestHelpers.VerifyCommandOption(_command.Options, "overwrite", false);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);

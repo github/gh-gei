@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -33,16 +32,6 @@ public class DownloadLogsCommandBase : Command
         _retryPolicy = retryPolicy;
 
         Description = "Downloads migration logs for migrations.";
-
-        AddOption(GithubOrg);
-        AddOption(GithubRepo);
-        AddOption(GithubApiUrl);
-        AddOption(GithubPat);
-        AddOption(MigrationLogFile);
-        AddOption(Overwrite);
-        AddOption(Verbose);
-
-        Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")
@@ -87,7 +76,18 @@ public class DownloadLogsCommandBase : Command
         Description = "Display more information to the console."
     };
 
-    public async Task Invoke(
+    protected void AddOptions()
+    {
+        AddOption(GithubOrg);
+        AddOption(GithubRepo);
+        AddOption(GithubApiUrl);
+        AddOption(GithubPat);
+        AddOption(MigrationLogFile);
+        AddOption(Overwrite);
+        AddOption(Verbose);
+    }
+
+    public async Task Handle(
         string githubOrg,
         string githubRepo,
         string githubApiUrl = null,
