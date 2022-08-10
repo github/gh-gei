@@ -8,7 +8,7 @@ using Octoshift.Models;
 using OctoshiftCLI.Models;
 using Xunit;
 
-namespace OctoshiftCLI.Tests
+namespace OctoshiftCLI.Tests.Octoshift
 {
     public class ReclaimServiceTests
     {

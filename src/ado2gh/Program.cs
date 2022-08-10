@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Contracts;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub
@@ -36,6 +37,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
+                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

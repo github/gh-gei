@@ -9,6 +9,7 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
