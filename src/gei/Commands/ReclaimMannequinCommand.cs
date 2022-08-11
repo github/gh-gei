@@ -28,10 +28,10 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
 
     public async Task Invoke(
         string githubTargetOrg,
+        string csv,
         string mannequinUser,
         string mannequinId,
         string targetUser,
-        string csv,
         bool force = false,
         string githubTargetPat = null,
         bool verbose = false) => await Handle(githubTargetOrg, csv, mannequinUser, mannequinId, targetUser, force, githubTargetPat, verbose);
