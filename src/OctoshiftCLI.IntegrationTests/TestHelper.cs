@@ -456,7 +456,7 @@ steps:
                 }
             }
 
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments} [Working Dir: {startInfo.WorkingDirectory}]");
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
 
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
@@ -488,7 +488,7 @@ steps:
                 }
             }
 
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments} [Working Dir: {startInfo.WorkingDirectory}]");
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
 
