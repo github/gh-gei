@@ -25,7 +25,7 @@ else {
         Remove-Item ./dist/win-x64/ado2gh-windows-amd64.exe
     }
 
-    Copy-Item ./dist/win-x64/ado2gh.exe ado2gh-windows-amd64.exe
+    Copy-Item ./dist/win-x64/ado2gh.exe ./dist/win-x64/ado2gh-windows-amd64.exe
 }
 
 if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
@@ -44,7 +44,7 @@ else {
         Remove-Item ./dist/linux-x64/ado2gh-linux-amd64
     }
 
-    Copy-Item ./dist/linux-x64/ado2gh ado2gh-linux-amd64
+    Copy-Item ./dist/linux-x64/ado2gh ./dist/linux-x64/ado2gh-linux-amd64
 }
 
 if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
@@ -63,7 +63,7 @@ else {
         Remove-Item ./dist/osx-x64/ado2gh-darwin-amd64
     }
 
-    Copy-Item ./dist/osx-x64/ado2gh ado2gh-darwin-amd64
+    Copy-Item ./dist/osx-x64/ado2gh ./dist/osx-x64/ado2gh-darwin-amd64
 }  
 
 
