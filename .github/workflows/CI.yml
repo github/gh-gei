@@ -268,6 +268,7 @@ jobs:
       with:
         body_path: ./RELEASENOTES.md
         repository: github/gh-ado2gh
+        tag_name: v0.1
         token: ${{ secrets.PUBLISH_ADO2GH_TOKEN }}
         files: |
           ./dist/win-x64/ado2gh-windows-amd64.exe
