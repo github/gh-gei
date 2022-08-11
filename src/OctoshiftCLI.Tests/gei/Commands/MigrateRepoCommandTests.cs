@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
 
-        private const string LFS_MAPPING_FILE = "lfs-mapping.csv";
+        private const string LFS_MAPPING_FILE = "../../../lfs-mapping.csv";
 
         public MigrateRepoCommandTests()
         {
@@ -368,19 +368,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            var migrationArchive = new byte[] {};
+            var migrationArchiveOrig = new byte[] {};
             try
             {
-                migrationArchive= File.ReadAllBytes("../../../ActionsDesk_MigrationArchive_04042022.tar.gz");
+                migrationArchiveOrig= File.ReadAllBytes("../../../metadataArchiveOrig.tar.gz");
             }
             catch (FileNotFoundException e)
             {
                 Console.WriteLine(e.ToString());
             }
             _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(migrationArchive);
+            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(migrationArchiveOrig);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), migrationArchive).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);

@@ -324,11 +324,47 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (!String.IsNullOrEmpty(lfsMappingFile))
             {
                 _log.LogInformation("Modifying pull_requests_*.json files in archive");
+                // extract the metadata archive
                 var gzipDataStream = new MemoryStream(metadataArchiveContent);
                 Stream inStream = new GZipInputStream(gzipDataStream);
                 TarArchive archive = TarArchive.CreateInputTarArchive(inStream, TarBuffer.DefaultBlockFactor);
                 archive.ExtractContents("./archiveExtracted");
+                
+                // modify the pull_requests_*.json files in the extracted archive
+                //string lfsShaMapping = File.ReadAllText(lfsMappingFile);
+                string[] fileNames = System.IO.Directory.GetFiles("./archiveExtracted");
+                foreach (string fileName in fileNames)
+                {
+                    string text = File.ReadAllText(fileName);
+                    var lfsMappingLines = File.ReadLines(lfsMappingFile);
+                    foreach (var lfsMappingLine in lfsMappingLines)
+                    {
+                        string[] lfsMapping = lfsMappingLine.Split(','); 
+                        text = text.Replace(lfsMapping[0], lfsMapping[1]);
+                    }
+                    File.WriteAllText(fileName, text);
+                }
+
+                // tar gz the modified archive
+                // TODO: figure out how to put this into a byte array rather than a file!!
+                Stream outStream = File.Create("newArchive.tar.gz");
+                outStream = new GZipOutputStream(outStream);
+                TarArchive newArchive = TarArchive.CreateOutputTarArchive(outStream, TarBuffer.DefaultBlockFactor);
+                newArchive.RootPath = "./archiveExtracted";
+                
+                if (fileNames.Length > 0) {
+					foreach (string name in fileNames) {
+						TarEntry entry = TarEntry.CreateEntryFromFile(name);
+						newArchive.WriteEntry(entry, true);
+					}
+				} else {
+                    _log.LogInformation("No files found in archiveExtracted directory");
+				}
+                newArchive.Close();
+                metadataArchiveContent= File.ReadAllBytes("newArchive.tar.gz");
                 _log.LogInformation("Done modifying pull_requests_*.json files in archive");
+                File.Delete("newArchive.tar.gz");
+                Directory.Delete("./archiveExtracted", true);
             }
             
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
