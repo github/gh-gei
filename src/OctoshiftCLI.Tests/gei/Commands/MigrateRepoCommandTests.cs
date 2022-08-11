@@ -380,7 +380,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
             _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(migrationArchive);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), migrationArchive).Result).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
