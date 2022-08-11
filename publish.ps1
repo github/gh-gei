@@ -40,8 +40,8 @@ else {
 
     tar -cvzf ./dist/ado2gh.$AssemblyVersion.linux-x64.tar.gz -C ./dist/linux-x64 ado2gh
     
-    if (Test-Path -Path ./dist/linux-x64/ado2gh-linux-amd64.exe) {
-        Remove-Item ./dist/linux-x64/ado2gh-linux-amd64.exe
+    if (Test-Path -Path ./dist/linux-x64/ado2gh-linux-amd64) {
+        Remove-Item ./dist/linux-x64/ado2gh-linux-amd64
     }
 
     Rename-Item ./dist/linux-x64/ado2gh ado2gh-linux-amd64
@@ -59,8 +59,8 @@ else {
 
     tar -cvzf ./dist/ado2gh.$AssemblyVersion.osx-x64.tar.gz -C ./dist/osx-x64 ado2gh
     
-    if (Test-Path -Path ./dist/osx-x64/ado2gh-darwin-amd64.exe) {
-        Remove-Item ./dist/osx-x64/ado2gh-darwin-amd64.exe
+    if (Test-Path -Path ./dist/osx-x64/ado2gh-darwin-amd64) {
+        Remove-Item ./dist/osx-x64/ado2gh-darwin-amd64
     }
 
     Rename-Item ./dist/osx-x64/ado2gh ado2gh-darwin-amd64
