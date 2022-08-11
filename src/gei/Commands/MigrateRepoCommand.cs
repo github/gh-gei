@@ -1,10 +1,12 @@
 ﻿using System;
+using System.IO;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using ICSharpCode.SharpZipLib.Tar;
+using ICSharpCode.SharpZipLib.GZip;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -318,11 +320,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
-
+            
             if (!String.IsNullOrEmpty(lfsMappingFile))
             {
-                // Use the lfs mapping file to modify the pull_requests_*.json files in the archive
+                _log.LogInformation("Modifying pull_requests_*.json files in archive");
+                var gzipDataStream = new MemoryStream(metadataArchiveContent);
+                Stream inStream = new GZipInputStream(gzipDataStream);
+                TarArchive archive = TarArchive.CreateInputTarArchive(inStream, TarBuffer.DefaultBlockFactor);
+                archive.ExtractContents("./archiveExtracted");
+                _log.LogInformation("Done modifying pull_requests_*.json files in archive");
             }
+            
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
             var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
