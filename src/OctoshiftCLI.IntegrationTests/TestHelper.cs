@@ -496,7 +496,7 @@ steps:
         }
 
         public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
-            await RunCliMigration(generateScriptCommand, Path.Join(GetOsDistPath(), "ado2gh"), tokens);
+            await RunCliMigration($"ado2gh {generateScriptCommand}", "gh", tokens);
 
         public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
