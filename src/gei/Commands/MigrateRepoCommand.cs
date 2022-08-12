@@ -471,7 +471,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
                 _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
-            if (args.LfsMappingFile != "")
+            if (args.LfsMappingFile is not null)
             {
                 _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
             }
