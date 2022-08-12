@@ -324,9 +324,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             
             if (lfsMappingFile is not null)
             {
-                _log.LogInformation("Modifying pull_requests_*.json files in archive");
-                metadataArchiveContent = applyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
-                _log.LogInformation("Done modifying pull_requests_*.json files in archive");
+                metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
             }
             
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
@@ -480,6 +478,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private byte[] ApplyLfsMappingFileToMetadata(byte[] metadataArchiveContent, string lfsMappingFile)
         {
+            _log.LogInformation("Modifying pull_requests_*.json files in archive");
             // extract the metadata archive
             var gzipDataStream = new MemoryStream(metadataArchiveContent);
             Stream inStream = new GZipInputStream(gzipDataStream);
@@ -507,11 +506,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             TarArchive newArchive = TarArchive.CreateOutputTarArchive(outStream, TarBuffer.DefaultBlockFactor);
             newArchive.RootPath = "./archiveExtracted";
             
-            if (!fileNames.Any()) 
-            {
-                _log.LogInformation("No files found in archiveExtracted directory");
-            }
-            
             foreach (string name in fileNames) 
             {
                     TarEntry entry = TarEntry.CreateEntryFromFile(name);
@@ -521,6 +515,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             byte[] newArchiveContent = File.ReadAllBytes("newArchive.tar.gz");
             File.Delete("newArchive.tar.gz");
             Directory.Delete("./archiveExtracted", true);
+            _log.LogInformation("Done modifying pull_requests_*.json files in archive");
             return newArchiveContent;
         }
     }
