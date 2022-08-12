@@ -478,7 +478,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             }
         }
 
-        private byte[] applyLfsMappingFileToMetadata(byte[] metadataArchiveContent, string lfsMappingFile)
+        private byte[] ApplyLfsMappingFileToMetadata(byte[] metadataArchiveContent, string lfsMappingFile)
         {
             // extract the metadata archive
             var gzipDataStream = new MemoryStream(metadataArchiveContent);
