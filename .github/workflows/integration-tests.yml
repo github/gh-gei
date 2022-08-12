@@ -68,22 +68,42 @@ jobs:
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
-      run: Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei
+      run: |
+        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
+        Copy-Item ./dist/linux-x64/ado2gh-linux-amd64 ./gh-ado2gh/gh-ado2gh
       shell: pwsh
 
     - name: Copy binary to root (windows)
       if: matrix.runner-os == 'windows-latest'
-      run: Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei.exe
+      run: |
+        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei/gh-gei.exe
+        Copy-Item ./dist/win-x64/ado2gh-windows-amd64.exe ./gh-ado2gh/gh-ado2gh.exe
       shell: pwsh
 
     - name: Copy binary to root (macos)
       if: matrix.runner-os == 'macos-latest'
-      run: Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei
+      run: |
+        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei/gh-gei
+        Copy-Item ./dist/osx-x64/ado2gh-darwin-amd64 ./gh-ado2gh/gh-ado2gh
       shell: pwsh
 
-    - name: Install GH extension
+    - name: Install gh-gei extension
       run: gh extension install .
       shell: pwsh
+      working-directory: ./gh-gei
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Install gh-ado2gh extension
+      run: gh extension install .
+      shell: pwsh
+      working-directory: ./gh-ado2gh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

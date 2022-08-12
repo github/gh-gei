@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.GZip;

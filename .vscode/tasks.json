@@ -14,24 +14,24 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "test",
+            "label": "build-ado2gh",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "test",
-                "${workspaceFolder}/src/OctoshiftCLI.Tests",
+                "build",
+                "${workspaceFolder}/src/ado2gh/ado2gh.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "publish",
+            "label": "test",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "publish",
-                "${workspaceFolder}/src/gei/gei.csproj",
+                "test",
+                "${workspaceFolder}/src/OctoshiftCLI.Tests",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
