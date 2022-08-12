@@ -6,8 +6,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using ICSharpCode.SharpZipLib.Tar;
-using ICSharpCode.SharpZipLib.GZip;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -18,19 +16,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
+        private readonly LfsShaMapper _lfsShaMapper;
         private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
         private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, LfsShaMapper lsfShaMapper) : base("migrate-repo")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _azureApiFactory = azureApiFactory;
+            _lfsShaMapper = lsfShaMapper;
 
             Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
@@ -324,7 +324,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             
             if (lfsMappingFile is not null)
             {
-                metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
+                metadataArchiveContent = await _lfsShaMapper.MapShas(metadataArchiveContent, lfsMappingFile);
+                //metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
             }
             
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
@@ -474,49 +475,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
             }
-        }
-
-        private byte[] ApplyLfsMappingFileToMetadata(byte[] metadataArchiveContent, string lfsMappingFile)
-        {
-            _log.LogInformation("Modifying pull_requests_*.json files in archive");
-            // extract the metadata archive
-            var gzipDataStream = new MemoryStream(metadataArchiveContent);
-            Stream inStream = new GZipInputStream(gzipDataStream);
-            TarArchive archive = TarArchive.CreateInputTarArchive(inStream, TarBuffer.DefaultBlockFactor);
-            archive.ExtractContents("./archiveExtracted");
-            
-            // modify the pull_requests_*.json files in the extracted archive
-            string[] fileNames = System.IO.Directory.GetFiles("./archiveExtracted");
-            foreach (string fileName in fileNames)
-            {
-                string text = File.ReadAllText(fileName);
-                var lfsMappingLines = File.ReadLines(lfsMappingFile);
-                foreach (var lfsMappingLine in lfsMappingLines)
-                {
-                    string[] lfsMapping = lfsMappingLine.Split(','); 
-                    text = text.Replace(lfsMapping[0], lfsMapping[1]);
-                }
-                File.WriteAllText(fileName, text);
-            }
-
-            // tar gz the modified archive
-            // TODO: figure out how to put this into a byte array rather than a file!!
-            Stream outStream = File.Create("newArchive.tar.gz");
-            outStream = new GZipOutputStream(outStream);
-            TarArchive newArchive = TarArchive.CreateOutputTarArchive(outStream, TarBuffer.DefaultBlockFactor);
-            newArchive.RootPath = "./archiveExtracted";
-            
-            foreach (string name in fileNames) 
-            {
-                    TarEntry entry = TarEntry.CreateEntryFromFile(name);
-                    newArchive.WriteEntry(entry, true);
-            }
-            newArchive.Close();
-            byte[] newArchiveContent = File.ReadAllBytes("newArchive.tar.gz");
-            File.Delete("newArchive.tar.gz");
-            Directory.Delete("./archiveExtracted", true);
-            _log.LogInformation("Done modifying pull_requests_*.json files in archive");
-            return newArchiveContent;
         }
     }
 
