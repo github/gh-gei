@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -23,7 +24,24 @@ namespace OctoshiftCLI
         public async Task<bool> IsLatest()
         {
             var curVersion = GetCurrentVersion();
-            var latestVersion = await GetLatestVersion();
+            var latestVersion = string.Empty;
+
+            var cacheCheck = Environment.GetEnvironmentVariable("OCTOSHIFT_VERSION_CHECK_DATE");
+
+            if (DateTime.TryParse(cacheCheck, out var cacheDate))
+            {
+                if (cacheDate.AddDays(1) > DateTime.Now)
+                {
+                    _log.LogVerbose("Version check cache is valid");
+                    latestVersion = Environment.GetEnvironmentVariable("OCTOSHIFT_VERSION_CHECK_RESULT");
+                }
+            }
+            else
+            {
+                latestVersion = await GetLatestVersion();
+                Environment.SetEnvironmentVariable("OCTOSHIFT_VERSION_CHECK_DATE", DateTime.Now.ToString());
+                Environment.SetEnvironmentVariable("OCTOSHIFT_VERSION_CHECK_RESULT", latestVersion);
+            }
 
             curVersion = curVersion[..latestVersion.Length];
 
