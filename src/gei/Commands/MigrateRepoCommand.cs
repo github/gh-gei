@@ -507,13 +507,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             TarArchive newArchive = TarArchive.CreateOutputTarArchive(outStream, TarBuffer.DefaultBlockFactor);
             newArchive.RootPath = "./archiveExtracted";
             
-            if (fileNames.Length > 0) {
-                foreach (string name in fileNames) {
+            if (!fileNames.Any()) 
+            {
+                _log.LogInformation("No files found in archiveExtracted directory");
+            }
+            
+            foreach (string name in fileNames) 
+            {
                     TarEntry entry = TarEntry.CreateEntryFromFile(name);
                     newArchive.WriteEntry(entry, true);
-                }
-            } else {
-                _log.LogInformation("No files found in archiveExtracted directory");
             }
             newArchive.Close();
             byte[] newArchiveContent = File.ReadAllBytes("newArchive.tar.gz");
