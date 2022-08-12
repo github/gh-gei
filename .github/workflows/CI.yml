@@ -189,7 +189,7 @@ jobs:
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
