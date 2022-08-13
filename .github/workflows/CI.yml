@@ -189,7 +189,7 @@ jobs:
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results"
@@ -273,6 +273,17 @@ jobs:
           ./dist/win-x64/ado2gh-windows-amd64.exe
           ./dist/linux-x64/ado2gh-linux-amd64
           ./dist/osx-x64/ado2gh-darwin-amd64
+
+    - name: Create gh-bbs2gh Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: ./RELEASENOTES.md
+        repository: github/gh-bbs2gh
+        token: ${{ secrets.PUBLISH_BBS2GH_TOKEN }}
+        files: |
+          ./dist/win-x64/bbs2gh-windows-amd64.exe
+          ./dist/linux-x64/bbs2gh-linux-amd64
+          ./dist/osx-x64/bbs2gh-darwin-amd64
 
     - name: Archive Release Notes
       shell: pwsh

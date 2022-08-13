@@ -17,7 +17,8 @@
 			"extensions": [
 				"ms-dotnettools.csharp",
 				"formulahendry.dotnet-test-explorer",
-				"github.copilot"
+				"github.copilot",
+				"ms-vscode.powershell"
 			]
 		}
 	},
