@@ -17,7 +17,7 @@ public class LfsShaMapper
         _log = log;
     }
 
-    public async Task<Byte[]> MapShas(byte[] metadataArchiveContent, string lfsMappingFile)
+    public virtual async Task<Byte[]> MapShas(byte[] metadataArchiveContent, string lfsMappingFile)
     {
         _log.LogInformation("Modifying pull_requests_*.json files in archive");
         

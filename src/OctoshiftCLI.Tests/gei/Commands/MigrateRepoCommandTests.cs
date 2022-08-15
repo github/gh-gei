@@ -20,6 +20,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
+        private readonly Mock<LfsShaMapper> _mockLfsShaMapper = TestHelpers.CreateMock<LfsShaMapper>();
 
         private readonly MigrateRepoCommand _command;
 
@@ -34,7 +35,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
 
-        private const string LFS_MAPPING_FILE = "../../../lfs-mapping.csv";
+        private const string LFS_MAPPING_FILE = "lfs-mapping.csv";
 
         public MigrateRepoCommandTests()
         {
@@ -43,7 +44,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockSourceGithubApiFactory.Object,
                 _mockTargetGithubApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
-                _mockAzureApiFactory.Object);
+                _mockAzureApiFactory.Object,
+                _mockLfsShaMapper.Object);
         }
 
         [Fact]
@@ -369,20 +371,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            var migrationArchiveOrig = new byte[] {};
-            try
-            {
-                migrationArchiveOrig= File.ReadAllBytes("../../../metadataArchiveOrig.tar.gz");
-            }
-            catch (FileNotFoundException e)
-            {
-                Console.WriteLine(e.ToString());
-            }
+            _mockLfsShaMapper.Setup(lfs => lfs.MapShas(metadataArchiveContent, LFS_MAPPING_FILE).Result).Returns(new byte[] { 6, 7, 8, 9, 10 });
+
             _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(migrationArchiveOrig);
-            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result)
-                .Returns(authenticatedGitArchiveUrl)
-                .Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
@@ -640,7 +635,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(_mockGithubApi.Object);
             _mockAzureApiFactory.Setup(m => m.Create(azureConnectionStringEnv)).Returns(_mockAzureApi.Object);
 
-            var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockSourceGithubApiFactory.Object, _mockTargetGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object, _mockAzureApiFactory.Object);
+            var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockSourceGithubApiFactory.Object, _mockTargetGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object, _mockAzureApiFactory.Object, _mockLfsShaMapper.Object);
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
