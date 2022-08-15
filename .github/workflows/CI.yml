@@ -292,9 +292,15 @@ jobs:
         Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
         
-    - name: Commit Archived Release Notes
+    - name: Update LATEST-VERSION.TXT
+      shell: pwsh
+      run: |
+        $TAG_NAME = "${{ github.ref }}".Substring(10)
+        $TAG_NAME | Out-File ./LATEST-VERSION.txt
+        
+    - name: Commit Release Notes and Version
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: Automated commit of archived release notes [skip ci]
-        file_pattern: RELEASENOTES.md releasenotes/*.md
+        commit_message: Automated commit of archived release notes and version file [skip ci]
+        file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
         branch: main
