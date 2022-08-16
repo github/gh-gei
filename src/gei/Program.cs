@@ -32,6 +32,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
+                .AddSingleton<LfsShaMapper>()
+                .AddSingleton<ArchiveHandler>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("NoSSL")
