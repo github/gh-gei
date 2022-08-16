@@ -26,7 +26,7 @@ public class LfsShaMapper
         _log.LogInformation("Modifying pull_requests_*.json files in archive");
         
         var fileNames = _archiveHandler.Unpack(metadataArchiveContent);
-            
+
         // modify the pull_requests_*.json files in the extracted archive
         var lfsMappingLines = ReadMappingFile(lfsMappingFile);
         var lfsMappings = lfsMappingLines
