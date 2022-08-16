@@ -23,7 +23,7 @@ public class LfsShaMapper
 
     public virtual async Task<Byte[]> MapShas(byte[] metadataArchiveContent, string lfsMappingFile)
     {
-        _log.LogInformation("Modifying pull_requests_*.json files in archive");
+        _log.LogInformation("Modifying metadata files in archive");
         
         var fileNames = _archiveHandler.Unpack(metadataArchiveContent);
 
@@ -42,7 +42,7 @@ public class LfsShaMapper
             await WriteToFile(fileName, text);
         }
 
-        _log.LogInformation("Done modifying pull_requests_*.json files in archive");
+        _log.LogInformation("Done modifying metadata files in archive");
 
         return _archiveHandler.Pack(_archiveHandler.extractDir);
     }
