@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace OctoshiftCLI;
 
@@ -8,6 +10,7 @@ public class LfsShaMapper
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
     internal Func<string, string> ReadFile = fileName => File.ReadAllText(fileName);
+    internal Func<string, IEnumerable<string>> ReadMappingFile = fileName => File.ReadLines(fileName);
     
     private readonly OctoLogger _log;
     private readonly ArchiveHandler _archiveHandler;
@@ -25,14 +28,16 @@ public class LfsShaMapper
         var fileNames = _archiveHandler.Unpack(metadataArchiveContent);
             
         // modify the pull_requests_*.json files in the extracted archive
+        var lfsMappingLines = ReadMappingFile(lfsMappingFile);
+        var lfsMappings = lfsMappingLines
+            .Select(line => line.Split(','))
+            .ToDictionary(kvp => kvp[0], kvp => kvp[1]);
         foreach (string fileName in fileNames)
         {
             string text = ReadFile(fileName);
-            var lfsMappingLines = File.ReadLines(lfsMappingFile);
-            foreach (var lfsMappingLine in lfsMappingLines)
+            foreach(KeyValuePair<string, string> entry in lfsMappings)
             {
-                var lfsMapping = lfsMappingLine.Split(','); 
-                text = text.Replace(lfsMapping[0], lfsMapping[1]);
+                text = text.Replace(entry.Key, entry.Value);
             }
             await WriteToFile(fileName, text);
         }
