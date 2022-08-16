@@ -1,5 +1,4 @@
 using System.IO;
-using System.Threading.Tasks;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.GZip;
 

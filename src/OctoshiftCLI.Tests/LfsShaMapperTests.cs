@@ -1,10 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 using Moq;
-using ICSharpCode.SharpZipLib.Tar;
 
 namespace OctoshiftCLI.Tests
 {

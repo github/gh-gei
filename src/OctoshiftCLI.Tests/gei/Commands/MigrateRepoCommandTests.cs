@@ -7,7 +7,6 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
-using System.IO;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
