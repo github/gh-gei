@@ -49,7 +49,7 @@ public class ArchiveHandler
             var entry = TarEntry.CreateEntryFromFile(name);
             newArchive.WriteEntry(entry, true);
         }
-
+        newArchive.Close();
         var newArchiveContent = File.ReadAllBytes(tarFileName);
         File.Delete(tarFileName);
         Directory.Delete(archivePath, true);
