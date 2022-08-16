@@ -25,7 +25,11 @@ namespace OctoshiftCLI.Tests
                 },
                 ReadFile = (_) =>
                 {
-                    return "oldsha,newsha";
+                    return "Bunch of text with oldsha all over the place. oldsha here, oldsha there, oldsha everywhere.";
+                },
+                ReadMappingFile = (_) =>
+                {
+                    return new List<string> { "oldsha,newsha" };
                 }
             };
         }
@@ -38,6 +42,7 @@ namespace OctoshiftCLI.Tests
             _mockOctoLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             _archiveHandler.Setup(m => m.Unpack(It.IsAny<byte[]>())).Returns(new string[] {"archiveExtracted/pull_requests_1.json", "archiveExtracted/pull_requests_2.json"});
+            _archiveHandler.Setup(m => m.Pack("./archiveExtracted")).Returns(new byte[] { 6, 7, 8, 9, 10 });
 
             var result = await _lfsShaMapper.MapShas(new byte[] { 6, 7, 8, 9, 10 }, "./lfsMappingFile");
             result.Should().BeEquivalentTo(new byte[] { 6, 7, 8, 9, 10 });
