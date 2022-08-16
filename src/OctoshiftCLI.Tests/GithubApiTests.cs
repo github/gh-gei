@@ -473,6 +473,42 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task CreateBbsMigrationSource_Returns_New_Migration_Source_Id()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"Bitbucket Server Source\",\"url\":\"https://not-used\",\"ownerId\":\"{orgId}\",\"type\":\"BITBUCKET_SERVER\"}},\"operationName\":\"createMigrationSource\"}}";
+            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""createMigrationSource"": {{
+                        ""migrationSource"": {{
+                            ""id"": ""{actualMigrationSourceId}"",
+                            ""name"": ""Bitbucket Server Source"",
+                            ""url"": ""https://not-used"",
+                            ""type"": ""BITBUCKET_SERVER""
+                        }}
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedMigrationSourceId = await _githubApi.CreateBbsMigrationSource(orgId);
+
+            // Assert
+            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
         public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
         {
             // Arrange

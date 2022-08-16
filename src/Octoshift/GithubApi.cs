@@ -186,6 +186,32 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
+        public virtual async Task<string> CreateBbsMigrationSource(string orgId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    name = "Bitbucket Server Source",
+                    url = "https://not-used",
+                    ownerId = orgId,
+                    type = "BITBUCKET_SERVER"
+                },
+                operationName = "createMigrationSource"
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+        }
+
         public virtual async Task<string> CreateGhecMigrationSource(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
