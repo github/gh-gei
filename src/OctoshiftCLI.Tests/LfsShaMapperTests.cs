@@ -45,7 +45,11 @@ namespace OctoshiftCLI.Tests
             _archiveHandler.Setup(m => m.Pack("./archiveExtracted")).Returns(new byte[] { 6, 7, 8, 9, 10 });
 
             var result = await _lfsShaMapper.MapShas(new byte[] { 6, 7, 8, 9, 10 }, "./lfsMappingFile");
+
             result.Should().BeEquivalentTo(new byte[] { 6, 7, 8, 9, 10 });
+            _archiveHandler.Verify(m => m.Unpack(It.IsAny<byte[]>()), Times.Once);
+            _archiveHandler.Verify(m => m.Pack("./archiveExtracted"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
         }
     }
 
