@@ -7,19 +7,27 @@
     "alternate": "src/Octoshift/{}.cs"
   },
 
-  "src/gei/*.cs": {
-    "alternate": "src/OctoshiftCLI.Tests/gei/{}Tests.cs"
-  },
-
-  "src/OctoshiftCLI.Tests/gei/*Tests.cs": {
-    "alternate": "src/gei/{}.cs"
-  },
-
   "src/ado2gh/*.cs": {
     "alternate": "src/OctoshiftCLI.Tests/ado2gh/{}Tests.cs"
   },
 
   "src/OctoshiftCLI.Tests/ado2gh/*Tests.cs": {
     "alternate": "src/ado2gh/{}.cs"
+  },
+
+  "src/bbs2gh/*.cs": {
+    "alternate": "src/OctoshiftCLI.Tests/bbs2gh/{}Tests.cs"
+  },
+
+  "src/OctoshiftCLI.Tests/bbs2gh/*Tests.cs": {
+    "alternate": "src/bbs2gh/{}.cs"
+  },
+
+  "src/gei/*.cs": {
+    "alternate": "src/OctoshiftCLI.Tests/gei/{}Tests.cs"
+  },
+
+  "src/OctoshiftCLI.Tests/gei/*Tests.cs": {
+    "alternate": "src/gei/{}.cs"
   }
 }
