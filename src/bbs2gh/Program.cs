@@ -75,7 +75,7 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())
