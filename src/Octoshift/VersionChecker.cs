@@ -56,8 +56,8 @@ namespace OctoshiftCLI
                 var content = await response.Content.ReadAsStringAsync();
                 _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
                 response.EnsureSuccessStatusCode();
-
-                _latestVersion = content.TrimStart('v', 'V');
+                
+                _latestVersion = content.TrimStart('v', 'V').Trim();
             }
 
             return _latestVersion;
