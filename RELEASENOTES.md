@@ -1,1 +1,2 @@
 - Added `create-team` command to `gh gei`.
+- Reduced # of REST API calls used to avoid rate limiting challenges
