@@ -19,7 +19,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "If the version check fails for any reason, we want the CLI to carry on with the current command")]
         public static async Task Main(string[] args)
         {
-            Logger.LogInformation("Execution Started");
+            Logger.LogDebug("Execution Started");
+
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddCommands()

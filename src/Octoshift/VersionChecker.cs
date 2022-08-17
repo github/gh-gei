@@ -59,7 +59,7 @@ namespace OctoshiftCLI
                 _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
                 foreach (var header in response.Headers)
                 {
-                    _log.LogVerbose($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
+                    _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
                 }
                 response.EnsureSuccessStatusCode();
                 var data = JObject.Parse(content);
