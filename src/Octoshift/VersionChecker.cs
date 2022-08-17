@@ -44,25 +44,21 @@ namespace OctoshiftCLI
         {
             if (_latestVersion.IsNullOrWhiteSpace())
             {
-                _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
                 _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", GetCurrentVersion()));
                 if (GetVersionComments() is { } comments)
                 {
                     _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
                 }
 
-                const string url = "https://api.github.com/repos/github/gh-gei/releases/latest";
+                const string url = "https://raw.githubusercontent.com/github/gh-gei/main/LATEST-VERSION.txt";
 
                 _log.LogVerbose($"HTTP GET: {url}");
                 var response = await _httpClient.GetAsync(url);
                 var content = await response.Content.ReadAsStringAsync();
                 _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
                 response.EnsureSuccessStatusCode();
-                var data = JObject.Parse(content);
 
-                var latestTag = (string)data["tag_name"];
-
-                _latestVersion = latestTag.TrimStart('v', 'V');
+                _latestVersion = content.TrimStart('v', 'V');
             }
 
             return _latestVersion;
