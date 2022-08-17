@@ -19,6 +19,7 @@ namespace OctoshiftCLI
         private readonly HashSet<string> _secrets = new();
         private readonly string _logFilePath;
         private readonly string _verboseFilePath;
+        private readonly bool _debugMode;
 
         private readonly Action<string> _writeToLog;
         private readonly Action<string> _writeToVerboseLog;
@@ -32,6 +33,11 @@ namespace OctoshiftCLI
             var logStartTime = DateTime.Now;
             _logFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.log";
             _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
+
+            if (Environment.GetEnvironmentVariable("GEI_DEBUG_MODE")?.ToUpperInvariant() == "TRUE")
+            {
+                _debugMode = true;
+            }
 
             _writeToLog = msg => File.AppendAllText(_logFilePath, msg);
             _writeToVerboseLog = msg => File.AppendAllText(_verboseFilePath, msg);
@@ -63,7 +69,10 @@ namespace OctoshiftCLI
             _writeToVerboseLog(output);
         }
 
-        private string FormatMessage(string msg, string level) => $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+        private string FormatMessage(string msg, string level)
+        {
+            return _debugMode ? $"[{DateTime.Now:o}] [{level}] {msg}\n" : $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+        }
 
         private string MaskSecrets(string msg)
         {
@@ -122,6 +131,14 @@ namespace OctoshiftCLI
             else
             {
                 _writeToVerboseLog(MaskSecrets(FormatMessage(msg, LogLevel.VERBOSE)));
+            }
+        }
+
+        public virtual void LogDebug(string msg)
+        {
+            if (_debugMode)
+            {
+                LogVerbose(msg);
             }
         }
 

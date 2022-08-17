@@ -55,6 +55,10 @@ namespace OctoshiftCLI
                 var response = await _httpClient.GetAsync(url);
                 var content = await response.Content.ReadAsStringAsync();
                 _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+                foreach (var header in response.Headers)
+                {
+                    _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
+                }
                 response.EnsureSuccessStatusCode();
 
                 _latestVersion = content.TrimStart('v', 'V').Trim();
