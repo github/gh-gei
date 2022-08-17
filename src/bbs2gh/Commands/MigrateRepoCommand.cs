@@ -117,7 +117,7 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
-            
+
             string migrationId;
 
             try
