@@ -1,1 +1,2 @@
 - Added `create-team` command to `gh gei`.
+- Checks for an environment variable GEI_DEBUG_MODE and if set to 'true' will emit additional data in the verbose log file
