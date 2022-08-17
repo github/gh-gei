@@ -1,1 +1,2 @@
 - Added `create-team` command to `gh gei`.
+- Changed how we do the version check to avoid warnings about being rate limited
