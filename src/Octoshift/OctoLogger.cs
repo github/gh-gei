@@ -34,7 +34,7 @@ namespace OctoshiftCLI
             _logFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.log";
             _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
 
-            if (Environment.GetEnvironmentVariable("GEI_DEBUG_MODE").ToUpperInvariant() == "TRUE")
+            if (Environment.GetEnvironmentVariable("GEI_DEBUG_MODE")?.ToUpperInvariant() == "TRUE")
             {
                 _debugMode = true;
             }
