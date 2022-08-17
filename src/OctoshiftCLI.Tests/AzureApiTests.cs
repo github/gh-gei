@@ -93,7 +93,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task DownloadArchive_Should_Throw_HttpRequestException_On_Non_Success_Response()
         {
-            // Arrnage
+            // Arrange
             using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock

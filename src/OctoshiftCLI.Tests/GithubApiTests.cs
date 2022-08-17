@@ -56,7 +56,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task AddAutoLink_Replaces_Spaces_In_Url_Tempalte()
+        public async Task AddAutoLink_Replaces_Spaces_In_Url_Template()
         {
             // Arrange
             const string adoOrg = "ADO_ORG";
@@ -990,7 +990,7 @@ namespace OctoshiftCLI.Tests
                     description = "A great team.",
                     privacy = "closed",
                     permission = "admin",
-                    members_url = "https://api.github.com/teams/1/members/membber",
+                    members_url = "https://api.github.com/teams/1/members/member",
                     repositories_url = "https://api.github.com/teams/1/repos",
                 }
             }.ToAsyncJTokenEnumerable();
@@ -1665,7 +1665,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task RepoExists_Throws_When_Underlying_HtttRepsponseException_Status_Is_Not_NotFound_Or_Moved()
+        public async Task RepoExists_Throws_When_Underlying_HttpResponseException_Status_Is_Not_NotFound_Or_Moved()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";

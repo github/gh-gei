@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gei", "gei\gei.csproj", "{0
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OctoshiftCLI.IntegrationTests", "OctoshiftCLI.IntegrationTests\OctoshiftCLI.IntegrationTests.csproj", "{308F794A-92E9-43E1-A092-C2F7D99F2C44}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bbs2gh", "bbs2gh\bbs2gh.csproj", "{39EE734C-AC4A-42AC-801A-ECCA661C23A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{308F794A-92E9-43E1-A092-C2F7D99F2C44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39EE734C-AC4A-42AC-801A-ECCA661C23A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39EE734C-AC4A-42AC-801A-ECCA661C23A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39EE734C-AC4A-42AC-801A-ECCA661C23A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39EE734C-AC4A-42AC-801A-ECCA661C23A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

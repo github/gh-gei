@@ -9,10 +9,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual AdoInspectorService Create(AdoApi adoApi)
         {
-            if (_instance is null)
-            {
-                _instance = new(_octoLogger, adoApi);
-            }
+            _instance ??= new(_octoLogger, adoApi);
 
             return _instance;
         }

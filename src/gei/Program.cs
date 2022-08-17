@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter

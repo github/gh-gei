@@ -1,8 +1,9 @@
 using System.Net.Http;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.AdoToGithub
 {
-    public class GithubApiFactory
+    public class GithubApiFactory : ITargetGithubApiFactory
     {
         private const string DEFAULT_API_URL = "https://api.github.com";
 
@@ -21,11 +22,11 @@ namespace OctoshiftCLI.AdoToGithub
             _versionProvider = versionProvider;
         }
 
-        public virtual GithubApi Create(string apiUrl = null, string personalAccessToken = null)
+        public virtual GithubApi Create(string apiUrl = null, string targetPersonalAccessToken = null)
         {
             apiUrl ??= DEFAULT_API_URL;
-            personalAccessToken ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _client, _versionProvider, personalAccessToken);
+            targetPersonalAccessToken ??= _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubClient = new GithubClient(_octoLogger, _client, _versionProvider, targetPersonalAccessToken);
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
     }
