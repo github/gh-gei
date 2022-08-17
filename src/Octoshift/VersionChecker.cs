@@ -2,7 +2,6 @@
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
