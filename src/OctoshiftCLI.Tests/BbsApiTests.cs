@@ -8,7 +8,7 @@ namespace OctoshiftCLI.Tests
 {
     public class BbsApiTests
     {
-      
+
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<BbsClient> _mockBbsClient = TestHelpers.CreateMock<BbsClient>();
 
@@ -19,9 +19,9 @@ namespace OctoshiftCLI.Tests
         private const string SLUG = "test-repo";
         private const long EXPORT_ID = 12345;
 
-        public BbsApiTests() 
+        public BbsApiTests()
         {
-          sut = new BbsApi(_mockBbsClient.Object, BBS_SERVICE_URL, _mockOctoLogger.Object);
+            sut = new BbsApi(_mockBbsClient.Object, BBS_SERVICE_URL, _mockOctoLogger.Object);
         }
 
         [Fact]
@@ -43,8 +43,9 @@ namespace OctoshiftCLI.Tests
                 }
             };
 
-            var responsePayload = new {
-              id = EXPORT_ID
+            var responsePayload = new
+            {
+                id = EXPORT_ID
             };
 
             _mockBbsClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == requestPayload.ToJson())).Result).Returns(responsePayload.ToJson());
@@ -57,19 +58,20 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetExportState_Returns_Export_State()
         {
-          var endpoint = $"{BBS_SERVICE_URL}/migration/exports/{EXPORT_ID}";
-          var state = "INITIALISING";
+            var endpoint = $"{BBS_SERVICE_URL}/migration/exports/{EXPORT_ID}";
+            var state = "INITIALISING";
 
-          var responsePayload = new {
-            id = EXPORT_ID,
-            state
-          };
+            var responsePayload = new
+            {
+                id = EXPORT_ID,
+                state
+            };
 
-          _mockBbsClient.Setup(x => x.GetAsync(endpoint).Result).Returns(responsePayload.ToJson());
+            _mockBbsClient.Setup(x => x.GetAsync(endpoint).Result).Returns(responsePayload.ToJson());
 
-          var result = await sut.GetExportState(EXPORT_ID);
+            var result = await sut.GetExportState(EXPORT_ID);
 
-          result.Should().Be(state);
-      }
+            result.Should().Be(state);
+        }
     }
 }

@@ -34,9 +34,9 @@ namespace OctoshiftCLI
                 }
             };
 
-             var content = await _client.PostAsync(url, payload);
+            var content = await _client.PostAsync(url, payload);
 
-             return(long)JObject.Parse(content)["id"];
+            return (long)JObject.Parse(content)["id"];
         }
 
         public virtual async Task<string> GetExportState(long id)

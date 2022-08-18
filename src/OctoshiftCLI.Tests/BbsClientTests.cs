@@ -86,7 +86,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose($"HTTP GET: {URL}"), Times.Once);
         }
-        
+
         [Fact]
         public async Task GetAsync_Returns_String_Response()
         {
@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
         }
-        
+
         [Fact]
         public async Task PostAsync_Encodes_The_Url()
         {
@@ -135,7 +135,8 @@ namespace OctoshiftCLI.Tests
                 ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
                 ItExpr.IsAny<CancellationToken>());
         }
-        
+
+        [Fact]
         public async Task PostAsync_Logs_The_Url()
         {
             // Arrange
