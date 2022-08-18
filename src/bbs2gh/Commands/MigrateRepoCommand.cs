@@ -20,22 +20,10 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             _githubApiFactory = githubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data";
+            Description = "Import a Bitbucket Server archive to GitHub.";
             Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
+            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var adoRepo = new Option<string>("--ado-repo")
-            {
-                IsRequired = true
-            };
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -44,85 +32,79 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             {
                 IsRequired = true
             };
-            var ssh = new Option("--ssh")
+            var archiveUrl = new Option<string>("--archive-url")
             {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
+                IsRequired = true,
+                Description = "URL used to downlodad Bitbucket Server migration archive."
             };
             var wait = new Option("--wait")
             {
-                IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
             };
             var githubPat = new Option<string>("--github-pat")
             {
                 IsRequired = false
+            };
+            var githubApiUrl = new Option<string>("--github-api-url")
+            {
+                Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
             };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
             };
 
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
-            AddOption(ssh);
+            AddOption(archiveUrl);
             AddOption(wait);
-            AddOption(adoPat);
             AddOption(githubPat);
+            AddOption(githubApiUrl);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, bool, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
+        public async Task Invoke(string githubOrg, string githubRepo, string archiveUrl, bool wait = false, string githubPat = null, string githubApiUrl = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
             _log.LogInformation("Migrating Repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO REPO: {adoRepo}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            if (ssh)
+
+            if (githubPat is not null)
             {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
+                _log.LogInformation("GITHUB PAT: ***");
+            }
+            if (githubApiUrl is not null)
+            {
+                _log.LogInformation($"GITHUB API URL: {githubApiUrl}");
             }
             if (wait)
             {
                 _log.LogInformation("WAIT: true");
             }
-            if (adoPat is not null)
-            {
-                _log.LogInformation("ADO PAT: ***");
-            }
-            if (githubPat is not null)
-            {
-                _log.LogInformation("GITHUB PAT: ***");
-            }
 
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-
-            var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
-
-            adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
+            var githubApi = _githubApiFactory.Create(apiUrl: githubApiUrl, targetPersonalAccessToken: githubPat);
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
+            var migrationSourceId = await githubApi.CreateBbsMigrationSource(githubOrgId);
 
             string migrationId;
 
             try
             {
-                migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
+                migrationId = await githubApi.StartMigration(
+                    migrationSourceId,
+                    "https://not-used",  // source repository URL
+                    githubOrgId,
+                    githubRepo,
+                    "not-used",  // source access token
+                    githubPat,
+                    archiveUrl,
+                    "https://not-used"  // metadata archive URL
+                );
             }
             catch (OctoshiftCliException ex)
             {
@@ -158,7 +140,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
-
-        private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
     }
 }
