@@ -44,6 +44,13 @@ namespace OctoshiftCLI
 
         private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
         {
+            _log.LogVerbose($"HTTP {httpMethod}: {url}");
+
+            if (body != null)
+            {
+                _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
+            }
+
             using var payload = body?.ToJson().ToStringContent();
             var response = httpMethod.ToString() switch
             {
