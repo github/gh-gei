@@ -14,7 +14,8 @@ namespace OctoshiftCLI.BbsToGithub.Commands
         public MigrateRepoCommand(
             OctoLogger log,
             GithubApiFactory githubApiFactory,
-            EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+            EnvironmentVariableProvider environmentVariableProvider
+        ) : base("migrate-repo")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
@@ -24,6 +25,11 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             Description += Environment.NewLine;
             Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
+            var archiveUrl = new Option<string>("--archive-url")
+            {
+                IsRequired = true,
+                Description = "URL used to downlodad Bitbucket Server migration archive."
+            };
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -31,15 +37,6 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             var githubRepo = new Option<string>("--github-repo")
             {
                 IsRequired = true
-            };
-            var archiveUrl = new Option<string>("--archive-url")
-            {
-                IsRequired = true,
-                Description = "URL used to downlodad Bitbucket Server migration archive."
-            };
-            var wait = new Option("--wait")
-            {
-                Description = "Synchronously waits for the repo migration to finish."
             };
             var githubPat = new Option<string>("--github-pat")
             {
@@ -49,23 +46,27 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             {
                 Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
             };
+            var wait = new Option("--wait")
+            {
+                Description = "Synchronously waits for the repo migration to finish."
+            };
             var verbose = new Option("--verbose")
             {
                 IsRequired = false
             };
 
+            AddOption(archiveUrl);
             AddOption(githubOrg);
             AddOption(githubRepo);
-            AddOption(archiveUrl);
-            AddOption(wait);
             AddOption(githubPat);
             AddOption(githubApiUrl);
+            AddOption(wait);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string archiveUrl, bool wait = false, string githubPat = null, string githubApiUrl = null, bool verbose = false)
+        public async Task Invoke(string archiveUrl, string githubOrg, string githubRepo, string githubPat = null, string githubApiUrl = null, bool wait = false, bool verbose = false)
         {
             _log.Verbose = verbose;
 
