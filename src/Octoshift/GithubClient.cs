@@ -136,6 +136,11 @@ namespace OctoshiftCLI
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
+            foreach (var header in response.Headers)
+            {
+                _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
+            }
+
             if (status == HttpStatusCode.OK)
             {
                 response.EnsureSuccessStatusCode();

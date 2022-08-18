@@ -88,7 +88,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
             var migrationId = Guid.NewGuid().ToString();
 
-            _mockGithubApi.Setup(x => x.RepoExists(TARGET_ORG, TARGET_REPO).Result).Returns(false);
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false).Result).Returns(migrationId);
@@ -127,7 +126,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.RepoExists(TARGET_ORG, TARGET_REPO));
             _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG));
             _mockGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
@@ -140,7 +138,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Idempotency_Stop_If_Target_Exists()
+        public async Task Skip_Migration_If_Target_Repo_Exists()
         {
             // Arrange
             var githubOrgId = Guid.NewGuid().ToString();
@@ -148,10 +146,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubRepoUrl = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
-            var migrationId = Guid.NewGuid().ToString();
 
-            _mockGithubApi.Setup(x => x.RepoExists(TARGET_ORG, TARGET_REPO).Result).Returns(true);
-            _mockGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, "", "", false).Result).Returns(migrationId);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            _mockGithubApi
+                .Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false).Result)
+                .Throws(new OctoshiftCliException($"A repository called {TARGET_ORG}/{TARGET_REPO} already exists"));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
@@ -162,7 +162,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            var expectedLogWarningOutput = $"The Org '{TARGET_ORG}' already contains a repository with the name '{TARGET_REPO}'. No operation will be performed";
+            var expectedLogOutput = $"The Org '{TARGET_ORG}' already contains a repository with the name '{TARGET_REPO}'. No operation will be performed";
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -177,12 +177,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.RepoExists(TARGET_ORG, TARGET_REPO));
-
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-            actualLogOutput.Should().Contain(expectedLogWarningOutput);
-
-            _mockGithubApi.VerifyNoOtherCalls();
+            actualLogOutput.Should().Contain(expectedLogOutput);
         }
 
         [Fact]

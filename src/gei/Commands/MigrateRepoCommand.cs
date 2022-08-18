@@ -200,12 +200,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
 
-            if (await githubApi.RepoExists(args.GithubTargetOrg, args.TargetRepo))
-            {
-                _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
-                return;
-            }
-
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
@@ -214,16 +208,31 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 ? await githubApi.CreateGhecMigrationSource(githubOrgId)
                 : await githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
 
-            var migrationId = await githubApi.StartMigration(
-                migrationSourceId,
-                sourceRepoUrl,
-                githubOrgId,
-                args.TargetRepo,
-                sourceToken,
-                targetToken,
-                args.GitArchiveUrl,
-                args.MetadataArchiveUrl,
-                args.SkipReleases);
+            string migrationId;
+
+            try
+            {
+                migrationId = await githubApi.StartMigration(
+                    migrationSourceId,
+                    sourceRepoUrl,
+                    githubOrgId,
+                    args.TargetRepo,
+                    sourceToken,
+                    targetToken,
+                    args.GitArchiveUrl,
+                    args.MetadataArchiveUrl,
+                    args.SkipReleases);
+            }
+            catch (OctoshiftCliException ex)
+            {
+                if (ex.Message == $"A repository called {args.GithubTargetOrg}/{args.TargetRepo} already exists")
+                {
+                    _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
+                    return;
+                }
+
+                throw;
+            }
 
             if (!args.Wait)
             {

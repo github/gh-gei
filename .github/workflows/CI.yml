@@ -141,8 +141,10 @@ jobs:
       run: |
         New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
         New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
         Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
         Copy-Item ./dist/linux-x64/ado2gh-linux-amd64 ./gh-ado2gh/gh-ado2gh
+        Copy-Item ./dist/linux-x64/bbs2gh-linux-amd64 ./gh-bbs2gh/gh-bbs2gh
       shell: pwsh
 
     - name: Copy binary to root (windows)
@@ -150,8 +152,10 @@ jobs:
       run: |
         New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
         New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
         Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei/gh-gei.exe
         Copy-Item ./dist/win-x64/ado2gh-windows-amd64.exe ./gh-ado2gh/gh-ado2gh.exe
+        Copy-Item ./dist/win-x64/bbs2gh-windows-amd64.exe ./gh-bbs2gh/gh-bbs2gh.exe
       shell: pwsh
 
     - name: Copy binary to root (macos)
@@ -159,8 +163,10 @@ jobs:
       run: |
         New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
         New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
         Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei/gh-gei
         Copy-Item ./dist/osx-x64/ado2gh-darwin-amd64 ./gh-ado2gh/gh-ado2gh
+        Copy-Item ./dist/osx-x64/bbs2gh-darwin-amd64 ./gh-bbs2gh/gh-bbs2gh
       shell: pwsh
 
     - name: Install gh-gei extension
@@ -176,6 +182,13 @@ jobs:
       working-directory: ./gh-ado2gh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Install gh-bbs2gh extension
+      run: gh extension install .
+      shell: pwsh
+      working-directory: ./gh-bbs2gh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Integration Test
       env: 
@@ -185,6 +198,7 @@ jobs:
         AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
         AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
         AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
+        GEI_DEBUG_MODE: 'true'
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
@@ -292,9 +306,15 @@ jobs:
         Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
         
-    - name: Commit Archived Release Notes
+    - name: Update LATEST-VERSION.TXT
+      shell: pwsh
+      run: |
+        $TAG_NAME = "${{ github.ref }}".Substring(10)
+        $TAG_NAME | Out-File ./LATEST-VERSION.txt
+        
+    - name: Commit Release Notes and Version
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: Automated commit of archived release notes [skip ci]
-        file_pattern: RELEASENOTES.md releasenotes/*.md
+        commit_message: Automated commit of archived release notes and version file [skip ci]
+        file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
         branch: main

@@ -111,18 +111,29 @@ namespace OctoshiftCLI.BbsToGithub.Commands
 
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            if (await githubApi.RepoExists(githubOrg, githubRepo))
-            {
-                _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
-                return;
-            }
 
             var adoRepoUrl = GetAdoRepoUrl(adoOrg, adoTeamProject, adoRepo);
 
             adoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
             var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
             var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
-            var migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
+
+            string migrationId;
+
+            try
+            {
+                migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
+            }
+            catch (OctoshiftCliException ex)
+            {
+                if (ex.Message == $"A repository called {githubOrg}/{githubRepo} already exists")
+                {
+                    _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
+                    return;
+                }
+
+                throw;
+            }
 
             if (!wait)
             {
