@@ -39,13 +39,13 @@ namespace OctoshiftCLI
              return(long)JObject.Parse(content)["id"];
         }
 
-        public virtual async Task<JObject> GetExport(long id)
+        public virtual async Task<string> GetExportState(long id)
         {
             var url = $"{_bbsBaseUrl}/migration/exports/{id}";
 
             var content = await _client.GetAsync(url);
 
-            return JObject.Parse(content);
+            return (string)JObject.Parse(content)["state"];
         }
     }
 }
