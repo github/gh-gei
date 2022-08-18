@@ -47,7 +47,7 @@ namespace OctoshiftCLI.BbsToGithub
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade ado2gh");
+                Logger.LogWarning("Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade bbs2gh");
                 Logger.LogVerbose(ex.ToString());
             }
 
@@ -66,12 +66,12 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (await versionChecker.IsLatest())
             {
-                Logger.LogInformation($"You are running the latest version of the ado2gh CLI [v{await versionChecker.GetLatestVersion()}]");
+                Logger.LogInformation($"You are running the latest version of the bbs2gh CLI [v{await versionChecker.GetLatestVersion()}]");
             }
             else
             {
-                Logger.LogWarning($"You are running an older version of the ado2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
-                Logger.LogWarning($"Please update by running: gh extension upgrade ado2gh");
+                Logger.LogWarning($"You are running an older version of the bbs2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
+                Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
         }
 
