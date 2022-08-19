@@ -106,6 +106,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
+            var lockSourceRepo = new Option("--lock-source-repo")
+            {
+                IsRequired = false,
+                Description = "Lock source repo when migrating."
+            };
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
@@ -151,6 +156,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(metadataArchiveUrl);
 
             AddOption(skipReleases);
+            AddOption(lockSourceRepo);
 
             AddOption(ssh);
             AddOption(wait);
@@ -182,6 +188,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   args.AzureStorageConnectionString,
                   args.GithubSourcePat,
                   args.SkipReleases,
+                  args.LockSourceRepo,
                   args.NoSslVerify
                 );
 
@@ -283,6 +290,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string azureStorageConnectionString,
           string githubSourcePat,
           bool skipReleases,
+          bool lockSourceRepo,
           bool noSslVerify = false)
         {
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
@@ -301,7 +309,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases);
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
@@ -453,6 +461,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SKIP RELEASES: true");
             }
 
+            if (args.LockSourceRepo)
+            {
+                _log.LogInformation("LOCK SOURCE REPO: true");
+            }
+
             if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
@@ -482,6 +495,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
         public bool SkipReleases { get; set; }
+        public bool LockSourceRepo { get; set; }
         public bool Ssh { get; set; }
         public bool Wait { get; set; }
         public bool Verbose { get; set; }

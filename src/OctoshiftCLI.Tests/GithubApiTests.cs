@@ -1625,6 +1625,7 @@ namespace OctoshiftCLI.Tests
                 repositories = new[] { GITHUB_REPO },
                 exclude_git_data = true,
                 exclude_releases = false,
+                lock_repositories = false,
                 exclude_owner_projects = true
             };
             const int expectedMigrationId = 1;
@@ -1635,7 +1636,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response.ToJson());
 
             // Act
-            var actualMigrationId = await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, false);
+            var actualMigrationId = await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, false, false);
 
             // Assert
             actualMigrationId.Should().Be(expectedMigrationId);
@@ -1651,6 +1652,7 @@ namespace OctoshiftCLI.Tests
                 repositories = new[] { GITHUB_REPO },
                 exclude_git_data = true,
                 exclude_releases = true,
+                lock_repositories = false,
                 exclude_owner_projects = true
             };
             var response = new { id = 1 };
@@ -1658,7 +1660,30 @@ namespace OctoshiftCLI.Tests
             _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>())).ReturnsAsync(response.ToJson());
 
             // Act
-            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true);
+            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true, false);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+        }
+
+        public async Task StartMetadataArchiveGeneration_Excludes_Releases_When_Lock_Source_Repo_Is_True()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_git_data = true,
+                exclude_releases = true,
+                lock_repositories = true,
+                exclude_owner_projects = true
+            };
+            var response = new { id = 1 };
+
+            _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>())).ReturnsAsync(response.ToJson());
+
+            // Act
+            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true, true);
 
             // Assert
             _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
