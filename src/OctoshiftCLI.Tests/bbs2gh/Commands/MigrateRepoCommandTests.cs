@@ -121,6 +121,72 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
+        public async Task Uses_GitHub_Pat_When_Provided_As_Option()
+        {
+            // Arrange
+            var githubPat = "specific github pat";
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                SOURCE_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                SOURCE_TOKEN,
+                githubPat,
+                ARCHIVE_URL,
+                METADATA_ARCHIVE_URL,
+                false
+            ).Result).Returns(MIGRATION_ID);
+
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = new List<string>()
+            {
+                "Migrating Repo...",
+                $"GITHUB ORG: {GITHUB_ORG}",
+                $"GITHUB REPO: {GITHUB_REPO}",
+                "GITHUB PAT: ***",
+                $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
+            };
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = githubPat
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
+            _mockGithubApi.Verify(m => m.CreateBbsMigrationSource(GITHUB_ORG_ID));
+            _mockGithubApi.Verify(m => m.StartMigration(
+                MIGRATION_SOURCE_ID,
+                SOURCE_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                SOURCE_TOKEN,
+                githubPat,
+                ARCHIVE_URL,
+                METADATA_ARCHIVE_URL,
+                false
+            ));
+
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
+            actualLogOutput.Should().Equal(expectedLogOutput);
+
+            _mockGithubApi.VerifyNoOtherCalls();
+            _mockOctoLogger.VerifyNoOtherCalls();
+        }
+
+        [Fact]
         public async Task Skip_Migration_If_Target_Repo_Exists()
         {
             // Arrange
