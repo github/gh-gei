@@ -42,10 +42,6 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             {
                 IsRequired = false
             };
-            var githubApiUrl = new Option<string>("--github-api-url")
-            {
-                Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
-            };
             var wait = new Option("--wait")
             {
                 Description = "Synchronously waits for the repo migration to finish."
@@ -59,7 +55,6 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             AddOption(githubOrg);
             AddOption(githubRepo);
             AddOption(githubPat);
-            AddOption(githubApiUrl);
             AddOption(wait);
             AddOption(verbose);
 
@@ -83,17 +78,13 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             {
                 _log.LogInformation("GITHUB PAT: ***");
             }
-            if (args.GithubApiUrl is not null)
-            {
-                _log.LogInformation($"GITHUB API URL: {args.GithubApiUrl}");
-            }
             if (args.Wait)
             {
                 _log.LogInformation("WAIT: true");
             }
 
             args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(apiUrl: args.GithubApiUrl, targetPersonalAccessToken: args.GithubPat);
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
             var migrationSourceId = await githubApi.CreateBbsMigrationSource(githubOrgId);
 
@@ -154,7 +145,6 @@ namespace OctoshiftCLI.BbsToGithub.Commands
         public string GithubOrg { get; set; }
         public string GithubRepo { get; set; }
         public string GithubPat { get; set; }
-        public string GithubApiUrl { get; set; }
         public bool Wait { get; set; }
         public bool Verbose { get; set; }
     }
