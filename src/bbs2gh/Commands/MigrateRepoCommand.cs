@@ -28,7 +28,7 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             var archiveUrl = new Option<string>("--archive-url")
             {
                 IsRequired = true,
-                Description = "URL used to downlodad Bitbucket Server migration archive."
+                Description = "URL used to download Bitbucket Server migration archive."
             };
             var githubOrg = new Option<string>("--github-org")
             {
