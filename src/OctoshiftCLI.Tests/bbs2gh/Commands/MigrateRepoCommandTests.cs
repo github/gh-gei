@@ -58,6 +58,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task Happy_Path()
         {
             // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi.Setup(x => x.StartMigration(
@@ -71,21 +74,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 UNUSED_METADATA_ARCHIVE_URL,
                 false
             ).Result).Returns(MIGRATION_ID);
-
-            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
-            var actualLogOutput = new List<string>();
-            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            var expectedLogOutput = new List<string>()
-            {
-                "Migrating Repo...",
-                $"GITHUB ORG: {GITHUB_ORG}",
-                $"GITHUB REPO: {GITHUB_REPO}",
-                $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
-            };
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -110,9 +98,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 UNUSED_METADATA_ARCHIVE_URL,
                 false
             ));
-
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(4));
-            actualLogOutput.Should().Equal(expectedLogOutput);
         }
 
         [Fact]
@@ -136,18 +121,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             ).Result).Returns(MIGRATION_ID);
 
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
-
-            var actualLogOutput = new List<string>();
-            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            var expectedLogOutput = new List<string>()
-            {
-                "Migrating Repo...",
-                $"GITHUB ORG: {GITHUB_ORG}",
-                $"GITHUB REPO: {GITHUB_REPO}",
-                "GITHUB PAT: ***",
-                $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
-            };
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -173,9 +146,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 UNUSED_METADATA_ARCHIVE_URL,
                 false
             ));
-
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
-            actualLogOutput.Should().Equal(expectedLogOutput);
         }
 
         [Fact]
