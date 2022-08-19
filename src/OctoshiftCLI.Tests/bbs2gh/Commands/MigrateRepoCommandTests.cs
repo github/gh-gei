@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
-        public async Task Happy_Path_Without_Wait()
+        public async Task Happy_Path()
         {
             // Arrange
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
@@ -74,7 +74,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 false
             ).Result).Returns(MIGRATION_ID);
 
-            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(SOURCE_TOKEN);
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
 
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
@@ -86,8 +86,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 "Migrating Repo...",
                 $"GITHUB ORG: {GITHUB_ORG}",
                 $"GITHUB REPO: {GITHUB_REPO}",
-                "GITHUB PAT: ***",
-                $"GITHUB API URL: {GITHUB_API_URL}",
                 $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
             };
 
@@ -96,9 +94,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                GithubApiUrl = GITHUB_API_URL
+                GithubRepo = GITHUB_REPO
             };
             await _command.Invoke(args);
 
@@ -117,7 +113,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 false
             ));
 
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(4));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockGithubApi.VerifyNoOtherCalls();
@@ -160,8 +156,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                GithubApiUrl = GITHUB_API_URL
+                GithubPat = GITHUB_PAT
             };
             await _command.Invoke(args);
 
