@@ -221,8 +221,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubRepo = GITHUB_REPO
             };
             await _command.Invoke(args);
 
