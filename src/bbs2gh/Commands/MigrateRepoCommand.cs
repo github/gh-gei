@@ -92,16 +92,7 @@ namespace OctoshiftCLI.BbsToGithub.Commands
 
             try
             {
-                migrationId = await githubApi.StartMigration(
-                    migrationSourceId,
-                    "https://not-used",  // source repository URL
-                    githubOrgId,
-                    args.GithubRepo,
-                    "not-used",  // source access token
-                    args.GithubPat,
-                    args.ArchiveUrl,
-                    "https://not-used"  // metadata archive URL
-                );
+                migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, args.ArchiveUrl);
             }
             catch (OctoshiftCliException ex)
             {
