@@ -21,7 +21,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string GITHUB_ORG = "target-org";
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
-        private const string GITHUB_API_URL = "https://api.github.com";
 
         private const string UNUSED_SOURCE_REPO_URL = "https://not-used";
         private const string UNUSED_METADATA_ARCHIVE_URL = "https://not-used";
