@@ -68,6 +68,11 @@ namespace OctoshiftCLI.BbsToGithub.Commands
 
         public async Task Invoke(MigrateRepoCommandArgs args)
         {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             _log.Verbose = args.Verbose;
 
             _log.LogInformation("Migrating Repo...");
