@@ -123,5 +123,51 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApi.VerifyNoOtherCalls();
             _mockOctoLogger.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task Skip_Migration_If_Target_Repo_Exists()
+        {
+            // Arrange
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi
+                .Setup(x => x.StartMigration(
+                    MIGRATION_SOURCE_ID,
+                    SOURCE_REPO_URL,
+                    GITHUB_ORG_ID,
+                    GITHUB_REPO,
+                    SOURCE_TOKEN,
+                    GITHUB_PAT,
+                    ARCHIVE_URL,
+                    METADATA_ARCHIVE_URL,
+                    false
+                ).Result)
+                .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
+
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+            _mockOctoLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            var expectedLogOutput = $"The Org '{GITHUB_ORG}' already contains a repository with the name '{GITHUB_REPO}'. No operation will be performed";
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+                GithubApiUrl = GITHUB_API_URL
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
+            actualLogOutput.Should().Contain(expectedLogOutput);
+        }
     }
 }
