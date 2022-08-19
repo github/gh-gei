@@ -167,12 +167,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 ).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
-            var actualLogOutput = new List<string>();
-            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-            _mockOctoLogger.Setup(m => m.LogWarning(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            var expectedLogOutput = $"The Org '{GITHUB_ORG}' already contains a repository with the name '{GITHUB_REPO}'. No operation will be performed";
-
             // Act
             var args = new MigrateRepoCommandArgs
             {
@@ -184,7 +178,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-            actualLogOutput.Should().Contain(expectedLogOutput);
         }
     }
 }
