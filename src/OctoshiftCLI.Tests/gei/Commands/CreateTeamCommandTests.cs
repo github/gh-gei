@@ -1,13 +1,13 @@
 using Moq;
-using OctoshiftCLI.AdoToGithub;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Contracts;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
 
 public class CreateTeamCommandTests
 {
-    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly CreateTeamCommand _command;
@@ -27,7 +27,7 @@ public class CreateTeamCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "team-name", true);
         TestHelpers.VerifyCommandOption(_command.Options, "idp-group", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
     }
 }
