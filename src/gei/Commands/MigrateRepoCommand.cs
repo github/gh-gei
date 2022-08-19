@@ -218,7 +218,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     targetToken,
                     args.GitArchiveUrl,
                     args.MetadataArchiveUrl,
-                    args.SkipReleases);
+                    args.SkipReleases,
+                    args.LockSourceRepo);
             }
             catch (OctoshiftCliException ex)
             {

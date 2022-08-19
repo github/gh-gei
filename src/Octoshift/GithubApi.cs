@@ -197,7 +197,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
-        public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false)
+        public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, bool lockSource = false)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -212,7 +212,8 @@ namespace OctoshiftCLI
                     $metadataArchiveUrl: String,
                     $accessToken: String!,
                     $githubPat: String,
-                    $skipReleases: Boolean)";
+                    $skipReleases: Boolean
+                    $lockSource: Boolean)";
             var gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -225,7 +226,8 @@ namespace OctoshiftCLI
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
                         githubPat: $githubPat,
-                        skipReleases: $skipReleases
+                        skipReleases: $skipReleases,
+                        lockSource: $lockSource
                     }
                 ) {
                     repositoryMigration {
@@ -255,7 +257,8 @@ namespace OctoshiftCLI
                     metadataArchiveUrl,
                     accessToken = sourceToken,
                     githubPat = targetToken,
-                    skipReleases
+                    skipReleases,
+                    lockSource
                 },
                 operationName = "startRepositoryMigration"
             };
@@ -458,7 +461,7 @@ namespace OctoshiftCLI
             return (int)data["id"];
         }
 
-        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases, bool lockSourceRepo)
+        public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases, bool lockSource)
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations";
 
@@ -467,7 +470,7 @@ namespace OctoshiftCLI
                 repositories = new[] { repo },
                 exclude_git_data = true,
                 exclude_releases = skipReleases,
-                lock_repositories = lockSourceRepo,
+                lock_repositories = lockSource,
                 exclude_owner_projects = true
             };
 
