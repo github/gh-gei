@@ -104,6 +104,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Arrange
             var githubPat = "specific github pat";
 
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
+
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi.Setup(x => x.StartMigration(
@@ -117,8 +119,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 UNUSED_METADATA_ARCHIVE_URL,
                 false
             ).Result).Returns(MIGRATION_ID);
-
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -148,6 +148,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task Skip_Migration_If_Target_Repo_Exists()
         {
             // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
@@ -163,10 +166,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                     false
                 ).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
-
-            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
