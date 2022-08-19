@@ -16,6 +16,15 @@ namespace OctoshiftCLI
             _log = log;
         }
 
+        public virtual async Task<string> GetServerVersion()
+        {
+            var url = $"{_bbsBaseUrl}/application-properties";
+
+            var content = await _client.GetAsync(url);
+
+            return (string)JObject.Parse(content)["version"];
+        }
+
         public virtual async Task<long> StartExport(string projectKey = "*", string slug = "*")
         {
             var url = $"{_bbsBaseUrl}/migration/exports";

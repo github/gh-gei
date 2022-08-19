@@ -73,5 +73,25 @@ namespace OctoshiftCLI.Tests
 
             result.Should().Be(state);
         }
+
+        [Fact]
+        public async Task GetServerVersion_Returns_Server_Version()
+        {
+            var endpoint = $"{BBS_SERVICE_URL}/application-properties";
+            var version = "8.3.0";
+
+            var responsePayload = new
+            {
+                version = version,
+                buildNumber = "8003000",
+                buildDate = "1659066041797"
+            };
+
+            _mockBbsClient.Setup(x => x.GetAsync(endpoint).Result).Returns(responsePayload.ToJson());
+
+            var result = await sut.GetServerVersion();
+
+            result.Should().Be(version);
+        }
     }
 }
