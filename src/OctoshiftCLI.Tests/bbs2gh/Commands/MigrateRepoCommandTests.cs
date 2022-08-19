@@ -140,7 +140,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 false
             ).Result).Returns(MIGRATION_ID);
 
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
