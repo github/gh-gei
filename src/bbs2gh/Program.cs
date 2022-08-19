@@ -66,11 +66,11 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (await versionChecker.IsLatest())
             {
-                Logger.LogInformation($"You are running the latest version of the bbs2gh CLI [v{await versionChecker.GetLatestVersion()}]");
+                Logger.LogInformation($"You are running the latest version of the bbs2gh extension [v{await versionChecker.GetLatestVersion()}]");
             }
             else
             {
-                Logger.LogWarning($"You are running an older version of the bbs2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
+                Logger.LogWarning($"You are running an older version of the bbs2gh extension [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
                 Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
         }
