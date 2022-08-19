@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Tests
 
             var responsePayload = new
             {
-                version = version,
+                version,
                 buildNumber = "8003000",
                 buildDate = "1659066041797"
             };
