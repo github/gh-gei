@@ -296,16 +296,16 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
         {
-                return await StartMigration(
-                    migrationSourceId,
-                    "https://not-used",  // source repository URL
-                    orgId,
-                    repo,
-                    "not-used",  // source access token
-                    targetToken,
-                    archiveUrl,
-                    "https://not-used"  // metadata archive URL
-                );
+            return await StartMigration(
+                migrationSourceId,
+                "https://not-used",  // source repository URL
+                orgId,
+                repo,
+                "not-used",  // source access token
+                targetToken,
+                archiveUrl,
+                "https://not-used"  // metadata archive URL
+            );
         }
 
         public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
