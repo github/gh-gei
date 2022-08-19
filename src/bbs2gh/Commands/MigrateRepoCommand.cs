@@ -63,33 +63,33 @@ namespace OctoshiftCLI.BbsToGithub.Commands
             AddOption(wait);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string archiveUrl, string githubOrg, string githubRepo, string githubPat = null, string githubApiUrl = null, bool wait = false, bool verbose = false)
+        public async Task Invoke(MigrateRepoCommandArgs args)
         {
-            _log.Verbose = verbose;
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Migrating Repo...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
 
-            if (githubPat is not null)
+            if (args.GithubPat is not null)
             {
                 _log.LogInformation("GITHUB PAT: ***");
             }
-            if (githubApiUrl is not null)
+            if (args.GithubApiUrl is not null)
             {
-                _log.LogInformation($"GITHUB API URL: {githubApiUrl}");
+                _log.LogInformation($"GITHUB API URL: {args.GithubApiUrl}");
             }
-            if (wait)
+            if (args.Wait)
             {
                 _log.LogInformation("WAIT: true");
             }
 
-            githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(apiUrl: githubApiUrl, targetPersonalAccessToken: githubPat);
-            var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
+            args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+            var githubApi = _githubApiFactory.Create(apiUrl: args.GithubApiUrl, targetPersonalAccessToken: args.GithubPat);
+            var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
             var migrationSourceId = await githubApi.CreateBbsMigrationSource(githubOrgId);
 
             string migrationId;
@@ -100,25 +100,25 @@ namespace OctoshiftCLI.BbsToGithub.Commands
                     migrationSourceId,
                     "https://not-used",  // source repository URL
                     githubOrgId,
-                    githubRepo,
+                    args.GithubRepo,
                     "not-used",  // source access token
-                    githubPat,
-                    archiveUrl,
+                    args.GithubPat,
+                    args.ArchiveUrl,
                     "https://not-used"  // metadata archive URL
                 );
             }
             catch (OctoshiftCliException ex)
             {
-                if (ex.Message == $"A repository called {githubOrg}/{githubRepo} already exists")
+                if (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
                 {
-                    _log.LogWarning($"The Org '{githubOrg}' already contains a repository with the name '{githubRepo}'. No operation will be performed");
+                    _log.LogWarning($"The Org '{args.GithubOrg}' already contains a repository with the name '{args.GithubRepo}'. No operation will be performed");
                     return;
                 }
 
                 throw;
             }
 
-            if (!wait)
+            if (!args.Wait)
             {
                 _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
                 return;
@@ -141,5 +141,16 @@ namespace OctoshiftCLI.BbsToGithub.Commands
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
+    }
+
+    public class MigrateRepoCommandArgs
+    {
+        public string ArchiveUrl { get; set; }
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string GithubPat { get; set; }
+        public string GithubApiUrl { get; set; }
+        public bool Wait { get; set; }
+        public bool Verbose { get; set; }
     }
 }
