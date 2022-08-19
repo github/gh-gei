@@ -85,8 +85,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
-            _mockGithubApi.Verify(m => m.CreateBbsMigrationSource(GITHUB_ORG_ID));
             _mockGithubApi.Verify(m => m.StartMigration(
                 MIGRATION_SOURCE_ID,
                 UNUSED_SOURCE_REPO_URL,
@@ -133,8 +131,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             await _command.Invoke(args);
 
             // Assert
-            _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
-            _mockGithubApi.Verify(m => m.CreateBbsMigrationSource(GITHUB_ORG_ID));
             _mockGithubApi.Verify(m => m.StartMigration(
                 MIGRATION_SOURCE_ID,
                 UNUSED_SOURCE_REPO_URL,
