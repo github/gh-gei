@@ -113,9 +113,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(4));
             actualLogOutput.Should().Equal(expectedLogOutput);
-
-            _mockGithubApi.VerifyNoOtherCalls();
-            _mockOctoLogger.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -179,9 +176,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
             actualLogOutput.Should().Equal(expectedLogOutput);
-
-            _mockGithubApi.VerifyNoOtherCalls();
-            _mockOctoLogger.VerifyNoOtherCalls();
         }
 
         [Fact]
