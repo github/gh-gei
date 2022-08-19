@@ -47,7 +47,7 @@ namespace OctoshiftCLI.BbsToGithub
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade bbs2gh");
+                Logger.LogWarning("Could not retrieve latest bbs2gh extension version from github.com, please ensure you are using the latest version by running: gh extension upgrade bbs2gh");
                 Logger.LogVerbose(ex.ToString());
             }
 
