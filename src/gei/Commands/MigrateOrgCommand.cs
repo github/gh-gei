@@ -21,7 +21,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
 
-            Description = "Invokes the GitHub APIs to migrate the org, its teams and the repositories.";
+            Description = "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
