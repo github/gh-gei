@@ -1,60 +1,59 @@
 ﻿using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace OctoshiftCLI
+namespace OctoshiftCLI;
+
+public class BbsApi
 {
-    public class BbsApi
+    private readonly BbsClient _client;
+    private readonly string _bbsBaseUrl;
+    private readonly OctoLogger _log;
+
+    public BbsApi(BbsClient client, string bbsServerUrl, OctoLogger log)
     {
-        private readonly BbsClient _client;
-        private readonly string _bbsBaseUrl;
-        private readonly OctoLogger _log;
+        _client = client;
+        _bbsBaseUrl = bbsServerUrl?.TrimEnd('/');
+        _log = log;
+    }
 
-        public BbsApi(BbsClient client, string bbsServerUrl, OctoLogger log)
+    public virtual async Task<string> GetServerVersion()
+    {
+        var url = $"{_bbsBaseUrl}/application-properties";
+
+        var content = await _client.GetAsync(url);
+
+        return (string)JObject.Parse(content)["version"];
+    }
+
+    public virtual async Task<long> StartExport(string projectKey = "*", string slug = "*")
+    {
+        var url = $"{_bbsBaseUrl}/migration/exports";
+        var payload = new
         {
-            _client = client;
-            _bbsBaseUrl = bbsServerUrl?.TrimEnd('/');
-            _log = log;
-        }
-
-        public virtual async Task<string> GetServerVersion()
-        {
-            var url = $"{_bbsBaseUrl}/application-properties";
-
-            var content = await _client.GetAsync(url);
-
-            return (string)JObject.Parse(content)["version"];
-        }
-
-        public virtual async Task<long> StartExport(string projectKey = "*", string slug = "*")
-        {
-            var url = $"{_bbsBaseUrl}/migration/exports";
-            var payload = new
+            repositoriesRequest = new
             {
-                repositoriesRequest = new
+                includes = new[]
                 {
-                    includes = new[]
-                    {
                         new
                         {
                             projectKey,
                             slug
                         }
                     }
-                }
-            };
+            }
+        };
 
-            var content = await _client.PostAsync(url, payload);
+        var content = await _client.PostAsync(url, payload);
 
-            return (long)JObject.Parse(content)["id"];
-        }
+        return (long)JObject.Parse(content)["id"];
+    }
 
-        public virtual async Task<string> GetExportState(long id)
-        {
-            var url = $"{_bbsBaseUrl}/migration/exports/{id}";
+    public virtual async Task<string> GetExportState(long id)
+    {
+        var url = $"{_bbsBaseUrl}/migration/exports/{id}";
 
-            var content = await _client.GetAsync(url);
+        var content = await _client.GetAsync(url);
 
-            return (string)JObject.Parse(content)["state"];
-        }
+        return (string)JObject.Parse(content)["state"];
     }
 }
