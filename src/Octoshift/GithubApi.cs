@@ -283,6 +283,53 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
+        public virtual async Task<string> StartOrganizationMigration(string sourceOrgUrl, string targetOrgName, string targetEnterpriseId, string sourceAccessToken, string targetAccessToken)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = @"
+                mutation startOrganizationMigration (
+                        $sourceOrgUrl: URI!,
+                        $targetOrgName: String!,
+                        $targetEnterpriseId: ID!,
+                        $sourceAccessToken: String!,
+	                    $targetAccessToken: String!)";
+            var gql = @"
+                startOrganizationMigration( 
+                    input: {
+                        sourceOrgUrl: $sourceOrgUrl,
+                        targetOrgName: $targetOrgName,
+                        targetEnterpriseId: $targetEnterpriseId,
+                        sourceAccessToken: $sourceAccessToken,
+		                targetAccessToken: $targetAccessToken
+                    }) {
+                        orgMigration {
+                            id
+                        }
+                    }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    sourceOrgUrl,
+                    targetOrgName,
+                    targetEnterpriseId,
+                    sourceAccessToken,
+                    targetAccessToken
+                },
+                operationName = "startOrganizationMigration"
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            EnsureSuccessGraphQLResponse(data);
+
+            return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
+        }
+
         public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
