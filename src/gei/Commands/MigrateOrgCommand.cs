@@ -33,6 +33,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = true,
                 Description = "Uses GH_PAT env variable or --github-target-pat option."
             };
+            var githubTargetEnterprise = new Option<string>("--github-target-enterprise")
+            {
+                IsRequired = true,
+                Description = "Name of the target enterprise."
+            };
             var ssh = new Option("--ssh")
             {
                 IsRequired = false,
@@ -54,6 +59,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(githubSourceOrg);
             AddOption(githubTargetOrg);
+            AddOption(githubTargetEnterprise);
 
             AddOption(ssh);
             AddOption(githubSourcePat);
@@ -76,7 +82,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubTargetPat);
 
-            var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
+            var githubEnterpriseId = await githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
             var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
             var sourceToken = GetSourceToken(args);
             var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
@@ -84,7 +90,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var migrationId = await githubApi.StartOrganizationMigration(
                 sourceOrgUrl,
                 args.GithubTargetOrg,
-                githubOrgId,
+                githubEnterpriseId,
                 sourceToken,
                 targetToken);
 
@@ -101,6 +107,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation("Migrating Org...");
             _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+            _log.LogInformation($"GITHUB TARGET ENTERPRISE: {args.GithubTargetEnterprise}");
 
             if (args.Ssh)
             {
@@ -129,6 +136,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
     {
         public string GithubSourceOrg { get; set; }
         public string GithubTargetOrg { get; set; }
+        public string GithubTargetEnterprise { get; set; }
         public bool Ssh { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }

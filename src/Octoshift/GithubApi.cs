@@ -143,6 +143,23 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
+        public virtual async Task<string> GetEnterpriseId(string name)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = new
+            {
+                // TODO: this is super ugly, need to find a graphql library to make this code nicer
+                query = "query($slug: String!) {enterprise (slug: $slug) { slug, id } }",
+                variables = new { slug = name }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["enterprise"]["id"];
+        }
+
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
         {
             var url = $"{_apiUrl}/graphql";
