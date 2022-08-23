@@ -143,7 +143,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["organization"]["id"];
         }
 
-        public virtual async Task<string> GetEnterpriseId(string name)
+        public virtual async Task<string> GetEnterpriseId(string enterpriseName)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -151,7 +151,7 @@ namespace OctoshiftCLI
             {
                 // TODO: this is super ugly, need to find a graphql library to make this code nicer
                 query = "query($slug: String!) {enterprise (slug: $slug) { slug, id } }",
-                variables = new { slug = name }
+                variables = new { slug = enterpriseName }
             };
 
             var response = await _client.PostAsync(url, payload);

@@ -23,6 +23,7 @@ namespace OctoshiftCLI.Tests
         private readonly GithubApi _githubApi;
 
         private const string GITHUB_ORG = "ORG_LOGIN";
+        private const string GITHUB_ENTERPRISE = "ENTERPRISE_NAME";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
 
         public GithubApiTests()
@@ -397,6 +398,38 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             result.Should().Be(orgId);
+        }
+
+        [Fact]
+        public async Task GetEnterpriseId_Returns_The_Enterprise_Id()
+        {
+            // Arrange
+            const string enterpriseId = "ENTERPRISE_ID";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
+            var response = $@"
+            {{
+                ""data"": 
+                    {{
+                        ""enterprise"": 
+                            {{
+                                ""slug"": ""{GITHUB_ENTERPRISE}"",
+                                ""id"": ""{enterpriseId}""
+                            }} 
+                    }} 
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var result = await _githubApi.GetEnterpriseId(GITHUB_ENTERPRISE);
+
+            // Assert
+            result.Should().Be(enterpriseId);
         }
 
         [Fact]
