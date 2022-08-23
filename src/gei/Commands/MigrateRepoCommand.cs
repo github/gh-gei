@@ -171,7 +171,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.Verbose = args.Verbose;
 
-            LogAndValidateOptions(args);
+            LogOptions(args);
+            ValidateOptions(args);
 
             if (args.GhesApiUrl.HasValue())
             {
@@ -356,34 +357,32 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             return $"{serverUrl}/{org}/{project}/_git/{repo}".Replace(" ", "%20");
         }
 
-        private void LogAndValidateOptions(MigrateRepoCommandArgs args)
+        private void LogOptions(MigrateRepoCommandArgs args)
         {
             _log.LogInformation("Migrating Repo...");
-            if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
+            if (args.GithubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
-            if (!string.IsNullOrWhiteSpace(args.AdoServerUrl))
+            if (args.AdoServerUrl.HasValue())
             {
                 _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
             }
-            if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
+            if (args.AdoSourceOrg.HasValue())
             {
                 _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
+            }
+            if (args.AdoTeamProject.HasValue())
+            {
                 _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
             _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
 
-            if (!string.IsNullOrWhiteSpace(args.TargetApiUrl))
+            if (args.TargetApiUrl.HasValue())
             {
                 _log.LogInformation($"TARGET API URL: {args.TargetApiUrl}");
-            }
-
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
             }
 
             if (args.Wait)
@@ -391,46 +390,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("WAIT: true");
             }
 
-            if (args.GithubSourcePat is not null)
+            if (args.GithubSourcePat.HasValue())
             {
                 _log.LogInformation("GITHUB SOURCE PAT: ***");
             }
 
-            if (args.GithubTargetPat is not null)
+            if (args.GithubTargetPat.HasValue())
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
-
-                if (args.GithubSourcePat is null)
-                {
-                    args.GithubSourcePat = args.GithubTargetPat;
-                    _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-                }
             }
 
-            if (args.AdoPat is not null)
+            if (args.AdoPat.HasValue())
             {
                 _log.LogInformation("ADO PAT: ***");
-            }
-
-            if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && string.IsNullOrWhiteSpace(args.AdoSourceOrg))
-            {
-                throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
-            }
-
-            if (args.AdoServerUrl.HasValue() && !args.AdoSourceOrg.HasValue())
-            {
-                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
-            }
-
-            if (string.IsNullOrWhiteSpace(args.GithubSourceOrg) && !string.IsNullOrWhiteSpace(args.AdoSourceOrg) && string.IsNullOrWhiteSpace(args.AdoTeamProject))
-            {
-                throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
-            }
-
-            if (string.IsNullOrWhiteSpace(args.TargetRepo))
-            {
-                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
-                args.TargetRepo = args.SourceRepo;
             }
 
             if (args.GhesApiUrl.HasValue())
@@ -453,15 +425,54 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation("SKIP RELEASES: true");
             }
 
+            if (args.GitArchiveUrl.HasValue())
+            {
+                _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
+            }
+
+            if (args.MetadataArchiveUrl.HasValue())
+            {
+                _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
+            }
+        }
+
+        private void ValidateOptions(MigrateRepoCommandArgs args)
+        {
+            if (args.Ssh)
+            {
+                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
+            }
+
+            if (args.GithubTargetPat.HasValue() && args.GithubSourcePat.IsNullOrWhiteSpace())
+            {
+                args.GithubSourcePat = args.GithubTargetPat;
+                _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
+            }
+
+            if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
+            }
+
+            if (args.AdoServerUrl.HasValue() && args.AdoSourceOrg.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
+            }
+
+            if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.HasValue() && args.AdoTeamProject.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
+            }
+
+            if (args.TargetRepo.IsNullOrWhiteSpace())
+            {
+                _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
+                args.TargetRepo = args.SourceRepo;
+            }
+
             if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
-            }
-
-            if (!string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
-            {
-                _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
-                _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
         }
     }
