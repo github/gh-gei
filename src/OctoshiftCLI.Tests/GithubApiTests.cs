@@ -715,7 +715,8 @@ namespace OctoshiftCLI.Tests
                     metadataArchiveUrl = unusedMetadataArchiveUrl,
                     accessToken = unusedSourceToken,
                     githubPat = targetToken,
-                    skipReleases = false
+                    skipReleases = false,
+                    lockSource = false
                 },
                 operationName = "startRepositoryMigration"
             };
