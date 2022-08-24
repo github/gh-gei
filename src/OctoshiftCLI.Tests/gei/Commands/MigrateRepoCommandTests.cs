@@ -998,6 +998,48 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Does_Not_Pass_Lock_Repos_To_StartMigration_For_GHES()
+        {
+            // Arrange
+            _mockGithubApi.Setup(m => m.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+
+            _mockSourceGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
+
+            _mockAzureApi.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                SkipReleases = true,
+                LockSourceRepo = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                false));
+        }
+
+        [Fact]
         public async Task It_Skips_Releases_When_Option_Is_True_For_Ghes_Migration_Path()
         {
             // Arrange
@@ -1026,6 +1068,38 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockGithubApi.Verify(m => m.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, true, false));
+        }
+
+        [Fact]
+        public async Task It_Locks_Repos_When_Option_Is_True_For_Ghes_Migration_Path()
+        {
+            // Arrange
+            _mockGithubApi.Setup(m => m.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+
+            _mockSourceGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
+
+            _mockAzureApi.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                SkipReleases = true,
+                LockSourceRepo = true
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, true, true));
         }
 
         [Fact]

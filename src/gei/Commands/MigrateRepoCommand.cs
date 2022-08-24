@@ -220,7 +220,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     args.GitArchiveUrl,
                     args.MetadataArchiveUrl,
                     args.SkipReleases,
-                    args.LockSourceRepo);
+                    args.GhesApiUrl.HasValue() ? false : args.LockSourceRepo);
             }
             catch (OctoshiftCliException ex)
             {
