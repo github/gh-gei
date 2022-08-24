@@ -70,6 +70,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     GITHUB_TOKEN,
                     null,
                     null,
+                    false,
                     false).Result)
                 .Returns(MIGRATION_ID);
             _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
@@ -103,7 +104,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
             _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
-            _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false));
+            _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, false));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
@@ -128,6 +129,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     GITHUB_TOKEN,
                     null,
                     null,
+                    false,
                     false).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
@@ -169,6 +171,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                         GITHUB_TOKEN,
                         null,
                         null,
+                        false,
                         false).Result)
                 .Returns(MIGRATION_ID);
             _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
