@@ -1807,6 +1807,7 @@ namespace OctoshiftCLI.Tests
             _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
         }
 
+        [Fact]
         public async Task StartMetadataArchiveGeneration_Excludes_Releases_When_Lock_Source_Repo_Is_True()
         {
             // Arrange

@@ -443,7 +443,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
-            
+
             if (args.LockSourceRepo)
             {
                 _log.LogInformation("LOCK SOURCE REPO: true");
