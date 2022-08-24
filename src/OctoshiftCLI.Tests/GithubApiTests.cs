@@ -1811,7 +1811,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task StartMetadataArchiveGeneration_Excludes_Releases_When_Lock_Source_Repo_Is_True()
+        public async Task StartMetadataArchiveGeneration_Locks_Repos_When_Lock_Source_Repo_Is_True()
         {
             // Arrange
             const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
