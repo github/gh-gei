@@ -35,10 +35,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public void Should_Have_Options()
         {
             _command.Should().NotBeNull();
-            _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(20);
+            _command.Name.Should().Be("migrate-org");
+            _command.Options.Count.Should().Be(7);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-enterprise", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
