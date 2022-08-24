@@ -673,7 +673,8 @@ namespace OctoshiftCLI.Tests
                     $metadataArchiveUrl: String,
                     $accessToken: String!,
                     $githubPat: String,
-                    $skipReleases: Boolean)";
+                    $skipReleases: Boolean,
+                    $lockSource: Boolean)";
             const string gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -686,7 +687,8 @@ namespace OctoshiftCLI.Tests
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
                         githubPat: $githubPat,
-                        skipReleases: $skipReleases
+                        skipReleases: $skipReleases,
+                        lockSource: $lockSource
                     }
                 ) {
                     repositoryMigration {
