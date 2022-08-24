@@ -1,21 +1,19 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
-    public class MigrationOrgCommand : Command
+    public class MigrateOrgCommand : Command
     {
         private readonly OctoLogger _log;
         private readonly ITargetGithubApiFactory _targetGithubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrationOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-org")
         {
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
@@ -66,10 +64,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<MigrationOrgCommandArgs>(Invoke);
+            Handler = CommandHandler.Create<MigrateOrgCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(MigrationOrgCommandArgs args)
+        public async Task Invoke(MigrateOrgCommandArgs args)
         {
             if (args is null)
             {
@@ -97,12 +95,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogSuccess($"Org Migration has been initiated (ID: {migrationId}).");
         }
 
-        private string GetSourceToken(MigrationOrgCommandArgs args) => 
+        private string GetSourceToken(MigrateOrgCommandArgs args) =>
             args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
         private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}".Replace(" ", "%20");
 
-        private void LogAndValidateOptions(MigrationOrgCommandArgs args)
+        private void LogAndValidateOptions(MigrateOrgCommandArgs args)
         {
             _log.LogInformation("Migrating Org...");
             _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
@@ -132,7 +130,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         }
     }
 
-    public class MigrationOrgCommandArgs
+    public class MigrateOrgCommandArgs
     {
         public string GithubSourceOrg { get; set; }
         public string GithubTargetOrg { get; set; }
