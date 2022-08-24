@@ -1,1 +1,1 @@
-
+- Add `migrate-repo` command to `bbs2gh`.

@@ -8,7 +8,6 @@ namespace OctoshiftCLI.BbsToGithub;
 public class EnvironmentVariableProvider
 {
     private const string GH_PAT = "GH_PAT";
-    private const string ADO_PAT = "ADO_PAT";
 
     private readonly OctoLogger _logger;
 
@@ -27,10 +26,6 @@ public class EnvironmentVariableProvider
     public virtual string GithubPersonalAccessToken() =>
             GetSecret(GH_PAT)
             ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
-
-    public virtual string AdoPersonalAccessToken() =>
-            GetSecret(ADO_PAT)
-            ?? throw new OctoshiftCliException($"{ADO_PAT} environment variable is not set.");
 
     private string GetSecret(string secretName)
     {

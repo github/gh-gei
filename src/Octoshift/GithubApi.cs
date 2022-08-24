@@ -171,6 +171,32 @@ namespace OctoshiftCLI
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
+        public virtual async Task<string> CreateBbsMigrationSource(string orgId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+            var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    name = "Bitbucket Server Source",
+                    url = "https://not-used",
+                    ownerId = orgId,
+                    type = "BITBUCKET_SERVER"
+                },
+                operationName = "createMigrationSource"
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+        }
+
         public virtual async Task<string> CreateGhecMigrationSource(string orgId)
         {
             var url = $"{_apiUrl}/graphql";
@@ -269,6 +295,20 @@ namespace OctoshiftCLI
             EnsureSuccessGraphQLResponse(data);
 
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
+        }
+
+        public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
+        {
+            return await StartMigration(
+                migrationSourceId,
+                "https://not-used",  // source repository URL
+                orgId,
+                repo,
+                "not-used",  // source access token
+                targetToken,
+                archiveUrl,
+                "https://not-used"  // metadata archive URL
+            );
         }
 
         public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
