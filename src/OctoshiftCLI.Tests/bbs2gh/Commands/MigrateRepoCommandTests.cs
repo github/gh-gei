@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
         private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+        private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
@@ -30,6 +31,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _command = new MigrateRepoCommand(
                 _mockOctoLogger.Object,
                 _mockGithubApiFactory.Object,
+                _mockBbsApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object
             );
         }

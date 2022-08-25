@@ -56,22 +56,31 @@ public class BbsApiTests
     }
 
     [Fact]
-    public async Task GetExportState_Returns_Export_State()
+    public async Task GetExport_Returns_Export_Details()
     {
         var endpoint = $"{BBS_SERVICE_URL}/migration/exports/{EXPORT_ID}";
         var state = "INITIALISING";
+        var message = "Still working on it!";
+        var percentage = 0;
 
         var responsePayload = new
         {
             id = EXPORT_ID,
-            state
+            state,
+            progress = new
+            {
+                message,
+                percentage
+            }
         };
 
         _mockBbsClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(responsePayload.ToJson());
 
-        var result = await sut.GetExportState(EXPORT_ID);
+        var (actualState, actualMessage, actualPercentage) = await sut.GetExport(EXPORT_ID);
 
-        result.Should().Be(state);
+        actualState.Should().Be(state);
+        actualMessage.Should().Be(message);
+        actualPercentage.Should().Be(percentage);
     }
 
     [Fact]
