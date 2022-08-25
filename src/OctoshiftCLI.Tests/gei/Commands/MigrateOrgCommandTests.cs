@@ -53,7 +53,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var githubOrgId = Guid.NewGuid().ToString();
             var githubEntpriseId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubOrgUrl = $"https://github.com/{SOURCE_ORG}";
@@ -116,7 +115,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var githubOrgId = Guid.NewGuid().ToString();
             var githubEntpriseId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubOrgUrl = $"https://github.com/{SOURCE_ORG}";
@@ -178,7 +176,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var githubOrgId = Guid.NewGuid().ToString();
             var githubEntpriseId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
             var githubOrgUrl = $"https://github.com/{SOURCE_ORG}";
