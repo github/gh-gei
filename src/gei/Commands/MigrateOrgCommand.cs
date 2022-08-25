@@ -121,7 +121,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
 
-                if (args.GithubSourcePat is null)
+                if (args.GithubSourcePat.IsNullOrWhitespace())
                 {
                     args.GithubSourcePat = args.GithubTargetPat;
                     _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
