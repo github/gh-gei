@@ -947,6 +947,37 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetOrganizationMigrationState_Returns_The_State()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""state"": ""{actualMigrationState}""
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedMigrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
+        }
+
+        [Fact]
         public async Task GetMigration_Retries_On_502()
         {
             // Arrange

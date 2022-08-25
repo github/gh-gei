@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -15,6 +16,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-org")
         {
+            IsHidden = true;
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
@@ -36,12 +38,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = true,
                 Description = "Name of the target enterprise."
             };
-            var ssh = new Option("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
-            };
             var githubSourcePat = new Option<string>("--github-source-pat")
             {
                 IsRequired = false
@@ -49,6 +45,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var githubTargetPat = new Option<string>("--github-target-pat")
             {
                 IsRequired = false
+            };
+            var wait = new Option("--wait")
+            {
+                IsRequired = false,
+                Description = "Synchronously waits for the org migration to finish."
             };
             var verbose = new Option("--verbose")
             {
@@ -59,9 +60,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(githubTargetOrg);
             AddOption(githubTargetEnterprise);
 
-            AddOption(ssh);
             AddOption(githubSourcePat);
             AddOption(githubTargetPat);
+            AddOption(wait);
             AddOption(verbose);
 
             Handler = CommandHandler.Create<MigrateOrgCommandArgs>(Invoke);
@@ -92,7 +93,29 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 sourceToken,
                 targetToken);
 
-            _log.LogSuccess($"Org Migration has been initiated (ID: {migrationId}).");
+
+            if (!args.Wait)
+            {
+                _log.LogInformation($"A organization migration (ID: {migrationId}) was successfully queued.");
+                return;
+            }
+
+            var migrationState = await githubApi.GetOrganizationMigrationState(migrationId);
+
+            while (OrganizationMigrationStatus.IsPending(migrationState))
+            {
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+                await Task.Delay(10000);
+                migrationState = await githubApi.GetOrganizationMigrationState(migrationId);
+            }
+
+            if (OrganizationMigrationStatus.IsFailed(migrationState))
+            {
+                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+                throw new OctoshiftCliException($"Migration Failed. Migration ID: {migrationId}");
+            }
+
+            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         }
 
         private string GetSourceToken(MigrateOrgCommandArgs args) =>
@@ -107,11 +130,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"GITHUB TARGET ENTERPRISE: {args.GithubTargetEnterprise}");
 
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
-            }
-
             if (args.GithubSourcePat.HasValue())
             {
                 _log.LogInformation("GITHUB SOURCE PAT: ***");
@@ -121,7 +139,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("GITHUB TARGET PAT: ***");
 
-                if (args.GithubSourcePat.IsNullOrWhitespace())
+                if (args.GithubSourcePat.IsNullOrWhiteSpace())
                 {
                     args.GithubSourcePat = args.GithubTargetPat;
                     _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
@@ -135,7 +153,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourceOrg { get; set; }
         public string GithubTargetOrg { get; set; }
         public string GithubTargetEnterprise { get; set; }
-        public bool Ssh { get; set; }
+        public bool Wait { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }

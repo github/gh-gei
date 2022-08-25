@@ -149,7 +149,6 @@ namespace OctoshiftCLI
 
             var payload = new
             {
-                // TODO: this is super ugly, need to find a graphql library to make this code nicer
                 query = "query($slug: String!) {enterprise (slug: $slug) { slug, id } }",
                 variables = new { slug = enterpriseName }
             };
@@ -360,7 +359,23 @@ namespace OctoshiftCLI
 
             return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
         }
-        
+
+        public virtual async Task<string> GetOrganizationMigrationState(string migrationId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on OrganizationMigration { state } }";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadGateway);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["node"]["state"];
+        }
+
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
         {
             return await StartMigration(
