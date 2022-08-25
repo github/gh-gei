@@ -112,7 +112,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
             }
 
-            if (args.GithubSourcePat is not null)
+            if (args.GithubSourcePat.HasValue())
             {
                 _log.LogInformation("GITHUB SOURCE PAT: ***");
             }
