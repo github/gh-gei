@@ -1,11 +1,10 @@
 using System.IO;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI;
 
-public class FileSystemProvider : IFileSystemProvider
+public class FileSystemProvider
 {
-    public bool FileExists(string path) => File.Exists(path);
+    public virtual bool FileExists(string path) => File.Exists(path);
 
-    public DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);
+    public virtual DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);
 }

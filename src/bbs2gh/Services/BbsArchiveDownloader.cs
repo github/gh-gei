@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using OctoshiftCLI.Contracts;
 using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
@@ -15,7 +14,7 @@ public class BbsArchiveDownloader : IDisposable
     private readonly OctoLogger _log;
     private DateTime _nextProgressReport;
 
-    internal IFileSystemProvider FileSystemProvider = new FileSystemProvider();
+    internal FileSystemProvider FileSystemProvider = new();
     internal Action<string, FileInfo> ScpDownload;
 
     public BbsArchiveDownloader(OctoLogger log, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)

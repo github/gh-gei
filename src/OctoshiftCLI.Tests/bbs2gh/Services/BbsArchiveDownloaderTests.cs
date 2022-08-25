@@ -3,7 +3,6 @@ using System.IO;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Services;
-using OctoshiftCLI.Contracts;
 using Renci.SshNet;
 using Xunit;
 
@@ -16,7 +15,7 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
 
     private readonly string _exportArchiveFilename = $"Bitbucket_export_{EXPORT_JOB_ID}.tar";
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-    private readonly Mock<IFileSystemProvider> _mockFileSystemProvider = new();
+    private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly BbsArchiveDownloader _bbsArchiveDownloader;
     private readonly ScpClient _scpClient;
 
