@@ -1,2 +1,1 @@
-- Add `migrate-repo` command to `bbs2gh`.
-- Added `--lock-source-repo` option to `gh gei migrate-repo` and `gh gei generate-script` commands. This will make the source repo read-only as part of the migration.
+
