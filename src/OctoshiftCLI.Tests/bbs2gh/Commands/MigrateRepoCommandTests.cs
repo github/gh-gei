@@ -41,11 +41,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(6);
+            _command.Options.Count.Should().Be(11);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "archive-url", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "archive-url", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);

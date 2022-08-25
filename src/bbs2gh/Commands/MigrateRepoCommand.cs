@@ -101,7 +101,6 @@ public class MigrateRepoCommand : Command
 
     public async Task Invoke(MigrateRepoCommandArgs args)
     {
-        _log.LogInformation("Logging works");
         if (args is null)
         {
             throw new ArgumentNullException(nameof(args));
@@ -117,8 +116,6 @@ public class MigrateRepoCommand : Command
         {
             await ImportArchive(args);
         }
-
-        _log.LogInformation("Done");
     }
 
     private bool ArgsForGenerate(MigrateRepoCommandArgs args)
@@ -138,14 +135,14 @@ public class MigrateRepoCommand : Command
             _log.LogInformation($"Export started. Export ID: {exportId}");
             return;
         }
-        
-        var (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
+
+        var (exportState, _, exportProgress) = await bbsApi.GetExport(exportId);
 
         while (exportState != "COMPLETED")
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
             await Task.Delay(1000);
-            (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
+            (exportState, _, exportProgress) = await bbsApi.GetExport(exportId);
         }
 
         _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at data/migration/export/Bitbucket_export_{exportId}.tar");
@@ -155,7 +152,6 @@ public class MigrateRepoCommand : Command
     {
         return !string.IsNullOrEmpty(args.GithubOrg) &&
             !string.IsNullOrEmpty(args.GithubRepo) &&
-            !string.IsNullOrEmpty(args.GithubPat) &&
             !string.IsNullOrEmpty(args.ArchiveUrl);
     }
 
