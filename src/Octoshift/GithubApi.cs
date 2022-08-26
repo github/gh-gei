@@ -370,7 +370,7 @@ namespace OctoshiftCLI
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
             var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
-                ex => ex.StatusCode == HttpStatusCode.BadGateway);
+                _ => true);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
