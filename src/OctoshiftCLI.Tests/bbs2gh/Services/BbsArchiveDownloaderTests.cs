@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.Win32.SafeHandles;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Services;
 using Renci.SshNet;
@@ -45,10 +44,6 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
         // Arrange
         var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename);
         var expectedTargetArchiveFullName = Path.Combine(TARGET_DIRECTORY, _exportArchiveFilename);
-        var expectedTargetArchive = new Mock<FileStream>(new SafeFileHandle(IntPtr.Zero, false), FileAccess.Read);
-        _mockFileSystemProvider
-            .Setup(m => m.Open(It.Is<string>(actual => actual == expectedTargetArchiveFullName), FileMode.CreateNew))
-            .Returns(expectedTargetArchive.Object);
 
         // Act
         await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
@@ -57,10 +52,12 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
         _mockSftpClient.Verify(m =>
             m.BeginDownloadFile(
                 It.Is<string>(actual => actual == expectedSourceArchiveFullName),
-                It.Is<Stream>(actual => actual == expectedTargetArchive.Object),
+                It.IsAny<Stream>(),
                 null,
                 null,
                 It.IsAny<Action<ulong>>()));
+
+        _mockFileSystemProvider.Verify(m => m.Open(It.Is<string>(actual => actual == expectedTargetArchiveFullName), FileMode.CreateNew));
     }
 
     [Fact]
