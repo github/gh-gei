@@ -65,7 +65,7 @@ namespace OctoshiftCLI.Tests
 
             // Act
             var internalSchemaHeader = new Dictionary<string, string>() { { ghraphQLSchemaHeaderName, ghraphQLSchemaHeaderValue } };
-            var actualContent = await githubClient.GetAsync("http://example.com", internalSchemaHeader);
+            await githubClient.GetAsync("http://example.com", internalSchemaHeader);
 
             // Assert
             handlerMock.Protected().Verify(
