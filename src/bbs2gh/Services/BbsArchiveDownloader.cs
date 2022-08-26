@@ -45,9 +45,9 @@ public class BbsArchiveDownloader : IDisposable
             throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
         }
 
-        if (_sftpClient is BaseClient { IsConnected: false } clinet)
+        if (_sftpClient is BaseClient { IsConnected: false } client)
         {
-            clinet.Connect();
+            client.Connect();
         }
 
         if (!_sftpClient.Exists(sourceExportArchiveFullPath))
