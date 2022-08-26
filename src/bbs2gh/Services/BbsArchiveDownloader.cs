@@ -13,19 +13,20 @@ public class BbsArchiveDownloader : IDisposable
 
     private readonly ISftpClient _sftpClient;
     private readonly OctoLogger _log;
+    private readonly FileSystemProvider _fileSystemProvider;
     private DateTime _nextProgressReport;
 
-    internal FileSystemProvider FileSystemProvider = new();
-
-    public BbsArchiveDownloader(OctoLogger log, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
+    public BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
     {
         _log = log;
+        _fileSystemProvider = fileSystemProvider;
         _sftpClient = new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
     }
 
-    internal BbsArchiveDownloader(OctoLogger log, ISftpClient sftpClient)
+    internal BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
     {
         _log = log;
+        _fileSystemProvider = fileSystemProvider;
         _sftpClient = sftpClient;
     }
 
@@ -39,7 +40,7 @@ public class BbsArchiveDownloader : IDisposable
         var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory, EXPORT_ARCHIVE_SOURCE_DIRECTORY, exportArchiveFilename);
         var targetExportArchiveFullPath = Path.Join(targetDirectory, exportArchiveFilename);
 
-        if (FileSystemProvider.FileExists(targetExportArchiveFullPath))
+        if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {
             throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
         }
@@ -54,10 +55,10 @@ public class BbsArchiveDownloader : IDisposable
             throw new OctoshiftCliException($"Source export archive ({sourceExportArchiveFullPath}) does not exist.");
         }
 
-        FileSystemProvider.CreateDirectory(targetDirectory);
+        _fileSystemProvider.CreateDirectory(targetDirectory);
 
         var sourceExportArchiveSize = _sftpClient.GetAttributes(sourceExportArchiveFullPath)?.Size ?? long.MaxValue;
-        await using var targetExportArchive = FileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
+        await using var targetExportArchive = _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
         await Task.Factory.FromAsync(
             _sftpClient.BeginDownloadFile(
                 sourceExportArchiveFullPath,

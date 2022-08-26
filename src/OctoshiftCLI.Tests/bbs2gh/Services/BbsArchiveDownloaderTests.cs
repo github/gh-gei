@@ -23,9 +23,8 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
 
     public BbsArchiveDownloaderTests()
     {
-        _bbsArchiveDownloader = new BbsArchiveDownloader(_mockOctoLogger.Object, _mockSftpClient.Object)
+        _bbsArchiveDownloader = new BbsArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
         {
-            FileSystemProvider = _mockFileSystemProvider.Object,
             BbsSharedHomeDirectory = BBS_HOME_DIRECTORY
         };
 
@@ -51,13 +50,13 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
         // Assert
         _mockSftpClient.Verify(m =>
             m.BeginDownloadFile(
-                It.Is<string>(actual => actual == expectedSourceArchiveFullName),
+                expectedSourceArchiveFullName,
                 It.IsAny<Stream>(),
                 null,
                 null,
                 It.IsAny<Action<ulong>>()));
 
-        _mockFileSystemProvider.Verify(m => m.Open(It.Is<string>(actual => actual == expectedTargetArchiveFullName), FileMode.CreateNew));
+        _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew));
     }
 
     [Fact]
