@@ -123,28 +123,20 @@ namespace OctoshiftCLI
 
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
+            using var request = new HttpRequestMessage(httpMethod, url).AddHeaders(customHeaders);
+
             if (body != null)
             {
                 _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
+
+                request.Content = body.ToJson().ToStringContent();
             }
 
-            AddHeaders(customHeaders);
+            using var response = await _httpClient.SendAsync(request);
 
-            using var payload = body?.ToJson().ToStringContent();
-            using var response = httpMethod.ToString() switch
-            {
-                "GET" => await _httpClient.GetAsync(url),
-                "DELETE" => await _httpClient.DeleteAsync(url),
-                "POST" => await _httpClient.PostAsync(url, payload),
-                "PUT" => await _httpClient.PutAsync(url, payload),
-                "PATCH" => await _httpClient.PatchAsync(url, payload),
-                _ => throw new ArgumentOutOfRangeException($"{httpMethod} is not supported.")
-            };
             _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
-
-            RemoveHeaders(customHeaders);
 
             foreach (var header in response.Headers)
             {
@@ -187,12 +179,6 @@ namespace OctoshiftCLI
 
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
-
-        private void AddHeaders(Dictionary<string, string> headers) =>
-            headers?.ToList().ForEach(kv => _httpClient.DefaultRequestHeaders.Add(kv.Key, kv.Value));
-
-        private void RemoveHeaders(Dictionary<string, string> headers) =>
-            headers?.ToList().ForEach(kv => _httpClient.DefaultRequestHeaders.Remove(kv.Key));
 
     }
 }

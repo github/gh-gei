@@ -54,6 +54,28 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task Custom_Headers_Are_Added_And_Removed()
+        {
+            // Arrange
+            const string ghraphQLSchemaHeaderName = "GraphQL-schema";
+            const string ghraphQLSchemaHeaderValue = "internal";
+            var handlerMock = MockHttpHandlerForGet();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, null);
+
+            // Act
+            var internalSchemaHeader = new Dictionary<string, string>() { { ghraphQLSchemaHeaderName, ghraphQLSchemaHeaderValue } };
+            var actualContent = await githubClient.GetAsync("http://example.com", internalSchemaHeader);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.Headers.Any(kv => kv.Key == ghraphQLSchemaHeaderName && kv.Value.First() == ghraphQLSchemaHeaderValue)),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
         public async Task GetAsync_Encodes_The_Url()
         {
             // Arrange
