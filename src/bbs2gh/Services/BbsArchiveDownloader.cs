@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
@@ -10,30 +11,27 @@ public class BbsArchiveDownloader : IDisposable
     private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
     private const string EXPORT_ARCHIVE_SOURCE_DIRECTORY = "data/migration/export";
 
-    private readonly ScpClient _scpClient;
+    private readonly ISftpClient _sftpClient;
     private readonly OctoLogger _log;
     private DateTime _nextProgressReport;
 
     internal FileSystemProvider FileSystemProvider = new();
-    internal Action<string, FileInfo> ScpDownload;
 
     public BbsArchiveDownloader(OctoLogger log, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
-        : this(log, new ScpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath)))
-    {
-    }
-
-    internal BbsArchiveDownloader(OctoLogger log, ScpClient scpClient)
     {
         _log = log;
-        _scpClient = scpClient;
-        _scpClient.Downloading += (_, args) => LogProgress(args.Downloaded, args.Size);
+        _sftpClient = new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
+    }
 
-        ScpDownload = DownloadFile;
+    internal BbsArchiveDownloader(OctoLogger log, ISftpClient sftpClient)
+    {
+        _log = log;
+        _sftpClient = sftpClient;
     }
 
     public virtual string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public virtual void Download(long exportJobId, string targetDirectory = "bbs_archive_downloads")
+    public virtual async Task Download(long exportJobId, string targetDirectory = "bbs_archive_downloads")
     {
         _nextProgressReport = DateTime.Now;
 
@@ -46,22 +44,31 @@ public class BbsArchiveDownloader : IDisposable
             throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
         }
 
-        FileSystemProvider.CreateDirectory(targetDirectory);
-
-        ScpDownload(sourceExportArchiveFullPath, new FileInfo(targetExportArchiveFullPath));
-    }
-
-    private void DownloadFile(string sourceExportArchiveFullPath, FileInfo targetExportArchive)
-    {
-        if (!_scpClient.IsConnected)
+        if (_sftpClient is BaseClient { IsConnected: false } clinet)
         {
-            _scpClient.Connect();
+            clinet.Connect();
         }
 
-        _scpClient.Download(sourceExportArchiveFullPath, targetExportArchive);
+        if (!_sftpClient.Exists(sourceExportArchiveFullPath))
+        {
+            throw new OctoshiftCliException($"Source export archive ({sourceExportArchiveFullPath}) does not exist.");
+        }
+
+        FileSystemProvider.CreateDirectory(targetDirectory);
+
+        var sourceExportArchiveSize = _sftpClient.GetAttributes(sourceExportArchiveFullPath)?.Size ?? long.MaxValue;
+        await using var targetExportArchive = FileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
+        await Task.Factory.FromAsync(
+            _sftpClient.BeginDownloadFile(
+                sourceExportArchiveFullPath,
+                targetExportArchive,
+                null,
+                null,
+                downloaded => LogProgress(downloaded, (ulong)sourceExportArchiveSize)),
+            _sftpClient.EndDownloadFile);
     }
 
-    private void LogProgress(long downloadedBytes, long totalBytes)
+    private void LogProgress(ulong downloadedBytes, ulong totalBytes)
     {
         if (DateTime.Now < _nextProgressReport)
         {
@@ -78,7 +85,7 @@ public class BbsArchiveDownloader : IDisposable
     {
         if (disposing)
         {
-            _scpClient?.Dispose();
+            (_sftpClient as IDisposable)?.Dispose();
         }
     }
 
