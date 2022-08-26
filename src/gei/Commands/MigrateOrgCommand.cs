@@ -112,7 +112,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (OrganizationMigrationStatus.IsFailed(migrationState))
             {
                 _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                throw new OctoshiftCliException($"Migration Failed. Migration ID: {migrationId}");
+                throw new OctoshiftCliException($"Migration Failed.");
             }
 
             _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");

@@ -17,6 +17,9 @@ namespace OctoshiftCLI
         private readonly string _apiUrl;
         private readonly RetryPolicy _retryPolicy;
 
+        private readonly Dictionary<string, string> _internalSchemaHeader =
+            new() { { "GraphQL-schema", "internal" } };
+
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
@@ -352,7 +355,7 @@ namespace OctoshiftCLI
                 operationName = "startOrganizationMigration"
             };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _client.PostAsync(url, payload, _internalSchemaHeader);
             var data = JObject.Parse(response);
 
             EnsureSuccessGraphQLResponse(data);
@@ -369,7 +372,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload, _internalSchemaHeader),
                 _ => true);
             var data = JObject.Parse(response);
 

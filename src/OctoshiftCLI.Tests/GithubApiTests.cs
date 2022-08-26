@@ -966,8 +966,9 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
+            var internalSchemaHeader = new Dictionary<string, string>() { { "GraphQL-schema", "internal" } };
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), internalSchemaHeader))
                 .ReturnsAsync(response);
 
             // Act
@@ -1438,7 +1439,8 @@ namespace OctoshiftCLI.Tests
                     It.IsAny<Func<JObject, JArray>>(),
                     It.IsAny<Func<JObject, JObject>>(),
                     It.IsAny<int>(),
-                    null, null))
+                    null,
+                    null))
                 .Returns(new[]
                 {
                     JToken.FromObject(migration1),
