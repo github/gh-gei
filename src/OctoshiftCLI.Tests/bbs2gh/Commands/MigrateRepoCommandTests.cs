@@ -196,7 +196,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BbsUsername = BBS_USERNAME,
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
+                BbsRepo = BBS_REPO,
+                Wait = true
             };
 
             // Assert
