@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 
@@ -11,6 +12,7 @@ public class MigrateRepoCommand : Command
     private readonly GithubApiFactory _githubApiFactory;
     private readonly BbsApiFactory _bbsApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
     public MigrateRepoCommand(
         OctoLogger log,
@@ -28,6 +30,7 @@ public class MigrateRepoCommand : Command
         Description += Environment.NewLine;
         Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
+        // Arguments to generate a new archive
         var bbsServerUrl = new Option<string>("--bbs-server-url")
         {
             IsRequired = false,
@@ -58,6 +61,7 @@ public class MigrateRepoCommand : Command
             Description = "The Bitbucket password of the user specified by --bbs-username."
         };
 
+        // Arguments to import an existing archive
         var archiveUrl = new Option<string>("--archive-url")
         {
             IsRequired = false,
@@ -88,13 +92,15 @@ public class MigrateRepoCommand : Command
         AddOption(githubOrg);
         AddOption(githubRepo);
         AddOption(githubPat);
-        AddOption(wait);
-        AddOption(verbose);
+
         AddOption(bbsServerUrl);
         AddOption(bbsProject);
         AddOption(bbsRepo);
         AddOption(bbsUsername);
         AddOption(bbsPassword);
+
+        AddOption(wait);
+        AddOption(verbose);
 
         Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
     }
@@ -108,26 +114,28 @@ public class MigrateRepoCommand : Command
 
         _log.Verbose = args.Verbose;
 
-        if (ArgsForGenerate(args))
+        if (args.BbsServerUrl.HasValue())
         {
             await GenerateArchive(args);
         }
-        else if (ArgsForImport(args))
+        else if (args.ArchiveUrl.HasValue())
         {
             await ImportArchive(args);
         }
-    }
-
-    private bool ArgsForGenerate(MigrateRepoCommandArgs args)
-    {
-        return !string.IsNullOrEmpty(args.BbsServerUrl) &&
-               !string.IsNullOrEmpty(args.BbsUsername) &&
-               !string.IsNullOrEmpty(args.BbsPassword);
+        else
+        {
+            throw new ArgumentException("Either --bbs-server-url or --archive-url must be specified.");
+        }
     }
 
     private async Task GenerateArchive(MigrateRepoCommandArgs args)
     {
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+
+        _log.LogInformation($"Generating archive on {args.BbsServerUrl}...");
+        _log.LogInformation($"BITBUCKET PROJECT: {args.BbsProject}");
+        _log.LogInformation($"BITBUCKET REPO: {args.BbsRepo}");
+
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
         if (!args.Wait)
@@ -136,23 +144,21 @@ public class MigrateRepoCommand : Command
             return;
         }
 
-        var (exportState, _, exportProgress) = await bbsApi.GetExport(exportId);
+        var (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
 
-        while (exportState != "COMPLETED")
+        while (ExportState.IsInProgress(exportState))
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
-            await Task.Delay(1000);
-            (exportState, _, exportProgress) = await bbsApi.GetExport(exportId);
+            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
+        }
+
+        if (ExportState.IsError(exportState))
+        {
+            throw new OctoshiftCliException($"Bitbucket export failed --> State: {exportState}; Message: {exportMessage}");
         }
 
         _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at data/migration/export/Bitbucket_export_{exportId}.tar");
-    }
-
-    private bool ArgsForImport(MigrateRepoCommandArgs args)
-    {
-        return !string.IsNullOrEmpty(args.GithubOrg) &&
-            !string.IsNullOrEmpty(args.GithubRepo) &&
-            !string.IsNullOrEmpty(args.ArchiveUrl);
     }
 
     private async Task ImportArchive(MigrateRepoCommandArgs args)

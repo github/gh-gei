@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
         private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+        private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
@@ -21,6 +22,13 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string GITHUB_ORG = "target-org";
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
+
+        private const string BBS_SERVER_URL = "https://our-bbs-server.com";
+        private const string BBS_USERNAME = "bbs-username";
+        private const string BBS_PASSWORD = "bbs-password";
+        private const string BBS_PROJECT = "bbs-project";
+        private const string BBS_REPO = "bbs-repo";
+        private const long BBS_EXPORT_ID = 123;
 
         private const string GITHUB_ORG_ID = "github-org-id";
         private const string MIGRATION_SOURCE_ID = "migration-source-id";
@@ -141,6 +149,58 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task Hits_Bitbucket_With_The_Right_Options()
+        {
+            // Arrange
+            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
+
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockBbsApi.Verify(m => m.StartExport(
+                BBS_PROJECT,
+                BBS_REPO
+            ));
+
+        }
+
+        [Fact]
+        public async Task Throws_An_Error_If_Export_Fails()
+        {
+
+            // Arrange
+            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
+
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("FAILED", "The export failed", 0));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO
+            };
+
+            // Assert
+            await Assert.ThrowsAsync<OctoshiftCliException>(() => _command.Invoke(args));
         }
     }
 }
