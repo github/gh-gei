@@ -16,6 +16,7 @@ public class WaitForMigrationCommandBase : Command
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
     private readonly string _repoMigrationIdPrefix = "RM_";
+    private readonly string _orgMigrationIdPrefix = "OM_";
 
     public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("wait-for-migration")
     {
@@ -85,7 +86,7 @@ public class WaitForMigrationCommandBase : Command
                 (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
             }
         }
-        else
+        else if (migrationId.StartsWith(_orgMigrationIdPrefix))
         {
             var state = await githubApi.GetOrganizationMigrationState(migrationId);
 
@@ -116,6 +117,11 @@ public class WaitForMigrationCommandBase : Command
 
                 state = await githubApi.GetOrganizationMigrationState(migrationId);
             }
+        }
+        else
+        {
+            _log.LogError($"Invalid migration id: {migrationId}");
+            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
         }
     }
 }

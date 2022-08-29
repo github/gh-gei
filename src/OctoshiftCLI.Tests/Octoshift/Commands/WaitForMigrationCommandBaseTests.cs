@@ -243,6 +243,39 @@ public class WaitForMigrationCommandBaseTests
     }
 
     [Fact]
+    public async Task With_Invalid_Migration_ID_Prefix_Throws_Exception()
+    {
+        // Arrange
+        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+        var actualLogOutput = new List<string>();
+        _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+        var invalidId = "SomeId";
+
+        var expectedLogOutput = new List<string>
+            {
+                $"Invalid migration id: {invalidId}"
+            };
+
+
+        // Act
+        await FluentActions
+            .Invoking(async () => await _command.Handle(invalidId))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage($"Invalid migration id: {invalidId}");
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
+
+        actualLogOutput.Should().Equal(expectedLogOutput);
+
+        _mockOctoLogger.VerifyNoOtherCalls();
+        _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task It_Uses_Github_Pat_When_Provided()
     {
         // Arrange
