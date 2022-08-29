@@ -15,8 +15,8 @@ public class WaitForMigrationCommandBase : Command
 
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
-    private readonly string _repoMigrationIdPrefix = "RM_";
-    private readonly string _orgMigrationIdPrefix = "OM_";
+    private const string REPO_MIGRATION_ID_PREFIX = "RM_";
+    private const string ORG_MIGRATION_ID_PREFIX = "OM_";
 
     public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("wait-for-migration")
     {
