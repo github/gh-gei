@@ -22,9 +22,9 @@ namespace OctoshiftCLI.BbsToGithub
 
         public virtual BbsApi Create(string bbsServerUrl, string bbsUsername, string bbsPassword)
         {
-            bbsServerUrl ??= _environmentVariableProvider.BbsServerUrl();
             bbsUsername ??= _environmentVariableProvider.BbsUsername();
             bbsPassword ??= _environmentVariableProvider.BbsPassword();
+
             var bbsClient = new BbsClient(_octoLogger, _client, _versionProvider, _retryPolicy, bbsUsername, bbsPassword);
             return new BbsApi(bbsClient, bbsServerUrl, _octoLogger);
         }

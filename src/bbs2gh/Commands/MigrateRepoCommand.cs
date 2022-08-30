@@ -52,7 +52,7 @@ public class MigrateRepoCommand : Command
         var bbsUsername = new Option<string>("--bbs-username")
         {
             IsRequired = false,
-            Description = "The Bitbucket username of a user with project admin privileges. If not set will be read from BBS_USERNAME environment variable."
+            Description = "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable."
         };
 
         var bbsPassword = new Option<string>("--bbs-password")
@@ -112,6 +112,16 @@ public class MigrateRepoCommand : Command
             throw new ArgumentNullException(nameof(args));
         }
 
+        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue())
+        {
+            throw new ArgumentException("Either --bbs-server-url or --archive-url must be specified.");
+        }
+
+        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new ArgumentException("Only one of --bbs-server-url or --archive-url can be specified.");
+        }
+
         _log.Verbose = args.Verbose;
 
         if (args.BbsServerUrl.HasValue())
@@ -122,14 +132,23 @@ public class MigrateRepoCommand : Command
         {
             await ImportArchive(args);
         }
-        else
-        {
-            throw new ArgumentException("Either --bbs-server-url or --archive-url must be specified.");
-        }
     }
 
     private async Task GenerateArchive(MigrateRepoCommandArgs args)
     {
+        args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
+        args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
+
+        if (!args.BbsUsername.HasValue())
+        {
+            throw new ArgumentException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+        }
+
+        if (!args.BbsPassword.HasValue())
+        {
+            throw new ArgumentException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+        }
+
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
 
         _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}...");
@@ -187,15 +206,10 @@ public class MigrateRepoCommand : Command
         {
             migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, args.ArchiveUrl);
         }
-        catch (OctoshiftCliException ex)
+        catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
-            if (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
-            {
-                _log.LogWarning($"The Org '{args.GithubOrg}' already contains a repository with the name '{args.GithubRepo}'. No operation will be performed");
-                return;
-            }
-
-            throw;
+            _log.LogWarning($"The Org '{args.GithubOrg}' already contains a repository with the name '{args.GithubRepo}'. No operation will be performed");
+            return;
         }
 
         if (!args.Wait)

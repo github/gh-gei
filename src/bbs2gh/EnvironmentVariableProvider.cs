@@ -8,7 +8,6 @@ namespace OctoshiftCLI.BbsToGithub;
 public class EnvironmentVariableProvider
 {
     private const string GH_PAT = "GH_PAT";
-    private const string BBS_SERVER_URL = "BBS_SERVER_URL";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
 
@@ -29,10 +28,6 @@ public class EnvironmentVariableProvider
     public virtual string GithubPersonalAccessToken() =>
             GetSecret(GH_PAT)
             ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
-
-    public virtual string BbsServerUrl() =>
-            _getEnvironmentVariable(BBS_SERVER_URL)
-            ?? throw new OctoshiftCliException($"{BBS_SERVER_URL} environment variable is not set.");
 
     public virtual string BbsUsername() =>
             GetSecret(BBS_USERNAME)
