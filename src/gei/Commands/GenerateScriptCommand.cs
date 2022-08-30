@@ -166,7 +166,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
             }
-            
+
             if (args.GithubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
