@@ -38,10 +38,10 @@ public class EnvironmentVariableProvider
             GetSecret(BBS_USERNAME)
             ?? throw new OctoshiftCliException($"{BBS_USERNAME} environment variable is not set.");
 
-    public virtual string BbsPassword() => 
+    public virtual string BbsPassword() =>
             GetSecret(BBS_PASSWORD)
             ?? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.");
-            
+
     private string GetSecret(string secretName)
     {
         var secret = _getEnvironmentVariable(secretName);
