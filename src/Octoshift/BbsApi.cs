@@ -49,7 +49,7 @@ public class BbsApi
         return (long)JObject.Parse(content)["id"];
     }
 
-    public virtual async Task<(string, string, int)> GetExport(long id)
+    public virtual async Task<(string State, string Message, int Percentage)> GetExport(long id)
     {
         var url = $"{_bbsBaseUrl}/migration/exports/{id}";
 
