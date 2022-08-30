@@ -52,11 +52,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var adoSourceOrgOption = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
+                IsHidden = true,
                 Description = "Uses ADO_PAT env variable or --ado-pat option."
             };
             var adoTeamProject = new Option<string>("--ado-team-project")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
             };
             var githubTargetOrgOption = new Option<string>("--github-target-org")
             {
@@ -116,7 +118,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var adoPat = new Option<string>("--ado-pat")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
             };
             var verbose = new Option("--verbose")
             {
@@ -157,6 +160,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.Verbose = args.Verbose;
 
             _log.LogInformation("Generating Script...");
+
+            var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
+            if (hasAdoSpecificArg)
+            {
+                _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
+            }
+            
             if (args.GithubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");

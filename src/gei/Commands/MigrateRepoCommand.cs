@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
@@ -45,11 +46,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var adoSourceOrg = new Option<string>("--ado-source-org")
             {
                 IsRequired = false,
+                IsHidden = true,
                 Description = "Uses ADO_PAT env variable or --ado-pat option."
             };
             var adoTeamProject = new Option<string>("--ado-team-project")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
             };
             var sourceRepo = new Option<string>("--source-repo")
             {
@@ -132,7 +135,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             };
             var adoPat = new Option<string>("--ado-pat")
             {
-                IsRequired = false
+                IsRequired = false,
+                IsHidden = true
             };
             var verbose = new Option("--verbose")
             {
@@ -369,6 +373,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private void LogOptions(MigrateRepoCommandArgs args)
         {
             _log.LogInformation("Migrating Repo...");
+
+            var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
+            if (hasAdoSpecificArg)
+            {
+                _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
+            }
+
             if (args.GithubSourceOrg.HasValue())
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");

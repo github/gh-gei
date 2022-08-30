@@ -58,8 +58,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
@@ -71,7 +71,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
