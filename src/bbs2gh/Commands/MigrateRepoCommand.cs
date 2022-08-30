@@ -132,9 +132,9 @@ public class MigrateRepoCommand : Command
     {
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
 
-        _log.LogInformation($"Generating archive on {args.BbsServerUrl}...");
-        _log.LogInformation($"BITBUCKET PROJECT: {args.BbsProject}");
-        _log.LogInformation($"BITBUCKET REPO: {args.BbsRepo}");
+        _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}...");
+        _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
+        _log.LogInformation($"BBS REPO: {args.BbsRepo}");
 
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
