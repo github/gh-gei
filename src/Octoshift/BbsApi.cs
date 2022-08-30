@@ -36,7 +36,6 @@ public class BbsApi
                 {
                         new
                         {
-                            // Why doesn't this pick up from the default arguments?
                             projectKey = projectKey ?? "*",
                             slug = slug ?? "*"
                         }

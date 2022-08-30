@@ -56,6 +56,37 @@ public class BbsApiTests
     }
 
     [Fact]
+    public async Task StartExport_Defaults_To_Wildcard()
+    {
+        var endpoint = $"{BBS_SERVICE_URL}/migration/exports";
+        var requestPayload = new
+        {
+            repositoriesRequest = new
+            {
+                includes = new[]
+                {
+                    new
+                    {
+                        projectKey = "*",
+                        slug = "*"
+                    }
+                }
+            }
+        };
+
+        var responsePayload = new
+        {
+            id = EXPORT_ID
+        };
+
+        _mockBbsClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == requestPayload.ToJson()))).ReturnsAsync(responsePayload.ToJson());
+
+        var result = await sut.StartExport();
+
+        _mockBbsClient.Verify(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == requestPayload.ToJson())));
+    }
+
+    [Fact]
     public async Task GetExport_Returns_Export_Details()
     {
         var endpoint = $"{BBS_SERVICE_URL}/migration/exports/{EXPORT_ID}";

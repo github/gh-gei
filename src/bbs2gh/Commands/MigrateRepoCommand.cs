@@ -158,7 +158,7 @@ public class MigrateRepoCommand : Command
             throw new OctoshiftCliException($"Bitbucket export failed --> State: {exportState}; Message: {exportMessage}");
         }
 
-        _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at data/migration/export/Bitbucket_export_{exportId}.tar");
+        _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
     }
 
     private async Task ImportArchive(MigrateRepoCommandArgs args)
@@ -215,8 +215,7 @@ public class MigrateRepoCommand : Command
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
-            _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-            throw new OctoshiftCliException(failureReason);
+            throw new OctoshiftCliException($"Migration #{migrationId} failed: {failureReason}");
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");

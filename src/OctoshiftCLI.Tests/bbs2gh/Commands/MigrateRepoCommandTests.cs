@@ -201,7 +201,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             };
 
             // Assert
-            await Assert.ThrowsAsync<OctoshiftCliException>(() => _command.Invoke(args));
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
     }
 }
