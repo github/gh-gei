@@ -83,7 +83,7 @@ public class BbsApiTests
 
         var result = await sut.StartExport();
 
-        _mockBbsClient.Verify(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == requestPayload.ToJson())));
+        result.Should().Be(EXPORT_ID);
     }
 
     [Fact]

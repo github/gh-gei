@@ -34,38 +34,38 @@ public class MigrateRepoCommand : Command
         var bbsServerUrl = new Option<string>("--bbs-server-url")
         {
             IsRequired = false,
-            Description = "The full URL of the Bitbucket Server/Data Center to migrate from."
+            Description = "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990"
         };
 
         var bbsProject = new Option<string>("--bbs-project")
         {
             IsRequired = false,
-            Description = "The Bitbucket project to import; defaults to '*' (all projects)."
+            Description = "The Bitbucket project to migrate."
         };
 
         var bbsRepo = new Option<string>("--bbs-repo")
         {
             IsRequired = false,
-            Description = "The Bitbucket repository to import; defaults to '*' (all repositories)."
+            Description = "The Bitbucket repository to migrate."
         };
 
         var bbsUsername = new Option<string>("--bbs-username")
         {
             IsRequired = false,
-            Description = "The Bitbucket username of a user with project admin privileges."
+            Description = "The Bitbucket username of a user with project admin privileges. If not set will be read from BBS_USERNAME environment variable."
         };
 
         var bbsPassword = new Option<string>("--bbs-password")
         {
             IsRequired = false,
-            Description = "The Bitbucket password of the user specified by --bbs-username."
+            Description = "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable."
         };
 
         // Arguments to import an existing archive
         var archiveUrl = new Option<string>("--archive-url")
         {
             IsRequired = false,
-            Description = "URL used to download Bitbucket Server migration archive."
+            Description = "URL used to download Bitbucket Server migration archive. Only needed if you want to manually retrieve the archive from BBS instead of letting this CLI do that for you."
         };
         var githubOrg = new Option<string>("--github-org")
         {
@@ -209,7 +209,7 @@ public class MigrateRepoCommand : Command
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
-            await Task.Delay(10000);
+            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
             (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
         }
 

@@ -31,7 +31,7 @@ public class EnvironmentVariableProvider
             ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
 
     public virtual string BbsServerUrl() =>
-            GetSecret(BBS_SERVER_URL)
+            _getEnvironmentVariable(BBS_SERVER_URL)
             ?? throw new OctoshiftCliException($"{BBS_SERVER_URL} environment variable is not set.");
 
     public virtual string BbsUsername() =>
