@@ -114,12 +114,12 @@ public class MigrateRepoCommand : Command
 
         if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue())
         {
-            throw new ArgumentException("Either --bbs-server-url or --archive-url must be specified.");
+            throw new OctoshiftCliException("Either --bbs-server-url or --archive-url must be specified.");
         }
 
         if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
         {
-            throw new ArgumentException("Only one of --bbs-server-url or --archive-url can be specified.");
+            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
         }
 
         _log.Verbose = args.Verbose;
@@ -141,12 +141,12 @@ public class MigrateRepoCommand : Command
 
         if (!args.BbsUsername.HasValue())
         {
-            throw new ArgumentException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+            throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
         }
 
         if (!args.BbsPassword.HasValue())
         {
-            throw new ArgumentException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+            throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
         }
 
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
