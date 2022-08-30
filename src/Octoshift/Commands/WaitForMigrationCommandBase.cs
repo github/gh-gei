@@ -52,76 +52,86 @@ public class WaitForMigrationCommandBase : Command
             throw new ArgumentNullException(nameof(migrationId));
         }
 
+        if (!migrationId.StartsWith(REPO_MIGRATION_ID_PREFIX) && !migrationId.StartsWith(ORG_MIGRATION_ID_PREFIX))
+        {
+            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
+        }
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
 
-        if (migrationId.StartsWith(_repoMigrationIdPrefix))
+        if (migrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
         {
-            var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
-
-            _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
-
-            if (githubPat is not null)
-            {
-                _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
-            }
-
-            while (true)
-            {
-                if (RepositoryMigrationStatus.IsSucceeded(state))
-                {
-                    _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
-                    return;
-                }
-
-                if (RepositoryMigrationStatus.IsFailed(state))
-                {
-                    _log.LogError($"Migration {migrationId} failed for {repositoryName}");
-                    throw new OctoshiftCliException(failureReason);
-                }
-
-                _log.LogInformation($"Migration {migrationId} for {repositoryName} is {state}");
-                _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
-                await Task.Delay(WaitIntervalInSeconds * 1000);
-
-                (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
-            }
-        }
-        else if (migrationId.StartsWith(_orgMigrationIdPrefix))
-        {
-            var state = await githubApi.GetOrganizationMigrationState(migrationId);
-
-            _log.LogInformation($"Waiting for org migration (ID: {migrationId}) to finish...");
-
-            if (githubPat is not null)
-            {
-                _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
-            }
-
-            while (true)
-            {
-                if (OrganizationMigrationStatus.IsSucceeded(state))
-                {
-                    _log.LogSuccess($"Migration {migrationId} succeeded");
-                    return;
-                }
-
-                if (OrganizationMigrationStatus.IsFailed(state))
-                {
-                    _log.LogError($"Migration {migrationId} failed");
-                    return;
-                }
-
-                _log.LogInformation($"Migration {migrationId} is {state}");
-                _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
-                await Task.Delay(WaitIntervalInSeconds * 1000);
-
-                state = await githubApi.GetOrganizationMigrationState(migrationId);
-            }
+            await WaitForRepositoryMigration(migrationId, githubPat, githubApi);
         }
         else
         {
-            _log.LogError($"Invalid migration id: {migrationId}");
-            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
+            await WaitForOrgMigration(migrationId, githubPat, githubApi);
+        }
+    }
+
+    private async Task WaitForOrgMigration(string migrationId, string githubPat, GithubApi githubApi)
+    {
+        var state = await githubApi.GetOrganizationMigrationState(migrationId);
+
+        _log.LogInformation($"Waiting for org migration (ID: {migrationId}) to finish...");
+
+        if (githubPat is not null)
+        {
+            _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
+        }
+
+        while (true)
+        {
+            if (OrganizationMigrationStatus.IsSucceeded(state))
+            {
+                _log.LogSuccess($"Migration {migrationId} succeeded");
+                return;
+            }
+
+            if (OrganizationMigrationStatus.IsFailed(state))
+            {
+                _log.LogError($"Migration {migrationId} failed");
+                return;
+            }
+
+            _log.LogInformation($"Migration {migrationId} is {state}");
+            _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
+            await Task.Delay(WaitIntervalInSeconds * 1000);
+
+            state = await githubApi.GetOrganizationMigrationState(migrationId);
+        }
+    }
+
+    private async Task WaitForRepositoryMigration(string migrationId, string githubPat, GithubApi githubApi)
+    {
+        var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
+
+        _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
+
+        if (githubPat is not null)
+        {
+            _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
+        }
+
+        while (true)
+        {
+            if (RepositoryMigrationStatus.IsSucceeded(state))
+            {
+                _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                return;
+            }
+
+            if (RepositoryMigrationStatus.IsFailed(state))
+            {
+                _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                throw new OctoshiftCliException(failureReason);
+            }
+
+            _log.LogInformation($"Migration {migrationId} for {repositoryName} is {state}");
+            _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
+            await Task.Delay(WaitIntervalInSeconds * 1000);
+
+            (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
         }
     }
 }

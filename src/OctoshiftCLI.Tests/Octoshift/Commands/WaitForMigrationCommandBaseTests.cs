@@ -253,12 +253,6 @@ public class WaitForMigrationCommandBaseTests
 
         var invalidId = "SomeId";
 
-        var expectedLogOutput = new List<string>
-            {
-                $"Invalid migration id: {invalidId}"
-            };
-
-
         // Act
         await FluentActions
             .Invoking(async () => await _command.Handle(invalidId))
@@ -267,10 +261,6 @@ public class WaitForMigrationCommandBaseTests
             .WithMessage($"Invalid migration id: {invalidId}");
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
-
-        actualLogOutput.Should().Equal(expectedLogOutput);
-
         _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
