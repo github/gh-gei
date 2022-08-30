@@ -17,6 +17,9 @@ namespace OctoshiftCLI
         private readonly string _apiUrl;
         private readonly RetryPolicy _retryPolicy;
 
+        private readonly Dictionary<string, string> _internalSchemaHeader =
+            new() { { "GraphQL-schema", "internal" } };
+
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
@@ -141,6 +144,22 @@ namespace OctoshiftCLI
             var data = JObject.Parse(response);
 
             return (string)data["data"]["organization"]["id"];
+        }
+
+        public virtual async Task<string> GetEnterpriseId(string enterpriseName)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var payload = new
+            {
+                query = "query($slug: String!) {enterprise (slug: $slug) { slug, id } }",
+                variables = new { slug = enterpriseName }
+            };
+
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["enterprise"]["id"];
         }
 
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
@@ -295,6 +314,69 @@ namespace OctoshiftCLI
             EnsureSuccessGraphQLResponse(data);
 
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
+        }
+
+        public virtual async Task<string> StartOrganizationMigration(string sourceOrgUrl, string targetOrgName, string targetEnterpriseId, string sourceAccessToken, string targetAccessToken)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = @"
+                mutation startOrganizationMigration (
+                        $sourceOrgUrl: URI!,
+                        $targetOrgName: String!,
+                        $targetEnterpriseId: ID!,
+                        $sourceAccessToken: String!,
+	                    $targetAccessToken: String!)";
+            var gql = @"
+                startOrganizationMigration( 
+                    input: {
+                        sourceOrgUrl: $sourceOrgUrl,
+                        targetOrgName: $targetOrgName,
+                        targetEnterpriseId: $targetEnterpriseId,
+                        sourceAccessToken: $sourceAccessToken,
+		                targetAccessToken: $targetAccessToken
+                    }) {
+                        orgMigration {
+                            id
+                        }
+                    }";
+
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    sourceOrgUrl,
+                    targetOrgName,
+                    targetEnterpriseId,
+                    sourceAccessToken,
+                    targetAccessToken
+                },
+                operationName = "startOrganizationMigration"
+            };
+
+            var response = await _client.PostAsync(url, payload, _internalSchemaHeader);
+            var data = JObject.Parse(response);
+
+            EnsureSuccessGraphQLResponse(data);
+
+            return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
+        }
+
+        public virtual async Task<string> GetOrganizationMigrationState(string migrationId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on OrganizationMigration { state } }";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload, _internalSchemaHeader),
+                _ => true);
+            var data = JObject.Parse(response);
+
+            return (string)data["data"]["node"]["state"];
         }
 
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
