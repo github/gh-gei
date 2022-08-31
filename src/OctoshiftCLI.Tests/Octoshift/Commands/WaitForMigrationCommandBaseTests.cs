@@ -223,16 +223,18 @@ public class WaitForMigrationCommandBaseTests
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {WAIT_INTERVAL} seconds...",
-                $"Migration {ORG_MIGRATION_ID} failed"
+                $"Waiting {WAIT_INTERVAL} seconds..."
             };
 
         // Act
-        await _command.Handle(ORG_MIGRATION_ID);
+        await FluentActions
+            .Invoking(async () => await _command.Handle(ORG_MIGRATION_ID))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage($"Migration {ORG_MIGRATION_ID} failed");
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
-        _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
         _mockGithubApi.Verify(m => m.GetOrganizationMigrationState(ORG_MIGRATION_ID), Times.Exactly(3));
 

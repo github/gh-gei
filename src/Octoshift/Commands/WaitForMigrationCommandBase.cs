@@ -90,8 +90,7 @@ public class WaitForMigrationCommandBase : Command
 
             if (OrganizationMigrationStatus.IsFailed(state))
             {
-                _log.LogError($"Migration {migrationId} failed");
-                return;
+                throw new OctoshiftCliException($"Migration {migrationId} failed");
             }
 
             _log.LogInformation($"Migration {migrationId} is {state}");
