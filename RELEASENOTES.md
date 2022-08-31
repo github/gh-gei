@@ -1,1 +1,1 @@
-
+- Hide ADO specific args from `gh gei` in favor of `gh ado2gh`.
