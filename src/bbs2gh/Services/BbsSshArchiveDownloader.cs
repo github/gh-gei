@@ -5,7 +5,7 @@ using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
-public class BbsArchiveDownloader : IDisposable
+public class BbsSshArchiveDownloader : IDisposable
 {
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
     private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
@@ -16,14 +16,14 @@ public class BbsArchiveDownloader : IDisposable
     private readonly FileSystemProvider _fileSystemProvider;
     private DateTime _nextProgressReport;
 
-    public BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
+    public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
         _sftpClient = new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
     }
 
-    internal BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
+    internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;

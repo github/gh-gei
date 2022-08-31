@@ -19,11 +19,11 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<ISftpClient> _mockSftpClient = new();
-    private readonly BbsArchiveDownloader _bbsArchiveDownloader;
+    private readonly BbsSshArchiveDownloader _bbsArchiveDownloader;
 
     public BbsArchiveDownloaderTests()
     {
-        _bbsArchiveDownloader = new BbsArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
+        _bbsArchiveDownloader = new BbsSshArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
         {
             BbsSharedHomeDirectory = BBS_HOME_DIRECTORY
         };
