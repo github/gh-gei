@@ -37,14 +37,15 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
-        public virtual async Task<string> GetAsync(string url) => (await SendAsync(HttpMethod.Get, url)).Content;
+        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) =>
+            (await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders)).Content;
 
-        public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)
+        public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
         {
             var nextUrl = url;
             do
             {
-                var (content, headers) = await SendAsync(HttpMethod.Get, nextUrl);
+                var (content, headers) = await SendAsync(HttpMethod.Get, nextUrl, customHeaders: customHeaders);
                 foreach (var jToken in JArray.Parse(content))
                 {
                     yield return jToken;
@@ -54,8 +55,8 @@ namespace OctoshiftCLI
             } while (nextUrl != null);
         }
 
-        public virtual async Task<string> PostAsync(string url, object body) =>
-            (await SendAsync(HttpMethod.Post, url, body)).Content;
+        public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+            (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
         public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
             string url,
@@ -63,7 +64,8 @@ namespace OctoshiftCLI
             Func<JObject, JArray> resultCollectionSelector,
             Func<JObject, JObject> pageInfoSelector,
             int first = 100,
-            string after = null)
+            string after = null,
+            Dictionary<string, string> customHeaders = null)
         {
             if (resultCollectionSelector is null)
             {
@@ -84,7 +86,7 @@ namespace OctoshiftCLI
             {
                 jBody["variables"]["after"] = after;
 
-                var (content, _) = await SendAsync(HttpMethod.Post, url, jBody);
+                var (content, _) = await SendAsync(HttpMethod.Post, url, jBody, customHeaders: customHeaders);
                 var jContent = JObject.Parse(content);
                 foreach (var jResult in resultCollectionSelector(jContent))
                 {
@@ -102,36 +104,36 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> PutAsync(string url, object body) =>
-            (await SendAsync(HttpMethod.Put, url, body)).Content;
+        public virtual async Task<string> PutAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+            (await SendAsync(HttpMethod.Put, url, body, customHeaders: customHeaders)).Content;
 
-        public virtual async Task<string> PatchAsync(string url, object body) =>
-            (await SendAsync(HttpMethod.Patch, url, body)).Content;
+        public virtual async Task<string> PatchAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+            (await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders)).Content;
 
-        public virtual async Task<string> DeleteAsync(string url) => (await SendAsync(HttpMethod.Delete, url)).Content;
+        public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
-            HttpMethod httpMethod, string url, object body = null, HttpStatusCode status = HttpStatusCode.OK)
+            HttpMethod httpMethod,
+            string url,
+            object body = null,
+            HttpStatusCode status = HttpStatusCode.OK,
+            Dictionary<string, string> customHeaders = null)
         {
             url = url?.Replace(" ", "%20");
 
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
+            using var request = new HttpRequestMessage(httpMethod, url).AddHeaders(customHeaders);
+
             if (body != null)
             {
                 _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
+
+                request.Content = body.ToJson().ToStringContent();
             }
 
-            using var payload = body?.ToJson().ToStringContent();
-            using var response = httpMethod.ToString() switch
-            {
-                "GET" => await _httpClient.GetAsync(url),
-                "DELETE" => await _httpClient.DeleteAsync(url),
-                "POST" => await _httpClient.PostAsync(url, payload),
-                "PUT" => await _httpClient.PutAsync(url, payload),
-                "PATCH" => await _httpClient.PatchAsync(url, payload),
-                _ => throw new ArgumentOutOfRangeException($"{httpMethod} is not supported.")
-            };
+            using var response = await _httpClient.SendAsync(request);
+
             _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
@@ -177,5 +179,6 @@ namespace OctoshiftCLI
 
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
+
     }
 }
