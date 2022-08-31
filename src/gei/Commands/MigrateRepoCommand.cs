@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.RegularExpressions;
@@ -139,7 +138,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var lfsMappingFile = new Option<string>("--lfs-mapping-file")
             {
                 IsRequired = false,
-                Description = "Rewrite PR SHAs using lfs mapping file during migration."
+                Description = "Rewrite PR SHAs using LFS mapping file during migration."
             };
 
             AddOption(githubSourceOrg);
