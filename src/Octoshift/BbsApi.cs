@@ -36,8 +36,8 @@ public class BbsApi
                 {
                         new
                         {
-                            projectKey,
-                            slug
+                            projectKey = projectKey ?? "*",
+                            slug = slug ?? "*"
                         }
                     }
             }
@@ -48,12 +48,16 @@ public class BbsApi
         return (long)JObject.Parse(content)["id"];
     }
 
-    public virtual async Task<string> GetExportState(long id)
+    public virtual async Task<(string State, string Message, int Percentage)> GetExport(long id)
     {
         var url = $"{_bbsBaseUrl}/migration/exports/{id}";
 
         var content = await _client.GetAsync(url);
 
-        return (string)JObject.Parse(content)["state"];
+        return (
+            (string)JObject.Parse(content)["state"],
+            (string)JObject.Parse(content)["progress"]["message"],
+            (int)JObject.Parse(content)["progress"]["percentage"]
+        );
     }
 }
