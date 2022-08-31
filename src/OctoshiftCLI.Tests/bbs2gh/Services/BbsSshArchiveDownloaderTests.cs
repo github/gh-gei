@@ -38,14 +38,14 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
     }
 
     [Fact]
-    public async Task Download_Calls_SftpClinet_DownloadFile_With_Correct_Params()
+    public async Task Download_Returns_Downloaded_Archive_Full_Name()
     {
         // Arrange
         var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename);
         var expectedTargetArchiveFullName = Path.Combine(TARGET_DIRECTORY, _exportArchiveFilename);
 
         // Act
-        await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
+        var actualDownloadedArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
 
         // Assert
         _mockSftpClient.Verify(m =>
@@ -57,6 +57,7 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
                 It.IsAny<Action<ulong>>()));
 
         _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew));
+        actualDownloadedArchiveFullName.Should().Be(expectedTargetArchiveFullName);
     }
 
     [Fact]

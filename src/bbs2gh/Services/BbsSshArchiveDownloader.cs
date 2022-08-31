@@ -5,7 +5,7 @@ using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
-public class BbsSshArchiveDownloader : IDisposable
+public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 {
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
     private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
@@ -32,7 +32,7 @@ public class BbsSshArchiveDownloader : IDisposable
 
     public virtual string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public virtual async Task Download(long exportJobId, string targetDirectory = "bbs_archive_downloads")
+    public virtual async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
@@ -67,6 +67,8 @@ public class BbsSshArchiveDownloader : IDisposable
                 null,
                 downloaded => LogProgress(downloaded, (ulong)sourceExportArchiveSize)),
             _sftpClient.EndDownloadFile);
+
+        return targetExportArchiveFullPath;
     }
 
     private void LogProgress(ulong downloadedBytes, ulong totalBytes)
