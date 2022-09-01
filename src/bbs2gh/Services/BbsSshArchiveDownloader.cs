@@ -78,10 +78,35 @@ public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
             return;
         }
 
-        var percentComplete = (int)(downloadedBytes * 100M / totalBytes);
-        _log.LogInformation($"Downloading archive in progress ({percentComplete}% completed)...");
+        _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
 
         _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
+    }
+
+    private string GetPercentage(ulong downloadedBytes, ulong totalBytes)
+    {
+        if (totalBytes is ulong.MinValue)
+        {
+            return "unknown%";
+        }
+
+        var percentage = (int)(downloadedBytes * 100D / totalBytes);
+        return $"{percentage}%";
+    }
+    
+    private string GetLogFriendlySize(ulong size)
+    {
+        const int kilobyte = 1024;
+        const int megabyte = 1024 * kilobyte;
+        const int gigabyte = 1024 * megabyte;
+
+        return size switch
+        {
+            >= 0 and < kilobyte => $"{size:n0} bytes",
+            >= kilobyte and < megabyte => $"{size / (double)kilobyte:n0} KB",
+            >= megabyte and < gigabyte => $"{size / (double)megabyte:n0} MB",
+            >= gigabyte => $"{size / (double)gigabyte:n2} GB"
+        };
     }
 
     protected virtual void Dispose(bool disposing)

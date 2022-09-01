@@ -9,7 +9,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.bbs2gh.Services;
 
-public sealed class BbsArchiveDownloaderTests : IDisposable
+public sealed class BbsSshArchiveDownloaderTests : IDisposable
 {
     private const int EXPORT_JOB_ID = 1;
     private const string BBS_HOME_DIRECTORY = "BBS_HOME";
@@ -21,7 +21,7 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
     private readonly Mock<ISftpClient> _mockSftpClient = new();
     private readonly BbsSshArchiveDownloader _bbsArchiveDownloader;
 
-    public BbsArchiveDownloaderTests()
+    public BbsSshArchiveDownloaderTests()
     {
         _bbsArchiveDownloader = new BbsSshArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
         {
