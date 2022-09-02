@@ -329,13 +329,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
-            
-            if (lfsMappingFile is not null)
+
+            if (lfsMappingFile.HasValue())
             {
                 metadataArchiveContent = await _lfsShaMapper.MapShas(metadataArchiveContent, lfsMappingFile);
-                //metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
             }
-            
+
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
             var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
@@ -375,19 +374,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private void LogAndValidateOptions(MigrateRepoCommandArgs args)
         {
             _log.LogInformation("Migrating Repo...");
+
             if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
+
             if (!string.IsNullOrWhiteSpace(args.AdoServerUrl))
             {
                 _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
             }
+
             if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
                 _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
                 _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
+
             _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
@@ -479,10 +482,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
                 _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
-            if (args.LfsMappingFile is not null)
+
+            if (args.LfsMappingFile.HasValue())
             {
                 _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
             }
+
             if (args.LfsMappingFile.HasValue() && !args.GhesApiUrl.HasValue())
             {
                 throw new OctoshiftCliException("LFS sha mapping is only supported when the source is GHES. Please set GHES_API_URL environment variable");
