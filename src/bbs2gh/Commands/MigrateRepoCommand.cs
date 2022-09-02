@@ -158,6 +158,7 @@ public class MigrateRepoCommand : Command
         else if (args.ArchivePath.HasValue())
         {
             var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+            _log.LogInformation("Archive uploaded, beginning")
             await ImportArchive(args, archiveUrl);
 
         }
@@ -215,14 +216,15 @@ public class MigrateRepoCommand : Command
 
     private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
     {
+        _log.LogInformation("Uploading Archive...");
+        _log.LogInformation($"ARCHIVE PATH: {archivePath}");
+
         azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
         var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
 
         var archiveData = await _fileSystemProvider.FileAsByteArray(archivePath);
         var guid = Guid.NewGuid().ToString();
         var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
-
-        _log.LogInformation($"Archive at: {archiveBlobUrl}");
 
         return archiveBlobUrl.ToString();
     }
