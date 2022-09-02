@@ -254,5 +254,37 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 ARCHIVE_URL
             ));
         }
+
+        [Fact]
+        public async Task Errors_If_Archive_Url_And_Archive_Path_Are_Passed()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
+            };
+
+            // Assert
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Errors_If_BbsServer_Url_And_Archive_Path_Are_Passed()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
+            };
+
+            // Assert
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
     }
 }
