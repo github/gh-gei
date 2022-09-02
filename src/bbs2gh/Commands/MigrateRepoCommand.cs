@@ -11,20 +11,26 @@ public class MigrateRepoCommand : Command
     private readonly OctoLogger _log;
     private readonly GithubApiFactory _githubApiFactory;
     private readonly BbsApiFactory _bbsApiFactory;
+    private readonly IAzureApiFactory _azureApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly FileSystemProvider _fileSystemProvider;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
     public MigrateRepoCommand(
         OctoLogger log,
         GithubApiFactory githubApiFactory,
         BbsApiFactory bbsApiFactory,
-        EnvironmentVariableProvider environmentVariableProvider
+        IAzureApiFactory azureApiFactory,
+        EnvironmentVariableProvider environmentVariableProvider,
+        FileSystemProvider fileSystemProvider
     ) : base("migrate-repo")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
         _bbsApiFactory = bbsApiFactory;
+        _azureApiFactory = azureApiFactory;
         _environmentVariableProvider = environmentVariableProvider;
+        _fileSystemProvider = fileSystemProvider;
 
         Description = "Import a Bitbucket Server archive to GitHub.";
         Description += Environment.NewLine;
@@ -67,6 +73,19 @@ public class MigrateRepoCommand : Command
             IsRequired = false,
             Description = "URL used to download Bitbucket Server migration archive. Only needed if you want to manually retrieve the archive from BBS instead of letting this CLI do that for you."
         };
+
+        var archivePath = new Option<string>("--archive-path")
+        {
+            IsRequired = false,
+            Description = "Path to Bitbucket Server migration archive on disk."
+        };
+
+        var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
+        {
+            IsRequired = false,
+            Description = "A connection string for an Azure Storage account, used to upload the BBS archive."
+        };
+
         var githubOrg = new Option<string>("--github-org")
         {
             IsRequired = false
@@ -99,6 +118,9 @@ public class MigrateRepoCommand : Command
         AddOption(bbsUsername);
         AddOption(bbsPassword);
 
+        AddOption(archivePath);
+        AddOption(azureStorageConnectionString);
+
         AddOption(wait);
         AddOption(verbose);
 
@@ -112,14 +134,21 @@ public class MigrateRepoCommand : Command
             throw new ArgumentNullException(nameof(args));
         }
 
-        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue())
+        LogOptions(args);
+
+        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
         {
-            throw new OctoshiftCliException("Either --bbs-server-url or --archive-url must be specified.");
+            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
         }
 
         if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
         {
             throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
+        }
+
+        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
         }
 
         _log.Verbose = args.Verbose;
@@ -128,9 +157,14 @@ public class MigrateRepoCommand : Command
         {
             await GenerateArchive(args);
         }
+        else if (args.ArchivePath.HasValue())
+        {
+            var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+            await ImportArchive(args, archiveUrl);
+        }
         else if (args.ArchiveUrl.HasValue())
         {
-            await ImportArchive(args);
+            await ImportArchive(args, args.ArchiveUrl);
         }
     }
 
@@ -150,10 +184,6 @@ public class MigrateRepoCommand : Command
         }
 
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
-
-        _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}...");
-        _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
-        _log.LogInformation($"BBS REPO: {args.BbsRepo}");
 
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
@@ -180,20 +210,25 @@ public class MigrateRepoCommand : Command
         _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
     }
 
-    private async Task ImportArchive(MigrateRepoCommandArgs args)
+    private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
     {
-        _log.LogInformation("Migrating Repo...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+        _log.LogInformation("Uploading Archive...");
 
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
+        azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
+        var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
+
+        var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
+        var guid = Guid.NewGuid().ToString();
+        var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
+
+        return archiveBlobUrl.ToString();
+    }
+
+    private async Task ImportArchive(MigrateRepoCommandArgs args, string archiveUrl = null)
+    {
+        _log.LogInformation("Importing Archive...");
+
+        archiveUrl ??= args.ArchiveUrl;
 
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
@@ -204,7 +239,7 @@ public class MigrateRepoCommand : Command
 
         try
         {
-            migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, args.ArchiveUrl);
+            migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -233,13 +268,81 @@ public class MigrateRepoCommand : Command
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+    }
 
+    private void LogOptions(MigrateRepoCommandArgs args)
+    {
+        _log.LogInformation("Migrating repo...");
+
+        if (args.BbsServerUrl.HasValue())
+        {
+            _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}");
+        }
+
+        if (args.BbsProject.HasValue())
+        {
+            _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
+        }
+
+        if (args.BbsRepo.HasValue())
+        {
+            _log.LogInformation($"BBS REPO: {args.BbsRepo}");
+        }
+
+        if (args.BbsUsername.HasValue())
+        {
+            _log.LogInformation($"BBS USERNAME: {args.BbsUsername}");
+        }
+
+        if (args.BbsPassword.HasValue())
+        {
+            _log.LogInformation("BBS PASSWORD: ********");
+        }
+
+        if (args.ArchiveUrl.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE URL: {args.ArchiveUrl}");
+        }
+
+        if (args.ArchivePath.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE PATH: {args.ArchivePath}");
+        }
+
+        if (args.AzureStorageConnectionString.HasValue())
+        {
+            _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {args.AzureStorageConnectionString}");
+        }
+
+        if (args.GithubOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+        }
+
+        if (args.GithubRepo.HasValue())
+        {
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+        }
+
+        if (args.GithubPat.HasValue())
+        {
+            _log.LogInformation($"GITHUB PAT: ********");
+        }
+
+        if (args.Wait)
+        {
+            _log.LogInformation("WAIT: true");
+        }
     }
 }
 
 public class MigrateRepoCommandArgs
 {
     public string ArchiveUrl { get; set; }
+    public string ArchivePath { get; set; }
+
+    public string AzureStorageConnectionString { get; set; }
+
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }
     public string GithubPat { get; set; }

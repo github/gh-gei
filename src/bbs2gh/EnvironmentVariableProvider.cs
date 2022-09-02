@@ -10,6 +10,7 @@ public class EnvironmentVariableProvider
     private const string GH_PAT = "GH_PAT";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
+    private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
 
     private readonly OctoLogger _logger;
 
@@ -36,6 +37,10 @@ public class EnvironmentVariableProvider
     public virtual string BbsPassword() =>
             GetSecret(BBS_PASSWORD)
             ?? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.");
+
+    public virtual string AzureStorageConnectionString() =>
+            GetSecret(AZURE_STORAGE_CONNECTION_STRING)
+            ?? throw new OctoshiftCliException($"{AZURE_STORAGE_CONNECTION_STRING} environment variable is not set.");
 
     private string GetSecret(string secretName)
     {
