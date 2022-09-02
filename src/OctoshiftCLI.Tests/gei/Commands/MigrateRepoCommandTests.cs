@@ -108,7 +108,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 $"GITHUB TARGET ORG: {TARGET_ORG}",
                 $"TARGET REPO: {TARGET_REPO}",
                 $"TARGET API URL: {TARGET_API_URL}",
-                $"LFS MAPPING FILE: {LFS_MAPPING_FILE}",
                 $"A repository migration (ID: {migrationId}) was successfully queued."
             };
 
@@ -120,8 +119,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = false,
-                LfsMappingFile = LFS_MAPPING_FILE
+                Wait = false
             };
             await _command.Invoke(args);
 
@@ -130,7 +128,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false));
 
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockGithubApi.VerifyNoOtherCalls();
