@@ -218,7 +218,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var archiveBytes = Encoding.ASCII.GetBytes("here are some bytes");
-            _mockFileSystemProvider.Setup(x => x.FileAsByteArray(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
 
             _mockAzureApiFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), archiveBytes)).ReturnsAsync(new System.Uri(ARCHIVE_URL));

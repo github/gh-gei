@@ -217,7 +217,7 @@ public class MigrateRepoCommand : Command
         azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
         var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
 
-        var archiveData = await _fileSystemProvider.FileAsByteArray(archivePath);
+        var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
         var guid = Guid.NewGuid().ToString();
         var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
 
@@ -270,7 +270,7 @@ public class MigrateRepoCommand : Command
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
     }
 
-    public void LogOptions(MigrateRepoCommandArgs args)
+    private void LogOptions(MigrateRepoCommandArgs args)
     {
         _log.LogInformation("Migrating repo...");
 
