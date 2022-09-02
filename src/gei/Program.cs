@@ -27,6 +27,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
+                .AddSingleton<GitHubSecretScanningAlertServiceFactory>()
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
@@ -36,6 +37,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddTransient<ISecretScanningAlertServiceFactory>(sp => sp.GetRequiredService<GitHubSecretScanningAlertServiceFactory>())
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
