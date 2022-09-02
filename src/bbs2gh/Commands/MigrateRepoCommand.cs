@@ -185,19 +185,14 @@ public class MigrateRepoCommand : Command
 
     private async Task<string> DownloadArchive(long exportId, MigrateRepoCommandArgs args)
     {
-        if (args.BbsServerUrl.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--bbs-server-url must be specified.");
-        }
-
         if (args.SshUser.IsNullOrWhiteSpace() && args.SmbUser.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("Either --ssh-user or --smb-user must be specified.");
         }
 
-        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
+        if (args.SshUser.HasValue() && args.SmbUser.HasValue())
         {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
+            throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
         }
 
         var useSsh = args.SshUser.HasValue();
