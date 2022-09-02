@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.IO;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -14,6 +13,7 @@ public class MigrateRepoCommand : Command
     private readonly BbsApiFactory _bbsApiFactory;
     private readonly IAzureApiFactory _azureApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly FileSystemProvider _fileSystemProvider;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
     public MigrateRepoCommand(
@@ -21,7 +21,8 @@ public class MigrateRepoCommand : Command
         GithubApiFactory githubApiFactory,
         BbsApiFactory bbsApiFactory,
         IAzureApiFactory azureApiFactory,
-        EnvironmentVariableProvider environmentVariableProvider
+        EnvironmentVariableProvider environmentVariableProvider,
+        FileSystemProvider fileSystemProvider
     ) : base("migrate-repo")
     {
         _log = log;
@@ -29,6 +30,7 @@ public class MigrateRepoCommand : Command
         _bbsApiFactory = bbsApiFactory;
         _azureApiFactory = azureApiFactory;
         _environmentVariableProvider = environmentVariableProvider;
+        _fileSystemProvider = fileSystemProvider;
 
         Description = "Import a Bitbucket Server archive to GitHub.";
         Description += Environment.NewLine;
@@ -116,6 +118,9 @@ public class MigrateRepoCommand : Command
         AddOption(bbsUsername);
         AddOption(bbsPassword);
 
+        AddOption(archivePath);
+        AddOption(azureStorageConnectionString);
+
         AddOption(wait);
         AddOption(verbose);
 
@@ -129,9 +134,9 @@ public class MigrateRepoCommand : Command
             throw new ArgumentNullException(nameof(args));
         }
 
-        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue())
+        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
         {
-            throw new OctoshiftCliException("Either --bbs-server-url or --archive-url must be specified.");
+            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
         }
 
         if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
@@ -213,9 +218,11 @@ public class MigrateRepoCommand : Command
         azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
         var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
 
-        var archiveData = await File.ReadAllBytesAsync(archivePath);
+        var archiveData = await _fileSystemProvider.FileAsByteArray(archivePath);
         var guid = Guid.NewGuid().ToString();
         var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
+
+        _log.LogInformation($"Archive at: {archiveBlobUrl}");
 
         return archiveBlobUrl.ToString();
     }
