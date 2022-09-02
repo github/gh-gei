@@ -158,7 +158,7 @@ public class MigrateRepoCommand : Command
         else if (args.ArchivePath.HasValue())
         {
             var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
-            _log.LogInformation("Archive uploaded, beginning")
+            _log.LogInformation("Archive uploaded, beginning");
             await ImportArchive(args, archiveUrl);
 
         }
