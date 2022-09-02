@@ -134,6 +134,8 @@ public class MigrateRepoCommand : Command
             throw new ArgumentNullException(nameof(args));
         }
 
+        LogOptions(args);
+
         if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
         {
             throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
@@ -158,9 +160,7 @@ public class MigrateRepoCommand : Command
         else if (args.ArchivePath.HasValue())
         {
             var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
-            _log.LogInformation("Archive uploaded, beginning");
             await ImportArchive(args, archiveUrl);
-
         }
         else if (args.ArchiveUrl.HasValue())
         {
@@ -184,10 +184,6 @@ public class MigrateRepoCommand : Command
         }
 
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
-
-        _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}...");
-        _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
-        _log.LogInformation($"BBS REPO: {args.BbsRepo}");
 
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
@@ -217,7 +213,6 @@ public class MigrateRepoCommand : Command
     private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
     {
         _log.LogInformation("Uploading Archive...");
-        _log.LogInformation($"ARCHIVE PATH: {archivePath}");
 
         azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
         var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
@@ -231,20 +226,9 @@ public class MigrateRepoCommand : Command
 
     private async Task ImportArchive(MigrateRepoCommandArgs args, string archiveUrl = null)
     {
-        _log.LogInformation("Migrating Repo...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+        _log.LogInformation("Importing Archive...");
 
         archiveUrl ??= args.ArchiveUrl;
-
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
 
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
@@ -284,7 +268,71 @@ public class MigrateRepoCommand : Command
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+    }
 
+    public void LogOptions(MigrateRepoCommandArgs args)
+    {
+        _log.LogInformation("Migrating repo...");
+
+        if (args.BbsServerUrl.HasValue())
+        {
+            _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}");
+        }
+
+        if (args.BbsProject.HasValue())
+        {
+            _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
+        }
+
+        if (args.BbsRepo.HasValue())
+        {
+            _log.LogInformation($"BBS REPO: {args.BbsRepo}");
+        }
+
+        if (args.BbsUsername.HasValue())
+        {
+            _log.LogInformation($"BBS USERNAME: {args.BbsUsername}");
+        }
+
+        if (args.BbsPassword.HasValue())
+        {
+            _log.LogInformation("BBS PASSWORD: ********");
+        }
+
+        if (args.ArchiveUrl.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE URL: {args.ArchiveUrl}");
+        }
+
+        if (args.ArchivePath.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE PATH: {args.ArchivePath}");
+        }
+
+        if (args.AzureStorageConnectionString.HasValue())
+        {
+            _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {args.AzureStorageConnectionString}");
+        }
+
+        if (args.GithubOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+        }
+
+        if (args.GithubRepo.HasValue())
+        {
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+        }
+
+        if (args.GithubPat.HasValue())
+        {
+            _log.LogInformation($"GITHUB PAT: ********");
+        }
+
+        if (args.Wait)
+        {
+            _log.LogInformation("WAIT: true");
+        }
     }
 }
 
