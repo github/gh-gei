@@ -5,7 +5,7 @@ using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
-public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
+public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 {
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
     private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
@@ -30,9 +30,9 @@ public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _sftpClient = sftpClient;
     }
 
-    public virtual string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public virtual async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
+    public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
@@ -93,7 +93,7 @@ public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         var percentage = (int)(downloadedBytes * 100D / totalBytes);
         return $"{percentage}%";
     }
-    
+
     private string GetLogFriendlySize(ulong size)
     {
         const int kilobyte = 1024;
@@ -102,24 +102,12 @@ public class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
         return size switch
         {
-            >= 0 and < kilobyte => $"{size:n0} bytes",
-            >= kilobyte and < megabyte => $"{size / (double)kilobyte:n0} KB",
-            >= megabyte and < gigabyte => $"{size / (double)megabyte:n0} MB",
-            >= gigabyte => $"{size / (double)gigabyte:n2} GB"
+            < kilobyte => $"{size:n0} bytes",
+            < megabyte => $"{size / (double)kilobyte:n0} KB",
+            < gigabyte => $"{size / (double)megabyte:n0} MB",
+            _ => $"{size / (double)gigabyte:n2} GB"
         };
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            (_sftpClient as IDisposable)?.Dispose();
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+    public void Dispose() => (_sftpClient as IDisposable)?.Dispose();
 }

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.BbsToGithub.Commands
@@ -15,6 +16,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
+        private readonly Mock<IBbsArchiveDownloader> _mockBbsArchiveDownloader = new();
 
         private readonly MigrateRepoCommand _command;
 
@@ -23,11 +26,14 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
 
-        private const string BBS_SERVER_URL = "https://our-bbs-server.com";
+        private const string BBS_HOST = "our-bbs-server.com";
+        private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
         private const string BBS_USERNAME = "bbs-username";
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
+        private const string SSH_USER = "ssh-user";
+        private const string PRIVATE_KEY = "private-key";
         private const long BBS_EXPORT_ID = 123;
 
         private const string GITHUB_ORG_ID = "github-org-id";
@@ -40,7 +46,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 _mockOctoLogger.Object,
                 _mockGithubApiFactory.Object,
                 _mockBbsApiFactory.Object,
-                _mockEnvironmentVariableProvider.Object
+                _mockEnvironmentVariableProvider.Object,
+                _mockBbsArchiveDownloaderFactory.Object
             );
         }
 
@@ -49,12 +56,17 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(11);
+            _command.Options.Count.Should().Be(16);
 
             TestHelpers.VerifyCommandOption(_command.Options, "archive-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "private-key", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-password", false);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
@@ -160,6 +172,10 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
 
+            _mockBbsArchiveDownloaderFactory
+                .Setup(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, PRIVATE_KEY, 22))
+                .Returns(_mockBbsArchiveDownloader.Object);
+
             // Act
             var args = new MigrateRepoCommandArgs
             {
@@ -167,7 +183,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BbsUsername = BBS_USERNAME,
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                PrivateKey = PRIVATE_KEY
             };
             await _command.Invoke(args);
 
