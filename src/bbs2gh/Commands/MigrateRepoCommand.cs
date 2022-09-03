@@ -106,7 +106,7 @@ public class MigrateRepoCommand : Command
         var privateKey = new Option<string>("--private-key")
         {
             IsRequired = false,
-            Description = "The full path of the privake key file to be used for downloaing the export archive off of the Bitbucket Server using SSH." +
+            Description = "The full path of the privake key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
                           Environment.NewLine +
                           "Supported private key formats:" +
                           Environment.NewLine +
