@@ -53,7 +53,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 _mockGithubApiFactory.Object,
                 _mockBbsApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
-                _mockBbsArchiveDownloaderFactory.Object
+                _mockBbsArchiveDownloaderFactory.Object,
                 _mockAzureApiFactory.Object,
                 _mockFileSystemProvider.Object
             );
