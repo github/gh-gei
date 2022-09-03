@@ -17,7 +17,9 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private DateTime _nextProgressReport;
 
     public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
-    : this(log, fileSystemProvider, new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
+    : this(log, fileSystemProvider, new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath)))
+    {
+    }
 
     internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
     {
