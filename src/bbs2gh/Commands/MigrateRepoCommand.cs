@@ -22,7 +22,7 @@ public class MigrateRepoCommand : Command
         GithubApiFactory githubApiFactory,
         BbsApiFactory bbsApiFactory,
         EnvironmentVariableProvider environmentVariableProvider,
-        BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory
+        BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
         IAzureApiFactory azureApiFactory,
         FileSystemProvider fileSystemProvider
     ) : base("migrate-repo")
