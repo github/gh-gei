@@ -312,10 +312,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BbsRepo = BBS_REPO,
                 SshUser = SSH_USER
             };
-            
+
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
+        [Fact]
         public async Task Uses_Archive_Path_If_Provided()
         {
             // Arrange
@@ -392,10 +393,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BbsRepo = BBS_REPO,
                 SmbUser = SMB_USER
             };
-            
+
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
+        [Fact]
         public async Task Errors_If_BbsServer_Url_And_Archive_Path_Are_Passed()
         {
             // Act
