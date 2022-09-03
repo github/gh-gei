@@ -36,9 +36,8 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddSingleton<FileSystemProvider>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
-                .AddTransient<BbsArchiveDownloaderFactory>()
+                .AddSingleton<BbsArchiveDownloaderFactory>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
