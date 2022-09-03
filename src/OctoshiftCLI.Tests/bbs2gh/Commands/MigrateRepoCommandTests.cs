@@ -80,8 +80,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
             TestHelpers.VerifyCommandOption(_command.Options, "private-key", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "smb-password", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-password", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
