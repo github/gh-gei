@@ -133,6 +133,7 @@ public class MigrateRepoCommand : Command
         var smbPassword = new Option<string>("--smb-password")
         {
             IsRequired = false,
+            IsHidden = true,
             Description = "The SMB password to be used for downloading the export archive off of the Bitbucket server."
         };
 
