@@ -127,6 +127,7 @@ public class MigrateRepoCommand : Command
         var smbUser = new Option<string>("--smb-user")
         {
             IsRequired = false,
+            IsHidden = true,
             Description = "The SMB user to be used for downloading the export archive off of the Bitbucket server."
         };
         var smbPassword = new Option<string>("--smb-password")
