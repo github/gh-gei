@@ -16,10 +16,12 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private readonly FileSystemProvider _fileSystemProvider;
     private DateTime _nextProgressReport;
 
+    #pragma warning disable CA2000 // Incorrectly flagged as a not-disposing error
     public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
     : this(log, fileSystemProvider, new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath)))
     {
     }
+    #pragma warning restore CA2000
 
     internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
     {
