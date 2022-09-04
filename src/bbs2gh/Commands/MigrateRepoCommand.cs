@@ -103,10 +103,10 @@ public class MigrateRepoCommand : Command
             IsRequired = false,
             Description = "The SSH user to be used for downloading the export archive off of the Bitbucket server."
         };
-        var privateKey = new Option<string>("--private-key")
+        var sshPrivateKey = new Option<string>("--ssh-private-key")
         {
             IsRequired = false,
-            Description = "The full path of the privake key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
+            Description = "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
                           Environment.NewLine +
                           "Supported private key formats:" +
                           Environment.NewLine +
@@ -162,7 +162,7 @@ public class MigrateRepoCommand : Command
         AddOption(bbsPassword);
 
         AddOption(sshUser);
-        AddOption(privateKey);
+        AddOption(sshPrivateKey);
         AddOption(sshPort);
 
         AddOption(smbUser);
@@ -234,17 +234,9 @@ public class MigrateRepoCommand : Command
         var useSsh = args.SshUser.HasValue();
         if (useSsh)
         {
-            if (args.PrivateKey.IsNullOrWhiteSpace())
+            if (args.SshPrivateKey.IsNullOrWhiteSpace())
             {
-                throw new OctoshiftCliException("--private-key must be specified for SSH download.");
-            }
-
-            _log.LogInformation($"SSH USER: {args.SshUser}");
-            _log.LogInformation($"PRIVATE KEY: {args.PrivateKey}");
-
-            if (args.SshPort.HasValue())
-            {
-                _log.LogInformation($"SSH PORT: {args.SshPort}");
+                throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
             }
         }
         else
@@ -253,13 +245,10 @@ public class MigrateRepoCommand : Command
             {
                 throw new OctoshiftCliException("--smb-password must be specified.");
             }
-
-            _log.LogInformation($"SMB USER: {args.SmbUser}");
-            _log.LogInformation("SMB PASSWORD: ***");
         }
 
         var downloader = useSsh
-            ? _bbsArchiveDownloaderFactory.CreateSshDownloader(ExtractHost(args.BbsServerUrl), args.SshUser, args.PrivateKey, args.SshPort)
+            ? _bbsArchiveDownloaderFactory.CreateSshDownloader(ExtractHost(args.BbsServerUrl), args.SshUser, args.SshPrivateKey, args.SshPort)
             : _bbsArchiveDownloaderFactory.CreateSmbDownloader();
 
         _log.LogInformation($"Download archive {exportId} started...");
@@ -425,6 +414,31 @@ public class MigrateRepoCommand : Command
             _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
         }
 
+        if (args.SshUser.HasValue())
+        {
+            _log.LogInformation($"SSH USER: {args.SshUser}");
+        }
+
+        if (args.SshPrivateKey.HasValue())
+        {
+            _log.LogInformation($"SSH PRIVATE KEY: {args.SshPrivateKey}");
+        }
+
+        if (args.SshPort.HasValue())
+        {
+            _log.LogInformation($"SSH PORT: {args.SshPort}");
+        }
+
+        if (args.SmbUser.HasValue())
+        {
+            _log.LogInformation($"SMB USER: {args.SmbUser}");
+        }
+
+        if (args.SmbPassword.HasValue())
+        {
+            _log.LogInformation($"SMB PASSWORD: ********");
+        }
+
         if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"GITHUB PAT: ********");
@@ -457,7 +471,7 @@ public class MigrateRepoCommandArgs
     public string BbsPassword { get; set; }
 
     public string SshUser { get; set; }
-    public string PrivateKey { get; set; }
+    public string SshPrivateKey { get; set; }
     public int SshPort { get; set; } = 22;
 
     public string SmbUser { get; set; }
