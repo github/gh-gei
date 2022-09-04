@@ -185,21 +185,7 @@ public class MigrateRepoCommand : Command
         }
 
         LogOptions(args);
-
-        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
-        {
-            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
-        }
-
-        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
-        }
-
-        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
-        }
+        ValidateOptions(args);
 
         _log.Verbose = args.Verbose;
 
@@ -221,33 +207,7 @@ public class MigrateRepoCommand : Command
 
     private async Task<string> DownloadArchive(long exportId, MigrateRepoCommandArgs args)
     {
-        if (args.SshUser.IsNullOrWhiteSpace() && args.SmbUser.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Either --ssh-user or --smb-user must be specified.");
-        }
-
-        if (args.SshUser.HasValue() && args.SmbUser.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
-        }
-
-        var useSsh = args.SshUser.HasValue();
-        if (useSsh)
-        {
-            if (args.SshPrivateKey.IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
-            }
-        }
-        else
-        {
-            if (args.SmbPassword.IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("--smb-password must be specified.");
-            }
-        }
-
-        var downloader = useSsh
+        var downloader = args.SshUser.HasValue()
             ? _bbsArchiveDownloaderFactory.CreateSshDownloader(ExtractHost(args.BbsServerUrl), args.SshUser, args.SshPrivateKey, args.SshPort)
             : _bbsArchiveDownloaderFactory.CreateSmbDownloader();
 
@@ -262,19 +222,6 @@ public class MigrateRepoCommand : Command
 
     private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
     {
-        args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
-        args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
-
-        if (!args.BbsUsername.HasValue())
-        {
-            throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
-        }
-
-        if (!args.BbsPassword.HasValue())
-        {
-            throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
-        }
-
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
 
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
@@ -447,6 +394,65 @@ public class MigrateRepoCommand : Command
         if (args.Wait)
         {
             _log.LogInformation("WAIT: true");
+        }
+    }
+
+    private void ValidateOptions(MigrateRepoCommandArgs args)
+    {
+        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
+        {
+            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
+        }
+
+        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
+        }
+
+        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
+        }
+
+        if (args.BbsServerUrl.HasValue())
+        {
+            args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
+            args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
+
+            if (!args.BbsUsername.HasValue())
+            {
+                throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+            }
+
+            if (!args.BbsPassword.HasValue())
+            {
+                throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+            }
+
+            if (args.SshUser.IsNullOrWhiteSpace() && args.SmbUser.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("Either --ssh-user or --smb-user must be specified.");
+            }
+
+            if (args.SshUser.HasValue() && args.SmbUser.HasValue())
+            {
+                throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
+            }
+
+            if (args.SshUser.HasValue())
+            {
+                if (args.SshPrivateKey.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
+                }
+            }
+            else
+            {
+                if (args.SmbPassword.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--smb-password must be specified.");
+                }
+            }
         }
     }
 }
