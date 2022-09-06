@@ -5,7 +5,7 @@ using Renci.SshNet;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
-public class BbsArchiveDownloader : IDisposable
+public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 {
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
     private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
@@ -16,29 +16,30 @@ public class BbsArchiveDownloader : IDisposable
     private readonly FileSystemProvider _fileSystemProvider;
     private DateTime _nextProgressReport;
 
-    public BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
+#pragma warning disable CA2000 // Incorrectly flagged as a not-disposing error
+    public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
+    : this(log, fileSystemProvider, new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath)))
     {
-        _log = log;
-        _fileSystemProvider = fileSystemProvider;
-        _sftpClient = new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
     }
+#pragma warning restore CA2000
 
-    internal BbsArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
+    internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
         _sftpClient = sftpClient;
     }
 
-    public virtual string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public virtual async Task Download(long exportJobId, string targetDirectory = "bbs_archive_downloads")
+    public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
         var exportArchiveFilename = $"Bitbucket_export_{exportJobId}.tar";
         var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory, EXPORT_ARCHIVE_SOURCE_DIRECTORY, exportArchiveFilename);
         var targetExportArchiveFullPath = Path.Join(targetDirectory, exportArchiveFilename);
+        sourceExportArchiveFullPath = sourceExportArchiveFullPath.Replace('\\', '/');
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {
@@ -67,6 +68,8 @@ public class BbsArchiveDownloader : IDisposable
                 null,
                 downloaded => LogProgress(downloaded, (ulong)sourceExportArchiveSize)),
             _sftpClient.EndDownloadFile);
+
+        return targetExportArchiveFullPath;
     }
 
     private void LogProgress(ulong downloadedBytes, ulong totalBytes)
@@ -76,23 +79,36 @@ public class BbsArchiveDownloader : IDisposable
             return;
         }
 
-        var percentComplete = (int)(downloadedBytes * 100M / totalBytes);
-        _log.LogInformation($"Downloading archive in progress ({percentComplete}% completed)...");
+        _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
 
         _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private string GetPercentage(ulong downloadedBytes, ulong totalBytes)
     {
-        if (disposing)
+        if (totalBytes is ulong.MinValue)
         {
-            (_sftpClient as IDisposable)?.Dispose();
+            return "unknown%";
         }
+
+        var percentage = (int)(downloadedBytes * 100D / totalBytes);
+        return $"{percentage}%";
     }
 
-    public void Dispose()
+    private string GetLogFriendlySize(ulong size)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        const int kilobyte = 1024;
+        const int megabyte = 1024 * kilobyte;
+        const int gigabyte = 1024 * megabyte;
+
+        return size switch
+        {
+            < kilobyte => $"{size:n0} bytes",
+            < megabyte => $"{size / (double)kilobyte:n0} KB",
+            < gigabyte => $"{size / (double)megabyte:n0} MB",
+            _ => $"{size / (double)gigabyte:n2} GB"
+        };
     }
+
+    public void Dispose() => (_sftpClient as IDisposable)?.Dispose();
 }

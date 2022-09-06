@@ -13,6 +13,7 @@ public class MigrateRepoCommand : Command
     private readonly BbsApiFactory _bbsApiFactory;
     private readonly IAzureApiFactory _azureApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly BbsArchiveDownloaderFactory _bbsArchiveDownloaderFactory;
     private readonly FileSystemProvider _fileSystemProvider;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
@@ -20,8 +21,9 @@ public class MigrateRepoCommand : Command
         OctoLogger log,
         GithubApiFactory githubApiFactory,
         BbsApiFactory bbsApiFactory,
-        IAzureApiFactory azureApiFactory,
         EnvironmentVariableProvider environmentVariableProvider,
+        BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
+        IAzureApiFactory azureApiFactory,
         FileSystemProvider fileSystemProvider
     ) : base("migrate-repo")
     {
@@ -30,6 +32,7 @@ public class MigrateRepoCommand : Command
         _bbsApiFactory = bbsApiFactory;
         _azureApiFactory = azureApiFactory;
         _environmentVariableProvider = environmentVariableProvider;
+        _bbsArchiveDownloaderFactory = bbsArchiveDownloaderFactory;
         _fileSystemProvider = fileSystemProvider;
 
         Description = "Import a Bitbucket Server archive to GitHub.";
@@ -94,6 +97,46 @@ public class MigrateRepoCommand : Command
         {
             IsRequired = false
         };
+
+        var sshUser = new Option<string>("--ssh-user")
+        {
+            IsRequired = false,
+            Description = "The SSH user to be used for downloading the export archive off of the Bitbucket server."
+        };
+        var sshPrivateKey = new Option<string>("--ssh-private-key")
+        {
+            IsRequired = false,
+            Description = "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
+                          Environment.NewLine +
+                          "Supported private key formats:" +
+                          Environment.NewLine +
+                          "  - RSA in OpenSSL PEM format." +
+                          Environment.NewLine +
+                          "  - DSA in OpenSSL PEM format." +
+                          Environment.NewLine +
+                          "  - ECDSA 256/384/521 in OpenSSL PEM format." +
+                          Environment.NewLine +
+                          "  - ECDSA 256/384/521, ED25519 and RSA in OpenSSH key format."
+        };
+        var sshPort = new Option<int>("--ssh-port")
+        {
+            IsRequired = false,
+            Description = "The SSH port (default: 22)."
+        };
+
+        var smbUser = new Option<string>("--smb-user")
+        {
+            IsRequired = false,
+            IsHidden = true,
+            Description = "The SMB user to be used for downloading the export archive off of the Bitbucket server."
+        };
+        var smbPassword = new Option<string>("--smb-password")
+        {
+            IsRequired = false,
+            IsHidden = true,
+            Description = "The SMB password to be used for downloading the export archive off of the Bitbucket server."
+        };
+
         var githubPat = new Option<string>("--github-pat")
         {
             IsRequired = false
@@ -118,6 +161,13 @@ public class MigrateRepoCommand : Command
         AddOption(bbsUsername);
         AddOption(bbsPassword);
 
+        AddOption(sshUser);
+        AddOption(sshPrivateKey);
+        AddOption(sshPort);
+
+        AddOption(smbUser);
+        AddOption(smbPassword);
+
         AddOption(archivePath);
         AddOption(azureStorageConnectionString);
 
@@ -135,63 +185,55 @@ public class MigrateRepoCommand : Command
         }
 
         LogOptions(args);
-
-        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
-        {
-            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
-        }
-
-        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
-        }
-
-        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
-        }
+        ValidateOptions(args);
 
         _log.Verbose = args.Verbose;
 
+        var exportId = 0L;
+
         if (args.BbsServerUrl.HasValue())
         {
-            await GenerateArchive(args);
+            exportId = await GenerateArchive(args);
         }
-        else if (args.ArchivePath.HasValue())
+
+        if (args.SshUser.HasValue())
         {
-            var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
-            await ImportArchive(args, archiveUrl);
+            args.ArchivePath = await DownloadArchive(exportId, args);
         }
-        else if (args.ArchiveUrl.HasValue())
+
+        if (args.ArchivePath.HasValue())
+        {
+            args.ArchiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+        }
+
+        if (args.ArchiveUrl.HasValue())
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
     }
 
-    private async Task GenerateArchive(MigrateRepoCommandArgs args)
+    private async Task<string> DownloadArchive(long exportId, MigrateRepoCommandArgs args)
     {
-        args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
-        args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
+        var downloader = args.SshUser.HasValue()
+            ? _bbsArchiveDownloaderFactory.CreateSshDownloader(ExtractHost(args.BbsServerUrl), args.SshUser, args.SshPrivateKey, args.SshPort)
+            : _bbsArchiveDownloaderFactory.CreateSmbDownloader();
 
-        if (!args.BbsUsername.HasValue())
-        {
-            throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
-        }
+        _log.LogInformation($"Download archive {exportId} started...");
+        var downloadedArchiveFullPath = await downloader.Download(exportId);
+        _log.LogInformation($"Archive was successfully downloaded at \"{downloadedArchiveFullPath}\".");
 
-        if (!args.BbsPassword.HasValue())
-        {
-            throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
-        }
+        return downloadedArchiveFullPath;
+    }
 
+    private string ExtractHost(string bbsServerUrl) => new Uri(bbsServerUrl).Host;
+
+    private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
+    {
         var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
 
         var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
-        if (!args.Wait)
-        {
-            _log.LogInformation($"Export started. Export ID: {exportId}");
-            return;
-        }
+        _log.LogInformation($"Export started. Export ID: {exportId}");
 
         var (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
 
@@ -208,6 +250,8 @@ public class MigrateRepoCommand : Command
         }
 
         _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
+
+        return exportId;
     }
 
     private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
@@ -324,6 +368,31 @@ public class MigrateRepoCommand : Command
             _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
         }
 
+        if (args.SshUser.HasValue())
+        {
+            _log.LogInformation($"SSH USER: {args.SshUser}");
+        }
+
+        if (args.SshPrivateKey.HasValue())
+        {
+            _log.LogInformation($"SSH PRIVATE KEY: {args.SshPrivateKey}");
+        }
+
+        if (args.SshPort.HasValue())
+        {
+            _log.LogInformation($"SSH PORT: {args.SshPort}");
+        }
+
+        if (args.SmbUser.HasValue())
+        {
+            _log.LogInformation($"SMB USER: {args.SmbUser}");
+        }
+
+        if (args.SmbPassword.HasValue())
+        {
+            _log.LogInformation($"SMB PASSWORD: ********");
+        }
+
         if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"GITHUB PAT: ********");
@@ -332,6 +401,65 @@ public class MigrateRepoCommand : Command
         if (args.Wait)
         {
             _log.LogInformation("WAIT: true");
+        }
+    }
+
+    private void ValidateOptions(MigrateRepoCommandArgs args)
+    {
+        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
+        {
+            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
+        }
+
+        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
+        }
+
+        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
+        }
+
+        if (args.BbsServerUrl.HasValue())
+        {
+            args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
+            args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
+
+            if (!args.BbsUsername.HasValue())
+            {
+                throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+            }
+
+            if (!args.BbsPassword.HasValue())
+            {
+                throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+            }
+
+            if (args.SshUser.IsNullOrWhiteSpace() && args.SmbUser.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("Either --ssh-user or --smb-user must be specified.");
+            }
+
+            if (args.SshUser.HasValue() && args.SmbUser.HasValue())
+            {
+                throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
+            }
+
+            if (args.SshUser.HasValue())
+            {
+                if (args.SshPrivateKey.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
+                }
+            }
+            else
+            {
+                if (args.SmbPassword.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--smb-password must be specified.");
+                }
+            }
         }
     }
 }
@@ -354,4 +482,11 @@ public class MigrateRepoCommandArgs
     public string BbsRepo { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
+
+    public string SshUser { get; set; }
+    public string SshPrivateKey { get; set; }
+    public int SshPort { get; set; } = 22;
+
+    public string SmbUser { get; set; }
+    public string SmbPassword { get; set; }
 }

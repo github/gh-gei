@@ -4,6 +4,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.BbsToGithub.Commands
@@ -18,6 +19,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
+        private readonly Mock<IBbsArchiveDownloader> _mockBbsArchiveDownloader = new();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
         private readonly MigrateRepoCommand _command;
@@ -28,11 +31,15 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
 
-        private const string BBS_SERVER_URL = "https://our-bbs-server.com";
+        private const string BBS_HOST = "our-bbs-server.com";
+        private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
         private const string BBS_USERNAME = "bbs-username";
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
+        private const string SSH_USER = "ssh-user";
+        private const string PRIVATE_KEY = "private-key";
+        private const string SMB_USER = "smb-user";
         private const long BBS_EXPORT_ID = 123;
 
         private const string GITHUB_ORG_ID = "github-org-id";
@@ -45,8 +52,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 _mockOctoLogger.Object,
                 _mockGithubApiFactory.Object,
                 _mockBbsApiFactory.Object,
-                _mockAzureApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
+                _mockBbsArchiveDownloaderFactory.Object,
+                _mockAzureApiFactory.Object,
                 _mockFileSystemProvider.Object
             );
         }
@@ -56,7 +64,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(13);
+            _command.Options.Count.Should().Be(18);
 
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
@@ -69,6 +77,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "smb-password", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
@@ -166,13 +179,17 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
-        public async Task Hits_Bitbucket_With_The_Right_Options()
+        public async Task Happy_Path_With_Bbs_Server_Url_And_Ssh_Download()
         {
             // Arrange
             _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
 
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            _mockBbsArchiveDownloaderFactory
+                .Setup(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, PRIVATE_KEY, 22))
+                .Returns(_mockBbsArchiveDownloader.Object);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -181,7 +198,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BbsUsername = BBS_USERNAME,
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY
             };
             await _command.Invoke(args);
 
@@ -191,6 +210,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 BBS_REPO
             ));
 
+            _mockBbsArchiveDownloader.Verify(m => m.Download(BBS_EXPORT_ID, It.IsAny<string>()));
         }
 
         [Fact]
@@ -214,6 +234,55 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             };
 
             // Assert
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_User_And_Smb_User_Not_Provided()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO
+            };
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_User_Are_Provided()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SmbUser = SMB_USER
+            };
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_User_Is_Provided_And_Private_Key_Is_Not_Provided()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER
+            };
+
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
@@ -268,6 +337,23 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             };
 
             // Assert
+            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Smb_User_Is_Provided_And_Smb_Password_Is_Not_Provided()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SmbUser = SMB_USER
+            };
+
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
