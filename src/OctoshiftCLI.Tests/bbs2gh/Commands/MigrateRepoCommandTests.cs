@@ -240,16 +240,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_User_And_Smb_User_Not_Provided()
         {
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-
-            _mockBbsArchiveDownloaderFactory
-                .Setup(m => m.CreateSshDownloader(BBS_HOST, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .Returns(_mockBbsArchiveDownloader.Object);
-
             // Act, Assert
             var args = new MigrateRepoCommandArgs
             {
@@ -265,16 +255,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_User_Are_Provided()
         {
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-
-            _mockBbsArchiveDownloaderFactory
-                .Setup(m => m.CreateSshDownloader(BBS_HOST, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .Returns(_mockBbsArchiveDownloader.Object);
-
             // Act, Assert
             var args = new MigrateRepoCommandArgs
             {
@@ -292,16 +272,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_User_Is_Provided_And_Private_Key_Is_Not_Provided()
         {
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-
-            _mockBbsArchiveDownloaderFactory
-                .Setup(m => m.CreateSshDownloader(BBS_HOST, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .Returns(_mockBbsArchiveDownloader.Object);
-
             // Act, Assert
             var args = new MigrateRepoCommandArgs
             {
@@ -373,16 +343,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Smb_User_Is_Provided_And_Smb_Password_Is_Not_Provided()
         {
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-
-            _mockBbsArchiveDownloaderFactory
-                .Setup(m => m.CreateSshDownloader(BBS_HOST, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .Returns(_mockBbsArchiveDownloader.Object);
-
             // Act, Assert
             var args = new MigrateRepoCommandArgs
             {
