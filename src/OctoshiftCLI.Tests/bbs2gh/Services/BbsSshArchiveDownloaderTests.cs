@@ -41,7 +41,7 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
     public async Task Download_Returns_Downloaded_Archive_Full_Name()
     {
         // Arrange
-        var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename);
+        var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename).Replace('\\', '/');
         var expectedTargetArchiveFullName = Path.Combine(TARGET_DIRECTORY, _exportArchiveFilename);
 
         // Act
