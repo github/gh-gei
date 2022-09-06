@@ -39,6 +39,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         var exportArchiveFilename = $"Bitbucket_export_{exportJobId}.tar";
         var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory, EXPORT_ARCHIVE_SOURCE_DIRECTORY, exportArchiveFilename);
         var targetExportArchiveFullPath = Path.Join(targetDirectory, exportArchiveFilename);
+        sourceExportArchiveFullPath = sourceExportArchiveFullPath.Replace('\\', '/');
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {

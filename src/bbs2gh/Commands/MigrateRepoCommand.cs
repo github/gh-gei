@@ -189,17 +189,24 @@ public class MigrateRepoCommand : Command
 
         _log.Verbose = args.Verbose;
 
+        var exportId = 0L;
+
         if (args.BbsServerUrl.HasValue())
         {
-            var exportId = await GenerateArchive(args);
-            await DownloadArchive(exportId, args);
+            exportId = await GenerateArchive(args);
         }
-        else if (args.ArchivePath.HasValue())
+
+        if (args.SshUser.HasValue())
         {
-            var archiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
-            await ImportArchive(args, archiveUrl);
+            args.ArchivePath = await DownloadArchive(exportId, args);
         }
-        else if (args.ArchiveUrl.HasValue())
+
+        if (args.ArchivePath.HasValue())
+        {
+            args.ArchiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+        }
+
+        if (args.ArchiveUrl.HasValue())
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
