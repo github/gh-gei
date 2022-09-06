@@ -355,7 +355,7 @@ dotnet_diagnostic.CA1508.severity = warning
 dotnet_diagnostic.CA1700.severity = warning
 
 # CA1707: Identifiers should not contain underscores
-dotnet_diagnostic.CA1707.severity = warning
+dotnet_diagnostic.CA1707.severity = none
 
 # CA1708: Identifiers should differ by more than case
 dotnet_diagnostic.CA1708.severity = warning

@@ -9,7 +9,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.bbs2gh.Services;
 
-public sealed class BbsArchiveDownloaderTests : IDisposable
+public sealed class BbsSshArchiveDownloaderTests : IDisposable
 {
     private const int EXPORT_JOB_ID = 1;
     private const string BBS_HOME_DIRECTORY = "BBS_HOME";
@@ -19,11 +19,11 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<ISftpClient> _mockSftpClient = new();
-    private readonly BbsArchiveDownloader _bbsArchiveDownloader;
+    private readonly BbsSshArchiveDownloader _bbsArchiveDownloader;
 
-    public BbsArchiveDownloaderTests()
+    public BbsSshArchiveDownloaderTests()
     {
-        _bbsArchiveDownloader = new BbsArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
+        _bbsArchiveDownloader = new BbsSshArchiveDownloader(_mockOctoLogger.Object, _mockFileSystemProvider.Object, _mockSftpClient.Object)
         {
             BbsSharedHomeDirectory = BBS_HOME_DIRECTORY
         };
@@ -38,14 +38,14 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
     }
 
     [Fact]
-    public async Task Download_Calls_SftpClinet_DownloadFile_With_Correct_Params()
+    public async Task Download_Returns_Downloaded_Archive_Full_Name()
     {
         // Arrange
-        var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename);
+        var expectedSourceArchiveFullName = Path.Combine(BBS_HOME_DIRECTORY, "data/migration/export", _exportArchiveFilename).Replace('\\', '/');
         var expectedTargetArchiveFullName = Path.Combine(TARGET_DIRECTORY, _exportArchiveFilename);
 
         // Act
-        await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
+        var actualDownloadedArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
 
         // Assert
         _mockSftpClient.Verify(m =>
@@ -57,6 +57,7 @@ public sealed class BbsArchiveDownloaderTests : IDisposable
                 It.IsAny<Action<ulong>>()));
 
         _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew));
+        actualDownloadedArchiveFullName.Should().Be(expectedTargetArchiveFullName);
     }
 
     [Fact]
