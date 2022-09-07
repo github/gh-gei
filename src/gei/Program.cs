@@ -27,7 +27,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
-                .AddSingleton<GitHubSecretScanningAlertServiceFactory>()
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
