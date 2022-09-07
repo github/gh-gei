@@ -14,7 +14,6 @@ namespace OctoshiftCLI
         public static bool IsDismissed(string alertState) => alertState?.Trim().ToLower() is AlertStateDismissed;
 
         public static bool IsValidDismissedReason(string reason) =>
-            reason?.Trim().ToLower() is (
-                DismissedReasonWontFix or DismissedReasonUsedInTests or DismissedReasonFalsePositive);
+            reason?.Trim().ToLower() is DismissedReasonWontFix or DismissedReasonUsedInTests or DismissedReasonFalsePositive;
     }
 }
