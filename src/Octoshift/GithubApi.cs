@@ -754,7 +754,7 @@ namespace OctoshiftCLI
             
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}";
 
-            dynamic payload;
+            object payload;
             if (state == "open")
             {
                 payload = new { state };
