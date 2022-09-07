@@ -9,7 +9,7 @@ namespace OctoshiftCLI
         public const string DismissedReasonWontFix = "wont_fix";
         public const string DismissedReasonUsedInTests = "used_in_tests";
         
-        public static bool IsOpenOrDismissed(string alertState) => alertState?.Trim().ToLower() is (AlertStateOpen or AlertStateDismissed);
+        public static bool IsOpenOrDismissed(string alertState) => alertState?.Trim().ToLower() is AlertStateOpen or AlertStateDismissed;
         
         public static bool IsDismissed(string alertState) => alertState?.Trim().ToLower() is AlertStateDismissed;
 
