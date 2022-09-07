@@ -94,9 +94,7 @@ public class GenerateScriptCommand : Command
         content.AppendLine();
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
-
-        content.AppendLine($"# =========== Organization: {args.GithubOrg} ===========");
-
+        content.AppendLine();
         content.AppendLine(Exec(MigrateGithubRepoScript(args, true)));
 
         return content.ToString();
@@ -104,13 +102,15 @@ public class GenerateScriptCommand : Command
 
     private string MigrateGithubRepoScript(GenerateScriptCommandArgs args, bool wait)
     {
-        var bbsUsername = args.BbsUsername.HasValue() ? $" --bbs-username \"{args.BbsUsername}\"" : "";
+        var bbsUsernameOption = args.BbsUsername.HasValue() ? $" --bbs-username \"{args.BbsUsername}\"" : "";
+        var waitOption = wait ? " --wait" : "";
+        var verboseOption = args.Verbose ? " --verbose" : "";
 
         var archiveDownloadOptions = args.SshUser.HasValue()
             ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}"
             : "";
 
-        return $"gh bbs2gh migrate-repo --github-org \"{args.GithubOrg}\" --bbs-server-url \"{args.BbsServerUrl}\"{bbsUsername}{archiveDownloadOptions}{(wait ? " --wait" : "")}";
+        return $"gh bbs2gh migrate-repo --github-org \"{args.GithubOrg}\" --bbs-server-url \"{args.BbsServerUrl}\"{bbsUsernameOption}{archiveDownloadOptions}{verboseOption}{waitOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
