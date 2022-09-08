@@ -2,6 +2,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
@@ -14,12 +15,21 @@ public class GenerateScriptCommand : Command
     private readonly OctoLogger _log;
     private readonly IVersionProvider _versionProvider;
     private readonly FileSystemProvider _fileSystemProvider;
+    private readonly BbsApiFactory _bbsApiFactory;
+    private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-    public GenerateScriptCommand(OctoLogger log, IVersionProvider versionProvider, FileSystemProvider fileSystemProvider) : base("generate-script")
+    public GenerateScriptCommand(
+        OctoLogger log,
+        IVersionProvider versionProvider,
+        FileSystemProvider fileSystemProvider,
+        BbsApiFactory bbsApiFactory,
+        EnvironmentVariableProvider environmentVariableProvider) : base("generate-script")
     {
         _log = log;
         _versionProvider = versionProvider;
         _fileSystemProvider = fileSystemProvider;
+        _bbsApiFactory = bbsApiFactory;
+        _environmentVariableProvider = environmentVariableProvider;
 
         Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
@@ -36,12 +46,12 @@ public class GenerateScriptCommand : Command
         };
         var sshUser = new Option<string>("--ssh-user")
         {
-            IsRequired = false,
+            IsRequired = true,
             Description = "The SSH user to be used for downloading the export archive off of the Bitbucket server."
         };
         var sshPrivateKey = new Option<string>("--ssh-private-key")
         {
-            IsRequired = false,
+            IsRequired = true,
             Description = "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP."
         };
         var sshPort = new Option<int>("--ssh-port")
@@ -78,7 +88,7 @@ public class GenerateScriptCommand : Command
 
         LogOptions(args);
 
-        var script = GenerateScript(args);
+        var script = await GenerateScript(args);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -86,31 +96,55 @@ public class GenerateScriptCommand : Command
         }
     }
 
-    private string GenerateScript(GenerateScriptCommandArgs args)
+    private async Task<string> GenerateScript(GenerateScriptCommandArgs args)
     {
         var content = new StringBuilder();
-
         content.AppendLine(PWSH_SHEBANG);
         content.AppendLine();
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
-        content.AppendLine();
-        content.AppendLine(Exec(MigrateGithubRepoScript(args, true)));
+
+        var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, _environmentVariableProvider.BbsPassword());
+        var projects = await bbsApi.GetProjects();
+        foreach (var (_, projectKey, projectName) in projects)
+        {
+            content.AppendLine();
+            content.AppendLine($"# =========== Project: {projectName} ===========");
+
+            var repos = await bbsApi.GetRepos(projectKey);
+
+            if (!repos.Any())
+            {
+                content.AppendLine("# Skipping this project because it has no git repos.");
+                continue;
+            }
+
+            content.AppendLine();
+
+            foreach (var (_, repoSlug, _) in repos)
+            {
+                content.AppendLine(Exec(MigrateGithubRepoScript(args, projectKey, repoSlug, true)));
+            }
+        }
 
         return content.ToString();
     }
 
-    private string MigrateGithubRepoScript(GenerateScriptCommandArgs args, bool wait)
+    private string MigrateGithubRepoScript(GenerateScriptCommandArgs args, string bbsProjectKey, string bbsRepoSlug, bool wait)
     {
+        var bbsServerUrlOption = $" --bbs-server-url \"{args.BbsServerUrl}\"";
         var bbsUsernameOption = args.BbsUsername.HasValue() ? $" --bbs-username \"{args.BbsUsername}\"" : "";
+        var bbsProjectOption = $" --bbs-project \"{bbsProjectKey}\"";
+        var bbsRepoOption = $" --bbs-repo \"{bbsRepoSlug}\"";
+        var githubOrgOption = $" --github-org \"{args.GithubOrg}\"";
+        var githubRepoOption = $" --github-repo \"{GetGithubRepoName(bbsProjectKey, bbsRepoSlug)}\"";
         var waitOption = wait ? " --wait" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
-
         var archiveDownloadOptions = args.SshUser.HasValue()
             ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}"
             : "";
 
-        return $"gh bbs2gh migrate-repo --github-org \"{args.GithubOrg}\" --bbs-server-url \"{args.BbsServerUrl}\"{bbsUsernameOption}{archiveDownloadOptions}{verboseOption}{waitOption}";
+        return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsProjectOption}{bbsRepoOption}{archiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
@@ -127,6 +161,11 @@ public class GenerateScriptCommand : Command
         if (args.GithubOrg.HasValue())
         {
             _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+        }
+
+        if (args.BbsUsername.HasValue())
+        {
+            _log.LogInformation($"BBS USERNAME: {args.BbsUsername}");
         }
 
         if (args.SshUser.HasValue())
@@ -149,6 +188,8 @@ public class GenerateScriptCommand : Command
             _log.LogInformation($"OUTPUT: {args.Output}");
         }
     }
+
+    private string GetGithubRepoName(string bbsProjectKey, string bbsRepoSlug) => $"{bbsProjectKey}-{bbsRepoSlug}".ReplaceInvalidCharactersWithDash();
 
     private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
