@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI;
@@ -18,7 +20,7 @@ public class BbsApi
 
     public virtual async Task<string> GetServerVersion()
     {
-        var url = $"{_bbsBaseUrl}/application-properties";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/application-properties";
 
         var content = await _client.GetAsync(url);
 
@@ -27,7 +29,7 @@ public class BbsApi
 
     public virtual async Task<long> StartExport(string projectKey = "*", string slug = "*")
     {
-        var url = $"{_bbsBaseUrl}/migration/exports";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/migration/exports";
         var payload = new
         {
             repositoriesRequest = new
@@ -50,14 +52,33 @@ public class BbsApi
 
     public virtual async Task<(string State, string Message, int Percentage)> GetExport(long id)
     {
-        var url = $"{_bbsBaseUrl}/migration/exports/{id}";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/migration/exports/{id}";
 
         var content = await _client.GetAsync(url);
+        var data = JObject.Parse(content);
 
         return (
-            (string)JObject.Parse(content)["state"],
-            (string)JObject.Parse(content)["progress"]["message"],
-            (int)JObject.Parse(content)["progress"]["percentage"]
+            (string)data["state"],
+            (string)data["progress"]["message"],
+            (int)data["progress"]["percentage"]
         );
+    }
+
+    public virtual async Task<IEnumerable<(int Id, string Key, string Name)>> GetProjects()
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects";
+        var content = await _client.GetAsync(url);
+        var data = JObject.Parse(content);
+
+        return data["values"].Select(x => ((int)x["id"], (string)x["key"], (string)x["name"])).ToList();
+    }
+
+    public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey}/repos";
+        var content = await _client.GetAsync(url);
+        var data = JObject.Parse(content);
+
+        return data["values"].Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"])).ToList();
     }
 }

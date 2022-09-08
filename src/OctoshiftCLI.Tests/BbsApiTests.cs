@@ -14,7 +14,7 @@ public class BbsApiTests
 
     private readonly BbsApi sut;
 
-    private const string BBS_SERVICE_URL = "http://localhost:7990/rest/api/1.0";
+    private const string BBS_SERVICE_URL = "http://localhost:7990";
     private const string PROJECT_KEY = "TEST";
     private const string SLUG = "test-repo";
     private const long EXPORT_ID = 12345;
@@ -27,7 +27,7 @@ public class BbsApiTests
     [Fact]
     public async Task StartExport_Should_Return_ExportId()
     {
-        var endpoint = $"{BBS_SERVICE_URL}/migration/exports";
+        var endpoint = $"{BBS_SERVICE_URL}/rest/api/1.0/migration/exports";
         var requestPayload = new
         {
             repositoriesRequest = new
@@ -58,7 +58,7 @@ public class BbsApiTests
     [Fact]
     public async Task StartExport_Defaults_To_Wildcard()
     {
-        var endpoint = $"{BBS_SERVICE_URL}/migration/exports";
+        var endpoint = $"{BBS_SERVICE_URL}/rest/api/1.0/migration/exports";
         var requestPayload = new
         {
             repositoriesRequest = new
@@ -89,7 +89,7 @@ public class BbsApiTests
     [Fact]
     public async Task GetExport_Returns_Export_Details()
     {
-        var endpoint = $"{BBS_SERVICE_URL}/migration/exports/{EXPORT_ID}";
+        var endpoint = $"{BBS_SERVICE_URL}/rest/api/1.0/migration/exports/{EXPORT_ID}";
         var state = "INITIALISING";
         var message = "Still working on it!";
         var percentage = 0;
@@ -117,7 +117,7 @@ public class BbsApiTests
     [Fact]
     public async Task GetServerVersion_Returns_Server_Version()
     {
-        var endpoint = $"{BBS_SERVICE_URL}/application-properties";
+        var endpoint = $"{BBS_SERVICE_URL}/rest/api/1.0/application-properties";
         var version = "8.3.0";
 
         var responsePayload = new
@@ -132,5 +132,82 @@ public class BbsApiTests
         var result = await sut.GetServerVersion();
 
         result.Should().Be(version);
+    }
+
+    [Fact]
+    public async Task GetProjects_Returns_Projects()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects";
+        var projectFoo = (Id: 1, Key: "PF", Name: "Foo");
+        var projectBar = (Id: 2, Key: "PB", Name: "Bar");
+        var responsePayload = new
+        {
+            size = 2,
+            limit = 25,
+            isLastPage = true,
+            values = new[]
+            {
+                new
+                {
+                    key = projectFoo.Key,
+                    id = projectFoo.Id,
+                    name = projectFoo.Name
+                },
+                new
+                {
+                    key = projectBar.Key,
+                    id = projectBar.Id,
+                    name = projectBar.Name
+                }
+            },
+            start = 0
+        };
+        _mockBbsClient.Setup(m => m.GetAsync(url)).ReturnsAsync(responsePayload.ToJson());
+
+        // Act
+        var response = await sut.GetProjects();
+
+        //Assert
+        response.Should().BeEquivalentTo(new[] { projectFoo, projectBar });
+    }
+
+    [Fact]
+    public async Task GetRepos_Returns_Repositories_For_Project()
+    {
+        // Arrange
+        const string fooProjectKey = "FP";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos";
+        var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo");
+        var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo");
+        var responsePayload = new
+        {
+            size = 2,
+            limit = 25,
+            isLastPage = true,
+            values = new[]
+            {
+                new
+                {
+                    slug = fooRepo.Slug,
+                    id = fooRepo.Id,
+                    name = fooRepo.Name
+                },
+                new
+                {
+                    slug = barRepo.Slug,
+                    id = barRepo.Id,
+                    name = barRepo.Name
+                }
+            },
+            start = 0
+        };
+        _mockBbsClient.Setup(m => m.GetAsync(url)).ReturnsAsync(responsePayload.ToJson());
+
+        // Act
+        var response = await sut.GetRepos(fooProjectKey);
+
+        // Assert
+        response.Should().BeEquivalentTo(new[] { fooRepo, barRepo });
     }
 }
