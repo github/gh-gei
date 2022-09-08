@@ -29,9 +29,9 @@ public class GenerateScriptCommandTests
     private const string BBS_USERNAME = "BBS-USERNAME";
     private const string BBS_PASSWORD = "BBS-PASSWORD";
     private const string SSH_USER = "SSH-USER";
-    private const string SSH_PRIVATE_KEY = "/path-to-ssh-private-key";
+    private const string SSH_PRIVATE_KEY = "path-to-ssh-private-key";
     private const string SSH_PORT = "1234";
-    private const string OUTPUT = "/path-to-output";
+    private const string OUTPUT = "unit-test-output";
     private const string BBS_FOO_PROJECT_KEY = "FP";
     private const string BBS_FOO_PROJECT_NAME = "BBS-FOO-PROJECT-NAME";
     private const string BBS_BAR_PROJECT_KEY = "BBS-BAR-PROJECT-NAME";
@@ -96,7 +96,7 @@ public class GenerateScriptCommandTests
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class GenerateScriptCommandTests
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
     }
 
     [Fact]
@@ -160,10 +160,10 @@ public class GenerateScriptCommandTests
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(migrateRepoCommand1))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(migrateRepoCommand2))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(migrateRepoCommand3))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(migrateRepoCommand4))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand1))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand2))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand3))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand4))));
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public class GenerateScriptCommandTests
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(cliVersionComment))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(cliVersionComment))));
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class GenerateScriptCommandTests
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.StartsWith(shebang))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.StartsWith(shebang))));
     }
 
     [Fact]
@@ -238,7 +238,7 @@ function Exec {
         await _command.Invoke(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(OUTPUT, It.Is<string>(script => script.Contains(execFunctionBlock))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(execFunctionBlock))));
     }
 
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
