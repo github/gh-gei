@@ -108,6 +108,8 @@ public class GenerateScriptCommand : Command
         var projects = await bbsApi.GetProjects();
         foreach (var (_, projectKey, projectName) in projects)
         {
+            _log.LogInformation($"Project: {projectName}");
+            
             content.AppendLine();
             content.AppendLine($"# =========== Project: {projectName} ===========");
 
@@ -121,8 +123,10 @@ public class GenerateScriptCommand : Command
 
             content.AppendLine();
 
-            foreach (var (_, repoSlug, _) in repos)
+            foreach (var (_, repoSlug, repoName) in repos)
             {
+                _log.LogInformation($"  Repo: {repoName}");
+                
                 content.AppendLine(Exec(MigrateGithubRepoScript(args, projectKey, repoSlug, true)));
             }
         }
