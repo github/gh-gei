@@ -224,7 +224,7 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var httpResponse = () => new HttpResponseMessage(HttpStatusCode.InternalServerError);
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -235,11 +235,11 @@ namespace OctoshiftCLI.Tests
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
+                .Invoking(async () =>
                 {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.GetAsync("http://example.com");
+                     using var httpClient = new HttpClient(handlerMock.Object);
+                     var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+                     return await githubClient.GetAsync("http://example.com");
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
