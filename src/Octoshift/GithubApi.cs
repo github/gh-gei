@@ -685,84 +685,70 @@ namespace OctoshiftCLI
             return data.ToObject<MannequinReclaimResult>();
         }
 
-        public virtual async Task<IEnumerable<CodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo)
+        public virtual async Task<IEnumerable<GithubCodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(codescan => BuildCodeScanningAnalysis(codescan))
                 .ToListAsync();
         }
-        
+
         public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
         {
-            if (!CodeScanningAlerts.IsOpenOrDismissed(state))
+            if (!CodeScanningAlert.IsOpenOrDismissed(state))
             {
                 throw new ArgumentException($"Invalid value for {nameof(state)}");
             }
-            
-            if (CodeScanningAlerts.IsDismissed(state) && !CodeScanningAlerts.IsValidDismissedReason(dismissedReason))
+
+            if (CodeScanningAlert.IsDismissed(state) && !CodeScanningAlert.IsValidDismissedReason(dismissedReason))
             {
                 throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
             }
-            
+
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
 
-            object payload;
-            if (state == "open")
-            {
-                payload = new { state };
-            }
-            else
-            {
-                payload = new
+            var payload = state == CodeScanningAlert.AlertStateOpen
+                ? (new { state })
+                : (object)(new
                 {
                     state,
                     dismissed_reason = dismissedReason,
                     dismissed_comment = dismissedComment
-                };
-            }
+                });
             await _client.PatchAsync(url, payload);
         }
 
-        public virtual async Task<IEnumerable<SecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
+        public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
                 .ToListAsync();
         }
-        
-        public virtual async Task<IEnumerable<SecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
+
+        public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(alertLocation => BuildSecretScanningAlertLocation(alertLocation))
                 .ToListAsync();
         }
-        
+
         public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null)
         {
-            if (!SecretScanningAlerts.IsOpenOrResolved(state))
+            if (!SecretScanningAlert.IsOpenOrResolved(state))
             {
                 throw new ArgumentException($"Invalid value for {nameof(state)}");
             }
-            
-            if (SecretScanningAlerts.IsResolved(state) && !SecretScanningAlerts.IsValidDismissedReason(resolution))
+
+            if (SecretScanningAlert.IsResolved(state) && !SecretScanningAlert.IsValidDismissedReason(resolution))
             {
                 throw new ArgumentException($"Invalid value for {nameof(resolution)}");
             }
-            
+
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}";
 
-            object payload;
-            if (state == "open")
-            {
-                payload = new { state };
-            }
-            else
-            {
-                payload = new { state, resolution };
-            }
+            var payload = state == SecretScanningAlert.AlertStateOpen ? (new { state }) : (object)(new { state, resolution });
             await _client.PatchAsync(url, payload);
         }
 
@@ -830,8 +816,8 @@ namespace OctoshiftCLI
             }
         }
 
-        private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
-            new CodeScanningAnalysis
+        private static GithubCodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
+            new GithubCodeScanningAnalysis
             {
                 Id = (int)codescan["id"],
                 SarifId = (string)codescan["sarif_id"],
@@ -846,10 +832,10 @@ namespace OctoshiftCLI
                 RulesCount = (int)codescan["rules_count"],
                 Deletable = (bool)codescan["deletable"],
                 Environment = codescan["environment"].Any()
-                    ? new CodeScanningEnvironment { Language = (string)codescan["environment"]["language"] }
+                    ? new GithubCodeScanningEnvironment { Language = (string)codescan["environment"]["language"] }
                     : null,
                 Tool = codescan["tool"].Any()
-                    ? new CodeScanningTool
+                    ? new GithubCodeScanningTool
                     {
                         Name = (string)codescan["tool"]["name"],
                         Guid = (string)codescan["tool"]["guid"],
@@ -858,8 +844,9 @@ namespace OctoshiftCLI
                     : null,
             };
 
-        private static SecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
-            new SecretScanningAlert { 
+        private static Octoshift.Models.GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
+            new Octoshift.Models.GithubSecretScanningAlert
+            {
                 Number = (int)secretAlert["number"],
                 CreatedAt = (string)secretAlert["created_at"],
                 Url = (string)secretAlert["url"],
@@ -872,13 +859,14 @@ namespace OctoshiftCLI
                 Secret = (string)secretAlert["secret"],
                 PushProtectionBypassed = (bool)secretAlert["push_protection_bypassed"],
                 PushProtectionBypassedAt = (string)secretAlert["push_protection_bypassed_at"],
-                PushProtectionBypassedBy = secretAlert["push_protection_bypassed_by"].Any() ? (string)secretAlert["push_protection_bypassed_by"]["login"]: null,
+                PushProtectionBypassedBy = secretAlert["push_protection_bypassed_by"].Any() ? (string)secretAlert["push_protection_bypassed_by"]["login"] : null,
             };
-        
-        private static SecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
-            new SecretScanningAlertLocation {
+
+        private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
+            new GithubSecretScanningAlertLocation
+            {
                 Type = (string)alertLocation["type"],
-                Details = new SecretScanningAlertLocationDetails
+                Details = new GithubSecretScanningAlertLocationDetails
                 {
                     Path = (string)alertLocation["details"]["path"],
                     StartLine = (int)alertLocation["details"]["start_line"],

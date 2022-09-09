@@ -1,9 +1,7 @@
 using Octoshift;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter
+namespace OctoshiftCLI.GithubEnterpriseImporter;
+public interface ISecretScanningAlertServiceFactory
 {
-    public interface ISecretScanningAlertServiceFactory
-    {
-        SecretScanningAlertService Create(GithubApi sourceApi, GithubApi targetApi);
-    }
+    SecretScanningAlertService Create(string sourceApi, string sourceToken, string targetApi, string targetToken, bool sourceApiNoSsl = false);
 }

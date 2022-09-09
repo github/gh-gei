@@ -1979,7 +1979,7 @@ namespace OctoshiftCLI.Tests
                     ""warning"": """"
                 }}
             ";
-            
+
             var codeQLCodeScanning2 = $@"
                 {{
                     ""ref"": ""refs/heads/main"",
@@ -2003,7 +2003,7 @@ namespace OctoshiftCLI.Tests
                     ""warning"": """"
                 }}
             ";
-            
+
             var responsePage1 = $@"
                 [
                     {tfsecCodeScanning},
@@ -2016,7 +2016,7 @@ namespace OctoshiftCLI.Tests
                     {codeQLCodeScanning2}
                 ]
             ";
-            
+
             async IAsyncEnumerable<JToken> GetAllPages()
             {
                 var jArrayPage1 = JArray.Parse(responsePage1);
@@ -2032,10 +2032,10 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
                 .Returns(GetAllPages);
-            
+
             // Act
             var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
-            
+
             // Assert
             scanResults.Count().Should().Be(3);
             var scanResultsArray = scanResults.ToArray();
@@ -2045,11 +2045,11 @@ namespace OctoshiftCLI.Tests
 
             expectedData = JObject.Parse(codeQLCodeScanning1);
             scanResultsArray[1].Id.Should().Be((int)expectedData["id"]);
-            
+
             expectedData = JObject.Parse(codeQLCodeScanning2);
             scanResultsArray[2].Id.Should().Be((int)expectedData["id"]);
         }
-        
+
         [Fact]
         public async Task GetSecretScanningAlertsData()
         {
@@ -2077,7 +2077,7 @@ namespace OctoshiftCLI.Tests
                     ""push_protection_bypassed_at"": null
                 }}
             ";
-            
+
             var secretScanningAlert_2 = $@"
                 {{
                     ""number"": 15,
@@ -2171,7 +2171,7 @@ namespace OctoshiftCLI.Tests
 		            ""push_protection_bypassed_at"": null
 	            }}
             ";
-            
+
             var responsePage1 = $@"
                 [
                     {secretScanningAlert_1},
@@ -2185,7 +2185,7 @@ namespace OctoshiftCLI.Tests
                     {secretScanningAlert_4},
                 ]
             ";
-            
+
             async IAsyncEnumerable<JToken> GetAllPages()
             {
                 var jArrayPage1 = JArray.Parse(responsePage1);
@@ -2202,10 +2202,10 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
                 .Returns(GetAllPages);
-            
+
             // Act
             var scanResults = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
-            
+
             // Assert
             scanResults.Count().Should().Be(4);
             var scanResultsArray = scanResults.ToArray();
@@ -2220,7 +2220,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             const int alert = 1;
-            string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alert}/locations?per_page=100";
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alert}/locations?per_page=100";
 
             var alertLocation_1 = $@"
                 {{
@@ -2255,7 +2255,7 @@ namespace OctoshiftCLI.Tests
                     }}
                 }}
             ";
-            
+
             var responsePage1 = $@"
                 [
                     {alertLocation_1},
@@ -2267,7 +2267,7 @@ namespace OctoshiftCLI.Tests
                     {alertLocation_2},
                 ]
             ";
-            
+
             async IAsyncEnumerable<JToken> GetAllPages()
             {
                 var jArrayPage1 = JArray.Parse(responsePage1);
@@ -2282,10 +2282,10 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
                 .Returns(GetAllPages);
-            
+
             // Act
             var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alert);
-            
+
             // Assert
             locations.Count().Should().Be(2);
             var locationsArray = locations.ToArray();
@@ -2294,14 +2294,14 @@ namespace OctoshiftCLI.Tests
             var expectedData = JObject.Parse(alertLocation_1);
             location.Type.Should().Be((string)expectedData["type"]);
             location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
-            
+
             location = locationsArray[1];
             expectedData = JObject.Parse(alertLocation_2);
             location.Type.Should().Be((string)expectedData["type"]);
             location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
         }
-        
-        private void AssertSecretScanningData(SecretScanningAlert actual, JToken expectedData)
+
+        private void AssertSecretScanningData(global::Octoshift.Models.GithubSecretScanningAlert actual, JToken expectedData)
         {
             actual.Number.Should().Be((int)expectedData["number"]);
             actual.State.Should().Be((string)expectedData["state"]);
@@ -2309,10 +2309,10 @@ namespace OctoshiftCLI.Tests
             actual.Resolution.Should().Be((string)expectedData["resolution"]);
             actual.Secret.Should().Be((string)expectedData["secret"]);
             actual.SecretTypeDisplayName.Should().Be((string)expectedData["secret_type_display_name"]);
-            
+
             if (expectedData["resolved_by"].Any())
             {
-                var resolvedByLogin = (string)expectedData["resolved_by"]["login"]; 
+                var resolvedByLogin = (string)expectedData["resolved_by"]["login"];
                 actual.ResolvedBy.Should().Be(resolvedByLogin);
             }
             else
@@ -2342,7 +2342,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
-        
+
         [Fact]
         public async Task UpdateSecretScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
         {
@@ -2359,7 +2359,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
-        
+
         [Fact]
         public async Task UpdateCodeScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
         {
@@ -2376,14 +2376,14 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
-        
+
         [Fact]
         public async Task GetSarifReport_For_Third_Party_Scanning_Tool()
         {
             // Arrange
             const int analysisId = 37019295;
             var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
-            
+
             var response = $@"
             {{
 	            ""runs"": [
@@ -2420,14 +2420,14 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.GetAsync(url, new Dictionary<string, string>() { { "accept", "application/sarif+json" } }))
                 .ReturnsAsync(response);
-            
+
             // Act
             var result = await _githubApi.GetSarifReport(GITHUB_ORG, GITHUB_REPO, analysisId);
 
             // Assert
             result.Should().Match(response);
         }
-        
+
         private string Compact(string source) =>
             source
                 .Replace("\r", "")

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
 using OctoshiftCLI;
+using SecretScanningAlert = OctoshiftCLI.SecretScanningAlert;
 
 namespace Octoshift;
 
@@ -36,50 +37,45 @@ public class SecretScanningAlertService
         {
             _log.LogInformation($"Processing source secret {alert.Alert.Number}");
 
-            if (SecretScanningAlerts.IsOpen(alert.Alert.State))
+            if (SecretScanningAlert.IsOpen(alert.Alert.State))
             {
                 _log.LogSuccess("  secret alert is still open, nothing to do");
+                continue;
             }
-            else
+
+            _log.LogInformation("  secret is resolved, looking for matching detection in target...");
+            var target = MatchTargetSecret(alert, targetAlerts);
+
+            if (target == null)
             {
-                _log.LogInformation("  secret is resolved, looking for matching detection in target...");
-                var target = MatchTargetSecret(alert, targetAlerts);
-
-                if (target == null)
-                {
-                    _log.LogWarning(
-                        $"  failed to locate a matching secret to source secret {alert.Alert.Number} in {targetOrg}/{targetRepo}");
-                }
-                else
-                {
-                    _log.LogInformation(
-                        $"  source secret alert matched alert to {target.Alert.Number} in {targetOrg}/{targetRepo}.");
-
-                    if (alert.Alert.Resolution == target.Alert.Resolution
-                        && alert.Alert.State == target.Alert.State)
-                    {
-                        _log.LogSuccess("  source and target alerts are already aligned.");
-                    }
-                    else
-                    {
-                        _log.LogInformation(
-                            $"  updating target alert:{target.Alert.Number} to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
-
-                        if (dryRun)
-                        {
-                            _log.LogInformation(
-                                $"  executing in dry run mode! Secret alert, {target.Alert.Number}, in repository {targetOrg}/{targetRepo} would have been updated to resolution, {alert.Alert.Resolution}");
-                        }
-                        else
-                        {
-                            await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, target.Alert.Number,
-                                alert.Alert.State, alert.Alert.Resolution);
-                            _log.LogSuccess(
-                                $"  source and target alert state and resolution have been aligned to {alert.Alert.Resolution}.");
-                        }
-                    }
-                }   
+                _log.LogWarning(
+                    $"  failed to locate a matching secret to source secret {alert.Alert.Number} in {targetOrg}/{targetRepo}");
+                continue;
             }
+
+            _log.LogInformation(
+                $"  source secret alert matched alert to {target.Alert.Number} in {targetOrg}/{targetRepo}.");
+
+            if (alert.Alert.Resolution == target.Alert.Resolution && alert.Alert.State == target.Alert.State)
+            {
+                _log.LogSuccess("  source and target alerts are already aligned.");
+                continue;
+            }
+
+            _log.LogInformation(
+                $"  updating target alert:{target.Alert.Number} to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
+
+            if (dryRun)
+            {
+                _log.LogInformation(
+                    $"  executing in dry run mode! Secret alert, {target.Alert.Number}, in repository {targetOrg}/{targetRepo} would have been updated to resolution, {alert.Alert.Resolution}");
+                continue;
+            }
+
+            await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, target.Alert.Number,
+                alert.Alert.State, alert.Alert.Resolution);
+            _log.LogSuccess(
+                $"  source and target alert state and resolution have been aligned to {alert.Alert.Resolution}.");
         }
     }
 
@@ -119,8 +115,8 @@ public class SecretScanningAlertService
         return matched;
     }
 
-    private bool IsMatchedSecretAlertLocation(SecretScanningAlertLocation sourceLocation,
-        SecretScanningAlertLocation[] targetLocations)
+    private bool IsMatchedSecretAlertLocation(GithubSecretScanningAlertLocation sourceLocation,
+        GithubSecretScanningAlertLocation[] targetLocations)
     {
         var sourceDetails = sourceLocation.Details;
 
@@ -136,8 +132,8 @@ public class SecretScanningAlertService
                 && sourceDetails.StartColumn == targetDetails.StartColumn
                 && sourceDetails.EndColumn == targetDetails.EndColumn
                 && sourceDetails.BlobSha == targetDetails.BlobSha)
-                // Technically this wil hold, but only if there is not commmit rewriting going on, so we need to make this last one optional for now
-                // && sourceDetails.CommitSha == targetDetails.CommitSha)
+            // Technically this wil hold, but only if there is not commmit rewriting going on, so we need to make this last one optional for now
+            // && sourceDetails.CommitSha == targetDetails.CommitSha)
             {
                 return true;
             }
@@ -153,7 +149,7 @@ public class SecretScanningAlertService
         foreach (var alert in alerts)
         {
             var locations =
-                await _sourceGithubApi.GetSecretScanningAlertsLocations(org, repo, alert.Number);
+                await api.GetSecretScanningAlertsLocations(org, repo, alert.Number);
             results.Add(new AlertWithLocations { Alert = alert, Locations = locations.ToArray() });
         }
 
@@ -161,9 +157,9 @@ public class SecretScanningAlertService
     }
 }
 
-class AlertWithLocations
+internal class AlertWithLocations
 {
-    public SecretScanningAlert Alert { get; set; }
+    public Models.GithubSecretScanningAlert Alert { get; set; }
 
-    public SecretScanningAlertLocation[] Locations { get; set; }
+    public GithubSecretScanningAlertLocation[] Locations { get; set; }
 }

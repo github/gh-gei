@@ -18,7 +18,7 @@ public class MigrateSecretScanningAlertsCommand : Command
 
     public MigrateSecretScanningAlertsCommand(OctoLogger log,
         ISecretScanningAlertServiceFactory secretScanningAlertServiceFactory,
-        ISourceGithubApiFactory sourceGithubApiFactory, 
+        ISourceGithubApiFactory sourceGithubApiFactory,
         ITargetGithubApiFactory targetGithubApiFactory,
         EnvironmentVariableProvider environmentVariableProvider) : base("migrate-secret-alerts")
     {
@@ -39,11 +39,13 @@ public class MigrateSecretScanningAlertsCommand : Command
         var sourceRepo = new Option<string>("--source-repo") { IsRequired = true };
         var githubTargetOrg = new Option<string>("--github-target-org")
         {
-            IsRequired = true, Description = "Uses GH_PAT env variable or --github-target-pat option."
+            IsRequired = true,
+            Description = "Uses GH_PAT env variable or --github-target-pat option."
         };
         var targetRepo = new Option<string>("--target-repo")
         {
-            IsRequired = false, Description = "Defaults to the name of source-repo"
+            IsRequired = false,
+            Description = "Defaults to the name of source-repo"
         };
         var targetApiUrl = new Option<string>("--target-api-url")
         {
@@ -103,14 +105,12 @@ public class MigrateSecretScanningAlertsCommand : Command
 
         LogAndValidateOptions(args);
 
-        var sourceGitHubApi = _sourceGithubApiFactory.Create(args.GhesApiUrl, GetSourceToken(args));
-        var targetGithubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, GetTargetToken(args));
-        var migrationService = _secretScanningAlertServiceFactory.Create(sourceGitHubApi, targetGithubApi);
+        var migrationService = _secretScanningAlertServiceFactory.Create(args.GhesApiUrl, GetSourceToken(args), args.TargetApiUrl, GetTargetToken(args), args.NoSslVerify);
 
         await migrationService.MigrateSecretScanningAlerts(
-            args.GithubSourceOrg,
+            args.SourceOrg,
             args.SourceRepo,
-            args.GithubTargetOrg,
+            args.TargetOrg,
             args.TargetRepo,
             args.DryRun);
 
@@ -126,13 +126,13 @@ public class MigrateSecretScanningAlertsCommand : Command
     private void LogAndValidateOptions(MigrateSecretScanningAlertsCommandArgs args)
     {
         _log.LogInformation("Migrating Repo Secret Scanning Alerts...");
-        if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
+        if (!string.IsNullOrWhiteSpace(args.SourceOrg))
         {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
+            _log.LogInformation($"GITHUB SOURCE ORG: {args.SourceOrg}");
         }
 
         _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+        _log.LogInformation($"GITHUB TARGET ORG: {args.TargetOrg}");
         _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
 
         if (!string.IsNullOrWhiteSpace(args.TargetApiUrl))
@@ -182,9 +182,9 @@ public class MigrateSecretScanningAlertsCommand : Command
 
 public class MigrateSecretScanningAlertsCommandArgs
 {
-    public string GithubSourceOrg { get; set; }
+    public string SourceOrg { get; set; }
     public string SourceRepo { get; set; }
-    public string GithubTargetOrg { get; set; }
+    public string TargetOrg { get; set; }
     public string TargetRepo { get; set; }
     public string TargetApiUrl { get; set; }
     public string GhesApiUrl { get; set; }
