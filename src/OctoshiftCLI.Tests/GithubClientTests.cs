@@ -101,43 +101,13 @@ namespace OctoshiftCLI.Tests
                 ItExpr.IsAny<CancellationToken>());
         }
 
-        [Fact]
-        public async Task GetAsync_Retries_On_ServiceUnavailable()
+        [Theory]
+        [InlineData(HttpStatusCode.Unauthorized)]
+        [InlineData(HttpStatusCode.ServiceUnavailable)]
+        public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
         {
             // Arrange
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("SECOND_RESPONSE")
-            };
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .SetupSequence<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse);
-
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            // Act
-            var returnedContent = await githubClient.GetAsync(URL);
-
-            // Assert
-            returnedContent.Should().Be("SECOND_RESPONSE");
-        }
-
-        [Fact]
-        public async Task GetAsync_Retries_On_Unauthorized()
-        {
-            // Arrange
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            using var firstHttpResponse = new HttpResponseMessage(httpStatusCode)
             {
                 Content = new StringContent("FIRST_RESPONSE")
             };
