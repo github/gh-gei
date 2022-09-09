@@ -14,6 +14,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private readonly ISftpClient _sftpClient;
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
+    private readonly object _mutex = new();
     private DateTime _nextProgressReport;
 
 #pragma warning disable CA2000 // Incorrectly flagged as a not-disposing error
@@ -74,14 +75,17 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
     private void LogProgress(ulong downloadedBytes, ulong totalBytes)
     {
-        if (DateTime.Now < _nextProgressReport)
+        lock (_mutex)
         {
-            return;
+            if (DateTime.Now < _nextProgressReport)
+            {
+                return;
+            }
+
+            _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
+
+            _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
         }
-
-        _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
-
-        _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
     }
 
     private string GetPercentage(ulong downloadedBytes, ulong totalBytes)
