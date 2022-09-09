@@ -1,1 +1,1 @@
-
+- Retry failed GET requests made to GitHub APIs.
