@@ -77,6 +77,71 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetAsync_Retries_On_ServiceUnavailable()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await adoClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be("SECOND_RESPONSE");
+        }
+
+        [Fact]
+        public async Task GetAsync_Retries_On_Unauthorized()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await adoClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be("SECOND_RESPONSE");
+        }
+
+
+        [Fact]
         public async Task GetAsync_Applies_Retry_Delay()
         {
             // Arrange
@@ -188,17 +253,22 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = MockHttpHandler(_ => true, httpResponse);
+            var httpResponse = () => new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
+                .Invoking(async () =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.GetAsync(URL);
+                    return await adoClient.GetAsync(URL);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
