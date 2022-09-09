@@ -237,9 +237,9 @@ namespace OctoshiftCLI.Tests
             await FluentActions
                 .Invoking(async () =>
                 {
-                     using var httpClient = new HttpClient(handlerMock.Object);
-                     var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-                     return await githubClient.GetAsync("http://example.com");
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+                    return await githubClient.GetAsync("http://example.com");
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
