@@ -16,7 +16,6 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
-        private double _retryDelay;
         private readonly RetryPolicy _retryPolicy;
 
         public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string personalAccessToken)
