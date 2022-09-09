@@ -180,6 +180,11 @@ public class GenerateScriptCommand : Command
             _log.LogInformation($"BBS USERNAME: {args.BbsUsername}");
         }
 
+        if (args.BbsPassword.HasValue())
+        {
+            _log.LogInformation("BBS PASSWORD: ***");
+        }
+
         if (args.SshUser.HasValue())
         {
             _log.LogInformation($"SSH USER: {args.SshUser}");
