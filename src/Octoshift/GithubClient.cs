@@ -131,7 +131,6 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
-            await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
             using var request = new HttpRequestMessage(httpMethod, url).AddHeaders(customHeaders);
@@ -183,16 +182,6 @@ namespace OctoshiftCLI
                 .FirstOrDefault(x => x.Rel == "next").Url;
 
             return nextUrl;
-        }
-
-        private async Task ApplyRetryDelayAsync()
-        {
-            if (_retryDelay > 0.0)
-            {
-                _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
-                await Task.Delay((int)_retryDelay);
-                _retryDelay = 0.0;
-            }
         }
 
         private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
