@@ -116,6 +116,70 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAsync_Retries_On_ServiceUnavailable()
+    {
+        // Arrange
+        using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+        {
+            Content = new StringContent("FIRST_RESPONSE")
+        };
+        using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("SECOND_RESPONSE")
+        };
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstHttpResponse)
+            .ReturnsAsync(secondHttpResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        var returnedContent = await bbsClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("SECOND_RESPONSE");
+    }
+
+    [Fact]
+    public async Task GetAsync_Retries_On_Unauthorized()
+    {
+        // Arrange
+        using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+        {
+            Content = new StringContent("FIRST_RESPONSE")
+        };
+        using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("SECOND_RESPONSE")
+        };
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstHttpResponse)
+            .ReturnsAsync(secondHttpResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        var returnedContent = await bbsClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("SECOND_RESPONSE");
+    }
+
+    [Fact]
     public async Task PostAsync_Encodes_The_Url()
     {
         var handlerMock = MockHttpHandlerForPost();
