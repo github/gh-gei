@@ -24,6 +24,7 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
+        private const string URL = "http://example.com/resource";
 
         public GithubClientTests()
         {
@@ -98,6 +99,70 @@ namespace OctoshiftCLI.Tests
                 Times.Once(),
                 ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
                 ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetAsync_Retries_On_ServiceUnavailable()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await githubClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be("SECOND_RESPONSE");
+        }
+
+        [Fact]
+        public async Task GetAsync_Retries_On_Unauthorized()
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await githubClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be("SECOND_RESPONSE");
         }
 
         [Fact]
