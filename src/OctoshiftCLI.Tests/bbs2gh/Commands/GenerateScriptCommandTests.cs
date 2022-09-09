@@ -54,6 +54,7 @@ public class GenerateScriptCommandTests
             _mockBbsApiFactory.Object,
             _mockEnvironmentVariableProvider.Object);
 
+        _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername()).Returns(BBS_USERNAME);
         _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword()).Returns(BBS_PASSWORD);
         _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD)).Returns(_mockBbsApi.Object);
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (1, BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT_NAME) });
@@ -65,11 +66,12 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(8);
+        _command.Options.Count.Should().Be(9);
 
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", true);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", true);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
@@ -87,7 +89,6 @@ public class GenerateScriptCommandTests
         var args = new GenerateScriptCommandArgs()
         {
             BbsServerUrl = BBS_SERVER_URL,
-            BbsUsername = BBS_USERNAME,
             GithubOrg = GITHUB_ORG,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
@@ -108,7 +109,6 @@ public class GenerateScriptCommandTests
         var args = new GenerateScriptCommandArgs()
         {
             BbsServerUrl = BBS_SERVER_URL,
-            BbsUsername = BBS_USERNAME,
             GithubOrg = GITHUB_ORG,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
@@ -146,11 +146,12 @@ public class GenerateScriptCommandTests
         const string migrateRepoCommand4 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-project \"{BBS_BAR_PROJECT_KEY}\" --bbs-repo \"{BBS_BAR_REPO_2_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_BAR_PROJECT_KEY}-{BBS_BAR_REPO_2_SLUG}\" --verbose --wait }}";
 
         // Act
-        var args = new GenerateScriptCommandArgs()
+        var args = new GenerateScriptCommandArgs
         {
             BbsServerUrl = BBS_SERVER_URL,
             GithubOrg = GITHUB_ORG,
             BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
             SshPort = SSH_PORT,
@@ -164,6 +165,9 @@ public class GenerateScriptCommandTests
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand2))));
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand3))));
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand4))));
+
+        _mockEnvironmentVariableProvider.Verify(m => m.BbsUsername(), Times.Never);
+        _mockEnvironmentVariableProvider.Verify(m => m.BbsPassword(), Times.Never);
     }
 
     [Fact]
@@ -174,10 +178,9 @@ public class GenerateScriptCommandTests
         const string cliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
 
         // Act
-        var args = new GenerateScriptCommandArgs()
+        var args = new GenerateScriptCommandArgs
         {
             BbsServerUrl = BBS_SERVER_URL,
-            BbsUsername = BBS_USERNAME,
             GithubOrg = GITHUB_ORG,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
@@ -199,7 +202,6 @@ public class GenerateScriptCommandTests
         var args = new GenerateScriptCommandArgs()
         {
             BbsServerUrl = BBS_SERVER_URL,
-            BbsUsername = BBS_USERNAME,
             GithubOrg = GITHUB_ORG,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
@@ -229,7 +231,6 @@ function Exec {
         var args = new GenerateScriptCommandArgs()
         {
             BbsServerUrl = BBS_SERVER_URL,
-            BbsUsername = BBS_USERNAME,
             GithubOrg = GITHUB_ORG,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,

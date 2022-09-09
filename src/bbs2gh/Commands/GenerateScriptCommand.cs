@@ -42,7 +42,14 @@ public class GenerateScriptCommand : Command
         var bbsUsername = new Option<string>("--bbs-username")
         {
             IsRequired = false,
-            Description = "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable."
+            Description = "The Bitbucket username of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_USERNAME environment variable."
+        };
+        var bbsPassword = new Option<string>("--bbs-password")
+        {
+            IsRequired = false,
+            Description = "The Bitbucket password of the user specified by --bbs-username to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
+                          $"{Environment.NewLine}" +
+                          "Note: The password will not get included in the generated script and it has to be set as an env variable for migrate-repo to work."
         };
         var sshUser = new Option<string>("--ssh-user")
         {
@@ -66,6 +73,7 @@ public class GenerateScriptCommand : Command
         AddOption(bbsServerUrl);
         AddOption(githubOrg);
         AddOption(bbsUsername);
+        AddOption(bbsPassword);
         AddOption(sshUser);
         AddOption(sshPrivateKey);
         AddOption(sshPort);
@@ -104,7 +112,7 @@ public class GenerateScriptCommand : Command
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
-        var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, _environmentVariableProvider.BbsPassword());
+        var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername ?? _environmentVariableProvider.BbsUsername(), args.BbsPassword ?? _environmentVariableProvider.BbsPassword());
         var projects = await bbsApi.GetProjects();
         foreach (var (_, projectKey, projectName) in projects)
         {
@@ -216,6 +224,7 @@ public class GenerateScriptCommandArgs
     public string BbsServerUrl { get; set; }
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
+    public string BbsPassword { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public string SshPort { get; set; }
