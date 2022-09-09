@@ -1,1 +1,1 @@
-- Retry failed GET requests made to GitHub APIs.
+- Retry all failed GET requests made to Github, Azure Devops, and Bitbucket Server.
