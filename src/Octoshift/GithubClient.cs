@@ -42,12 +42,12 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
         {
-            var (Content, ResponseHeaders) = await _retryPolicy.HttpRetry(
+            var (content, _) = await _retryPolicy.HttpRetry(
                 async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders),
-                ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable
+                _ => true
             );
 
-            return Content;
+            return content;
         }
 
         public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
