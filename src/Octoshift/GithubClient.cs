@@ -16,11 +16,14 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
+        private double _retryDelay;
+        private readonly RetryPolicy _retryPolicy;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, string personalAccessToken)
+        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+            _retryPolicy = retryPolicy;
 
             if (_httpClient != null)
             {
@@ -37,8 +40,15 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
-        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) =>
-            (await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders)).Content;
+        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
+        {
+            var (Content, ResponseHeaders) = await _retryPolicy.HttpRetry(
+                async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders),
+                ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable
+            );
+
+            return Content;
+        }
 
         public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
         {
@@ -121,6 +131,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
+            await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
             using var request = new HttpRequestMessage(httpMethod, url).AddHeaders(customHeaders);
@@ -172,6 +183,16 @@ namespace OctoshiftCLI
                 .FirstOrDefault(x => x.Rel == "next").Url;
 
             return nextUrl;
+        }
+
+        private async Task ApplyRetryDelayAsync()
+        {
+            if (_retryDelay > 0.0)
+            {
+                _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
+                await Task.Delay((int)_retryDelay);
+                _retryDelay = 0.0;
+            }
         }
 
         private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
