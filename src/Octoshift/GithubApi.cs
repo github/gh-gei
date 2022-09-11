@@ -707,14 +707,14 @@ namespace OctoshiftCLI
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
 
-            var payload = state == CodeScanningAlert.AlertStateOpen
-                ? (new { state })
-                : (object)(new
+            object payload = state == CodeScanningAlert.AlertStateOpen
+                ? new { state }
+                : new
                 {
                     state,
                     dismissed_reason = dismissedReason,
                     dismissed_comment = dismissedComment
-                });
+                };
             await _client.PatchAsync(url, payload);
         }
 
