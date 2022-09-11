@@ -748,7 +748,7 @@ namespace OctoshiftCLI
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}";
 
-            var payload = state == SecretScanningAlert.AlertStateOpen ? (new { state }) : (object)(new { state, resolution });
+            object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
             await _client.PatchAsync(url, payload);
         }
 
