@@ -2,7 +2,6 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
@@ -10,38 +9,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 public class MigrateSecretScanningAlertsCommand : Command
 {
     private readonly OctoLogger _log;
-    private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
-    private readonly ITargetGithubApiFactory _targetGithubApiFactory;
-    private readonly ISecretScanningAlertServiceFactory _secretScanningAlertServiceFactory;
+
+    private readonly GitHubSecretScanningAlertServiceFactory _secretScanningAlertServiceFactory;
 
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
     public MigrateSecretScanningAlertsCommand(OctoLogger log,
-        ISecretScanningAlertServiceFactory secretScanningAlertServiceFactory,
-        ISourceGithubApiFactory sourceGithubApiFactory,
-        ITargetGithubApiFactory targetGithubApiFactory,
+        GitHubSecretScanningAlertServiceFactory secretScanningAlertServiceFactory,
         EnvironmentVariableProvider environmentVariableProvider) : base("migrate-secret-alerts")
     {
         _log = log;
-        _sourceGithubApiFactory = sourceGithubApiFactory;
-        _targetGithubApiFactory = targetGithubApiFactory;
         _secretScanningAlertServiceFactory = secretScanningAlertServiceFactory;
         _environmentVariableProvider = environmentVariableProvider;
 
         Description = "Invokes the GitHub APIs to migrate repo secret scanning alert data.";
 
-        var githubSourceOrg = new Option<string>("--github-source-org")
-        {
-            IsRequired = false,
-            Description =
-                "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
-        };
+        var githubSourceOrg = new Option<string>("--github-source-org") { IsRequired = true };
         var sourceRepo = new Option<string>("--source-repo") { IsRequired = true };
-        var githubTargetOrg = new Option<string>("--github-target-org")
-        {
-            IsRequired = true,
-            Description = "Uses GH_PAT env variable or --github-target-pat option."
-        };
+
+        var githubTargetOrg = new Option<string>("--github-target-org") { IsRequired = true };
         var targetRepo = new Option<string>("--target-repo")
         {
             IsRequired = false,
@@ -126,13 +112,20 @@ public class MigrateSecretScanningAlertsCommand : Command
     private void LogAndValidateOptions(MigrateSecretScanningAlertsCommandArgs args)
     {
         _log.LogInformation("Migrating Repo Secret Scanning Alerts...");
-        if (!string.IsNullOrWhiteSpace(args.SourceOrg))
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.SourceOrg}");
-        }
 
+        if (string.IsNullOrWhiteSpace(args.SourceOrg))
+        {
+            throw new OctoshiftCliException("Missing GitHub source organization name, please set --github-source-org");
+        }
+        _log.LogInformation($"GITHUB SOURCE ORG: {args.SourceOrg}");
         _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
+
         _log.LogInformation($"GITHUB TARGET ORG: {args.TargetOrg}");
+        if (args.SourceRepo.HasValue() && args.TargetRepo.IsNullOrWhiteSpace())
+        {
+            args.TargetRepo = args.SourceRepo;
+            _log.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo vaule.");
+        }
         _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
 
         if (!string.IsNullOrWhiteSpace(args.TargetApiUrl))

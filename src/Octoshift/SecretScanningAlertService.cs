@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
-using OctoshiftCLI;
-using SecretScanningAlert = OctoshiftCLI.SecretScanningAlert;
 
-namespace Octoshift;
+namespace OctoshiftCLI;
 
 public class SecretScanningAlertService
 {
@@ -122,24 +120,16 @@ public class SecretScanningAlertService
 
         // We cannot guarantee the ordering of things with the locations and the APIs, typically they would match, but cannot be sure
         // so we need to iterate over all the targets to ensure a match
-        foreach (var targetLocation in targetLocations)
-        {
-            var targetDetails = targetLocation.Details;
-
-            if (sourceDetails.Path == targetDetails.Path
-                && sourceDetails.StartLine == targetDetails.StartLine
-                && sourceDetails.EndLine == targetDetails.EndLine
-                && sourceDetails.StartColumn == targetDetails.StartColumn
-                && sourceDetails.EndColumn == targetDetails.EndColumn
-                && sourceDetails.BlobSha == targetDetails.BlobSha)
-            // Technically this wil hold, but only if there is not commmit rewriting going on, so we need to make this last one optional for now
-            // && sourceDetails.CommitSha == targetDetails.CommitSha)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return targetLocations.Any(
+            target => sourceDetails.Path == target.Details.Path
+                   && sourceDetails.StartLine == target.Details.StartLine
+                   && sourceDetails.EndLine == target.Details.EndLine
+                   && sourceDetails.StartColumn == target.Details.StartColumn
+                   && sourceDetails.EndColumn == target.Details.EndColumn
+                   && sourceDetails.BlobSha == target.Details.BlobSha
+                   // Technically this wil hold, but only if there is not commit rewriting going on, so we need to make this last one optional for now
+                   // && sourceDetails.CommitSha == target.Details.CommitSha)       
+                   );
     }
 
     private async Task<List<AlertWithLocations>> GetAlertsWithLocations(GithubApi api, string org, string repo)
@@ -159,7 +149,7 @@ public class SecretScanningAlertService
 
 internal class AlertWithLocations
 {
-    public Models.GithubSecretScanningAlert Alert { get; set; }
+    public GithubSecretScanningAlert Alert { get; set; }
 
     public GithubSecretScanningAlertLocation[] Locations { get; set; }
 }

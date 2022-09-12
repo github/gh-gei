@@ -1,9 +1,8 @@
-using Octoshift;
 using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter;
 
-public sealed class GitHubSecretScanningAlertServiceFactory : ISecretScanningAlertServiceFactory
+public class GitHubSecretScanningAlertServiceFactory
 {
     private readonly OctoLogger _octoLogger;
     private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
@@ -17,7 +16,7 @@ public sealed class GitHubSecretScanningAlertServiceFactory : ISecretScanningAle
         _targetGithubApiFactory = targetGithubApiFactory;
     }
 
-    public SecretScanningAlertService
+    public virtual SecretScanningAlertService
         Create(string sourceApi, string sourceToken, string targetApi, string targetToken, bool sourceApiNoSsl = false)
     {
         var sourceGithubApi = sourceApiNoSsl

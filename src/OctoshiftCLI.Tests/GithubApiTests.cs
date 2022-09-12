@@ -2301,7 +2301,7 @@ namespace OctoshiftCLI.Tests
             location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
         }
 
-        private void AssertSecretScanningData(global::Octoshift.Models.GithubSecretScanningAlert actual, JToken expectedData)
+        private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)
         {
             actual.Number.Should().Be((int)expectedData["number"]);
             actual.State.Should().Be((string)expectedData["state"]);

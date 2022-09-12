@@ -844,8 +844,8 @@ namespace OctoshiftCLI
                     : null,
             };
 
-        private static Octoshift.Models.GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
-            new Octoshift.Models.GithubSecretScanningAlert
+        private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
+            new()
             {
                 Number = (int)secretAlert["number"],
                 CreatedAt = (string)secretAlert["created_at"],
@@ -863,7 +863,7 @@ namespace OctoshiftCLI
             };
 
         private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
-            new GithubSecretScanningAlertLocation
+            new()
             {
                 Type = (string)alertLocation["type"],
                 Details = new GithubSecretScanningAlertLocationDetails
