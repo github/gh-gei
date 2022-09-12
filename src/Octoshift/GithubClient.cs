@@ -16,11 +16,13 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
+        private readonly RetryPolicy _retryPolicy;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, string personalAccessToken)
+        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+            _retryPolicy = retryPolicy;
 
             if (_httpClient != null)
             {
@@ -37,8 +39,15 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
-        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) =>
-            (await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders)).Content;
+        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
+        {
+            var (content, _) = await _retryPolicy.HttpRetry(
+                async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders),
+                _ => true
+            );
+
+            return content;
+        }
 
         public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
         {

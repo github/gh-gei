@@ -26,7 +26,7 @@ namespace OctoshiftCLI.BbsToGithub
         {
             apiUrl ??= DEFAULT_API_URL;
             targetPersonalAccessToken ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubClient = new GithubClient(_octoLogger, _client, _versionProvider, targetPersonalAccessToken);
+            var githubClient = new GithubClient(_octoLogger, _client, _versionProvider, _retryPolicy, targetPersonalAccessToken);
             return new GithubApi(githubClient, apiUrl, _retryPolicy);
         }
     }
