@@ -49,7 +49,7 @@ public class GenerateScriptCommand : Command
             IsRequired = false,
             Description = "The Bitbucket password of the user specified by --bbs-username to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
                           $"{Environment.NewLine}" +
-                          "Note: The password will not get included in the generated script and it has to be set as an env variable for migrate-repo to work."
+                          "Note: The password will not get included in the generated script and it has to be set as an env variable before running the script."
         };
         var sshUser = new Option<string>("--ssh-user")
         {
