@@ -16,11 +16,15 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
+        private double _retryDelay;
+        private readonly RetryPolicy _retryPolicy;
+        private readonly DateTimeProvider _dateTimeProvider;
 
-        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, string personalAccessToken)
+        public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
         {
             _log = log;
             _httpClient = httpClient;
+            _dateTimeProvider = dateTimeProvider;
 
             if (_httpClient != null)
             {
@@ -121,6 +125,7 @@ namespace OctoshiftCLI
         {
             url = url?.Replace(" ", "%20");
 
+            await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
             using var request = new HttpRequestMessage(httpMethod, url).AddHeaders(customHeaders);
@@ -138,7 +143,9 @@ namespace OctoshiftCLI
             var content = await response.Content.ReadAsStringAsync();
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
-            foreach (var header in response.Headers)
+            var headers = response.Headers.ToArray();
+
+            foreach (var header in headers)
             {
                 _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
             }
@@ -147,12 +154,24 @@ namespace OctoshiftCLI
             {
                 response.EnsureSuccessStatusCode();
             }
-            else if (response.StatusCode != status)
+            else if (response.StatusCode != status && ExtractHeaderValue("X-RateLimit-Remaining", headers) != "0")
             {
                 throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}", null, response.StatusCode);
             }
 
-            return (content, response.Headers.ToArray());
+            CheckForRetryDelay(headers);
+
+            return (content, headers);
+        }
+
+        private async Task ApplyRetryDelayAsync()
+        {
+            if (_retryDelay > 0.0)
+            {
+                _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
+                await Task.Delay((int)_retryDelay);
+                _retryDelay = 0.0;
+            }
         }
 
         private string GetNextUrl(KeyValuePair<string, IEnumerable<string>>[] headers)
@@ -180,5 +199,15 @@ namespace OctoshiftCLI
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
 
+        private void CheckForRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+        {
+            if (ExtractHeaderValue("X-RateLimit-Remaining", headers)== "0")
+            {
+                var resetUnixSeconds = long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers));
+                var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
+
+                _retryDelay = (resetUnixSeconds - currentUnixSeconds) * 1000;
+            }
+        }
     }
 }
