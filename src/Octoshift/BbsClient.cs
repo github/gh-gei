@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -36,8 +35,7 @@ public class BbsClient
 
     public virtual async Task<string> GetAsync(string url)
     {
-        return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url),
-                                        ex => ex.StatusCode == HttpStatusCode.ServiceUnavailable);
+        return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url), _ => true);
     }
 
     public virtual async Task<string> PostAsync(string url, object body) => await SendAsync(HttpMethod.Post, url, body);
@@ -63,6 +61,8 @@ public class BbsClient
         };
         var content = await response.Content.ReadAsStringAsync();
         _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+
+        response.EnsureSuccessStatusCode();
 
         return content;
 

@@ -24,6 +24,7 @@ namespace OctoshiftCLI
         {
             _log = log;
             _httpClient = httpClient;
+            _retryPolicy = retryPolicy;
             _dateTimeProvider = dateTimeProvider;
 
             if (_httpClient != null)
@@ -41,8 +42,15 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
 
-        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) =>
-            (await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders)).Content;
+        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
+        {
+            var (content, _) = await _retryPolicy.HttpRetry(
+                async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders),
+                _ => true
+            );
+
+            return content;
+        }
 
         public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
         {
@@ -201,7 +209,7 @@ namespace OctoshiftCLI
 
         private void CheckForRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
         {
-            if (ExtractHeaderValue("X-RateLimit-Remaining", headers)== "0")
+            if (ExtractHeaderValue("X-RateLimit-Remaining", headers) == "0")
             {
                 var resetUnixSeconds = long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers));
                 var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
