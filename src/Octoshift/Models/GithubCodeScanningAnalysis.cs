@@ -25,9 +25,11 @@ public class GithubCodeScanningEnvironment
 
 public class GithubCodeScanningTool
 {
-#pragma warning disable CA1720
     public string Name { get; set; }
+
+#pragma warning disable CA1720
     public string Guid { get; set; }
-    public string Version { get; set; }
 #pragma warning restore CA1720
+    public string Version { get; set; }
+
 }
