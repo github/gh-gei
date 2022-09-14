@@ -162,7 +162,7 @@ namespace OctoshiftCLI
             {
                 response.EnsureSuccessStatusCode();
             }
-            else if (response.StatusCode != status && ExtractHeaderValue("X-RateLimit-Remaining", headers) != "0")
+            else if (response.StatusCode != status && RateLimitRemaining(headers) != 0)
             {
                 throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}", null, response.StatusCode);
             }
@@ -204,14 +204,20 @@ namespace OctoshiftCLI
         private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             ExtractHeaderValue("Link", headers);
 
+        private int RateLimitRemaining(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+            int.Parse(ExtractHeaderValue("X-RateLimit-Remaining", headers) ?? "5000");
+
+        private long RateLimitReset(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+            long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers) ?? DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
 
         private void CheckForRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
         {
-            if (ExtractHeaderValue("X-RateLimit-Remaining", headers) == "0")
+            if (RateLimitRemaining(headers) == 0)
             {
-                var resetUnixSeconds = long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers));
+                var resetUnixSeconds = RateLimitReset(headers);
                 var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
 
                 _retryDelay = (resetUnixSeconds - currentUnixSeconds) * 1000.0;

@@ -230,7 +230,7 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent("FIRST_RESPONSE")
             };
 
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
             {
                 Content = new StringContent("SECOND_RESPONSE")
             };
