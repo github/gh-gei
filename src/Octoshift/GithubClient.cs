@@ -214,7 +214,7 @@ namespace OctoshiftCLI
                 var resetUnixSeconds = long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers));
                 var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
 
-                _retryDelay = (resetUnixSeconds - currentUnixSeconds) * 1000;
+                _retryDelay = (resetUnixSeconds - currentUnixSeconds) * 1000.0;
             }
         }
     }
