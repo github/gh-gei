@@ -47,17 +47,27 @@ namespace OctoshiftCLI.AdoToGithub
 
             SetContext(parser.Parse(args));
 
+            WarnIfNotUsingExtension();
+
             try
             {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("Could not retrieve latest ado2gh version from github.com, please ensure you are using the latest version by downloading it from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogWarning("Could not retrieve latest ado2gh CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade ado2gh");
                 Logger.LogVerbose(ex.ToString());
             }
 
             await parser.InvokeAsync(args);
+        }
+
+        private static void WarnIfNotUsingExtension()
+        {
+            if (!AppContext.BaseDirectory.EndsWith("extensions\\gh-ado2gh\\") && !AppContext.BaseDirectory.EndsWith("extensions/gh-ado2gh/"))
+            {
+                Logger.LogWarning("You are not running the ado2gh CLI as a gh extension. This is not recommended, please run: gh extension install github/gh-ado2gh");
+            }
         }
 
         private static void SetContext(ParseResult parseResult)
@@ -77,7 +87,7 @@ namespace OctoshiftCLI.AdoToGithub
             else
             {
                 Logger.LogWarning($"You are running an older version of the ado2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
-                Logger.LogWarning($"Please download the latest version from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogWarning($"Please update by running: gh extension upgrade ado2gh");
             }
         }
 
