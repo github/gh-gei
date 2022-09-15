@@ -208,7 +208,7 @@ namespace OctoshiftCLI
             int.Parse(ExtractHeaderValue("X-RateLimit-Remaining", headers) ?? "5000");
 
         private long RateLimitReset(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
-            long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers) ?? DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+            long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers) ?? _dateTimeProvider.CurrentUnixTimeSeconds().ToString());
 
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();

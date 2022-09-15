@@ -33,7 +33,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             _githubHttpClient = new HttpClient();
             _versionClient = new HttpClient();
-            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), null, githubToken);
+            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
             _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger));
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
