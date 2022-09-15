@@ -24,10 +24,10 @@ public class MigrateSecretScanningAlertsCommand : Command
 
         Description = "Invokes the GitHub APIs to migrate repo secret scanning alert data.";
 
-        var githubSourceOrg = new Option<string>("--github-source-org") { IsRequired = true };
+        var githubSourceOrg = new Option<string>("--source-org") { IsRequired = true };
         var sourceRepo = new Option<string>("--source-repo") { IsRequired = true };
 
-        var githubTargetOrg = new Option<string>("--github-target-org") { IsRequired = true };
+        var githubTargetOrg = new Option<string>("--target-org") { IsRequired = true };
         var targetRepo = new Option<string>("--target-repo")
         {
             IsRequired = false,
