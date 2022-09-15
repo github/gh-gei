@@ -48,9 +48,9 @@ public class MigrateSecretScanningAlertsCommandTests
         _command.Name.Should().Be("migrate-secret-alerts");
         _command.Options.Count.Should().Be(11);
 
-        TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", true);
+        TestHelpers.VerifyCommandOption(_command.Options, "source-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "source-repo", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
+        TestHelpers.VerifyCommandOption(_command.Options, "target-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "target-repo", false);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
