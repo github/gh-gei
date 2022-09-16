@@ -5,6 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>bbs2gh</AssemblyName>
     <LangVersion>10</LangVersion>
+    <RootNamespace>OctoshiftCLI.BbsToGithub</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

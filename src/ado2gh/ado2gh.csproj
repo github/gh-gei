@@ -5,6 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>ado2gh</AssemblyName>
     <LangVersion>10</LangVersion>
+    <RootNamespace>OctoshiftCLI.AdoToGithub</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
