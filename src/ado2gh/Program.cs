@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -64,7 +65,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static void WarnIfNotUsingExtension()
         {
-            if (!AppContext.BaseDirectory.EndsWith("extensions\\gh-ado2gh\\") && !AppContext.BaseDirectory.EndsWith("extensions/gh-ado2gh/"))
+            if (!Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory).EndsWith(Path.Combine("extensions", "gh-ado2gh").ToString()))
             {
                 Logger.LogWarning("You are not running the ado2gh CLI as a gh extension. This is not recommended, please run: gh extension install github/gh-ado2gh");
             }
