@@ -263,7 +263,56 @@ namespace OctoshiftCLI.Tests
             await githubClient.GetAsync("http://example.com"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 10000 ms"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAsync_Applies_Retry_Delay_If_Forbidden()
+        {
+            // Arrange
+            var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            var retryAt = now + 10;
+
+            _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
+
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+
+            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
+
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("THIRD_RESPONSE")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse)
+                .ReturnsAsync(thirdResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await githubClient.GetAsync("http://example.com"); // normal call
+            await githubClient.GetAsync("http://example.com"); // call with delay and retry
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -327,7 +376,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PostAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 10000 ms"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -515,7 +564,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PutAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 10000 ms"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -703,7 +752,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PatchAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 10000 ms"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -877,7 +926,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.DeleteAsync("http://example.com"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("THROTTLING IN EFFECT. Waiting 10000 ms"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
         }
 
         [Fact]

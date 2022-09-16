@@ -20,6 +20,9 @@ namespace OctoshiftCLI
         private readonly RetryPolicy _retryPolicy;
         private readonly DateTimeProvider _dateTimeProvider;
 
+        private const string DEFAULT_RATE_LIMIT_REMAINING = "5000";
+        private const float MILLISECONDS_PER_SECOND = 1000f;
+
         public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
         {
             _log = log;
@@ -40,7 +43,7 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, status: status)).Content;
+        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, expectedStatus: status)).Content;
 
         public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
         {
@@ -128,7 +131,7 @@ namespace OctoshiftCLI
             HttpMethod httpMethod,
             string url,
             object body = null,
-            HttpStatusCode status = HttpStatusCode.OK,
+            HttpStatusCode expectedStatus = HttpStatusCode.OK,
             Dictionary<string, string> customHeaders = null)
         {
             url = url?.Replace(" ", "%20");
@@ -158,27 +161,30 @@ namespace OctoshiftCLI
                 _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
             }
 
-            if (status == HttpStatusCode.OK)
+            if (GetRateLimitRemaining(headers) <= 0)
+            {
+                SetRetryDelay(headers);
+            }
+
+            if (expectedStatus == HttpStatusCode.OK)
             {
                 response.EnsureSuccessStatusCode();
             }
-            else if (response.StatusCode != status && RateLimitRemaining(headers) != 0)
+            else if (response.StatusCode != expectedStatus)
             {
-                throw new HttpRequestException($"Expected status code {status} but got {response.StatusCode}", null, response.StatusCode);
+                throw new HttpRequestException($"Expected status code {expectedStatus} but got {response.StatusCode}", null, response.StatusCode);
             }
-
-            CheckForRetryDelay(headers);
 
             return (content, headers);
         }
 
         private async Task ApplyRetryDelayAsync()
         {
-            if (_retryDelay > 0.0)
+            if (_retryDelay > 0)
             {
-                _log.LogWarning($"THROTTLING IN EFFECT. Waiting {(int)_retryDelay} ms");
-                await Task.Delay((int)_retryDelay);
-                _retryDelay = 0.0;
+                _log.LogWarning($"GitHub rate limit exceeded. Waiting {_retryDelay} seconds before continuing");
+                await Task.Delay((int)(_retryDelay * MILLISECONDS_PER_SECOND));
+                _retryDelay = 0;
             }
         }
 
@@ -204,24 +210,21 @@ namespace OctoshiftCLI
         private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             ExtractHeaderValue("Link", headers);
 
-        private int RateLimitRemaining(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
-            int.Parse(ExtractHeaderValue("X-RateLimit-Remaining", headers) ?? "5000");
+        private int GetRateLimitRemaining(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+            int.Parse(ExtractHeaderValue("X-RateLimit-Remaining", headers) ?? DEFAULT_RATE_LIMIT_REMAINING);
 
-        private long RateLimitReset(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+        private long GetRateLimitReset(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers) ?? _dateTimeProvider.CurrentUnixTimeSeconds().ToString());
 
         private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
             headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
 
-        private void CheckForRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+        private void SetRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
         {
-            if (RateLimitRemaining(headers) == 0)
-            {
-                var resetUnixSeconds = RateLimitReset(headers);
-                var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
+            var resetUnixSeconds = GetRateLimitReset(headers);
+            var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
 
-                _retryDelay = (resetUnixSeconds - currentUnixSeconds) * 1000.0;
-            }
+            _retryDelay = resetUnixSeconds - currentUnixSeconds;
         }
     }
 }
