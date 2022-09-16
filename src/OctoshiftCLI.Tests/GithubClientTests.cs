@@ -380,6 +380,56 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PostAsync_Applies_Retry_Delay_If_Forbidden()
+        {
+            // Arrange
+            var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            var retryAt = now + 10;
+
+            _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
+
+            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+
+            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
+
+            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("THIRD_RESPONSE")
+            };
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse)
+                .ReturnsAsync(thirdResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await githubClient.PostAsync("http://example.com", "hello"); // normal call
+            var result = await githubClient.PostAsync("http://example.com", "hello"); // call with retry delay
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            result.Should().Be("THIRD_RESPONSE");
+        }
+
+        [Fact]
         public async Task PostAsync_Encodes_The_Url()
         {
             // Arrange
