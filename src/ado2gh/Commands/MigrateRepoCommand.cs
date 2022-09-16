@@ -44,12 +44,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
-            var ssh = new Option("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
-            };
             var wait = new Option("--wait")
             {
                 IsRequired = false,
@@ -73,16 +67,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
-            AddOption(ssh);
             AddOption(wait);
             AddOption(adoPat);
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -92,10 +85,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO REPO: {adoRepo}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            if (ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
-            }
             if (wait)
             {
                 _log.LogInformation("WAIT: true");
