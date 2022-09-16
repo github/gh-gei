@@ -1,1 +1,1 @@
-
+- If `create-team` fails when linking an IdP group with an HTTP 400, we will retry
