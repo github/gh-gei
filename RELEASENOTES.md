@@ -1,1 +1,1 @@
-
+- fixed a bug where secrets were not getting scrubbed from the logs in some circumstances
