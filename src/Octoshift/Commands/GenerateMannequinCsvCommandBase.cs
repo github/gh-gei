@@ -85,6 +85,8 @@ public class GenerateMannequinCsvCommandBase : Command
             _log.LogInformation($"{IncludeReclaimed.GetLogFriendlyName()}: true");
         }
 
+        _log.RegisterSecret(githubPat);
+
         var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
 
         var githubOrgId = await githubApi.GetOrganizationId(githubOrg);

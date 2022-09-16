@@ -185,6 +185,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
 
+            _log.RegisterSecret(args.GithubSourcePat);
+            _log.RegisterSecret(args.AdoPat);
+
             // GHES Migration Path
             if (args.GhesApiUrl.HasValue())
             {

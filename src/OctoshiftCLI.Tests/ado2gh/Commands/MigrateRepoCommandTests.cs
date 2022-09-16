@@ -110,7 +110,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockGithubApi.VerifyNoOtherCalls();
-            _mockOctoLogger.VerifyNoOtherCalls();
         }
 
         [Fact]

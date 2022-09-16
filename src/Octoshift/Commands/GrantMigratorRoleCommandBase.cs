@@ -63,6 +63,8 @@ public class GrantMigratorRoleCommandBase : Command
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
+        _log.RegisterSecret(githubPat);
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
         var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
         var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);

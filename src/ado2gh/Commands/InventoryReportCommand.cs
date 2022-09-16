@@ -89,6 +89,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("MINIMAL: true");
             }
 
+            _log.RegisterSecret(adoPat);
+
             var ado = _adoApiFactory.Create(adoPat);
             var inspector = _adoInspectorServiceFactory.Create(ado);
             inspector.OrgFilter = adoOrg;

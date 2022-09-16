@@ -79,6 +79,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             LogAndValidateOptions(args);
 
+            _log.RegisterSecret(args.GithubSourcePat);
+            _log.RegisterSecret(args.GithubTargetPat);
+
             var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubTargetPat);
 
             var githubEnterpriseId = await githubApi.GetEnterpriseId(args.GithubTargetEnterprise);

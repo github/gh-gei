@@ -62,6 +62,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("ADO PAT: ***");
             }
 
+            _log.RegisterSecret(adoPat);
+
             var ado = _adoApiFactory.Create(adoPat);
 
             var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);

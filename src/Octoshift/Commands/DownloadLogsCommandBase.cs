@@ -120,6 +120,8 @@ public class DownloadLogsCommandBase : Command
             _log.LogInformation($"{MigrationLogFile.GetLogFriendlyName()}: {migrationLogFile}");
         }
 
+        _log.RegisterSecret(githubPat);
+
         migrationLogFile ??= $"migration-log-{githubOrg}-{githubRepo}.log";
 
         if (FileExists(migrationLogFile))

@@ -69,6 +69,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
+            _log.RegisterSecret(githubPat);
+
             var keyPrefix = "AB#";
             var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
 

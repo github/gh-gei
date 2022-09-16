@@ -109,6 +109,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
+            _log.RegisterSecret(adoPat);
+            _log.RegisterSecret(githubPat);
+
             githubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
             var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
 

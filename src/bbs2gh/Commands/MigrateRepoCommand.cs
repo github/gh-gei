@@ -187,6 +187,11 @@ public class MigrateRepoCommand : Command
         LogOptions(args);
         ValidateOptions(args);
 
+        _log.RegisterSecret(args.AzureStorageConnectionString);
+        _log.RegisterSecret(args.BbsPassword);
+        _log.RegisterSecret(args.GithubPat);
+        _log.RegisterSecret(args.SmbPassword);
+
         _log.Verbose = args.Verbose;
 
         var exportId = 0L;

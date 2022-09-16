@@ -96,6 +96,8 @@ public class GenerateScriptCommand : Command
 
         LogOptions(args);
 
+        _log.RegisterSecret(args.BbsPassword);
+
         var script = await GenerateScript(args);
 
         if (script.HasValue() && args.Output.HasValue())
