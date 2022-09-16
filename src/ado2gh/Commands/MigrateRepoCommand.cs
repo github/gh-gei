@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -44,13 +44,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
-            var ssh = new Option("--ssh")
+            var ssh = new Option<bool>("--ssh")
             {
                 IsRequired = false,
                 IsHidden = true,
                 Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
             };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
@@ -63,7 +63,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

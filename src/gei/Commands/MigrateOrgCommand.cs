@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
@@ -46,12 +46,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the org migration to finish."
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -55,7 +55,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
                 IsRequired = false,
                 Description = "Significantly speeds up the generation of the CSV files by including the bare minimum info."
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

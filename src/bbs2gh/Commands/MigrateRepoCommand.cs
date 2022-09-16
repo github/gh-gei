@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -141,11 +141,11 @@ public class MigrateRepoCommand : Command
         {
             IsRequired = false
         };
-        var wait = new Option("--wait")
+        var wait = new Option<bool>("--wait")
         {
             Description = "Synchronously waits for the repo migration to finish."
         };
-        var verbose = new Option("--verbose")
+        var verbose = new Option<bool>("--verbose")
         {
             IsRequired = false
         };
