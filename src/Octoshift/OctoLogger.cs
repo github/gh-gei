@@ -110,7 +110,7 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(ex));
             }
 
-            var verboseMessage = ex is HttpRequestException httpEx ? $"HTTP ERROR {httpEx.StatusCode}\n{ex}" : ex.ToString();
+            var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {httpEx.StatusCode}] {ex}" : ex.ToString();
             var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
 
             var output = MaskSecrets(FormatMessage(logMessage, LogLevel.ERROR));
