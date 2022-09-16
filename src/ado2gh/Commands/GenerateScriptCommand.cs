@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,16 +23,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
         private AdoInspectorService _adoInspectorService;
 
-        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorServiceFactory adoInspectorServiceFactory) : base("generate-script")
+        public GenerateScriptCommand(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorServiceFactory adoInspectorServiceFactory) : base(
+            name: "generate-script",
+            description: "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it." +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
             _versionProvider = versionProvider;
             _adoInspectorServiceFactory = adoInspectorServiceFactory;
-
-            Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var githubOrgOption = new Option<string>("--github-org")
             {
@@ -50,7 +50,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var sequential = new Option("--sequential")
+            var sequential = new Option<bool>("--sequential")
             {
                 IsRequired = false,
                 Description = "Waits for each migration to finish before moving on to the next one."
@@ -59,47 +59,47 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };
-            var downloadMigrationLogs = new Option("--download-migration-logs")
+            var downloadMigrationLogs = new Option<bool>("--download-migration-logs")
             {
                 IsRequired = false,
                 Description = "Downloads the migration log for each repository migration."
             };
 
-            var createTeams = new Option("--create-teams")
+            var createTeams = new Option<bool>("--create-teams")
             {
                 IsRequired = false,
                 Description = "Includes create-team scripts that creates admins and maintainers teams and adds them to repos."
             };
-            var linkIdpGroups = new Option("--link-idp-groups")
+            var linkIdpGroups = new Option<bool>("--link-idp-groups")
             {
                 IsRequired = false,
                 Description = "Adds --idp-group to the end of create teams scripts that links the created team to an idP group."
             };
-            var lockAdoRepos = new Option("--lock-ado-repos")
+            var lockAdoRepos = new Option<bool>("--lock-ado-repos")
             {
                 IsRequired = false,
                 Description = "Includes lock-ado-repo scripts that lock repos before migrating them."
             };
-            var disableAdoRepos = new Option("--disable-ado-repos")
+            var disableAdoRepos = new Option<bool>("--disable-ado-repos")
             {
                 IsRequired = false,
                 Description = "Includes disable-ado-repo scripts that disable repos after migrating them."
             };
-            var integrateBoards = new Option("--integrate-boards")
+            var integrateBoards = new Option<bool>("--integrate-boards")
             {
                 IsRequired = false,
                 Description = "Includes configure-autolink and integrate-boards scripts that configure Azure Boards integrations."
             };
-            var rewirePipelines = new Option("--rewire-pipelines")
+            var rewirePipelines = new Option<bool>("--rewire-pipelines")
             {
                 IsRequired = false,
                 Description = "Includes share-service-connection and rewire-pipeline scripts that rewire Azure Pipelines to point to GitHub repos."
             };
-            var all = new Option("--all")
+            var all = new Option<bool>("--all")
             {
                 IsRequired = false,
                 Description = "Includes all script generation options."

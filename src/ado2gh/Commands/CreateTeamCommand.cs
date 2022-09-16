@@ -1,5 +1,5 @@
 ﻿using System;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 

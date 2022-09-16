@@ -10,12 +10,12 @@ public class GrantMigratorRoleCommandBase : Command
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
 
-    public GrantMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("grant-migrator-role")
+    public GrantMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+        name: "grant-migrator-role",
+        description: "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
-
-        Description = "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
