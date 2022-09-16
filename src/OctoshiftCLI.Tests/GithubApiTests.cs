@@ -23,6 +23,7 @@ namespace OctoshiftCLI.Tests
         private readonly GithubApi _githubApi;
 
         private const string GITHUB_ORG = "ORG_LOGIN";
+        private const string GITHUB_ENTERPRISE = "ENTERPRISE_NAME";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
 
         public GithubApiTests()
@@ -52,7 +53,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.AddAutoLink(GITHUB_ORG, GITHUB_REPO, keyPrefix, urlTemplate);
 
             // Assert
-            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -77,7 +78,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.AddAutoLink(GITHUB_ORG, GITHUB_REPO, keyPrefix, urlTemplate);
 
             // Assert
-            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -86,13 +87,13 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/autolinks";
 
-            _githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<JToken>());
+            _githubClientMock.Setup(x => x.GetAllAsync(It.IsAny<string>(), null)).Returns(AsyncEnumerable.Empty<JToken>());
 
             // Act
             await _githubApi.GetAutoLinks(GITHUB_ORG, GITHUB_REPO);
 
             // Assert
-            _githubClientMock.Verify(m => m.GetAllAsync(url));
+            _githubClientMock.Verify(m => m.GetAllAsync(url, null));
         }
 
         [Fact]
@@ -107,7 +108,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, autoLinkId);
 
             // Assert
-            _githubClientMock.Verify(m => m.DeleteAsync(url));
+            _githubClientMock.Verify(m => m.DeleteAsync(url, null));
         }
 
         [Fact]
@@ -123,7 +124,7 @@ namespace OctoshiftCLI.Tests
             var response = $"{{\"id\": \"{teamId}\"}}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -153,7 +154,7 @@ namespace OctoshiftCLI.Tests
             }.ToAsyncJTokenEnumerable();
 
             _githubClientMock
-                .Setup(m => m.GetAllAsync(url))
+                .Setup(m => m.GetAllAsync(url, null))
                 .Returns(teamsResult);
 
             // Act
@@ -214,7 +215,7 @@ namespace OctoshiftCLI.Tests
             }
 
             _githubClientMock
-                .Setup(m => m.GetAllAsync(url))
+                .Setup(m => m.GetAllAsync(url, null))
                 .Returns(GetAllPages);
 
             // Act
@@ -234,7 +235,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamName}/members?per_page=100";
 
             _githubClientMock
-                .SetupSequence(m => m.GetAllAsync(url))
+                .SetupSequence(m => m.GetAllAsync(url, null))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.NotFound))
                 .Returns(new[]
@@ -297,7 +298,7 @@ namespace OctoshiftCLI.Tests
             }
 
             _githubClientMock
-                .Setup(m => m.GetAllAsync(url))
+                .Setup(m => m.GetAllAsync(url, null))
                 .Returns(GetAllPages);
 
             // Act
@@ -317,14 +318,14 @@ namespace OctoshiftCLI.Tests
 
             var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamName}/memberships/{member}";
 
-            _githubClientMock.Setup(m => m.DeleteAsync(url));
+            _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
             // Act
             var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
             await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
             // Assert
-            _githubClientMock.Verify(m => m.DeleteAsync(url));
+            _githubClientMock.Verify(m => m.DeleteAsync(url, null));
         }
 
         [Fact]
@@ -346,7 +347,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.AddTeamSync(GITHUB_ORG, teamName, groupId, groupName, groupDesc);
 
             // Assert
-            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -363,7 +364,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.AddTeamToRepo(GITHUB_ORG, GITHUB_REPO, teamName, role);
 
             // Assert
-            _githubClientMock.Verify(m => m.PutAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PutAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -389,7 +390,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -397,6 +398,38 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             result.Should().Be(orgId);
+        }
+
+        [Fact]
+        public async Task GetEnterpriseId_Returns_The_Enterprise_Id()
+        {
+            // Arrange
+            const string enterpriseId = "ENTERPRISE_ID";
+
+            var url = $"https://api.github.com/graphql";
+            var payload =
+                $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
+            var response = $@"
+            {{
+                ""data"": 
+                    {{
+                        ""enterprise"": 
+                            {{
+                                ""slug"": ""{GITHUB_ENTERPRISE}"",
+                                ""id"": ""{enterpriseId}""
+                            }} 
+                    }} 
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var result = await _githubApi.GetEnterpriseId(GITHUB_ENTERPRISE);
+
+            // Assert
+            result.Should().Be(enterpriseId);
         }
 
         [Fact]
@@ -425,7 +458,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -462,11 +495,47 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
             var expectedMigrationSourceId = await _githubApi.CreateAdoMigrationSource(orgId, adoServerUrl);
+
+            // Assert
+            expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateBbsMigrationSource_Returns_New_Migration_Source_Id()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"Bitbucket Server Source\",\"url\":\"https://not-used\",\"ownerId\":\"{orgId}\",\"type\":\"BITBUCKET_SERVER\"}},\"operationName\":\"createMigrationSource\"}}";
+            const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""createMigrationSource"": {{
+                        ""migrationSource"": {{
+                            ""id"": ""{actualMigrationSourceId}"",
+                            ""name"": ""Bitbucket Server Source"",
+                            ""url"": ""https://not-used"",
+                            ""type"": ""BITBUCKET_SERVER""
+                        }}
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedMigrationSourceId = await _githubApi.CreateBbsMigrationSource(orgId);
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
@@ -498,7 +567,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -532,7 +601,8 @@ namespace OctoshiftCLI.Tests
                     $metadataArchiveUrl: String,
                     $accessToken: String!,
                     $githubPat: String,
-                    $skipReleases: Boolean)";
+                    $skipReleases: Boolean,
+                    $lockSource: Boolean)";
             const string gql = @"
                 startRepositoryMigration(
                     input: { 
@@ -545,7 +615,8 @@ namespace OctoshiftCLI.Tests
                         metadataArchiveUrl: $metadataArchiveUrl,
                         accessToken: $accessToken,
                         githubPat: $githubPat,
-                        skipReleases: $skipReleases
+                        skipReleases: $skipReleases,
+                        lockSource: $lockSource
                     }
                 ) {
                     repositoryMigration {
@@ -574,7 +645,8 @@ namespace OctoshiftCLI.Tests
                     metadataArchiveUrl,
                     accessToken = sourceToken,
                     githubPat = targetToken,
-                    skipReleases = false
+                    skipReleases = false,
+                    lockSource = false
                 },
                 operationName = "startRepositoryMigration"
             };
@@ -599,11 +671,116 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
             var expectedRepositoryMigrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, GITHUB_REPO, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
+
+            // Assert
+            expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+        }
+
+        [Fact]
+        public async Task StartBbsMigration_Returns_New_Repository_Migration_Id()
+        {
+            // Arrange
+            const string migrationSourceId = "MIGRATION_SOURCE_ID";
+            const string orgId = "ORG_ID";
+            const string url = "https://api.github.com/graphql";
+            const string gitArchiveUrl = "GIT_ARCHIVE_URL";
+            const string targetToken = "TARGET_TOKEN";
+
+            const string unusedSourceRepoUrl = "https://not-used";
+            const string unusedSourceToken = "not-used";
+            const string unusedMetadataArchiveUrl = "https://not-used";
+
+            const string query = @"
+                mutation startRepositoryMigration(
+                    $sourceId: ID!,
+                    $ownerId: ID!,
+                    $sourceRepositoryUrl: URI!,
+                    $repositoryName: String!,
+                    $continueOnError: Boolean!,
+                    $gitArchiveUrl: String,
+                    $metadataArchiveUrl: String,
+                    $accessToken: String!,
+                    $githubPat: String,
+                    $skipReleases: Boolean,
+                    $lockSource: Boolean)";
+            const string gql = @"
+                startRepositoryMigration(
+                    input: { 
+                        sourceId: $sourceId,
+                        ownerId: $ownerId,
+                        sourceRepositoryUrl: $sourceRepositoryUrl,
+                        repositoryName: $repositoryName,
+                        continueOnError: $continueOnError,
+                        gitArchiveUrl: $gitArchiveUrl,
+                        metadataArchiveUrl: $metadataArchiveUrl,
+                        accessToken: $accessToken,
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases,
+                        lockSource: $lockSource
+                    }
+                ) {
+                    repositoryMigration {
+                        id,
+                        migrationSource {
+                            id,
+                            name,
+                            type
+                        },
+                        sourceUrl,
+                        state,
+                        failureReason
+                    }
+                  }";
+            var payload = new
+            {
+                query = $"{query} {{ {gql} }}",
+                variables = new
+                {
+                    sourceId = migrationSourceId,
+                    ownerId = orgId,
+                    sourceRepositoryUrl = unusedSourceRepoUrl,
+                    repositoryName = GITHUB_REPO,
+                    continueOnError = true,
+                    gitArchiveUrl,
+                    metadataArchiveUrl = unusedMetadataArchiveUrl,
+                    accessToken = unusedSourceToken,
+                    githubPat = targetToken,
+                    skipReleases = false,
+                    lockSource = false
+                },
+                operationName = "startRepositoryMigration"
+            };
+            const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""startRepositoryMigration"": {{
+                        ""repositoryMigration"": {{
+                            ""id"": ""{actualRepositoryMigrationId}"",
+                            ""migrationSource"": {{
+                                ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
+                                ""name"": ""Azure Devops Source"",
+                                ""type"": ""AZURE_DEVOPS""
+                            }},
+                        ""sourceUrl"": ""https://dev.azure.com/github-inside-msft/Team-Demos/_git/Tiny"",
+                        ""state"": ""QUEUED"",
+                        ""failureReason"": """"
+                        }}
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
 
             // Assert
             expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
@@ -637,7 +814,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
                 .ReturnsAsync(response);
 
             // Act, Assert
@@ -681,7 +858,7 @@ namespace OctoshiftCLI.Tests
             const string expectedErrorMessage = "UNKNOWN";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
                 .ReturnsAsync(response);
 
             // Act, Assert
@@ -714,7 +891,7 @@ namespace OctoshiftCLI.Tests
             }";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
                 .ReturnsAsync(response);
 
             // Act, Assert
@@ -757,7 +934,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -767,6 +944,38 @@ namespace OctoshiftCLI.Tests
             expectedMigrationState.Should().Be(actualMigrationState);
             expectedRepositoryName.Should().Be(GITHUB_REPO);
             expectedFailureReason.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetOrganizationMigrationState_Returns_The_State()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""state"": ""{actualMigrationState}""
+                    }}
+                }}
+            }}";
+
+            var internalSchemaHeader = new Dictionary<string, string>() { { "GraphQL-schema", "internal" } };
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), internalSchemaHeader))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedMigrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
         }
 
         [Fact]
@@ -796,7 +1005,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
@@ -836,7 +1045,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -882,7 +1091,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -923,7 +1132,7 @@ namespace OctoshiftCLI.Tests
             }";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -958,7 +1167,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.GetAsync(url))
+                .Setup(m => m.GetAsync(url, null))
                 .ReturnsAsync(response);
 
             // Act
@@ -996,7 +1205,7 @@ namespace OctoshiftCLI.Tests
             }.ToAsyncJTokenEnumerable();
 
             _githubClientMock
-                .Setup(m => m.GetAllAsync(url))
+                .Setup(m => m.GetAllAsync(url, null))
                 .Returns(response);
 
             // Act
@@ -1020,7 +1229,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.AddEmuGroupToTeam(GITHUB_ORG, teamSlug, groupId);
 
             // Assert
-            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -1047,7 +1256,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1072,7 +1281,7 @@ namespace OctoshiftCLI.Tests
                 "\"operationName\":\"grantMigratorRole\"}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -1106,7 +1315,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1131,7 +1340,7 @@ namespace OctoshiftCLI.Tests
                 "\"operationName\":\"revokeMigratorRole\"}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -1151,7 +1360,7 @@ namespace OctoshiftCLI.Tests
             await _githubApi.DeleteRepo(GITHUB_ORG, GITHUB_REPO);
 
             // Assert
-            _githubClientMock.Verify(m => m.DeleteAsync(url));
+            _githubClientMock.Verify(m => m.DeleteAsync(url, null));
         }
 
         [Fact]
@@ -1230,6 +1439,7 @@ namespace OctoshiftCLI.Tests
                     It.IsAny<Func<JObject, JArray>>(),
                     It.IsAny<Func<JObject, JObject>>(),
                     It.IsAny<int>(),
+                    null,
                     null))
                 .Returns(new[]
                 {
@@ -1277,7 +1487,7 @@ namespace OctoshiftCLI.Tests
             }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1319,7 +1529,7 @@ namespace OctoshiftCLI.Tests
             }";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload)))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1397,7 +1607,7 @@ namespace OctoshiftCLI.Tests
 
             _githubClientMock
                 .Setup(m => m.PostAsync(url,
-                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)), null))
                     .ReturnsAsync(response);
 
             // Act
@@ -1445,6 +1655,7 @@ namespace OctoshiftCLI.Tests
                     It.IsAny<Func<JObject, JArray>>(),
                     It.IsAny<Func<JObject, JObject>>(),
                     It.IsAny<int>(),
+                    null,
                     null))
                     .Returns(Array.Empty<JToken>().ToAsyncEnumerable());
 
@@ -1512,6 +1723,7 @@ namespace OctoshiftCLI.Tests
                     It.IsAny<Func<JObject, JArray>>(),
                     It.IsAny<Func<JObject, JObject>>(),
                     It.IsAny<int>(),
+                    null,
                     null))
                     .Returns(new[]
                         {
@@ -1605,7 +1817,7 @@ namespace OctoshiftCLI.Tests
 
             _githubClientMock
                 .Setup(m => m.PostAsync(url,
-                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload))))
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)), null))
                     .ReturnsAsync(response);
 
             // Act
@@ -1625,17 +1837,18 @@ namespace OctoshiftCLI.Tests
                 repositories = new[] { GITHUB_REPO },
                 exclude_git_data = true,
                 exclude_releases = false,
+                lock_repositories = false,
                 exclude_owner_projects = true
             };
             const int expectedMigrationId = 1;
             var response = new { id = expectedMigrationId };
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response.ToJson());
 
             // Act
-            var actualMigrationId = await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, false);
+            var actualMigrationId = await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, false, false);
 
             // Assert
             actualMigrationId.Should().Be(expectedMigrationId);
@@ -1651,17 +1864,42 @@ namespace OctoshiftCLI.Tests
                 repositories = new[] { GITHUB_REPO },
                 exclude_git_data = true,
                 exclude_releases = true,
+                lock_repositories = false,
                 exclude_owner_projects = true
             };
             var response = new { id = 1 };
 
-            _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>())).ReturnsAsync(response.ToJson());
+            _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>(), null)).ReturnsAsync(response.ToJson());
 
             // Act
-            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true);
+            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true, false);
 
             // Assert
-            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())));
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task StartMetadataArchiveGeneration_Locks_Repos_When_Lock_Source_Repo_Is_True()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_git_data = true,
+                exclude_releases = true,
+                lock_repositories = true,
+                exclude_owner_projects = true
+            };
+            var response = new { id = 1 };
+
+            _githubClientMock.Setup(m => m.PostAsync(url, It.IsAny<object>(), null)).ReturnsAsync(response.ToJson());
+
+            // Act
+            await _githubApi.StartMetadataArchiveGeneration(GITHUB_ORG, GITHUB_REPO, true, true);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
         [Fact]
@@ -1678,7 +1916,7 @@ namespace OctoshiftCLI.Tests
             var response = new { id = expectedMigrationId };
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson())))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response.ToJson());
 
             // Act

@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using OctoshiftCLI.Contracts;
 
@@ -21,9 +20,13 @@ namespace OctoshiftCLI.BbsToGithub
             _retryPolicy = retryPolicy;
         }
 
-        public virtual BbsApi Create(string personalAccessToken)
+        public virtual BbsApi Create(string bbsServerUrl, string bbsUsername, string bbsPassword)
         {
-            throw new NotImplementedException();
+            bbsUsername ??= _environmentVariableProvider.BbsUsername();
+            bbsPassword ??= _environmentVariableProvider.BbsPassword();
+
+            var bbsClient = new BbsClient(_octoLogger, _client, _versionProvider, _retryPolicy, bbsUsername, bbsPassword);
+            return new BbsApi(bbsClient, bbsServerUrl, _octoLogger);
         }
     }
 }

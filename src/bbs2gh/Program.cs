@@ -30,10 +30,14 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<BbsApiFactory>()
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
+                .AddSingleton<IAzureApiFactory, AzureApiFactory>()
+                .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
+                .AddSingleton<FileSystemProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddSingleton<BbsArchiveDownloaderFactory>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -47,7 +51,7 @@ namespace OctoshiftCLI.BbsToGithub
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("Could not retrieve latest gei CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade ado2gh");
+                Logger.LogWarning("Could not retrieve latest bbs2gh extension version from github.com, please ensure you are using the latest version by running: gh extension upgrade bbs2gh");
                 Logger.LogVerbose(ex.ToString());
             }
 
@@ -66,18 +70,18 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (await versionChecker.IsLatest())
             {
-                Logger.LogInformation($"You are running the latest version of the ado2gh CLI [v{await versionChecker.GetLatestVersion()}]");
+                Logger.LogInformation($"You are running the latest version of the bbs2gh extension [v{await versionChecker.GetLatestVersion()}]");
             }
             else
             {
-                Logger.LogWarning($"You are running an older version of the ado2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
-                Logger.LogWarning($"Please update by running: gh extension upgrade ado2gh");
+                Logger.LogWarning($"You are running an older version of the bbs2gh extension [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
+                Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
         }
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
             var commandLineBuilder = new CommandLineBuilder(root);
 
             foreach (var command in serviceProvider.GetServices<Command>())

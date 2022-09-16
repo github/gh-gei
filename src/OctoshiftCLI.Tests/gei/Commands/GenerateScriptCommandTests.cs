@@ -58,19 +58,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false, true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "lock-source-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "download-migration-logs", false);
             TestHelpers.VerifyCommandOption(_command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
@@ -1500,6 +1500,70 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
                 SkipReleases = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script, 22, 7);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+        [Fact]
+        public async Task It_Adds_Lock_Source_Repo_To_Migrate_Repo_Command_When_Provided_In_Sequential_Script()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait --lock-source-repo }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                LockSourceRepo = true
+            };
+            await _command.Invoke(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Parallel_It_Adds_Lock_Source_Repo_To_Migrate_Repo_Command_When_Provided_In_Parallel_Script()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockSourceGithubApiFactory
+                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_mockGithubApi.Object);
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo }}");
+            expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
+            expected.Append($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                LockSourceRepo = true
             };
             await _command.Invoke(args);
 
