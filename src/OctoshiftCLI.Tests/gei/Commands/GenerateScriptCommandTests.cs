@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(17);
+            _command.Options.Count.Should().Be(16);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -68,7 +68,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "lock-source-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "download-migration-logs", false);
             TestHelpers.VerifyCommandOption(_command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false, true);
