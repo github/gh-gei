@@ -14,14 +14,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-org")
+        public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+            name: "migrate-org",
+            description: "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.")
         {
             IsHidden = true;
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
-
-            Description = "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {

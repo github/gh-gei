@@ -24,8 +24,11 @@ public class MigrateRepoCommand : Command
         EnvironmentVariableProvider environmentVariableProvider,
         BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
         IAzureApiFactory azureApiFactory,
-        FileSystemProvider fileSystemProvider
-    ) : base("migrate-repo")
+        FileSystemProvider fileSystemProvider) : base(
+            name: "migrate-repo",
+            description: "Import a Bitbucket Server archive to GitHub." +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
@@ -34,10 +37,6 @@ public class MigrateRepoCommand : Command
         _environmentVariableProvider = environmentVariableProvider;
         _bbsArchiveDownloaderFactory = bbsArchiveDownloaderFactory;
         _fileSystemProvider = fileSystemProvider;
-
-        Description = "Import a Bitbucket Server archive to GitHub.";
-        Description += Environment.NewLine;
-        Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
         // Arguments to generate a new archive
         var bbsServerUrl = new Option<string>("--bbs-server-url")

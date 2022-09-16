@@ -27,7 +27,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             OrgsCsvGeneratorService orgsCsvGeneratorService,
             TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService,
             ReposCsvGeneratorService reposCsvGeneratorService,
-            PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base("inventory-report")
+            PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base(
+                name: "inventory-report",
+                description: "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations." +
+                             Environment.NewLine +
+                             "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
@@ -36,10 +40,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
             _reposCsvGenerator = reposCsvGeneratorService;
             _pipelinesCsvGenerator = pipelinesCsvGeneratorService;
-
-            Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

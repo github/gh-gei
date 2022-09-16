@@ -10,14 +10,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
 
-        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("add-team-to-repo")
+        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
+            name: "add-team-to-repo",
+            description: "Adds a team to a repo with a specific role/permission" +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
-
-            Description = "Adds a team to a repo with a specific role/permission";
-            Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {

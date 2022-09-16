@@ -10,14 +10,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly AdoApiFactory _adoApiFactory;
 
-        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("rewire-pipeline")
+        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
+            name: "rewire-pipeline",
+            description: "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo." +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             _log = log;
             _adoApiFactory = adoApiFactory;
-
-            Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {

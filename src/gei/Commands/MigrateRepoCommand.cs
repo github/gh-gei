@@ -22,15 +22,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base(
+            name: "migrate-repo",
+            description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _azureApiFactory = azureApiFactory;
-
-            Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
