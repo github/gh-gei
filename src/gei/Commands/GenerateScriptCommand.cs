@@ -28,15 +28,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             ISourceGithubApiFactory sourceGithubApiFactory,
             AdoApiFactory sourceAdoApiFactory,
             EnvironmentVariableProvider environmentVariableProvider,
-            IVersionProvider versionProvider) : base("generate-script")
+            IVersionProvider versionProvider) : base(
+                name: "generate-script",
+                description: "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _sourceAdoApiFactory = sourceAdoApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _versionProvider = versionProvider;
-
-            Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
             var githubSourceOrgOption = new Option<string>("--github-source-org")
             {
