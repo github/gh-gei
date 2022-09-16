@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
 using FluentAssertions;
 using Xunit;
 
@@ -178,6 +180,20 @@ namespace OctoshiftCLI.Tests
             // Assert
             _consoleOutput.Should().NotBeNull();
             _consoleError.Should().BeNull();
+        }
+
+        [Fact]
+        public void Verbose_Log_Should_Capture_Http_Status_Code()
+        {
+            // Arrange
+            _octoLogger.Verbose = true;
+            var ex = new HttpRequestException(null, null, HttpStatusCode.BadGateway); // HTTP 502
+
+            // Act
+            _octoLogger.LogError(ex);
+
+            // Assert
+            _verboseLogOutput.Trim().Should().Contain("502");
         }
 
         private void CaptureLogOutput(string msg) => _logOutput += msg;

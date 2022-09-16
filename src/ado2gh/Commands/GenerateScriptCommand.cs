@@ -50,11 +50,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var sshOption = new Option<bool>("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true
-            };
             var sequential = new Option<bool>("--sequential")
             {
                 IsRequired = false,
@@ -119,7 +114,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoOrgOption);
             AddOption(adoTeamProject);
             AddOption(outputOption);
-            AddOption(sshOption);
             AddOption(sequential);
             AddOption(adoPat);
             AddOption(verbose);
@@ -537,10 +531,6 @@ if ($Failed -ne 0) {
             {
                 _log.LogInformation($"OUTPUT: {args.Output}");
             }
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
-            }
             if (args.Sequential)
             {
                 _log.LogInformation("SEQUENTIAL: true");
@@ -643,7 +633,6 @@ function ExecBatch {
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
         public FileInfo Output { get; set; }
-        public bool Ssh { get; set; }
         public bool Sequential { get; set; }
         public string AdoPat { get; set; }
         public bool Verbose { get; set; }

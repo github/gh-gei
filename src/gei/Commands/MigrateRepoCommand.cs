@@ -114,12 +114,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Lock source repo when migrating."
             };
-            var ssh = new Option<bool>("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
-            };
             var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
@@ -162,7 +156,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(skipReleases);
             AddOption(lockSourceRepo);
 
-            AddOption(ssh);
             AddOption(wait);
             AddOption(githubSourcePat);
             AddOption(githubTargetPat);
@@ -463,11 +456,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private void ValidateOptions(MigrateRepoCommandArgs args)
         {
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored");
-            }
-
             if (args.GithubTargetPat.HasValue() && args.GithubSourcePat.IsNullOrWhiteSpace())
             {
                 args.GithubSourcePat = args.GithubTargetPat;
@@ -519,7 +507,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string MetadataArchiveUrl { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
-        public bool Ssh { get; set; }
         public bool Wait { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }

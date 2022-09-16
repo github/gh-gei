@@ -102,11 +102,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
-            var ssh = new Option<bool>("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true
-            };
             var sequential = new Option<bool>("--sequential")
             {
                 IsRequired = false,
@@ -141,7 +136,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(lockSourceRepo);
 
             AddOption(outputOption);
-            AddOption(ssh);
             AddOption(sequential);
             AddOption(githubSourcePath);
             AddOption(adoPat);
@@ -226,10 +220,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"OUTPUT: {args.Output}");
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
-            }
             if (args.Sequential)
             {
                 _log.LogInformation("SEQUENTIAL: true");
@@ -639,7 +629,6 @@ function ExecAndGetMigrationID {
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
         public bool DownloadMigrationLogs { get; set; }
-        public bool Ssh { get; set; }
         public bool Sequential { get; set; }
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }
