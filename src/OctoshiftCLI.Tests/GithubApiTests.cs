@@ -1233,6 +1233,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task AddEmuGroupToTeam_Retries_On_400()
+        {
+            // Arrange
+            const string teamSlug = "TEAM_SLUG";
+            const int groupId = 1;
+
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamSlug}/external-groups";
+            var payload = new { group_id = groupId };
+
+            _githubClientMock.SetupSequence(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.BadRequest))
+                .ReturnsAsync("");
+
+            // Act
+            await _githubApi.AddEmuGroupToTeam(GITHUB_ORG, teamSlug, groupId);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null), Times.Exactly(2));
+        }
+
+        [Fact]
         public async Task GrantMigratorRole_Returns_True_On_Success()
         {
             // Arrange
