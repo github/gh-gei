@@ -16,12 +16,12 @@ namespace OctoshiftCLI
     {
         private readonly HttpClient _httpClient;
         private readonly OctoLogger _log;
-        private double _retryDelay;
+        private int _retryDelay;
         private readonly RetryPolicy _retryPolicy;
         private readonly DateTimeProvider _dateTimeProvider;
 
         private const string DEFAULT_RATE_LIMIT_REMAINING = "5000";
-        private const float MILLISECONDS_PER_SECOND = 1000f;
+        private const int MILLISECONDS_PER_SECOND = 1000;
 
         public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
         {
@@ -166,7 +166,11 @@ namespace OctoshiftCLI
                 SetRetryDelay(headers);
             }
 
-            if (expectedStatus == HttpStatusCode.OK)
+            if (response.StatusCode == HttpStatusCode.Forbidden && _retryDelay > 0)
+            {
+                (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders);
+            }
+            else if (expectedStatus == HttpStatusCode.OK)
             {
                 response.EnsureSuccessStatusCode();
             }
@@ -183,7 +187,7 @@ namespace OctoshiftCLI
             if (_retryDelay > 0)
             {
                 _log.LogWarning($"GitHub rate limit exceeded. Waiting {_retryDelay} seconds before continuing");
-                await Task.Delay((int)(_retryDelay * MILLISECONDS_PER_SECOND));
+                await Task.Delay(_retryDelay * MILLISECONDS_PER_SECOND);
                 _retryDelay = 0;
             }
         }
@@ -224,7 +228,7 @@ namespace OctoshiftCLI
             var resetUnixSeconds = GetRateLimitReset(headers);
             var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
 
-            _retryDelay = resetUnixSeconds - currentUnixSeconds;
+            _retryDelay = (int)(resetUnixSeconds - currentUnixSeconds);
         }
     }
 }
