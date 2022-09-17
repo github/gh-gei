@@ -19,6 +19,6 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
-    
+
     public async Task Invoke(WaitForMigrationCommandArgs args) => await Handle(args);
 }

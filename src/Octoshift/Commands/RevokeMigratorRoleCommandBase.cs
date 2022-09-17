@@ -44,7 +44,7 @@ public class RevokeMigratorRoleCommandBase : Command
         {
             throw new ArgumentNullException(nameof(args));
         }
-        
+
         _log.Verbose = args.Verbose;
 
         _log.LogInformation("Granting migrator role ...");
