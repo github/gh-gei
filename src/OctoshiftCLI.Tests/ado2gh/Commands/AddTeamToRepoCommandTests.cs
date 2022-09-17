@@ -48,7 +48,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockGithubApi.Setup(x => x.GetTeamSlug(GITHUB_ORG, TEAM)).ReturnsAsync(teamSlug);
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, TEAM, role);
+            var args = new AddTeamToRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Team = TEAM,
+                Role = role
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.AddTeamToRepo(GITHUB_ORG, GITHUB_REPO, teamSlug, role));
         }
@@ -60,7 +67,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, TEAM, "role", githubPat);
+            var args = new AddTeamToRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Team = TEAM,
+                Role = "role",
+                GithubPat = githubPat
+            };
+            await _command.Invoke(args);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }

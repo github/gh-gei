@@ -52,28 +52,43 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<AddTeamToRepoCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, string githubPat = null, bool verbose = false)
+        public async Task Invoke(AddTeamToRepoCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Adding team to repo...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"TEAM: {team}");
-            _log.LogInformation($"ROLE: {role}");
-            if (githubPat is not null)
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+            _log.LogInformation($"TEAM: {args.Team}");
+            _log.LogInformation($"ROLE: {args.Role}");
+            if (args.GithubPat is not null)
             {
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
-            var github = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            var teamSlug = await github.GetTeamSlug(githubOrg, team);
-            await github.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role);
+            var github = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+            var teamSlug = await github.GetTeamSlug(args.GithubOrg, args.Team);
+            await github.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);
 
             _log.LogSuccess("Successfully added team to repo");
         }
+    }
+
+    public class AddTeamToRepoCommandArgs
+    {
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string Team { get; set; }
+        public string Role { get; set; }
+        public string GithubPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }
