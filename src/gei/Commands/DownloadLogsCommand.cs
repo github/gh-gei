@@ -18,7 +18,7 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         RetryPolicy retryPolicy) : base(log, targetGithubApiFactory, httpDownloadService, retryPolicy)
     {
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
+        Handler = CommandHandler.Create<DownloadLogsCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat")
@@ -45,12 +45,5 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         Description = "Target GitHub organization to download logs from."
     };
 
-    public async Task Invoke(
-        string githubTargetOrg,
-        string targetRepo,
-        string targetApiUrl = null,
-        string githubTargetPat = null,
-        string migrationLogFile = null,
-        bool overwrite = false,
-        bool verbose = false) => await Handle(githubTargetOrg, targetRepo, targetApiUrl, githubTargetPat, migrationLogFile, overwrite, verbose);
+    public async Task Invoke(DownloadLogsCommandArgs args) => await Handle(args);
 }

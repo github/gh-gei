@@ -38,7 +38,12 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(logUrl, defaultFileName));
@@ -57,7 +62,12 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo));
@@ -79,7 +89,13 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo, targetApiUrl);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            GithubApiUrl = targetApiUrl,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
@@ -99,7 +115,13 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo, null, githubTargetPat);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            GithubPat = githubTargetPat,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
@@ -119,7 +141,13 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo, null, null, migrationLogFile);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            MigrationLogFile = migrationLogFile,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), migrationLogFile));
@@ -147,7 +175,12 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
@@ -168,7 +201,13 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        await _command.Handle(githubOrg, repo, null, null, null, overwrite);
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            Overwrite = overwrite,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
@@ -185,8 +224,13 @@ public class DownloadLogsCommandBaseTests
         _command.FileExists = _ => true;
 
         // Assert
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -203,8 +247,13 @@ public class DownloadLogsCommandBaseTests
         _mockGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
 
         // Assert
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -221,8 +270,13 @@ public class DownloadLogsCommandBaseTests
         _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(githubOrg, repo))
+            .Invoking(async () => await _command.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
 
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
