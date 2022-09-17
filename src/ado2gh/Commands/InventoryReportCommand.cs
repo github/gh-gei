@@ -65,33 +65,38 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(minimal);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, bool, bool>(Invoke);
+            Handler = CommandHandler.Create<InventoryReportCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoPat = null, bool minimal = false, bool verbose = false)
+        public async Task Invoke(InventoryReportCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Creating inventory report...");
 
-            if (adoOrg.HasValue())
+            if (args.AdoOrg.HasValue())
             {
-                _log.LogInformation($"ADO ORG: {adoOrg}");
+                _log.LogInformation($"ADO ORG: {args.AdoOrg}");
             }
 
-            if (adoPat is not null)
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            if (minimal)
+            if (args.Minimal)
             {
                 _log.LogInformation("MINIMAL: true");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(args.AdoPat);
             var inspector = _adoInspectorServiceFactory.Create(ado);
-            inspector.OrgFilter = adoOrg;
+            inspector.OrgFilter = args.AdoOrg;
 
             _log.LogInformation("Finding Orgs...");
             var orgs = await inspector.GetOrgs();
@@ -110,24 +115,32 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"Found {pipelineCount} Pipelines");
 
             _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat, minimal);
+            var orgsCsvText = await _orgsCsvGenerator.Generate(args.AdoPat, args.Minimal);
             await WriteToFile("orgs.csv", orgsCsvText);
             _log.LogSuccess("orgs.csv generated");
 
             _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat, minimal);
+            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(args.AdoPat, args.Minimal);
             await WriteToFile("team-projects.csv", teamProjectsCsvText);
             _log.LogSuccess("team-projects.csv generated");
 
             _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(adoPat, minimal);
+            var reposCsvText = await _reposCsvGenerator.Generate(args.AdoPat, args.Minimal);
             await WriteToFile("repos.csv", reposCsvText);
             _log.LogSuccess("repos.csv generated");
 
             _log.LogInformation("Generating pipelines.csv...");
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(adoPat);
+            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(args.AdoPat);
             await WriteToFile("pipelines.csv", pipelinesCsvText);
             _log.LogSuccess("pipelines.csv generated");
         }
+    }
+
+    public class InventoryReportCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoPat { get; set; }
+        public bool Minimal { get; set; }
+        public bool Verbose { get; set; }
     }
 }
