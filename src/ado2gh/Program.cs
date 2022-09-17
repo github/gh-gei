@@ -39,6 +39,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<PipelinesCsvGeneratorService>()
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
+                .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
