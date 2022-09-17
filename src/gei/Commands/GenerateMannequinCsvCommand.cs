@@ -12,7 +12,7 @@ public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBas
     public GenerateMannequinCsvCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base(log, targetGithubApiFactory)
     {
         AddOptions();
-        Handler = CommandHandler.Create<string, FileInfo, bool, string, bool>(Invoke);
+        Handler = CommandHandler.Create<GenerateMannequinCsvCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubOrg { get; } = new("--github-target-org")
@@ -23,6 +23,6 @@ public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBas
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(string githubTargetOrg, FileInfo output, bool includeReclaimed = false, string githubTargetPat = null, bool verbose = false) =>
-        await Handle(githubTargetOrg, output, includeReclaimed, githubTargetPat, verbose);
+    public async Task Invoke(GenerateMannequinCsvCommandArgs args) =>
+        await Handle(args);
 }
