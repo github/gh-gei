@@ -46,35 +46,49 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<ShareServiceConnectionCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId, string adoPat = null, bool verbose = false)
+        public async Task Invoke(ShareServiceConnectionCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Sharing Service Connection...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
-            if (adoPat is not null)
+            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {args.ServiceConnectionId}");
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(args.AdoPat);
 
-            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
+            var adoTeamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
 
-            if (await ado.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId))
+            if (await ado.ContainsServiceConnection(args.AdoOrg, args.AdoTeamProject, args.ServiceConnectionId))
             {
                 _log.LogInformation("Service connection already shared with team project");
                 return;
             }
 
-            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
+            await ado.ShareServiceConnection(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, args.ServiceConnectionId);
 
             _log.LogSuccess("Successfully shared service connection");
         }
+    }
+
+    public class ShareServiceConnectionCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string ServiceConnectionId { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }
