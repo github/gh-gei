@@ -18,20 +18,20 @@ public class ReclaimMannequinCommandBase : Command
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base("reclaim-mannequin")
+    public ReclaimMannequinCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base(
+        name: "reclaim-mannequin",
+        description: "Reclaims one or more mannequin user(s). An invite will be sent and the user(s) will have to accept for the remapping to occur." +
+                     "You can reclaim a single user by using --mannequin-user and --target-user or reclaim mannequins in bulk by using the --csv parameter" +
+                     Environment.NewLine +
+                     "The CSV file should contain a column with the user's login name (source) and reclaiming user login (target)." +
+                     Environment.NewLine +
+                     "The first line is considered the header and is ignored." +
+                     Environment.NewLine +
+                     "If both options are specified The CSV file takes precedence and other options will be ignored")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
         _reclaimService = reclaimService;
-
-        Description = "Reclaims one or more mannequin user(s). An invite will be sent and the user(s) will have to accept for the remapping to occur."
-          + "You can reclaim a single user by using --mannequin-user and --target-user or reclaim mannequins in bulk by using the --csv parameter"
-          + Environment.NewLine
-          + "The CSV file should contain a column with the user's login name (source) and reclaiming user login (target)."
-          + Environment.NewLine
-          + "The first line is considered the header and is ignored."
-          + Environment.NewLine
-          + "If both options are specified The CSV file takes precedence and other options will be ignored";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")

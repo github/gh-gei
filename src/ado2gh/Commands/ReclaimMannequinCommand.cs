@@ -1,4 +1,4 @@
-﻿using System.CommandLine.Invocation;
+﻿using System.CommandLine.NamingConventionBinder;
 using Octoshift;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;

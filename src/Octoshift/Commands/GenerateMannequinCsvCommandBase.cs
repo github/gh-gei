@@ -17,12 +17,12 @@ public class GenerateMannequinCsvCommandBase : Command
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _targetGithubApiFactory;
 
-    public GenerateMannequinCsvCommandBase(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("generate-mannequin-csv")
+    public GenerateMannequinCsvCommandBase(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base(
+        name: "generate-mannequin-csv",
+        description: "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.")
     {
         _log = log;
         _targetGithubApiFactory = targetGithubApiFactory;
-
-        Description = "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")

@@ -100,7 +100,7 @@ namespace OctoshiftCLI.AdoToGithub
 
             foreach (var command in serviceProvider.GetServices<Command>())
             {
-                commandLineBuilder.AddCommand(command);
+                commandLineBuilder.Command.AddCommand(command);
             }
 
             return commandLineBuilder
