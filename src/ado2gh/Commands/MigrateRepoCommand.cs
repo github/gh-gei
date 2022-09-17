@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -11,18 +11,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly GithubApiFactory _githubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(
-            OctoLogger log,
-            GithubApiFactory githubApiFactory,
-            EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+            name: "migrate-repo",
+            description: "Invokes the GitHub API's to migrate the repo and all PR data" +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
-
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
@@ -44,7 +41,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
@@ -57,7 +54,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

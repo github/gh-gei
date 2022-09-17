@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,14 +11,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
 
-        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("configure-autolink")
+        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
+            name: "configure-autolink",
+            description: "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub" +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
-
-            Description = "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub";
-            Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {
@@ -40,7 +40,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

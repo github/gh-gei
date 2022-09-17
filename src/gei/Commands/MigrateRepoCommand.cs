@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,15 +22,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base(
+            name: "migrate-repo",
+            description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _azureApiFactory = azureApiFactory;
-
-            Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -85,7 +85,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
             };
-            var noSslVerify = new Option("--no-ssl-verify")
+            var noSslVerify = new Option<bool>("--no-ssl-verify")
             {
                 IsRequired = false,
                 Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
@@ -104,17 +104,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
             };
-            var skipReleases = new Option("--skip-releases")
+            var skipReleases = new Option<bool>("--skip-releases")
             {
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
-            var lockSourceRepo = new Option("--lock-source-repo")
+            var lockSourceRepo = new Option<bool>("--lock-source-repo")
             {
                 IsRequired = false,
                 Description = "Lock source repo when migrating."
             };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
@@ -132,7 +132,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 IsHidden = true
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

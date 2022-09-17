@@ -18,12 +18,12 @@ public class WaitForMigrationCommandBase : Command
     private const string REPO_MIGRATION_ID_PREFIX = "RM_";
     private const string ORG_MIGRATION_ID_PREFIX = "OM_";
 
-    public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("wait-for-migration")
+    public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+        name: "wait-for-migration",
+        description: "Waits for migration(s) to finish and reports all in progress and queued ones.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
-
-        Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
     }
 
     protected virtual Option<string> MigrationId { get; } = new("--migration-id")
