@@ -15,6 +15,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         private readonly RewirePipelineCommand _command;
 
+        private const string ADO_ORG = "FooOrg";
+        private const string ADO_TEAM_PROJECT = "BlahTeamProject";
+        private const string ADO_PIPELINE = "foo-pipeline";
+        private const string GITHUB_ORG = "foo-gh-org";
+        private const string GITHUB_REPO = "gh-repo";
+        private readonly string SERVICE_CONNECTION_ID = Guid.NewGuid().ToString();
+        private readonly string ADO_PAT = Guid.NewGuid().ToString();
+
         public RewirePipelineCommandTests()
         {
             _command = new RewirePipelineCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
@@ -40,37 +48,48 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Happy_Path()
         {
-            var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
-            var adoPipeline = "foo-pipeline";
-            var githubOrg = "foo-gh-org";
-            var githubRepo = "foo-repo";
-            var serviceConnectionId = Guid.NewGuid().ToString();
             var pipelineId = 1234;
             var defaultBranch = "default-branch";
             var clean = "true";
             var checkoutSubmodules = "null";
 
-            _mockAdoApi.Setup(x => x.GetPipelineId(adoOrg, adoTeamProject, adoPipeline).Result).Returns(pipelineId);
-            _mockAdoApi.Setup(x => x.GetPipeline(adoOrg, adoTeamProject, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
+            _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE).Result).Returns(pipelineId);
+            _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, serviceConnectionId);
+            var args = new RewirePipelineCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoPipeline = ADO_PIPELINE,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                ServiceConnectionId = SERVICE_CONNECTION_ID,
+            };
+            await _command.Invoke(args);
 
-            _mockAdoApi.Verify(x => x.ChangePipelineRepo(adoOrg, adoTeamProject, pipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId));
+            _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID));
         }
 
         [Fact]
         public async Task It_Uses_The_Ado_Pat_When_Provided()
         {
-            const string adoPat = "ado-pat";
+            _mockAdoApiFactory.Setup(m => m.Create(ADO_PAT)).Returns(_mockAdoApi.Object);
 
-            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
+            var args = new RewirePipelineCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoPipeline = ADO_PIPELINE,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                ServiceConnectionId = Guid.NewGuid().ToString(),
+                AdoPat = ADO_PAT,
+            };
+            await _command.Invoke(args);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "adoPipeline", "githubOrg", "githubRepo", "serviceConnectionId", adoPat);
-
-            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockAdoApiFactory.Verify(m => m.Create(ADO_PAT));
         }
     }
 }
