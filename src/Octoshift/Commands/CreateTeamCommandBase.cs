@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,54 +39,68 @@ public class CreateTeamCommandBase : Command
         AddOption(Verbose);
     }
 
-    public async Task Handle(string githubOrg, string teamName, string idpGroup, string githubPat = null, bool verbose = false)
+    public async Task Handle(CreateTeamCommandArgs args)
     {
-        _log.Verbose = verbose;
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        _log.Verbose = args.Verbose;
 
         _log.LogInformation("Creating GitHub team...");
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        _log.LogInformation($"{TeamName.GetLogFriendlyName()}: {teamName}");
-        _log.LogInformation($"{IdpGroup.GetLogFriendlyName()}: {idpGroup}");
+        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {args.GithubOrg}");
+        _log.LogInformation($"{TeamName.GetLogFriendlyName()}: {args.TeamName}");
+        _log.LogInformation($"{IdpGroup.GetLogFriendlyName()}: {args.IdpGroup}");
 
-        if (githubPat is not null)
+        if (args.GithubPat is not null)
         {
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
+        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
-        var teams = await githubApi.GetTeams(githubOrg);
-        if (teams.Contains(teamName))
+        var teams = await githubApi.GetTeams(args.GithubOrg);
+        if (teams.Contains(args.TeamName))
         {
-            _log.LogSuccess($"Team '{teamName}' already exists - New team will not be created");
+            _log.LogSuccess($"Team '{args.TeamName}' already exists - New team will not be created");
         }
         else
         {
-            await githubApi.CreateTeam(githubOrg, teamName);
+            await githubApi.CreateTeam(args.GithubOrg, args.TeamName);
             _log.LogSuccess("Successfully created team");
         }
 
         // TODO: Can improve perf by capturing slug in the response from CreateTeam or GetTeams
-        var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
+        var teamSlug = await githubApi.GetTeamSlug(args.GithubOrg, args.TeamName);
 
-        if (string.IsNullOrWhiteSpace(idpGroup))
+        if (string.IsNullOrWhiteSpace(args.IdpGroup))
         {
             _log.LogInformation("No IdP Group provided, skipping the IdP linking step");
         }
         else
         {
-            var members = await githubApi.GetTeamMembers(githubOrg, teamSlug);
+            var members = await githubApi.GetTeamMembers(args.GithubOrg, teamSlug);
 
             foreach (var member in members)
             {
-                await githubApi.RemoveTeamMember(githubOrg, teamSlug, member);
+                await githubApi.RemoveTeamMember(args.GithubOrg, teamSlug, member);
             }
 
-            var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
+            var idpGroupId = await githubApi.GetIdpGroupId(args.GithubOrg, args.IdpGroup);
 
-            await githubApi.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
+            await githubApi.AddEmuGroupToTeam(args.GithubOrg, teamSlug, idpGroupId);
 
             _log.LogSuccess("Successfully linked team to Idp group");
         }
     }
+}
+
+public class CreateTeamCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public string TeamName { get; set; }
+    public string IdpGroup { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

@@ -15,11 +15,11 @@ public sealed class CreateTeamCommand : CreateTeamCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+        Handler = CommandHandler.Create<CreateTeamCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(string githubOrg, string teamName, string idpGroup, string githubTargetPat = null, bool verbose = false) =>
-        await Handle(githubOrg, teamName, idpGroup, githubTargetPat, verbose);
+    public async Task Invoke(CreateTeamCommandArgs args) =>
+        await Handle(args);
 }
