@@ -16,11 +16,10 @@ public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.GetLogFriendlyName()} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+        Handler = CommandHandler.Create<RevokeMigratorRoleArgs>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(string githubOrg, string actor, string actorType, string githubTargetPat = null, bool verbose = false) =>
-        await Handle(githubOrg, actor, actorType, githubTargetPat, verbose);
+    public async Task Invoke(RevokeMigratorRoleArgs args) => await Handle(args);
 }
