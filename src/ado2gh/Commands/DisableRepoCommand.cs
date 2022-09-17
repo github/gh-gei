@@ -47,34 +47,48 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<DisableRepoCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string adoPat = null, bool verbose = false)
+        public async Task Invoke(DisableRepoCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Disabling repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO REPO: {adoRepo}");
-            if (adoPat is not null)
+            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            _log.LogInformation($"ADO REPO: {args.AdoRepo}");
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(args.AdoPat);
 
-            var allRepos = await ado.GetRepos(adoOrg, adoTeamProject);
-            if (allRepos.Any(r => r.Name == adoRepo && r.IsDisabled))
+            var allRepos = await ado.GetRepos(args.AdoOrg, args.AdoTeamProject);
+            if (allRepos.Any(r => r.Name == args.AdoRepo && r.IsDisabled))
             {
-                _log.LogSuccess($"Repo '{adoOrg}/{adoTeamProject}/{adoRepo}' is already disabled - No action will be performed");
+                _log.LogSuccess($"Repo '{args.AdoOrg}/{args.AdoTeamProject}/{args.AdoRepo}' is already disabled - No action will be performed");
                 return;
             }
-            var repoId = allRepos.First(r => r.Name == adoRepo).Id;
-            await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
+            var repoId = allRepos.First(r => r.Name == args.AdoRepo).Id;
+            await ado.DisableRepo(args.AdoOrg, args.AdoTeamProject, repoId);
 
             _log.LogSuccess("Repo successfully disabled");
         }
+    }
+
+    public class DisableRepoCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string AdoRepo { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

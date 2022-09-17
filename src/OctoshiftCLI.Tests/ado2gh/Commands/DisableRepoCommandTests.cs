@@ -49,7 +49,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID));
         }
@@ -62,7 +68,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID), Times.Never);
         }
@@ -76,7 +88,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", ADO_REPO, adoPat);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                AdoPat = adoPat
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }
