@@ -46,31 +46,45 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<LockRepoCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string adoPat = null, bool verbose = false)
+        public async Task Invoke(LockRepoCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+            
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Locking repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO REPO: {adoRepo}");
-            if (adoPat is not null)
+            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            _log.LogInformation($"ADO REPO: {args.AdoRepo}");
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(args.AdoPat);
 
-            var teamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-            var repoId = await ado.GetRepoId(adoOrg, adoTeamProject, adoRepo);
+            var teamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
+            var repoId = await ado.GetRepoId(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
 
-            var identityDescriptor = await ado.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
-            await ado.LockRepo(adoOrg, teamProjectId, repoId, identityDescriptor);
+            var identityDescriptor = await ado.GetIdentityDescriptor(args.AdoOrg, teamProjectId, "Project Valid Users");
+            await ado.LockRepo(args.AdoOrg, teamProjectId, repoId, identityDescriptor);
 
             _log.LogSuccess("Repo successfully locked");
         }
+    }
+
+    public class LockRepoCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string AdoRepo { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }
