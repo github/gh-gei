@@ -52,29 +52,34 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<ConfigureAutoLinkCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, string githubPat = null, bool verbose = false)
+        public async Task Invoke(ConfigureAutoLinkCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation("Configuring Autolink Reference...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            if (githubPat is not null)
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            if (args.GithubPat is not null)
             {
                 _log.LogInformation("GITHUB PAT: ***");
             }
 
             var keyPrefix = "AB#";
-            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
+            var urlTemplate = $"https://dev.azure.com/{args.AdoOrg}/{args.AdoTeamProject}/_workitems/edit/<num>/";
 
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
+            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
-            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
+            var autoLinks = await githubApi.GetAutoLinks(args.GithubOrg, args.GithubRepo);
             if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
             {
                 _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
@@ -86,12 +91,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
                 _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
-                await githubApi.DeleteAutoLink(githubOrg, githubRepo, autoLink.Id);
+                await githubApi.DeleteAutoLink(args.GithubOrg, args.GithubRepo, autoLink.Id);
             }
 
-            await githubApi.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate);
+            await githubApi.AddAutoLink(args.GithubOrg, args.GithubRepo, keyPrefix, urlTemplate);
 
             _log.LogSuccess("Successfully configured autolink references");
         }
+    }
+
+    public class ConfigureAutoLinkCommandArgs
+    {
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string GithubPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }
