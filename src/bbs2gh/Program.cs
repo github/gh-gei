@@ -45,17 +45,17 @@ public static class Program
         migrateRepoCommand.SetHandler(async (commandArgs, log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider) =>
                 await new MigrateRepoCommandHandler(log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider)
                     .Handle(commandArgs),
-            new GenericArgsBinder<MigrateRepoCommandOptions, MigrateRepoCommandArgs>(migrateRepoCommand.Options),
+            new GenericArgsBinder<MigrateRepoCommand, MigrateRepoCommandArgs>(migrateRepoCommand),
             new GenericServiceBinder<OctoLogger>(serviceProvider),
-            new GithubApiBinder(serviceProvider, null, migrateRepoCommand.Options.GithubPat),
-            new BbsApiBinder(serviceProvider, migrateRepoCommand.Options.BbsServerUrl, migrateRepoCommand.Options.BbsUsername, migrateRepoCommand.Options.BbsPassword),
+            new GithubApiBinder(serviceProvider, null, migrateRepoCommand.GithubPat),
+            new BbsApiBinder(serviceProvider, migrateRepoCommand.BbsServerUrl, migrateRepoCommand.BbsUsername, migrateRepoCommand.BbsPassword),
             new BbsSshArchiveDownloaderBinder(
                 serviceProvider,
-                migrateRepoCommand.Options.BbsServerUrl,
-                migrateRepoCommand.Options.SshUser,
-                migrateRepoCommand.Options.SshPrivateKey,
-                migrateRepoCommand.Options.SshPort),
-            new AzureApiBinder(serviceProvider, migrateRepoCommand.Options.AzureStorageConnectionString, null),
+                migrateRepoCommand.BbsServerUrl,
+                migrateRepoCommand.SshUser,
+                migrateRepoCommand.SshPrivateKey,
+                migrateRepoCommand.SshPort),
+            new AzureApiBinder(serviceProvider, migrateRepoCommand.AzureStorageConnectionString, null),
             new GenericServiceBinder<EnvironmentVariableProvider>(serviceProvider),
             new GenericServiceBinder<FileSystemProvider>(serviceProvider));
         

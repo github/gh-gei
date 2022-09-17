@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Binding;
+using System.Linq;
 
 namespace OctoshiftCLI.BbsToGithub.ModelBinders;
 
@@ -15,7 +16,7 @@ public class GenericArgsBinder<TOptions, TArgs> : BinderBase<TArgs>
     {
         var args = new TArgs();
         
-        foreach (var prop in _options.GetType().GetProperties())
+        foreach (var prop in _options.GetType().GetProperties().Where(p => p.GetValue(_options) is Option))
         {
             args.GetType()
                 .GetProperty(prop.Name)?

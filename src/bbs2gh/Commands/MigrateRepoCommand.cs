@@ -11,31 +11,26 @@ public class MigrateRepoCommand : Command
         Environment.NewLine +
         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
     {
-        AddOption(Options.ArchiveUrl);
-        AddOption(Options.GithubOrg);
-        AddOption(Options.GithubRepo);
-        AddOption(Options.GithubPat);
-        AddOption(Options.BbsServerUrl);
-        AddOption(Options.BbsProject);
-        AddOption(Options.BbsRepo);
-        AddOption(Options.BbsUsername);
-        AddOption(Options.BbsPassword);
-        AddOption(Options.SshUser);
-        AddOption(Options.SshPrivateKey);
-        AddOption(Options.SshPort);
-        AddOption(Options.SmbUser);
-        AddOption(Options.SmbPassword);
-        AddOption(Options.ArchivePath);
-        AddOption(Options.AzureStorageConnectionString);
-        AddOption(Options.Wait);
-        AddOption(Options.Verbose);
+        AddOption(ArchiveUrl);
+        AddOption(GithubOrg);
+        AddOption(GithubRepo);
+        AddOption(GithubPat);
+        AddOption(BbsServerUrl);
+        AddOption(BbsProject);
+        AddOption(BbsRepo);
+        AddOption(BbsUsername);
+        AddOption(BbsPassword);
+        AddOption(SshUser);
+        AddOption(SshPrivateKey);
+        AddOption(SshPort);
+        AddOption(SmbUser);
+        AddOption(SmbPassword);
+        AddOption(ArchivePath);
+        AddOption(AzureStorageConnectionString);
+        AddOption(Wait);
+        AddOption(Verbose);
     }
 
-    public new MigrateRepoCommandOptions Options { get; } = new();
-}
-
-public class MigrateRepoCommandOptions
-{
     public Option<string> BbsServerUrl { get; } = new(
         name: "--bbs-server-url",
         description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990");
