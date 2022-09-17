@@ -55,7 +55,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 throw new ArgumentNullException(nameof(args));
             }
-            
+
             _log.Verbose = args.Verbose;
 
             _log.LogInformation("Locking repo...");
