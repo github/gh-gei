@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -28,15 +28,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             ISourceGithubApiFactory sourceGithubApiFactory,
             AdoApiFactory sourceAdoApiFactory,
             EnvironmentVariableProvider environmentVariableProvider,
-            IVersionProvider versionProvider) : base("generate-script")
+            IVersionProvider versionProvider) : base(
+                name: "generate-script",
+                description: "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
             _sourceAdoApiFactory = sourceAdoApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
             _versionProvider = versionProvider;
-
-            Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
             var githubSourceOrgOption = new Option<string>("--github-source-org")
             {
@@ -76,23 +76,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
             };
-            var noSslVerify = new Option("--no-ssl-verify")
+            var noSslVerify = new Option<bool>("--no-ssl-verify")
             {
                 IsRequired = false,
                 Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
             };
-            var skipReleases = new Option("--skip-releases")
+            var skipReleases = new Option<bool>("--skip-releases")
             {
                 IsRequired = false,
                 Description = "Skip releases when migrating."
             };
-            var lockSourceRepo = new Option("--lock-source-repo")
+            var lockSourceRepo = new Option<bool>("--lock-source-repo")
             {
                 IsRequired = false,
                 Description = "Lock the source repository when migrating."
             };
 
-            var downloadMigrationLogs = new Option("--download-migration-logs")
+            var downloadMigrationLogs = new Option<bool>("--download-migration-logs")
             {
                 IsRequired = false,
                 Description = "Downloads the migration log for each repository migration."
@@ -102,12 +102,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
-            var ssh = new Option("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true
-            };
-            var sequential = new Option("--sequential")
+            var sequential = new Option<bool>("--sequential")
             {
                 IsRequired = false,
                 Description = "Waits for each migration to finish before moving on to the next one."
@@ -121,7 +116,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 IsHidden = true
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };
@@ -141,7 +136,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(lockSourceRepo);
 
             AddOption(outputOption);
-            AddOption(ssh);
             AddOption(sequential);
             AddOption(githubSourcePath);
             AddOption(adoPat);
@@ -229,10 +223,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"OUTPUT: {args.Output}");
-            if (args.Ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
-            }
             if (args.Sequential)
             {
                 _log.LogInformation("SEQUENTIAL: true");
@@ -642,7 +632,6 @@ function ExecAndGetMigrationID {
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
         public bool DownloadMigrationLogs { get; set; }
-        public bool Ssh { get; set; }
         public bool Sequential { get; set; }
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }

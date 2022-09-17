@@ -48,7 +48,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(21);
+            _command.Options.Count.Should().Be(20);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -64,7 +64,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(_command.Options, "git-archive-url", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "metadata-archive-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);

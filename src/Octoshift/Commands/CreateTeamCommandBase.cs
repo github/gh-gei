@@ -11,12 +11,12 @@ public class CreateTeamCommandBase : Command
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
 
-    public CreateTeamCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("create-team")
+    public CreateTeamCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+        name: "create-team",
+        description: "Creates a GitHub team and optionally links it to an IdP group.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
-
-        Description = "Creates a GitHub team and optionally links it to an IdP group.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };

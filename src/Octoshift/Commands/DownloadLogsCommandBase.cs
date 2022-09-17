@@ -24,14 +24,12 @@ public class DownloadLogsCommandBase : Command
         OctoLogger log,
         ITargetGithubApiFactory githubApiFactory,
         HttpDownloadService httpDownloadService,
-        RetryPolicy retryPolicy) : base("download-logs")
+        RetryPolicy retryPolicy) : base(name: "download-logs", description: "Downloads migration logs for migrations.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
         _httpDownloadService = httpDownloadService;
         _retryPolicy = retryPolicy;
-
-        Description = "Downloads migration logs for migrations.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")
