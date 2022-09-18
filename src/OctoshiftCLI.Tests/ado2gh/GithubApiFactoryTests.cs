@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             using var httpClient = new HttpClient();
 
             // Act
-            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null, null);
+            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null, null, null);
             var result = factory.Create();
 
             // Assert
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             using var httpClient = new HttpClient();
 
             // Act
-            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null, null);
+            var factory = new GithubApiFactory(null, httpClient, environmentVariableProviderMock.Object, null, null, null);
             var result = factory.Create(targetPersonalAccessToken: GH_PAT);
 
             // Assert
