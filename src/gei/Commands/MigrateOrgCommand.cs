@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
@@ -14,14 +14,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base("migrate-org")
+        public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+            name: "migrate-org",
+            description: "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.")
         {
             IsHidden = true;
             _log = log;
             _targetGithubApiFactory = targetGithubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
-
-            Description = "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.";
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -46,12 +46,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 IsRequired = false
             };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the org migration to finish."
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

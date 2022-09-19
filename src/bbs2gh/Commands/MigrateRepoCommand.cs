@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 
@@ -24,8 +24,11 @@ public class MigrateRepoCommand : Command
         EnvironmentVariableProvider environmentVariableProvider,
         BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
         IAzureApiFactory azureApiFactory,
-        FileSystemProvider fileSystemProvider
-    ) : base("migrate-repo")
+        FileSystemProvider fileSystemProvider) : base(
+            name: "migrate-repo",
+            description: "Import a Bitbucket Server archive to GitHub." +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
@@ -34,10 +37,6 @@ public class MigrateRepoCommand : Command
         _environmentVariableProvider = environmentVariableProvider;
         _bbsArchiveDownloaderFactory = bbsArchiveDownloaderFactory;
         _fileSystemProvider = fileSystemProvider;
-
-        Description = "Import a Bitbucket Server archive to GitHub.";
-        Description += Environment.NewLine;
-        Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
         // Arguments to generate a new archive
         var bbsServerUrl = new Option<string>("--bbs-server-url")
@@ -141,11 +140,11 @@ public class MigrateRepoCommand : Command
         {
             IsRequired = false
         };
-        var wait = new Option("--wait")
+        var wait = new Option<bool>("--wait")
         {
             Description = "Synchronously waits for the repo migration to finish."
         };
-        var verbose = new Option("--verbose")
+        var verbose = new Option<bool>("--verbose")
         {
             IsRequired = false
         };

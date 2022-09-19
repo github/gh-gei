@@ -10,12 +10,12 @@ public class RevokeMigratorRoleCommandBase : Command
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
 
-    public RevokeMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("revoke-migrator-role")
+    public RevokeMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+        name: "revoke-migrator-role",
+        description: "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
-
-        Description = "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };

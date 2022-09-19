@@ -33,6 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
+                .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<LfsShaMapper>()
                 .AddSingleton<ArchiveHandler>()
@@ -98,7 +99,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
             foreach (var command in serviceProvider.GetServices<Command>())
             {
-                commandLineBuilder.AddCommand(command);
+                commandLineBuilder.Command.AddCommand(command);
             }
 
             return commandLineBuilder
