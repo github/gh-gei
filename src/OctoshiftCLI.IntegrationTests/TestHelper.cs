@@ -57,21 +57,26 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetAdoTestEnvironment(string adoOrg)
         {
-            var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
+            var retryPolicy = new RetryPolicy(null);
 
-            _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
-
-            foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
+            await retryPolicy.Retry(async () =>
             {
-                _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
-                var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
-                var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
+                var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
 
-                while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
+                _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
+
+                foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
                 {
-                    await Task.Delay(1000);
+                    _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
+                    var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
+                    var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
+
+                    while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
-            }
+            });
         }
 
         public async Task CreateGithubRepo(string githubOrg, string repo)
@@ -82,24 +87,29 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetGithubTestEnvironment(string githubOrg)
         {
-            var githubRepos = await _githubApi.GetRepos(githubOrg);
+            var retryPolicy = new RetryPolicy(null);
 
-            foreach (var repo in githubRepos)
+            await retryPolicy.Retry(async () =>
             {
-                _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
-                DeleteMigrationLog(githubOrg, repo);
+                var githubRepos = await _githubApi.GetRepos(githubOrg);
 
-                _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubApi.DeleteRepo(githubOrg, repo);
-            }
+                foreach (var repo in githubRepos)
+                {
+                    _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
+                    DeleteMigrationLog(githubOrg, repo);
 
-            var githubTeams = await GetTeamSlugs(githubOrg);
+                    _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
+                    await _githubApi.DeleteRepo(githubOrg, repo);
+                }
 
-            foreach (var teamSlug in githubTeams)
-            {
-                _output.WriteLine($"Deleting GitHub team: {teamSlug}");
-                await DeleteTeam(githubOrg, teamSlug);
-            }
+                var githubTeams = await GetTeamSlugs(githubOrg);
+
+                foreach (var teamSlug in githubTeams)
+                {
+                    _output.WriteLine($"Deleting GitHub team: {teamSlug}");
+                    await DeleteTeam(githubOrg, teamSlug);
+                }
+            });
         }
 
         public async Task CreateTeamProject(string adoOrg, string teamProject)
