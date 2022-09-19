@@ -104,7 +104,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
-            await _client.DeleteAsync(url);
+            await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
