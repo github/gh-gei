@@ -12,7 +12,7 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
     public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, ReclaimService reclaimService = null) : base(log, targetGithubApiFactory, reclaimService)
     {
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, string, bool, string, bool>(Invoke);
+        Handler = CommandHandler.Create<ReclaimMannequinCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubOrg { get; } = new("--github-target-org")
@@ -26,13 +26,27 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
         IsRequired = false
     };
 
-    public async Task Invoke(
-        string githubTargetOrg,
-        string csv,
-        string mannequinUser,
-        string mannequinId,
-        string targetUser,
-        bool force = false,
-        string githubTargetPat = null,
-        bool verbose = false) => await Handle(githubTargetOrg, csv, mannequinUser, mannequinId, targetUser, force, githubTargetPat, verbose);
+    internal async Task Invoke(ReclaimMannequinCommandArgs args) => await Handle(new OctoshiftCLI.Commands.ReclaimMannequinCommandArgs
+    {
+        GithubOrg = args.GithubTargetOrg,
+        Csv = args.Csv,
+        MannequinUser = args.MannequinUser,
+        MannequinId = args.MannequinId,
+        TargetUser = args.TargetUser,
+        Force = args.Force,
+        GithubPat = args.GithubTargetPat,
+        Verbose = args.Verbose,
+    });
+}
+
+public class ReclaimMannequinCommandArgs
+{
+    public string GithubTargetOrg { get; set; }
+    public string Csv { get; set; }
+    public string MannequinUser { get; set; }
+    public string MannequinId { get; set; }
+    public string TargetUser { get; set; }
+    public bool Force { get; set; }
+    public string GithubTargetPat { get; set; }
+    public bool Verbose { get; set; }
 }
