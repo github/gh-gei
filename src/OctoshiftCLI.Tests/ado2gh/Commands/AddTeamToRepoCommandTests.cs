@@ -24,20 +24,21 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _command = new AddTeamToRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
         }
 
-        //[Fact]
-        //public void Should_Have_Options()
-        //{
-        //    Assert.NotNull(_command);
-        //    Assert.Equal("add-team-to-repo", _command.Name);
-        //    Assert.Equal(6, _command.Options.Count);
+        [Fact]
+        public void Should_Have_Options()
+        {
+            var command = new AddTeamToRepoCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+            Assert.NotNull(command);
+            Assert.Equal("add-team-to-repo", command.Name);
+            Assert.Equal(6, command.Options.Count);
 
-        //    TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-        //    TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-        //    TestHelpers.VerifyCommandOption(_command.Options, "team", true);
-        //    TestHelpers.VerifyCommandOption(_command.Options, "role", true);
-        //    TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-        //    TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
-        //}
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "team", true);
+            TestHelpers.VerifyCommandOption(command.Options, "role", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+        }
 
         [Fact]
         public async Task Happy_Path()
