@@ -1,27 +1,16 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class MigrateOrgCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly ITargetGithubApiFactory _targetGithubApiFactory;
-        private readonly EnvironmentVariableProvider _environmentVariableProvider;
-        private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
-
         public MigrateOrgCommand(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
             name: "migrate-org",
             description: "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.")
         {
             IsHidden = true;
-            _log = log;
-            _targetGithubApiFactory = targetGithubApiFactory;
-            _environmentVariableProvider = environmentVariableProvider;
 
             var githubSourceOrg = new Option<string>("--github-source-org")
             {
@@ -65,86 +54,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(wait);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<MigrateOrgCommandArgs>(Invoke);
-        }
-
-        public async Task Invoke(MigrateOrgCommandArgs args)
-        {
-            if (args is null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
-
-            _log.Verbose = args.Verbose;
-
-            LogAndValidateOptions(args);
-
-            var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubTargetPat);
-
-            var githubEnterpriseId = await githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
-            var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
-            var sourceToken = GetSourceToken(args);
-            var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
-
-            var migrationId = await githubApi.StartOrganizationMigration(
-                sourceOrgUrl,
-                args.GithubTargetOrg,
-                githubEnterpriseId,
-                sourceToken,
-                targetToken);
-
-
-            if (!args.Wait)
-            {
-                _log.LogInformation($"A organization migration (ID: {migrationId}) was successfully queued.");
-                return;
-            }
-
-            var migrationState = await githubApi.GetOrganizationMigrationState(migrationId);
-
-            while (OrganizationMigrationStatus.IsPending(migrationState))
-            {
-                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
-                await Task.Delay(10000);
-                migrationState = await githubApi.GetOrganizationMigrationState(migrationId);
-            }
-
-            if (OrganizationMigrationStatus.IsFailed(migrationState))
-            {
-                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                throw new OctoshiftCliException($"Migration Failed.");
-            }
-
-            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private string GetSourceToken(MigrateOrgCommandArgs args) =>
-            args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
-
-        private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}".Replace(" ", "%20");
-
-        private void LogAndValidateOptions(MigrateOrgCommandArgs args)
-        {
-            _log.LogInformation("Migrating Org...");
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-            _log.LogInformation($"GITHUB TARGET ENTERPRISE: {args.GithubTargetEnterprise}");
-
-            if (args.GithubSourcePat.HasValue())
-            {
-                _log.LogInformation("GITHUB SOURCE PAT: ***");
-            }
-
-            if (args.GithubTargetPat.HasValue())
-            {
-                _log.LogInformation("GITHUB TARGET PAT: ***");
-
-                if (args.GithubSourcePat.IsNullOrWhiteSpace())
-                {
-                    args.GithubSourcePat = args.GithubTargetPat;
-                    _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-                }
-            }
+            var handler = new MigrateOrgCommandHandler(log, targetGithubApiFactory, environmentVariableProvider);
+            Handler = CommandHandler.Create<MigrateOrgCommandArgs>(handler.Invoke);
         }
     }
 

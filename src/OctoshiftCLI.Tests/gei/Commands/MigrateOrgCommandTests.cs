@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
-        private readonly MigrateOrgCommand _command;
+        private readonly MigrateOrgCommandHandler _command;
 
         private const string TARGET_ENTERPRISE = "foo-target-ent";
         private const string SOURCE_ORG = "foo-source-org";
@@ -25,7 +25,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public MigrateOrgCommandTests()
         {
-            _command = new MigrateOrgCommand(
+            _command = new MigrateOrgCommandHandler(
                 _mockOctoLogger.Object,
                 _mockTargetGithubApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object);
@@ -34,17 +34,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            _command.Should().NotBeNull();
-            _command.Name.Should().Be("migrate-org");
-            _command.Options.Count.Should().Be(7);
+            var command = new MigrateOrgCommand(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object);
+            command.Should().NotBeNull();
+            command.Name.Should().Be("migrate-org");
+            command.Options.Count.Should().Be(7);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-enterprise", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-enterprise", true);
+            TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
