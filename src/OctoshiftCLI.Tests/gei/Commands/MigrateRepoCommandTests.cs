@@ -57,6 +57,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "source-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "target-repo", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);

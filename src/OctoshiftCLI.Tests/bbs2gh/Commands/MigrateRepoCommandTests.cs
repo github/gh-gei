@@ -76,6 +76,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);

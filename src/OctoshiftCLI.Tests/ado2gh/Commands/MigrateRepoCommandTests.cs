@@ -47,6 +47,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "ado-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
