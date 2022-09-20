@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly ConfigureAutoLinkCommand _command;
+        private readonly ConfigureAutoLinkCommandHandler _command;
 
         private const string GITHUB_ORG = "foo-org";
         private const string GITHUB_REPO = "foo-repo";
@@ -25,22 +25,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public ConfigureAutoLinkCommandTests()
         {
-            _command = new ConfigureAutoLinkCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+            _command = new ConfigureAutoLinkCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("configure-autolink", _command.Name);
-            Assert.Equal(6, _command.Options.Count);
+            var command = new ConfigureAutoLinkCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            Assert.NotNull(command);
+            Assert.Equal("configure-autolink", command.Name);
+            Assert.Equal(6, command.Options.Count);
+
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
