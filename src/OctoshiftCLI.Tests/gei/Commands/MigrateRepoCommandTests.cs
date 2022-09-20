@@ -898,6 +898,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             // Arrange
             _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TARGET_PAT)).Returns(_mockGithubApi.Object);
+
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
