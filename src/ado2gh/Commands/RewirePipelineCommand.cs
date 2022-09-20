@@ -62,32 +62,49 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<RewirePipelineCommandArgs>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, string adoPat = null, bool verbose = false)
+        public async Task Invoke(RewirePipelineCommandArgs args)
         {
-            _log.Verbose = verbose;
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            _log.Verbose = args.Verbose;
 
             _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO PIPELINE: {adoPipeline}");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
-            if (adoPat is not null)
+            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            _log.LogInformation($"ADO PIPELINE: {args.AdoPipeline}");
+            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
+            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+            _log.LogInformation($"SERVICE CONNECTION ID: {args.ServiceConnectionId}");
+            if (args.AdoPat is not null)
             {
                 _log.LogInformation("ADO PAT: ***");
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            var ado = _adoApiFactory.Create(args.AdoPat);
 
-            var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
-            await ado.ChangePipelineRepo(adoOrg, adoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
+            var adoPipelineId = await ado.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
+            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+            await ado.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId);
 
             _log.LogSuccess("Successfully rewired pipeline");
         }
+    }
+
+    public class RewirePipelineCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string AdoPipeline { get; set; }
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string ServiceConnectionId { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

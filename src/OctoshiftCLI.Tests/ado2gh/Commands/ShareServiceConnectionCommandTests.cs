@@ -15,6 +15,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         private readonly ShareServiceConnectionCommand _command;
 
+        private const string ADO_ORG = "FooOrg";
+        private const string ADO_TEAM_PROJECT = "BlahTeamProject";
+        private readonly string SERVICE_CONNECTION_ID = Guid.NewGuid().ToString();
+        private readonly string TEAM_PROJECT_ID = Guid.NewGuid().ToString();
+
         public ShareServiceConnectionCommandTests()
         {
             _command = new ShareServiceConnectionCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
@@ -37,35 +42,37 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public async Task Happy_Path()
         {
-            var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
-            var serviceConnectionId = Guid.NewGuid().ToString();
-            var teamProjectId = Guid.NewGuid().ToString();
-
-            _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(false);
+            _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, SERVICE_CONNECTION_ID).Result).Returns(false);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
+            var args = new ShareServiceConnectionCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                ServiceConnectionId = SERVICE_CONNECTION_ID,
+            };
+            await _command.Invoke(args);
 
-            _mockAdoApi.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId));
+            _mockAdoApi.Verify(x => x.ShareServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, SERVICE_CONNECTION_ID));
         }
 
         [Fact]
         public async Task It_Skips_When_Already_Shared()
         {
-            var adoOrg = "FooOrg";
-            var adoTeamProject = "BlahTeamProject";
-            var serviceConnectionId = Guid.NewGuid().ToString();
-            var teamProjectId = Guid.NewGuid().ToString();
-
-            _mockAdoApi.Setup(x => x.GetTeamProjectId(adoOrg, adoTeamProject).Result).Returns(teamProjectId);
-            _mockAdoApi.Setup(x => x.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId).Result).Returns(true);
+            _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
+            _mockAdoApi.Setup(x => x.ContainsServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, SERVICE_CONNECTION_ID).Result).Returns(true);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(adoOrg, adoTeamProject, serviceConnectionId);
+            var args = new ShareServiceConnectionCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                ServiceConnectionId = SERVICE_CONNECTION_ID,
+            };
+            await _command.Invoke(args);
 
-            _mockAdoApi.Verify(x => x.ShareServiceConnection(adoOrg, adoTeamProject, teamProjectId, serviceConnectionId), Times.Never);
+            _mockAdoApi.Verify(x => x.ShareServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, SERVICE_CONNECTION_ID), Times.Never);
         }
 
         [Fact]
@@ -75,7 +82,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "serviceConnectionId", adoPat);
+            var args = new ShareServiceConnectionCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                ServiceConnectionId = SERVICE_CONNECTION_ID,
+                AdoPat = adoPat,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }

@@ -50,7 +50,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));
@@ -65,7 +72,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke("githubOrg", "githubRepo", "adoOrg", "adoTeamProject", githubPat);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubPat = githubPat,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
@@ -84,7 +99,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE), Times.Never);
@@ -105,7 +127,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1));
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));
