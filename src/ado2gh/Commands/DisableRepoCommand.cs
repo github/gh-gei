@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {

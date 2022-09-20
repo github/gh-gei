@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Commands;
 
-namespace OctoshiftCLI.AdoToGithub.Commands
+namespace OctoshiftCLI.AdoToGithub.Handlers
 {
     public class ConfigureAutoLinkCommandHandler
     {

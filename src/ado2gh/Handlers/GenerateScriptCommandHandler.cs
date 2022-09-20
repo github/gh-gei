@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI.AdoToGithub.Commands
+namespace OctoshiftCLI.AdoToGithub.Handlers
 {
     public class GenerateScriptCommandHandler
     {

@@ -2,9 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI.AdoToGithub.Commands
+namespace OctoshiftCLI.AdoToGithub.Handlers
 {
     public class InventoryReportCommandHandler
     {
