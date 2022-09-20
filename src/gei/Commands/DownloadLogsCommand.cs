@@ -45,5 +45,25 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         Description = "Target GitHub organization to download logs from."
     };
 
-    public async Task Invoke(DownloadLogsCommandArgs args) => await Handle(args);
+    internal async Task Invoke(DownloadLogsCommandArgs args) => await Handle(new OctoshiftCLI.Commands.DownloadLogsCommandArgs
+    {
+        GithubOrg = args.GithubTargetOrg,
+        GithubRepo = args.TargetRepo,
+        GithubApiUrl = args.TargetApiUrl,
+        GithubPat = args.GithubTargetPat,
+        MigrationLogFile = args.MigrationLogFile,
+        Overwrite = args.Overwrite,
+        Verbose = args.Verbose,
+    });
+}
+
+public class DownloadLogsCommandArgs
+{
+    public string GithubTargetOrg { get; set; }
+    public string TargetRepo { get; set; }
+    public string TargetApiUrl { get; set; }
+    public string GithubTargetPat { get; set; }
+    public string MigrationLogFile { get; set; }
+    public bool Overwrite { get; set; }
+    public bool Verbose { get; set; }
 }

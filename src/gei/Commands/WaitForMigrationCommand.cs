@@ -20,5 +20,17 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(WaitForMigrationCommandArgs args) => await Handle(args);
+    internal async Task Invoke(WaitForMigrationCommandArgs args) => await Handle(new OctoshiftCLI.Commands.WaitForMigrationCommandArgs
+    {
+        MigrationId = args.MigrationId,
+        GithubPat = args.GithubTargetPat,
+        Verbose = args.Verbose
+    });
+}
+
+public class WaitForMigrationCommandArgs
+{
+    public string MigrationId { get; set; }
+    public string GithubTargetPat { get; set; }
+    public bool Verbose { get; set; }
 }

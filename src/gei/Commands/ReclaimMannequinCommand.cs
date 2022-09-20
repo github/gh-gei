@@ -26,5 +26,27 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
         IsRequired = false
     };
 
-    public async Task Invoke(ReclaimMannequinCommandArgs args) => await Handle(args);
+    internal async Task Invoke(ReclaimMannequinCommandArgs args) => await Handle(new OctoshiftCLI.Commands.ReclaimMannequinCommandArgs
+    {
+        GithubOrg = args.GithubTargetOrg,
+        Csv = args.Csv,
+        MannequinUser = args.MannequinUser,
+        MannequinId = args.MannequinId,
+        TargetUser = args.TargetUser,
+        Force = args.Force,
+        GithubPat = args.GithubTargetPat,
+        Verbose = args.Verbose,
+    });
+}
+
+public class ReclaimMannequinCommandArgs
+{
+    public string GithubTargetOrg { get; set; }
+    public string Csv { get; set; }
+    public string MannequinUser { get; set; }
+    public string MannequinId { get; set; }
+    public string TargetUser { get; set; }
+    public bool Force { get; set; }
+    public string GithubTargetPat { get; set; }
+    public bool Verbose { get; set; }
 }

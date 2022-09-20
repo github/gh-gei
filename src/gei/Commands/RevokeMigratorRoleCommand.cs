@@ -21,5 +21,21 @@ public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(RevokeMigratorRoleArgs args) => await Handle(args);
+    internal async Task Invoke(RevokeMigratorRoleArgs args) => await Handle(new OctoshiftCLI.Commands.RevokeMigratorRoleArgs
+    {
+        GithubOrg = args.GithubOrg,
+        Actor = args.Actor,
+        ActorType = args.ActorType,
+        GithubPat = args.GithubTargetPat,
+        Verbose = args.Verbose
+    });
+}
+
+public class RevokeMigratorRoleArgs
+{
+    public string GithubOrg { get; set; }
+    public string Actor { get; set; }
+    public string ActorType { get; set; }
+    public string GithubTargetPat { get; set; }
+    public bool Verbose { get; set; }
 }
