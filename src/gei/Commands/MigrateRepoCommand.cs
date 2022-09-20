@@ -68,6 +68,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Defaults to the name of source-repo"
             };
+            var targetRepoVisibility = new Option<string>("--target-repo-visibility")
+            {
+                IsRequired = false,
+                Description = "Defaults to private. Valid values are public, private, internal"
+            };
             var targetApiUrl = new Option<string>("--target-api-url")
             {
                 IsRequired = false,
@@ -144,6 +149,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(sourceRepo);
             AddOption(githubTargetOrg);
             AddOption(targetRepo);
+            AddOption(targetRepoVisibility);
             AddOption(targetApiUrl);
 
             AddOption(ghesApiUrl);
@@ -217,6 +223,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                     args.GitArchiveUrl,
                     args.MetadataArchiveUrl,
                     args.SkipReleases,
+                    args.TargetRepoVisibility,
                     args.GhesApiUrl.IsNullOrWhiteSpace() && args.LockSourceRepo);
             }
             catch (OctoshiftCliException ex)
@@ -499,6 +506,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string SourceRepo { get; set; }
         public string GithubTargetOrg { get; set; }
         public string TargetRepo { get; set; }
+        public string TargetRepoVisibility { get; set; }
         public string TargetApiUrl { get; set; }
         public string GhesApiUrl { get; set; }
         public string AzureStorageConnectionString { get; set; }

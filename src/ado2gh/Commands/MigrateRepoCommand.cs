@@ -41,6 +41,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
+            var targetRepoVisibility = new Option<string>("--target-repo-visibility")
+            {
+                IsRequired = false,
+                Description = "Defaults to private. Valid values are public, private, internal"
+            };
             var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
@@ -64,15 +69,16 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
+            AddOption(targetRepoVisibility);
             AddOption(wait);
             AddOption(adoPat);
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, string, bool, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, string targetRepoVisibility = null, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -108,7 +114,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
 
             try
             {
-                migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat);
+                migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, githubRepo, adoPat, githubPat, null, null, false, targetRepoVisibility, false);
             }
             catch (OctoshiftCliException ex)
             {

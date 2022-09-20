@@ -589,6 +589,7 @@ namespace OctoshiftCLI.Tests
             const string metadataArchiveUrl = "METADATA_ARCHIVE_URL";
             const string sourceToken = "SOURCE_TOKEN";
             const string targetToken = "TARGET_TOKEN";
+            const string targetRepoVisibility = null;
 
             const string query = @"
                 mutation startRepositoryMigration(
@@ -602,6 +603,7 @@ namespace OctoshiftCLI.Tests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
             const string gql = @"
                 startRepositoryMigration(
@@ -616,6 +618,7 @@ namespace OctoshiftCLI.Tests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -646,6 +649,7 @@ namespace OctoshiftCLI.Tests
                     accessToken = sourceToken,
                     githubPat = targetToken,
                     skipReleases = false,
+                    targetRepoVisibility,
                     lockSource = false
                 },
                 operationName = "startRepositoryMigration"
@@ -690,6 +694,7 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
             const string gitArchiveUrl = "GIT_ARCHIVE_URL";
             const string targetToken = "TARGET_TOKEN";
+            const string targetRepoVisibility = null;
 
             const string unusedSourceRepoUrl = "https://not-used";
             const string unusedSourceToken = "not-used";
@@ -707,6 +712,7 @@ namespace OctoshiftCLI.Tests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
             const string gql = @"
                 startRepositoryMigration(
@@ -721,6 +727,7 @@ namespace OctoshiftCLI.Tests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -751,6 +758,7 @@ namespace OctoshiftCLI.Tests
                     accessToken = unusedSourceToken,
                     githubPat = targetToken,
                     skipReleases = false,
+                    targetRepoVisibility,
                     lockSource = false
                 },
                 operationName = "startRepositoryMigration"

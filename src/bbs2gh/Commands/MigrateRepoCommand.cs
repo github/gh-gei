@@ -97,6 +97,12 @@ public class MigrateRepoCommand : Command
             IsRequired = false
         };
 
+        var targetRepoVisibility = new Option<string>("--target-repo-visibility")
+        {
+            IsRequired = false,
+            Description = "Defaults to private. Valid values are public, private, internal"
+        };
+
         var sshUser = new Option<string>("--ssh-user")
         {
             IsRequired = false,
@@ -152,6 +158,7 @@ public class MigrateRepoCommand : Command
         AddOption(archiveUrl);
         AddOption(githubOrg);
         AddOption(githubRepo);
+        AddOption(targetRepoVisibility);
         AddOption(githubPat);
 
         AddOption(bbsServerUrl);
@@ -282,7 +289,7 @@ public class MigrateRepoCommand : Command
 
         try
         {
-            migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl);
+            migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -472,6 +479,7 @@ public class MigrateRepoCommandArgs
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }
+    public string TargetRepoVisibility { get; set; }
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
     public bool Verbose { get; set; }

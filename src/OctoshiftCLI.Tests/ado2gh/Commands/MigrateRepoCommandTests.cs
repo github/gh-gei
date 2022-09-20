@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(9);
+            _command.Options.Count.Should().Be(10);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
@@ -70,6 +70,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     null,
                     null,
                     false,
+                    null,
                     false).Result)
                 .Returns(MIGRATION_ID);
             _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
@@ -103,7 +104,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             // Assert
             _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
             _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
-            _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, false));
+            _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
@@ -129,6 +130,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                     null,
                     null,
                     false,
+                    null,
                     false).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
@@ -171,6 +173,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                         null,
                         null,
                         false,
+                        null,
                         false).Result)
                 .Returns(MIGRATION_ID);
             _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));

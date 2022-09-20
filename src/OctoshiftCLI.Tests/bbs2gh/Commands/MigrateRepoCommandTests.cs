@@ -64,7 +64,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(18);
+            _command.Options.Count.Should().Be(19);
 
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
@@ -96,7 +96,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -114,7 +114,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
-                ARCHIVE_URL
+                ARCHIVE_URL,
+                null
             ));
         }
 
@@ -129,7 +130,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -148,7 +149,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 githubPat,
-                ARCHIVE_URL
+                ARCHIVE_URL,
+                null
             ));
         }
 
@@ -162,7 +164,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
             // Act
@@ -302,7 +304,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -320,7 +322,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
-                ARCHIVE_URL
+                ARCHIVE_URL,
+                null
             ));
         }
 
