@@ -1,26 +1,17 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class MigrateRepoCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
-        private readonly EnvironmentVariableProvider _environmentVariableProvider;
-
         public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
             name: "migrate-repo",
             description: "Invokes the GitHub API's to migrate the repo and all PR data" +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
         {
-            _log = log;
-            _githubApiFactory = githubApiFactory;
-            _environmentVariableProvider = environmentVariableProvider;
-
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -69,88 +60,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
+            var handler = new MigrateRepoCommandHandler(log, githubApiFactory, environmentVariableProvider);
+            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
         }
-
-        public async Task Invoke(MigrateRepoCommandArgs args)
-        {
-            if (args is null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
-
-            _log.Verbose = args.Verbose;
-
-            _log.LogInformation("Migrating Repo...");
-            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-            _log.LogInformation($"ADO REPO: {args.AdoRepo}");
-            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-            if (args.Wait)
-            {
-                _log.LogInformation("WAIT: true");
-            }
-            if (args.AdoPat is not null)
-            {
-                _log.LogInformation("ADO PAT: ***");
-            }
-            if (args.GithubPat is not null)
-            {
-                _log.LogInformation("GITHUB PAT: ***");
-            }
-
-            args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-
-            var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
-
-            args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
-            var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-            var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
-
-            string migrationId;
-
-            try
-            {
-                migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat);
-            }
-            catch (OctoshiftCliException ex)
-            {
-                if (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
-                {
-                    _log.LogWarning($"The Org '{args.GithubOrg}' already contains a repository with the name '{args.GithubRepo}'. No operation will be performed");
-                    return;
-                }
-
-                throw;
-            }
-
-            if (!args.Wait)
-            {
-                _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
-                return;
-            }
-
-            var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
-
-            while (RepositoryMigrationStatus.IsPending(migrationState))
-            {
-                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
-                await Task.Delay(10000);
-                (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
-            }
-
-            if (RepositoryMigrationStatus.IsFailed(migrationState))
-            {
-                _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-                throw new OctoshiftCliException(failureReason);
-            }
-
-            _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        }
-
-        private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
     }
 
     public class MigrateRepoCommandArgs
