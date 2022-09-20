@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private string _scriptOutput;
-        private readonly GenerateScriptCommand _command;
+        private readonly GenerateScriptCommandHandler _command;
 
         public GenerateScriptCommandTests()
         {
@@ -47,7 +47,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new GenerateScriptCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
+            _command = new GenerateScriptCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
