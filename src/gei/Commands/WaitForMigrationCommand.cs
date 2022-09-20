@@ -15,10 +15,22 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<string, string, bool>(Invoke);
+        Handler = CommandHandler.Create<WaitForMigrationCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
-    public async Task Invoke(string migrationId, string githubTargetPat = null, bool verbose = false) => await Handle(migrationId, githubTargetPat, verbose);
+    internal async Task Invoke(WaitForMigrationCommandArgs args) => await Handle(new OctoshiftCLI.Commands.WaitForMigrationCommandArgs
+    {
+        MigrationId = args.MigrationId,
+        GithubPat = args.GithubTargetPat,
+        Verbose = args.Verbose
+    });
+}
+
+public class WaitForMigrationCommandArgs
+{
+    public string MigrationId { get; set; }
+    public string GithubTargetPat { get; set; }
+    public bool Verbose { get; set; }
 }
