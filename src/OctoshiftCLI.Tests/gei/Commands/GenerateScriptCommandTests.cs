@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
 
-        private readonly GenerateScriptCommand _command;
+        private readonly GenerateScriptCommandHandler _command;
 
         private const string SOURCE_ORG = "FOO-SOURCE-ORG";
         private const string TARGET_ORG = "FOO-TARGET-ORG";
@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public GenerateScriptCommandTests()
         {
-            _command = new GenerateScriptCommand(
+            _command = new GenerateScriptCommandHandler(
                 _mockOctoLogger.Object,
                 _mockSourceGithubApiFactory.Object,
                 _mockAdoApiFactory.Object,
@@ -52,26 +52,33 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            _command.Should().NotBeNull();
-            _command.Name.Should().Be("generate-script");
-            _command.Options.Count.Should().Be(16);
+            var command = new GenerateScriptCommand(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApiFactory.Object,
+                _mockAdoApiFactory.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockVersionProvider.Object
+                );
+            command.Should().NotBeNull();
+            command.Name.Should().Be("generate-script");
+            command.Options.Count.Should().Be(16);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "lock-source-repo", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "download-migration-logs", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "sequential", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
+            TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
+            TestHelpers.VerifyCommandOption(command.Options, "lock-source-repo", false);
+            TestHelpers.VerifyCommandOption(command.Options, "download-migration-logs", false);
+            TestHelpers.VerifyCommandOption(command.Options, "output", false);
+            TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
