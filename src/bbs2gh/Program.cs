@@ -6,8 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Commands;
-using OctoshiftCLI.BbsToGithub.Handlers;
-using OctoshiftCLI.BbsToGithub.ModelBinders;
 using OctoshiftCLI.Contracts;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
@@ -29,7 +27,7 @@ public static class Program
             .AddSingleton<BbsApiFactory>()
             .AddSingleton<GithubApiFactory>()
             .AddSingleton<RetryPolicy>()
-            .AddSingleton<IAzureApiFactory, AzureApiFactory>()
+            .AddSingleton<AzureApiFactory>()
             .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
             .AddSingleton<VersionChecker>()
             .AddSingleton<HttpDownloadService>()
@@ -38,31 +36,27 @@ public static class Program
             .AddSingleton<BbsArchiveDownloaderFactory>()
             .AddHttpClient();
         var serviceProvider = serviceCollection.BuildServiceProvider();
-            
+
         var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
-        
-        var migrateRepoCommand = new MigrateRepoCommand();
-        migrateRepoCommand.SetHandler(async (commandArgs, log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider) =>
-                await new MigrateRepoCommandHandler(log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider)
-                    .Handle(commandArgs),
-            new GenericArgsBinder<MigrateRepoCommand, MigrateRepoCommandArgs>(migrateRepoCommand),
-            new GenericServiceBinder<OctoLogger>(serviceProvider),
-            new GithubApiBinder(serviceProvider, null, migrateRepoCommand.GithubPat),
-            new BbsApiBinder(serviceProvider, migrateRepoCommand.BbsServerUrl, migrateRepoCommand.BbsUsername, migrateRepoCommand.BbsPassword),
-            new BbsSshArchiveDownloaderBinder(
-                serviceProvider,
-                migrateRepoCommand.BbsServerUrl,
-                migrateRepoCommand.SshUser,
-                migrateRepoCommand.SshPrivateKey,
-                migrateRepoCommand.SshPort),
-            new AzureApiBinder(serviceProvider, migrateRepoCommand.AzureStorageConnectionString, null),
-            new GenericServiceBinder<EnvironmentVariableProvider>(serviceProvider),
-            new GenericServiceBinder<FileSystemProvider>(serviceProvider));
-        
-        rootCommand.AddCommand(migrateRepoCommand);
+
+        foreach (var commandType in typeof(MigrateRepoCommandArgs).GetAllDescendantsOfCommandBase())
+        {
+            var command = commandType.CreateInstance<Command>();
+
+            command.SetHandler(async ctx =>
+            {
+                var commandArgsType = commandType.BaseType.GetGenericArguments()[0];
+                var commandArgs = ctx.BindArgs(command, commandArgsType);
+                var handler = commandType.GetMethod("BuildHandler").Invoke(command, new[] { commandArgs, serviceProvider });
+                await (Task)handler.GetType().GetMethod("Handle").Invoke(handler, new[] { commandArgs });
+            });
+
+            rootCommand.AddCommand(command);
+        }
+
 
         SetContext(new InvocationContext(rootCommand.Parse(args)));
-            
+
         try
         {
             await LatestVersionCheck(serviceProvider);

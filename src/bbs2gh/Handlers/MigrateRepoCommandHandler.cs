@@ -18,7 +18,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly FileSystemProvider _fileSystemProvider;
 
-    public MigrateRepoCommandHandler(        
+    public MigrateRepoCommandHandler(
         OctoLogger log,
         GithubApi githubApi,
         BbsApi bbsApi,
@@ -57,7 +57,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.SshUser.HasValue())
         {
-            args.ArchivePath = await DownloadArchive(exportId, args);
+            args.ArchivePath = await DownloadArchive(exportId);
         }
 
         if (args.ArchivePath.HasValue())
@@ -70,8 +70,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await ImportArchive(args, args.ArchiveUrl);
         }
     }
-    
-    private async Task<string> DownloadArchive(long exportId, MigrateRepoCommandArgs args)
+
+    private async Task<string> DownloadArchive(long exportId)
     {
         _log.LogInformation($"Download archive {exportId} started...");
         var downloadedArchiveFullPath = await _bbsArchiveDownloader.Download(exportId);

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.BbsToGithub.Handlers;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 
-public class MigrateRepoCommand : Command
+public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRepoCommandHandler>
 {
     public MigrateRepoCommand() : base(
         "migrate-repo",
@@ -93,11 +95,13 @@ public class MigrateRepoCommand : Command
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.") { IsHidden = true };
+        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.")
+    { IsHidden = true };
 
     public Option<string> SmbPassword { get; } = new(
         name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.") { IsHidden = true };
+        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.")
+    { IsHidden = true };
 
     public Option<string> GithubPat { get; } = new("--github-pat");
 
@@ -106,6 +110,40 @@ public class MigrateRepoCommand : Command
         description: "Synchronously waits for the repo migration to finish.");
 
     public Option<bool> Verbose { get; } = new("--verbose");
+
+    public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+
+        var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
+        var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+        var githubApi = githubApiFactory.Create(null, args.GithubPat ?? environmentVariableProvider.GithubPersonalAccessToken());
+
+        var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
+        var bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername ?? environmentVariableProvider.BbsUsername(),
+            args.BbsPassword ?? environmentVariableProvider.BbsPassword());
+
+        var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
+        var bbsHost = new Uri(args.BbsServerUrl).Host;
+        var bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort);
+
+        var azureApiFactory = sp.GetRequiredService<AzureApiFactory>();
+        var azureApi = azureApiFactory.Create(args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString());
+
+        var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+
+        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider);
+    }
 }
 
 public class MigrateRepoCommandArgs
