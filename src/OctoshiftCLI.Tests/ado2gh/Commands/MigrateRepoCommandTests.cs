@@ -133,7 +133,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
             // Act
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, targetRepoVisibility: "public", wait: false);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                TargetRepoVisibility = targetRepoVisibility
+            };
+            await _command.Invoke(args);
 
             // Assert
             actualLogOutput.Should().Contain("TARGET REPO VISIBILITY: public");
