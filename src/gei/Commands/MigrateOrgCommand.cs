@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {

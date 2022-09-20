@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
@@ -133,7 +134,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(skipReleases);
             AddOption(lockSourceRepo);
-            
+
             AddOption(wait);
             AddOption(githubSourcePat);
             AddOption(githubTargetPat);

@@ -7,9 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers
 {
     public class GenerateScriptCommandHandler
     {
@@ -146,7 +147,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
         {
-            var client = (ghesApiUrl.HasValue() && noSslVerify) ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
+            var client = ghesApiUrl.HasValue() && noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
 
             var repos = await GetGithubRepos(client, githubSourceOrg);
             if (!repos.Any())

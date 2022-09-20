@@ -3,6 +3,7 @@ using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Runtime.CompilerServices;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands

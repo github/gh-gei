@@ -6,8 +6,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers
 {
     public class MigrateRepoCommandHandler
     {
