@@ -459,6 +459,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation("LOCK SOURCE REPO: true");
             }
+
+            if (args.TargetRepoVisibility.HasValue())
+            {
+                _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
+            }
         }
 
         private void ValidateOptions(MigrateRepoCommandArgs args)

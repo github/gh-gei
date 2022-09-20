@@ -374,6 +374,11 @@ public class MigrateRepoCommand : Command
             _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
         }
 
+        if (args.TargetRepoVisibility.HasValue())
+        {
+            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
+        }
+
         if (args.SshUser.HasValue())
         {
             _log.LogInformation($"SSH USER: {args.SshUser}");

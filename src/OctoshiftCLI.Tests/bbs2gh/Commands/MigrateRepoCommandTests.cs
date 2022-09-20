@@ -375,5 +375,39 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Assert
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
+
+        [Fact]
+        public async Task Passes_Target_Repo_Visibility_If_Provided()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Returns(MIGRATION_ID);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                TargetRepoVisibility = "public"
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                MIGRATION_SOURCE_ID,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                GITHUB_PAT,
+                ARCHIVE_URL,
+                "public"
+            ));
+        }
     }
 }

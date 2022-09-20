@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
@@ -88,6 +89,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO REPO: {adoRepo}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
+            
+            if (targetRepoVisibility.HasValue())
+            {
+                _log.LogInformation($"TARGET REPO VISIBILITY: {targetRepoVisibility}");
+            }
             if (wait)
             {
                 _log.LogInformation("WAIT: true");

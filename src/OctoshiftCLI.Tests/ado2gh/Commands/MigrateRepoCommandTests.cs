@@ -114,6 +114,36 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
+        public async Task It_Sets_Target_Repo_Visibility_When_Specified()
+        {
+            // Arrange
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            var targetRepoVisibility = "public";
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            // Act
+            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, targetRepoVisibility: "public", wait: false);
+
+            // Assert
+            actualLogOutput.Should().Contain("TARGET REPO VISIBILITY: public");
+
+            _mockGithubApi.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                targetRepoVisibility,
+                It.IsAny<bool>()));
+        }
+
+        [Fact]
         public async Task Skip_Migration_If_Target_Repo_Exists()
         {
             // Arrange

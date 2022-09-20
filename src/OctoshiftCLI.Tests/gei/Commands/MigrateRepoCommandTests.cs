@@ -1010,6 +1010,45 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task It_Sets_Target_Repo_Visibility_When_Specified()
+        {
+            // Arrange
+            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            var targetRepoVisibility = "public";
+            var actualLogOutput = new List<string>();
+            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetRepoVisibility = targetRepoVisibility
+
+            };
+            await _command.Invoke(args);
+
+            // Assert
+            actualLogOutput.Should().Contain("TARGET REPO VISIBILITY: public");
+
+            _mockGithubApi.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                targetRepoVisibility,
+                It.IsAny<bool>()));
+        }
+
+        [Fact]
         public async Task Does_Not_Pass_Lock_Repos_To_StartMigration_For_GHES()
         {
             // Arrange
