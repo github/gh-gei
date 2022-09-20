@@ -50,7 +50,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+            var args = new LockRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.LockRepo(ADO_ORG, TEAM_PROJECT_ID, REPO_ID, IDENTITY_DESCRIPTOR));
         }
@@ -62,7 +68,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
+            var args = new LockRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                AdoPat = adoPat
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }

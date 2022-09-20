@@ -66,7 +66,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_ORG, GITHUB_REPO);
+            var args = new IntegrateBoardsCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, ENDPOINT_ID, NEW_REPO_ID));
         }
@@ -87,7 +94,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_ORG, GITHUB_REPO);
+            var args = new IntegrateBoardsCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, CONNECTION_ID, CONNECTION_NAME, ENDPOINT_ID, Moq.It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
@@ -111,7 +125,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_ORG, GITHUB_REPO);
+            var args = new IntegrateBoardsCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
@@ -129,7 +150,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "githubOrg", "githubRepo", adoPat, githubPat);
+            var args = new IntegrateBoardsCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoPat = adoPat,
+                GithubPat = githubPat,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
             _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
@@ -147,7 +177,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "githubOrg", "githubRepo", adoPat);
+            var args = new IntegrateBoardsCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoPat = adoPat,
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
             _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Once);
