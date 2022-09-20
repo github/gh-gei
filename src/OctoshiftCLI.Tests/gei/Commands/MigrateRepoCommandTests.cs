@@ -53,7 +53,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockTargetGithubApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApiFactory.Object);
-            
+
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
             command.Options.Count.Should().Be(20);
