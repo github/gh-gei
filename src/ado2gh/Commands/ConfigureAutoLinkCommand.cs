@@ -1,8 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
