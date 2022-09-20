@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class AddTeamToRepoCommandHandler : ICommandHandler<AddTeamToRepoCommandArgs>
+    public class AddTeamToRepoCommandHandler
     {
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;

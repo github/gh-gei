@@ -1,13 +1,10 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public sealed class AddTeamToRepoCommand : BaseCommand<AddTeamToRepoCommandArgs, AddTeamToRepoCommandHandler>
+    public sealed class AddTeamToRepoCommand : Command
     {
         public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
             name: "add-team-to-repo",
@@ -53,7 +50,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         }
     }
 
-    public class AddTeamToRepoCommandArgs : ICommandArgs
+    public class AddTeamToRepoCommandArgs
     {
         public string GithubOrg { get; set; }
         public string GithubRepo { get; set; }
