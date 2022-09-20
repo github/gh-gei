@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
@@ -37,18 +38,23 @@ public class GrantMigratorRoleCommandBase : Command
         AddOption(Verbose);
     }
 
-    public async Task Handle(string githubOrg, string actor, string actorType, string githubPat = null, bool verbose = false)
+    public async Task Handle(GrantMigratorRoleCommandArgs args)
     {
-        _log.Verbose = verbose;
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        _log.Verbose = args.Verbose;
 
         _log.LogInformation("Granting migrator role ...");
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        _log.LogInformation($"{Actor.GetLogFriendlyName()}: {actor}");
+        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {args.GithubOrg}");
+        _log.LogInformation($"{Actor.GetLogFriendlyName()}: {args.Actor}");
 
-        actorType = actorType?.ToUpper();
-        _log.LogInformation($"{ActorType.GetLogFriendlyName()}: {actorType}");
+        args.ActorType = args.ActorType?.ToUpper();
+        _log.LogInformation($"{ActorType.GetLogFriendlyName()}: {args.ActorType}");
 
-        if (actorType is "TEAM" or "USER")
+        if (args.ActorType is "TEAM" or "USER")
         {
             _log.LogInformation("Actor type is valid...");
         }
@@ -58,22 +64,31 @@ public class GrantMigratorRoleCommandBase : Command
             return;
         }
 
-        if (githubPat is not null)
+        if (args.GithubPat is not null)
         {
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-        var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-        var success = await githubApi.GrantMigratorRole(githubOrgId, actor, actorType);
+        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
+        var success = await githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
         if (success)
         {
-            _log.LogSuccess($"Migrator role successfully set for the {actorType} \"{actor}\"");
+            _log.LogSuccess($"Migrator role successfully set for the {args.ActorType} \"{args.Actor}\"");
         }
         else
         {
-            _log.LogError($"Migrator role couldn't be set for the {actorType} \"{actor}\"");
+            _log.LogError($"Migrator role couldn't be set for the {args.ActorType} \"{args.Actor}\"");
         }
     }
+}
+
+public class GrantMigratorRoleCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public string Actor { get; set; }
+    public string ActorType { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

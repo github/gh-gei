@@ -45,7 +45,13 @@ public class GenerateMannequinCsvCommandBaseTests
         var expected = CSV_HEADER + Environment.NewLine;
 
         // Act
-        await _command.Handle("octocat", new FileInfo("unit-test-output"), false);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = false,
+        };
+        await _command.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -69,7 +75,13 @@ public class GenerateMannequinCsvCommandBaseTests
                                   + "mona,monaid," + Environment.NewLine;
 
         // Act
-        await _command.Handle(GITHUB_ORG, new FileInfo("unit-test-output"), false);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = false,
+        };
+        await _command.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -94,7 +106,13 @@ public class GenerateMannequinCsvCommandBaseTests
                                   + "monalisa,monalisaid,monalisa_gh" + Environment.NewLine;
 
         // Act
-        await _command.Handle(GITHUB_ORG, new FileInfo("unit-test-output"), true);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = true,
+        };
+        await _command.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
