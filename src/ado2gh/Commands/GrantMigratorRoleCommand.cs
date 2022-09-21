@@ -11,8 +11,8 @@ public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
     {
         Description += Environment.NewLine;
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
-
+        
         AddOptions();
-        Handler = CommandHandler.Create<GrantMigratorRoleCommandArgs>(Handle);
+        Handler = CommandHandler.Create<GrantMigratorRoleCommandArgs>(BaseHandler.Handle);
     }
 }

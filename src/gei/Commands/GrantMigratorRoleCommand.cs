@@ -21,7 +21,7 @@ public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
     internal async Task Invoke(GrantMigratorRoleCommandArgs args) =>
-        await Handle(new OctoshiftCLI.Commands.GrantMigratorRoleCommandArgs
+        await BaseHandler.Handle(new OctoshiftCLI.Commands.GrantMigratorRoleCommandArgs
         {
             GithubOrg = args.GithubOrg,
             Actor = args.Actor,
