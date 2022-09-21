@@ -12,6 +12,7 @@ public class MigrateRepoCommand : Command
     private readonly GithubApiFactory _githubApiFactory;
     private readonly BbsApiFactory _bbsApiFactory;
     private readonly IAzureApiFactory _azureApiFactory;
+    private readonly IAwsApiFactory _awsApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly BbsArchiveDownloaderFactory _bbsArchiveDownloaderFactory;
     private readonly FileSystemProvider _fileSystemProvider;
@@ -24,6 +25,7 @@ public class MigrateRepoCommand : Command
         EnvironmentVariableProvider environmentVariableProvider,
         BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
         IAzureApiFactory azureApiFactory,
+        IAwsApiFactory awsApiFactory,
         FileSystemProvider fileSystemProvider) : base(
             name: "migrate-repo",
             description: "Import a Bitbucket Server archive to GitHub." +
@@ -34,6 +36,7 @@ public class MigrateRepoCommand : Command
         _githubApiFactory = githubApiFactory;
         _bbsApiFactory = bbsApiFactory;
         _azureApiFactory = azureApiFactory;
+        _awsApiFactory = awsApiFactory;
         _environmentVariableProvider = environmentVariableProvider;
         _bbsArchiveDownloaderFactory = bbsArchiveDownloaderFactory;
         _fileSystemProvider = fileSystemProvider;
