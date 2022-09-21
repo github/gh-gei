@@ -15,7 +15,7 @@ public class GenerateMannequinCsvCommandBaseTests
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-    private readonly GenerateMannequinCsvCommandBase _command;
+    private readonly GenerateMannequinCsvCommandBaseHandler _command;
 
     private const string CSV_HEADER = "mannequin-user,mannequin-id,target-user";
     private const string GITHUB_ORG = "FooOrg";
@@ -24,7 +24,7 @@ public class GenerateMannequinCsvCommandBaseTests
 
     public GenerateMannequinCsvCommandBaseTests()
     {
-        _command = new GenerateMannequinCsvCommandBase(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
+        _command = new GenerateMannequinCsvCommandBaseHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
         {
             WriteToFile = (_, contents) =>
             {
