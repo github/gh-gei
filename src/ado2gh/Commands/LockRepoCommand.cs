@@ -1,24 +1,18 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class LockRepoCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-
         public LockRepoCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
             name: "lock-ado-repo",
             description: "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -46,36 +40,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<LockRepoCommandArgs>(Invoke);
-        }
-
-        public async Task Invoke(LockRepoCommandArgs args)
-        {
-            if (args is null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
-
-            _log.Verbose = args.Verbose;
-
-            _log.LogInformation("Locking repo...");
-            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-            _log.LogInformation($"ADO REPO: {args.AdoRepo}");
-            if (args.AdoPat is not null)
-            {
-                _log.LogInformation("ADO PAT: ***");
-            }
-
-            var ado = _adoApiFactory.Create(args.AdoPat);
-
-            var teamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-            var repoId = await ado.GetRepoId(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
-
-            var identityDescriptor = await ado.GetIdentityDescriptor(args.AdoOrg, teamProjectId, "Project Valid Users");
-            await ado.LockRepo(args.AdoOrg, teamProjectId, repoId, identityDescriptor);
-
-            _log.LogSuccess("Repo successfully locked");
+            var handler = new LockRepoCommandHandler(log, adoApiFactory);
+            Handler = CommandHandler.Create<LockRepoCommandArgs>(handler.Invoke);
         }
     }
 

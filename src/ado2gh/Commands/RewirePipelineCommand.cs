@@ -1,24 +1,18 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class RewirePipelineCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-
         public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
             name: "rewire-pipeline",
             description: "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -62,37 +56,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<RewirePipelineCommandArgs>(Invoke);
-        }
-
-        public async Task Invoke(RewirePipelineCommandArgs args)
-        {
-            if (args is null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
-
-            _log.Verbose = args.Verbose;
-
-            _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
-            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-            _log.LogInformation($"ADO PIPELINE: {args.AdoPipeline}");
-            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {args.ServiceConnectionId}");
-            if (args.AdoPat is not null)
-            {
-                _log.LogInformation("ADO PAT: ***");
-            }
-
-            var ado = _adoApiFactory.Create(args.AdoPat);
-
-            var adoPipelineId = await ado.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
-            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-            await ado.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId);
-
-            _log.LogSuccess("Successfully rewired pipeline");
+            var handler = new RewirePipelineCommandHandler(log, adoApiFactory);
+            Handler = CommandHandler.Create<RewirePipelineCommandArgs>(handler.Invoke);
         }
     }
 
