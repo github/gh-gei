@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Extensions;
 public static class CommandExtensions
 {
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static RootCommand AddCommands(RootCommand rootCommand, ServiceProvider serviceProvider)
+    public static RootCommand AddCommands(this RootCommand rootCommand, ServiceProvider serviceProvider)
     {
         if (rootCommand is null)
         {
