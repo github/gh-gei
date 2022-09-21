@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -13,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly RewirePipelineCommand _command;
+        private readonly RewirePipelineCommandHandler _command;
 
         private const string ADO_ORG = "FooOrg";
         private const string ADO_TEAM_PROJECT = "BlahTeamProject";
@@ -25,24 +26,25 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public RewirePipelineCommandTests()
         {
-            _command = new RewirePipelineCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            _command = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("rewire-pipeline", _command.Name);
-            Assert.Equal(8, _command.Options.Count);
+            var command = new RewirePipelineCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            Assert.NotNull(command);
+            Assert.Equal("rewire-pipeline", command.Name);
+            Assert.Equal(8, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pipeline", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
