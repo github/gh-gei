@@ -17,6 +17,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
+        private readonly Mock<IAwsApiFactory> _mockAwsApiFactory = new Mock<IAwsApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
@@ -55,6 +56,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockBbsArchiveDownloaderFactory.Object,
                 _mockAzureApiFactory.Object,
+                _mockAwsApiFactory.Object,
                 _mockFileSystemProvider.Object
             );
         }
