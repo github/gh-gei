@@ -398,7 +398,7 @@ if ($Failed -ne 0) {
                 content.AppendLine($"# === Migration status for Team Project: {adoSourceOrg}/{teamProject} ===");
             }
 
-            foreach (var repo in repos[teamProject].Select(r => GetGithubRepoName(teamProject, r))
+            foreach (var repo in repos[teamProject].Select(r => GetGithubRepoName(teamProject, r)))
             {
                 content.AppendLine(WaitForMigrationScript(repo));
                 content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
