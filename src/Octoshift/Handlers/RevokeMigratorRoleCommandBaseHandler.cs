@@ -1,9 +1,7 @@
 using System;
-using System.CommandLine;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Handlers;
 
