@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
-using Amazon.S3.Transfer;
 using Amazon.S3.Model;
-using System.Threading.Tasks;
+using Amazon.S3.Transfer;
 
 namespace OctoshiftCLI
 {
