@@ -21,7 +21,7 @@ public sealed class CreateTeamCommand : CreateTeamCommandBase
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
     internal async Task Invoke(CreateTeamCommandArgs args) =>
-        await Handle(new OctoshiftCLI.Commands.CreateTeamCommandArgs
+        await BaseHandler.Handle(new OctoshiftCLI.Commands.CreateTeamCommandArgs
         {
             GithubOrg = args.GithubOrg,
             TeamName = args.TeamName,
