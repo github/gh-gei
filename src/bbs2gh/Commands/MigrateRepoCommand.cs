@@ -91,6 +91,24 @@ public class MigrateRepoCommand : Command
             Description = "A connection string for an Azure Storage account, used to upload the BBS archive."
         };
 
+        var awsBucketName = new Option<string>("--aws-bucket-name")
+        {
+            IsRequired = false,
+            Description = "AWS S3 bucket name (to upload BBS archive)."
+        };
+
+        var awsAccessKey = new Option<string>("--aws-access-key")
+        {
+            IsRequired = false,
+            Description = "AWS access key (to upload BBS archive)."
+        };
+
+        var awsSecretKey = new Option<string>("--aws-secret-key")
+        {
+            IsRequired = false,
+            Description = "AWS secret key (to upload BBS archive)."
+        };
+
         var githubOrg = new Option<string>("--github-org")
         {
             IsRequired = false
@@ -171,7 +189,12 @@ public class MigrateRepoCommand : Command
         AddOption(smbPassword);
 
         AddOption(archivePath);
+
         AddOption(azureStorageConnectionString);
+
+        AddOption(awsBucketName);
+        AddOption(awsAccessKey);
+        AddOption(awsSecretKey);
 
         AddOption(wait);
         AddOption(verbose);
@@ -205,7 +228,14 @@ public class MigrateRepoCommand : Command
 
         if (args.ArchivePath.HasValue())
         {
-            args.ArchiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+            if (args.AwsBucketName.HasValue())
+            {
+                args.ArchiveUrl = await UploadArchiveToAws(args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.ArchivePath);
+            }
+            else
+            {
+                args.ArchiveUrl = await UploadArchiveToAzure(args.AzureStorageConnectionString, args.ArchivePath);
+            }
         }
 
         if (args.ArchiveUrl.HasValue())
@@ -256,18 +286,39 @@ public class MigrateRepoCommand : Command
         return exportId;
     }
 
-    private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
+    private async Task<string> UploadArchiveToAzure(string azureStorageConnectionString, string archivePath)
     {
-        _log.LogInformation("Uploading Archive...");
+        _log.LogInformation("Uploading Archive to Azure...");
 
         azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
         var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
 
         var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
-        var guid = Guid.NewGuid().ToString();
-        var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
+        var archiveName = GenerateArchiveName();
+        var archiveBlobUrl = await azureApi.UploadToBlob(archiveName, archiveData);
 
         return archiveBlobUrl.ToString();
+    }
+
+    private async Task<string> UploadArchiveToAws(string bucketName, string accessKey, string secretKey, string archivePath)
+    {
+        _log.LogInformation("Uploading Archive to AWS...");
+
+        accessKey ??= _environmentVariableProvider.AwsAccessKey();
+        secretKey ??= _environmentVariableProvider.AwsSecretKey();
+
+        var awsApi = _awsApiFactory.Create(accessKey, secretKey);
+
+        var keyName = GenerateArchiveName();
+        var archiveBlobUrl = await awsApi.UploadToBucket(bucketName, archivePath, keyName);
+
+        return archiveBlobUrl.ToString();
+    }
+
+    private string GenerateArchiveName()
+    {
+        var guid = Guid.NewGuid().ToString();
+        return $"{guid}.tar";
     }
 
     private async Task ImportArchive(MigrateRepoCommandArgs args, string archiveUrl = null)
@@ -358,6 +409,21 @@ public class MigrateRepoCommand : Command
         if (args.AzureStorageConnectionString.HasValue())
         {
             _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {args.AzureStorageConnectionString}");
+        }
+
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS S3 BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation($"AWS ACCESS KEY: ********");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation("AWS SECRET KEY: ********");
         }
 
         if (args.GithubOrg.HasValue())
@@ -472,6 +538,10 @@ public class MigrateRepoCommandArgs
     public string ArchivePath { get; set; }
 
     public string AzureStorageConnectionString { get; set; }
+
+    public string AwsBucketName { get; set; }
+    public string AwsAccessKey { get; set; }
+    public string AwsSecretKey { get; set; }
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }
