@@ -3,6 +3,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -24,13 +25,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private string _reposCsvOutput = "";
         private string _pipelinesCsvOutput = "";
 
-        private readonly InventoryReportCommand _command;
+        private readonly InventoryReportCommandHandler _command;
 
         public InventoryReportCommandTests()
         {
             _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new InventoryReportCommand(
+            _command = new InventoryReportCommandHandler(
                 TestHelpers.CreateMock<OctoLogger>().Object,
                 _mockAdoApiFactory.Object,
                 _mockAdoInspectorServiceFactory.Object,
@@ -69,14 +70,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         [Fact]
         public void Should_Have_Options()
         {
+            var command = new InventoryReportCommand(null, null, null, null, null, null, null);
             Assert.NotNull(_command);
-            Assert.Equal("inventory-report", _command.Name);
-            Assert.Equal(4, _command.Options.Count);
+            Assert.Equal("inventory-report", command.Name);
+            Assert.Equal(4, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "minimal", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "minimal", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]

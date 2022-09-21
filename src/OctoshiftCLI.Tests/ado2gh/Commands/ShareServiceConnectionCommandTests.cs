@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -13,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly ShareServiceConnectionCommand _command;
+        private readonly ShareServiceConnectionCommandHandler _command;
 
         private const string ADO_ORG = "FooOrg";
         private const string ADO_TEAM_PROJECT = "BlahTeamProject";
@@ -22,21 +23,22 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public ShareServiceConnectionCommandTests()
         {
-            _command = new ShareServiceConnectionCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            _command = new ShareServiceConnectionCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("share-service-connection", _command.Name);
-            Assert.Equal(5, _command.Options.Count);
+            var command = new ShareServiceConnectionCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            Assert.NotNull(command);
+            Assert.Equal("share-service-connection", command.Name);
+            Assert.Equal(5, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "service-connection-id", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
