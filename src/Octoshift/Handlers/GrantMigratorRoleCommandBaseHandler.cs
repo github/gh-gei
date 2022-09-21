@@ -1,8 +1,9 @@
 using System;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Handlers;
 
 public class GrantMigratorRoleCommandBaseHandler
 {

@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 using Polly;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]

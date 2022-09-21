@@ -1,10 +1,11 @@
 using System;
 using System.CommandLine;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Handlers;
 
 public class RevokeMigratorRoleCommandBaseHandler
 {

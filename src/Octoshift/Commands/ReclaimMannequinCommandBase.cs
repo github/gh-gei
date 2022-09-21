@@ -2,6 +2,7 @@ using System;
 using System.CommandLine;
 using Octoshift;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 

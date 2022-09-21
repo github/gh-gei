@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Runtime.CompilerServices;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
