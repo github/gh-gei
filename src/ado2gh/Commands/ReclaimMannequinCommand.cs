@@ -10,6 +10,6 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
     public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base(log, githubApiFactory, reclaimService)
     {
         AddOptions();
-        Handler = CommandHandler.Create<ReclaimMannequinCommandArgs>(Handle);
+        Handler = CommandHandler.Create<ReclaimMannequinCommandArgs>(BaseHandler.Handle);
     }
 }
