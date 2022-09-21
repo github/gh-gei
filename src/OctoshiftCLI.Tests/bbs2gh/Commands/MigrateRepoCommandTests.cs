@@ -66,7 +66,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(18);
+            _command.Options.Count.Should().Be(21);
 
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
@@ -76,6 +76,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             TestHelpers.VerifyCommandOption(_command.Options, "archive-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "archive-path", false);
             TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "aws-bucket-name", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "aws-access-key", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "aws-secret-key", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
