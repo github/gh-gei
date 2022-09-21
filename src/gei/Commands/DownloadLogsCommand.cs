@@ -45,7 +45,7 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         Description = "Target GitHub organization to download logs from."
     };
 
-    internal async Task Invoke(DownloadLogsCommandArgs args) => await Handle(new OctoshiftCLI.Commands.DownloadLogsCommandArgs
+    internal async Task Invoke(DownloadLogsCommandArgs args) => await BaseHandler.Handle(new OctoshiftCLI.Commands.DownloadLogsCommandArgs
     {
         GithubOrg = args.GithubTargetOrg,
         GithubRepo = args.TargetRepo,
