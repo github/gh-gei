@@ -228,14 +228,9 @@ public class MigrateRepoCommand : Command
 
         if (args.ArchivePath.HasValue())
         {
-            if (args.AwsBucketName.HasValue())
-            {
-                args.ArchiveUrl = await UploadArchiveToAws(args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.ArchivePath);
-            }
-            else
-            {
-                args.ArchiveUrl = await UploadArchiveToAzure(args.AzureStorageConnectionString, args.ArchivePath);
-            }
+            args.ArchiveUrl = args.AwsBucketName.HasValue()
+                ? await UploadArchiveToAws(args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.ArchivePath)
+                : await UploadArchiveToAzure(args.AzureStorageConnectionString, args.ArchivePath);
         }
 
         if (args.ArchiveUrl.HasValue())
