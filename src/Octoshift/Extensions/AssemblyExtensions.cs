@@ -8,7 +8,7 @@ namespace OctoshiftCLI.Extensions;
 
 public static class AssemblyExtensions
 {
-    public static IEnumerable<Type> GetAllDescendantsOfCommandBase(this Assembly assembly) =>
+    internal static IEnumerable<Type> GetAllDescendantsOfCommandBase(this Assembly assembly) =>
         assembly?
             .GetTypes()
             .Where(t =>

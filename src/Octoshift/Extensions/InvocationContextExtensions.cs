@@ -7,7 +7,7 @@ namespace OctoshiftCLI.Extensions;
 
 public static class InvocationContextExtensions
 {
-    public static object BindArgs(this InvocationContext invocationContext, Command command, Type commandArgsType)
+    internal static object BindArgs(this InvocationContext invocationContext, Command command, Type commandArgsType)
     {
         if (invocationContext is null)
         {
