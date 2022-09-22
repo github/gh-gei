@@ -16,7 +16,7 @@ namespace OctoshiftCLI.BbsToGithub
             var accessKey = string.IsNullOrWhiteSpace(awsAccessKey) ? _environmentVariableProvider.AwsAccessKey() : awsAccessKey;
             var secretKey = string.IsNullOrWhiteSpace(awsSecretKey) ? _environmentVariableProvider.AwsSecretKey() : awsSecretKey;
 
-            return new AwsApi(accessKey, secretKey, _octoLogger);
+            return new AwsApi(accessKey, secretKey);
         }
     }
 }

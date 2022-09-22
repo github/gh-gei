@@ -11,17 +11,15 @@ namespace OctoshiftCLI
     {
         private readonly string _awsAccessKey;
         private readonly string _awsSecretKey;
-        private readonly OctoLogger _log;
 
         private static readonly RegionEndpoint regionEndpoint = RegionEndpoint.USEast1;
 
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
 
-        public AwsApi(string awsAccessKey, string awsSecretKey, OctoLogger log)
+        public AwsApi(string awsAccessKey, string awsSecretKey)
         {
             _awsAccessKey = awsAccessKey;
             _awsSecretKey = awsSecretKey;
-            _log = log;
         }
 
         public virtual async Task<Uri> UploadToBucket(string bucketName, string fileName, string keyName)
