@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 
 namespace OctoshiftCLI
@@ -79,12 +80,9 @@ namespace OctoshiftCLI
         {
             var result = msg;
 
-            foreach (var secret in _secrets)
+            foreach (var secret in _secrets.Where(x => x is not null))
             {
-                if (secret is not null)
-                {
-                    result = result.Replace(secret, "***");
-                }
+                result = result.Replace(secret, "***");
             }
 
             return result;
