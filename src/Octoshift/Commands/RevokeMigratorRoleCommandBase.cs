@@ -56,6 +56,8 @@ public class RevokeMigratorRoleCommandBase : Command
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         args.ActorType = args.ActorType?.ToUpper();
         _log.LogInformation($"{ActorType.GetLogFriendlyName()}: {args.ActorType}");
 
