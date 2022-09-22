@@ -37,7 +37,13 @@ public class CreateTeamCommandBaseTests
 
         _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-        await _command.Handle(GITHUB_ORG, TEAM_NAME, IDP_GROUP);
+        var args = new CreateTeamCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            TeamName = TEAM_NAME,
+            IdpGroup = IDP_GROUP,
+        };
+        await _command.Handle(args);
 
         _mockGithubApi.Verify(x => x.CreateTeam(GITHUB_ORG, TEAM_NAME));
         _mockGithubApi.Verify(x => x.RemoveTeamMember(GITHUB_ORG, TEAM_SLUG, TEAM_MEMBERS[0]));
@@ -52,7 +58,14 @@ public class CreateTeamCommandBaseTests
 
         _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-        await _command.Handle("GITHUB_ORG", "TEAM_NAME", "IDP_GROUP", githubPat);
+        var args = new CreateTeamCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            TeamName = TEAM_NAME,
+            IdpGroup = IDP_GROUP,
+            GithubPat = githubPat,
+        };
+        await _command.Handle(args);
 
         _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
@@ -71,7 +84,13 @@ public class CreateTeamCommandBaseTests
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
         _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-        await _command.Handle(GITHUB_ORG, TEAM_NAME, IDP_GROUP);
+        var args = new CreateTeamCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            TeamName = TEAM_NAME,
+            IdpGroup = IDP_GROUP,
+        };
+        await _command.Handle(args);
 
         _mockGithubApi.Verify(x => x.CreateTeam(GITHUB_ORG, TEAM_NAME), Times.Never);
         _mockGithubApi.Verify(x => x.RemoveTeamMember(GITHUB_ORG, TEAM_SLUG, TEAM_MEMBERS[0]));

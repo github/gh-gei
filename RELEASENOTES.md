@@ -1,1 +1,3 @@
-
+- 6 months ago in [v0.10](https://github.com/github/gh-gei/releases/tag/v0.10), we deprecated the --ssh flag, making it silently do nothing. Now, we’ve removed the flag entirely, so the CLI will error if you try to specify it. If you have any scripts that include the --ssh flag, you must remove that flag or the script will break.
+- If `create-team` fails when linking an IdP group with an HTTP 400, we will retry
+- If `create-team` fails when removing the initial team member, it will retry

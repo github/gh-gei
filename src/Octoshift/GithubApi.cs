@@ -104,7 +104,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
-            await _client.DeleteAsync(url);
+            await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
@@ -505,7 +505,8 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
-            await _client.PatchAsync(url, payload);
+            await _retryPolicy.HttpRetry(async () => await _client.PatchAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadRequest);
         }
 
         public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)

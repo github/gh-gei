@@ -24,14 +24,12 @@ public class DownloadLogsCommandBase : Command
         OctoLogger log,
         ITargetGithubApiFactory githubApiFactory,
         HttpDownloadService httpDownloadService,
-        RetryPolicy retryPolicy) : base("download-logs")
+        RetryPolicy retryPolicy) : base(name: "download-logs", description: "Downloads migration logs for migrations.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
         _httpDownloadService = httpDownloadService;
         _retryPolicy = retryPolicy;
-
-        Description = "Downloads migration logs for migrations.";
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")
@@ -87,71 +85,79 @@ public class DownloadLogsCommandBase : Command
         AddOption(Verbose);
     }
 
-    public async Task Handle(
-        string githubOrg,
-        string githubRepo,
-        string githubApiUrl = null,
-        string githubPat = null,
-        string migrationLogFile = null,
-        bool overwrite = false,
-        bool verbose = false
-    )
+    public async Task Handle(DownloadLogsCommandArgs args)
     {
-        _log.Verbose = verbose;
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        _log.Verbose = args.Verbose;
 
         _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
         _log.LogInformation("Downloading migration logs...");
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        _log.LogInformation($"{GithubRepo.GetLogFriendlyName()}: {githubRepo}");
+        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {args.GithubOrg}");
+        _log.LogInformation($"{GithubRepo.GetLogFriendlyName()}: {args.GithubRepo}");
 
-        if (githubApiUrl.HasValue())
+        if (args.GithubApiUrl.HasValue())
         {
-            _log.LogInformation($"{GithubApiUrl.GetLogFriendlyName()}: {githubApiUrl}");
+            _log.LogInformation($"{GithubApiUrl.GetLogFriendlyName()}: {args.GithubApiUrl}");
         }
 
-        if (githubPat.HasValue())
+        if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
-        if (migrationLogFile.HasValue())
+        if (args.MigrationLogFile.HasValue())
         {
-            _log.LogInformation($"{MigrationLogFile.GetLogFriendlyName()}: {migrationLogFile}");
+            _log.LogInformation($"{MigrationLogFile.GetLogFriendlyName()}: {args.MigrationLogFile}");
         }
 
-        migrationLogFile ??= $"migration-log-{githubOrg}-{githubRepo}.log";
+        args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}.log";
 
-        if (FileExists(migrationLogFile))
+        if (FileExists(args.MigrationLogFile))
         {
-            if (!overwrite)
+            if (!args.Overwrite)
             {
-                throw new OctoshiftCliException($"File {migrationLogFile} already exists!  Use --overwrite to overwrite this file.");
+                throw new OctoshiftCliException($"File {args.MigrationLogFile} already exists!  Use --overwrite to overwrite this file.");
             }
 
-            _log.LogWarning($"Overwriting {migrationLogFile} due to --overwrite option.");
+            _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
         }
 
-        var githubApi = _githubApiFactory.Create(githubApiUrl, githubPat);
+        var githubApi = _githubApiFactory.Create(args.GithubApiUrl, args.GithubPat);
 
-        var result = await _retryPolicy.RetryOnResult(async () => await githubApi.GetMigrationLogUrl(githubOrg, githubRepo), string.Empty,
+        var result = await _retryPolicy.RetryOnResult(async () => await githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), string.Empty,
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Successful && result.Result is null)
         {
-            throw new OctoshiftCliException($"Migration for repository {githubRepo} not found!");
+            throw new OctoshiftCliException($"Migration for repository {args.GithubRepo} not found!");
         }
 
         if (result.Outcome == OutcomeType.Failure)
         {
-            throw new OctoshiftCliException($"Migration log for repository {githubRepo} unavailable!");
+            throw new OctoshiftCliException($"Migration log for repository {args.GithubRepo} unavailable!");
         }
 
         var logUrl = result.Result;
 
-        _log.LogInformation($"Downloading log for repository {githubRepo} to {migrationLogFile}...");
-        await _httpDownloadService.Download(logUrl, migrationLogFile);
+        _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
+        await _httpDownloadService.Download(logUrl, args.MigrationLogFile);
 
-        _log.LogSuccess($"Downloaded {githubRepo} log to {migrationLogFile}.");
+        _log.LogSuccess($"Downloaded {args.GithubRepo} log to {args.MigrationLogFile}.");
     }
+}
+
+public class DownloadLogsCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public string GithubRepo { get; set; }
+    public string GithubApiUrl { get; set; }
+    public string GithubPat { get; set; }
+    public string MigrationLogFile { get; set; }
+    public bool Overwrite { get; set; }
+    public bool Verbose { get; set; }
 }

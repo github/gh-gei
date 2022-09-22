@@ -5,6 +5,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -16,7 +17,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
-        private readonly MigrateRepoCommand _command;
+        private readonly MigrateRepoCommandHandler _command;
 
         private const string ADO_ORG = "FooOrg";
         private const string ADO_TEAM_PROJECT = "BlahTeamProject";
@@ -32,26 +33,26 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public MigrateRepoCommandTests()
         {
-            _command = new MigrateRepoCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object);
+            _command = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            _command.Should().NotBeNull();
-            _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(10);
+            var command = new MigrateRepoCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object);
+            command.Should().NotBeNull();
+            command.Name.Should().Be("migrate-repo");
+            command.Options.Count.Should().Be(9);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ssh", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
@@ -99,7 +100,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             };
 
             // Act
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: false);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = false,
+            };
+            await _command.Invoke(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
@@ -149,7 +159,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var expectedLogOutput = $"The Org '{GITHUB_ORG}' already contains a repository with the name '{GITHUB_REPO}'. No operation will be performed";
 
             // Act
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: false);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = false,
+            };
+            await _command.Invoke(args);
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
@@ -185,7 +204,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.AdoPersonalAccessToken())
                 .Returns(ADO_TOKEN);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = true,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.GetMigration(MIGRATION_ID));
         }
@@ -203,7 +231,18 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.AdoPersonalAccessToken())
                 .Returns(ADO_TOKEN);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: true, adoPat: ADO_TOKEN, githubPat: GITHUB_TOKEN);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = true,
+                AdoPat = ADO_TOKEN,
+                GithubPat = GITHUB_TOKEN,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_TOKEN));
             _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
@@ -224,7 +263,16 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .Setup(m => m.AdoPersonalAccessToken())
                 .Returns(ADO_TOKEN);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, GITHUB_ORG, GITHUB_REPO, wait: true);
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = true,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_TOKEN));
             _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken());

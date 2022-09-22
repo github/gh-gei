@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public GithubApiFactoryTests()
         {
-            _sourceGithubApiFactory = new GithubApiFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockEnvironmentVariableProvider.Object, null, null);
+            _sourceGithubApiFactory = new GithubApiFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockEnvironmentVariableProvider.Object, null, null, null);
             _targetGithubApiFactory = (ITargetGithubApiFactory)_sourceGithubApiFactory;
         }
 

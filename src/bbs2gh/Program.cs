@@ -5,8 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.BbsToGithub;
@@ -32,28 +32,14 @@ public static class Program
             .AddSingleton<VersionChecker>()
             .AddSingleton<HttpDownloadService>()
             .AddSingleton<FileSystemProvider>()
+            .AddSingleton<DateTimeProvider>()
             .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
             .AddSingleton<BbsArchiveDownloaderFactory>()
             .AddHttpClient();
+
         var serviceProvider = serviceCollection.BuildServiceProvider();
-
-        var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
-
-        foreach (var commandType in typeof(MigrateRepoCommandArgs).GetAllDescendantsOfCommandBase())
-        {
-            var command = commandType.CreateInstance<Command>();
-
-            command.SetHandler(async ctx =>
-            {
-                var commandArgsType = commandType.BaseType.GetGenericArguments()[0];
-                var commandArgs = ctx.BindArgs(command, commandArgsType);
-                var handler = commandType.GetMethod("BuildHandler").Invoke(command, new[] { commandArgs, serviceProvider });
-                await (Task)handler.GetType().GetMethod("Handle").Invoke(handler, new[] { commandArgs });
-            });
-
-            rootCommand.AddCommand(command);
-        }
-
+        var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.")
+            .AddCommands(serviceProvider);
 
         SetContext(new InvocationContext(rootCommand.Parse(args)));
 

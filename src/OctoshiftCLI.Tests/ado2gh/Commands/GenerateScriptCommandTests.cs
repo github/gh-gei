@@ -9,6 +9,7 @@ using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Xunit;
@@ -39,7 +40,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private string _scriptOutput;
-        private readonly GenerateScriptCommand _command;
+        private readonly GenerateScriptCommandHandler _command;
 
         public GenerateScriptCommandTests()
         {
@@ -47,7 +48,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-            _command = new GenerateScriptCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
+            _command = new GenerateScriptCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -63,13 +64,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             var command = new GenerateScriptCommand(null, null, null, null);
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(17);
+            command.Options.Count.Should().Be(16);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ssh", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);

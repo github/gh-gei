@@ -18,12 +18,12 @@ public class WaitForMigrationCommandBase : Command
     private const string REPO_MIGRATION_ID_PREFIX = "RM_";
     private const string ORG_MIGRATION_ID_PREFIX = "OM_";
 
-    public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("wait-for-migration")
+    public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+        name: "wait-for-migration",
+        description: "Waits for migration(s) to finish and reports all in progress and queued ones.")
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
-
-        Description = "Waits for migration(s) to finish and reports all in progress and queued ones.";
     }
 
     protected virtual Option<string> MigrationId { get; } = new("--migration-id")
@@ -43,29 +43,34 @@ public class WaitForMigrationCommandBase : Command
         AddOption(Verbose);
     }
 
-    public async Task Handle(string migrationId, string githubPat = null, bool verbose = false)
+    public async Task Handle(WaitForMigrationCommandArgs args)
     {
-        _log.Verbose = verbose;
-
-        if (migrationId is null)
+        if (args is null)
         {
-            throw new ArgumentNullException(nameof(migrationId));
+            throw new ArgumentNullException(nameof(args));
         }
 
-        if (!migrationId.StartsWith(REPO_MIGRATION_ID_PREFIX) && !migrationId.StartsWith(ORG_MIGRATION_ID_PREFIX))
+        _log.Verbose = args.Verbose;
+
+        if (args.MigrationId is null)
         {
-            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
+            throw new ArgumentNullException(nameof(args), "MigrationId cannot be null");
         }
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-
-        if (migrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
+        if (!args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX) && !args.MigrationId.StartsWith(ORG_MIGRATION_ID_PREFIX))
         {
-            await WaitForRepositoryMigration(migrationId, githubPat, githubApi);
+            throw new OctoshiftCliException($"Invalid migration id: {args.MigrationId}");
+        }
+
+        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+        if (args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
+        {
+            await WaitForRepositoryMigration(args.MigrationId, args.GithubPat, githubApi);
         }
         else
         {
-            await WaitForOrgMigration(migrationId, githubPat, githubApi);
+            await WaitForOrgMigration(args.MigrationId, args.GithubPat, githubApi);
         }
     }
 
@@ -133,4 +138,11 @@ public class WaitForMigrationCommandBase : Command
             (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
         }
     }
+}
+
+public class WaitForMigrationCommandArgs
+{
+    public string MigrationId { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

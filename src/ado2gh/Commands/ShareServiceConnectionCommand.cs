@@ -1,24 +1,18 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Threading.Tasks;
+using System.CommandLine.NamingConventionBinder;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class ShareServiceConnectionCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-
-        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("share-service-connection")
+        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
+            name: "share-service-connection",
+            description: "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines." +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-
-            Description = "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
-
             var adoOrg = new Option<string>("--ado-org")
             {
                 IsRequired = true
@@ -35,7 +29,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };
@@ -46,35 +40,17 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            var handler = new ShareServiceConnectionCommandHandler(log, adoApiFactory);
+            Handler = CommandHandler.Create<ShareServiceConnectionCommandArgs>(handler.Invoke);
         }
+    }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string serviceConnectionId, string adoPat = null, bool verbose = false)
-        {
-            _log.Verbose = verbose;
-
-            _log.LogInformation("Sharing Service Connection...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
-            if (adoPat is not null)
-            {
-                _log.LogInformation("ADO PAT: ***");
-            }
-
-            var ado = _adoApiFactory.Create(adoPat);
-
-            var adoTeamProjectId = await ado.GetTeamProjectId(adoOrg, adoTeamProject);
-
-            if (await ado.ContainsServiceConnection(adoOrg, adoTeamProject, serviceConnectionId))
-            {
-                _log.LogInformation("Service connection already shared with team project");
-                return;
-            }
-
-            await ado.ShareServiceConnection(adoOrg, adoTeamProject, adoTeamProjectId, serviceConnectionId);
-
-            _log.LogSuccess("Successfully shared service connection");
-        }
+    public class ShareServiceConnectionCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string ServiceConnectionId { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 
@@ -13,6 +13,6 @@ public sealed class CreateTeamCommand : CreateTeamCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, bool>(Handle);
+        Handler = CommandHandler.Create<CreateTeamCommandArgs>(Handle);
     }
 }

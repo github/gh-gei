@@ -1,5 +1,4 @@
-﻿using System.CommandLine.Invocation;
-using System.IO;
+﻿using System.CommandLine.NamingConventionBinder;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 
@@ -10,6 +9,6 @@ public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBas
     public GenerateMannequinCsvCommand(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(log, githubApiFactory)
     {
         AddOptions();
-        Handler = CommandHandler.Create<string, FileInfo, bool, string, bool>(Handle);
+        Handler = CommandHandler.Create<GenerateMannequinCsvCommandArgs>(Handle);
     }
 }

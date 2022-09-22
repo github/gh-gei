@@ -55,7 +55,11 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
-        await _command.Handle(REPO_MIGRATION_ID);
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = REPO_MIGRATION_ID,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
@@ -97,8 +101,12 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = REPO_MIGRATION_ID,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(REPO_MIGRATION_ID))
+            .Invoking(async () => await _command.Handle(args))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage(failureReason);
@@ -143,8 +151,12 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = REPO_MIGRATION_ID,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(REPO_MIGRATION_ID))
+            .Invoking(async () => await _command.Handle(args))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage(failureReason);
@@ -188,7 +200,11 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
-        await _command.Handle(ORG_MIGRATION_ID);
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = ORG_MIGRATION_ID,
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));
@@ -227,8 +243,12 @@ public class WaitForMigrationCommandBaseTests
             };
 
         // Act
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = ORG_MIGRATION_ID,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(ORG_MIGRATION_ID))
+            .Invoking(async () => await _command.Handle(args))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage($"Migration {ORG_MIGRATION_ID} failed");
@@ -256,8 +276,12 @@ public class WaitForMigrationCommandBaseTests
         var invalidId = "SomeId";
 
         // Act
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = invalidId,
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle(invalidId))
+            .Invoking(async () => await _command.Handle(args))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage($"Invalid migration id: {invalidId}");
@@ -280,7 +304,12 @@ public class WaitForMigrationCommandBaseTests
         _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
         // Act
-        await _command.Handle(REPO_MIGRATION_ID, githubPat);
+        var args = new WaitForMigrationCommandArgs
+        {
+            MigrationId = REPO_MIGRATION_ID,
+            GithubPat = githubPat
+        };
+        await _command.Handle(args);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation("GITHUB PAT: ***"));

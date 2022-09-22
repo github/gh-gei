@@ -4,6 +4,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -14,7 +15,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly ConfigureAutoLinkCommand _command;
+        private readonly ConfigureAutoLinkCommandHandler _command;
 
         private const string GITHUB_ORG = "foo-org";
         private const string GITHUB_REPO = "foo-repo";
@@ -25,22 +26,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public ConfigureAutoLinkCommandTests()
         {
-            _command = new ConfigureAutoLinkCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+            _command = new ConfigureAutoLinkCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("configure-autolink", _command.Name);
-            Assert.Equal(6, _command.Options.Count);
+            var command = new ConfigureAutoLinkCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            Assert.NotNull(command);
+            Assert.Equal("configure-autolink", command.Name);
+            Assert.Equal(6, command.Options.Count);
+
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
@@ -50,7 +53,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                       .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));
@@ -65,7 +75,15 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
                 .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
             _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-            await _command.Invoke("githubOrg", "githubRepo", "adoOrg", "adoTeamProject", githubPat);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                GithubPat = githubPat,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
@@ -84,7 +102,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE), Times.Never);
@@ -105,7 +130,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, ADO_ORG, ADO_TEAM_PROJECT);
+            var args = new ConfigureAutoLinkCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+            };
+            await _command.Invoke(args);
 
             _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1));
             _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));

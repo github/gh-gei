@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
@@ -18,7 +18,7 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         RetryPolicy retryPolicy) : base(log, targetGithubApiFactory, httpDownloadService, retryPolicy)
     {
         AddOptions();
-        Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(Invoke);
+        Handler = CommandHandler.Create<DownloadLogsCommandArgs>(Invoke);
     }
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat")
@@ -45,12 +45,25 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         Description = "Target GitHub organization to download logs from."
     };
 
-    public async Task Invoke(
-        string githubTargetOrg,
-        string targetRepo,
-        string targetApiUrl = null,
-        string githubTargetPat = null,
-        string migrationLogFile = null,
-        bool overwrite = false,
-        bool verbose = false) => await Handle(githubTargetOrg, targetRepo, targetApiUrl, githubTargetPat, migrationLogFile, overwrite, verbose);
+    internal async Task Invoke(DownloadLogsCommandArgs args) => await Handle(new OctoshiftCLI.Commands.DownloadLogsCommandArgs
+    {
+        GithubOrg = args.GithubTargetOrg,
+        GithubRepo = args.TargetRepo,
+        GithubApiUrl = args.TargetApiUrl,
+        GithubPat = args.GithubTargetPat,
+        MigrationLogFile = args.MigrationLogFile,
+        Overwrite = args.Overwrite,
+        Verbose = args.Verbose,
+    });
+}
+
+public class DownloadLogsCommandArgs
+{
+    public string GithubTargetOrg { get; set; }
+    public string TargetRepo { get; set; }
+    public string TargetApiUrl { get; set; }
+    public string GithubTargetPat { get; set; }
+    public string MigrationLogFile { get; set; }
+    public bool Overwrite { get; set; }
+    public bool Verbose { get; set; }
 }

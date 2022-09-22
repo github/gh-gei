@@ -329,6 +329,27 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task RemoveTeamMember_Retries_On_Exception()
+        {
+            // Arrange
+            const string teamName = "TEAM_NAME";
+            const string member = "MEMBER";
+
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamName}/memberships/{member}";
+
+            _githubClientMock.SetupSequence(m => m.DeleteAsync(url, null))
+                             .ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.BadGateway))
+                             .ReturnsAsync(string.Empty);
+
+            // Act
+            var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+            await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
+
+            // Assert
+            _githubClientMock.Verify(m => m.DeleteAsync(url, null), Times.Exactly(2));
+        }
+
+        [Fact]
         public async Task AddTeamSync_Calls_The_Right_Endpoint_With_Payload()
         {
             // Arrange
@@ -1230,6 +1251,27 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task AddEmuGroupToTeam_Retries_On_400()
+        {
+            // Arrange
+            const string teamSlug = "TEAM_SLUG";
+            const int groupId = 1;
+
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamSlug}/external-groups";
+            var payload = new { group_id = groupId };
+
+            _githubClientMock.SetupSequence(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.BadRequest))
+                .ReturnsAsync("");
+
+            // Act
+            await _githubApi.AddEmuGroupToTeam(GITHUB_ORG, teamSlug, groupId);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null), Times.Exactly(2));
         }
 
         [Fact]
