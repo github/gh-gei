@@ -35,6 +35,8 @@ public class ConfigureAutoLinkCommandHandler
             _log.LogInformation("GITHUB PAT: ***");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var keyPrefix = "AB#";
         var urlTemplate = $"https://dev.azure.com/{args.AdoOrg}/{args.AdoTeamProject}/_workitems/edit/<num>/";
 

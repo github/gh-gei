@@ -43,6 +43,8 @@ public class GenerateScriptCommandHandler
 
         LogOptions(args);
 
+        _log.RegisterSecret(args.AdoPat);
+
         _generateScriptOptions = new GenerateScriptOptions
         {
             CreateTeams = args.All || args.CreateTeams || args.LinkIdpGroups,
