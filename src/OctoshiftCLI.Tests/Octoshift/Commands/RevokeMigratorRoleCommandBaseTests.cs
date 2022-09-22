@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
@@ -13,7 +14,7 @@ public class RevokeMigratorRoleCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly RevokeMigratorRoleCommandBase _command;
+    private readonly RevokeMigratorRoleCommandHandler _command;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string ACTOR = "foo-actor";
@@ -21,7 +22,7 @@ public class RevokeMigratorRoleCommandBaseTests
 
     public RevokeMigratorRoleCommandBaseTests()
     {
-        _command = new RevokeMigratorRoleCommandBase(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _command = new RevokeMigratorRoleCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]

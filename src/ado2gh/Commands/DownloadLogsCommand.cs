@@ -16,6 +16,6 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
         RetryPolicy retryPolicy) : base(log, githubApiFactory, httpDownloadService, retryPolicy)
     {
         AddOptions();
-        Handler = CommandHandler.Create<DownloadLogsCommandArgs>(Handle);
+        Handler = CommandHandler.Create<DownloadLogsCommandArgs>(BaseHandler.Handle);
     }
 }

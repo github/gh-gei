@@ -13,6 +13,6 @@ public sealed class CreateTeamCommand : CreateTeamCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<CreateTeamCommandArgs>(Handle);
+        Handler = CommandHandler.Create<CreateTeamCommandArgs>(BaseHandler.Handle);
     }
 }

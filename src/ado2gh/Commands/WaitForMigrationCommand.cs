@@ -13,6 +13,6 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
         Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
 
         AddOptions();
-        Handler = CommandHandler.Create<WaitForMigrationCommandArgs>(Handle);
+        Handler = CommandHandler.Create<WaitForMigrationCommandArgs>(BaseHandler.Handle);
     }
 }

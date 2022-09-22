@@ -9,6 +9,6 @@ public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBas
     public GenerateMannequinCsvCommand(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(log, githubApiFactory)
     {
         AddOptions();
-        Handler = CommandHandler.Create<GenerateMannequinCsvCommandArgs>(Handle);
+        Handler = CommandHandler.Create<GenerateMannequinCsvCommandArgs>(BaseHandler.Handle);
     }
 }
