@@ -5,6 +5,7 @@ using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
@@ -15,7 +16,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly DisableRepoCommand _command;
+        private readonly DisableRepoCommandHandler _command;
 
         private const string ADO_ORG = "FooOrg";
         private const string ADO_TEAM_PROJECT = "BlahTeamProject";
@@ -24,21 +25,23 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 
         public DisableRepoCommandTests()
         {
-            _command = new DisableRepoCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            _command = new DisableRepoCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("disable-ado-repo", _command.Name);
-            Assert.Equal(5, _command.Options.Count);
+            var command = new DisableRepoCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            Assert.NotNull(command);
+            Assert.Equal("disable-ado-repo", command.Name);
+            Assert.Equal(5, command.Options.Count);
+
+            TestHelpers.VerifyCommandOption(command.Options, "ado-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
@@ -49,7 +52,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID));
         }
@@ -62,7 +71,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO
+            };
+            await _command.Invoke(args);
 
             _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID), Times.Never);
         }
@@ -76,7 +91,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _mockAdoApi.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
             _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
 
-            await _command.Invoke("adoOrg", "adoTeamProject", ADO_REPO, adoPat);
+            var args = new DisableRepoCommandArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                AdoRepo = ADO_REPO,
+                AdoPat = adoPat
+            };
+            await _command.Invoke(args);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }

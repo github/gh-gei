@@ -1,25 +1,18 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Linq;
-using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public class ConfigureAutoLinkCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
-
         public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
             name: "configure-autolink",
             description: "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub" +
                          Environment.NewLine +
                          "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
-            _log = log;
-            _githubApiFactory = githubApiFactory;
-
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -52,48 +45,18 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            var handler = new ConfigureAutoLinkCommandHandler(log, githubApiFactory);
+            Handler = CommandHandler.Create<ConfigureAutoLinkCommandArgs>(handler.Invoke);
         }
+    }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject, string githubPat = null, bool verbose = false)
-        {
-            _log.Verbose = verbose;
-
-            _log.LogInformation("Configuring Autolink Reference...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            if (githubPat is not null)
-            {
-                _log.LogInformation("GITHUB PAT: ***");
-            }
-
-            _log.RegisterSecret(githubPat);
-
-            var keyPrefix = "AB#";
-            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
-
-            var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-
-            var autoLinks = await githubApi.GetAutoLinks(githubOrg, githubRepo);
-            if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
-            {
-                _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
-                return;
-            }
-
-            var autoLink = autoLinks.FirstOrDefault(al => al.KeyPrefix == keyPrefix);
-            if (autoLink != default((int, string, string)))
-            {
-                _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
-                _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
-                await githubApi.DeleteAutoLink(githubOrg, githubRepo, autoLink.Id);
-            }
-
-            await githubApi.AddAutoLink(githubOrg, githubRepo, keyPrefix, urlTemplate);
-
-            _log.LogSuccess("Successfully configured autolink references");
-        }
+    public class ConfigureAutoLinkCommandArgs
+    {
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string GithubPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

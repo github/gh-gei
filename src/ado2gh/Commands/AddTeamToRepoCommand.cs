@@ -1,24 +1,18 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
     public sealed class AddTeamToRepoCommand : Command
     {
-        private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
-
         public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
             name: "add-team-to-repo",
             description: "Adds a team to a repo with a specific role/permission" +
                          Environment.NewLine +
                          "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
-            _log = log;
-            _githubApiFactory = githubApiFactory;
-
             var githubOrg = new Option<string>("--github-org")
             {
                 IsRequired = true
@@ -52,30 +46,18 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            var handler = new AddTeamToRepoCommandHandler(log, githubApiFactory);
+            Handler = CommandHandler.Create<AddTeamToRepoCommandArgs>(handler.Invoke);
         }
+    }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, string githubPat = null, bool verbose = false)
-        {
-            _log.Verbose = verbose;
-
-            _log.LogInformation("Adding team to repo...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"TEAM: {team}");
-            _log.LogInformation($"ROLE: {role}");
-            if (githubPat is not null)
-            {
-                _log.LogInformation("GITHUB PAT: ***");
-            }
-
-            _log.RegisterSecret(githubPat);
-
-            var github = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            var teamSlug = await github.GetTeamSlug(githubOrg, team);
-            await github.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role);
-
-            _log.LogSuccess("Successfully added team to repo");
-        }
+    public class AddTeamToRepoCommandArgs
+    {
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string Team { get; set; }
+        public string Role { get; set; }
+        public string GithubPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

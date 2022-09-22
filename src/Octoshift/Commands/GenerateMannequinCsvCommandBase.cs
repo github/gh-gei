@@ -62,48 +62,57 @@ public class GenerateMannequinCsvCommandBase : Command
         AddOption(Verbose);
     }
 
-    public async Task Handle(
-        string githubOrg,
-        FileInfo output,
-        bool includeReclaimed = false,
-        string githubPat = null,
-        bool verbose = false)
+    public async Task Handle(GenerateMannequinCsvCommandArgs args)
     {
-        _log.Verbose = verbose;
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        _log.Verbose = args.Verbose;
 
         _log.LogInformation("Generating CSV...");
 
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        if (githubPat is not null)
+        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {args.GithubOrg}");
+        if (args.GithubPat is not null)
         {
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
-        _log.LogInformation($"{Output.GetLogFriendlyName()}: {output}");
-        if (includeReclaimed)
+        _log.LogInformation($"{Output.GetLogFriendlyName()}: {args.Output}");
+        if (args.IncludeReclaimed)
         {
             _log.LogInformation($"{IncludeReclaimed.GetLogFriendlyName()}: true");
         }
 
-        _log.RegisterSecret(githubPat);
+        _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
+        var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
-        var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
+        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
         var mannequins = await githubApi.GetMannequins(githubOrgId);
 
         _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
         _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");
 
         var contents = new StringBuilder().AppendLine(ReclaimService.CSVHEADER);
-        foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
+        foreach (var mannequin in mannequins.Where(m => args.IncludeReclaimed || m.MappedUser is null))
         {
             contents.AppendLine($"{mannequin.Login},{mannequin.Id},{mannequin.MappedUser?.Login}");
         }
 
-        if (output?.FullName is not null)
+        if (args.Output?.FullName is not null)
         {
-            await WriteToFile(output.FullName, contents.ToString());
+            await WriteToFile(args.Output.FullName, contents.ToString());
         }
     }
+}
+
+public class GenerateMannequinCsvCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public FileInfo Output { get; set; }
+    public bool IncludeReclaimed { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

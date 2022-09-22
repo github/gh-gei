@@ -33,8 +33,9 @@ public class ReclaimMannequinCommandBaseTests
     [Fact]
     public async Task No_Parameters_Provided_Throws_OctoshiftCliException()
     {
+        var args = new ReclaimMannequinCommandArgs { GithubOrg = GITHUB_ORG };
         await FluentActions
-            .Invoking(async () => await _command.Handle(GITHUB_ORG, null, null, null, null))
+            .Invoking(async () => await _command.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -47,7 +48,16 @@ public class ReclaimMannequinCommandBaseTests
         _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
         _mockTargetGithubApiFactory.Setup(m => m.Create(null, githubTargetPat)).Returns(_mockGithubApi.Object);
 
-        await _command.Handle(GITHUB_ORG, null, MANNEQUIN_USER, mannequinUserId, TARGET_USER, false, githubTargetPat);
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = MANNEQUIN_USER,
+            MannequinId = mannequinUserId,
+            TargetUser = TARGET_USER,
+            Force = false,
+            GithubPat = githubTargetPat,
+        };
+        await _command.Handle(args);
 
         _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
     }
@@ -57,8 +67,13 @@ public class ReclaimMannequinCommandBaseTests
     {
         _command.FileExists = _ => false;
 
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Csv = "I_DO_NOT_EXIST_CSV_PATH",
+        };
         await FluentActions
-            .Invoking(async () => await _command.Handle("dummy", "I_DO_NOT_EXIST_CSV_PATH", null, null, null))
+            .Invoking(async () => await _command.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -70,7 +85,14 @@ public class ReclaimMannequinCommandBaseTests
         _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
         _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
 
-        await _command.Handle(GITHUB_ORG, null, MANNEQUIN_USER, mannequinUserId, TARGET_USER);
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = MANNEQUIN_USER,
+            MannequinId = mannequinUserId,
+            TargetUser = TARGET_USER,
+        };
+        await _command.Handle(args);
 
         _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
     }
@@ -83,7 +105,14 @@ public class ReclaimMannequinCommandBaseTests
         _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
         _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
 
-        await _command.Handle(GITHUB_ORG, null, MANNEQUIN_USER, mannequinUserId, TARGET_USER);
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = MANNEQUIN_USER,
+            MannequinId = mannequinUserId,
+            TargetUser = TARGET_USER,
+        };
+        await _command.Handle(args);
 
         _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
     }
@@ -93,7 +122,12 @@ public class ReclaimMannequinCommandBaseTests
     {
         _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
 
-        await _command.Handle(GITHUB_ORG, "file.csv", null, null, null);
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Csv = "file.csv",
+        };
+        await _command.Handle(args);
 
         _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false), Times.Once);
     }
@@ -103,7 +137,14 @@ public class ReclaimMannequinCommandBaseTests
     {
         _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
 
-        await _command.Handle(GITHUB_ORG, "file.csv", MANNEQUIN_USER, null, TARGET_USER); // All parameters passed. CSV has precedence
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Csv = "file.csv",
+            MannequinUser = MANNEQUIN_USER,
+            TargetUser = TARGET_USER,
+        };
+        await _command.Handle(args); // All parameters passed. CSV has precedence
 
         _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false), Times.Once);
     }
