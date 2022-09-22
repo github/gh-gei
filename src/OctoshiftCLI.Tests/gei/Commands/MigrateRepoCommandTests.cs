@@ -6,6 +6,7 @@ using Moq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -20,7 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
 
-        private readonly MigrateRepoCommand _command;
+        private readonly MigrateRepoCommandHandler _command;
 
         private const string TARGET_API_URL = "https://api.github.com";
         private const string GHES_API_URL = "https://myghes/api/v3";
@@ -35,7 +36,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public MigrateRepoCommandTests()
         {
-            _command = new MigrateRepoCommand(
+            _command = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
                 _mockSourceGithubApiFactory.Object,
                 _mockTargetGithubApiFactory.Object,
@@ -46,29 +47,36 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            _command.Should().NotBeNull();
-            _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(20);
+            var command = new MigrateRepoCommand(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApiFactory.Object,
+                _mockTargetGithubApiFactory.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockAzureApiFactory.Object);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-source-org", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "source-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "target-repo", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "skip-releases", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "git-archive-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "metadata-archive-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            command.Should().NotBeNull();
+            command.Name.Should().Be("migrate-repo");
+            command.Options.Count.Should().Be(20);
+
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "target-repo", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
+            TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
+            TestHelpers.VerifyCommandOption(command.Options, "git-archive-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
@@ -126,7 +134,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockGithubApi.VerifyNoOtherCalls();
-            _mockOctoLogger.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -626,7 +633,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApiFactory.Setup(m => m.Create(TARGET_API_URL, It.IsAny<string>())).Returns(_mockGithubApi.Object);
             _mockAzureApiFactory.Setup(m => m.Create(azureConnectionStringEnv)).Returns(_mockAzureApi.Object);
 
-            var command = new MigrateRepoCommand(TestHelpers.CreateMock<OctoLogger>().Object, _mockSourceGithubApiFactory.Object, _mockTargetGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object, _mockAzureApiFactory.Object);
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
@@ -637,7 +643,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GhesApiUrl = GHES_API_URL,
                 Wait = true
             };
-            await command.Invoke(args);
+            await _command.Invoke(args);
 
             _mockAzureApiFactory.Verify(x => x.Create(azureConnectionStringEnv));
             _mockGithubApi.Verify(x => x.GetMigration(migrationId));

@@ -24,7 +24,7 @@ public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBas
     protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 
     internal async Task Invoke(GenerateMannequinCsvCommandArgs args) =>
-        await Handle(new OctoshiftCLI.Commands.GenerateMannequinCsvCommandArgs
+        await BaseHandler.Handle(new OctoshiftCLI.Commands.GenerateMannequinCsvCommandArgs
         {
             GithubOrg = args.GithubTargetOrg,
             Output = args.Output,

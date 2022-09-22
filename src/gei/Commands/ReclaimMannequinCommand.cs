@@ -26,7 +26,7 @@ public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
         IsRequired = false
     };
 
-    internal async Task Invoke(ReclaimMannequinCommandArgs args) => await Handle(new OctoshiftCLI.Commands.ReclaimMannequinCommandArgs
+    internal async Task Invoke(ReclaimMannequinCommandArgs args) => await BaseHandler.Handle(new OctoshiftCLI.Commands.ReclaimMannequinCommandArgs
     {
         GithubOrg = args.GithubTargetOrg,
         Csv = args.Csv,
