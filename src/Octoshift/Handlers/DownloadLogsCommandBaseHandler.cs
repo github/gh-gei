@@ -62,6 +62,8 @@ public class DownloadLogsCommandBaseHandler
             _log.LogInformation($"MIGRATION LOG FILE: {args.MigrationLogFile}");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}.log";
 
         if (FileExists(args.MigrationLogFile))

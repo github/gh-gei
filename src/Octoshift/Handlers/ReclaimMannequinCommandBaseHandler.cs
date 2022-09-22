@@ -33,6 +33,8 @@ public class ReclaimMannequinCommandBaseHandler
 
         _log.Verbose = args.Verbose;
 
+        _log.RegisterSecret(args.GithubPat);
+
         if (string.IsNullOrEmpty(args.Csv) && (string.IsNullOrEmpty(args.MannequinUser) || string.IsNullOrEmpty(args.TargetUser)))
         {
             throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");

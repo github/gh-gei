@@ -36,6 +36,8 @@ public class CreateTeamCommandBaseHandler
             _log.LogInformation($"GITHUB PAT: ***");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
         var teams = await githubApi.GetTeams(args.GithubOrg);

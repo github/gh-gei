@@ -31,6 +31,8 @@ public class WaitForMigrationCommandBaseHandler
         }
 
         _log.Verbose = args.Verbose;
+        
+        _log.RegisterSecret(args.GithubPat);
 
         if (args.MigrationId is null)
         {
