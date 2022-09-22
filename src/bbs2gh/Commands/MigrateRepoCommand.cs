@@ -1,10 +1,8 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
-using System.Threading.Tasks;
-using OctoshiftCLI.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 

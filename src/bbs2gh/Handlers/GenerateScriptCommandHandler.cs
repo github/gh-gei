@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 
