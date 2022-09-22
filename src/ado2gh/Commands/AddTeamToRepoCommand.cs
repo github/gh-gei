@@ -1,23 +1,23 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class AddTeamToRepoCommand : Command
+    public sealed class AddTeamToRepoCommand : Command
     {
         private readonly OctoLogger _log;
         private readonly GithubApiFactory _githubApiFactory;
 
-        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("add-team-to-repo")
+        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
+            name: "add-team-to-repo",
+            description: "Adds a team to a repo with a specific role/permission" +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
-
-            Description = "Adds a team to a repo with a specific role/permission";
-            Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
 
             var githubOrg = new Option<string>("--github-org")
             {
@@ -40,7 +40,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };

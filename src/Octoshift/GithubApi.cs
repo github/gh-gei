@@ -505,7 +505,8 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
-            await _client.PatchAsync(url, payload);
+            await _retryPolicy.HttpRetry(async () => await _client.PatchAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadRequest);
         }
 
         public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)

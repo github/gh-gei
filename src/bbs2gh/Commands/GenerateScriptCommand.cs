@@ -1,6 +1,6 @@
 using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,15 +23,15 @@ public class GenerateScriptCommand : Command
         IVersionProvider versionProvider,
         FileSystemProvider fileSystemProvider,
         BbsApiFactory bbsApiFactory,
-        EnvironmentVariableProvider environmentVariableProvider) : base("generate-script")
+        EnvironmentVariableProvider environmentVariableProvider) : base(
+            name: "generate-script",
+            description: "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.")
     {
         _log = log;
         _versionProvider = versionProvider;
         _fileSystemProvider = fileSystemProvider;
         _bbsApiFactory = bbsApiFactory;
         _environmentVariableProvider = environmentVariableProvider;
-
-        Description = "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.";
 
         var bbsServerUrl = new Option<string>("--bbs-server-url")
         {

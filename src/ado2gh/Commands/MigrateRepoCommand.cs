@@ -1,6 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
@@ -11,18 +11,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         private readonly GithubApiFactory _githubApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-        public MigrateRepoCommand(
-            OctoLogger log,
-            GithubApiFactory githubApiFactory,
-            EnvironmentVariableProvider environmentVariableProvider) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+            name: "migrate-repo",
+            description: "Invokes the GitHub API's to migrate the repo and all PR data" +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
         {
             _log = log;
             _githubApiFactory = githubApiFactory;
             _environmentVariableProvider = environmentVariableProvider;
-
-            Description = "Invokes the GitHub API's to migrate the repo and all PR data";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.";
 
             var adoOrg = new Option<string>("--ado-org")
             {
@@ -44,13 +41,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = true
             };
-            var ssh = new Option("--ssh")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses SSH protocol instead of HTTPS to push a Git repository into the target repository on GitHub."
-            };
-            var wait = new Option("--wait")
+            var wait = new Option<bool>("--wait")
             {
                 IsRequired = false,
                 Description = "Synchronously waits for the repo migration to finish."
@@ -63,7 +54,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 IsRequired = false
             };
-            var verbose = new Option("--verbose")
+            var verbose = new Option<bool>("--verbose")
             {
                 IsRequired = false
             };
@@ -73,16 +64,15 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(adoRepo);
             AddOption(githubOrg);
             AddOption(githubRepo);
-            AddOption(ssh);
             AddOption(wait);
             AddOption(adoPat);
             AddOption(githubPat);
             AddOption(verbose);
 
-            Handler = CommandHandler.Create<string, string, string, string, string, bool, bool, string, string, bool>(Invoke);
+            Handler = CommandHandler.Create<string, string, string, string, string, bool, string, string, bool>(Invoke);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool ssh = false, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
+        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait = false, string adoPat = null, string githubPat = null, bool verbose = false)
         {
             _log.Verbose = verbose;
 
@@ -92,10 +82,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             _log.LogInformation($"ADO REPO: {adoRepo}");
             _log.LogInformation($"GITHUB ORG: {githubOrg}");
             _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            if (ssh)
-            {
-                _log.LogWarning("SSH mode is no longer supported. --ssh flag will be ignored.");
-            }
             if (wait)
             {
                 _log.LogInformation("WAIT: true");
