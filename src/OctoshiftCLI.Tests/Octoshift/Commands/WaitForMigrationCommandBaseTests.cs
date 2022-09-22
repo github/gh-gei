@@ -283,7 +283,6 @@ public class WaitForMigrationCommandBaseTests
             .WithMessage($"Invalid migration id: {invalidId}");
 
         // Assert
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
