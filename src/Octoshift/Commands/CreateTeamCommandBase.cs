@@ -6,13 +6,13 @@ namespace OctoshiftCLI.Commands;
 
 public class CreateTeamCommandBase : Command
 {
-    protected CreateTeamCommandBaseHandler BaseHandler { get; init; }
+    protected CreateTeamCommandHandler BaseHandler { get; init; }
 
     public CreateTeamCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
         name: "create-team",
         description: "Creates a GitHub team and optionally links it to an IdP group.")
     {
-        BaseHandler = new CreateTeamCommandBaseHandler(log, githubApiFactory);
+        BaseHandler = new CreateTeamCommandHandler(log, githubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };

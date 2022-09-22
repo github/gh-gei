@@ -10,7 +10,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
 public class DownloadLogsCommandBaseTests
 {
-    private readonly DownloadLogsCommandBaseHandler _command;
+    private readonly DownloadLogsCommandHandler _command;
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<HttpDownloadService> _mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
@@ -18,7 +18,7 @@ public class DownloadLogsCommandBaseTests
 
     public DownloadLogsCommandBaseTests()
     {
-        _command = new DownloadLogsCommandBaseHandler(
+        _command = new DownloadLogsCommandHandler(
             _mockLogger.Object,
             _mockGithubApiFactory.Object,
             _mockHttpDownloadService.Object,

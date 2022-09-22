@@ -6,13 +6,13 @@ namespace OctoshiftCLI.Commands;
 
 public class GrantMigratorRoleCommandBase : Command
 {
-    protected GrantMigratorRoleCommandBaseHandler BaseHandler { get; init; }
+    protected GrantMigratorRoleCommandHandler BaseHandler { get; init; }
 
     public GrantMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
         name: "grant-migrator-role",
         description: "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.")
     {
-        BaseHandler = new GrantMigratorRoleCommandBaseHandler(log, githubApiFactory);
+        BaseHandler = new GrantMigratorRoleCommandHandler(log, githubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };

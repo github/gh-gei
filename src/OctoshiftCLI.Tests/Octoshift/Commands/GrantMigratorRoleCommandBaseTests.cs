@@ -14,7 +14,7 @@ public class GrantMigratorRoleCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly GrantMigratorRoleCommandBaseHandler _command;
+    private readonly GrantMigratorRoleCommandHandler _command;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string ACTOR = "foo-actor";
@@ -22,7 +22,7 @@ public class GrantMigratorRoleCommandBaseTests
 
     public GrantMigratorRoleCommandBaseTests()
     {
-        _command = new GrantMigratorRoleCommandBaseHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _command = new GrantMigratorRoleCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]

@@ -6,13 +6,13 @@ namespace OctoshiftCLI.Commands;
 
 public class RevokeMigratorRoleCommandBase : Command
 {
-    protected RevokeMigratorRoleCommandBaseHandler BaseHandler { get; init; }
+    protected RevokeMigratorRoleCommandHandler BaseHandler { get; init; }
 
     public RevokeMigratorRoleCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
         name: "revoke-migrator-role",
         description: "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.")
     {
-        BaseHandler = new RevokeMigratorRoleCommandBaseHandler(log, githubApiFactory);
+        BaseHandler = new RevokeMigratorRoleCommandHandler(log, githubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };

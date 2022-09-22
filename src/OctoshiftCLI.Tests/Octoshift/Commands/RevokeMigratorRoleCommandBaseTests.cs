@@ -14,7 +14,7 @@ public class RevokeMigratorRoleCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly RevokeMigratorRoleCommandBaseHandler _command;
+    private readonly RevokeMigratorRoleCommandHandler _command;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string ACTOR = "foo-actor";
@@ -22,7 +22,7 @@ public class RevokeMigratorRoleCommandBaseTests
 
     public RevokeMigratorRoleCommandBaseTests()
     {
-        _command = new RevokeMigratorRoleCommandBaseHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _command = new RevokeMigratorRoleCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]

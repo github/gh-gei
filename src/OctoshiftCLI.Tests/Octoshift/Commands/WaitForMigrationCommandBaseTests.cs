@@ -15,7 +15,7 @@ public class WaitForMigrationCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly WaitForMigrationCommandBaseHandler _command;
+    private readonly WaitForMigrationCommandHandler _command;
 
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
     private const string ORG_MIGRATION_ID = "OM_MIGRATION_ID";
@@ -24,7 +24,7 @@ public class WaitForMigrationCommandBaseTests
 
     public WaitForMigrationCommandBaseTests()
     {
-        _command = new WaitForMigrationCommandBaseHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object)
+        _command = new WaitForMigrationCommandHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object)
         {
             WaitIntervalInSeconds = WAIT_INTERVAL
         };

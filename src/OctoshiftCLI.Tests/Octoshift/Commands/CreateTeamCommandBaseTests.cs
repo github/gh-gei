@@ -14,7 +14,7 @@ public class CreateTeamCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly CreateTeamCommandBaseHandler _command;
+    private readonly CreateTeamCommandHandler _command;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string TEAM_NAME = "foo-team";
@@ -25,7 +25,7 @@ public class CreateTeamCommandBaseTests
 
     public CreateTeamCommandBaseTests()
     {
-        _command = new CreateTeamCommandBaseHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _command = new CreateTeamCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]

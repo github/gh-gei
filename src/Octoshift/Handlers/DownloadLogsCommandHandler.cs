@@ -11,7 +11,7 @@ using Polly;
 
 namespace OctoshiftCLI.Handlers;
 
-public class DownloadLogsCommandBaseHandler
+public class DownloadLogsCommandHandler
 {
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
@@ -20,7 +20,7 @@ public class DownloadLogsCommandBaseHandler
 
     internal Func<string, bool> FileExists = path => File.Exists(path);
 
-    public DownloadLogsCommandBaseHandler(
+    public DownloadLogsCommandHandler(
         OctoLogger log,
         ITargetGithubApiFactory githubApiFactory,
         HttpDownloadService httpDownloadService,

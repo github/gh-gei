@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Commands;
 
 public class DownloadLogsCommandBase : Command
 {
-    protected DownloadLogsCommandBaseHandler BaseHandler { get; init; }
+    protected DownloadLogsCommandHandler BaseHandler { get; init; }
 
     public DownloadLogsCommandBase(
         OctoLogger log,
@@ -17,7 +17,7 @@ public class DownloadLogsCommandBase : Command
         HttpDownloadService httpDownloadService,
         RetryPolicy retryPolicy) : base(name: "download-logs", description: "Downloads migration logs for migrations.")
     {
-        BaseHandler = new DownloadLogsCommandBaseHandler(log, githubApiFactory, httpDownloadService, retryPolicy);
+        BaseHandler = new DownloadLogsCommandHandler(log, githubApiFactory, httpDownloadService, retryPolicy);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")

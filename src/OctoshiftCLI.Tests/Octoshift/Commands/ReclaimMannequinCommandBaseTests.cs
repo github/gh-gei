@@ -16,7 +16,7 @@ public class ReclaimMannequinCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
-    private readonly ReclaimMannequinCommandBaseHandler _command;
+    private readonly ReclaimMannequinCommandHandler _command;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string MANNEQUIN_USER = "mona";
@@ -24,7 +24,7 @@ public class ReclaimMannequinCommandBaseTests
 
     public ReclaimMannequinCommandBaseTests()
     {
-        _command = new ReclaimMannequinCommandBaseHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object, _mockReclaimService.Object)
+        _command = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object, _mockReclaimService.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()

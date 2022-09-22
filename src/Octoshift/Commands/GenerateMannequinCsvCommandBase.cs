@@ -7,13 +7,13 @@ namespace OctoshiftCLI.Commands;
 
 public class GenerateMannequinCsvCommandBase : Command
 {
-    protected GenerateMannequinCsvCommandBaseHandler BaseHandler { get; init; }
+    protected GenerateMannequinCsvCommandHandler BaseHandler { get; init; }
 
     public GenerateMannequinCsvCommandBase(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base(
         name: "generate-mannequin-csv",
         description: "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.")
     {
-        BaseHandler = new GenerateMannequinCsvCommandBaseHandler(log, targetGithubApiFactory);
+        BaseHandler = new GenerateMannequinCsvCommandHandler(log, targetGithubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")

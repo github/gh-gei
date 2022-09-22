@@ -6,12 +6,12 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class CreateTeamCommandBaseHandler
+public class CreateTeamCommandHandler
 {
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
 
-    public CreateTeamCommandBaseHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public CreateTeamCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
     {
         _log = log;
         _githubApiFactory = githubApiFactory;

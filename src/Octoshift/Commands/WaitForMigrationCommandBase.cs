@@ -9,13 +9,13 @@ namespace OctoshiftCLI.Commands;
 
 public class WaitForMigrationCommandBase : Command
 {
-    protected WaitForMigrationCommandBaseHandler BaseHandler { get; init; }
+    protected WaitForMigrationCommandHandler BaseHandler { get; init; }
 
     public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
         name: "wait-for-migration",
         description: "Waits for migration(s) to finish and reports all in progress and queued ones.")
     {
-        BaseHandler = new WaitForMigrationCommandBaseHandler(log, githubApiFactory);
+        BaseHandler = new WaitForMigrationCommandHandler(log, githubApiFactory);
     }
 
     protected virtual Option<string> MigrationId { get; } = new("--migration-id")

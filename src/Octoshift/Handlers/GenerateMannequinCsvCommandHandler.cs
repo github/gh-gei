@@ -9,14 +9,14 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class GenerateMannequinCsvCommandBaseHandler
+public class GenerateMannequinCsvCommandHandler
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _targetGithubApiFactory;
 
-    public GenerateMannequinCsvCommandBaseHandler(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory)
+    public GenerateMannequinCsvCommandHandler(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory)
     {
         _log = log;
         _targetGithubApiFactory = targetGithubApiFactory;

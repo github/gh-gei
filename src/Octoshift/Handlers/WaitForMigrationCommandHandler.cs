@@ -8,7 +8,7 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class WaitForMigrationCommandBaseHandler
+public class WaitForMigrationCommandHandler
 {
     internal int WaitIntervalInSeconds = 10;
 
@@ -17,7 +17,7 @@ public class WaitForMigrationCommandBaseHandler
     private const string REPO_MIGRATION_ID_PREFIX = "RM_";
     private const string ORG_MIGRATION_ID_PREFIX = "OM_";
 
-    public WaitForMigrationCommandBaseHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public WaitForMigrationCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
     {
         _log = log;
         _githubApiFactory = githubApiFactory;

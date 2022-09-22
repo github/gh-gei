@@ -8,7 +8,7 @@ namespace OctoshiftCLI.Commands;
 
 public class ReclaimMannequinCommandBase : Command
 {
-    protected ReclaimMannequinCommandBaseHandler BaseHandler { get; init; }
+    protected ReclaimMannequinCommandHandler BaseHandler { get; init; }
 
     public ReclaimMannequinCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base(
         name: "reclaim-mannequin",
@@ -21,7 +21,7 @@ public class ReclaimMannequinCommandBase : Command
                      Environment.NewLine +
                      "If both options are specified The CSV file takes precedence and other options will be ignored")
     {
-        BaseHandler = new ReclaimMannequinCommandBaseHandler(log, githubApiFactory, reclaimService);
+        BaseHandler = new ReclaimMannequinCommandHandler(log, githubApiFactory, reclaimService);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")

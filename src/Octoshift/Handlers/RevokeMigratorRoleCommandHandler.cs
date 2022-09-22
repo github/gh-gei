@@ -5,18 +5,18 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class GrantMigratorRoleCommandBaseHandler
+public class RevokeMigratorRoleCommandHandler
 {
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
 
-    public GrantMigratorRoleCommandBaseHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public RevokeMigratorRoleCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
     }
 
-    public async Task Handle(GrantMigratorRoleCommandArgs args)
+    public async Task Handle(RevokeMigratorRoleArgs args)
     {
         if (args is null)
         {
@@ -29,8 +29,15 @@ public class GrantMigratorRoleCommandBaseHandler
         _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
         _log.LogInformation($"ACTOR: {args.Actor}");
 
+        if (args.GithubPat is not null)
+        {
+            _log.LogInformation($"GITHUB PAT: ***");
+        }
+
         args.ActorType = args.ActorType?.ToUpper();
         _log.LogInformation($"ACTOR TYPE: {args.ActorType}");
+
+        args.ActorType = args.ActorType.ToUpper();
 
         if (args.ActorType is "TEAM" or "USER")
         {
@@ -42,24 +49,19 @@ public class GrantMigratorRoleCommandBaseHandler
             return;
         }
 
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
         _log.RegisterSecret(args.GithubPat);
 
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var success = await githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
+        var success = await githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
         if (success)
         {
-            _log.LogSuccess($"Migrator role successfully set for the {args.ActorType} \"{args.Actor}\"");
+            _log.LogSuccess($"Migrator role successfully revoked for the {args.ActorType} \"{args.Actor}\"");
         }
         else
         {
-            _log.LogError($"Migrator role couldn't be set for the {args.ActorType} \"{args.Actor}\"");
+            _log.LogError($"Migrator role couldn't be revoked for the {args.ActorType} \"{args.Actor}\"");
         }
     }
 }

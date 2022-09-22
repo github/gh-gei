@@ -8,7 +8,7 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class ReclaimMannequinCommandBaseHandler
+public class ReclaimMannequinCommandHandler
 {
     private readonly OctoLogger _log;
     private readonly ITargetGithubApiFactory _githubApiFactory;
@@ -17,7 +17,7 @@ public class ReclaimMannequinCommandBaseHandler
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandBaseHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null)
+    public ReclaimMannequinCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null)
     {
         _log = log;
         _githubApiFactory = githubApiFactory;
