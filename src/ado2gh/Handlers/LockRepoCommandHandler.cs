@@ -33,6 +33,8 @@ public class LockRepoCommandHandler
             _log.LogInformation("ADO PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
 
         var teamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);

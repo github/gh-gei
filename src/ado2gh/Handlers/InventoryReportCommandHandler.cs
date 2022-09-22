@@ -63,6 +63,8 @@ public class InventoryReportCommandHandler
             _log.LogInformation("MINIMAL: true");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
         var inspector = _adoInspectorServiceFactory.Create(ado);
         inspector.OrgFilter = args.AdoOrg;
