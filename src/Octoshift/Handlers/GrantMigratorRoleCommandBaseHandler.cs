@@ -15,6 +15,7 @@ public class GrantMigratorRoleCommandBaseHandler
         _log = log;
         _githubApiFactory = githubApiFactory;
     }
+
     public async Task Handle(GrantMigratorRoleCommandArgs args)
     {
         if (args is null)
