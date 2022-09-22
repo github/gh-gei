@@ -80,7 +80,10 @@ namespace OctoshiftCLI
 
             foreach (var secret in _secrets)
             {
-                result = result.Replace(secret, "***");
+                if (secret is not null)
+                {
+                    result = result.Replace(secret, "***");
+                }
             }
 
             return result;
