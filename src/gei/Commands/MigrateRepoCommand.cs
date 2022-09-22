@@ -177,6 +177,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             LogOptions(args);
             ValidateOptions(args);
 
+            _log.RegisterSecret(args.GithubSourcePat);
+            _log.RegisterSecret(args.GithubTargetPat);
+            _log.RegisterSecret(args.AdoPat);
+
             if (args.GhesApiUrl.HasValue())
             {
                 (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(

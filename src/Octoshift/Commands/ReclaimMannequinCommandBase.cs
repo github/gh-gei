@@ -106,7 +106,10 @@ public class ReclaimMannequinCommandBase : Command
             throw new OctoshiftCliException($"Either --{Csv.ArgumentHelpName} or --{MannequinUsername.ArgumentHelpName} and --{TargetUsername.ArgumentHelpName} must be specified");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
         _reclaimService ??= new ReclaimService(githubApi, _log);
 
         if (!string.IsNullOrEmpty(args.Csv))

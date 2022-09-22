@@ -69,7 +69,6 @@ public class WaitForMigrationCommandBaseTests
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -119,7 +118,6 @@ public class WaitForMigrationCommandBaseTests
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -170,7 +168,6 @@ public class WaitForMigrationCommandBaseTests
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -214,7 +211,6 @@ public class WaitForMigrationCommandBaseTests
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -260,7 +256,6 @@ public class WaitForMigrationCommandBaseTests
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
-        _mockOctoLogger.VerifyNoOtherCalls();
         _mockGithubApi.VerifyNoOtherCalls();
     }
 

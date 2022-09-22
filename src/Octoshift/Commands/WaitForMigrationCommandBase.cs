@@ -62,6 +62,8 @@ public class WaitForMigrationCommandBase : Command
             throw new OctoshiftCliException($"Invalid migration id: {args.MigrationId}");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
         if (args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))

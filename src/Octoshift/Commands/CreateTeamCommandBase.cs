@@ -58,6 +58,8 @@ public class CreateTeamCommandBase : Command
             _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
         var teams = await githubApi.GetTeams(args.GithubOrg);

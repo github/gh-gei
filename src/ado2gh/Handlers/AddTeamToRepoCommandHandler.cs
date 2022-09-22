@@ -34,6 +34,8 @@ public class AddTeamToRepoCommandHandler
             _log.LogInformation("GITHUB PAT: ***");
         }
 
+        _log.RegisterSecret(args.GithubPat);
+
         var github = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var teamSlug = await github.GetTeamSlug(args.GithubOrg, args.Team);
         await github.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);
