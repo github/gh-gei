@@ -27,7 +27,7 @@ public static class CommandExtensions
 
             var command = (Command)typeof(CommandExtensions)
                 .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-                .Single(m => m.Name == "ConfigureCommand" && m.IsGenericMethod && m.GetParameters().Length == 3)
+                .Single(m => m.Name == "ConfigureCommand" && m.IsGenericMethod)
                 .MakeGenericMethod(commandType, argsType, handlerType)
                 .Invoke(null, new object[] { serviceProvider });
 
