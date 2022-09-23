@@ -225,7 +225,7 @@ function Exec {
 }";
 }
 
-public class GenerateScriptCommandArgs : ICommandArgs
+public class GenerateScriptCommandArgs
 {
     public string BbsServerUrl { get; set; }
     public string GithubOrg { get; set; }
