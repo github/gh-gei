@@ -8,21 +8,21 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class RevokeMigratorRoleCommandBaseTests
+public class GrantMigratorRoleCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly RevokeMigratorRoleCommandHandler _command;
+    private readonly GrantMigratorRoleCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string ACTOR = "foo-actor";
     private const string ACTOR_TYPE = "TEAM";
 
-    public RevokeMigratorRoleCommandBaseTests()
+    public GrantMigratorRoleCommandHandlerTests()
     {
-        _command = new RevokeMigratorRoleCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _handler = new GrantMigratorRoleCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]
@@ -33,15 +33,15 @@ public class RevokeMigratorRoleCommandBaseTests
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(githubOrgId);
         _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
-        var args = new RevokeMigratorRoleArgs
+        var args = new GrantMigratorRoleCommandArgs
         {
             GithubOrg = GITHUB_ORG,
             Actor = ACTOR,
             ActorType = ACTOR_TYPE,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
-        _mockGithubApi.Verify(x => x.RevokeMigratorRole(githubOrgId, ACTOR, ACTOR_TYPE));
+        _mockGithubApi.Verify(x => x.GrantMigratorRole(githubOrgId, ACTOR, ACTOR_TYPE));
     }
 
     [Fact]
@@ -51,14 +51,14 @@ public class RevokeMigratorRoleCommandBaseTests
 
         _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
 
-        var args = new RevokeMigratorRoleArgs
+        var args = new GrantMigratorRoleCommandArgs
         {
             GithubOrg = GITHUB_ORG,
             Actor = ACTOR,
             ActorType = ACTOR_TYPE,
             GithubPat = githubPat,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
@@ -66,12 +66,12 @@ public class RevokeMigratorRoleCommandBaseTests
     [Fact]
     public async Task Invalid_Actor_Type()
     {
-        var args = new RevokeMigratorRoleArgs
+        var args = new GrantMigratorRoleCommandArgs
         {
             GithubOrg = GITHUB_ORG,
             Actor = ACTOR,
             ActorType = "INVALID",
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
     }
 }
