@@ -2,7 +2,9 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Handlers;
+using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 
@@ -125,23 +127,38 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-
-        var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
-        var githubApi = githubApiFactory.Create(null, args.GithubPat ?? environmentVariableProvider.GithubPersonalAccessToken());
-
-        var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
-        var bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername ?? environmentVariableProvider.BbsUsername(),
-            args.BbsPassword ?? environmentVariableProvider.BbsPassword());
-
-        var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-        var bbsHost = new Uri(args.BbsServerUrl).Host;
-        var bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort);
-
-        var azureApiFactory = sp.GetRequiredService<AzureApiFactory>();
-        var azureApi = azureApiFactory.Create(args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString());
-
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+        GithubApi githubApi = null;
+        BbsApi bbsApi = null;
+        IBbsArchiveDownloader bbsArchiveDownloader = null;
+        AzureApi azureApi = null;
+
+        if (args.GithubOrg.HasValue())
+        {
+            var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
+            githubApi = githubApiFactory.Create(null, args.GithubPat ?? environmentVariableProvider.GithubPersonalAccessToken());
+        }
+
+        if (args.BbsServerUrl.HasValue())
+        {
+            var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
+            bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername ?? environmentVariableProvider.BbsUsername(),
+                args.BbsPassword ?? environmentVariableProvider.BbsPassword());
+        }
+
+        if (args.SshUser.HasValue())
+        {
+            var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
+            var bbsHost = new Uri(args.BbsServerUrl).Host;
+            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort);
+        }
+
+        if (args.AzureStorageConnectionString.HasValue())
+        {
+            var azureApiFactory = sp.GetRequiredService<AzureApiFactory>();
+            azureApi = azureApiFactory.Create(args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString());
+        }
 
         return new MigrateRepoCommandHandler(log, githubApi, bbsApi, bbsArchiveDownloader, azureApi, environmentVariableProvider, fileSystemProvider);
     }
