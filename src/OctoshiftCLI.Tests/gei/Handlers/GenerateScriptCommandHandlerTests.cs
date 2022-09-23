@@ -49,7 +49,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
             };
         }
-        
+
         [Fact]
         public async Task AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
         {
