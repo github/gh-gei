@@ -147,7 +147,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     }
 }
 
-public class MigrateRepoCommandArgs
+public class MigrateRepoCommandArgs : ICommandArgs
 {
     public string ArchiveUrl { get; set; }
     public string ArchivePath { get; set; }

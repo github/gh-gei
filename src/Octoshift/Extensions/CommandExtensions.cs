@@ -1,9 +1,14 @@
 using System;
 using System.CommandLine;
+using System.CommandLine.Binding;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Extensions;
 
@@ -19,19 +24,27 @@ public static class CommandExtensions
 
         foreach (var commandType in Assembly.GetCallingAssembly().GetAllDescendantsOfCommandBase())
         {
-            var command = commandType.CreateInstance<Command>();
+            var argsType = commandType.BaseType.GetGenericArguments()[0];
+            var handlerType = commandType.BaseType.GetGenericArguments()[1];
 
-            command.SetHandler(async ctx =>
-            {
-                var commandArgsType = commandType.BaseType.GetGenericArguments()[0];
-                var commandArgs = ctx.BindArgs(command, commandArgsType);
-                var handler = commandType.GetMethod("BuildHandler").Invoke(command, new[] { commandArgs, serviceProvider });
-                await (Task)handler.GetType().GetMethod("Handle").Invoke(handler, new[] { commandArgs });
-            });
+            var command = (Command)typeof(CommandExtensions)
+                .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                .Single(m => m.Name == "ConfigureCommand" && m.IsGenericMethod && m.GetParameters().Length == 3)
+                .MakeGenericMethod(commandType, argsType, handlerType)
+                .Invoke(null, new object[] { serviceProvider });
 
             rootCommand.AddCommand(command);
         }
 
         return rootCommand;
+    }
+
+    [SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Called via reflection")]
+    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : class, ICommandArgs, new() where TCommand : CommandBase<TArgs, THandler>, new() where THandler : ICommandHandler<TArgs>
+    {
+        var command = new TCommand();
+        var argsBinder = new GenericArgsBinder<TCommand, TArgs>(command);
+        command.SetHandler(async args => await command.BuildHandler(args, sp).Handle(args), argsBinder);
+        return command;
     }
 }

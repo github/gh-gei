@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
@@ -224,7 +225,7 @@ function Exec {
 }";
 }
 
-public class GenerateScriptCommandArgs
+public class GenerateScriptCommandArgs : ICommandArgs
 {
     public string BbsServerUrl { get; set; }
     public string GithubOrg { get; set; }
