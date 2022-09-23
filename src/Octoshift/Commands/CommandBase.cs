@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OctoshiftCLI.Commands;
 
-public abstract class CommandBase<TArgs, THandler> : Command where TArgs : class where THandler : class
+public abstract class CommandBase<TArgs, THandler> : Command where TArgs : class where THandler : ICommandHandler<TArgs>
 {
     protected CommandBase(string name, string description = null) : base(name, description) { }
 
