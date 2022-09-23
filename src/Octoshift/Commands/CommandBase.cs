@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
