@@ -11,21 +11,21 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class GenerateMannequinCsvCommandBaseTests
+public class GenerateMannequinCsvCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-    private readonly GenerateMannequinCsvCommandHandler _command;
+    private readonly GenerateMannequinCsvCommandHandler _handler;
 
     private const string CSV_HEADER = "mannequin-user,mannequin-id,target-user";
     private const string GITHUB_ORG = "FooOrg";
     private readonly string GITHUB_ORG_ID = Guid.NewGuid().ToString();
     private string _csvContent = string.Empty;
 
-    public GenerateMannequinCsvCommandBaseTests()
+    public GenerateMannequinCsvCommandHandlerTests()
     {
-        _command = new GenerateMannequinCsvCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
+        _handler = new GenerateMannequinCsvCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
         {
             WriteToFile = (_, contents) =>
             {
@@ -52,7 +52,7 @@ public class GenerateMannequinCsvCommandBaseTests
             Output = new FileInfo("unit-test-output"),
             IncludeReclaimed = false,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -82,7 +82,7 @@ public class GenerateMannequinCsvCommandBaseTests
             Output = new FileInfo("unit-test-output"),
             IncludeReclaimed = false,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -113,7 +113,7 @@ public class GenerateMannequinCsvCommandBaseTests
             Output = new FileInfo("unit-test-output"),
             IncludeReclaimed = true,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
