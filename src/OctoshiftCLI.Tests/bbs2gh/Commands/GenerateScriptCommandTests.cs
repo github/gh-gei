@@ -10,7 +10,7 @@ public class GenerateScriptCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new GenerateScriptCommand(null, null, null, null, null);
+        var command = new GenerateScriptCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("generate-script");
         command.Options.Count.Should().Be(9);

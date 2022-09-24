@@ -1,14 +1,14 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
+using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.BbsToGithub
@@ -24,7 +24,6 @@ namespace OctoshiftCLI.BbsToGithub
 
             var serviceCollection = new ServiceCollection();
             serviceCollection
-                .AddCommands()
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<BbsApiFactory>()
@@ -37,14 +36,24 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddSingleton<BbsArchiveDownloaderFactory>()
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
-            var parser = BuildParser(serviceProvider);
+            var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.")
+                .AddCommands(serviceProvider);
 
-            SetContext(parser.Parse(args));
+            var commandLineBuilder = new CommandLineBuilder(rootCommand);
+            var parser = commandLineBuilder
+                .UseDefaults()
+                .UseExceptionHandler((ex, _) =>
+                {
+                    Logger.LogError(ex);
+                    Environment.ExitCode = 1;
+                }, 1)
+                .Build();
+
+            SetContext(new InvocationContext(parser.Parse(args)));
 
             try
             {
@@ -59,10 +68,10 @@ namespace OctoshiftCLI.BbsToGithub
             await parser.InvokeAsync(args);
         }
 
-        private static void SetContext(ParseResult parseResult)
+        private static void SetContext(InvocationContext context)
         {
-            CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
-            CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
+            CliContext.RootCommand = context.ParseResult.RootCommandResult.Command.Name;
+            CliContext.ExecutingCommand = context.ParseResult.CommandResult.Command.Name;
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
@@ -78,44 +87,6 @@ namespace OctoshiftCLI.BbsToGithub
                 Logger.LogWarning($"You are running an older version of the bbs2gh extension [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
                 Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
-        }
-
-        private static Parser BuildParser(ServiceProvider serviceProvider)
-        {
-            var root = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
-            var commandLineBuilder = new CommandLineBuilder(root);
-
-            foreach (var command in serviceProvider.GetServices<Command>())
-            {
-                commandLineBuilder.Command.AddCommand(command);
-            }
-
-            return commandLineBuilder
-                .UseDefaults()
-                .UseExceptionHandler((ex, _) =>
-                {
-                    Logger.LogError(ex);
-                    Environment.ExitCode = 1;
-                }, 1)
-                .Build();
-        }
-
-        private static IServiceCollection AddCommands(this IServiceCollection services)
-        {
-            var sampleCommandType = typeof(MigrateRepoCommand);
-            var commandType = typeof(Command);
-
-            var commands = sampleCommandType
-                .Assembly
-                .GetExportedTypes()
-                .Where(x => x.Namespace == sampleCommandType.Namespace && commandType.IsAssignableFrom(x));
-
-            foreach (var command in commands)
-            {
-                services.AddSingleton(commandType, command);
-            }
-
-            return services;
         }
     }
 }

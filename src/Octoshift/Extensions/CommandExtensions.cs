@@ -36,7 +36,9 @@ public static class CommandExtensions
     }
 
     [SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Called via reflection")]
-    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : class, new() where TCommand : CommandBase<TArgs, THandler>, new() where THandler : ICommandHandler<TArgs>
+    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : class, new()
+                                                                                            where TCommand : CommandBase<TArgs, THandler>, new()
+                                                                                            where THandler : ICommandHandler<TArgs>
     {
         var command = new TCommand();
         var argsBinder = new GenericArgsBinder<TCommand, TArgs>(command);

@@ -5,32 +5,33 @@ using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 
-public class GenerateScriptCommandHandler
+public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {
     private readonly OctoLogger _log;
     private readonly IVersionProvider _versionProvider;
     private readonly FileSystemProvider _fileSystemProvider;
-    private readonly BbsApiFactory _bbsApiFactory;
+    private readonly BbsApi _bbsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         IVersionProvider versionProvider,
         FileSystemProvider fileSystemProvider,
-        BbsApiFactory bbsApiFactory,
+        BbsApi bbsApi,
         EnvironmentVariableProvider environmentVariableProvider)
     {
         _log = log;
         _versionProvider = versionProvider;
         _fileSystemProvider = fileSystemProvider;
-        _bbsApiFactory = bbsApiFactory;
+        _bbsApi = bbsApi;
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public async Task Invoke(GenerateScriptCommandArgs args)
+    public async Task Handle(GenerateScriptCommandArgs args)
     {
         if (args is null)
         {
@@ -61,8 +62,7 @@ public class GenerateScriptCommandHandler
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
-        var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername ?? _environmentVariableProvider.BbsUsername(), args.BbsPassword ?? _environmentVariableProvider.BbsPassword());
-        var projects = await bbsApi.GetProjects();
+        var projects = await _bbsApi.GetProjects();
         foreach (var (_, projectKey, projectName) in projects)
         {
             _log.LogInformation($"Project: {projectName}");
@@ -70,7 +70,7 @@ public class GenerateScriptCommandHandler
             content.AppendLine();
             content.AppendLine($"# =========== Project: {projectName} ===========");
 
-            var repos = await bbsApi.GetRepos(projectKey);
+            var repos = await _bbsApi.GetRepos(projectKey);
 
             if (!repos.Any())
             {
