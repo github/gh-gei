@@ -75,7 +75,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
@@ -107,7 +107,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 GithubRepo = GITHUB_REPO,
                 GithubPat = githubPat
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
@@ -138,7 +138,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
@@ -162,7 +162,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockBbsApi.Verify(m => m.StartExport(
@@ -192,7 +192,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             };
 
             // Assert
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -207,7 +207,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 BbsProject = BBS_PROJECT,
                 BbsRepo = BBS_REPO
             };
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -224,7 +224,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SshUser = SSH_USER,
                 SmbUser = SMB_USER
             };
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SshUser = SSH_USER
             };
 
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -268,7 +268,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
@@ -293,7 +293,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             };
 
             // Assert
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -310,7 +310,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SmbUser = SMB_USER
             };
 
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -326,7 +326,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             };
 
             // Assert
-            await _handler.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
     }
 }

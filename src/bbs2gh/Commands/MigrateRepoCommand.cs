@@ -157,7 +157,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         if (args.AzureStorageConnectionString.HasValue())
         {
-            var azureApiFactory = sp.GetRequiredService<AzureApiFactory>();
+            var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
             azureApi = azureApiFactory.Create(args.AzureStorageConnectionString);
         }
 

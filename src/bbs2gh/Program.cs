@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CommandLine;
+using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
@@ -42,7 +43,17 @@ namespace OctoshiftCLI.BbsToGithub
             var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.")
                 .AddCommands(serviceProvider);
 
-            SetContext(new InvocationContext(rootCommand.Parse(args)));
+            var commandLineBuilder = new CommandLineBuilder(rootCommand);
+            var parser = commandLineBuilder
+                .UseDefaults()
+                .UseExceptionHandler((ex, _) =>
+                {
+                    Logger.LogError(ex);
+                    Environment.ExitCode = 1;
+                }, 1)
+                .Build();
+
+            SetContext(new InvocationContext(parser.Parse(args)));
 
             try
             {
@@ -54,15 +65,7 @@ namespace OctoshiftCLI.BbsToGithub
                 Logger.LogVerbose(ex.ToString());
             }
 
-            try
-            {
-                await rootCommand.InvokeAsync(args);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex);
-                Environment.ExitCode = 1;
-            }
+            await parser.InvokeAsync(args);
         }
 
         private static void SetContext(InvocationContext context)

@@ -36,20 +36,20 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _fileSystemProvider = fileSystemProvider;
     }
 
-    public async Task Invoke(MigrateRepoCommandArgs args)
+    public async Task Handle(MigrateRepoCommandArgs args)
     {
         if (args is null)
         {
             throw new ArgumentNullException(nameof(args));
         }
 
-        LogOptions(args);
-        ValidateOptions(args);
-
         _log.RegisterSecret(args.AzureStorageConnectionString);
         _log.RegisterSecret(args.BbsPassword);
         _log.RegisterSecret(args.GithubPat);
         _log.RegisterSecret(args.SmbPassword);
+
+        LogOptions(args);
+        ValidateOptions(args);
 
         _log.Verbose = args.Verbose;
 
@@ -207,7 +207,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.AzureStorageConnectionString.HasValue())
         {
-            _log.LogInformation($"AZURE STORAGE CONNECTION STRING: {args.AzureStorageConnectionString}");
+            _log.LogInformation($"AZURE STORAGE CONNECTION STRING: ********");
         }
 
         if (args.GithubOrg.HasValue())
@@ -314,6 +314,4 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
     }
-
-    public Task Handle(MigrateRepoCommandArgs args) => throw new NotImplementedException();
 }
