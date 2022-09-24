@@ -141,8 +141,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
-            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat, args.DownloadMigrationLogs) :
-            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
+            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
+            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -150,7 +150,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
     }
 
-    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
@@ -164,7 +164,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
     }
 
-    private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat, bool downloadMigrationLogs)
+    private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, bool downloadMigrationLogs)
     {
         var repos = await GetAdoRepos(_sourceAdoApi, adoSourceOrg, adoTeamProject);
         if (!repos.Any())
