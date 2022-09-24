@@ -3,12 +3,11 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
 {
@@ -23,7 +22,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
             var serviceCollection = new ServiceCollection();
             serviceCollection
-                .AddCommands()
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
@@ -35,8 +33,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
-                .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddSingleton<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
@@ -92,13 +90,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("CLI for GitHub Enterprise Importer.");
+            var root = new RootCommand("CLI for GitHub Enterprise Importer.")
+                .AddCommands(serviceProvider);
             var commandLineBuilder = new CommandLineBuilder(root);
-
-            foreach (var command in serviceProvider.GetServices<Command>())
-            {
-                commandLineBuilder.Command.AddCommand(command);
-            }
 
             return commandLineBuilder
                 .UseDefaults()
@@ -108,24 +102,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                     Environment.ExitCode = 1;
                 }, 1)
                 .Build();
-        }
-
-        private static IServiceCollection AddCommands(this IServiceCollection services)
-        {
-            var sampleCommandType = typeof(GenerateScriptCommand);
-            var commandType = typeof(Command);
-
-            var commands = sampleCommandType
-                .Assembly
-                .GetExportedTypes()
-                .Where(x => x.Namespace == sampleCommandType.Namespace && commandType.IsAssignableFrom(x));
-
-            foreach (var command in commands)
-            {
-                services.AddSingleton(commandType, command);
-            }
-
-            return services;
         }
     }
 }
