@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.Linq;
 using System.Reflection;
 using OctoshiftCLI.Commands;
@@ -13,7 +14,6 @@ public static class AssemblyExtensions
             .GetTypes()
             .Where(t =>
                 t.IsClass &&
-                t.BaseType is { IsGenericType: true } &&
-                t.BaseType.GetGenericTypeDefinition() == typeof(CommandBase<,>))
+                t.IsAssignableTo(typeof(Command)))
         ?? throw new ArgumentNullException(nameof(assembly));
 }
