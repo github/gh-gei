@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
 using System.Reflection;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.Extensions;
 
