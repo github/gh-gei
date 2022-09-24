@@ -1,148 +1,157 @@
-﻿using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+﻿using System;
+using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
-    public class MigrateRepoCommand : Command
+    public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRepoCommandHandler>
     {
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base(
+        public MigrateRepoCommand() : base(
             name: "migrate-repo",
             description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
-            var githubSourceOrg = new Option<string>("--github-source-org")
-            {
-                IsRequired = false,
-                Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
-            };
-            var adoServerUrl = new Option<string>("--ado-server-url")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
-            };
-            var adoSourceOrg = new Option<string>("--ado-source-org")
-            {
-                IsRequired = false,
-                IsHidden = true,
-                Description = "Uses ADO_PAT env variable or --ado-pat option."
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = false,
-                IsHidden = true
-            };
-            var sourceRepo = new Option<string>("--source-repo")
-            {
-                IsRequired = true
-            };
-            var githubTargetOrg = new Option<string>("--github-target-org")
-            {
-                IsRequired = true,
-                Description = "Uses GH_PAT env variable or --github-target-pat option."
-            };
-            var targetRepo = new Option<string>("--target-repo")
-            {
-                IsRequired = false,
-                Description = "Defaults to the name of source-repo"
-            };
-            var targetApiUrl = new Option<string>("--target-api-url")
-            {
-                IsRequired = false,
-                Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
-            };
+            AddOption(GithubSourceOrg);
+            AddOption(AdoServerUrl);
+            AddOption(AdoSourceOrg);
+            AddOption(AdoTeamProject);
+            AddOption(SourceRepo);
+            AddOption(GithubTargetOrg);
+            AddOption(TargetRepo);
+            AddOption(TargetApiUrl);
 
-            // GHES migration path
-            var ghesApiUrl = new Option<string>("--ghes-api-url")
-            {
-                IsRequired = false,
-                Description = "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
-            };
-            var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
-            {
-                IsRequired = false,
-                Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
-            };
-            var noSslVerify = new Option<bool>("--no-ssl-verify")
-            {
-                IsRequired = false,
-                Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
-            };
+            AddOption(GhesApiUrl);
+            AddOption(AzureStorageConnectionString);
+            AddOption(NoSslVerify);
 
-            // Pre-uploaded archive urls, hidden by default
-            var gitArchiveUrl = new Option<string>("--git-archive-url")
-            {
-                IsHidden = true,
-                IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
-            };
-            var metadataArchiveUrl = new Option<string>("--metadata-archive-url")
-            {
-                IsHidden = true,
-                IsRequired = false,
-                Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
-            };
-            var skipReleases = new Option<bool>("--skip-releases")
-            {
-                IsRequired = false,
-                Description = "Skip releases when migrating."
-            };
-            var lockSourceRepo = new Option<bool>("--lock-source-repo")
-            {
-                IsRequired = false,
-                Description = "Lock source repo when migrating."
-            };
-            var wait = new Option<bool>("--wait")
-            {
-                IsRequired = false,
-                Description = "Synchronously waits for the repo migration to finish."
-            };
-            var githubSourcePat = new Option<string>("--github-source-pat")
-            {
-                IsRequired = false
-            };
-            var githubTargetPat = new Option<string>("--github-target-pat")
-            {
-                IsRequired = false
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false,
-                IsHidden = true
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(GitArchiveUrl);
+            AddOption(MetadataArchiveUrl);
 
-            AddOption(githubSourceOrg);
-            AddOption(adoServerUrl);
-            AddOption(adoSourceOrg);
-            AddOption(adoTeamProject);
-            AddOption(sourceRepo);
-            AddOption(githubTargetOrg);
-            AddOption(targetRepo);
-            AddOption(targetApiUrl);
+            AddOption(SkipReleases);
+            AddOption(LockSourceRepo);
 
-            AddOption(ghesApiUrl);
-            AddOption(azureStorageConnectionString);
-            AddOption(noSslVerify);
+            AddOption(Wait);
+            AddOption(GithubSourcePat);
+            AddOption(GithubTargetPat);
+            AddOption(AdoPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(gitArchiveUrl);
-            AddOption(metadataArchiveUrl);
+        public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
+        {
+            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
+        };
+        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
+        {
+            IsHidden = true,
+            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
+        };
+        public Option<string> AdoSourceOrg { get; } = new("--ado-source-org")
+        {
+            IsHidden = true,
+            Description = "Uses ADO_PAT env variable or --ado-pat option."
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsHidden = true
+        };
+        public Option<string> SourceRepo { get; } = new("--source-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubTargetOrg { get; } = new("--github-target-org")
+        {
+            IsRequired = true,
+            Description = "Uses GH_PAT env variable or --github-target-pat option."
+        };
+        public Option<string> TargetRepo { get; } = new("--target-repo")
+        {
+            Description = "Defaults to the name of source-repo"
+        };
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+        };
 
-            AddOption(skipReleases);
-            AddOption(lockSourceRepo);
+        // GHES migration path
+        public Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
+        {
+            Description = "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
+        };
+        public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
+        {
+            Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
+        };
+        public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
+        {
+            Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
+        };
 
-            AddOption(wait);
-            AddOption(githubSourcePat);
-            AddOption(githubTargetPat);
-            AddOption(adoPat);
-            AddOption(verbose);
+        // Pre-uploaded archive urls, hidden by default
+        public Option<string> GitArchiveUrl { get; } = new("--git-archive-url")
+        {
+            IsHidden = true,
+            Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated git archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --metadata-archive-url"
+        };
+        public Option<string> MetadataArchiveUrl { get; } = new("--metadata-archive-url")
+        {
+            IsHidden = true,
+            Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
+        };
+        public Option<bool> SkipReleases { get; } = new("--skip-releases")
+        {
+            Description = "Skip releases when migrating."
+        };
+        public Option<bool> LockSourceRepo { get; } = new("--lock-source-repo")
+        {
+            Description = "Lock source repo when migrating."
+        };
+        public Option<bool> Wait { get; } = new("--wait")
+        {
+            Description = "Synchronously waits for the repo migration to finish."
+        };
+        public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
+        public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
+        public Option<string> AdoPat { get; } = new("--ado-pat")
+        {
+            IsHidden = true
+        };
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new MigrateRepoCommandHandler(log, sourceGithubApiFactory, targetGithubApiFactory, environmentVariableProvider, azureApiFactory);
-            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
+        public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+            var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
+
+            GithubApi ghesApi = null;
+            AzureApi azureApi = null;
+
+            if (args.GhesApiUrl.HasValue())
+            {
+                var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
+                var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
+
+                ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
+                azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
+            }
+
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi);
         }
     }
 
