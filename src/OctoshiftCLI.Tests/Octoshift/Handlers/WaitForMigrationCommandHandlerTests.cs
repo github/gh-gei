@@ -20,7 +20,7 @@ public class WaitForMigrationCommandHandlerTests
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
     private const string ORG_MIGRATION_ID = "OM_MIGRATION_ID";
     private const string TARGET_REPO = "TARGET_REPO";
-    private const int WAIT_INTERVAL = 1;
+    private const int WAIT_INTERVAL = 0;
 
     public WaitForMigrationCommandHandlerTests()
     {

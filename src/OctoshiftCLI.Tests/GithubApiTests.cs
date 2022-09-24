@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests
     public class GithubApiTests
     {
         private const string API_URL = "https://api.github.com";
-        private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object);
+        private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0 };
         private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
 
         private readonly GithubApi _githubApi;
