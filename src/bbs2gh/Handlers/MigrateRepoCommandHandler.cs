@@ -1,36 +1,38 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 
-public class MigrateRepoCommandHandler
+public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly GithubApiFactory _githubApiFactory;
-    private readonly BbsApiFactory _bbsApiFactory;
-    private readonly IAzureApiFactory _azureApiFactory;
+    private readonly GithubApi _githubApi;
+    private readonly BbsApi _bbsApi;
+    private readonly AzureApi _azureApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    private readonly BbsArchiveDownloaderFactory _bbsArchiveDownloaderFactory;
+    private readonly IBbsArchiveDownloader _bbsArchiveDownloader;
     private readonly FileSystemProvider _fileSystemProvider;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
-        GithubApiFactory githubApiFactory,
-        BbsApiFactory bbsApiFactory,
+        GithubApi githubApi,
+        BbsApi bbsApi,
         EnvironmentVariableProvider environmentVariableProvider,
-        BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
-        IAzureApiFactory azureApiFactory,
+        IBbsArchiveDownloader bbsArchiveDownloader,
+        AzureApi azureApi,
         FileSystemProvider fileSystemProvider)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
-        _bbsApiFactory = bbsApiFactory;
-        _azureApiFactory = azureApiFactory;
+        _githubApi = githubApi;
+        _bbsApi = bbsApi;
+        _azureApi = azureApi;
         _environmentVariableProvider = environmentVariableProvider;
-        _bbsArchiveDownloaderFactory = bbsArchiveDownloaderFactory;
+        _bbsArchiveDownloader = bbsArchiveDownloader;
         _fileSystemProvider = fileSystemProvider;
     }
 
@@ -60,12 +62,12 @@ public class MigrateRepoCommandHandler
 
         if (args.SshUser.HasValue())
         {
-            args.ArchivePath = await DownloadArchive(exportId, args);
+            args.ArchivePath = await DownloadArchive(exportId);
         }
 
         if (args.ArchivePath.HasValue())
         {
-            args.ArchiveUrl = await UploadArchive(args.AzureStorageConnectionString, args.ArchivePath);
+            args.ArchiveUrl = await UploadArchive(args.ArchivePath);
         }
 
         if (args.ArchiveUrl.HasValue())
@@ -74,36 +76,28 @@ public class MigrateRepoCommandHandler
         }
     }
 
-    private async Task<string> DownloadArchive(long exportId, MigrateRepoCommandArgs args)
+    private async Task<string> DownloadArchive(long exportId)
     {
-        var downloader = args.SshUser.HasValue()
-            ? _bbsArchiveDownloaderFactory.CreateSshDownloader(ExtractHost(args.BbsServerUrl), args.SshUser, args.SshPrivateKey, args.SshPort)
-            : _bbsArchiveDownloaderFactory.CreateSmbDownloader();
-
         _log.LogInformation($"Download archive {exportId} started...");
-        var downloadedArchiveFullPath = await downloader.Download(exportId);
+        var downloadedArchiveFullPath = await _bbsArchiveDownloader.Download(exportId);
         _log.LogInformation($"Archive was successfully downloaded at \"{downloadedArchiveFullPath}\".");
 
         return downloadedArchiveFullPath;
     }
 
-    private string ExtractHost(string bbsServerUrl) => new Uri(bbsServerUrl).Host;
-
     private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
     {
-        var bbsApi = _bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
-
-        var exportId = await bbsApi.StartExport(args.BbsProject, args.BbsRepo);
+        var exportId = await _bbsApi.StartExport(args.BbsProject, args.BbsRepo);
 
         _log.LogInformation($"Export started. Export ID: {exportId}");
 
-        var (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
+        var (exportState, exportMessage, exportProgress) = await _bbsApi.GetExport(exportId);
 
         while (ExportState.IsInProgress(exportState))
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
-            (exportState, exportMessage, exportProgress) = await bbsApi.GetExport(exportId);
+            (exportState, exportMessage, exportProgress) = await _bbsApi.GetExport(exportId);
         }
 
         if (ExportState.IsError(exportState))
@@ -116,16 +110,13 @@ public class MigrateRepoCommandHandler
         return exportId;
     }
 
-    private async Task<string> UploadArchive(string azureStorageConnectionString, string archivePath)
+    private async Task<string> UploadArchive(string archivePath)
     {
         _log.LogInformation("Uploading Archive...");
 
-        azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
-        var azureApi = _azureApiFactory.Create(azureStorageConnectionString);
-
         var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
         var guid = Guid.NewGuid().ToString();
-        var archiveBlobUrl = await azureApi.UploadToBlob($"{guid}.tar", archiveData);
+        var archiveBlobUrl = await _azureApi.UploadToBlob($"{guid}.tar", archiveData);
 
         return archiveBlobUrl.ToString();
     }
@@ -137,15 +128,14 @@ public class MigrateRepoCommandHandler
         archiveUrl ??= args.ArchiveUrl;
 
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var migrationSourceId = await githubApi.CreateBbsMigrationSource(githubOrgId);
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+        var migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
 
         string migrationId;
 
         try
         {
-            migrationId = await githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl);
+            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -159,13 +149,13 @@ public class MigrateRepoCommandHandler
             return;
         }
 
-        var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
+        var (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
-            (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
+            (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
         }
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
@@ -324,4 +314,6 @@ public class MigrateRepoCommandHandler
             }
         }
     }
+
+    public Task Handle(MigrateRepoCommandArgs args) => throw new NotImplementedException();
 }

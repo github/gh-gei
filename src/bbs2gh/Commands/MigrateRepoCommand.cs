@@ -1,169 +1,167 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Handlers;
+using OctoshiftCLI.BbsToGithub.Services;
+using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 
-public class MigrateRepoCommand : Command
+public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRepoCommandHandler>
 {
-    public MigrateRepoCommand(
-        OctoLogger log,
-        GithubApiFactory githubApiFactory,
-        BbsApiFactory bbsApiFactory,
-        EnvironmentVariableProvider environmentVariableProvider,
-        BbsArchiveDownloaderFactory bbsArchiveDownloaderFactory,
-        IAzureApiFactory azureApiFactory,
-        FileSystemProvider fileSystemProvider) : base(
+    public MigrateRepoCommand() : base(
             name: "migrate-repo",
             description: "Import a Bitbucket Server archive to GitHub." +
                          Environment.NewLine +
                          "Note: Expects GH_PAT env variable or --github-pat option to be set.")
     {
-        // Arguments to generate a new archive
-        var bbsServerUrl = new Option<string>("--bbs-server-url")
-        {
-            IsRequired = false,
-            Description = "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990"
-        };
+        AddOption(ArchiveUrl);
+        AddOption(GithubOrg);
+        AddOption(GithubRepo);
+        AddOption(GithubPat);
+        AddOption(BbsServerUrl);
+        AddOption(BbsProject);
+        AddOption(BbsRepo);
+        AddOption(BbsUsername);
+        AddOption(BbsPassword);
+        AddOption(SshUser);
+        AddOption(SshPrivateKey);
+        AddOption(SshPort);
+        AddOption(SmbUser);
+        AddOption(SmbPassword);
+        AddOption(ArchivePath);
+        AddOption(AzureStorageConnectionString);
+        AddOption(Wait);
+        AddOption(Verbose);
+    }
 
-        var bbsProject = new Option<string>("--bbs-project")
-        {
-            IsRequired = false,
-            Description = "The Bitbucket project to migrate."
-        };
+    public Option<string> BbsServerUrl { get; } = new(
+        name: "--bbs-server-url",
+        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990");
 
-        var bbsRepo = new Option<string>("--bbs-repo")
-        {
-            IsRequired = false,
-            Description = "The Bitbucket repository to migrate."
-        };
+    public Option<string> BbsProject { get; } = new(
+        name: "--bbs-project",
+        description: "The Bitbucket project to migrate.");
 
-        var bbsUsername = new Option<string>("--bbs-username")
-        {
-            IsRequired = false,
-            Description = "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable."
-        };
+    public Option<string> BbsRepo { get; } = new(
+        name: "--bbs-repo",
+        description: "The Bitbucket repository to migrate.");
 
-        var bbsPassword = new Option<string>("--bbs-password")
-        {
-            IsRequired = false,
-            Description = "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable."
-        };
+    public Option<string> BbsUsername { get; } = new(
+        name: "--bbs-username",
+        description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.");
 
-        // Arguments to import an existing archive
-        var archiveUrl = new Option<string>("--archive-url")
-        {
-            IsRequired = false,
-            Description = "URL used to download Bitbucket Server migration archive. Only needed if you want to manually retrieve the archive from BBS instead of letting this CLI do that for you."
-        };
+    public Option<string> BbsPassword { get; } = new(
+        name: "--bbs-password",
+        description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.");
 
-        var archivePath = new Option<string>("--archive-path")
-        {
-            IsRequired = false,
-            Description = "Path to Bitbucket Server migration archive on disk."
-        };
+    public Option<string> ArchiveUrl { get; } = new(
+        name: "--archive-url",
+        description:
+        "URL used to download Bitbucket Server migration archive. Only needed if you want to manually retrieve the archive from BBS instead of letting this CLI do that for you.");
 
-        var azureStorageConnectionString = new Option<string>("--azure-storage-connection-string")
-        {
-            IsRequired = false,
-            Description = "A connection string for an Azure Storage account, used to upload the BBS archive."
-        };
+    public Option<string> ArchivePath { get; } = new(
+        name: "--archive-path",
+        description: "Path to Bitbucket Server migration archive on disk.");
 
-        var githubOrg = new Option<string>("--github-org")
-        {
-            IsRequired = false
-        };
-        var githubRepo = new Option<string>("--github-repo")
-        {
-            IsRequired = false
-        };
+    public Option<string> AzureStorageConnectionString { get; } = new(
+        name: "--azure-storage-connection-string",
+        description: "A connection string for an Azure Storage account, used to upload the BBS archive. If not set will be read from AZURE_STORAGE_CONNECTION_STRING environment variable.");
 
-        var sshUser = new Option<string>("--ssh-user")
+    public Option<string> GithubOrg { get; } = new("--github-org");
+
+    public Option<string> GithubRepo { get; } = new("--github-repo");
+
+    public Option<string> SshUser { get; } = new(
+        name: "--ssh-user",
+        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.");
+
+    public Option<string> SshPrivateKey { get; } = new(
+        name: "--ssh-private-key",
+        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
+                     Environment.NewLine +
+                     "Supported private key formats:" +
+                     Environment.NewLine +
+                     "  - RSA in OpenSSL PEM format." +
+                     Environment.NewLine +
+                     "  - DSA in OpenSSL PEM format." +
+                     Environment.NewLine +
+                     "  - ECDSA 256/384/521 in OpenSSL PEM format." +
+                     Environment.NewLine +
+                     "  - ECDSA 256/384/521, ED25519 and RSA in OpenSSH key format.");
+
+    public Option<int> SshPort { get; } = new(
+        name: "--ssh-port",
+        getDefaultValue: () => 22,
+        description: "The SSH port (default: 22).");
+
+    public Option<string> SmbUser { get; } = new(
+        name: "--smb-user",
+        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.")
+    { IsHidden = true };
+
+    public Option<string> SmbPassword { get; } = new(
+        name: "--smb-password",
+        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.")
+    { IsHidden = true };
+
+    public Option<string> GithubPat { get; } = new(
+        name: "--github-pat",
+        description: "The GitHub personal access token to be used for the migration. If not set will be read from GH_PAT environment variable.");
+
+    public Option<bool> Wait { get; } = new(
+        name: "--wait",
+        description: "Synchronously waits for the repo migration to finish.");
+
+    public Option<bool> Verbose { get; } = new("--verbose");
+
+    public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
+    {
+        if (args is null)
         {
-            IsRequired = false,
-            Description = "The SSH user to be used for downloading the export archive off of the Bitbucket server."
-        };
-        var sshPrivateKey = new Option<string>("--ssh-private-key")
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
         {
-            IsRequired = false,
-            Description = "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
-                          Environment.NewLine +
-                          "Supported private key formats:" +
-                          Environment.NewLine +
-                          "  - RSA in OpenSSL PEM format." +
-                          Environment.NewLine +
-                          "  - DSA in OpenSSL PEM format." +
-                          Environment.NewLine +
-                          "  - ECDSA 256/384/521 in OpenSSL PEM format." +
-                          Environment.NewLine +
-                          "  - ECDSA 256/384/521, ED25519 and RSA in OpenSSH key format."
-        };
-        var sshPort = new Option<int>("--ssh-port")
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+        var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+        GithubApi githubApi = null;
+        BbsApi bbsApi = null;
+        IBbsArchiveDownloader bbsArchiveDownloader = null;
+        AzureApi azureApi = null;
+
+        if (args.GithubOrg.HasValue())
         {
-            IsRequired = false,
-            Description = "The SSH port (default: 22)."
-        };
+            var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
+            githubApi = githubApiFactory.Create(null, args.GithubPat);
+        }
 
-        var smbUser = new Option<string>("--smb-user")
+        if (args.BbsServerUrl.HasValue())
         {
-            IsRequired = false,
-            IsHidden = true,
-            Description = "The SMB user to be used for downloading the export archive off of the Bitbucket server."
-        };
-        var smbPassword = new Option<string>("--smb-password")
+            var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
+            bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+        }
+
+        if (args.SshUser.HasValue())
         {
-            IsRequired = false,
-            IsHidden = true,
-            Description = "The SMB password to be used for downloading the export archive off of the Bitbucket server."
-        };
+            var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
+            var bbsHost = new Uri(args.BbsServerUrl).Host;
+            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort);
+        }
 
-        var githubPat = new Option<string>("--github-pat")
+        if (args.AzureStorageConnectionString.HasValue())
         {
-            IsRequired = false
-        };
-        var wait = new Option<bool>("--wait")
-        {
-            Description = "Synchronously waits for the repo migration to finish."
-        };
-        var verbose = new Option<bool>("--verbose")
-        {
-            IsRequired = false
-        };
+            var azureApiFactory = sp.GetRequiredService<AzureApiFactory>();
+            azureApi = azureApiFactory.Create(args.AzureStorageConnectionString);
+        }
 
-        AddOption(archiveUrl);
-        AddOption(githubOrg);
-        AddOption(githubRepo);
-        AddOption(githubPat);
-
-        AddOption(bbsServerUrl);
-        AddOption(bbsProject);
-        AddOption(bbsRepo);
-        AddOption(bbsUsername);
-        AddOption(bbsPassword);
-
-        AddOption(sshUser);
-        AddOption(sshPrivateKey);
-        AddOption(sshPort);
-
-        AddOption(smbUser);
-        AddOption(smbPassword);
-
-        AddOption(archivePath);
-        AddOption(azureStorageConnectionString);
-
-        AddOption(wait);
-        AddOption(verbose);
-
-        var handler = new MigrateRepoCommandHandler(
-            log,
-            githubApiFactory,
-            bbsApiFactory,
-            environmentVariableProvider,
-            bbsArchiveDownloaderFactory,
-            azureApiFactory,
-            fileSystemProvider);
-        Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
+        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, fileSystemProvider);
     }
 }
 

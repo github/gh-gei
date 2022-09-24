@@ -13,14 +13,10 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
     public class MigrateRepoCommandHandlerTests
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
-        private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
-        private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-        private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
         private readonly Mock<IBbsArchiveDownloader> _mockBbsArchiveDownloader = new();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
@@ -51,11 +47,11 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         {
             _handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
-                _mockGithubApiFactory.Object,
-                _mockBbsApiFactory.Object,
+                _mockGithubApi.Object,
+                _mockBbsApi.Object,
                 _mockEnvironmentVariableProvider.Object,
-                _mockBbsArchiveDownloaderFactory.Object,
-                _mockAzureApiFactory.Object,
+                _mockBbsArchiveDownloader.Object,
+                _mockAzureApi.Object,
                 _mockFileSystemProvider.Object
             );
         }
@@ -65,7 +61,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         {
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -98,8 +93,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             // Arrange
             var githubPat = "specific github pat";
 
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
-
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
@@ -131,7 +124,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         {
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -156,14 +148,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         public async Task Happy_Path_With_Bbs_Server_Url_And_Ssh_Download()
         {
             // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-
-            _mockBbsArchiveDownloaderFactory
-                .Setup(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, PRIVATE_KEY, 22))
-                .Returns(_mockBbsArchiveDownloader.Object);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -191,8 +177,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         public async Task Throws_An_Error_If_Export_Fails()
         {
             // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("FAILED", "The export failed", 0));
 
@@ -265,12 +249,10 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         {
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var archiveBytes = Encoding.ASCII.GetBytes("here are some bytes");
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
 
-            _mockAzureApiFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), archiveBytes)).ReturnsAsync(new System.Uri(ARCHIVE_URL));
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);

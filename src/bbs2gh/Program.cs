@@ -1,6 +1,5 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
@@ -85,26 +84,6 @@ namespace OctoshiftCLI.BbsToGithub
                 Logger.LogWarning($"You are running an older version of the bbs2gh extension [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
                 Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
-        }
-
-        private static Parser BuildParser(ServiceProvider serviceProvider)
-        {
-            var root = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.");
-            var commandLineBuilder = new CommandLineBuilder(root);
-
-            foreach (var command in serviceProvider.GetServices<Command>())
-            {
-                commandLineBuilder.Command.AddCommand(command);
-            }
-
-            return commandLineBuilder
-                .UseDefaults()
-                .UseExceptionHandler((ex, _) =>
-                {
-                    Logger.LogError(ex);
-                    Environment.ExitCode = 1;
-                }, 1)
-                .Build();
         }
     }
 }

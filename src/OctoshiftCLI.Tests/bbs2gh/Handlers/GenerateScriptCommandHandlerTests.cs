@@ -21,7 +21,6 @@ public class GenerateScriptCommandHandlerTests
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
     private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
-    private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
 
     private readonly GenerateScriptCommandHandler _handler;
 
@@ -52,12 +51,11 @@ public class GenerateScriptCommandHandlerTests
             _mockOctoLogger.Object,
             _mockVersionProvider.Object,
             _mockFileSystemProvider.Object,
-            _mockBbsApiFactory.Object,
+            _mockBbsApi.Object,
             _mockEnvironmentVariableProvider.Object);
 
         _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername()).Returns(BBS_USERNAME);
         _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword()).Returns(BBS_PASSWORD);
-        _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD)).Returns(_mockBbsApi.Object);
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (1, BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT_NAME) });
         _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[] { (1, BBS_FOO_REPO_1_SLUG, BBS_FOO_REPO_1_NAME) });
     }
@@ -77,7 +75,7 @@ public class GenerateScriptCommandHandlerTests
             SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
@@ -97,7 +95,7 @@ public class GenerateScriptCommandHandlerTests
             SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
@@ -141,7 +139,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo(OUTPUT),
             Verbose = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand1))));
@@ -169,7 +167,7 @@ public class GenerateScriptCommandHandlerTests
             SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(cliVersionComment))));
@@ -190,7 +188,7 @@ public class GenerateScriptCommandHandlerTests
             SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.StartsWith(shebang))));
@@ -219,7 +217,7 @@ function Exec {
             SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(execFunctionBlock))));
