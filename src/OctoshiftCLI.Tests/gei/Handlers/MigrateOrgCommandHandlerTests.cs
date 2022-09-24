@@ -14,7 +14,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
     public class MigrateOrgCommandHandlerTests
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new Mock<ITargetGithubApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
@@ -28,7 +27,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _handler = new MigrateOrgCommandHandler(
                 _mockOctoLogger.Object,
-                _mockTargetGithubApiFactory.Object,
+                _mockGithubApi.Object,
                 _mockEnvironmentVariableProvider.Object);
         }
 
@@ -51,8 +50,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
-
-            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -79,7 +76,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetPat = targetGithubPat,
                 Wait = true,
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
@@ -113,8 +110,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
-            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -139,7 +134,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetPat = targetGithubPat,
                 Wait = true,
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
@@ -173,8 +168,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
 
-            _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
             var actualLogOutput = new List<string>();
             _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
             _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -196,7 +189,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetEnterprise = TARGET_ENTERPRISE,
                 Wait = true,
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
