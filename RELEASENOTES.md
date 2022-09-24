@@ -2,3 +2,4 @@
 - fixed a bug where secrets were not getting scrubbed from the logs in some circumstances
 - If `create-team` fails when linking an IdP group with an HTTP 400, we will retry
 - If `create-team` fails when removing the initial team member, it will retry
+- In v0.25 we started publishing `ado2gh` as an extension to the `gh` CLI. However, we didn't update `ado2gh generate-script` to use the new syntax in the generated migration script. Now it will, and you will need the `gh ado2gh` extension installed in order to run the generated migration script.
