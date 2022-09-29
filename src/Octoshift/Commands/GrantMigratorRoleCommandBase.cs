@@ -25,7 +25,7 @@ public class GrantMigratorRoleCommandBase : Command
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
-    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false};
+    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
 
     protected void AddOptions()
     {

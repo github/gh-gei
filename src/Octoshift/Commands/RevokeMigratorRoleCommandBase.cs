@@ -45,5 +45,5 @@ public class RevokeMigratorRoleArgs
     public string ActorType { get; set; }
     public string GithubPat { get; set; }
     public bool Verbose { get; set; }
-    public string GhesApiUrl{ get; set; }
+    public string GhesApiUrl { get; set; }
 }
