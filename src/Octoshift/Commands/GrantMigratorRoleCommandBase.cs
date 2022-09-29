@@ -25,6 +25,8 @@ public class GrantMigratorRoleCommandBase : Command
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
+    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false};
+
     protected void AddOptions()
     {
         AddOption(GithubOrg);
@@ -32,6 +34,7 @@ public class GrantMigratorRoleCommandBase : Command
         AddOption(ActorType);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(GhesApiUrl);
     }
 }
 
@@ -42,4 +45,5 @@ public class GrantMigratorRoleCommandArgs
     public string ActorType { get; set; }
     public string GithubPat { get; set; }
     public bool Verbose { get; set; }
+    public string GhesApiUrl { get; set; }
 }

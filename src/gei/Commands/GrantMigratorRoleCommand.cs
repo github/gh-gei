@@ -27,7 +27,8 @@ public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
             Actor = args.Actor,
             ActorType = args.ActorType,
             GithubPat = args.GithubTargetPat,
-            Verbose = args.Verbose
+            Verbose = args.Verbose,
+            GhesApiUrl = args.GhesApiUrl
         });
 }
 
@@ -38,4 +39,5 @@ public class GrantMigratorRoleCommandArgs
     public string ActorType { get; set; }
     public string GithubTargetPat { get; set; }
     public bool Verbose { get; set; }
+    public string GhesApiUrl { get; set; }
 }
