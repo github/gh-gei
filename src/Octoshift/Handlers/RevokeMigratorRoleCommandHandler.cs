@@ -51,7 +51,7 @@ public class RevokeMigratorRoleCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = _githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
         var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
         var success = await githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
