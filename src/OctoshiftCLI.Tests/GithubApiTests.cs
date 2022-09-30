@@ -25,6 +25,7 @@ namespace OctoshiftCLI.Tests
         private const string GITHUB_ORG = "ORG_LOGIN";
         private const string GITHUB_ENTERPRISE = "ENTERPRISE_NAME";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
+        private const string TARGET_ORG = "TARGET_ORG";
 
         public GithubApiTests()
         {
@@ -968,38 +969,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetOrganizationMigrationState_Returns_The_State()
-        {
-            // Arrange
-            const string migrationId = "MIGRATION_ID";
-            const string url = "https://api.github.com/graphql";
-
-            var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state } } }\"" +
-                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
-            const string actualMigrationState = "SUCCEEDED";
-            var response = $@"
-            {{
-                ""data"": {{
-                    ""node"": {{
-                        ""state"": ""{actualMigrationState}""
-                    }}
-                }}
-            }}";
-
-            var internalSchemaHeader = new Dictionary<string, string>() { { "GraphQL-schema", "internal" } };
-            _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), internalSchemaHeader))
-                .ReturnsAsync(response);
-
-            // Act
-            var expectedMigrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
-
-            // Assert
-            expectedMigrationState.Should().Be(actualMigrationState);
-        }
-
-        [Fact]
         public async Task GetMigration_Retries_On_502()
         {
             // Arrange
@@ -1074,6 +1043,149 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
+        }
+
+        [Fact]
+        public async Task GetOrganizationMigration_Returns_The_Migration_State_And_Org_URL_And_Name()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+            const string sourceOrgUrl = "https://github.com/import-testing";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""sourceOrgUrl"": ""{sourceOrgUrl}"",
+                        ""state"": ""{actualMigrationState}"",
+                        ""failureReason"": """",
+                        ""targetOrgName"": ""{TARGET_ORG}""
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var (expectedMigrationState, expectedSourceOrgUrl, expectedTargetOrgName, expectedFailureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
+            expectedSourceOrgUrl.Should().Be(sourceOrgUrl);
+            expectedTargetOrgName.Should().Be(TARGET_ORG);
+            expectedFailureReason.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetOrganizationMigration_Retries_On_502()
+        {
+            // Arrange
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+            const string sourceOrgUrl = "https://github.com/import-testing";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""sourceOrgUrl"": ""{sourceOrgUrl}"",
+                        ""state"": ""{actualMigrationState}"",
+                        ""failureReason"": """",
+                        ""targetOrgName"": ""{TARGET_ORG}""
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var (expectedMigrationState, _, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
+        }
+
+        [Fact]
+        public async Task GetOrganizationMigration_Returns_The_Migration_Failure_Reason()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+            const string sourceOrgUrl = "https://github.com/import-testing";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualFailureReason = "FAILURE_REASON";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""sourceOrgUrl"": ""{sourceOrgUrl}"",
+                        ""state"": ""FAILED"",
+                        ""failureReason"": ""{actualFailureReason}"",
+                        ""targetOrgName"": ""{TARGET_ORG}""
+                    }}
+                }}
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var (_, _, _, expectedFailureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+
+            // Assert
+            expectedFailureReason.Should().Be(actualFailureReason);
+        }
+
+        [Fact]
+        public async Task GetOrganizationMigrationState_Returns_The_State()
+        {
+            // Arrange
+            const string migrationId = "MIGRATION_ID";
+            const string url = "https://api.github.com/graphql";
+
+            var payload =
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state } } }\"" +
+                $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+            const string actualMigrationState = "SUCCEEDED";
+            var response = $@"
+            {{
+                ""data"": {{
+                    ""node"": {{
+                        ""state"": ""{actualMigrationState}""
+                    }}
+                }}
+            }}";
+
+            var internalSchemaHeader = new Dictionary<string, string>() { { "GraphQL-schema", "internal" } };
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var expectedMigrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
+
+            // Assert
+            expectedMigrationState.Should().Be(actualMigrationState);
         }
 
         [Fact]

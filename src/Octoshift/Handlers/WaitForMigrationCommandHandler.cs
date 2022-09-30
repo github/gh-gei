@@ -58,9 +58,9 @@ public class WaitForMigrationCommandHandler
 
     private async Task WaitForOrgMigration(string migrationId, string githubPat, GithubApi githubApi)
     {
-        var state = await githubApi.GetOrganizationMigrationState(migrationId);
+        var (state, sourceOrgUrl, targetOrgName, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
 
-        _log.LogInformation($"Waiting for org migration (ID: {migrationId}) to finish...");
+        _log.LogInformation($"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {migrationId}) to finish...");
 
         if (githubPat is not null)
         {
@@ -77,14 +77,15 @@ public class WaitForMigrationCommandHandler
 
             if (OrganizationMigrationStatus.IsFailed(state))
             {
-                throw new OctoshiftCliException($"Migration {migrationId} failed");
+                _log.LogError($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}");
+                throw new OctoshiftCliException(failureReason);
             }
 
             _log.LogInformation($"Migration {migrationId} is {state}");
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            state = await githubApi.GetOrganizationMigrationState(migrationId);
+            (state, sourceOrgUrl, targetOrgName, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
         }
     }
 
