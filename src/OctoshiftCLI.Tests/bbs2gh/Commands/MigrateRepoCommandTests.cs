@@ -17,6 +17,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
+        private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
         private readonly Mock<IAwsApiFactory> _mockAwsApiFactory = new Mock<IAwsApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
@@ -38,6 +39,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
+        private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string AWS_ACCESS_KEY = "aws-access-key";
+        private const string AWS_SECRET_KEY = "aws-secret-key";
         private const string SSH_USER = "ssh-user";
         private const string PRIVATE_KEY = "private-key";
         private const string SMB_USER = "smb-user";
@@ -376,6 +380,47 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Uses_Aws_If_Credentials_Are_Passed()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Returns(MIGRATION_ID);
+
+            _mockAwsApiFactory.Setup(x => x.Create(AWS_ACCESS_KEY, AWS_SECRET_KEY)).Returns(_mockAwsApi.Object);
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(new System.Uri(ARCHIVE_URL));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                ArchivePath = ARCHIVE_PATH,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                AwsSecretKey = AWS_SECRET_KEY,
+                AwsBucketName = AWS_BUCKET_NAME
+            };
+            
+            await _command.Invoke(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                MIGRATION_SOURCE_ID,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                GITHUB_PAT,
+                ARCHIVE_URL
+            ));
+
+            _mockAwsApi.Verify(m => m.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()));
         }
     }
 }
