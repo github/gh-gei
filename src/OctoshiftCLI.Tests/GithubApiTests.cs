@@ -1176,7 +1176,6 @@ namespace OctoshiftCLI.Tests
                 }}
             }}";
 
-            var internalSchemaHeader = new Dictionary<string, string>() { { "GraphQL-schema", "internal" } };
             _githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
