@@ -42,6 +42,11 @@ public class GrantMigratorRoleCommandHandler
             return;
         }
 
+        if (args.GhesApiUrl is not null)
+        {
+            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+        }
+
         if (args.GithubPat is not null)
         {
             _log.LogInformation($"GITHUB PAT: ***");
