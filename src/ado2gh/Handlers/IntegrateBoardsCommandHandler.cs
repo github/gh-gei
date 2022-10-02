@@ -42,6 +42,9 @@ public class IntegrateBoardsCommandHandler
             _log.LogInformation("GITHUB PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+        _log.RegisterSecret(args.GithubPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
 

@@ -45,6 +45,9 @@ public class MigrateRepoCommandHandler
             _log.LogInformation("GITHUB PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+        _log.RegisterSecret(args.GithubPat);
+
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
         var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 

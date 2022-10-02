@@ -36,7 +36,10 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
 
-            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object);
+            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
+            {
+                _httpRetryInterval = 0
+            };
         }
 
         public void Dispose()
@@ -221,7 +224,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -263,7 +266,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.GetAsync("http://example.com"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -271,7 +274,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -312,7 +315,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.GetAsync("http://example.com"); // call with delay and retry
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -334,7 +337,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -376,7 +379,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PostAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -384,7 +387,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -425,7 +428,7 @@ namespace OctoshiftCLI.Tests
             var result = await githubClient.PostAsync("http://example.com", "hello"); // call with retry delay
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
             result.Should().Be("THIRD_RESPONSE");
         }
 
@@ -572,7 +575,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -614,7 +617,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PutAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -760,7 +763,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -802,7 +805,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.PatchAsync("http://example.com", "hello"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]
@@ -934,7 +937,7 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var retryAt = now + 10;
+            var retryAt = now + 1;
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
@@ -976,7 +979,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.DeleteAsync("http://example.com"); // normal call
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 10 seconds before continuing"), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("GitHub rate limit exceeded. Waiting 1 seconds before continuing"), Times.Once);
         }
 
         [Fact]

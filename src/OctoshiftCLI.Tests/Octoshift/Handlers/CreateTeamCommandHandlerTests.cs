@@ -3,17 +3,18 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class CreateTeamCommandBaseTests
+public class CreateTeamCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly CreateTeamCommandBase _command;
+    private readonly CreateTeamCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string TEAM_NAME = "foo-team";
@@ -22,9 +23,9 @@ public class CreateTeamCommandBaseTests
     private const int IDP_GROUP_ID = 42;
     private const string TEAM_SLUG = "foo-slug";
 
-    public CreateTeamCommandBaseTests()
+    public CreateTeamCommandHandlerTests()
     {
-        _command = new CreateTeamCommandBase(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _handler = new CreateTeamCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
     }
 
     [Fact]
@@ -43,7 +44,7 @@ public class CreateTeamCommandBaseTests
             TeamName = TEAM_NAME,
             IdpGroup = IDP_GROUP,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.CreateTeam(GITHUB_ORG, TEAM_NAME));
         _mockGithubApi.Verify(x => x.RemoveTeamMember(GITHUB_ORG, TEAM_SLUG, TEAM_MEMBERS[0]));
@@ -65,7 +66,7 @@ public class CreateTeamCommandBaseTests
             IdpGroup = IDP_GROUP,
             GithubPat = githubPat,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
@@ -90,7 +91,7 @@ public class CreateTeamCommandBaseTests
             TeamName = TEAM_NAME,
             IdpGroup = IDP_GROUP,
         };
-        await _command.Handle(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.CreateTeam(GITHUB_ORG, TEAM_NAME), Times.Never);
         _mockGithubApi.Verify(x => x.RemoveTeamMember(GITHUB_ORG, TEAM_SLUG, TEAM_MEMBERS[0]));

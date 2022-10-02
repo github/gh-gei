@@ -36,6 +36,8 @@ public class RewirePipelineCommandHandler
             _log.LogInformation("ADO PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
 
         var adoPipelineId = await ado.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);

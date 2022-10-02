@@ -8,7 +8,7 @@ namespace OctoshiftCLI
     public class RetryPolicy
     {
         private readonly OctoLogger _log;
-        internal readonly int _httpRetryInterval = 1000;
+        internal int _httpRetryInterval = 1000;
         internal int _retryOnResultInterval = 4000;
 
         public RetryPolicy(OctoLogger log)

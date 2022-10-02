@@ -33,6 +33,8 @@ public class ShareServiceConnectionCommandHandler
             _log.LogInformation("ADO PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
 
         var adoTeamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);

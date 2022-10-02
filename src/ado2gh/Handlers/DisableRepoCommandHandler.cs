@@ -34,6 +34,8 @@ public class DisableRepoCommandHandler
             _log.LogInformation("ADO PAT: ***");
         }
 
+        _log.RegisterSecret(args.AdoPat);
+
         var ado = _adoApiFactory.Create(args.AdoPat);
 
         var allRepos = await ado.GetRepos(args.AdoOrg, args.AdoTeamProject);
