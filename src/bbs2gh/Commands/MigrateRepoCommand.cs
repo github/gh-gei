@@ -74,15 +74,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsBucketName { get; } = new(
         name: "--aws-bucket-name",
-        description: "The name of the AWS S3 bucket to upload the BBS archive to. If not set will be read from AWS_BUCKET_NAME environment variable.");
+        description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
-        description: "The AWS access key to use for uploading the BBS archive. If not set will be read from AWS_ACCESS_KEY environment variable.");
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
 
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
-        description: "The AWS secret key to use for uploading the BBS archive. If not set will be read from AWS_SECRET_KEY environment variable.");
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 

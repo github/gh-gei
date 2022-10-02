@@ -236,6 +236,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"AZURE STORAGE CONNECTION STRING: ********");
         }
 
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation($"AWS ACCESS KEY: ********");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation($"AWS SECRET KEY: ********");
+        }
+
         if (args.GithubOrg.HasValue())
         {
             _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
