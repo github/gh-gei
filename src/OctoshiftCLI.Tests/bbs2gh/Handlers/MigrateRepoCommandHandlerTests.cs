@@ -358,7 +358,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 AwsSecretKey = AWS_SECRET_KEY,
                 AwsBucketName = AWS_BUCKET_NAME
             };
-            
+
             await _handler.Handle(args);
 
             // Assert

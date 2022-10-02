@@ -119,7 +119,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Uploading Archive to Azure...");
 
-        azureStorageConnectionString ??= _environmentVariableProvider.AzureStorageConnectionString();
+        _ = azureStorageConnectionString ?? _environmentVariableProvider.AzureStorageConnectionString();
 
         var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
         var archiveName = GenerateArchiveName();
@@ -127,7 +127,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         return archiveBlobUrl.ToString();
     }
-    
+
     private string GenerateArchiveName()
     {
         var guid = Guid.NewGuid().ToString();
@@ -138,8 +138,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Uploading Archive to AWS...");
 
-        accessKey ??= _environmentVariableProvider.AwsAccessKey();
-        secretKey ??= _environmentVariableProvider.AwsSecretKey();
+        _ = accessKey ?? _environmentVariableProvider.AwsAccessKey();
+        _ = secretKey ?? _environmentVariableProvider.AwsSecretKey();
 
         var keyName = GenerateArchiveName();
         var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
