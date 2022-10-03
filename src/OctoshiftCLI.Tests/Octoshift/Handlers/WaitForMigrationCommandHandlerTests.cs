@@ -176,12 +176,12 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Org_Migration_ID_That_Succeeds()
     {
         // Arrange
-        const string SourceOrgUrl = "some_url";
-        const string TargetOrgName = "TARGET_ORG";
+        const string sourceOrgUrl = "some_url";
+        const string targetOrgName = "TARGET_ORG";
         _mockGithubApi.SetupSequence(x => x.GetOrganizationMigration(ORG_MIGRATION_ID).Result)
-            .Returns((State: OrganizationMigrationStatus.InProgress, SourceOrgUrl, TargetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.InProgress, SourceOrgUrl, TargetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.Succeeded, SourceOrgUrl, TargetOrgName, FailureReason: null));
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
+            .Returns((State: OrganizationMigrationStatus.Succeeded, sourceOrgUrl, targetOrgName, FailureReason: null));
 
         _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
@@ -191,7 +191,7 @@ public class WaitForMigrationCommandHandlerTests
 
         var expectedLogOutput = new List<string>
             {
-                $"Waiting for {SourceOrgUrl} -> {TargetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
+                $"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
@@ -221,13 +221,13 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Org_Migration_ID_That_Fails()
     {
         // Arrange
-        const string FailureReason = "Failure Reason";
-        const string SourceOrgUrl = "some_url";
-        const string TargetOrgName = "TARGET_ORG";
+        const string failureReason = "Failure Reason";
+        const string sourceOrgUrl = "some_url";
+        const string targetOrgName = "TARGET_ORG";
         _mockGithubApi.SetupSequence(x => x.GetOrganizationMigration(ORG_MIGRATION_ID).Result)
-            .Returns((State: OrganizationMigrationStatus.InProgress, SourceOrgUrl, TargetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.InProgress, SourceOrgUrl, TargetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.Failed, SourceOrgUrl, TargetOrgName, FailureReason));
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
+            .Returns((State: OrganizationMigrationStatus.Failed, sourceOrgUrl, targetOrgName, failureReason));
 
         _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
@@ -237,12 +237,11 @@ public class WaitForMigrationCommandHandlerTests
 
         var expectedLogOutput = new List<string>
             {
-                $"Waiting for {SourceOrgUrl} -> {TargetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
+                $"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
-                $"Waiting {WAIT_INTERVAL} seconds...",
-                $"Migration {ORG_MIGRATION_ID} failed for {SourceOrgUrl} -> {TargetOrgName}"
+                $"Waiting {WAIT_INTERVAL} seconds..."
             };
 
         // Act
@@ -254,7 +253,7 @@ public class WaitForMigrationCommandHandlerTests
             .Invoking(async () => await _handler.Handle(args))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
-            .WithMessage(FailureReason);
+            .WithMessage($"Migration {ORG_MIGRATION_ID} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(5));

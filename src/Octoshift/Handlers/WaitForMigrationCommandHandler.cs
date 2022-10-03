@@ -77,8 +77,7 @@ public class WaitForMigrationCommandHandler
 
             if (OrganizationMigrationStatus.IsFailed(state))
             {
-                _log.LogError($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}");
-                throw new OctoshiftCliException(failureReason);
+                throw new OctoshiftCliException($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
             }
 
             _log.LogInformation($"Migration {migrationId} is {state}");
