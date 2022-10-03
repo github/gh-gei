@@ -74,4 +74,23 @@ public class GrantMigratorRoleCommandHandlerTests
         };
         await _handler.Handle(args);
     }
+
+    [Fact]
+    public async Task It_Uses_The_GhesApiUrl_When_Provided()
+    {
+        const string ghesApiUrl = "GHES-API-URL";
+
+        _mockGithubApiFactory.Setup(x => x.Create(ghesApiUrl, It.IsAny<string>())).Returns(_mockGithubApi.Object);
+
+        var args = new GrantMigratorRoleCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Actor = ACTOR,
+            ActorType = ACTOR_TYPE,
+            GhesApiUrl = ghesApiUrl
+        };
+        await _handler.Handle(args);
+
+        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
+    }
 }
