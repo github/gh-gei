@@ -34,6 +34,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AzureStorageConnectionString);
         AddOption(Wait);
         AddOption(Verbose);
+        AddOption(SharedHome);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -116,6 +117,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
+    public Option<string> SharedHome { get; } = new(
+        name: "--shared-home",
+        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
     {
         if (args is null)
@@ -152,7 +157,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
             var bbsHost = new Uri(args.BbsServerUrl).Host;
-            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort);
+            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.SharedHome);
         }
 
         if (args.AzureStorageConnectionString.HasValue())
@@ -177,6 +182,7 @@ public class MigrateRepoCommandArgs
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
     public bool Verbose { get; set; }
+    public string SharedHome { get; set; }
 
     public string BbsServerUrl { get; set; }
     public string BbsProject { get; set; }
