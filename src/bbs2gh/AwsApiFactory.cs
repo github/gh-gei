@@ -1,6 +1,6 @@
 namespace OctoshiftCLI.BbsToGithub;
 
-public class AwsApiFactory 
+public class AwsApiFactory
 {
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly OctoLogger _octoLogger;

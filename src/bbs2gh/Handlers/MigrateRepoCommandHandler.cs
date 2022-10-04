@@ -71,8 +71,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.ArchivePath.HasValue())
         {
             args.ArchiveUrl = args.AwsBucketName.HasValue()
-                ? await UploadArchiveToAws(args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.ArchivePath)
-                : await UploadArchiveToAzure(args.AzureStorageConnectionString, args.ArchivePath);
+                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                : await UploadArchiveToAzure(args.ArchivePath);
         }
 
         if (args.ArchiveUrl.HasValue())
@@ -115,11 +115,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return exportId;
     }
 
-    private async Task<string> UploadArchiveToAzure(string azureStorageConnectionString, string archivePath)
+    private async Task<string> UploadArchiveToAzure(string archivePath)
     {
         _log.LogInformation("Uploading Archive to Azure...");
-
-        _ = azureStorageConnectionString ?? _environmentVariableProvider.AzureStorageConnectionString();
 
         var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
         var archiveName = GenerateArchiveName();
@@ -128,18 +126,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return archiveBlobUrl.ToString();
     }
 
-    private string GenerateArchiveName()
-    {
-        var guid = Guid.NewGuid().ToString();
-        return $"{guid}.tar";
-    }
+    private string GenerateArchiveName() => $"{Guid.NewGuid()}.tar";
 
-    private async Task<string> UploadArchiveToAws(string bucketName, string accessKey, string secretKey, string archivePath)
+    private async Task<string> UploadArchiveToAws(string bucketName, string archivePath)
     {
         _log.LogInformation("Uploading Archive to AWS...");
-
-        _ = accessKey ?? _environmentVariableProvider.AwsAccessKey();
-        _ = secretKey ?? _environmentVariableProvider.AwsSecretKey();
 
         var keyName = GenerateArchiveName();
         var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
