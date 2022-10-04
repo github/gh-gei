@@ -31,7 +31,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
-                .AddSingleton<IAwsApiFactory, AwsApiFactory>()
+                .AddSingleton<AwsApiFactory, AwsApiFactory>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<FileSystemProvider>()

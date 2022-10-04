@@ -179,7 +179,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         if (args.AwsBucketName.HasValue())
         {
-            var awsApiFactory = sp.GetRequiredService<IAwsApiFactory>();
+            var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
             awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
         }
 
