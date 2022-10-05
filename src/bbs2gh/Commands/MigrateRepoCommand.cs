@@ -25,6 +25,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(BbsRepo);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
+        AddOption(BbsSharedHome);
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
@@ -34,7 +35,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AzureStorageConnectionString);
         AddOption(Wait);
         AddOption(Verbose);
-        AddOption(SharedHome);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -56,6 +56,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> BbsPassword { get; } = new(
         name: "--bbs-password",
         description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.");
+
+    public Option<string> BbsSharedHome { get; } = new(
+        name: "--bbs-shared-home",
+        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
 
     public Option<string> ArchiveUrl { get; } = new(
         name: "--archive-url",
@@ -117,11 +121,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
-    public Option<string> SharedHome { get; } = new(
-        name: "--shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
-
-    public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
+    public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {
@@ -157,7 +157,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
             var bbsHost = new Uri(args.BbsServerUrl).Host;
-            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.SharedHome);
+            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome);
         }
 
         if (args.AzureStorageConnectionString.HasValue())
@@ -182,13 +182,13 @@ public class MigrateRepoCommandArgs
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
     public bool Verbose { get; set; }
-    public string SharedHome { get; set; }
 
     public string BbsServerUrl { get; set; }
     public string BbsProject { get; set; }
     public string BbsRepo { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
+    public string BbsSharedHome { get; set; }
 
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }

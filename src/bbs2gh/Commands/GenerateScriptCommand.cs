@@ -64,7 +64,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
-    public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, ServiceProvider sp)
+    public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

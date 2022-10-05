@@ -255,9 +255,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("WAIT: true");
         }
 
-        if (args.SharedHome.HasValue())
+        if (args.BbsSharedHome.HasValue())
         {
-            _log.LogInformation($"SHARED HOME: {args.SharedHome}");
+            _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
         }
     }
 
