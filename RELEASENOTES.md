@@ -4,4 +4,4 @@
 - If `create-team` fails when removing the initial team member, it will retry
 - In v0.25 we started publishing `ado2gh` as an extension to the `gh` CLI. However, we didn't update `ado2gh generate-script` to use the new syntax in the generated migration script. Now it will, and you will need the `gh ado2gh` extension installed in order to run the generated migration script.
 - Added `--ghes-api-url` as an optional arg to the `grant-migrator-role` and `revoke-migrator-role` commands for both `ado2gh` and `gei`.
-- Added `--bbs-shared-home` option to `migrate-repo` and `generate-script` commands for `bbs2gh`.
+- Added `--bbs-shared-home` option to `migrate-repo` and `generate-script` commands for `bbs2gh`. This provides support for BBS servers with a non default directory path.
