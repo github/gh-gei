@@ -21,7 +21,6 @@ public class AwsApiTests
         var fileName = "file.zip";
         var keyName = "key";
         var url = "http://example.com/file.zip";
-        var oneDayFromNow = DateTime.Now.AddHours(24);
 
         var transferUtility = new Mock<ITransferUtility>();
         var s3Client = new Mock<IAmazonS3>();
@@ -31,9 +30,16 @@ public class AwsApiTests
         var awsApi = new AwsApi(transferUtility.Object);
 
         // Act
-        var result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
+        string result;
 
-        awsApi.Dispose();
+        try
+        {
+            result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
+        }
+        finally
+        {
+            awsApi.Dispose();
+        }
 
         // Assert
         result.Should().Be(url);
