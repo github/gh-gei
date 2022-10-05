@@ -5,55 +5,54 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 
-namespace OctoshiftCLI
+namespace OctoshiftCLI;
+
+public class AwsApi : IDisposable
 {
-    public class AwsApi : IDisposable
-    {
-        private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
-        private static readonly RegionEndpoint RegionEndpoint = RegionEndpoint.USEast1;
-        
-        private readonly ITransferUtility _transferUtility;
+    private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
+    private static readonly RegionEndpoint RegionEndpoint = RegionEndpoint.USEast1;
+
+    private readonly ITransferUtility _transferUtility;
 
 #pragma warning disable CA2000
-        public AwsApi(string awsAccessKey, string awsSecretKey) : this(new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)))
+    public AwsApi(string awsAccessKey, string awsSecretKey) : this(new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)))
 #pragma warning restore CA2000
+    {
+    }
+
+    internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
+
+    public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
+    {
+        await _transferUtility.UploadAsync(fileName, bucketName, keyName);
+        return GetPreSignedUrlForFile(bucketName, keyName);
+    }
+
+    private string GetPreSignedUrlForFile(string bucketName, string keyName)
+    {
+        var expires = DateTime.Now.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS);
+
+        var urlRequest = new GetPreSignedUrlRequest
         {
-        }
+            BucketName = bucketName,
+            Key = keyName,
+            Expires = expires
+        };
 
-        internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
+        return _transferUtility.S3Client.GetPreSignedURL(urlRequest);
+    }
 
-        public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
         {
-            await _transferUtility.UploadAsync(fileName, bucketName, keyName);
-            return GetPreSignedUrlForFile(bucketName, keyName);
+            _transferUtility?.Dispose();
         }
+    }
 
-        private string GetPreSignedUrlForFile(string bucketName, string keyName)
-        {
-            var expires = DateTime.Now.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS);
-
-            var urlRequest = new GetPreSignedUrlRequest
-            {
-                BucketName = bucketName,
-                Key = keyName,
-                Expires = expires
-            };
-
-            return _transferUtility.S3Client.GetPreSignedURL(urlRequest);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _transferUtility?.Dispose();
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

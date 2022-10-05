@@ -3,12 +3,10 @@ namespace OctoshiftCLI.BbsToGithub;
 public class AwsApiFactory
 {
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    private readonly OctoLogger _octoLogger;
 
-    public AwsApiFactory(EnvironmentVariableProvider environmentVariableProvider, OctoLogger octoLogger)
+    public AwsApiFactory(EnvironmentVariableProvider environmentVariableProvider)
     {
         _environmentVariableProvider = environmentVariableProvider;
-        _octoLogger = octoLogger;
     }
 
     public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null)

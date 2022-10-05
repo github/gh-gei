@@ -346,7 +346,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
                 .Returns(MIGRATION_ID);
 
-            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(new System.Uri(ARCHIVE_URL));
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
 
             // Act
             var args = new MigrateRepoCommandArgs
