@@ -11,8 +11,8 @@ public class AwsApiFactory
 
     public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null)
     {
-        var accessKey = _environmentVariableProvider.AwsAccessKey() ?? awsAccessKey;
-        var secretKey = _environmentVariableProvider.AwsSecretKey() ?? awsSecretKey;
+        var accessKey = awsAccessKey ?? _environmentVariableProvider.AwsAccessKey();
+        var secretKey = awsSecretKey ?? _environmentVariableProvider.AwsSecretKey();
 
         return new AwsApi(accessKey, secretKey);
     }
