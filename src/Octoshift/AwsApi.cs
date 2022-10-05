@@ -7,32 +7,28 @@ using Amazon.S3.Transfer;
 
 namespace OctoshiftCLI
 {
-    public class AwsApi
+    public class AwsApi : IDisposable
     {
-        private readonly string _awsAccessKey;
-        private readonly string _awsSecretKey;
-
-        private static readonly RegionEndpoint regionEndpoint = RegionEndpoint.USEast1;
-
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
+        private static readonly RegionEndpoint RegionEndpoint = RegionEndpoint.USEast1;
+        
+        private readonly ITransferUtility _transferUtility;
 
-        public AwsApi(string awsAccessKey, string awsSecretKey)
+#pragma warning disable CA2000
+        public AwsApi(string awsAccessKey, string awsSecretKey) : this(new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)))
+#pragma warning restore CA2000
         {
-            _awsAccessKey = awsAccessKey;
-            _awsSecretKey = awsSecretKey;
         }
 
-        public virtual async Task<Uri> UploadToBucket(string bucketName, string fileName, string keyName)
+        internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
+
+        public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
         {
-            using var amazonS3Client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, regionEndpoint);
-            using var transferUtility = new TransferUtility(amazonS3Client);
-
-            await transferUtility.UploadAsync(fileName, bucketName, keyName);
-
-            return GetPreSignedUrlForFile(amazonS3Client, bucketName, keyName);
+            await _transferUtility.UploadAsync(fileName, bucketName, keyName);
+            return GetPreSignedUrlForFile(bucketName, keyName);
         }
 
-        private Uri GetPreSignedUrlForFile(AmazonS3Client amazonS3Client, string bucketName, string keyName)
+        private string GetPreSignedUrlForFile(string bucketName, string keyName)
         {
             var expires = DateTime.Now.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS);
 
@@ -43,9 +39,21 @@ namespace OctoshiftCLI
                 Expires = expires
             };
 
-            var urlString = amazonS3Client.GetPreSignedURL(urlRequest);
+            return _transferUtility.S3Client.GetPreSignedURL(urlRequest);
+        }
 
-            return new Uri(urlString);
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _transferUtility?.Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
