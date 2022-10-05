@@ -21,7 +21,7 @@ public class MigrateRepoCommandTests
     private const string BBS_PASSWORD = "bbs-password";
     private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
-    private Mock<IServiceProvider> _mockServiceProvider = new();
+    private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
@@ -42,7 +42,7 @@ public class MigrateRepoCommandTests
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsArchiveDownloaderFactory))).Returns(_mockBbsArchiveDownloaderFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(IAzureApiFactory))).Returns(_mockAzureApiFactory.Object);
     }
-    
+
     [Fact]
     public void Should_Have_Options()
     {
@@ -83,10 +83,10 @@ public class MigrateRepoCommandTests
             BbsSharedHome = BBS_SHARED_HOME,
             BbsServerUrl = BBS_SERVER_URL
         };
-        
+
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-        
+
         // Assert
         handler.Should().NotBeNull();
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
@@ -97,10 +97,10 @@ public class MigrateRepoCommandTests
     {
         // Arrange
         var args = new MigrateRepoCommandArgs();
-        
+
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-        
+
         // Assert
         handler.Should().NotBeNull();
 
@@ -119,12 +119,12 @@ public class MigrateRepoCommandTests
         var args = new MigrateRepoCommandArgs
         {
             GithubOrg = GITHUB_ORG,
-            GithubPat = GITHUB_PAT 
+            GithubPat = GITHUB_PAT
         };
-        
+
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-        
+
         // Assert
         handler.Should().NotBeNull();
 
@@ -141,10 +141,10 @@ public class MigrateRepoCommandTests
             BbsUsername = BBS_USERNAME,
             BbsPassword = BBS_PASSWORD
         };
-        
+
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-        
+
         // Assert
         handler.Should().NotBeNull();
 
@@ -159,10 +159,10 @@ public class MigrateRepoCommandTests
         {
             AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
         };
-        
+
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-        
+
         // Assert
         handler.Should().NotBeNull();
 

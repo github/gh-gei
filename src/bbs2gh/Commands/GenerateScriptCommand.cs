@@ -47,7 +47,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
         description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
-    
+
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
         description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.")

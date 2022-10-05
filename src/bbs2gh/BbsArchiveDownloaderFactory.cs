@@ -1,6 +1,5 @@
 using System;
 using OctoshiftCLI.BbsToGithub.Services;
-using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.BbsToGithub;
 
