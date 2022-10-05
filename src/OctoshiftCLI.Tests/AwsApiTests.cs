@@ -33,6 +33,8 @@ public class AwsApiTests
         // Act
         var result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
 
+        awsApi.Dispose();
+
         // Assert
         result.Should().Be(url);
         transferUtility.Verify(m => m.UploadAsync(fileName, bucketName, keyName, It.IsAny<CancellationToken>()));
