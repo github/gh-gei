@@ -104,8 +104,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var archiveDownloadOptions = args.SshUser.HasValue()
             ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}"
             : "";
+        var bbsSharedHomeOption = args.BbsSharedHome.HasValue() ? $" --bbs-shared-home \"{args.BbsSharedHome}\"" : "";
 
-        return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsProjectOption}{bbsRepoOption}{archiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}";
+        return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{archiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
