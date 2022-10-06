@@ -20,6 +20,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
+        private readonly Mock<AwsApiFactory> _mockAwsApiFactory = TestHelpers.CreateMock<AwsApiFactory>();
 
         private readonly MigrateRepoCommandHandler _handler;
 
@@ -41,7 +42,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockSourceGithubApiFactory.Object,
                 _mockTargetGithubApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
-                _mockAzureApiFactory.Object);
+                _mockAzureApiFactory.Object,
+                _mockAwsApiFactory.Object);
         }
 
         [Fact]

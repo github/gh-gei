@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
@@ -22,9 +23,16 @@ public class AwsApi : IDisposable
 
     internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
 
-    public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
+    public virtual async Task<string> UploadFileToBucket(string bucketName, string fileName, string keyName)
     {
         await _transferUtility.UploadAsync(fileName, bucketName, keyName);
+        return GetPreSignedUrlForFile(bucketName, keyName);
+    }
+
+    public virtual async Task<string> UploadBytesToBucket(string bucketName, byte[] bytes, string keyName)
+    {
+        using var byteStream = new MemoryStream(bytes);
+        await _transferUtility.UploadAsync(byteStream, bucketName, keyName);
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 

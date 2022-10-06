@@ -9,11 +9,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new MigrateRepoCommand(null, null, null, null, null);
+            var command = new MigrateRepoCommand(null, null, null, null, null, null);
 
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(20);
+            command.Options.Count.Should().Be(23);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
@@ -25,6 +25,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+            TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
+            TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);
+            TestHelpers.VerifyCommandOption(command.Options, "aws-secret-key", false);
             TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(command.Options, "git-archive-url", false, true);

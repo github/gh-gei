@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.S3;
@@ -34,7 +33,7 @@ public class AwsApiTests
 
         try
         {
-            result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
+            result = await awsApi.UploadFileToBucket(bucketName, fileName, keyName);
         }
         finally
         {
