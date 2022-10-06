@@ -9,7 +9,18 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
 
 public class MigrateRepoCommandTests
 {
+    private const string SSH_USER = "ssh-user";
+    private const string SSH_PRIVATE_KEY = "ssh-private-key";
+    private const int SSH_PORT = 1234;
+    private const string BBS_SHARED_HOME = "shared-home";
     private const string BBS_HOST = "bbs-host";
+    private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
+    private const string GITHUB_ORG = "github-org";
+    private const string GITHUB_PAT = "github-pat";
+    private const string BBS_USERNAME = "bbs-username";
+    private const string BBS_PASSWORD = "bbs-password";
+    private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
+
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
@@ -18,6 +29,8 @@ public class MigrateRepoCommandTests
     private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
     private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
     private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
+
+    private readonly MigrateRepoCommand _command = new();
 
     public MigrateRepoCommandTests()
     {
@@ -60,103 +73,102 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "wait", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
     }
-}
 
-[Fact]
-public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_Is_Provided()
-{
-    // Arrange
-    var args = new MigrateRepoCommandArgs
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_Is_Provided()
     {
-        SshUser = SSH_USER,
-        SshPrivateKey = SSH_PRIVATE_KEY,
-        SshPort = SSH_PORT,
-        BbsSharedHome = BBS_SHARED_HOME,
-        BbsServerUrl = BBS_SERVER_URL
-    };
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
 
-    // Act
-    var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-    // Assert
-    handler.Should().NotBeNull();
-    _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
-}
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+    }
 
-[Fact]
-public void BuildHandler_Creates_The_Handler()
-{
-    // Arrange
-    var args = new MigrateRepoCommandArgs();
-
-    // Act
-    var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
-
-    // Assert
-    handler.Should().NotBeNull();
-
-    _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-    _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-    _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-    _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(), Times.Never);
-    _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
-    _mockAzureApiFactory.Verify(m => m.CreateClientNoSsl(It.IsAny<string>()), Times.Never);
-}
-
-[Fact]
-public void BuildHandler_Creates_GitHub_Api_When_Github_Org_Is_Provided()
-{
-    // Arrange
-    var args = new MigrateRepoCommandArgs
+    [Fact]
+    public void BuildHandler_Creates_The_Handler()
     {
-        GithubOrg = GITHUB_ORG,
-        GithubPat = GITHUB_PAT
-    };
+        // Arrange
+        var args = new MigrateRepoCommandArgs();
 
-    // Act
-    var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-    // Assert
-    handler.Should().NotBeNull();
+        // Assert
+        handler.Should().NotBeNull();
 
-    _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
-}
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(), Times.Never);
+        _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
+        _mockAzureApiFactory.Verify(m => m.CreateClientNoSsl(It.IsAny<string>()), Times.Never);
+    }
 
-[Fact]
-public void BuildHandler_Creates_Bbs_Api_When_Github_Org_Is_Provided()
-{
-    // Arrange
-    var args = new MigrateRepoCommandArgs
+    [Fact]
+    public void BuildHandler_Creates_GitHub_Api_When_Github_Org_Is_Provided()
     {
-        BbsServerUrl = BBS_SERVER_URL,
-        BbsUsername = BBS_USERNAME,
-        BbsPassword = BBS_PASSWORD
-    };
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            GithubPat = GITHUB_PAT
+        };
 
-    // Act
-    var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-    // Assert
-    handler.Should().NotBeNull();
+        // Assert
+        handler.Should().NotBeNull();
 
-    _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
-}
+        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+    }
 
-[Fact]
-public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided()
-{
-    // Arrange
-    var args = new MigrateRepoCommandArgs
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Api_When_Github_Org_Is_Provided()
     {
-        AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
-    };
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD
+        };
 
-    // Act
-    var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-    // Assert
-    handler.Should().NotBeNull();
+        // Assert
+        handler.Should().NotBeNull();
 
-    _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
-}
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
+    }
 }
