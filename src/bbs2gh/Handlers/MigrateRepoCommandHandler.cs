@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -63,6 +64,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.SshUser.HasValue())
         {
             args.ArchivePath = await DownloadArchive(exportId);
+        }
+
+        if (args.ArchivePath.IsNullOrWhiteSpace() && args.ArchiveUrl.IsNullOrWhiteSpace())
+        {
+            args.ArchivePath = Path.Combine(
+                args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
+                IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
         }
 
         if (args.ArchivePath.HasValue())
@@ -293,11 +301,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
             }
 
-            if (args.SshUser.IsNullOrWhiteSpace() && args.SmbUser.IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("Either --ssh-user or --smb-user must be specified.");
-            }
-
             if (args.SshUser.HasValue() && args.SmbUser.HasValue())
             {
                 throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
@@ -310,7 +313,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                     throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
                 }
             }
-            else
+            else if (args.SmbUser.HasValue())
             {
                 if (args.SmbPassword.IsNullOrWhiteSpace())
                 {
