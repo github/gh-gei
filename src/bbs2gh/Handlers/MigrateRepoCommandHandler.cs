@@ -313,7 +313,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                     throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
                 }
             }
-            else if (args.SmbUser.HasValue())
+
+            if (args.SmbUser.HasValue())
             {
                 if (args.SmbPassword.IsNullOrWhiteSpace())
                 {
