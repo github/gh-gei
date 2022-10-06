@@ -346,7 +346,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
                 .Returns(MIGRATION_ID);
 
-            _mockAwsApi.Setup(x => x.UploadFileToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -370,7 +370,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 ARCHIVE_URL
             ));
 
-            _mockAwsApi.Verify(m => m.UploadFileToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()));
+            _mockAwsApi.Verify(m => m.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()));
         }
     }
 }

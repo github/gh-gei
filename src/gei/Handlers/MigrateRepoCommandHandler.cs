@@ -220,9 +220,9 @@ public class MigrateRepoCommandHandler
     private async Task<(string, string)> UploadArchivesToAws(AwsApi awsApi, string bucketName, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
     {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
-        var authenticatedGitArchiveUri = await awsApi.UploadBytesToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
+        var authenticatedGitArchiveUri = await awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
         _log.LogInformation($"Uploading archive {metadataArchiveFileName} to AWS S3");
-        var authenticatedMetadataArchiveUri = await awsApi.UploadBytesToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
+        var authenticatedMetadataArchiveUri = await awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
 
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }

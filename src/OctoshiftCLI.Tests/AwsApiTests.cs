@@ -30,7 +30,7 @@ public class AwsApiTests
         transferUtility.Setup(m => m.S3Client).Returns(s3Client.Object);
         using var awsApi = new AwsApi(transferUtility.Object);
 
-        var result = await awsApi.UploadFileToBucket(bucketName, fileName, keyName);
+        var result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
 
         // Assert
         result.Should().Be(url);
@@ -38,7 +38,7 @@ public class AwsApiTests
     }
 
     [Fact]
-    public async Task UploadBytesToBucket_Should_Succeed()
+    public async Task UploadToBucket_Uploads_Byte_Array()
     {
         // Arrange
         var bucketName = "bucket";
@@ -53,7 +53,7 @@ public class AwsApiTests
         transferUtility.Setup(m => m.S3Client).Returns(s3Client.Object);
         using var awsApi = new AwsApi(transferUtility.Object);
 
-        var result = await awsApi.UploadBytesToBucket(bucketName, bytes, keyName);
+        var result = await awsApi.UploadToBucket(bucketName, bytes, keyName);
 
         // Assert
         result.Should().Be(url);

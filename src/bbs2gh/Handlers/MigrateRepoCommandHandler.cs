@@ -133,7 +133,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation("Uploading Archive to AWS...");
 
         var keyName = GenerateArchiveName();
-        var archiveBlobUrl = await _awsApi.UploadFileToBucket(bucketName, archivePath, keyName);
+        var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
 
         return archiveBlobUrl.ToString();
     }
