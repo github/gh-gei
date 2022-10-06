@@ -178,7 +178,7 @@ public class MigrateRepoCommandHandler
 
         var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
         var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
-        var awsApi = _awsApiFactory.Create(awsAccessKey, awsSecretKey);
+        var awsApi = string.IsNullOrWhiteSpace(awsBucketName) ? null : _awsApiFactory.Create(awsAccessKey, awsSecretKey);
 
         var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
         _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
@@ -201,9 +201,9 @@ public class MigrateRepoCommandHandler
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
-        return awsBucketName.HasValue() ?
-            await UploadArchivesToAws(awsApi, awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
-            await UploadArchivesToAzure(azureApi, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+        return string.IsNullOrWhiteSpace(awsBucketName) ?
+            await UploadArchivesToAzure(azureApi, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
+            await UploadArchivesToAws(awsApi, awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
 
     }
 
