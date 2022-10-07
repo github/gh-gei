@@ -68,7 +68,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ArchivePath.IsNullOrWhiteSpace() && args.ArchiveUrl.IsNullOrWhiteSpace())
         {
-            args.ArchivePath = Path.Combine(
+            args.ArchivePath = Path.Join(
                 args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
                 IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
         }
