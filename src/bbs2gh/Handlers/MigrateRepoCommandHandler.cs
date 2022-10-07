@@ -306,20 +306,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
             }
 
-            if (args.SshUser.HasValue())
+            if (args.SshUser.HasValue() && args.SshPrivateKey.IsNullOrWhiteSpace())
             {
-                if (args.SshPrivateKey.IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
-                }
+                throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
             }
 
-            if (args.SmbUser.HasValue())
+            if (args.SmbUser.HasValue() && args.SmbPassword.IsNullOrWhiteSpace())
             {
-                if (args.SmbPassword.IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("--smb-password must be specified.");
-                }
+                throw new OctoshiftCliException("--smb-password must be specified.");
             }
         }
     }
