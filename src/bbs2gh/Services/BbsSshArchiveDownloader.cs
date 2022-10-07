@@ -34,10 +34,11 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
-        targetDirectory ??= IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-        var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory.TrimEnd('\\', '/'), IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).Replace('\\', '/');
-        var targetExportArchiveFullPath = Path.Join(targetDirectory.TrimEnd('\\', '/'), IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).Replace('\\', '/');
+        var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
+            IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).Replace('\\', '/');
+        var targetExportArchiveFullPath =
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).Replace('\\', '/');
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {
