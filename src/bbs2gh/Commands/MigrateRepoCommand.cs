@@ -177,7 +177,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
-        if (azureStorageConnectionString is not null)
+        if (azureStorageConnectionString.HasValue())
         {
             var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
             azureApi = azureApiFactory.Create(azureStorageConnectionString);
