@@ -7,7 +7,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
     public class MigrateRepoCommand : Command
     {
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory) : base(
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, AwsApiFactory awsApiFactory) : base(
             name: "migrate-repo",
             description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
@@ -64,6 +64,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
             };
+
+            var awsBucketName = new Option<string>("--aws-bucket-name")
+            {
+                IsRequired = false,
+                Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
+            };
+            var awsAccessKey = new Option<string>("--aws-access-key")
+            {
+                IsRequired = false,
+                Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable."
+            };
+            var awsSecretKey = new Option<string>("--aws-secret-key")
+            {
+                IsRequired = false,
+                Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
+            };
+
             var noSslVerify = new Option<bool>("--no-ssl-verify")
             {
                 IsRequired = false,
@@ -127,6 +144,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(ghesApiUrl);
             AddOption(azureStorageConnectionString);
+            AddOption(awsBucketName);
+            AddOption(awsAccessKey);
+            AddOption(awsSecretKey);
             AddOption(noSslVerify);
 
             AddOption(gitArchiveUrl);
@@ -141,7 +161,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            var handler = new MigrateRepoCommandHandler(log, sourceGithubApiFactory, targetGithubApiFactory, environmentVariableProvider, azureApiFactory);
+            var handler = new MigrateRepoCommandHandler(log, sourceGithubApiFactory, targetGithubApiFactory, environmentVariableProvider, azureApiFactory, awsApiFactory);
             Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
         }
     }
@@ -158,6 +178,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string TargetApiUrl { get; set; }
         public string GhesApiUrl { get; set; }
         public string AzureStorageConnectionString { get; set; }
+        public string AwsBucketName { get; set; }
+        public string AwsAccessKey { get; set; }
+        public string AwsSecretKey { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }

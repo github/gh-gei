@@ -33,6 +33,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SmbPassword);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
+        AddOption(AwsBucketName);
+        AddOption(AwsAccessKey);
+        AddOption(AwsSecretKey);
         AddOption(Wait);
         AddOption(Verbose);
     }
@@ -73,6 +76,18 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> AzureStorageConnectionString { get; } = new(
         name: "--azure-storage-connection-string",
         description: "A connection string for an Azure Storage account, used to upload the BBS archive. If not set will be read from AZURE_STORAGE_CONNECTION_STRING environment variable.");
+
+    public Option<string> AwsBucketName { get; } = new(
+        name: "--aws-bucket-name",
+        description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
+
+    public Option<string> AwsAccessKey { get; } = new(
+        name: "--aws-access-key",
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
+
+    public Option<string> AwsSecretKey { get; } = new(
+        name: "--aws-secret-key",
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 
@@ -140,6 +155,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         BbsApi bbsApi = null;
         IBbsArchiveDownloader bbsArchiveDownloader = null;
         AzureApi azureApi = null;
+        AwsApi awsApi = null;
 
         if (args.GithubOrg.HasValue())
         {
@@ -167,7 +183,13 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             azureApi = azureApiFactory.Create(azureStorageConnectionString);
         }
 
-        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, fileSystemProvider);
+        if (args.AwsBucketName.HasValue())
+        {
+            var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
+            awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+        }
+
+        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider);
     }
 }
 
@@ -177,6 +199,10 @@ public class MigrateRepoCommandArgs
     public string ArchivePath { get; set; }
 
     public string AzureStorageConnectionString { get; set; }
+
+    public string AwsBucketName { get; set; }
+    public string AwsAccessKey { get; set; }
+    public string AwsSecretKey { get; set; }
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }

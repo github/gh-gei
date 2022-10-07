@@ -46,29 +46,32 @@ public class MigrateRepoCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        _command.Should().NotBeNull();
-        _command.Name.Should().Be("migrate-repo");
-        _command.Options.Count.Should().Be(19);
+        var command = new MigrateRepoCommand();
+        command.Should().NotBeNull();
+        command.Name.Should().Be("migrate-repo");
+        command.Options.Count.Should().Be(22);
 
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-repo", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-shared-home", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "archive-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "archive-path", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "azure-storage-connection-string", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false, true);
-        TestHelpers.VerifyCommandOption(_command.Options, "smb-password", false, true);
-        TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-username", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-password", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-path", false);
+        TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-secret-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+        TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
     }
 
     [Fact]
