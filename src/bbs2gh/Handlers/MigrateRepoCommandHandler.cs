@@ -13,6 +13,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly GithubApi _githubApi;
     private readonly BbsApi _bbsApi;
     private readonly AzureApi _azureApi;
+    private readonly AwsApi _awsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly IBbsArchiveDownloader _bbsArchiveDownloader;
     private readonly FileSystemProvider _fileSystemProvider;
@@ -25,12 +26,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         EnvironmentVariableProvider environmentVariableProvider,
         IBbsArchiveDownloader bbsArchiveDownloader,
         AzureApi azureApi,
+        AwsApi awsApi,
         FileSystemProvider fileSystemProvider)
     {
         _log = log;
         _githubApi = githubApi;
         _bbsApi = bbsApi;
         _azureApi = azureApi;
+        _awsApi = awsApi;
         _environmentVariableProvider = environmentVariableProvider;
         _bbsArchiveDownloader = bbsArchiveDownloader;
         _fileSystemProvider = fileSystemProvider;
@@ -67,7 +70,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ArchivePath.HasValue())
         {
-            args.ArchiveUrl = await UploadArchive(args.ArchivePath);
+            args.ArchiveUrl = args.AwsBucketName.HasValue()
+                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                : await UploadArchiveToAzure(args.ArchivePath);
         }
 
         if (args.ArchiveUrl.HasValue())
@@ -110,13 +115,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return exportId;
     }
 
-    private async Task<string> UploadArchive(string archivePath)
+    private async Task<string> UploadArchiveToAzure(string archivePath)
     {
-        _log.LogInformation("Uploading Archive...");
+        _log.LogInformation("Uploading Archive to Azure...");
 
         var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
-        var guid = Guid.NewGuid().ToString();
-        var archiveBlobUrl = await _azureApi.UploadToBlob($"{guid}.tar", archiveData);
+        var archiveName = GenerateArchiveName();
+        var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
+
+        return archiveBlobUrl.ToString();
+    }
+
+    private string GenerateArchiveName() => $"{Guid.NewGuid()}.tar";
+
+    private async Task<string> UploadArchiveToAws(string bucketName, string archivePath)
+    {
+        _log.LogInformation("Uploading Archive to AWS...");
+
+        var keyName = GenerateArchiveName();
+        var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
 
         return archiveBlobUrl.ToString();
     }
@@ -208,6 +225,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.AzureStorageConnectionString.HasValue())
         {
             _log.LogInformation($"AZURE STORAGE CONNECTION STRING: ********");
+        }
+
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation($"AWS ACCESS KEY: ********");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation($"AWS SECRET KEY: ********");
         }
 
         if (args.GithubOrg.HasValue())
