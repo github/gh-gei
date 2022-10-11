@@ -24,7 +24,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
-    
+
     protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
