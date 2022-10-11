@@ -12,7 +12,7 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
 
     protected override Option<string> GithubPat { get; } = new("--github-target-pat")
     {
-        Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
     protected override Option<string> GithubApiUrl { get; } = new("--target-api-url")

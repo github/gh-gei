@@ -7,15 +7,15 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class GrantMigratorRoleCommandBaseTests
+public class RevokeMigratorRoleCommandBaseTests
 {
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly GrantMigratorRoleCommandBase _command = new();
+    private readonly RevokeMigratorRoleCommandBase _command = new();
 
-    public GrantMigratorRoleCommandBaseTests()
+    public RevokeMigratorRoleCommandBaseTests()
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection
@@ -30,7 +30,7 @@ public class GrantMigratorRoleCommandBaseTests
     {
         var githubPat = Guid.NewGuid().ToString();
 
-        var args = new GrantMigratorRoleCommandArgs
+        var args = new RevokeMigratorRoleCommandArgs
         {
             GithubOrg = "foo",
             Actor = "blah",
