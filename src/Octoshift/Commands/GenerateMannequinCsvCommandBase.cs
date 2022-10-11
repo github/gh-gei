@@ -40,7 +40,8 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
 
     protected virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false
+        IsRequired = false,
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
     public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, ServiceProvider sp)

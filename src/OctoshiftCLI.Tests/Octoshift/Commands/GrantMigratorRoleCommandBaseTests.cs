@@ -7,15 +7,15 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class CreateTeamCommandTests
+public class GrantMigratorRoleCommandBaseTests
 {
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly CreateTeamCommandBase _command = new();
+    private readonly GrantMigratorRoleCommandBase _command = new();
 
-    public CreateTeamCommandTests()
+    public GrantMigratorRoleCommandBaseTests()
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection
@@ -26,14 +26,15 @@ public class CreateTeamCommandTests
     }
 
     [Fact]
-    public void It_Uses_Github_Source_Pat_When_Provided()
+    public void It_Uses_Github_Target_Pat_When_Provided()
     {
         var githubPat = Guid.NewGuid().ToString();
 
-        var args = new CreateTeamCommandArgs
+        var args = new GrantMigratorRoleCommandArgs
         {
             GithubOrg = "foo",
-            TeamName = "blah",
+            Actor = "blah",
+            ActorType = "TEAM",
             GithubPat = githubPat
         };
 
