@@ -8,7 +8,7 @@ public class CreateTeamCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new CreateTeamCommand(null, null);
+        var command = new CreateTeamCommand();
         Assert.NotNull(command);
         Assert.Equal("create-team", command.Name);
         Assert.Equal(5, command.Options.Count);

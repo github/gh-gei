@@ -1,18 +1,15 @@
+using System;
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class CreateTeamCommandBase : Command
+public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTeamCommandHandler>
 {
-    protected CreateTeamCommandHandler BaseHandler { get; init; }
-
-    public CreateTeamCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
-        name: "create-team",
-        description: "Creates a GitHub team and optionally links it to an IdP group.")
+    public CreateTeamCommandBase() : base(name: "create-team", description: "Creates a GitHub team and optionally links it to an IdP group.")
     {
-        BaseHandler = new CreateTeamCommandHandler(log, githubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
@@ -24,6 +21,26 @@ public class CreateTeamCommandBase : Command
     protected virtual Option<string> GithubPat { get; } = new("--github-pat") { IsRequired = false };
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+
+    public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, ServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+        return new CreateTeamCommandHandler(log, githubApi);
+    }
 
     protected void AddOptions()
     {
