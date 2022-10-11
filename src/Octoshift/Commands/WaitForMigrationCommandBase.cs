@@ -23,7 +23,10 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
         Description = "Waits for the specified migration to finish."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat");
+    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    {
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
+    };
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose");
 
@@ -47,7 +50,7 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(args.GithubPat);
+        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(targetPersonalAccessToken: args.GithubPat);
 
         return new WaitForMigrationCommandHandler(log, githubApi);
     }

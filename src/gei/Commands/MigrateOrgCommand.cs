@@ -64,7 +64,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            var targetGithubApi = targetGithubApiFactory.Create(args.GithubTargetPat);
+            var targetGithubApi = targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubTargetPat);
 
             return new MigrateOrgCommandHandler(log, targetGithubApi, environmentVariableProvider);
         }

@@ -74,7 +74,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.GithubPat);
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var reclaimService = new ReclaimService(githubApi, log);
 
         return new ReclaimMannequinCommandHandler(log, githubApi, reclaimService);
