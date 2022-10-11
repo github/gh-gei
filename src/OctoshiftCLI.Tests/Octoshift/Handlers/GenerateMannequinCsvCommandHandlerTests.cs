@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Models;
 using Xunit;
@@ -14,7 +13,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 public class GenerateMannequinCsvCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly GenerateMannequinCsvCommandHandler _handler;
 
@@ -25,7 +23,7 @@ public class GenerateMannequinCsvCommandHandlerTests
 
     public GenerateMannequinCsvCommandHandlerTests()
     {
-        _handler = new GenerateMannequinCsvCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
+        _handler = new GenerateMannequinCsvCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object)
         {
             WriteToFile = (_, contents) =>
             {
@@ -38,8 +36,6 @@ public class GenerateMannequinCsvCommandHandlerTests
     [Fact]
     public async Task NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
     {
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(Array.Empty<Mannequin>());
 
@@ -66,8 +62,6 @@ public class GenerateMannequinCsvCommandHandlerTests
             new Mannequin { Id = "monaid", Login = "mona" },
             new Mannequin { Id = "monalisaid", Login = "monalisa", MappedUser = new Claimant { Id = "monalisamapped-id", Login = "monalisa_gh" } }
         };
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);
@@ -96,8 +90,6 @@ public class GenerateMannequinCsvCommandHandlerTests
             new Mannequin { Id = "monaid", Login = "mona" },
             new Mannequin { Id = "monalisaid", Login = "monalisa", MappedUser = new Claimant { Id = "monalisamapped-id", Login = "monalisa_gh" } }
         };
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);

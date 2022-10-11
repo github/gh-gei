@@ -1,19 +1,18 @@
+using System;
 using System.CommandLine;
 using System.IO;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class GenerateMannequinCsvCommandBase : Command
+public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvCommandArgs, GenerateMannequinCsvCommandHandler>
 {
-    protected GenerateMannequinCsvCommandHandler BaseHandler { get; init; }
-
-    public GenerateMannequinCsvCommandBase(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base(
+    public GenerateMannequinCsvCommandBase() : base(
         name: "generate-mannequin-csv",
         description: "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.")
     {
-        BaseHandler = new GenerateMannequinCsvCommandHandler(log, targetGithubApiFactory);
     }
 
     protected virtual Option<string> GithubOrg { get; } = new("--github-org")
@@ -43,6 +42,25 @@ public class GenerateMannequinCsvCommandBase : Command
     {
         IsRequired = false
     };
+
+    public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, ServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+        return new GenerateMannequinCsvCommandHandler(log, githubApi);
+    }
 
     protected void AddOptions()
     {
