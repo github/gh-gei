@@ -22,7 +22,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
             AddOption(TargetApiUrl);
-            
+
             AddOption(GhesApiUrl);
             AddOption(AzureStorageConnectionString);
             AddOption(AwsBucketName);
@@ -161,18 +161,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (args.GhesApiUrl.HasValue())
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
-                var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
+                var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
 
+                azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
                 ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
 
                 if (args.AwsBucketName.HasValue())
                 {
                     awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
-                }
-                else
-                {
-                    azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
                 }
             }
 

@@ -41,7 +41,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
 
         return new RevokeMigratorRoleCommandHandler(log, githubApi);
     }

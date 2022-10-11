@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockTargetGithubApi.Object,
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
-                _mockAwsApi.Object);
+                null);
         }
 
         [Fact]
@@ -1170,6 +1170,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAwsApi.Setup(m => m.UploadToBucket(awsBucketName, It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
 
+            var handler = new MigrateRepoCommandHandler(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApi.Object,
+                _mockTargetGithubApi.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockAzureApi.Object,
+                _mockAwsApi.Object);
+
             // Act
             var args = new MigrateRepoCommandArgs
             {
@@ -1184,7 +1192,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 AwsSecretKey = awsSecretKey,
                 Wait = true
             };
-            await _handler.Handle(args);
+
+            await handler.Handle(args);
 
             // Assert
             _mockAwsApi.Verify(m => m.UploadToBucket(awsBucketName, It.IsAny<byte[]>(), It.IsAny<string>()));
