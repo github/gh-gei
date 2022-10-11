@@ -22,7 +22,6 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
 
     protected virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false,
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 

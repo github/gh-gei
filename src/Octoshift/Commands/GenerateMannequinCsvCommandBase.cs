@@ -23,24 +23,18 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
 
     protected virtual Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./mannequins.csv"))
     {
-        IsRequired = false,
         Description = "Output filename. Default value mannequins.csv"
     };
 
     protected virtual Option<bool> IncludeReclaimed { get; } = new("--include-reclaimed")
     {
-        IsRequired = false,
         Description = "Include mannequins that have already been reclaimed"
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose")
-    {
-        IsRequired = false
-    };
+    protected virtual Option<bool> Verbose { get; } = new("--verbose");
 
     protected virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false,
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 

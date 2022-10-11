@@ -16,11 +16,10 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
 
     protected virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
 
-    protected virtual Option<string> IdpGroup { get; } = new("--idp-group") { IsRequired = false };
+    protected virtual Option<string> IdpGroup { get; } = new("--idp-group");
 
     protected virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false,
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
