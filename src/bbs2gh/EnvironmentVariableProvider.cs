@@ -40,9 +40,9 @@ public class EnvironmentVariableProvider
             GetSecret(BBS_PASSWORD)
             ?? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.");
 
-    public virtual string AzureStorageConnectionString() =>
-            GetSecret(AZURE_STORAGE_CONNECTION_STRING)
-            ?? throw new OctoshiftCliException($"{AZURE_STORAGE_CONNECTION_STRING} environment variable is not set.");
+    public virtual string AzureStorageConnectionString(bool throwIfNotFound = true) =>
+        GetSecret(AZURE_STORAGE_CONNECTION_STRING)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AZURE_STORAGE_CONNECTION_STRING} environment variable is not set.") : null);
 
     public virtual string AwsSecretKey() =>
             GetSecret(AWS_SECRET_KEY)

@@ -19,8 +19,8 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "bbs-username", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-password", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-shared-home", false);
-        TestHelpers.VerifyCommandOption(command.Options, "ssh-user", true);
-        TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", true);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
         TestHelpers.VerifyCommandOption(command.Options, "output", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);

@@ -50,13 +50,11 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
-        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.")
-    { IsRequired = true };
+        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.");
 
     public Option<string> SshPrivateKey { get; } = new(
         name: "--ssh-private-key",
-        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP.")
-    { IsRequired = true };
+        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP.");
 
     public Option<int> SshPort { get; } = new(
         name: "--ssh-port",
