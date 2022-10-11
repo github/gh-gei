@@ -176,10 +176,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome);
         }
 
-        if (args.AzureStorageConnectionString.HasValue())
+        var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
+        if (azureStorageConnectionString.HasValue())
         {
             var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
-            azureApi = azureApiFactory.Create(args.AzureStorageConnectionString);
+            azureApi = azureApiFactory.Create(azureStorageConnectionString);
         }
 
         if (args.AwsBucketName.HasValue())

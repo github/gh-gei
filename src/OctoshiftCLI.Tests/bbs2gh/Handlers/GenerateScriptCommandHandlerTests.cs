@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;

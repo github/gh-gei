@@ -135,7 +135,7 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Api_When_Github_Org_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Api_When_Bbs_Server_Url_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
@@ -155,13 +155,30 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
-    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided()
+    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided_Via_Args()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
         {
             AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
         };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided_Via_Environment_Variables()
+    {
+        // Arrange
+        _mockEnvironmentVariableProvider.Setup(m => m.AzureStorageConnectionString(false)).Returns(AZURE_STORAGE_CONNECTION_STRING);
+
+        var args = new MigrateRepoCommandArgs();
 
         // Act
         var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
