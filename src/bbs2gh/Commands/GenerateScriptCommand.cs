@@ -18,6 +18,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GithubOrg);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
+        AddOption(BbsSharedHome);
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
@@ -43,15 +44,17 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
                       $"{Environment.NewLine}" +
                       "Note: The password will not get included in the generated script and it has to be set as an env variable before running the script.");
 
+    public Option<string> BbsSharedHome { get; } = new(
+        name: "--bbs-shared-home",
+        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
-        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.")
-    { IsRequired = true };
+        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.");
 
     public Option<string> SshPrivateKey { get; } = new(
         name: "--ssh-private-key",
-        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP.")
-    { IsRequired = true };
+        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP.");
 
     public Option<int> SshPort { get; } = new(
         name: "--ssh-port",
@@ -64,7 +67,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
-    public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, ServiceProvider sp)
+    public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {
@@ -94,6 +97,7 @@ public class GenerateScriptCommandArgs
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
+    public string BbsSharedHome { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public string SshPort { get; set; }

@@ -46,6 +46,8 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         return new RevokeMigratorRoleCommandHandler(log, githubApi);
     }
 
+    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
+
     protected void AddOptions()
     {
         AddOption(GithubOrg);
@@ -53,6 +55,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         AddOption(ActorType);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(GhesApiUrl);
     }
 }
 
@@ -63,4 +66,5 @@ public class RevokeMigratorRoleCommandArgs
     public string ActorType { get; set; }
     public string GithubPat { get; set; }
     public bool Verbose { get; set; }
+    public string GhesApiUrl { get; set; }
 }

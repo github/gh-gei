@@ -44,8 +44,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockGithubApi.Setup(x => x.GetEnterpriseId(TARGET_ENTERPRISE).Result).Returns(githubEntpriseId);
-            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat, targetGithubPat).Result).Returns(migrationId);
-            _mockGithubApi.Setup(x => x.GetOrganizationMigrationState(migrationId).Result).Returns(migrationState);
+            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat).Result).Returns(migrationId);
+            _mockGithubApi.Setup(x => x.GetOrganizationMigration(migrationId).Result)
+                .Returns((State: migrationState, SourceOrgUrl: githubOrgUrl, TargetOrgName: TARGET_ORG, FailureReason: null));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
@@ -79,8 +80,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
-            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat, targetGithubPat));
-            _mockGithubApi.Verify(m => m.GetOrganizationMigrationState(migrationId));
+            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat));
+            _mockGithubApi.Verify(m => m.GetOrganizationMigration(migrationId));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
             _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Exactly(1));
@@ -103,8 +104,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockGithubApi.Setup(x => x.GetEnterpriseId(TARGET_ENTERPRISE).Result).Returns(githubEntpriseId);
-            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, targetGithubPat, targetGithubPat).Result).Returns(migrationId);
-            _mockGithubApi.Setup(x => x.GetOrganizationMigrationState(migrationId).Result).Returns(migrationState);
+            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, targetGithubPat).Result).Returns(migrationId);
+            _mockGithubApi.Setup(x => x.GetOrganizationMigration(migrationId).Result).Returns((State: migrationState, SourceOrgUrl: githubOrgUrl, TargetOrgName: TARGET_ORG, FailureReason: null));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
@@ -137,8 +138,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
-            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, targetGithubPat, targetGithubPat));
-            _mockGithubApi.Verify(m => m.GetOrganizationMigrationState(migrationId));
+            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, targetGithubPat));
+            _mockGithubApi.Verify(m => m.GetOrganizationMigration(migrationId));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
             _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Exactly(1));
@@ -161,8 +162,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockGithubApi.Setup(x => x.GetEnterpriseId(TARGET_ENTERPRISE).Result).Returns(githubEntpriseId);
-            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat, targetGithubPat).Result).Returns(migrationId);
-            _mockGithubApi.Setup(x => x.GetOrganizationMigrationState(migrationId).Result).Returns(migrationState);
+            _mockGithubApi.Setup(x => x.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat).Result).Returns(migrationId);
+            _mockGithubApi.Setup(x => x.GetOrganizationMigration(migrationId).Result).Returns((State: migrationState, SourceOrgUrl: githubOrgUrl, TargetOrgName: TARGET_ORG, FailureReason: null));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);
@@ -192,8 +193,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockGithubApi.Verify(m => m.GetEnterpriseId(TARGET_ENTERPRISE));
-            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat, targetGithubPat));
-            _mockGithubApi.Verify(m => m.GetOrganizationMigrationState(migrationId));
+            _mockGithubApi.Verify(m => m.StartOrganizationMigration(githubOrgUrl, TARGET_ORG, githubEntpriseId, sourceGithubPat));
+            _mockGithubApi.Verify(m => m.GetOrganizationMigration(migrationId));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(4));
             _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Exactly(1));

@@ -28,6 +28,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
+                .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()

@@ -22,9 +22,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
             AddOption(TargetApiUrl);
-
+            
             AddOption(GhesApiUrl);
             AddOption(AzureStorageConnectionString);
+            AddOption(AwsBucketName);
+            AddOption(AwsAccessKey);
+            AddOption(AwsSecretKey);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -84,6 +87,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
         {
             Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
+        };
+        public Option<string> AwsBucketName = new Option<string>("--aws-bucket-name")
+        {
+            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
+        };
+        public Option<string> AwsAccessKey = new Option<string>("--aws-access-key")
+        {
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable."
+        };
+        public Option<string> AwsSecretKey = new Option<string>("--aws-secret-key")
+        {
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -167,6 +182,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string TargetApiUrl { get; set; }
         public string GhesApiUrl { get; set; }
         public string AzureStorageConnectionString { get; set; }
+        public string AwsBucketName { get; set; }
+        public string AwsAccessKey { get; set; }
+        public string AwsSecretKey { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }

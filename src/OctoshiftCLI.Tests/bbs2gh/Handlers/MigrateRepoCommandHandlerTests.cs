@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -15,6 +16,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
+        private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<IBbsArchiveDownloader> _mockBbsArchiveDownloader = new();
@@ -27,6 +29,9 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         private const string GITHUB_ORG = "target-org";
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
+        private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string AWS_ACCESS_KEY = "aws-access-key";
+        private const string AWS_SECRET_KEY = "aws-secret-key";
 
         private const string BBS_HOST = "our-bbs-server.com";
         private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
@@ -52,6 +57,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 _mockEnvironmentVariableProvider.Object,
                 _mockBbsArchiveDownloader.Object,
                 _mockAzureApi.Object,
+                _mockAwsApi.Object,
                 _mockFileSystemProvider.Object
             );
         }
@@ -150,6 +156,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             // Arrange
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -196,21 +203,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         }
 
         [Fact]
-        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_User_And_Smb_User_Not_Provided()
-        {
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
-            };
-            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_User_Are_Provided()
         {
             // Act, Assert
@@ -253,7 +245,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             var archiveBytes = Encoding.ASCII.GetBytes("here are some bytes");
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), archiveBytes)).ReturnsAsync(new System.Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), archiveBytes)).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -327,6 +319,118 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
 
             // Assert
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Erros_If_BbsServer_Url_Archive_Path_And_Archive_Url_Are_Not_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task It_Sets_The_Archive_Path_To_Default_Local_Path_When_Archive_Path_And_Archive_Url_Are_Not_Provided()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>())).ReturnsAsync(new Uri(ARCHIVE_URL));
+
+            var expectedArchivePath = $"{IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY}/{IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(BBS_EXPORT_ID)}";
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            args.ArchivePath.Should().Be(expectedArchivePath);
+            _mockFileSystemProvider.Verify(m => m.ReadAllBytesAsync(expectedArchivePath));
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Set_The_Archive_Path_When_Archive_Path_Is_Provided()
+        {
+            // Arrange
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>())).ReturnsAsync(new Uri(ARCHIVE_URL));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            args.ArchivePath.Should().Be(ARCHIVE_PATH);
+            _mockFileSystemProvider.Verify(m => m.ReadAllBytesAsync(ARCHIVE_PATH));
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Set_The_Archive_Path_When_Archive_Url_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            args.ArchivePath.Should().BeNull();
+            _mockFileSystemProvider.Verify(m => m.ReadAllBytesAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Uses_Aws_If_Credentials_Are_Passed()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
+                .Returns(MIGRATION_ID);
+
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                ArchivePath = ARCHIVE_PATH,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                AwsSecretKey = AWS_SECRET_KEY,
+                AwsBucketName = AWS_BUCKET_NAME
+            };
+
+            await _handler.Handle(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                MIGRATION_SOURCE_ID,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                GITHUB_PAT,
+                ARCHIVE_URL
+            ));
+
+            _mockAwsApi.Verify(m => m.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()));
         }
     }
 }

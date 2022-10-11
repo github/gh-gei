@@ -8,8 +8,6 @@ namespace OctoshiftCLI.BbsToGithub.Services;
 public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 {
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
-    private const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
-    private const string EXPORT_ARCHIVE_SOURCE_DIRECTORY = "data/migration/export";
 
     private readonly ISftpClient _sftpClient;
     private readonly OctoLogger _log;
@@ -31,16 +29,16 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _sftpClient = sftpClient;
     }
 
-    public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
-        var exportArchiveFilename = $"Bitbucket_export_{exportJobId}.tar";
-        var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory, EXPORT_ARCHIVE_SOURCE_DIRECTORY, exportArchiveFilename);
-        var targetExportArchiveFullPath = Path.Join(targetDirectory, exportArchiveFilename);
-        sourceExportArchiveFullPath = sourceExportArchiveFullPath.Replace('\\', '/');
+        var sourceExportArchiveFullPath = Path.Join(BbsSharedHomeDirectory ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
+            IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).Replace('\\', '/');
+        var targetExportArchiveFullPath =
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).Replace('\\', '/');
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {

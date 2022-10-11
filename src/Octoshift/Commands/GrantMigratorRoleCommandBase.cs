@@ -24,6 +24,8 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
+    
+    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
@@ -41,7 +43,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
 
         return new GrantMigratorRoleCommandHandler(log, githubApi);
     }
@@ -53,6 +55,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
         AddOption(ActorType);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(GhesApiUrl);
     }
 }
 
@@ -63,4 +66,5 @@ public class GrantMigratorRoleCommandArgs
     public string ActorType { get; set; }
     public string GithubPat { get; set; }
     public bool Verbose { get; set; }
+    public string GhesApiUrl { get; set; }
 }

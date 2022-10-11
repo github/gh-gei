@@ -36,14 +36,12 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
         var githubEnterpriseId = await _githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
         var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
         var sourceToken = GetSourceToken(args);
-        var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
         var migrationId = await _githubApi.StartOrganizationMigration(
             sourceOrgUrl,
             args.GithubTargetOrg,
             githubEnterpriseId,
-            sourceToken,
-            targetToken);
+            sourceToken);
 
 
         if (!args.Wait)
@@ -52,19 +50,19 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             return;
         }
 
-        var migrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
+        var (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
 
         while (OrganizationMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
-            migrationState = await _githubApi.GetOrganizationMigrationState(migrationId);
+            (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
         }
 
         if (OrganizationMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
-            throw new OctoshiftCliException($"Migration Failed.");
+            throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");

@@ -14,6 +14,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly GithubApi _sourceGithubApi;
     private readonly GithubApi _targetGithubApi;
     private readonly AzureApi _azureApi;
+    private readonly AwsApi _awsApi
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
@@ -21,13 +22,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
         _targetGithubApi = targetGithubApi;
         _environmentVariableProvider = environmentVariableProvider;
         _azureApi = azureApi;
+        _awsApi = awsApi;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -52,6 +54,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.GithubSourceOrg,
               args.SourceRepo,
               args.AzureStorageConnectionString,
+              args.AwsBucketName,
+              args.AwsAccessKey,
+              args.AwsSecretKey,
+              args.GithubSourcePat,
               args.SkipReleases,
               args.LockSourceRepo
             );
@@ -150,10 +156,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string githubSourceOrg,
       string sourceRepo,
       string azureStorageConnectionString,
+      string awsBucketName,
+      string awsAccessKey,
+      string awsSecretKey,
+      string githubSourcePat,
       bool skipReleases,
       bool lockSourceRepo)
     {
-        if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+        if (string.IsNullOrWhiteSpace(awsBucketName) && string.IsNullOrWhiteSpace(azureStorageConnectionString))
         {
             _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
             azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
@@ -185,10 +195,28 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveContent = await _azureApi.DownloadArchive(metadataArchiveUrl);
 
+        return string.IsNullOrWhiteSpace(awsBucketName) ?
+            await UploadArchivesToAzure(azureApi, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
+            await UploadArchivesToAws(awsApi, awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+
+    }
+
+    private async Task<(string, string)> UploadArchivesToAzure(AzureApi azureApi, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
         var authenticatedGitArchiveUri = await _azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
         _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
         var authenticatedMetadataArchiveUri = await _azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
+
+        return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+    }
+
+    private async Task<(string, string)> UploadArchivesToAws(AwsApi awsApi, string bucketName, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    {
+        _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
+        var authenticatedGitArchiveUri = await awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
+        _log.LogInformation($"Uploading archive {metadataArchiveFileName} to AWS S3");
+        var authenticatedMetadataArchiveUri = await awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
 
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }
