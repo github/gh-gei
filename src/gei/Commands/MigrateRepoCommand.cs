@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
+using System.Net.Http;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
@@ -161,7 +162,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
 
-            var handler = new MigrateRepoCommandHandler(log, sourceGithubApiFactory, targetGithubApiFactory, environmentVariableProvider, azureApiFactory, awsApiFactory);
+            var handler = new MigrateRepoCommandHandler(log, sourceGithubApiFactory, targetGithubApiFactory, environmentVariableProvider, azureApiFactory, awsApiFactory, new FileDownloader(new HttpClient(), log));
             Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
         }
     }

@@ -22,6 +22,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new Mock<IAzureApiFactory>();
         private readonly Mock<AwsApiFactory> _mockAwsApiFactory = TestHelpers.CreateMock<AwsApiFactory>();
         private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
+        private readonly Mock<FileDownloader> _mockFileDownloader = TestHelpers.CreateMock<FileDownloader>();
 
         private readonly MigrateRepoCommandHandler _handler;
 
@@ -44,7 +45,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockTargetGithubApiFactory.Object,
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApiFactory.Object,
-                _mockAwsApiFactory.Object);
+                _mockAwsApiFactory.Object,
+                _mockFileDownloader.Object);
         }
 
         [Fact]
@@ -337,8 +339,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
 
@@ -588,8 +590,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
 
@@ -660,8 +662,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
 
@@ -980,7 +982,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
             _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
+            _mockFileDownloader.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
@@ -1022,7 +1024,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
             _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
+            _mockFileDownloader.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
@@ -1053,7 +1055,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
             _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
 
-            _mockAzureApi.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
+            _mockFileDownloader.Setup(x => x.DownloadArchive(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
@@ -1234,8 +1236,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             _mockAzureApiFactory.Setup(m => m.Create(It.IsAny<string>())).Returns(_mockAzureApi.Object);
-            _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
-            _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockFileDownloader.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken()).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken()).Returns(targetGithubPat);

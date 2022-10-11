@@ -16,13 +16,14 @@ public class MigrateRepoCommandHandler
     private readonly IAzureApiFactory _azureApiFactory;
     private readonly AwsApiFactory _awsApiFactory;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly FileDownloader _fileDownloader;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, AwsApiFactory awsApiFactory)
+    public MigrateRepoCommandHandler(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, AwsApiFactory awsApiFactory, FileDownloader fileDownloader)
     {
         _log = log;
         _sourceGithubApiFactory = sourceGithubApiFactory;
@@ -30,6 +31,7 @@ public class MigrateRepoCommandHandler
         _environmentVariableProvider = environmentVariableProvider;
         _azureApiFactory = azureApiFactory;
         _awsApiFactory = awsApiFactory;
+        _fileDownloader = fileDownloader;
     }
 
     public async Task Invoke(MigrateRepoCommandArgs args)
@@ -177,7 +179,7 @@ public class MigrateRepoCommandHandler
         }
 
         var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
-        var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
+        var azureApi = CreateAzureApi(azureStorageConnectionString, noSslVerify);
         var awsApi = string.IsNullOrWhiteSpace(awsBucketName) ? null : _awsApiFactory.Create(awsAccessKey, awsSecretKey);
 
         var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
@@ -193,13 +195,13 @@ public class MigrateRepoCommandHandler
         _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
 
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveContent = await azureApi.DownloadArchive(gitArchiveUrl);
+        var gitArchiveContent = await _fileDownloader.DownloadArchive(gitArchiveUrl);
 
         var metadataArchiveUrl = await WaitForArchiveGeneration(ghesApi, githubSourceOrg, metadataArchiveId);
         _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-        var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
+        var metadataArchiveContent = await _fileDownloader.DownloadArchive(metadataArchiveUrl);
 
         return string.IsNullOrWhiteSpace(awsBucketName) ?
             await UploadArchivesToAzure(azureApi, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
@@ -253,6 +255,13 @@ public class MigrateRepoCommandHandler
     {
         serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
         return $"{serverUrl}/{org}/{project}/_git/{repo}".Replace(" ", "%20");
+    }
+
+    private AzureApi CreateAzureApi(string azureStorageConnectionString, bool noSslVerify)
+    {
+        return string.IsNullOrWhiteSpace(azureStorageConnectionString)
+            ? null
+            : noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
     }
 
     private void LogOptions(MigrateRepoCommandArgs args)
