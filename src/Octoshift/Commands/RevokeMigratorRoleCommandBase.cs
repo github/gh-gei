@@ -27,7 +27,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose");
 
-    public override RevokeMigratorRoleCommandHandler BuildHandler(RevokeMigratorRoleCommandArgs args, ServiceProvider sp)
+    public override RevokeMigratorRoleCommandHandler BuildHandler(RevokeMigratorRoleCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

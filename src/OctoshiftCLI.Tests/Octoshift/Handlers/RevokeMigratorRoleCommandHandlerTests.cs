@@ -55,23 +55,6 @@ public class RevokeMigratorRoleCommandHandlerTests
         _mockOctoLogger.Verify(x => x.LogError(It.IsAny<string>()));
     }
 
-    [Fact]
-    public async Task It_Uses_The_GhesApiUrl_When_Provided()
-    {
-        const string ghesApiUrl = "GhesApiUrl";
 
-        _mockGithubApiFactory.Setup(m => m.Create(ghesApiUrl, It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
-        var args = new RevokeMigratorRoleArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            Actor = ACTOR,
-            ActorType = ACTOR_TYPE,
-            GhesApiUrl = ghesApiUrl,
-        };
-        await _handler.Handle(args);
-
-        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
-    }
 
 }

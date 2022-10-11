@@ -10,16 +10,14 @@ namespace OctoshiftCLI.Handlers;
 public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly GithubApi _githubApi;
     private readonly ReclaimService _reclaimService;
 
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandHandler(OctoLogger log, GithubApi githubApi, ReclaimService reclaimService)
+    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService)
     {
         _log = log;
-        _githubApi = githubApi;
         _reclaimService = reclaimService;
     }
 

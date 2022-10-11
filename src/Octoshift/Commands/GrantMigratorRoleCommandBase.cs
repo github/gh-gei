@@ -29,7 +29,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
-    public override GrantMigratorRoleCommandHandler BuildHandler(GrantMigratorRoleCommandArgs args, ServiceProvider sp)
+    public override GrantMigratorRoleCommandHandler BuildHandler(GrantMigratorRoleCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

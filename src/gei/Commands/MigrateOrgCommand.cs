@@ -48,7 +48,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<bool> Verbose { get; } = new("--verbose");
 
-        public override MigrateOrgCommandHandler BuildHandler(MigrateOrgCommandArgs args, ServiceProvider sp)
+        public override MigrateOrgCommandHandler BuildHandler(MigrateOrgCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
             {

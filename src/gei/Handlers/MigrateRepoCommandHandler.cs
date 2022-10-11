@@ -14,7 +14,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly GithubApi _sourceGithubApi;
     private readonly GithubApi _targetGithubApi;
     private readonly AzureApi _azureApi;
-    private readonly AwsApi _awsApi
+    private readonly AwsApi _awsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
@@ -55,9 +55,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.SourceRepo,
               args.AzureStorageConnectionString,
               args.AwsBucketName,
-              args.AwsAccessKey,
-              args.AwsSecretKey,
-              args.GithubSourcePat,
               args.SkipReleases,
               args.LockSourceRepo
             );
@@ -157,9 +154,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string sourceRepo,
       string azureStorageConnectionString,
       string awsBucketName,
-      string awsAccessKey,
-      string awsSecretKey,
-      string githubSourcePat,
       bool skipReleases,
       bool lockSourceRepo)
     {
@@ -195,13 +189,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveContent = await _azureApi.DownloadArchive(metadataArchiveUrl);
 
-        return string.IsNullOrWhiteSpace(awsBucketName) ?
-            await UploadArchivesToAzure(azureApi, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
-            await UploadArchivesToAws(awsApi, awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+        return _azureApi.HasValue() ?
+            await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
+            await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
 
     }
 
-    private async Task<(string, string)> UploadArchivesToAzure(AzureApi azureApi, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
     {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
         var authenticatedGitArchiveUri = await _azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
@@ -211,12 +205,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }
 
-    private async Task<(string, string)> UploadArchivesToAws(AwsApi awsApi, string bucketName, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    private async Task<(string, string)> UploadArchivesToAws(string bucketName, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
     {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
-        var authenticatedGitArchiveUri = await awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
+        var authenticatedGitArchiveUri = await _awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
         _log.LogInformation($"Uploading archive {metadataArchiveFileName} to AWS S3");
-        var authenticatedMetadataArchiveUri = await awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
+        var authenticatedMetadataArchiveUri = await _awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
 
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }

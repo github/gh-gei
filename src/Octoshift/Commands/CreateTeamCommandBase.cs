@@ -25,7 +25,7 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
-    public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, ServiceProvider sp)
+    public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

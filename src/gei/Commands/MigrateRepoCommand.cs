@@ -136,7 +136,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<bool> Verbose { get; } = new("--verbose");
 
-        public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, ServiceProvider sp)
+        public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
             {
@@ -156,17 +156,27 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             GithubApi ghesApi = null;
             AzureApi azureApi = null;
+            AwsApi awsApi = null;
 
             if (args.GhesApiUrl.HasValue())
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
+                var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
 
                 ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
-                azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
+
+                if (args.AwsBucketName.HasValue())
+                {
+                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                }
+                else
+                {
+                    azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
+                }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi);
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.Commands;
@@ -41,5 +42,23 @@ public class GrantMigratorRoleCommandBaseTests
         _command.BuildHandler(args, _serviceProvider);
 
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), githubPat));
+    }
+
+    [Fact]
+    public void It_Uses_The_GhesApiUrl_When_Provided()
+    {
+        var ghesApiUrl = "GHES-API-URL";
+
+        var args = new GrantMigratorRoleCommandArgs
+        {
+            GithubOrg = "foo",
+            Actor = "blah",
+            ActorType = "TEAM",
+            GhesApiUrl = ghesApiUrl
+        };
+
+        _command.BuildHandler(args, _serviceProvider);
+
+        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
     }
 }

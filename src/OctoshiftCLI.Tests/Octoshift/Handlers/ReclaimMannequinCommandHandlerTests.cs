@@ -11,7 +11,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
 public class ReclaimMannequinCommandHandlerTests
 {
-    private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
     private readonly ReclaimMannequinCommandHandler _handler;
@@ -22,7 +21,7 @@ public class ReclaimMannequinCommandHandlerTests
 
     public ReclaimMannequinCommandHandlerTests()
     {
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockReclaimService.Object)
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()

@@ -52,7 +52,7 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
         Description = "Display more information to the console."
     };
 
-    public override DownloadLogsCommandHandler BuildHandler(DownloadLogsCommandArgs args, ServiceProvider sp)
+    public override DownloadLogsCommandHandler BuildHandler(DownloadLogsCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

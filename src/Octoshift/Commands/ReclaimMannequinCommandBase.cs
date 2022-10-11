@@ -60,7 +60,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     protected virtual Option<bool> Verbose { get; } = new("--verbose");
 
-    public override ReclaimMannequinCommandHandler BuildHandler(ReclaimMannequinCommandArgs args, ServiceProvider sp)
+    public override ReclaimMannequinCommandHandler BuildHandler(ReclaimMannequinCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {
@@ -77,7 +77,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var reclaimService = new ReclaimService(githubApi, log);
 
-        return new ReclaimMannequinCommandHandler(log, githubApi, reclaimService);
+        return new ReclaimMannequinCommandHandler(log, reclaimService);
     }
 
     protected void AddOptions()

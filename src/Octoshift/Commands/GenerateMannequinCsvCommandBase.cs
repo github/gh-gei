@@ -38,7 +38,7 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, ServiceProvider sp)
+    public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

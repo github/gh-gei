@@ -37,7 +37,7 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
         AddOption(Verbose);
     }
 
-    public override WaitForMigrationCommandHandler BuildHandler(WaitForMigrationCommandArgs args, ServiceProvider sp)
+    public override WaitForMigrationCommandHandler BuildHandler(WaitForMigrationCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
         {

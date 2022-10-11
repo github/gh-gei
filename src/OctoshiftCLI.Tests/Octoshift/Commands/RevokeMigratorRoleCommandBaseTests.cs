@@ -42,4 +42,22 @@ public class RevokeMigratorRoleCommandBaseTests
 
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), githubPat));
     }
+
+    [Fact]
+    public void It_Uses_The_GhesApiUrl_When_Provided()
+    {
+        var ghesApiUrl = "GhesApiUrl";
+
+        var args = new RevokeMigratorRoleCommandArgs
+        {
+            GithubOrg = "foo",
+            Actor = "blah",
+            ActorType = "TEAM",
+            GhesApiUrl = ghesApiUrl,
+        };
+
+        _command.BuildHandler(args, _serviceProvider);
+
+        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
+    }
 }
