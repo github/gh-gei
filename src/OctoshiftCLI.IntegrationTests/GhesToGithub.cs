@@ -77,7 +77,7 @@ public sealed class GhesToGithub : IDisposable
         await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
 
         await _targetHelper.RunGeiCliMigration(
-            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs", _tokens);
+            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs --sequential", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
