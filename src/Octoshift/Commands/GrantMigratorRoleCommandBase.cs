@@ -14,20 +14,20 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
     {
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
+    public virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
 
-    protected virtual Option<string> Actor { get; } = new("--actor") { IsRequired = true };
+    public virtual Option<string> Actor { get; } = new("--actor") { IsRequired = true };
 
-    protected virtual Option<string> ActorType { get; } = new("--actor-type") { IsRequired = true };
+    public virtual Option<string> ActorType { get; } = new("--actor-type") { IsRequired = true };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
+    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+    public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
     public override GrantMigratorRoleCommandHandler BuildHandler(GrantMigratorRoleCommandArgs args, IServiceProvider sp)
     {

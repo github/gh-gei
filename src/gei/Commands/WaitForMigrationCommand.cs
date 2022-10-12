@@ -14,5 +14,5 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
         AddOptions();
     }
 
-    protected override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
+    public override Option<string> GithubPat { get; } = new("--github-target-pat") { IsRequired = false };
 }

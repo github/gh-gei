@@ -7,7 +7,7 @@ public sealed class CreateTeamCommand : CreateTeamCommandBase
 {
     public CreateTeamCommand() : base() => AddOptions();
 
-    protected override Option<string> GithubPat { get; } = new("--github-target-pat")
+    public override Option<string> GithubPat { get; } = new("--github-target-pat")
     {
         IsRequired = false,
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."

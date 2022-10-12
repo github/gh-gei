@@ -17,18 +17,18 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
     {
     }
 
-    protected virtual Option<string> MigrationId { get; } = new("--migration-id")
+    public virtual Option<string> MigrationId { get; } = new("--migration-id")
     {
         IsRequired = true,
         Description = "Waits for the specified migration to finish."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose");
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
 
     protected void AddOptions()
     {

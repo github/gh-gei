@@ -12,18 +12,18 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
     {
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
+    public virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
 
-    protected virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
+    public virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
 
-    protected virtual Option<string> IdpGroup { get; } = new("--idp-group");
+    public virtual Option<string> IdpGroup { get; } = new("--idp-group");
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+    public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
     public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, IServiceProvider sp)
     {

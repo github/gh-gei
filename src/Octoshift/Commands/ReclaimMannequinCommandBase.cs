@@ -22,43 +22,43 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
     {
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "Uses GH_PAT env variable or --github-pat arg."
     };
 
-    protected virtual Option<string> Csv { get; } = new("--csv")
+    public virtual Option<string> Csv { get; } = new("--csv")
     {
         Description = "CSV file path with list of mannequins to be reclaimed."
     };
 
-    protected virtual Option<string> MannequinUsername { get; } = new("--mannequin-user")
+    public virtual Option<string> MannequinUsername { get; } = new("--mannequin-user")
     {
         Description = "The login of the mannequin to be remapped."
     };
 
-    protected virtual Option<string> MannequinId { get; } = new("--mannequin-id")
+    public virtual Option<string> MannequinId { get; } = new("--mannequin-id")
     {
         Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
     };
 
-    protected virtual Option<string> TargetUsername { get; } = new("--target-user")
+    public virtual Option<string> TargetUsername { get; } = new("--target-user")
     {
         Description = "The login of the target user to be mapped."
     };
 
-    protected virtual Option<bool> Force { get; } = new("--force")
+    public virtual Option<bool> Force { get; } = new("--force")
     {
         Description = "Map the user even if it was previously mapped"
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose");
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
 
     public override ReclaimMannequinCommandHandler BuildHandler(ReclaimMannequinCommandArgs args, IServiceProvider sp)
     {

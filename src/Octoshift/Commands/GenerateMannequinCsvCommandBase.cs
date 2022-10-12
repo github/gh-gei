@@ -15,25 +15,25 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
     {
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "Uses GH_PAT env variable."
     };
 
-    protected virtual Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./mannequins.csv"))
+    public virtual Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./mannequins.csv"))
     {
         Description = "Output filename. Default value mannequins.csv"
     };
 
-    protected virtual Option<bool> IncludeReclaimed { get; } = new("--include-reclaimed")
+    public virtual Option<bool> IncludeReclaimed { get; } = new("--include-reclaimed")
     {
         Description = "Include mannequins that have already been reclaimed"
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose");
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };

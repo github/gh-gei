@@ -15,39 +15,39 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
     {
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "GitHub organization to download logs from."
     };
 
-    protected virtual Option<string> GithubRepo { get; } = new("--github-repo")
+    public virtual Option<string> GithubRepo { get; } = new("--github-repo")
     {
         IsRequired = true,
         Description = "Target repository to download latest log for."
     };
 
-    protected virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
+    public virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
     {
         Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<string> MigrationLogFile { get; } = new("--migration-log-file")
+    public virtual Option<string> MigrationLogFile { get; } = new("--migration-log-file")
     {
         Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
     };
 
-    protected virtual Option<bool> Overwrite { get; } = new("--overwrite")
+    public virtual Option<bool> Overwrite { get; } = new("--overwrite")
     {
         Description = "Overwrite migration log file if it exists."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose")
+    public virtual Option<bool> Verbose { get; } = new("--verbose")
     {
         Description = "Display more information to the console."
     };

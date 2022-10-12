@@ -7,5 +7,5 @@ public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
 {
     public RevokeMigratorRoleCommand() : base() => AddOptions();
 
-    protected override Option<string> GithubPat { get; } = new("--github-target-pat");
+    public override Option<string> GithubPat { get; } = new("--github-target-pat");
 }
