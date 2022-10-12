@@ -1,7 +1,5 @@
-using System.CommandLine;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
