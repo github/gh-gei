@@ -1,52 +1,64 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class ConfigureAutoLinkCommand : Command
+    public class ConfigureAutoLinkCommand : CommandBase<ConfigureAutoLinkCommandArgs, ConfigureAutoLinkCommandHandler>
     {
-        public ConfigureAutoLinkCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base(
+        public ConfigureAutoLinkCommand() : base(
             name: "configure-autolink",
             description: "Configures Autolink References in GitHub so that references to Azure Boards work items become hyperlinks in GitHub" +
                          Environment.NewLine +
                          "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var githubPat = new Option<string>("--github-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(GithubOrg);
+            AddOption(GithubRepo);
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(GithubPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(githubPat);
-            AddOption(verbose);
+        public Option<string> GithubOrg { get; } = new("--github-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubRepo { get; } = new("--github-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoOrg { get; } = new("--ado-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubPat { get; } = new("--github-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new ConfigureAutoLinkCommandHandler(log, githubApiFactory);
-            Handler = CommandHandler.Create<ConfigureAutoLinkCommandArgs>(handler.Invoke);
+        public override ConfigureAutoLinkCommandHandler BuildHandler(ConfigureAutoLinkCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+            var githubApi = targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+            return new ConfigureAutoLinkCommandHandler(log, githubApi);
         }
     }
 

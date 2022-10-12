@@ -2,21 +2,22 @@
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class ConfigureAutoLinkCommandHandler
+public class ConfigureAutoLinkCommandHandler : ICommandHandler<ConfigureAutoLinkCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly GithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public ConfigureAutoLinkCommandHandler(OctoLogger log, GithubApiFactory githubApiFactory)
+    public ConfigureAutoLinkCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
     }
 
-    public async Task Invoke(ConfigureAutoLinkCommandArgs args)
+    public async Task Handle(ConfigureAutoLinkCommandArgs args)
     {
         if (args is null)
         {
@@ -40,9 +41,7 @@ public class ConfigureAutoLinkCommandHandler
         var keyPrefix = "AB#";
         var urlTemplate = $"https://dev.azure.com/{args.AdoOrg}/{args.AdoTeamProject}/_workitems/edit/<num>/";
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-
-        var autoLinks = await githubApi.GetAutoLinks(args.GithubOrg, args.GithubRepo);
+        var autoLinks = await _githubApi.GetAutoLinks(args.GithubOrg, args.GithubRepo);
         if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))
         {
             _log.LogSuccess($"Autolink reference already exists for key_prefix: '{keyPrefix}'. No operation will be performed");
@@ -54,10 +53,10 @@ public class ConfigureAutoLinkCommandHandler
         {
             _log.LogInformation($"Autolink reference already exists for key_prefix: '{keyPrefix}', but the url template is incorrect");
             _log.LogInformation($"Deleting existing Autolink reference for key_prefix: '{keyPrefix}' before creating a new Autolink reference");
-            await githubApi.DeleteAutoLink(args.GithubOrg, args.GithubRepo, autoLink.Id);
+            await _githubApi.DeleteAutoLink(args.GithubOrg, args.GithubRepo, autoLink.Id);
         }
 
-        await githubApi.AddAutoLink(args.GithubOrg, args.GithubRepo, keyPrefix, urlTemplate);
+        await _githubApi.AddAutoLink(args.GithubOrg, args.GithubRepo, keyPrefix, urlTemplate);
 
         _log.LogSuccess("Successfully configured autolink references");
     }
