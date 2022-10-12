@@ -9,7 +9,7 @@ public class WaitForMigrationCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new WaitForMigrationCommand(null, null);
+        var command = new WaitForMigrationCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("wait-for-migration");
         command.Options.Count.Should().Be(3);

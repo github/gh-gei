@@ -1,5 +1,7 @@
+using System;
 using System.CommandLine;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 
@@ -7,32 +9,50 @@ using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class WaitForMigrationCommandBase : Command
+public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandArgs, WaitForMigrationCommandHandler>
 {
-    protected WaitForMigrationCommandHandler BaseHandler { get; init; }
-
-    public WaitForMigrationCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base(
+    public WaitForMigrationCommandBase() : base(
         name: "wait-for-migration",
         description: "Waits for migration(s) to finish and reports all in progress and queued ones.")
     {
-        BaseHandler = new WaitForMigrationCommandHandler(log, githubApiFactory);
     }
 
-    protected virtual Option<string> MigrationId { get; } = new("--migration-id")
+    public virtual Option<string> MigrationId { get; } = new("--migration-id")
     {
         IsRequired = true,
         Description = "Waits for the specified migration to finish."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat") { IsRequired = false };
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
+    {
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
+    };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
 
     protected void AddOptions()
     {
         AddOption(MigrationId);
         AddOption(GithubPat);
         AddOption(Verbose);
+    }
+
+    public override WaitForMigrationCommandHandler BuildHandler(WaitForMigrationCommandArgs args, IServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(targetPersonalAccessToken: args.GithubPat);
+
+        return new WaitForMigrationCommandHandler(log, githubApi);
     }
 }
 

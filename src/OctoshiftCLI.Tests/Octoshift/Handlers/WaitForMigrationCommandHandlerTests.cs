@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 using Xunit;
 
@@ -12,7 +11,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 public class WaitForMigrationCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly WaitForMigrationCommandHandler _handler;
@@ -24,7 +22,7 @@ public class WaitForMigrationCommandHandlerTests
 
     public WaitForMigrationCommandHandlerTests()
     {
-        _handler = new WaitForMigrationCommandHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object)
+        _handler = new WaitForMigrationCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object)
         {
             WaitIntervalInSeconds = WAIT_INTERVAL
         };
@@ -38,8 +36,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
-
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -83,8 +79,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, FailureReason: failureReason));
-
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -132,8 +126,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null))
             .Returns((State: RepositoryMigrationStatus.FailedValidation, RepositoryName: TARGET_REPO, FailureReason: failureReason));
-
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -183,8 +175,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
             .Returns((State: OrganizationMigrationStatus.Succeeded, sourceOrgUrl, targetOrgName, FailureReason: null));
 
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
         _mockOctoLogger.Setup(m => m.LogSuccess(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -229,8 +219,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
             .Returns((State: OrganizationMigrationStatus.Failed, sourceOrgUrl, targetOrgName, failureReason));
 
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
         _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -269,8 +257,6 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Invalid_Migration_ID_Prefix_Throws_Exception()
     {
         // Arrange
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
 
@@ -289,31 +275,6 @@ public class WaitForMigrationCommandHandlerTests
 
         // Assert
         _mockGithubApi.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task It_Uses_Github_Pat_When_Provided()
-    {
-        // Arrange
-        const string githubPat = "github-pat";
-
-        _mockGithubApi
-            .Setup(x => x.GetMigration(REPO_MIGRATION_ID).Result)
-            .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
-
-        _mockTargetGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
-
-        // Act
-        var args = new WaitForMigrationCommandArgs
-        {
-            MigrationId = REPO_MIGRATION_ID,
-            GithubPat = githubPat
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation("GITHUB PAT: ***"));
-        _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
 }
 

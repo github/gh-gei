@@ -1,19 +1,18 @@
 using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class GrantMigratorRoleCommandHandler
+public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRoleCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public GrantMigratorRoleCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public GrantMigratorRoleCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
     }
 
     public async Task Handle(GrantMigratorRoleCommandArgs args)
@@ -54,9 +53,8 @@ public class GrantMigratorRoleCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
-        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var success = await githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+        var success = await _githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
         if (success)
         {

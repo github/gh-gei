@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public void Should_Have_Options()
         {
-            var command = new MigrateOrgCommand(null, null, null);
+            var command = new MigrateOrgCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-org");
             command.Options.Count.Should().Be(7);

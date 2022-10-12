@@ -34,9 +34,7 @@ public class GenerateScriptCommandHandlerTests
     private readonly IEnumerable<string> EMPTY_PIPELINES = new List<string>();
 
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-    private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
     private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
-    private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private string _scriptOutput;
@@ -46,9 +44,8 @@ public class GenerateScriptCommandHandlerTests
     {
         var mockVersionProvider = new Mock<IVersionProvider>();
         mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-        _mockAdoInspectorServiceFactory.Setup(m => m.Create(_mockAdoApi.Object)).Returns(_mockAdoInspector.Object);
 
-        _handler = new GenerateScriptCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object, mockVersionProvider.Object, _mockAdoInspectorServiceFactory.Object)
+        _handler = new GenerateScriptCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, mockVersionProvider.Object, _mockAdoInspector.Object)
         {
             WriteToFile = (_, contents) =>
             {
@@ -62,7 +59,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_StartsWith_Shebang()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
 
         // Act
@@ -73,7 +69,7 @@ public class GenerateScriptCommandHandlerTests
             Sequential = true,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().StartWith("#!/usr/bin/env pwsh");
@@ -83,8 +79,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Single_Repo_No_Options()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -98,7 +92,7 @@ public class GenerateScriptCommandHandlerTests
             Sequential = true,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
         var expected = $"Exec {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
@@ -112,8 +106,6 @@ public class GenerateScriptCommandHandlerTests
     {
         // Arrange
         var repoList = new FileInfo("repos.csv");
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -129,7 +121,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             RepoList = repoList
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
         var expected = $"Exec {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --wait }}";
@@ -143,8 +135,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Single_Repo_All_Options()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -172,7 +162,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -190,8 +180,6 @@ public class GenerateScriptCommandHandlerTests
         var adoRepo = "Some Repo";
         var adoRepos = new List<AdoRepository> { new() { Name = adoRepo } };
         var expectedGithubRepoName = "Parts-Unlimited-Some-Repo";
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -220,7 +208,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -232,8 +220,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Single_Repo_No_Options_With_Download_Migration_Logs()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -248,7 +234,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             DownloadMigrationLogs = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
         var expected = new StringBuilder();
@@ -263,7 +249,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Skips_Team_Project_With_No_Repos()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(0);
 
         // Act
@@ -274,7 +259,7 @@ public class GenerateScriptCommandHandlerTests
             Sequential = true,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().BeNull();
@@ -289,8 +274,6 @@ public class GenerateScriptCommandHandlerTests
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
         _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -323,7 +306,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -336,8 +319,6 @@ public class GenerateScriptCommandHandlerTests
     {
         // Arrange
         ADO_PIPELINES = new List<string> { FOO_PIPELINE, BAR_PIPELINE };
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -366,7 +347,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -378,8 +359,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Create_Teams_Option_Should_Generate_Create_Team_And_Add_Teams_To_Repos_Scripts()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -401,7 +380,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             CreateTeams = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -413,8 +392,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Link_Idp_Groups_Option_Should_Generate_Create_Teams_Scripts_With_Idp_Groups()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -436,7 +413,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             LinkIdpGroups = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -448,8 +425,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Lock_Ado_Repo_Option_Should_Generate_Lock_Ado_Repo_Script()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -468,7 +443,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             LockAdoRepos = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -480,8 +455,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Disable_Ado_Repo_Option_Should_Generate_Disable_Ado_Repo_Script()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -500,7 +473,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             DisableAdoRepos = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -512,8 +485,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Integrate_Boards_Option_Should_Generate_Auto_Link_And_Boards_Integration_Scripts()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -533,7 +504,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             IntegrateBoards = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -549,8 +520,6 @@ public class GenerateScriptCommandHandlerTests
         _mockAdoApi
             .Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS))
             .ReturnsAsync(APP_ID);
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -572,7 +541,7 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo("unit-test-output"),
             RewirePipelines = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
 
@@ -584,7 +553,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task ParallelScript_StartsWith_Shebang()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
 
         // Act
@@ -594,7 +562,7 @@ public class GenerateScriptCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().StartWith("#!/usr/bin/env pwsh");
@@ -604,8 +572,6 @@ public class GenerateScriptCommandHandlerTests
     public async Task ParallelScript_Single_Repo_No_Options()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -693,7 +659,7 @@ if ($Failed -ne 0) {
             AdoOrg = ADO_ORG,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -703,8 +669,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Single_Repo_No_Options_With_Download_Migration_Logs()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -796,7 +760,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             DownloadMigrationLogs = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -806,8 +770,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Skips_Team_Project_With_No_Repos()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(0);
 
         // Act
@@ -817,7 +779,7 @@ if ($Failed -ne 0) {
             AdoOrg = ADO_ORG,
             Output = new FileInfo("unit-test-output")
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().BeNull();
@@ -832,8 +794,6 @@ if ($Failed -ne 0) {
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
         _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(2);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -963,7 +923,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -976,8 +936,6 @@ if ($Failed -ne 0) {
         ADO_PIPELINES = new List<string> { FOO_PIPELINE, BAR_PIPELINE };
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -1081,7 +1039,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             All = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1091,8 +1049,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Create_Teams_Option_Should_Generate_Create_Teams_And_Add_Teams_To_Repos_Scripts()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -1126,7 +1082,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             CreateTeams = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
@@ -1138,8 +1094,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Link_Idp_Groups_Option_Should_Generate_Create_Teams_Scripts_With_Idp_Groups()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -1173,7 +1127,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             LinkIdpGroups = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
@@ -1185,8 +1139,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Lock_Ado_Repo_Option_Should_Generate_Lock_Ado_Repo_Script()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -1215,7 +1167,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             LockAdoRepos = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
@@ -1227,8 +1179,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Disable_Ado_Repo_Option_Should_Generate_Disable_Ado_Repo_Script()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -1259,7 +1209,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             DisableAdoRepos = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
@@ -1271,8 +1221,6 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Integrate_Boards_Option_Should_Generate_Auto_Link_And_Boards_Integration_Scripts()
     {
         // Arrange
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
         _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
@@ -1304,7 +1252,7 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             IntegrateBoards = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
@@ -1318,8 +1266,6 @@ if ($Failed -ne 0) {
         // Arrange
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
         _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT })).ReturnsAsync(APP_ID);
-
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -1353,36 +1299,12 @@ if ($Failed -ne 0) {
             Output = new FileInfo("unit-test-output"),
             RewirePipelines = true
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Ado_Pat_When_Provided()
-    {
-        // Arrange
-        const string adoPat = "ado-pat";
-
-        _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
-
-        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(0);
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            AdoOrg = ADO_ORG,
-            AdoPat = adoPat,
-            Output = new FileInfo("unit-test-output")
-        };
-        await _handler.Invoke(args);
-
-        // Assert
-        _mockAdoApiFactory.Verify(m => m.Create(adoPat));
     }
 
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)

@@ -1,57 +1,66 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class IntegrateBoardsCommand : Command
+    public class IntegrateBoardsCommand : CommandBase<IntegrateBoardsCommandArgs, IntegrateBoardsCommandHandler>
     {
-        public IntegrateBoardsCommand(OctoLogger log, AdoApiFactory adoApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+        public IntegrateBoardsCommand() : base(
             name: "integrate-boards",
             description: "Configures the Azure Boards<->GitHub integration in Azure DevOps." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
         {
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var githubPat = new Option<string>("--github-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(GithubOrg);
+            AddOption(GithubRepo);
+            AddOption(AdoPat);
+            AddOption(GithubPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(adoPat);
-            AddOption(githubPat);
-            AddOption(verbose);
+        public Option<string> AdoOrg { get; } = new("--ado-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubOrg { get; } = new("--github-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubRepo { get; } = new("--github-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<string> GithubPat { get; } = new("--github-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new IntegrateBoardsCommandHandler(log, adoApiFactory, environmentVariableProvider);
-            Handler = CommandHandler.Create<IntegrateBoardsCommandArgs>(handler.Invoke);
+        public override IntegrateBoardsCommandHandler BuildHandler(IntegrateBoardsCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
+
+            return new IntegrateBoardsCommandHandler(log, adoApi, environmentVariableProvider);
         }
     }
 

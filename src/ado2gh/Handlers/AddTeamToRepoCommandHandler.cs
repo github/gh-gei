@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class AddTeamToRepoCommandHandler
+public class AddTeamToRepoCommandHandler : ICommandHandler<AddTeamToRepoCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly GithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public AddTeamToRepoCommandHandler(OctoLogger log, GithubApiFactory githubApiFactory)
+    public AddTeamToRepoCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
     }
 
-    public async Task Invoke(AddTeamToRepoCommandArgs args)
+    public async Task Handle(AddTeamToRepoCommandArgs args)
     {
         if (args is null)
         {
@@ -36,9 +37,8 @@ public class AddTeamToRepoCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var github = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-        var teamSlug = await github.GetTeamSlug(args.GithubOrg, args.Team);
-        await github.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);
+        var teamSlug = await _githubApi.GetTeamSlug(args.GithubOrg, args.Team);
+        await _githubApi.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);
 
         _log.LogSuccess("Successfully added team to repo");
     }

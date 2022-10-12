@@ -1,22 +1,21 @@
 using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class RevokeMigratorRoleCommandHandler
+public class RevokeMigratorRoleCommandHandler : ICommandHandler<RevokeMigratorRoleCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public RevokeMigratorRoleCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public RevokeMigratorRoleCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
     }
 
-    public async Task Handle(RevokeMigratorRoleArgs args)
+    public async Task Handle(RevokeMigratorRoleCommandArgs args)
     {
         if (args is null)
         {
@@ -56,9 +55,8 @@ public class RevokeMigratorRoleCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
-        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var success = await githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+        var success = await _githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
         if (success)
         {

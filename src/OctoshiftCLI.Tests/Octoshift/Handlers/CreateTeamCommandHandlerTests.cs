@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 using Xunit;
 
@@ -11,7 +10,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 public class CreateTeamCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly CreateTeamCommandHandler _handler;
@@ -25,7 +23,7 @@ public class CreateTeamCommandHandlerTests
 
     public CreateTeamCommandHandlerTests()
     {
-        _handler = new CreateTeamCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _handler = new CreateTeamCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object);
     }
 
     [Fact]
@@ -35,8 +33,6 @@ public class CreateTeamCommandHandlerTests
         _mockGithubApi.Setup(x => x.GetIdpGroupId(GITHUB_ORG, IDP_GROUP).Result).Returns(IDP_GROUP_ID);
         _mockGithubApi.Setup(x => x.GetTeamSlug(GITHUB_ORG, TEAM_NAME).Result).Returns(TEAM_SLUG);
         _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<string>());
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var args = new CreateTeamCommandArgs
         {
@@ -53,33 +49,12 @@ public class CreateTeamCommandHandlerTests
     }
 
     [Fact]
-    public async Task It_Uses_The_Github_Pat_When_Provided()
-    {
-        const string githubPat = "github-pat";
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
-
-        var args = new CreateTeamCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            TeamName = TEAM_NAME,
-            IdpGroup = IDP_GROUP,
-            GithubPat = githubPat,
-        };
-        await _handler.Handle(args);
-
-        _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
-    }
-
-    [Fact]
     public async Task Idempotency_Team_Exists()
     {
         _mockGithubApi.Setup(x => x.GetTeamMembers(GITHUB_ORG, TEAM_SLUG).Result).Returns(TEAM_MEMBERS);
         _mockGithubApi.Setup(x => x.GetIdpGroupId(GITHUB_ORG, IDP_GROUP).Result).Returns(IDP_GROUP_ID);
         _mockGithubApi.Setup(x => x.GetTeamSlug(GITHUB_ORG, TEAM_NAME).Result).Returns(TEAM_SLUG);
         _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<string> { TEAM_NAME });
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));

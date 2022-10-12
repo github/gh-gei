@@ -8,7 +8,7 @@ public class ReclaimMannequinCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new ReclaimMannequinCommand(null, null, null);
+        var command = new ReclaimMannequinCommand();
         Assert.NotNull(command);
         Assert.Equal("reclaim-mannequin", command.Name);
         Assert.Equal(8, command.Options.Count);

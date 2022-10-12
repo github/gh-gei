@@ -4,12 +4,11 @@ using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub
@@ -25,7 +24,6 @@ namespace OctoshiftCLI.AdoToGithub
 
             var serviceCollection = new ServiceCollection();
             serviceCollection
-                .AddCommands()
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
@@ -95,13 +93,9 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.")
+                .AddCommands(serviceProvider);
             var commandLineBuilder = new CommandLineBuilder(root);
-
-            foreach (var command in serviceProvider.GetServices<Command>())
-            {
-                commandLineBuilder.Command.AddCommand(command);
-            }
 
             return commandLineBuilder
                 .UseDefaults()
@@ -111,24 +105,6 @@ namespace OctoshiftCLI.AdoToGithub
                     Environment.ExitCode = 1;
                 }, 1)
                 .Build();
-        }
-
-        private static IServiceCollection AddCommands(this IServiceCollection services)
-        {
-            var sampleCommandType = typeof(GenerateScriptCommand);
-            var commandType = typeof(Command);
-
-            var commands = sampleCommandType
-                .Assembly
-                .GetExportedTypes()
-                .Where(x => x.Namespace == sampleCommandType.Namespace && commandType.IsAssignableFrom(x));
-
-            foreach (var command in commands)
-            {
-                services.AddSingleton(commandType, command);
-            }
-
-            return services;
         }
     }
 }

@@ -21,8 +21,12 @@ public static class CommandExtensions
 
         foreach (var commandType in Assembly.GetCallingAssembly().GetAllDescendantsOfCommandBase())
         {
-            var argsType = commandType.BaseType.GetGenericArguments()[0];
-            var handlerType = commandType.BaseType.GetGenericArguments()[1];
+            var commandBaseType = commandType.BaseType.IsGenericType && commandType.BaseType.GetGenericTypeDefinition() == typeof(CommandBase<,>)
+                ? commandType.BaseType
+                : commandType.BaseType.BaseType;
+
+            var argsType = commandBaseType.GetGenericArguments()[0];
+            var handlerType = commandBaseType.GetGenericArguments()[1];
 
             var command = (Command)typeof(CommandExtensions)
                 .GetMethod("ConfigureCommand", BindingFlags.NonPublic | BindingFlags.Static)

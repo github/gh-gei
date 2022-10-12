@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class RewirePipelineCommandHandler
+public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
+    private readonly AdoApi _adoApi;
 
-    public RewirePipelineCommandHandler(OctoLogger log, AdoApiFactory adoApiFactory)
+    public RewirePipelineCommandHandler(OctoLogger log, AdoApi adoApi)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
+        _adoApi = adoApi;
     }
 
-    public async Task Invoke(RewirePipelineCommandArgs args)
+    public async Task Handle(RewirePipelineCommandArgs args)
     {
         if (args is null)
         {
@@ -38,11 +39,9 @@ public class RewirePipelineCommandHandler
 
         _log.RegisterSecret(args.AdoPat);
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
-
-        var adoPipelineId = await ado.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
-        var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-        await ado.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId);
+        var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
+        var (defaultBranch, clean, checkoutSubmodules) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+        await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId);
 
         _log.LogSuccess("Successfully rewired pipeline");
     }

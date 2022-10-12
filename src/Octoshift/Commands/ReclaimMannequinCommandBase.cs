@@ -1,16 +1,15 @@
 using System;
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Octoshift;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class ReclaimMannequinCommandBase : Command
+public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandArgs, ReclaimMannequinCommandHandler>
 {
-    protected ReclaimMannequinCommandHandler BaseHandler { get; init; }
-
-    public ReclaimMannequinCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base(
+    public ReclaimMannequinCommandBase() : base(
         name: "reclaim-mannequin",
         description: "Reclaims one or more mannequin user(s). An invite will be sent and the user(s) will have to accept for the remapping to occur." +
                      "You can reclaim a single user by using --mannequin-user and --target-user or reclaim mannequins in bulk by using the --csv parameter" +
@@ -21,54 +20,65 @@ public class ReclaimMannequinCommandBase : Command
                      Environment.NewLine +
                      "If both options are specified The CSV file takes precedence and other options will be ignored")
     {
-        BaseHandler = new ReclaimMannequinCommandHandler(log, githubApiFactory, reclaimService);
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "Uses GH_PAT env variable or --github-pat arg."
     };
 
-    protected virtual Option<string> Csv { get; } = new("--csv")
+    public virtual Option<string> Csv { get; } = new("--csv")
     {
-        IsRequired = false,
         Description = "CSV file path with list of mannequins to be reclaimed."
     };
 
-    protected virtual Option<string> MannequinUsername { get; } = new("--mannequin-user")
+    public virtual Option<string> MannequinUsername { get; } = new("--mannequin-user")
     {
-        IsRequired = false,
         Description = "The login of the mannequin to be remapped."
     };
 
-    protected virtual Option<string> MannequinId { get; } = new("--mannequin-id")
+    public virtual Option<string> MannequinId { get; } = new("--mannequin-id")
     {
-        IsRequired = false,
         Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
     };
 
-    protected virtual Option<string> TargetUsername { get; } = new("--target-user")
+    public virtual Option<string> TargetUsername { get; } = new("--target-user")
     {
-        IsRequired = false,
         Description = "The login of the target user to be mapped."
     };
 
-    protected virtual Option<bool> Force { get; } = new("--force")
+    public virtual Option<bool> Force { get; } = new("--force")
     {
-        IsRequired = false,
         Description = "Map the user even if it was previously mapped"
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose")
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
+
+    public override ReclaimMannequinCommandHandler BuildHandler(ReclaimMannequinCommandArgs args, IServiceProvider sp)
     {
-        IsRequired = false
-    };
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var reclaimService = new ReclaimService(githubApi, log);
+
+        return new ReclaimMannequinCommandHandler(log, reclaimService);
+    }
 
     protected void AddOptions()
     {

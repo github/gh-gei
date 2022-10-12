@@ -8,7 +8,7 @@ public class GrantMigratorRoleCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new GrantMigratorRoleCommand(null, null);
+        var command = new GrantMigratorRoleCommand();
         Assert.NotNull(command);
         Assert.Equal("grant-migrator-role", command.Name);
         Assert.Equal(6, command.Options.Count);

@@ -8,7 +8,7 @@ public class RevokeMigratorRoleCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new RevokeMigratorRoleCommand(null, null);
+        var command = new RevokeMigratorRoleCommand();
         Assert.NotNull(command);
         Assert.Equal("revoke-migrator-role", command.Name);
         Assert.Equal(6, command.Options.Count);

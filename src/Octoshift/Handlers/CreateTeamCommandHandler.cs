@@ -2,19 +2,18 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class CreateTeamCommandHandler
+public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public CreateTeamCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory)
+    public CreateTeamCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
     }
 
     public async Task Handle(CreateTeamCommandArgs args)
@@ -38,21 +37,19 @@ public class CreateTeamCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-
-        var teams = await githubApi.GetTeams(args.GithubOrg);
+        var teams = await _githubApi.GetTeams(args.GithubOrg);
         if (teams.Contains(args.TeamName))
         {
             _log.LogSuccess($"Team '{args.TeamName}' already exists - New team will not be created");
         }
         else
         {
-            await githubApi.CreateTeam(args.GithubOrg, args.TeamName);
+            await _githubApi.CreateTeam(args.GithubOrg, args.TeamName);
             _log.LogSuccess("Successfully created team");
         }
 
         // TODO: Can improve perf by capturing slug in the response from CreateTeam or GetTeams
-        var teamSlug = await githubApi.GetTeamSlug(args.GithubOrg, args.TeamName);
+        var teamSlug = await _githubApi.GetTeamSlug(args.GithubOrg, args.TeamName);
 
         if (string.IsNullOrWhiteSpace(args.IdpGroup))
         {
@@ -60,16 +57,16 @@ public class CreateTeamCommandHandler
         }
         else
         {
-            var members = await githubApi.GetTeamMembers(args.GithubOrg, teamSlug);
+            var members = await _githubApi.GetTeamMembers(args.GithubOrg, teamSlug);
 
             foreach (var member in members)
             {
-                await githubApi.RemoveTeamMember(args.GithubOrg, teamSlug, member);
+                await _githubApi.RemoveTeamMember(args.GithubOrg, teamSlug, member);
             }
 
-            var idpGroupId = await githubApi.GetIdpGroupId(args.GithubOrg, args.IdpGroup);
+            var idpGroupId = await _githubApi.GetIdpGroupId(args.GithubOrg, args.IdpGroup);
 
-            await githubApi.AddEmuGroupToTeam(args.GithubOrg, teamSlug, idpGroupId);
+            await _githubApi.AddEmuGroupToTeam(args.GithubOrg, teamSlug, idpGroupId);
 
             _log.LogSuccess("Successfully linked team to Idp group");
         }

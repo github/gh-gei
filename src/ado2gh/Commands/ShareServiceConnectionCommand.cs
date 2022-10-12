@@ -1,47 +1,58 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class ShareServiceConnectionCommand : Command
+    public class ShareServiceConnectionCommand : CommandBase<ShareServiceConnectionCommandArgs, ShareServiceConnectionCommandHandler>
     {
-        public ShareServiceConnectionCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
+        public ShareServiceConnectionCommand() : base(
             name: "share-service-connection",
             description: "Makes an existing GitHub Pipelines App service connection available in another team project. This is required before you can rewire pipelines." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var serviceConnectionId = new Option<string>("--service-connection-id")
-            {
-                IsRequired = true
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(ServiceConnectionId);
+            AddOption(AdoPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(serviceConnectionId);
-            AddOption(adoPat);
-            AddOption(verbose);
+        public Option<string> AdoOrg { get; } = new("--ado-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> ServiceConnectionId { get; } = new("--service-connection-id")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new ShareServiceConnectionCommandHandler(log, adoApiFactory);
-            Handler = CommandHandler.Create<ShareServiceConnectionCommandArgs>(handler.Invoke);
+        public override ShareServiceConnectionCommandHandler BuildHandler(ShareServiceConnectionCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
+
+            return new ShareServiceConnectionCommandHandler(log, adoApi);
         }
     }
 

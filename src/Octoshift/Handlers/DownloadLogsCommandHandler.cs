@@ -3,7 +3,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Polly;
 
@@ -11,10 +10,10 @@ using Polly;
 
 namespace OctoshiftCLI.Handlers;
 
-public class DownloadLogsCommandHandler
+public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
     private readonly HttpDownloadService _httpDownloadService;
     private readonly RetryPolicy _retryPolicy;
 
@@ -22,12 +21,12 @@ public class DownloadLogsCommandHandler
 
     public DownloadLogsCommandHandler(
         OctoLogger log,
-        ITargetGithubApiFactory githubApiFactory,
+        GithubApi githubApi,
         HttpDownloadService httpDownloadService,
         RetryPolicy retryPolicy)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
         _httpDownloadService = httpDownloadService;
         _retryPolicy = retryPolicy;
     }
@@ -40,6 +39,7 @@ public class DownloadLogsCommandHandler
         }
 
         _log.Verbose = args.Verbose;
+        _log.RegisterSecret(args.GithubPat);
 
         _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
@@ -62,8 +62,6 @@ public class DownloadLogsCommandHandler
             _log.LogInformation($"MIGRATION LOG FILE: {args.MigrationLogFile}");
         }
 
-        _log.RegisterSecret(args.GithubPat);
-
         args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}.log";
 
         if (FileExists(args.MigrationLogFile))
@@ -76,9 +74,7 @@ public class DownloadLogsCommandHandler
             _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
         }
 
-        var githubApi = _githubApiFactory.Create(args.GithubApiUrl, args.GithubPat);
-
-        var result = await _retryPolicy.RetryOnResult(async () => await githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), string.Empty,
+        var result = await _retryPolicy.RetryOnResult(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), string.Empty,
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Successful && result.Result is null)

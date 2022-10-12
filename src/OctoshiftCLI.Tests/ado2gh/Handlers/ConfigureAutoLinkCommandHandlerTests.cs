@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
@@ -12,7 +11,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 public class ConfigureAutoLinkCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ConfigureAutoLinkCommandHandler _handler;
@@ -26,7 +24,7 @@ public class ConfigureAutoLinkCommandHandlerTests
 
     public ConfigureAutoLinkCommandHandlerTests()
     {
-        _handler = new ConfigureAutoLinkCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        _handler = new ConfigureAutoLinkCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object);
     }
 
     [Fact]
@@ -34,7 +32,6 @@ public class ConfigureAutoLinkCommandHandlerTests
     {
         _mockGithubApi.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
                   .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var args = new ConfigureAutoLinkCommandArgs
         {
@@ -43,32 +40,10 @@ public class ConfigureAutoLinkCommandHandlerTests
             AdoOrg = ADO_ORG,
             AdoTeamProject = ADO_TEAM_PROJECT,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
         _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Github_Pat_When_Provided()
-    {
-        const string githubPat = "github-pat";
-
-        _mockGithubApi.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
-
-        var args = new ConfigureAutoLinkCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubPat = githubPat,
-        };
-        await _handler.Invoke(args);
-
-        _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
     }
 
     [Fact]
@@ -79,7 +54,6 @@ public class ConfigureAutoLinkCommandHandlerTests
                   {
                       (1, KEY_PREFIX, URL_TEMPLATE),
                   }));
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -92,7 +66,7 @@ public class ConfigureAutoLinkCommandHandlerTests
             AdoOrg = ADO_ORG,
             AdoTeamProject = ADO_TEAM_PROJECT,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1), Times.Never);
         _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE), Times.Never);
@@ -107,7 +81,6 @@ public class ConfigureAutoLinkCommandHandlerTests
                   {
                       (1, KEY_PREFIX, "SomethingElse"),
                   });
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -120,7 +93,7 @@ public class ConfigureAutoLinkCommandHandlerTests
             AdoOrg = ADO_ORG,
             AdoTeamProject = ADO_TEAM_PROJECT,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.DeleteAutoLink(GITHUB_ORG, GITHUB_REPO, 1));
         _mockGithubApi.Verify(x => x.AddAutoLink(GITHUB_ORG, GITHUB_REPO, KEY_PREFIX, URL_TEMPLATE));

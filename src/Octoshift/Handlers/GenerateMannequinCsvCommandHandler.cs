@@ -5,21 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 using Octoshift;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class GenerateMannequinCsvCommandHandler
+public class GenerateMannequinCsvCommandHandler : ICommandHandler<GenerateMannequinCsvCommandArgs>
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+    private readonly GithubApi _githubApi;
 
-    public GenerateMannequinCsvCommandHandler(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory)
+    public GenerateMannequinCsvCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
-        _targetGithubApiFactory = targetGithubApiFactory;
+        _githubApi = githubApi;
     }
 
     public async Task Handle(GenerateMannequinCsvCommandArgs args)
@@ -47,10 +46,8 @@ public class GenerateMannequinCsvCommandHandler
 
         _log.RegisterSecret(args.GithubPat);
 
-        var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-
-        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var mannequins = await githubApi.GetMannequins(githubOrgId);
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+        var mannequins = await _githubApi.GetMannequins(githubOrgId);
 
         _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
         _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");

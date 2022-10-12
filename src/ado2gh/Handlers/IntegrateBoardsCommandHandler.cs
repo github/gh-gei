@@ -3,23 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class IntegrateBoardsCommandHandler
+public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
+    private readonly AdoApi _adoApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-    public IntegrateBoardsCommandHandler(OctoLogger log, AdoApiFactory adoApiFactory, EnvironmentVariableProvider environmentVariableProvider)
+    public IntegrateBoardsCommandHandler(OctoLogger log, AdoApi adoApi, EnvironmentVariableProvider environmentVariableProvider)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
+        _adoApi = adoApi;
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public async Task Invoke(IntegrateBoardsCommandArgs args)
+    public async Task Handle(IntegrateBoardsCommandArgs args)
     {
         if (args is null)
         {
@@ -45,24 +46,23 @@ public class IntegrateBoardsCommandHandler
         _log.RegisterSecret(args.AdoPat);
         _log.RegisterSecret(args.GithubPat);
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
 
-        var adoTeamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-        var githubHandle = await ado.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
+        var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
+        var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
 
-        var boardsConnection = await ado.GetBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject);
+        var boardsConnection = await _adoApi.GetBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject);
 
         if (boardsConnection == default)
         {
-            var endpointId = await ado.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
-            var repoId = await ado.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
-            await ado.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
+            var endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
+            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
+            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
             _log.LogSuccess("Successfully configured Boards<->GitHub integration");
         }
         else
         {
-            var repoId = await ado.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, boardsConnection.endpointId, args.GithubOrg, args.GithubRepo);
+            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, boardsConnection.endpointId, args.GithubOrg, args.GithubRepo);
 
             if (boardsConnection.repoIds.Any(x => x == repoId))
             {
@@ -75,7 +75,7 @@ public class IntegrateBoardsCommandHandler
                     repoId
                 };
 
-                await ado.AddRepoToBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
+                await _adoApi.AddRepoToBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
                 _log.LogSuccess("Successfully configured Boards<->GitHub integration");
             }
         }

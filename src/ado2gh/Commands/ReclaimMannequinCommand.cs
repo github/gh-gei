@@ -1,15 +1,8 @@
-﻿using System.CommandLine.NamingConventionBinder;
-using Octoshift;
-using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
+﻿using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands;
 
 public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
 {
-    public ReclaimMannequinCommand(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null) : base(log, githubApiFactory, reclaimService)
-    {
-        AddOptions();
-        Handler = CommandHandler.Create<ReclaimMannequinCommandArgs>(BaseHandler.Handle);
-    }
+    public ReclaimMannequinCommand() : base() => AddOptions();
 }
