@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class LockRepoCommandHandler
+public class LockRepoCommandHandler : ICommandHandler<LockRepoCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
+    private readonly AdoApi _adoApi;
 
-    public LockRepoCommandHandler(OctoLogger log, AdoApiFactory adoApiFactory)
+    public LockRepoCommandHandler(OctoLogger log, AdoApi adoApi)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
+        _adoApi = adoApi;
     }
 
-    public async Task Invoke(LockRepoCommandArgs args)
+    public async Task Handle(LockRepoCommandArgs args)
     {
         if (args is null)
         {
@@ -35,13 +36,11 @@ public class LockRepoCommandHandler
 
         _log.RegisterSecret(args.AdoPat);
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
+        var teamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
+        var repoId = await _adoApi.GetRepoId(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
 
-        var teamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-        var repoId = await ado.GetRepoId(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
-
-        var identityDescriptor = await ado.GetIdentityDescriptor(args.AdoOrg, teamProjectId, "Project Valid Users");
-        await ado.LockRepo(args.AdoOrg, teamProjectId, repoId, identityDescriptor);
+        var identityDescriptor = await _adoApi.GetIdentityDescriptor(args.AdoOrg, teamProjectId, "Project Valid Users");
+        await _adoApi.LockRepo(args.AdoOrg, teamProjectId, repoId, identityDescriptor);
 
         _log.LogSuccess("Repo successfully locked");
     }
