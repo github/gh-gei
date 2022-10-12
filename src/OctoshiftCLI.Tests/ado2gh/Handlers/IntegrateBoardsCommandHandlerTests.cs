@@ -13,7 +13,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 public class IntegrateBoardsCommandHandlerTests
 {
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-    private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
@@ -33,7 +32,7 @@ public class IntegrateBoardsCommandHandlerTests
 
     public IntegrateBoardsCommandHandlerTests()
     {
-        _handler = new IntegrateBoardsCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object, _mockEnvironmentVariableProvider.Object);
+        _handler = new IntegrateBoardsCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, _mockEnvironmentVariableProvider.Object);
     }
 
     [Fact]
@@ -49,8 +48,6 @@ public class IntegrateBoardsCommandHandlerTests
             .Setup(m => m.GithubPersonalAccessToken())
             .Returns(GITHUB_TOKEN);
 
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         var args = new IntegrateBoardsCommandArgs
         {
             AdoOrg = ADO_ORG,
@@ -58,7 +55,7 @@ public class IntegrateBoardsCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, ENDPOINT_ID, NEW_REPO_ID));
     }
@@ -77,8 +74,6 @@ public class IntegrateBoardsCommandHandlerTests
             .Setup(m => m.GithubPersonalAccessToken())
             .Returns(GITHUB_TOKEN);
 
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         var args = new IntegrateBoardsCommandArgs
         {
             AdoOrg = ADO_ORG,
@@ -86,12 +81,12 @@ public class IntegrateBoardsCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, CONNECTION_ID, CONNECTION_NAME, ENDPOINT_ID, Moq.It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
-                                                                                                                                                                           x.Contains(repoIds[1]) &&
-                                                                                                                                                                           x.Contains(NEW_REPO_ID))));
+        _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, CONNECTION_ID, CONNECTION_NAME, ENDPOINT_ID, It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
+                                                                                                                                                                          x.Contains(repoIds[1]) &&
+                                                                                                                                                                          x.Contains(NEW_REPO_ID))));
     }
 
     [Fact]
@@ -108,8 +103,6 @@ public class IntegrateBoardsCommandHandlerTests
             .Setup(m => m.GithubPersonalAccessToken())
             .Returns(GITHUB_TOKEN);
 
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         var args = new IntegrateBoardsCommandArgs
         {
             AdoOrg = ADO_ORG,
@@ -117,62 +110,9 @@ public class IntegrateBoardsCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Ado_And_Github_Pats_When_Provided()
-    {
-        const string adoPat = "ado-pat";
-        const string githubPat = "github-pat";
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
-            .Returns(githubPat);
-
-        _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
-
-        var args = new IntegrateBoardsCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            AdoPat = adoPat,
-            GithubPat = githubPat,
-        };
-        await _handler.Invoke(args);
-
-        _mockAdoApiFactory.Verify(m => m.Create(adoPat));
-        _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
-    }
-
-    [Fact]
-    public async Task It_Falls_Back_To_Github_Pat_From_Environment_When_Not_Provided()
-    {
-        const string adoPat = "ado-pat";
-        const string githubPat = "github-pat";
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
-            .Returns(githubPat);
-
-        _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
-
-        var args = new IntegrateBoardsCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            AdoPat = adoPat,
-        };
-        await _handler.Invoke(args);
-
-        _mockAdoApiFactory.Verify(m => m.Create(adoPat));
-        _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Once);
     }
 }
