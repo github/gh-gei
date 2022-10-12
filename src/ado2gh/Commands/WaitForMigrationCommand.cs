@@ -1,4 +1,3 @@
-using System;
 using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands;
