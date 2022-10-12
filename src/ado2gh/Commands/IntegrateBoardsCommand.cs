@@ -54,7 +54,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             {
                 throw new ArgumentNullException(nameof(sp));
             }
-            
+
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
