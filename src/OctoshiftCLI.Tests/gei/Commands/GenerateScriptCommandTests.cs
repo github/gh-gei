@@ -10,10 +10,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class GenerateScriptCommandTests
     {
-        private readonly Mock<ISourceGithubApiFactory> _mockGithubApiFactory = new Mock<ISourceGithubApiFactory>();
+        private readonly Mock<ISourceGithubApiFactory> _mockGithubApiFactory = new();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
+        private readonly Mock<IVersionProvider> _mockVersionProvider = new();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
 
         private readonly ServiceProvider _serviceProvider;
