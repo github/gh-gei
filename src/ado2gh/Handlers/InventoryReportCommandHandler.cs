@@ -4,16 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class InventoryReportCommandHandler
+public class InventoryReportCommandHandler : ICommandHandler<InventoryReportCommandArgs>
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
-    private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
+    private readonly AdoInspectorService _adoInspectorService;
     private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
     private readonly TeamProjectsCsvGeneratorService _teamProjectsCsvGenerator;
     private readonly ReposCsvGeneratorService _reposCsvGenerator;
@@ -21,23 +21,21 @@ public class InventoryReportCommandHandler
 
     public InventoryReportCommandHandler(
         OctoLogger log,
-        AdoApiFactory adoApiFactory,
-        AdoInspectorServiceFactory adoInspectorServiceFactory,
+        AdoInspectorService adoInspectorService,
         OrgsCsvGeneratorService orgsCsvGeneratorService,
         TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService,
         ReposCsvGeneratorService reposCsvGeneratorService,
         PipelinesCsvGeneratorService pipelinesCsvGeneratorService)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
-        _adoInspectorServiceFactory = adoInspectorServiceFactory;
+        _adoInspectorService = adoInspectorService;
         _orgsCsvGenerator = orgsCsvGeneratorService;
         _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
         _reposCsvGenerator = reposCsvGeneratorService;
         _pipelinesCsvGenerator = pipelinesCsvGeneratorService;
     }
 
-    public async Task Invoke(InventoryReportCommandArgs args)
+    public async Task Handle(InventoryReportCommandArgs args)
     {
         if (args is null)
         {
@@ -65,24 +63,22 @@ public class InventoryReportCommandHandler
 
         _log.RegisterSecret(args.AdoPat);
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
-        var inspector = _adoInspectorServiceFactory.Create(ado);
-        inspector.OrgFilter = args.AdoOrg;
+        _adoInspectorService.OrgFilter = args.AdoOrg;
 
         _log.LogInformation("Finding Orgs...");
-        var orgs = await inspector.GetOrgs();
+        var orgs = await _adoInspectorService.GetOrgs();
         _log.LogInformation($"Found {orgs.Count()} Orgs");
 
         _log.LogInformation("Finding Team Projects...");
-        var teamProjectCount = await inspector.GetTeamProjectCount();
+        var teamProjectCount = await _adoInspectorService.GetTeamProjectCount();
         _log.LogInformation($"Found {teamProjectCount} Team Projects");
 
         _log.LogInformation("Finding Repos...");
-        var repoCount = await inspector.GetRepoCount();
+        var repoCount = await _adoInspectorService.GetRepoCount();
         _log.LogInformation($"Found {repoCount} Repos");
 
         _log.LogInformation("Finding Pipelines...");
-        var pipelineCount = await inspector.GetPipelineCount();
+        var pipelineCount = await _adoInspectorService.GetPipelineCount();
         _log.LogInformation($"Found {pipelineCount} Pipelines");
 
         _log.LogInformation("Generating orgs.csv...");
