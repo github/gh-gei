@@ -1,6 +1,5 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using OctoshiftCLI.Commands;

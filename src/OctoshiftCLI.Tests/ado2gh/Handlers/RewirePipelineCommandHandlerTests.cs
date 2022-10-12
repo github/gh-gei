@@ -20,7 +20,6 @@ public class RewirePipelineCommandHandlerTests
     private const string GITHUB_ORG = "foo-gh-org";
     private const string GITHUB_REPO = "gh-repo";
     private readonly string SERVICE_CONNECTION_ID = Guid.NewGuid().ToString();
-    private readonly string ADO_PAT = Guid.NewGuid().ToString();
 
     public RewirePipelineCommandHandlerTests()
     {
