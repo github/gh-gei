@@ -1,68 +1,77 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class MigrateRepoCommand : Command
+    public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRepoCommandHandler>
     {
-        public MigrateRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider) : base(
+        public MigrateRepoCommand() : base(
             name: "migrate-repo",
             description: "Invokes the GitHub API's to migrate the repo and all PR data" +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
         {
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var adoRepo = new Option<string>("--ado-repo")
-            {
-                IsRequired = true
-            };
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var wait = new Option<bool>("--wait")
-            {
-                IsRequired = false,
-                Description = "Synchronously waits for the repo migration to finish."
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var githubPat = new Option<string>("--github-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(AdoRepo);
+            AddOption(GithubOrg);
+            AddOption(GithubRepo);
+            AddOption(Wait);
+            AddOption(AdoPat);
+            AddOption(GithubPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(adoRepo);
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(wait);
-            AddOption(adoPat);
-            AddOption(githubPat);
-            AddOption(verbose);
+        public Option<string> AdoOrg { get; } = new("--ado-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoRepo { get; } = new("--ado-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubOrg { get; } = new("--github-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubRepo { get; } = new("--github-repo")
+        {
+            IsRequired = true
+        };
+        public Option<bool> Wait { get; } = new("--wait")
+        {
+            Description = "Synchronously waits for the repo migration to finish."
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<string> GithubPat { get; } = new("--github-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new MigrateRepoCommandHandler(log, githubApiFactory, environmentVariableProvider);
-            Handler = CommandHandler.Create<MigrateRepoCommandArgs>(handler.Invoke);
+        public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+            var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+            var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            return new MigrateRepoCommandHandler(log, githubApi, environmentVariableProvider);
         }
     }
 

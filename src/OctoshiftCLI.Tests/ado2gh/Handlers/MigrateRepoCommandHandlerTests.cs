@@ -13,7 +13,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 public class MigrateRepoCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
@@ -33,7 +32,7 @@ public class MigrateRepoCommandHandlerTests
 
     public MigrateRepoCommandHandlerTests()
     {
-        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApiFactory.Object, _mockEnvironmentVariableProvider.Object);
+        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockEnvironmentVariableProvider.Object);
     }
 
     [Fact]
@@ -56,8 +55,6 @@ public class MigrateRepoCommandHandlerTests
                 false).Result)
             .Returns(MIGRATION_ID);
         _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
-
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
 
         _mockEnvironmentVariableProvider
             .Setup(m => m.GithubPersonalAccessToken())
@@ -90,7 +87,7 @@ public class MigrateRepoCommandHandlerTests
             GithubRepo = GITHUB_REPO,
             Wait = false,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
@@ -123,8 +120,6 @@ public class MigrateRepoCommandHandlerTests
                 false).Result)
             .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockEnvironmentVariableProvider
             .Setup(m => m.GithubPersonalAccessToken())
             .Returns(GITHUB_TOKEN);
@@ -148,7 +143,7 @@ public class MigrateRepoCommandHandlerTests
             GithubRepo = GITHUB_REPO,
             Wait = false,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
@@ -175,8 +170,6 @@ public class MigrateRepoCommandHandlerTests
             .Returns(MIGRATION_ID);
         _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
 
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockEnvironmentVariableProvider
             .Setup(m => m.GithubPersonalAccessToken())
             .Returns(GITHUB_TOKEN);
@@ -193,40 +186,9 @@ public class MigrateRepoCommandHandlerTests
             GithubRepo = GITHUB_REPO,
             Wait = true,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.GetMigration(MIGRATION_ID));
-    }
-
-    [Fact]
-    public async Task It_Uses_Ado_And_Github_Pats_When_Provided()
-    {
-        _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TOKEN)).Returns(_mockGithubApi.Object);
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
-            .Returns(GITHUB_TOKEN);
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.AdoPersonalAccessToken())
-            .Returns(ADO_TOKEN);
-
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            Wait = true,
-            AdoPat = ADO_TOKEN,
-            GithubPat = GITHUB_TOKEN,
-        };
-        await _handler.Invoke(args);
-
-        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_TOKEN));
-        _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
-        _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
     }
 
     [Fact]
@@ -234,7 +196,6 @@ public class MigrateRepoCommandHandlerTests
     {
         _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<string>());
         _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), GITHUB_TOKEN)).Returns(_mockGithubApi.Object);
 
         _mockEnvironmentVariableProvider
             .Setup(m => m.GithubPersonalAccessToken())
@@ -252,9 +213,10 @@ public class MigrateRepoCommandHandlerTests
             GithubRepo = GITHUB_REPO,
             Wait = true,
         };
-        await _handler.Invoke(args);
 
-        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_TOKEN));
+        await _handler.Handle(args);
+
+        _mockGithubApi.Verify(x => x.StartMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ADO_TOKEN, GITHUB_TOKEN, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()));
         _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken());
         _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken());
     }

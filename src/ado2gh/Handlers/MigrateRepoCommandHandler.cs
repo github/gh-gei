@@ -1,23 +1,24 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class MigrateRepoCommandHandler
+public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly GithubApiFactory _githubApiFactory;
+    private readonly GithubApi _githubApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApiFactory githubApiFactory, EnvironmentVariableProvider environmentVariableProvider)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi githubApi, EnvironmentVariableProvider environmentVariableProvider)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
+        _githubApi = githubApi;
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public async Task Invoke(MigrateRepoCommandArgs args)
+    public async Task Handle(MigrateRepoCommandArgs args)
     {
         if (args is null)
         {
@@ -49,19 +50,18 @@ public class MigrateRepoCommandHandler
         _log.RegisterSecret(args.GithubPat);
 
         args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
 
         var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
 
         args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
-        var githubOrgId = await githubApi.GetOrganizationId(args.GithubOrg);
-        var migrationSourceId = await githubApi.CreateAdoMigrationSource(githubOrgId, null);
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+        var migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, null);
 
         string migrationId;
 
         try
         {
-            migrationId = await githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat);
+            migrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat);
         }
         catch (OctoshiftCliException ex)
         {
@@ -80,13 +80,13 @@ public class MigrateRepoCommandHandler
             return;
         }
 
-        var (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
+        var (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
-            (migrationState, _, failureReason) = await githubApi.GetMigration(migrationId);
+            (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
         }
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
