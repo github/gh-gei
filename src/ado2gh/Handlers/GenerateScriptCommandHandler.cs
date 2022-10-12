@@ -7,30 +7,29 @@ using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class GenerateScriptCommandHandler
+public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
+    private readonly AdoApi _adoApi;
     private GenerateScriptOptions _generateScriptOptions;
     private readonly IVersionProvider _versionProvider;
-    private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
+    private readonly AdoInspectorService _adoInspectorService;
 
-    private AdoInspectorService _adoInspectorService;
-
-    public GenerateScriptCommandHandler(OctoLogger log, AdoApiFactory adoApiFactory, IVersionProvider versionProvider, AdoInspectorServiceFactory adoInspectorServiceFactory)
+    public GenerateScriptCommandHandler(OctoLogger log, AdoApi adoApi, IVersionProvider versionProvider, AdoInspectorService adoInspectorService)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
+        _adoApi = adoApi;
         _versionProvider = versionProvider;
-        _adoInspectorServiceFactory = adoInspectorServiceFactory;
+        _adoInspectorService = adoInspectorService;
     }
 
-    public async Task Invoke(GenerateScriptCommandArgs args)
+    public async Task Handle(GenerateScriptCommandArgs args)
     {
         if (args is null)
         {
@@ -56,8 +55,6 @@ public class GenerateScriptCommandHandler
             DownloadMigrationLogs = args.All || args.DownloadMigrationLogs
         };
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
-        _adoInspectorService = _adoInspectorServiceFactory.Create(ado);
         _adoInspectorService.OrgFilter = args.AdoOrg;
         _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
 
@@ -73,7 +70,7 @@ public class GenerateScriptCommandHandler
             return;
         }
 
-        var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(ado, args.GithubOrg) : new Dictionary<string, string>();
+        var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(_adoApi, args.GithubOrg) : new Dictionary<string, string>();
 
         var script = args.Sequential
             ? await GenerateSequentialScript(appIds, args.GithubOrg)
