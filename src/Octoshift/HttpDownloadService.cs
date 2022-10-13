@@ -18,6 +18,11 @@ namespace OctoshiftCLI
         {
             _log = log;
             _httpClient = httpClient;
+
+            if (_httpClient is not null)
+            {
+                _httpClient.Timeout = TimeSpan.FromHours(1);
+            }
         }
 
         public virtual async Task DownloadToFile(string url, string file)
