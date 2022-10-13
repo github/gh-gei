@@ -28,15 +28,15 @@ namespace OctoshiftCLI
             }
         }
 
-    public virtual async Task<byte[]> DownloadArchive(string fromUrl)
-{
-    _log.LogVerbose($"HTTP GET: {fromUrl}");
-    using var response = await _client.GetAsync(fromUrl);
-    _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
-    response.EnsureSuccessStatusCode();
+        public virtual async Task<byte[]> DownloadArchive(string fromUrl)
+        {
+            _log.LogVerbose($"HTTP GET: {fromUrl}");
+            using var response = await _client.GetAsync(fromUrl);
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+            response.EnsureSuccessStatusCode();
 
-    return await response.Content.ReadAsByteArrayAsync();
-}
+            return await response.Content.ReadAsByteArrayAsync();
+        }
 
         public virtual async Task<Uri> UploadToBlob(string fileName, byte[] content)
         {
