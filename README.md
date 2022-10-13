@@ -25,31 +25,33 @@ To see the available commands and options run:
 
 >`gh gei --help`
 
-### GitHub to GitHub Usage (GHEC -> GHEC)
+>`gh ado2gh --help`
+
+### GitHub to GitHub Usage (GitHub.com -> GitHub.com)
 1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer)).
 
 2. Set the GH_SOURCE_PAT and GH_PAT environment variables.
 
-3. Run the `generate-script` command to generate a migration script.
+3. Run the `generate-script` command to generate a migration PowerShell script.
 >`gh gei generate-script --github-source-org ORGNAME --github-target-org ORGNAME`
 
-4. The previous command will have created a migrate.ps1 script. Review the steps in the generated script and tweak if necessary.
+4. The previous command will have created a `migrate.ps1` script. Review the steps in the generated script and tweak if necessary.
 
-5. The migrate.ps1 script requires powershell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install powershell on Windows, Linux, or Mac. Then run the script.
+5. The migrate.ps1 script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
-Refer to the [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) for more details (and differences when migrating from GHES or to GHAE).
+Refer to the [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) for more details, including differences when migrating from GitHub Enterprise Server.
 
 ### Azure DevOps to GitHub Usage
 1. Create Personal Access Tokens with access to the Azure DevOps org, and the GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer)).
 
-2. Set the ADO_PAT and GH_PAT environment variables.
+2. Set the `ADO_PAT` and `GH_PAT` environment variables.
 
 3. Run the `generate-script` command to generate a migration script.
 >`gh ado2gh generate-script --ado-org ORGNAME --github-org ORGNAME --all`
 
-4. The previous command will have created a migrate.ps1 script. Review the steps in the generated script and tweak if necessary.
+4. The previous command will have created a `migrate.ps1` PowerShell script. Review the steps in the generated script and tweak if necessary.
 
-5. The migrate.ps1 script requires powershell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install powershell on Windows, Linux, or Mac. Then run the script.
+5. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
 Refer to the [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) for more details.
 
