@@ -8,7 +8,7 @@ public class DownloadLogsCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new DownloadLogsCommand(null, null, null, null);
+        var command = new DownloadLogsCommand();
         Assert.NotNull(command);
         Assert.Equal("download-logs", command.Name);
         Assert.Equal(7, command.Options.Count);

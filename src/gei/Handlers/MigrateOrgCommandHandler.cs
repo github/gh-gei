@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
-public class MigrateOrgCommandHandler
+public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _targetGithubApiFactory;
+    private readonly GithubApi _githubApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateOrgCommandHandler(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider)
+    public MigrateOrgCommandHandler(OctoLogger log, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider)
     {
         _log = log;
-        _targetGithubApiFactory = targetGithubApiFactory;
+        _githubApi = targetGithubApi;
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public async Task Invoke(MigrateOrgCommandArgs args)
+    public async Task Handle(MigrateOrgCommandArgs args)
     {
         if (args is null)
         {
@@ -28,16 +28,16 @@ public class MigrateOrgCommandHandler
         }
 
         _log.Verbose = args.Verbose;
+        _log.RegisterSecret(args.GithubSourcePat);
+        _log.RegisterSecret(args.GithubTargetPat);
 
         LogAndValidateOptions(args);
 
-        var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubTargetPat);
-
-        var githubEnterpriseId = await githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
+        var githubEnterpriseId = await _githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
         var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
         var sourceToken = GetSourceToken(args);
 
-        var migrationId = await githubApi.StartOrganizationMigration(
+        var migrationId = await _githubApi.StartOrganizationMigration(
             sourceOrgUrl,
             args.GithubTargetOrg,
             githubEnterpriseId,
@@ -50,14 +50,13 @@ public class MigrateOrgCommandHandler
             return;
         }
 
-        //var migrationState = await githubApi.GetOrganizationMigrationState(migrationId);
-        var (migrationState, _, _, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
+        var (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
 
         while (OrganizationMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
-            (migrationState, _, _, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
+            (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
         }
 
         if (OrganizationMigrationStatus.IsFailed(migrationState))

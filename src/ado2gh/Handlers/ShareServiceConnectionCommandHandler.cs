@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
-public class ShareServiceConnectionCommandHandler
+public class ShareServiceConnectionCommandHandler : ICommandHandler<ShareServiceConnectionCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly AdoApiFactory _adoApiFactory;
+    private readonly AdoApi _adoApi;
 
-    public ShareServiceConnectionCommandHandler(OctoLogger log, AdoApiFactory adoApiFactory)
+    public ShareServiceConnectionCommandHandler(OctoLogger log, AdoApi adoApi)
     {
         _log = log;
-        _adoApiFactory = adoApiFactory;
+        _adoApi = adoApi;
     }
 
-    public async Task Invoke(ShareServiceConnectionCommandArgs args)
+    public async Task Handle(ShareServiceConnectionCommandArgs args)
     {
         if (args is null)
         {
@@ -35,17 +36,15 @@ public class ShareServiceConnectionCommandHandler
 
         _log.RegisterSecret(args.AdoPat);
 
-        var ado = _adoApiFactory.Create(args.AdoPat);
+        var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
 
-        var adoTeamProjectId = await ado.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-
-        if (await ado.ContainsServiceConnection(args.AdoOrg, args.AdoTeamProject, args.ServiceConnectionId))
+        if (await _adoApi.ContainsServiceConnection(args.AdoOrg, args.AdoTeamProject, args.ServiceConnectionId))
         {
             _log.LogInformation("Service connection already shared with team project");
             return;
         }
 
-        await ado.ShareServiceConnection(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, args.ServiceConnectionId);
+        await _adoApi.ShareServiceConnection(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, args.ServiceConnectionId);
 
         _log.LogSuccess("Successfully shared service connection");
     }

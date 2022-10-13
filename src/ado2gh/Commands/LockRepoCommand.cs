@@ -1,47 +1,58 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class LockRepoCommand : Command
+    public class LockRepoCommand : CommandBase<LockRepoCommandArgs, LockRepoCommandHandler>
     {
-        public LockRepoCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base(
+        public LockRepoCommand() : base(
             name: "lock-ado-repo",
             description: "Makes the ADO repo read-only for all users. It does this by adding Deny permissions for the Project Valid Users group on the repo." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var adoRepo = new Option<string>("--ado-repo")
-            {
-                IsRequired = true
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option<bool>("--verbose")
-            {
-                IsRequired = false
-            };
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(AdoRepo);
+            AddOption(AdoPat);
+            AddOption(Verbose);
+        }
 
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(adoRepo);
-            AddOption(adoPat);
-            AddOption(verbose);
+        public Option<string> AdoOrg { get; } = new("--ado-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoRepo { get; } = new("--ado-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            var handler = new LockRepoCommandHandler(log, adoApiFactory);
-            Handler = CommandHandler.Create<LockRepoCommandArgs>(handler.Invoke);
+        public override LockRepoCommandHandler BuildHandler(LockRepoCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
+
+            var log = sp.GetRequiredService<OctoLogger>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
+
+            return new LockRepoCommandHandler(log, adoApi);
         }
     }
 

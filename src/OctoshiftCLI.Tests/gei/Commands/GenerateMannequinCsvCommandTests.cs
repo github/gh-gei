@@ -8,7 +8,7 @@ public class GenerateMannequinCsvCommandTests
     [Fact]
     public void Should_Have_Options()
     {
-        var command = new GenerateMannequinCsvCommand(null, null);
+        var command = new GenerateMannequinCsvCommand();
         Assert.NotNull(command);
         Assert.Equal("generate-mannequin-csv", command.Name);
         Assert.Equal(5, command.Options.Count);

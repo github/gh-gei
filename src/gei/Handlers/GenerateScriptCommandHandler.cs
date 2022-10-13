@@ -8,35 +8,36 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
-public class GenerateScriptCommandHandler
+public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {
     internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
 
     private readonly OctoLogger _log;
-    private readonly ISourceGithubApiFactory _sourceGithubApiFactory;
-    private readonly AdoApiFactory _sourceAdoApiFactory;
+    private readonly GithubApi _sourceGithubApi;
+    private readonly AdoApi _sourceAdoApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly IVersionProvider _versionProvider;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
-        ISourceGithubApiFactory sourceGithubApiFactory,
-        AdoApiFactory sourceAdoApiFactory,
+        GithubApi sourceGithubApi,
+        AdoApi sourceAdoApi,
         EnvironmentVariableProvider environmentVariableProvider,
         IVersionProvider versionProvider)
     {
         _log = log;
-        _sourceGithubApiFactory = sourceGithubApiFactory;
-        _sourceAdoApiFactory = sourceAdoApiFactory;
+        _sourceGithubApi = sourceGithubApi;
+        _sourceAdoApi = sourceAdoApi;
         _environmentVariableProvider = environmentVariableProvider;
         _versionProvider = versionProvider;
     }
 
-    public async Task Invoke(GenerateScriptCommandArgs args)
+    public async Task Handle(GenerateScriptCommandArgs args)
     {
         if (args is null)
         {
@@ -44,6 +45,10 @@ public class GenerateScriptCommandHandler
         }
 
         _log.Verbose = args.Verbose;
+
+        _log.RegisterSecret(args.AzureStorageConnectionString);
+        _log.RegisterSecret(args.GithubSourcePat);
+        _log.RegisterSecret(args.AdoPat);
 
         _log.LogInformation("Generating Script...");
 
@@ -136,8 +141,8 @@ public class GenerateScriptCommandHandler
         }
 
         var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
-            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.AdoPat, args.DownloadMigrationLogs) :
-            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.GithubSourcePat, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
+            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
+            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -145,11 +150,9 @@ public class GenerateScriptCommandHandler
         }
     }
 
-    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, string githubSourcePat, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
-        var client = ghesApiUrl.HasValue() && noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
-
-        var repos = await GetGithubRepos(client, githubSourceOrg);
+        var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
         {
             _log.LogError("A migration script could not be generated because no migratable repos were found.");
@@ -161,9 +164,9 @@ public class GenerateScriptCommandHandler
             : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
     }
 
-    private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, string adoPat, bool downloadMigrationLogs)
+    private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, bool downloadMigrationLogs)
     {
-        var repos = await GetAdoRepos(_sourceAdoApiFactory.Create(adoServerUrl, adoPat), adoSourceOrg, adoTeamProject);
+        var repos = await GetAdoRepos(_sourceAdoApi, adoSourceOrg, adoTeamProject);
         if (!repos.Any())
         {
             _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos.");

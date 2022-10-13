@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
@@ -11,7 +10,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 public class RewirePipelineCommandHandlerTests
 {
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-    private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly RewirePipelineCommandHandler _handler;
@@ -22,11 +20,10 @@ public class RewirePipelineCommandHandlerTests
     private const string GITHUB_ORG = "foo-gh-org";
     private const string GITHUB_REPO = "gh-repo";
     private readonly string SERVICE_CONNECTION_ID = Guid.NewGuid().ToString();
-    private readonly string ADO_PAT = Guid.NewGuid().ToString();
 
     public RewirePipelineCommandHandlerTests()
     {
-        _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+        _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object);
     }
 
     [Fact]
@@ -40,8 +37,6 @@ public class RewirePipelineCommandHandlerTests
         _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE).Result).Returns(pipelineId);
         _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
 
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
         var args = new RewirePipelineCommandArgs
         {
             AdoOrg = ADO_ORG,
@@ -51,28 +46,8 @@ public class RewirePipelineCommandHandlerTests
             GithubRepo = GITHUB_REPO,
             ServiceConnectionId = SERVICE_CONNECTION_ID,
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID));
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Ado_Pat_When_Provided()
-    {
-        _mockAdoApiFactory.Setup(m => m.Create(ADO_PAT)).Returns(_mockAdoApi.Object);
-
-        var args = new RewirePipelineCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            AdoPipeline = ADO_PIPELINE,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            ServiceConnectionId = Guid.NewGuid().ToString(),
-            AdoPat = ADO_PAT,
-        };
-        await _handler.Invoke(args);
-
-        _mockAdoApiFactory.Verify(m => m.Create(ADO_PAT));
     }
 }

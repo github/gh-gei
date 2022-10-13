@@ -4,23 +4,20 @@ using System.Linq;
 using System.Threading.Tasks;
 using Octoshift;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Handlers;
 
-public class ReclaimMannequinCommandHandler
+public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCommandArgs>
 {
     private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
-    private ReclaimService _reclaimService;
+    private readonly ReclaimService _reclaimService;
 
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandHandler(OctoLogger log, ITargetGithubApiFactory githubApiFactory, ReclaimService reclaimService = null)
+    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService)
     {
         _log = log;
-        _githubApiFactory = githubApiFactory;
         _reclaimService = reclaimService;
     }
 
@@ -39,9 +36,6 @@ public class ReclaimMannequinCommandHandler
         {
             throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
         }
-
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
-        _reclaimService ??= new ReclaimService(githubApi, _log);
 
         if (!string.IsNullOrEmpty(args.Csv))
         {

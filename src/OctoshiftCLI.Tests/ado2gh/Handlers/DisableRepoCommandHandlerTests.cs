@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Moq;
 using Octoshift.Models;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
@@ -13,7 +12,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
 public class DisableRepoCommandHandlerTests
 {
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-    private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly DisableRepoCommandHandler _handler;
@@ -25,7 +23,7 @@ public class DisableRepoCommandHandlerTests
 
     public DisableRepoCommandHandlerTests()
     {
-        _handler = new DisableRepoCommandHandler(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+        _handler = new DisableRepoCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object);
     }
 
     [Fact]
@@ -34,7 +32,6 @@ public class DisableRepoCommandHandlerTests
         var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, IsDisabled = false } };
 
         _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         var args = new DisableRepoCommandArgs
         {
@@ -42,7 +39,7 @@ public class DisableRepoCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID));
     }
@@ -53,7 +50,6 @@ public class DisableRepoCommandHandlerTests
         var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, IsDisabled = true } };
 
         _mockAdoApi.Setup(x => x.GetRepos(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(repos);
-        _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
 
         var args = new DisableRepoCommandArgs
         {
@@ -61,29 +57,8 @@ public class DisableRepoCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO
         };
-        await _handler.Invoke(args);
+        await _handler.Handle(args);
 
         _mockAdoApi.Verify(x => x.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, REPO_ID), Times.Never);
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Ado_Pat_When_Provided()
-    {
-        const string adoPat = "ado-pat";
-
-        var repos = new List<AdoRepository> { new() { Id = REPO_ID, Name = ADO_REPO, Size = 1234, IsDisabled = true } };
-        _mockAdoApi.Setup(x => x.GetRepos(It.IsAny<string>(), It.IsAny<string>()).Result).Returns(repos);
-        _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
-
-        var args = new DisableRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            AdoRepo = ADO_REPO,
-            AdoPat = adoPat
-        };
-        await _handler.Invoke(args);
-
-        _mockAdoApiFactory.Verify(m => m.Create(adoPat));
     }
 }

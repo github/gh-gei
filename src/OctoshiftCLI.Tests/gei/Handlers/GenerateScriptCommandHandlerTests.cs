@@ -18,9 +18,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
     public class GenerateScriptCommandHandlerTests
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly Mock<ISourceGithubApiFactory> _mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
@@ -36,8 +34,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _handler = new GenerateScriptCommandHandler(
                 _mockOctoLogger.Object,
-                _mockSourceGithubApiFactory.Object,
-                _mockAdoApiFactory.Object,
+                _mockGithubApi.Object,
+                _mockAdoApi.Object,
                 _mockEnvironmentVariableProvider.Object,
                 _mockVersionProvider.Object
                 )
@@ -54,7 +52,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
         {
             await FluentActions
-                .Invoking(async () => await _handler.Invoke(new GenerateScriptCommandArgs
+                .Invoking(async () => await _handler.Handle(new GenerateScriptCommandArgs
                 {
                     AdoServerUrl = "https://ado.contoso.com",
                     GithubTargetOrg = TARGET_ORG
@@ -66,11 +64,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Sequential_Github_No_Data()
         {
-            // Arrange
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -79,7 +72,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().BeNull();
@@ -89,11 +82,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Parallel_Github_No_Data()
         {
-            // Arrange
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -102,7 +90,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().BeNull();
@@ -117,10 +105,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -129,7 +113,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().StartWith("#!/usr/bin/env pwsh");
@@ -143,10 +127,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -155,7 +135,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output")
 
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().StartWith("#!/usr/bin/env pwsh");
@@ -169,10 +149,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait }}";
 
             // Act
@@ -183,7 +159,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -203,10 +179,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { repo1, repo2, repo3 });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --wait }}");
             expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --wait }}");
@@ -220,7 +192,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -242,10 +214,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject1)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 } });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(org, teamProject2)).ReturnsAsync(new[] { new AdoRepository { Name = repo2 } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -254,7 +222,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().NotBeEmpty();
@@ -263,43 +231,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Verify(m => m.GetEnabledRepos(org, teamProject2), Times.Once);
             _mockAdoApi.VerifyNoOtherCalls();
         }
-
-        [Fact]
-        public async Task Invoke_Returns_For_Ghes_NoSsl_Client_When_NoSsl_Parameter_Is_Provided()
-        {
-
-            // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
-
-            _mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                Output = new FileInfo("unit-test-output"),
-                GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString,
-                NoSslVerify = true,
-                Sequential = true
-            };
-            await _handler.Invoke(args);
-
-            // Assert
-            _script.Should().NotBeEmpty();
-            _mockSourceGithubApiFactory.Verify(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()), Times.Once);
-            _mockGithubApi.Verify(m => m.GetRepos(args.GithubSourceOrg), Times.Once);
-        }
-
 
         [Fact]
         public async Task Invoke_Gets_All_Ado_Repos_For_Provided_Team_Project()
@@ -314,10 +245,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Setup(x => x.GetTeamProjects(org)).ReturnsAsync(new[] { adoTeamProject, anotherTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(org, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -327,7 +254,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().NotBeEmpty();
@@ -346,10 +273,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(org)).ReturnsAsync(new[] { adoTeamProject, anotherTeamProject });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -359,7 +282,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().BeNull();
@@ -378,10 +301,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --wait }}";
 
             // Act
@@ -394,7 +313,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 AzureStorageConnectionString = azureStorageConnectionString,
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -405,50 +324,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Sequential_Github_Ghes_Repo_No_Ssl()
-        {
-            // Arrange
-            const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "foo-storage-connection-string";
-
-            _mockGithubApi
-                .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify --wait }}";
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                Output = new FileInfo("unit-test-output"),
-                GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString,
-                Sequential = true,
-                NoSslVerify = true
-            };
-            await _handler.Invoke(args);
-
-            _script = TrimNonExecutableLines(_script);
-
-            // Assert
-            _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
-        }
-
-        [Fact]
         public async Task Sequential_Ado_No_Data()
         {
-            // Arrange
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -457,7 +334,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().BeNull();
@@ -467,11 +344,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         [Fact]
         public async Task Parallel_Ado_No_Data()
         {
-            // Arrange
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             // Act
             var args = new GenerateScriptCommandArgs
             {
@@ -479,7 +351,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output")
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().BeNull();
@@ -495,10 +367,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}";
 
             // Act
@@ -510,7 +378,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -528,10 +396,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = adoRepo } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"ADO-TEAM-PROJECT-SOME-REPO\" --wait }}";
 
             // Act
@@ -543,7 +407,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -561,10 +425,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(adoServerUrl, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --ado-server-url \"{adoServerUrl}\" --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}";
 
             // Act
@@ -577,7 +437,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -602,10 +462,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 new AdoRepository { Name = repo3 }
             });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" --wait }}");
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\" --wait }}");
@@ -620,7 +476,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -638,10 +494,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
-
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -713,7 +565,7 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output")
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -727,10 +579,6 @@ if ($Failed -ne 0) {
             const string repo2 = "FOO-REPO-2";
 
             _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { repo1, repo2 });
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
@@ -799,7 +647,7 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output")
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -815,10 +663,6 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(ghesApiUrl, It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -884,7 +728,7 @@ if ($Failed -ne 0) {
                 GhesApiUrl = ghesApiUrl,
                 AzureStorageConnectionString = azureStorageConnectionString
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -901,10 +745,6 @@ if ($Failed -ne 0) {
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}");
             expected.Append($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" }}");
@@ -919,7 +759,7 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -937,10 +777,6 @@ if ($Failed -ne 0) {
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(adoServerUrl, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-server-url \"{adoServerUrl}\" --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" --wait }}");
             expected.Append($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{REPO}\" }}");
@@ -956,7 +792,7 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -981,10 +817,6 @@ if ($Failed -ne 0) {
                 new AdoRepository { Name = repo3}
             });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --ado-source-org \"{SOURCE_ORG}\" --ado-team-project \"{adoTeamProject}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" --wait }}");
             expected.AppendLine($"Exec {{ gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\" }}");
@@ -1003,7 +835,7 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -1021,10 +853,6 @@ if ($Failed -ne 0) {
 
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = repo1 }, new AdoRepository { Name = repo2 } });
-
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1099,7 +927,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1115,10 +943,6 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { repo1, repo2 });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1191,7 +1015,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1207,10 +1031,6 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1278,7 +1098,7 @@ if ($Failed -ne 0) {
                 AzureStorageConnectionString = azureStorageConnectionString,
                 DownloadMigrationLogs = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1294,10 +1114,6 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.CreateClientNoSsl(ghesApiUrl, It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1364,61 +1180,11 @@ if ($Failed -ne 0) {
                 AzureStorageConnectionString = azureStorageConnectionString,
                 NoSslVerify = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
             _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
-        }
-
-        [Fact]
-        public async Task It_Uses_Github_Source_Pat_When_Provided()
-        {
-            // Arrange
-            const string githubSourcePat = "github-source-pat";
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), githubSourcePat))
-                .Returns(_mockGithubApi.Object);
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                GithubSourcePat = githubSourcePat
-            };
-            await _handler.Invoke(args);
-
-            // Assert
-            _mockSourceGithubApiFactory.Verify(m => m.Create(null, githubSourcePat));
-            _mockEnvironmentVariableProvider.VerifyNoOtherCalls();
-        }
-
-        [Fact]
-        public async Task It_Uses_Ado_Pat_When_Provided()
-        {
-            // Arrange
-            const string adoPat = "ado-pat";
-
-            _mockAdoApiFactory.Setup(m => m.Create(null, adoPat)).Returns(_mockAdoApi.Object);
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
-            // Act
-            var args = new GenerateScriptCommandArgs
-            {
-                AdoSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                AdoPat = adoPat
-            };
-            await _handler.Invoke(args);
-
-            // Assert
-            _mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
-            _mockEnvironmentVariableProvider.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -1428,10 +1194,6 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait --skip-releases }}";
 
@@ -1444,7 +1206,7 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 SkipReleases = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -1460,10 +1222,6 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --skip-releases }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
@@ -1477,7 +1235,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 SkipReleases = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script, 22, 7);
 
@@ -1493,10 +1251,6 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --wait --lock-source-repo }}";
 
             // Act
@@ -1508,7 +1262,7 @@ if ($Failed -ne 0) {
                 Sequential = true,
                 LockSourceRepo = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script);
 
@@ -1524,10 +1278,6 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
@@ -1541,7 +1291,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 LockSourceRepo = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             _script = TrimNonExecutableLines(_script, 22, 7);
 
@@ -1557,10 +1307,6 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1573,7 +1319,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Contain(expectedCliVersionComment);
@@ -1584,10 +1330,6 @@ if ($Failed -ne 0) {
         {
             // Arrange
             _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { REPO });
-            _mockSourceGithubApiFactory
-                .Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(_mockGithubApi.Object);
-
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1599,7 +1341,7 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output")
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Contain(expectedCliVersionComment);
@@ -1614,10 +1356,6 @@ if ($Failed -ne 0) {
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, adoTeamProject)).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1631,7 +1369,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Contain(expectedCliVersionComment);
@@ -1646,10 +1384,6 @@ if ($Failed -ne 0) {
             _mockAdoApi.Setup(x => x.GetTeamProjects(SOURCE_ORG)).ReturnsAsync(new[] { adoTeamProject });
             _mockAdoApi.Setup(x => x.GetEnabledRepos(SOURCE_ORG, It.IsAny<string>())).ReturnsAsync(new[] { new AdoRepository { Name = REPO } });
 
-            _mockAdoApiFactory
-                .Setup(m => m.Create(null, null))
-                .Returns(_mockAdoApi.Object);
-
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1662,7 +1396,7 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output")
             };
-            await _handler.Invoke(args);
+            await _handler.Handle(args);
 
             // Assert
             _script.Should().Contain(expectedCliVersionComment);

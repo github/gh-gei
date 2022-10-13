@@ -4,7 +4,6 @@ using FluentAssertions;
 using Moq;
 using Octoshift;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 using Xunit;
 
@@ -12,8 +11,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
 public class ReclaimMannequinCommandHandlerTests
 {
-    private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<ITargetGithubApiFactory> _mockTargetGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
     private readonly ReclaimMannequinCommandHandler _handler;
@@ -24,7 +21,7 @@ public class ReclaimMannequinCommandHandlerTests
 
     public ReclaimMannequinCommandHandlerTests()
     {
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockTargetGithubApiFactory.Object, _mockReclaimService.Object)
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()
@@ -38,29 +35,6 @@ public class ReclaimMannequinCommandHandlerTests
         await FluentActions
             .Invoking(async () => await _handler.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
-    }
-
-    [Fact]
-    public async Task It_Uses_The_Github_Pat_When_Provided()
-    {
-        string mannequinUserId = null;
-        var githubTargetPat = "PAT";
-
-        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
-        _mockTargetGithubApiFactory.Setup(m => m.Create(null, githubTargetPat)).Returns(_mockGithubApi.Object);
-
-        var args = new ReclaimMannequinCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            MannequinUser = MANNEQUIN_USER,
-            MannequinId = mannequinUserId,
-            TargetUser = TARGET_USER,
-            Force = false,
-            GithubPat = githubTargetPat,
-        };
-        await _handler.Handle(args);
-
-        _mockTargetGithubApiFactory.Verify(m => m.Create(null, githubTargetPat));
     }
 
     [Fact]
@@ -83,7 +57,6 @@ public class ReclaimMannequinCommandHandlerTests
     {
         string mannequinUserId = null;
 
-        _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
         _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
@@ -103,7 +76,6 @@ public class ReclaimMannequinCommandHandlerTests
     {
         var mannequinUserId = "monaid";
 
-        _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
         _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
@@ -121,8 +93,6 @@ public class ReclaimMannequinCommandHandlerTests
     [Fact]
     public async Task CSVReclaiming_Happy_Path()
     {
-        _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
-
         var args = new ReclaimMannequinCommandArgs
         {
             GithubOrg = GITHUB_ORG,
@@ -136,8 +106,6 @@ public class ReclaimMannequinCommandHandlerTests
     [Fact]
     public async Task CSV_CSV_TakesPrecedence()
     {
-        _mockTargetGithubApiFactory.Setup(m => m.Create(null, null)).Returns(_mockGithubApi.Object);
-
         var args = new ReclaimMannequinCommandArgs
         {
             GithubOrg = GITHUB_ORG,

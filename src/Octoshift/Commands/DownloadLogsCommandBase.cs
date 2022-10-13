@@ -1,5 +1,7 @@
+using System;
 using System.CommandLine;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
 
@@ -7,60 +9,69 @@ using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class DownloadLogsCommandBase : Command
+public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, DownloadLogsCommandHandler>
 {
-    protected DownloadLogsCommandHandler BaseHandler { get; init; }
-
-    public DownloadLogsCommandBase(
-        OctoLogger log,
-        ITargetGithubApiFactory githubApiFactory,
-        HttpDownloadService httpDownloadService,
-        RetryPolicy retryPolicy) : base(name: "download-logs", description: "Downloads migration logs for migrations.")
+    public DownloadLogsCommandBase() : base(name: "download-logs", description: "Downloads migration logs for migrations.")
     {
-        BaseHandler = new DownloadLogsCommandHandler(log, githubApiFactory, httpDownloadService, retryPolicy);
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "GitHub organization to download logs from."
     };
 
-    protected virtual Option<string> GithubRepo { get; } = new("--github-repo")
+    public virtual Option<string> GithubRepo { get; } = new("--github-repo")
     {
         IsRequired = true,
         Description = "Target repository to download latest log for."
     };
 
-    protected virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
+    public virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
     {
-        IsRequired = false,
         Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false,
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<string> MigrationLogFile { get; } = new("--migration-log-file")
+    public virtual Option<string> MigrationLogFile { get; } = new("--migration-log-file")
     {
-        IsRequired = false,
         Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
     };
 
-    protected virtual Option<bool> Overwrite { get; } = new("--overwrite")
+    public virtual Option<bool> Overwrite { get; } = new("--overwrite")
     {
-        IsRequired = false,
         Description = "Overwrite migration log file if it exists."
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose")
+    public virtual Option<bool> Verbose { get; } = new("--verbose")
     {
-        IsRequired = false,
         Description = "Display more information to the console."
     };
+
+    public override DownloadLogsCommandHandler BuildHandler(DownloadLogsCommandArgs args, IServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+        var githubApi = githubApiFactory.Create(args.GithubApiUrl, args.GithubPat);
+        var httpDownloadService = sp.GetRequiredService<HttpDownloadService>();
+        var retryPolicy = sp.GetRequiredService<RetryPolicy>();
+
+        return new DownloadLogsCommandHandler(log, githubApi, httpDownloadService, retryPolicy);
+    }
 
     protected void AddOptions()
     {
