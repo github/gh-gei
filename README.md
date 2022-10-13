@@ -8,21 +8,20 @@ The [GitHub Enterprise Importer](https://docs.github.com/en/early-access/github/
 > GEI is in a public beta for GitHub Enterprise Cloud.
 
 ## Using the GEI CLI
-There are 2 separate CLIs that we ship:
-- `gh gei` - Intended for running migrations from anywhere supported to GitHub.
-- `ado2gh` - Extends the basic migration support in `gh gei` to include extra commands such as re-wiring Azure Pipelines and configure Azure Boards integration post-migration.
-
-To use `ado2gh` download the latest version from the [Releases](https://github.com/github/gh-gei/releases/latest) in this repo.
+There are 2 separate CLIs that we ship as extensions for the official [GitHub CLI](https://github.com/cli/cli#installation):
+- `gh gei` - Run migrations between GitHub products
+- `gh ado2gh` - Run migrations from Azure DevOps to GitHub
 
 To use `gh gei` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
 >`gh extension install github/gh-gei`
 
-We update the gei extension frequently, to ensure you're using the latest version run this command on a regular basis:
+To use `gh ado2gh` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
+>`gh extension install github/gh-ado2gh`
+
+We update the extensions frequently, so make sure you update them on a regular basis:
 >`gh extension upgrade github/gh-gei`
 
 To see the available commands and options run:
-
->`ado2gh --help`
 
 >`gh gei --help`
 
@@ -46,7 +45,7 @@ Refer to the [official documentation](https://docs.github.com/en/early-access/gi
 2. Set the ADO_PAT and GH_PAT environment variables.
 
 3. Run the `generate-script` command to generate a migration script.
->`ado2gh generate-script --ado-org ORGNAME --github-org ORGNAME --all`
+>`gh ado2gh generate-script --ado-org ORGNAME --github-org ORGNAME --all`
 
 4. The previous command will have created a migrate.ps1 script. Review the steps in the generated script and tweak if necessary.
 
