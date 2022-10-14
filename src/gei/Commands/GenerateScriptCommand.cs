@@ -25,6 +25,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(GhesApiUrl);
             AddOption(AzureStorageConnectionString);
+            AddOption(AwsBucketName);
+            AddOption(AwsAccessKey);
+            AddOption(AwsSecretKey);
             AddOption(NoSslVerify);
             AddOption(DownloadMigrationLogs);
 
@@ -99,6 +102,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             IsHidden = true
         };
+
+        public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
+        {
+            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
+        };
+        public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
+        {
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable."
+        };
+        public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
+        {
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
+        };
+
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
@@ -147,6 +164,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public FileInfo Output { get; set; }
         public string GhesApiUrl { get; set; }
         public string AzureStorageConnectionString { get; set; }
+        public string AwsBucketName { get; set; }
+        public string AwsAccessKey { get; set; }
+        public string AwsSecretKey { get; set; }
         public bool NoSslVerify { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }

@@ -47,6 +47,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         _log.Verbose = args.Verbose;
 
         _log.RegisterSecret(args.AzureStorageConnectionString);
+        _log.RegisterSecret(args.AwsAccessKey);
+        _log.RegisterSecret(args.AwsSecretKey);
         _log.RegisterSecret(args.GithubSourcePat);
         _log.RegisterSecret(args.AdoPat);
 
@@ -81,7 +83,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         {
             _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
 
-            if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
+            if (args.AzureStorageConnectionString.IsNullOrWhiteSpace() && args.AwsBucketName.IsNullOrWhiteSpace())
             {
                 _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
                 args.AzureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
@@ -91,9 +93,16 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
                 }
             }
-            else
+            else if (args.AzureStorageConnectionString.HasValue())
             {
                 _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
+            }
+            else if (args.AwsBucketName.HasValue() && args.AwsAccessKey.HasValue() && args.AwsSecretKey.HasValue())
+            {
+                _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+                _log.LogInformation($"AWS ACCESS KEY: ***");
+                _log.LogInformation($"AWS SECRET KEY: ***");
+
             }
 
             if (args.NoSslVerify)
@@ -142,7 +151,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
             await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
-            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
+            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -150,7 +159,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
     }
 
-    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
@@ -160,8 +169,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         return sequential
-            ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs)
-            : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
+            ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, awsBucketName, awsAccessKey, awsSecretKey, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs)
+            : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, awsBucketName, awsAccessKey, awsSecretKey, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
     }
 
     private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, bool downloadMigrationLogs)
@@ -222,7 +231,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var content = new StringBuilder();
 
@@ -235,7 +244,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         foreach (var repo in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases, lockSourceRepo)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, awsBucketName, awsAccessKey, awsBucketName, noSslVerify, true, skipReleases, lockSourceRepo)));
 
             if (downloadMigrationLogs)
             {
@@ -246,7 +255,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return content.ToString();
     }
 
-    private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var content = new StringBuilder();
 
@@ -270,7 +279,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Queuing migrations
         foreach (var repo in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases, lockSourceRepo))}");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, awsBucketName, awsAccessKey, awsSecretKey, noSslVerify, false, skipReleases, lockSourceRepo))}");
             content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
             content.AppendLine();
         }
@@ -446,12 +455,12 @@ if ($Failed -ne 0) {
 
     private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo}".ReplaceInvalidCharactersWithDash();
 
-    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo)
+    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo)
     {
         var ghesRepoOptions = "";
         if (ghesApiUrl.HasValue())
         {
-            ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, noSslVerify);
+            ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, awsBucketName, awsAccessKey, awsSecretKey, noSslVerify);
         }
 
         return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)}";
@@ -462,9 +471,9 @@ if ($Failed -ne 0) {
         return $"gh gei migrate-repo{(adoServerUrl.HasValue() ? $" --ado-server-url \"{adoServerUrl}\"" : string.Empty)} --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
     }
 
-    private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
+    private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify)
     {
-        return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
+        return $"--ghes-api-url \"{ghesApiUrl}\" {(azureStorageConnectionString.HasValue() ? $"--azure-storage-connection-string \"{azureStorageConnectionString}\"" : string.Empty )} {(awsBucketName.HasValue() ? $"--aws-bucket-name \"{awsBucketName}\"" : string.Empty )} {(awsAccessKey.HasValue() ? $"--aws-access-key \"{awsAccessKey}\"" : string.Empty )} {(awsSecretKey.HasValue() ? $"--aws-secret-key \"{awsSecretKey}\"" : string.Empty )} {(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
     }
 
     private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
