@@ -90,7 +90,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
         var logUrl = result.Result;
 
         _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
-        await _httpDownloadService.Download(logUrl, args.MigrationLogFile);
+        await _httpDownloadService.DownloadToFile(logUrl, args.MigrationLogFile);
 
         _log.LogSuccess($"Downloaded {args.GithubRepo} log to {args.MigrationLogFile}.");
     }
