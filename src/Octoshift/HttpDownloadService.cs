@@ -18,9 +18,14 @@ namespace OctoshiftCLI
         {
             _log = log;
             _httpClient = httpClient;
+
+            if (_httpClient is not null)
+            {
+                _httpClient.Timeout = TimeSpan.FromHours(1);
+            }
         }
 
-        public virtual async Task Download(string url, string file)
+        public virtual async Task DownloadToFile(string url, string file)
         {
             _log.LogVerbose($"HTTP GET: {url}");
 
@@ -31,6 +36,18 @@ namespace OctoshiftCLI
 
             var contents = await response.Content.ReadAsStringAsync();
             await WriteToFile(file, contents);
+        }
+
+        public virtual async Task<byte[]> DownloadToBytes(string url)
+        {
+            _log.LogVerbose($"HTTP GET: {url}");
+
+            using var response = await _httpClient.GetAsync(url);
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsByteArrayAsync();
         }
     }
 }

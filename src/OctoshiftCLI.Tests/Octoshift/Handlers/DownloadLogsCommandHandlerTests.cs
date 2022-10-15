@@ -33,7 +33,7 @@ public class DownloadLogsCommandHandlerTests
         const string defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -44,7 +44,7 @@ public class DownloadLogsCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockHttpDownloadService.Verify(m => m.Download(logUrl, defaultFileName));
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrl, defaultFileName));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class DownloadLogsCommandHandlerTests
         const string logUrl = "some-url";
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -80,7 +80,7 @@ public class DownloadLogsCommandHandlerTests
         const string migrationLogFile = "migration-log-file";
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -92,7 +92,7 @@ public class DownloadLogsCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), migrationLogFile));
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(It.IsAny<string>(), migrationLogFile));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class DownloadLogsCommandHandlerTests
             .ReturnsAsync(logUrlEmpty)
             .ReturnsAsync(logUrlPopulated);
 
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -125,7 +125,7 @@ public class DownloadLogsCommandHandlerTests
 
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
-        _mockHttpDownloadService.Verify(m => m.Download(logUrlPopulated, defaultFileName));
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrlPopulated, defaultFileName));
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class DownloadLogsCommandHandlerTests
         const bool overwrite = true;
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -150,7 +150,7 @@ public class DownloadLogsCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
     }
 
     [Fact]
@@ -204,7 +204,7 @@ public class DownloadLogsCommandHandlerTests
         const string logUrl = "";
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
-        _mockHttpDownloadService.Setup(m => m.Download(It.IsAny<string>(), It.IsAny<string>()));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -217,6 +217,6 @@ public class DownloadLogsCommandHandlerTests
             .Should().ThrowAsync<OctoshiftCliException>();
 
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
-        _mockHttpDownloadService.Verify(m => m.Download(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
     }
 }
