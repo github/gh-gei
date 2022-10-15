@@ -1,6 +1,5 @@
 using System;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
