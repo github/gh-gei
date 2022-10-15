@@ -4,6 +4,7 @@ using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +39,13 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<BbsArchiveDownloaderFactory>()
-                .AddHttpClient();
+                .AddHttpClient("Kerberos")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                {
+                    UseDefaultCredentials = true
+                })
+                .Services
+                .AddHttpClient("Default");
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var rootCommand = new RootCommand("Automate end-to-end Bitbucket Server to GitHub migrations.")

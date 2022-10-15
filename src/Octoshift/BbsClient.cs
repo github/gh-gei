@@ -14,7 +14,17 @@ public class BbsClient
     private readonly OctoLogger _log;
     private readonly RetryPolicy _retryPolicy;
 
-    public BbsClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string username, string password)
+    public BbsClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string username, string password) :
+        this(log, httpClient, versionProvider, retryPolicy)
+    {
+        if (_httpClient != null)
+        {
+            var authCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authCredentials);
+        }
+    }
+
+    public BbsClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy)
     {
         _log = log;
         _httpClient = httpClient;
@@ -23,8 +33,6 @@ public class BbsClient
         if (_httpClient != null)
         {
             _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-            var authCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authCredentials);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionProvider?.GetCurrentVersion()));
             if (versionProvider?.GetVersionComments() is { } comments)
             {
