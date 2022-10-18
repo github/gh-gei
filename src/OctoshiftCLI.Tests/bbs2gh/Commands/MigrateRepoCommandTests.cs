@@ -49,7 +49,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(22);
+        command.Options.Count.Should().Be(23);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -71,6 +71,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "smb-user", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "smb-password", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+        TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
     }
 
@@ -187,5 +188,34 @@ public class MigrateRepoCommandTests
         handler.Should().NotBeNull();
 
         _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
+    }
+
+    [Fact]
+    public void It_Gets_A_Kerberos_HttpClient_When_Kerberos_Is_True()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            Kerberos = true
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL));
+    }
+
+    [Fact]
+    public void It_Gets_A_Default_HttpClient_When_Kerberos_Is_Not_Set()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
     }
 }

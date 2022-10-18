@@ -23,6 +23,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshPrivateKey);
         AddOption(SshPort);
         AddOption(Output);
+        AddOption(Kerberos);
         AddOption(Verbose);
     }
 
@@ -65,6 +66,11 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--output",
         getDefaultValue: () => new FileInfo("./migrate.ps1"));
 
+    public Option<bool> Kerberos { get; } = new(
+        name: "--kerberos",
+        description: "Use Kerberos authentication for Bitbucket Server.")
+    { IsHidden = true };
+
     public Option<bool> Verbose { get; } = new("--verbose");
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
@@ -85,7 +91,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
         var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
-        var bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+        var bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
 
         return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, bbsApi, environmentVariableProvider);
     }
@@ -102,5 +108,6 @@ public class GenerateScriptCommandArgs
     public string SshPrivateKey { get; set; }
     public string SshPort { get; set; }
     public FileInfo Output { get; set; }
+    public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 }
