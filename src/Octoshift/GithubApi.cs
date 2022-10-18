@@ -137,7 +137,7 @@ namespace OctoshiftCLI
                 variables = new { login = org }
             };
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 var httpResponse = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(httpResponse);
@@ -167,7 +167,7 @@ namespace OctoshiftCLI
                 variables = new { slug = enterpriseName }
             };
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 var httpResponse = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(httpResponse);
@@ -394,7 +394,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 var httpResponse = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(httpResponse);
@@ -441,7 +441,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 var httpResponse = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(httpResponse);
@@ -481,7 +481,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 var httpResponse = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(httpResponse);
@@ -649,7 +649,7 @@ namespace OctoshiftCLI
 
             var payload = GetMannequinsPayload(orgId);
 
-            var response = await _retryPolicy.Retry(async () => 
+            var response = await _retryPolicy.Retry(async () =>
             {
                 return await _client.PostGraphQLWithPaginationAsync(
                     url,
@@ -660,12 +660,9 @@ namespace OctoshiftCLI
                 .ToListAsync();
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new InvalidOperationException($"Failed to retrieve the list of mannequins", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new InvalidOperationException($"Failed to retrieve the list of mannequins", response.FinalException)
+                : (IEnumerable<Mannequin>)response.Result;
         }
 
         public virtual async Task<string> GetUserId(string login)

@@ -444,7 +444,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/graphql";
             var payload =
                 $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
-            
+
             var response = $@"
             {{
                 ""data"": 
@@ -512,7 +512,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/graphql";
             var payload =
                 $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
-            
+
             var response = $@"
             {{
                 ""data"": 
