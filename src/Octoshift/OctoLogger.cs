@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
 
 namespace OctoshiftCLI
 {
@@ -78,7 +80,7 @@ namespace OctoshiftCLI
         {
             var result = msg;
 
-            foreach (var secret in _secrets)
+            foreach (var secret in _secrets.Where(x => x is not null))
             {
                 result = result.Replace(secret, "***");
             }
@@ -109,7 +111,9 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(ex));
             }
 
-            var logMessage = Verbose ? ex.ToString() : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
+            var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString();
+            var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
+
             var output = MaskSecrets(FormatMessage(logMessage, LogLevel.ERROR));
 
             Console.ForegroundColor = ConsoleColor.Red;
@@ -117,7 +121,7 @@ namespace OctoshiftCLI
             Console.ResetColor();
 
             _writeToLog(output);
-            _writeToVerboseLog(MaskSecrets(FormatMessage(ex.ToString(), LogLevel.ERROR)));
+            _writeToVerboseLog(MaskSecrets(FormatMessage(verboseMessage, LogLevel.ERROR)));
         }
 
         public virtual void LogVerbose(string msg)

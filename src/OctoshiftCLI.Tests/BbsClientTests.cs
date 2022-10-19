@@ -52,6 +52,19 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
+    public void It_Doesnt_Add_Authorization_Header_When_No_Credentials_Passed()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+
+        // Act
+        _ = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Assert
+        httpClient.DefaultRequestHeaders.Authorization.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetAsync_Encodes_The_Url()
     {
         // Arrange
@@ -113,6 +126,40 @@ public sealed class BbsClientTests : IDisposable
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        using var firstHttpResponse = new HttpResponseMessage(httpStatusCode)
+        {
+            Content = new StringContent("FIRST_RESPONSE")
+        };
+        using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("SECOND_RESPONSE")
+        };
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstHttpResponse)
+            .ReturnsAsync(secondHttpResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        var returnedContent = await bbsClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("SECOND_RESPONSE");
     }
 
     [Fact]

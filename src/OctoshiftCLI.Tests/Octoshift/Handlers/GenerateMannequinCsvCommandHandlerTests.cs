@@ -4,27 +4,26 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Models;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
-public class GenerateMannequinCsvCommandBaseTests
+public class GenerateMannequinCsvCommandHandlerTests
 {
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-    private readonly GenerateMannequinCsvCommandBase _command;
+    private readonly GenerateMannequinCsvCommandHandler _handler;
 
     private const string CSV_HEADER = "mannequin-user,mannequin-id,target-user";
     private const string GITHUB_ORG = "FooOrg";
     private readonly string GITHUB_ORG_ID = Guid.NewGuid().ToString();
     private string _csvContent = string.Empty;
 
-    public GenerateMannequinCsvCommandBaseTests()
+    public GenerateMannequinCsvCommandHandlerTests()
     {
-        _command = new GenerateMannequinCsvCommandBase(_mockOctoLogger.Object, _mockGithubApiFactory.Object)
+        _handler = new GenerateMannequinCsvCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object)
         {
             WriteToFile = (_, contents) =>
             {
@@ -37,15 +36,19 @@ public class GenerateMannequinCsvCommandBaseTests
     [Fact]
     public async Task NoMannequins_GenerateEmptyCSV_WithOnlyHeaders()
     {
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(Array.Empty<Mannequin>());
 
         var expected = CSV_HEADER + Environment.NewLine;
 
         // Act
-        await _command.Handle("octocat", new FileInfo("unit-test-output"), false);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = false,
+        };
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -60,8 +63,6 @@ public class GenerateMannequinCsvCommandBaseTests
             new Mannequin { Id = "monalisaid", Login = "monalisa", MappedUser = new Claimant { Id = "monalisamapped-id", Login = "monalisa_gh" } }
         };
 
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);
 
@@ -69,7 +70,13 @@ public class GenerateMannequinCsvCommandBaseTests
                                   + "mona,monaid," + Environment.NewLine;
 
         // Act
-        await _command.Handle(GITHUB_ORG, new FileInfo("unit-test-output"), false);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = false,
+        };
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);
@@ -84,8 +91,6 @@ public class GenerateMannequinCsvCommandBaseTests
             new Mannequin { Id = "monalisaid", Login = "monalisa", MappedUser = new Claimant { Id = "monalisamapped-id", Login = "monalisa_gh" } }
         };
 
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
         _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(GITHUB_ORG_ID).Result).Returns(mannequinsResponse);
 
@@ -94,7 +99,13 @@ public class GenerateMannequinCsvCommandBaseTests
                                   + "monalisa,monalisaid,monalisa_gh" + Environment.NewLine;
 
         // Act
-        await _command.Handle(GITHUB_ORG, new FileInfo("unit-test-output"), true);
+        var args = new GenerateMannequinCsvCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            IncludeReclaimed = true,
+        };
+        await _handler.Handle(args);
 
         // Assert
         _csvContent.Should().Be(expected);

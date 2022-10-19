@@ -1,5 +1,4 @@
-using System;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
@@ -9,22 +8,20 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class LockRepoCommandTests
     {
-        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly LockRepoCommand _command;
-
-        private const string ADO_ORG = "FooOrg";
-        private const string ADO_TEAM_PROJECT = "BlahTeamProject";
-        private const string ADO_REPO = "foo-repo";
-        private readonly string REPO_ID = Guid.NewGuid().ToString();
-        private const string IDENTITY_DESCRIPTOR = "foo-id";
-        private readonly string TEAM_PROJECT_ID = Guid.NewGuid().ToString();
+        private readonly ServiceProvider _serviceProvider;
+        private readonly LockRepoCommand _command = new();
 
         public LockRepoCommandTests()
         {
-            _command = new LockRepoCommand(_mockOctoLogger.Object, _mockAdoApiFactory.Object);
+            var serviceCollection = new ServiceCollection();
+            serviceCollection
+                .AddSingleton(_mockOctoLogger.Object)
+                .AddSingleton(_mockAdoApiFactory.Object);
+
+            _serviceProvider = serviceCollection.BuildServiceProvider();
         }
 
         [Fact]
@@ -42,27 +39,19 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         }
 
         [Fact]
-        public async Task Happy_Path()
-        {
-            _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-            _mockAdoApi.Setup(x => x.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO).Result).Returns(REPO_ID);
-            _mockAdoApi.Setup(x => x.GetIdentityDescriptor(ADO_ORG, TEAM_PROJECT_ID, "Project Valid Users").Result).Returns(IDENTITY_DESCRIPTOR);
-
-            _mockAdoApiFactory.Setup(m => m.Create(null)).Returns(_mockAdoApi.Object);
-
-            await _command.Invoke(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
-
-            _mockAdoApi.Verify(x => x.LockRepo(ADO_ORG, TEAM_PROJECT_ID, REPO_ID, IDENTITY_DESCRIPTOR));
-        }
-
-        [Fact]
-        public async Task It_Uses_The_Ado_Pat_When_Provided()
+        public void It_Uses_The_Ado_Pat_When_Provided()
         {
             const string adoPat = "ado-pat";
 
-            _mockAdoApiFactory.Setup(m => m.Create(adoPat)).Returns(_mockAdoApi.Object);
+            var args = new LockRepoCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoRepo = "some-repo",
+                AdoPat = adoPat
+            };
 
-            await _command.Invoke("adoOrg", "adoTeamProject", "adoRepo", adoPat);
+            _command.BuildHandler(args, _serviceProvider);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
         }

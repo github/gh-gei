@@ -1,80 +1,67 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class DisableRepoCommand : Command
+    public class DisableRepoCommand : CommandBase<DisableRepoCommandArgs, DisableRepoCommandHandler>
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-
-        public DisableRepoCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("disable-ado-repo")
+        public DisableRepoCommand() : base(
+            name: "disable-ado-repo",
+            description: "Disables the repo in Azure DevOps. This makes the repo non-readable for all." +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-
-            Description = "Disables the repo in Azure DevOps. This makes the repo non-readable for all.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
-
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var adoRepo = new Option<string>("--ado-repo")
-            {
-                IsRequired = true
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(adoRepo);
-            AddOption(adoPat);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, string, string, bool>(Invoke);
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(AdoRepo);
+            AddOption(AdoPat);
+            AddOption(Verbose);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoRepo, string adoPat = null, bool verbose = false)
+        public Option<string> AdoOrg { get; } = new("--ado-org")
         {
-            _log.Verbose = verbose;
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoRepo { get; } = new("--ado-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            _log.LogInformation("Disabling repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO REPO: {adoRepo}");
-            if (adoPat is not null)
+        public override DisableRepoCommandHandler BuildHandler(DisableRepoCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
             {
-                _log.LogInformation("ADO PAT: ***");
+                throw new ArgumentNullException(nameof(args));
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
-
-            var allRepos = await ado.GetRepos(adoOrg, adoTeamProject);
-            if (allRepos.Any(r => r.Name == adoRepo && r.IsDisabled))
+            if (sp is null)
             {
-                _log.LogSuccess($"Repo '{adoOrg}/{adoTeamProject}/{adoRepo}' is already disabled - No action will be performed");
-                return;
+                throw new ArgumentNullException(nameof(sp));
             }
-            var repoId = allRepos.First(r => r.Name == adoRepo).Id;
-            await ado.DisableRepo(adoOrg, adoTeamProject, repoId);
 
-            _log.LogSuccess("Repo successfully disabled");
+            var log = sp.GetRequiredService<OctoLogger>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
+
+            return new DisableRepoCommandHandler(log, adoApi);
         }
+    }
+
+    public class DisableRepoCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string AdoRepo { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

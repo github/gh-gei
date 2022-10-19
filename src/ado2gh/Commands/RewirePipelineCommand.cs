@@ -1,93 +1,86 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class RewirePipelineCommand : Command
+    public class RewirePipelineCommand : CommandBase<RewirePipelineCommandArgs, RewirePipelineCommandHandler>
     {
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-
-        public RewirePipelineCommand(OctoLogger log, AdoApiFactory adoApiFactory) : base("rewire-pipeline")
+        public RewirePipelineCommand() : base(
+            name: "rewire-pipeline",
+            description: "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo." +
+                         Environment.NewLine +
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-
-            Description = "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
-
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = true
-            };
-            var adoTeamProject = new Option<string>("--ado-team-project")
-            {
-                IsRequired = true
-            };
-            var adoPipeline = new Option<string>("--ado-pipeline")
-            {
-                IsRequired = true,
-                Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline)"
-            };
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var serviceConnectionId = new Option<string>("--service-connection-id")
-            {
-                IsRequired = true
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(adoOrg);
-            AddOption(adoTeamProject);
-            AddOption(adoPipeline);
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(serviceConnectionId);
-            AddOption(adoPat);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, string, string, string, string, string, bool>(Invoke);
+            AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
+            AddOption(AdoPipeline);
+            AddOption(GithubOrg);
+            AddOption(GithubRepo);
+            AddOption(ServiceConnectionId);
+            AddOption(AdoPat);
+            AddOption(Verbose);
         }
 
-        public async Task Invoke(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string serviceConnectionId, string adoPat = null, bool verbose = false)
+        public Option<string> AdoOrg { get; } = new("--ado-org")
         {
-            _log.Verbose = verbose;
+            IsRequired = true
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPipeline { get; } = new("--ado-pipeline")
+        {
+            IsRequired = true,
+            Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline)"
+        };
+        public Option<string> GithubOrg { get; } = new("--github-org")
+        {
+            IsRequired = true
+        };
+        public Option<string> GithubRepo { get; } = new("--github-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> ServiceConnectionId { get; } = new("--service-connection-id")
+        {
+            IsRequired = true
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
-            _log.LogInformation($"ADO ORG: {adoOrg}");
-            _log.LogInformation($"ADO TEAM PROJECT: {adoTeamProject}");
-            _log.LogInformation($"ADO PIPELINE: {adoPipeline}");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"SERVICE CONNECTION ID: {serviceConnectionId}");
-            if (adoPat is not null)
+        public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
             {
-                _log.LogInformation("ADO PAT: ***");
+                throw new ArgumentNullException(nameof(args));
             }
 
-            var ado = _adoApiFactory.Create(adoPat);
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
 
-            var adoPipelineId = await ado.GetPipelineId(adoOrg, adoTeamProject, adoPipeline);
-            var (defaultBranch, clean, checkoutSubmodules) = await ado.GetPipeline(adoOrg, adoTeamProject, adoPipelineId);
-            await ado.ChangePipelineRepo(adoOrg, adoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, githubOrg, githubRepo, serviceConnectionId);
+            var log = sp.GetRequiredService<OctoLogger>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
 
-            _log.LogSuccess("Successfully rewired pipeline");
+            return new RewirePipelineCommandHandler(log, adoApi);
         }
+    }
+
+    public class RewirePipelineCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoTeamProject { get; set; }
+        public string AdoPipeline { get; set; }
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string ServiceConnectionId { get; set; }
+        public string AdoPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

@@ -1,57 +1,61 @@
 using System;
 using System.CommandLine;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Octoshift;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class GenerateMannequinCsvCommandBase : Command
+public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvCommandArgs, GenerateMannequinCsvCommandHandler>
 {
-    internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
-
-    private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _targetGithubApiFactory;
-
-    public GenerateMannequinCsvCommandBase(OctoLogger log, ITargetGithubApiFactory targetGithubApiFactory) : base("generate-mannequin-csv")
+    public GenerateMannequinCsvCommandBase() : base(
+        name: "generate-mannequin-csv",
+        description: "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.")
     {
-        _log = log;
-        _targetGithubApiFactory = targetGithubApiFactory;
-
-        Description = "Generates a CSV with unreclaimed mannequins to reclaim them in bulk.";
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org")
+    public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
         IsRequired = true,
         Description = "Uses GH_PAT env variable."
     };
 
-    protected virtual Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./mannequins.csv"))
+    public virtual Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./mannequins.csv"))
     {
-        IsRequired = false,
         Description = "Output filename. Default value mannequins.csv"
     };
 
-    protected virtual Option<bool> IncludeReclaimed { get; } = new("--include-reclaimed")
+    public virtual Option<bool> IncludeReclaimed { get; } = new("--include-reclaimed")
     {
-        IsRequired = false,
         Description = "Include mannequins that have already been reclaimed"
     };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose")
+    public virtual Option<bool> Verbose { get; } = new("--verbose");
+
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
-        IsRequired = false
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat")
+    public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, IServiceProvider sp)
     {
-        IsRequired = false
-    };
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+        return new GenerateMannequinCsvCommandHandler(log, githubApi);
+    }
 
     protected void AddOptions()
     {
@@ -61,47 +65,13 @@ public class GenerateMannequinCsvCommandBase : Command
         AddOption(GithubPat);
         AddOption(Verbose);
     }
+}
 
-    public async Task Handle(
-        string githubOrg,
-        FileInfo output,
-        bool includeReclaimed = false,
-        string githubPat = null,
-        bool verbose = false)
-    {
-        _log.Verbose = verbose;
-
-        _log.LogInformation("Generating CSV...");
-
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        if (githubPat is not null)
-        {
-            _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
-        }
-
-        _log.LogInformation($"{Output.GetLogFriendlyName()}: {output}");
-        if (includeReclaimed)
-        {
-            _log.LogInformation($"{IncludeReclaimed.GetLogFriendlyName()}: true");
-        }
-
-        var githubApi = _targetGithubApiFactory.Create(targetPersonalAccessToken: githubPat);
-
-        var githubOrgId = await githubApi.GetOrganizationId(githubOrg);
-        var mannequins = await githubApi.GetMannequins(githubOrgId);
-
-        _log.LogInformation($"    # Mannequins Found: {mannequins.Count()}");
-        _log.LogInformation($"    # Mannequins Previously Reclaimed: {mannequins.Count(x => x.MappedUser is not null)}");
-
-        var contents = new StringBuilder().AppendLine(ReclaimService.CSVHEADER);
-        foreach (var mannequin in mannequins.Where(m => includeReclaimed || m.MappedUser is null))
-        {
-            contents.AppendLine($"{mannequin.Login},{mannequin.Id},{mannequin.MappedUser?.Login}");
-        }
-
-        if (output?.FullName is not null)
-        {
-            await WriteToFile(output.FullName, contents.ToString());
-        }
-    }
+public class GenerateMannequinCsvCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public FileInfo Output { get; set; }
+    public bool IncludeReclaimed { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

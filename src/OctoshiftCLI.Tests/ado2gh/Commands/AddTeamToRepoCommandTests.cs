@@ -1,66 +1,62 @@
 using System.CommandLine;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Contracts;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands
 {
     public class AddTeamToRepoCommandTests
     {
-        private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+        private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-        private readonly AddTeamToRepoCommand _command;
-
-        private readonly string GITHUB_ORG = "foo-org";
-        private readonly string GITHUB_REPO = "foo-repo";
-        private readonly string TEAM = "foo-team";
+        private readonly ServiceProvider _serviceProvider;
+        private readonly AddTeamToRepoCommand _command = new();
 
         public AddTeamToRepoCommandTests()
         {
-            _command = new AddTeamToRepoCommand(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+            var serviceCollection = new ServiceCollection();
+            serviceCollection
+                .AddSingleton(_mockOctoLogger.Object)
+                .AddSingleton(_mockGithubApiFactory.Object);
+
+            _serviceProvider = serviceCollection.BuildServiceProvider();
         }
 
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("add-team-to-repo", _command.Name);
-            Assert.Equal(6, _command.Options.Count);
+            var command = new AddTeamToRepoCommand();
+            Assert.NotNull(command);
+            Assert.Equal("add-team-to-repo", command.Name);
+            Assert.Equal(6, command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "team", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "role", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(command.Options, "team", true);
+            TestHelpers.VerifyCommandOption(command.Options, "role", true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+            TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         }
 
         [Fact]
-        public async Task Happy_Path()
-        {
-            var teamSlug = "foo-slug";
-            var role = "maintain";
-
-            _mockGithubApi.Setup(x => x.GetTeamSlug(GITHUB_ORG, TEAM)).ReturnsAsync(teamSlug);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
-
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, TEAM, role);
-
-            _mockGithubApi.Verify(x => x.AddTeamToRepo(GITHUB_ORG, GITHUB_REPO, teamSlug, role));
-        }
-
-        [Fact]
-        public async Task It_Uses_The_Github_Pat_When_Provided()
+        public void It_Uses_The_Github_Pat_When_Provided()
         {
             const string githubPat = "github-pat";
 
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
+            var args = new AddTeamToRepoCommandArgs
+            {
+                GithubOrg = "foo",
+                GithubRepo = "blah",
+                Team = "some-team",
+                Role = "role",
+                GithubPat = githubPat
+            };
 
-            await _command.Invoke(GITHUB_ORG, GITHUB_REPO, TEAM, "role", githubPat);
+            _command.BuildHandler(args, _serviceProvider);
 
             _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
@@ -70,14 +66,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         {
             var role = "read";  // read is not a valid role
 
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            var args = new string[] { "add-team-to-repo", "--github-org", "foo-org", "--github-repo", "blah-repo", "--team", "some-team", "--role", role };
+            var command = new AddTeamToRepoCommand();
+            var argsBinder = new GenericArgsBinder<AddTeamToRepoCommand, AddTeamToRepoCommandArgs>(command);
+            command.SetHandler(async x => await command.BuildHandler(x, _serviceProvider).Handle(x), argsBinder);
+            await command.InvokeAsync(args);
 
-            var root = new RootCommand();
-            root.AddCommand(_command);
-            var args = new string[] { "add-team-to-repo", "--github-org", GITHUB_ORG, "--github-repo", GITHUB_REPO, "--team", TEAM, "--role", role };
-            await root.InvokeAsync(args);
-
-            _mockGithubApi.Verify(x => x.AddTeamToRepo(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockGithubApiFactory.Verify(x => x.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
     }
 }

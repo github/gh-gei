@@ -35,7 +35,10 @@ namespace OctoshiftCLI.Tests
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
             };
 
-            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object);
+            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
+            {
+                _httpRetryInterval = 0
+            };
         }
 
         [Fact]
@@ -75,6 +78,41 @@ namespace OctoshiftCLI.Tests
                 ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
                 ItExpr.IsAny<CancellationToken>());
         }
+
+        [Theory]
+        [InlineData(HttpStatusCode.Unauthorized)]
+        [InlineData(HttpStatusCode.ServiceUnavailable)]
+        public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
+        {
+            // Arrange
+            using var firstHttpResponse = new HttpResponseMessage(httpStatusCode)
+            {
+                Content = new StringContent("FIRST_RESPONSE")
+            };
+            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("SECOND_RESPONSE")
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(firstHttpResponse)
+                .ReturnsAsync(secondHttpResponse);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await adoClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be("SECOND_RESPONSE");
+        }
+
 
         [Fact]
         public async Task GetAsync_Applies_Retry_Delay()
@@ -188,17 +226,22 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = MockHttpHandler(_ => true, httpResponse);
+            var httpResponse = () => new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
+                .Invoking(async () =>
                 {
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-                    return adoClient.GetAsync(URL);
+                    return await adoClient.GetAsync(URL);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();

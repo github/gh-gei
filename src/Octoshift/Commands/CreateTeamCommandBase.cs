@@ -1,33 +1,49 @@
+using System;
 using System.CommandLine;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
-public class CreateTeamCommandBase : Command
+public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTeamCommandHandler>
 {
-    private readonly OctoLogger _log;
-    private readonly ITargetGithubApiFactory _githubApiFactory;
-
-    public CreateTeamCommandBase(OctoLogger log, ITargetGithubApiFactory githubApiFactory) : base("create-team")
+    public CreateTeamCommandBase() : base(name: "create-team", description: "Creates a GitHub team and optionally links it to an IdP group.")
     {
-        _log = log;
-        _githubApiFactory = githubApiFactory;
-
-        Description = "Creates a GitHub team and optionally links it to an IdP group.";
     }
 
-    protected virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
+    public virtual Option<string> GithubOrg { get; } = new("--github-org") { IsRequired = true };
 
-    protected virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
+    public virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
 
-    protected virtual Option<string> IdpGroup { get; } = new("--idp-group") { IsRequired = false };
+    public virtual Option<string> IdpGroup { get; } = new("--idp-group");
 
-    protected virtual Option<string> GithubPat { get; } = new("--github-pat") { IsRequired = false };
+    public virtual Option<string> GithubPat { get; } = new("--github-pat")
+    {
+        Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
+    };
 
-    protected virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+    public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
+
+    public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, IServiceProvider sp)
+    {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
+
+        if (sp is null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
+        var log = sp.GetRequiredService<OctoLogger>();
+        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+
+        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+        return new CreateTeamCommandHandler(log, githubApi);
+    }
 
     protected void AddOptions()
     {
@@ -37,55 +53,13 @@ public class CreateTeamCommandBase : Command
         AddOption(GithubPat);
         AddOption(Verbose);
     }
+}
 
-    public async Task Handle(string githubOrg, string teamName, string idpGroup, string githubPat = null, bool verbose = false)
-    {
-        _log.Verbose = verbose;
-
-        _log.LogInformation("Creating GitHub team...");
-        _log.LogInformation($"{GithubOrg.GetLogFriendlyName()}: {githubOrg}");
-        _log.LogInformation($"{TeamName.GetLogFriendlyName()}: {teamName}");
-        _log.LogInformation($"{IdpGroup.GetLogFriendlyName()}: {idpGroup}");
-
-        if (githubPat is not null)
-        {
-            _log.LogInformation($"{GithubPat.GetLogFriendlyName()}: ***");
-        }
-
-        var githubApi = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-
-        var teams = await githubApi.GetTeams(githubOrg);
-        if (teams.Contains(teamName))
-        {
-            _log.LogSuccess($"Team '{teamName}' already exists - New team will not be created");
-        }
-        else
-        {
-            await githubApi.CreateTeam(githubOrg, teamName);
-            _log.LogSuccess("Successfully created team");
-        }
-
-        // TODO: Can improve perf by capturing slug in the response from CreateTeam or GetTeams
-        var teamSlug = await githubApi.GetTeamSlug(githubOrg, teamName);
-
-        if (string.IsNullOrWhiteSpace(idpGroup))
-        {
-            _log.LogInformation("No IdP Group provided, skipping the IdP linking step");
-        }
-        else
-        {
-            var members = await githubApi.GetTeamMembers(githubOrg, teamSlug);
-
-            foreach (var member in members)
-            {
-                await githubApi.RemoveTeamMember(githubOrg, teamSlug, member);
-            }
-
-            var idpGroupId = await githubApi.GetIdpGroupId(githubOrg, idpGroup);
-
-            await githubApi.AddEmuGroupToTeam(githubOrg, teamSlug, idpGroupId);
-
-            _log.LogSuccess("Successfully linked team to Idp group");
-        }
-    }
+public class CreateTeamCommandArgs
+{
+    public string GithubOrg { get; set; }
+    public string TeamName { get; set; }
+    public string IdpGroup { get; set; }
+    public string GithubPat { get; set; }
+    public bool Verbose { get; set; }
 }

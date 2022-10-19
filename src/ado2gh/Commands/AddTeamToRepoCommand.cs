@@ -1,79 +1,75 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class AddTeamToRepoCommand : Command
+    public sealed class AddTeamToRepoCommand : CommandBase<AddTeamToRepoCommandArgs, AddTeamToRepoCommandHandler>
     {
-        private readonly OctoLogger _log;
-        private readonly GithubApiFactory _githubApiFactory;
-
-        public AddTeamToRepoCommand(OctoLogger log, GithubApiFactory githubApiFactory) : base("add-team-to-repo")
+        public AddTeamToRepoCommand() : base(
+            name: "add-team-to-repo",
+            description: "Adds a team to a repo with a specific role/permission" +
+                         Environment.NewLine +
+                         "Note: Expects GH_PAT env variable or --github-pat option to be set.")
         {
-            _log = log;
-            _githubApiFactory = githubApiFactory;
-
-            Description = "Adds a team to a repo with a specific role/permission";
-            Description += Environment.NewLine;
-            Description += "Note: Expects GH_PAT env variable or --github-pat option to be set.";
-
-            var githubOrg = new Option<string>("--github-org")
-            {
-                IsRequired = true
-            };
-            var githubRepo = new Option<string>("--github-repo")
-            {
-                IsRequired = true
-            };
-            var team = new Option<string>("--team")
-            {
-                IsRequired = true
-            };
-            var role = new Option<string>("--role")
-            {
-                IsRequired = true,
-                Description = "The only valid values are: pull, push, admin, maintain, triage. For more details see https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions, custom repository roles are not currently supported."
-            };
-            var githubPat = new Option<string>("--github-pat")
-            {
-                IsRequired = false
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(githubOrg);
-            AddOption(githubRepo);
-            AddOption(team);
-            AddOption(role.FromAmong("pull", "push", "admin", "maintain", "triage"));
-            AddOption(githubPat);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, string, string, string, bool>(Invoke);
+            AddOption(GithubOrg);
+            AddOption(GithubRepo);
+            AddOption(Team);
+            AddOption(Role.FromAmong("pull", "push", "admin", "maintain", "triage"));
+            AddOption(GithubPat);
+            AddOption(Verbose);
         }
 
-        public async Task Invoke(string githubOrg, string githubRepo, string team, string role, string githubPat = null, bool verbose = false)
+        public Option<string> GithubOrg { get; } = new("--github-org")
         {
-            _log.Verbose = verbose;
+            IsRequired = true
+        };
+        public Option<string> GithubRepo { get; } = new("--github-repo")
+        {
+            IsRequired = true
+        };
+        public Option<string> Team { get; } = new("--team")
+        {
+            IsRequired = true
+        };
+        public Option<string> Role { get; } = new("--role")
+        {
+            IsRequired = true,
+            Description = "The only valid values are: pull, push, admin, maintain, triage. For more details see https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions, custom repository roles are not currently supported."
+        };
+        public Option<string> GithubPat { get; } = new("--github-pat");
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            _log.LogInformation("Adding team to repo...");
-            _log.LogInformation($"GITHUB ORG: {githubOrg}");
-            _log.LogInformation($"GITHUB REPO: {githubRepo}");
-            _log.LogInformation($"TEAM: {team}");
-            _log.LogInformation($"ROLE: {role}");
-            if (githubPat is not null)
+        public override AddTeamToRepoCommandHandler BuildHandler(AddTeamToRepoCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
             {
-                _log.LogInformation("GITHUB PAT: ***");
+                throw new ArgumentNullException(nameof(args));
             }
 
-            var github = _githubApiFactory.Create(targetPersonalAccessToken: githubPat);
-            var teamSlug = await github.GetTeamSlug(githubOrg, team);
-            await github.AddTeamToRepo(githubOrg, githubRepo, teamSlug, role);
+            if (sp is null)
+            {
+                throw new ArgumentNullException(nameof(sp));
+            }
 
-            _log.LogSuccess("Successfully added team to repo");
+            var log = sp.GetRequiredService<OctoLogger>();
+            var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+            var githubApi = targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+
+            return new AddTeamToRepoCommandHandler(log, githubApi);
         }
+    }
+
+    public class AddTeamToRepoCommandArgs
+    {
+        public string GithubOrg { get; set; }
+        public string GithubRepo { get; set; }
+        public string Team { get; set; }
+        public string Role { get; set; }
+        public string GithubPat { get; set; }
+        public bool Verbose { get; set; }
     }
 }

@@ -1,5 +1,5 @@
-using System;
-using System.Threading.Tasks;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
@@ -9,48 +9,55 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands;
 
 public class RevokeMigratorRoleCommandBaseTests
 {
-    private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly RevokeMigratorRoleCommandBase _command;
+    private readonly ServiceProvider _serviceProvider;
+    private readonly RevokeMigratorRoleCommandBase _command = new();
 
     public RevokeMigratorRoleCommandBaseTests()
     {
-        _command = new RevokeMigratorRoleCommandBase(_mockOctoLogger.Object, _mockGithubApiFactory.Object);
+        var serviceCollection = new ServiceCollection();
+        serviceCollection
+            .AddSingleton(_mockOctoLogger.Object)
+            .AddSingleton(_mockGithubApiFactory.Object);
+
+        _serviceProvider = serviceCollection.BuildServiceProvider();
     }
 
     [Fact]
-    public async Task Happy_Path()
+    public void It_Uses_Github_Target_Pat_When_Provided()
     {
-        var githubOrg = "FooOrg";
-        var actor = "foo-actor";
-        var actorType = "TEAM";
-        var githubOrgId = Guid.NewGuid().ToString();
+        var githubPat = Guid.NewGuid().ToString();
 
-        _mockGithubApi.Setup(x => x.GetOrganizationId(githubOrg).Result).Returns(githubOrgId);
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+        var args = new RevokeMigratorRoleCommandArgs
+        {
+            GithubOrg = "foo",
+            Actor = "blah",
+            ActorType = "TEAM",
+            GithubPat = githubPat
+        };
 
-        await _command.Handle(githubOrg, actor, actorType);
+        _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApi.Verify(x => x.RevokeMigratorRole(githubOrgId, actor, actorType));
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), githubPat));
     }
 
     [Fact]
-    public async Task It_Uses_The_Github_Pat_When_Provided()
+    public void It_Uses_The_GhesApiUrl_When_Provided()
     {
-        const string githubPat = "github-pat";
+        var ghesApiUrl = "GhesApiUrl";
 
-        _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
+        var args = new RevokeMigratorRoleCommandArgs
+        {
+            GithubOrg = "foo",
+            Actor = "blah",
+            ActorType = "TEAM",
+            GhesApiUrl = ghesApiUrl,
+        };
 
-        await _command.Handle("githubOrg", "actor", "TEAM", githubPat);
+        _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
-    }
-
-    [Fact]
-    public async Task Invalid_Actor_Type()
-    {
-        await _command.Handle("foo", "foo", "foo");
+        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
     }
 }

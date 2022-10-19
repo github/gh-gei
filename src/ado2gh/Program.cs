@@ -3,12 +3,12 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Extensions;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub
@@ -24,7 +24,6 @@ namespace OctoshiftCLI.AdoToGithub
 
             var serviceCollection = new ServiceCollection();
             serviceCollection
-                .AddCommands()
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
@@ -38,6 +37,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<PipelinesCsvGeneratorService>()
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
+                .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
@@ -47,17 +47,27 @@ namespace OctoshiftCLI.AdoToGithub
 
             SetContext(parser.Parse(args));
 
+            WarnIfNotUsingExtension();
+
             try
             {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("Could not retrieve latest ado2gh version from github.com, please ensure you are using the latest version by downloading it from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogWarning("Could not retrieve latest ado2gh CLI version from github.com, please ensure you are using the latest version by running: gh extension upgrade ado2gh");
                 Logger.LogVerbose(ex.ToString());
             }
 
             await parser.InvokeAsync(args);
+        }
+
+        private static void WarnIfNotUsingExtension()
+        {
+            if (!Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory).EndsWith(Path.Combine("extensions", "gh-ado2gh").ToString()))
+            {
+                Logger.LogWarning("You are not running the ado2gh CLI as a gh extension. This is not recommended, please run: gh extension install github/gh-ado2gh");
+            }
         }
 
         private static void SetContext(ParseResult parseResult)
@@ -77,19 +87,15 @@ namespace OctoshiftCLI.AdoToGithub
             else
             {
                 Logger.LogWarning($"You are running an older version of the ado2gh CLI [v{versionChecker.GetCurrentVersion()}]. The latest version is v{await versionChecker.GetLatestVersion()}.");
-                Logger.LogWarning($"Please download the latest version from https://github.com/github/gh-gei/releases/latest");
+                Logger.LogWarning($"Please update by running: gh extension upgrade ado2gh");
             }
         }
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.")
+                .AddCommands(serviceProvider);
             var commandLineBuilder = new CommandLineBuilder(root);
-
-            foreach (var command in serviceProvider.GetServices<Command>())
-            {
-                commandLineBuilder.AddCommand(command);
-            }
 
             return commandLineBuilder
                 .UseDefaults()
@@ -99,24 +105,6 @@ namespace OctoshiftCLI.AdoToGithub
                     Environment.ExitCode = 1;
                 }, 1)
                 .Build();
-        }
-
-        private static IServiceCollection AddCommands(this IServiceCollection services)
-        {
-            var sampleCommandType = typeof(GenerateScriptCommand);
-            var commandType = typeof(Command);
-
-            var commands = sampleCommandType
-                .Assembly
-                .GetExportedTypes()
-                .Where(x => x.Namespace == sampleCommandType.Namespace && commandType.IsAssignableFrom(x));
-
-            foreach (var command in commands)
-            {
-                services.AddSingleton(commandType, command);
-            }
-
-            return services;
         }
     }
 }

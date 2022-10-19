@@ -1,207 +1,221 @@
-using System.Threading.Tasks;
+using System;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Commands
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
+
+public class MigrateRepoCommandTests
 {
-    public class MigrateRepoCommandTests
+    private const string SSH_USER = "ssh-user";
+    private const string SSH_PRIVATE_KEY = "ssh-private-key";
+    private const int SSH_PORT = 1234;
+    private const string BBS_SHARED_HOME = "shared-home";
+    private const string BBS_HOST = "bbs-host";
+    private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
+    private const string GITHUB_ORG = "github-org";
+    private const string GITHUB_PAT = "github-pat";
+    private const string BBS_USERNAME = "bbs-username";
+    private const string BBS_PASSWORD = "bbs-password";
+    private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
+
+    private readonly Mock<IServiceProvider> _mockServiceProvider = new();
+    private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+    private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+    private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
+    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+    private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
+    private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
+    private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
+
+    private readonly MigrateRepoCommand _command = new();
+
+    public MigrateRepoCommandTests()
     {
-        private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
-        private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
-        private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
-        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        _mockServiceProvider.Setup(m => m.GetService(typeof(OctoLogger))).Returns(_mockOctoLogger.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(EnvironmentVariableProvider))).Returns(_mockEnvironmentVariableProvider.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(FileSystemProvider))).Returns(_mockFileSystemProvider.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(GithubApiFactory))).Returns(_mockGithubApiFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(BbsApiFactory))).Returns(_mockBbsApiFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(BbsArchiveDownloaderFactory))).Returns(_mockBbsArchiveDownloaderFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(IAzureApiFactory))).Returns(_mockAzureApiFactory.Object);
+    }
 
-        private readonly MigrateRepoCommand _command;
+    [Fact]
+    public void Should_Have_Options()
+    {
+        var command = new MigrateRepoCommand();
+        command.Should().NotBeNull();
+        command.Name.Should().Be("migrate-repo");
+        command.Options.Count.Should().Be(23);
 
-        private const string ARCHIVE_URL = "https://archive-url/bbs-archive.tar";
-        private const string GITHUB_ORG = "target-org";
-        private const string GITHUB_REPO = "target-repo";
-        private const string GITHUB_PAT = "github pat";
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-username", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-password", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-path", false);
+        TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-secret-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "wait", false);
+        TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+    }
 
-        private const string BBS_SERVER_URL = "https://our-bbs-server.com";
-        private const string BBS_USERNAME = "bbs-username";
-        private const string BBS_PASSWORD = "bbs-password";
-        private const string BBS_PROJECT = "bbs-project";
-        private const string BBS_REPO = "bbs-repo";
-        private const long BBS_EXPORT_ID = 123;
-
-        private const string GITHUB_ORG_ID = "github-org-id";
-        private const string MIGRATION_SOURCE_ID = "migration-source-id";
-        private const string MIGRATION_ID = "migration-id";
-
-        public MigrateRepoCommandTests()
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
         {
-            _command = new MigrateRepoCommand(
-                _mockOctoLogger.Object,
-                _mockGithubApiFactory.Object,
-                _mockBbsApiFactory.Object,
-                _mockEnvironmentVariableProvider.Object
-            );
-        }
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
 
-        [Fact]
-        public void Should_Have_Options()
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_The_Handler()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs();
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(), Times.Never);
+        _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
+        _mockAzureApiFactory.Verify(m => m.CreateClientNoSsl(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_GitHub_Api_When_Github_Org_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
         {
-            _command.Should().NotBeNull();
-            _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(11);
+            GithubOrg = GITHUB_ORG,
+            GithubPat = GITHUB_PAT
+        };
 
-            TestHelpers.VerifyCommandOption(_command.Options, "archive-url", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-org", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-repo", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "wait", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
-        }
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        [Fact]
-        public async Task Happy_Path()
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Api_When_Bbs_Server_Url_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
         {
-            // Arrange
-            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD
+        };
 
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-            _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
-                .Returns(MIGRATION_ID);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchiveUrl = ARCHIVE_URL,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
-            };
-            await _command.Invoke(args);
+        // Assert
+        handler.Should().NotBeNull();
 
-            // Assert
-            _mockGithubApi.Verify(m => m.StartBbsMigration(
-                MIGRATION_SOURCE_ID,
-                GITHUB_ORG_ID,
-                GITHUB_REPO,
-                GITHUB_PAT,
-                ARCHIVE_URL
-            ));
-        }
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+    }
 
-        [Fact]
-        public async Task Uses_GitHub_Pat_When_Provided_As_Option()
+    [Fact]
+    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided_Via_Args()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
         {
-            // Arrange
-            var githubPat = "specific github pat";
+            AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+        };
 
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), githubPat)).Returns(_mockGithubApi.Object);
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
 
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-            _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
-                .Returns(MIGRATION_ID);
+        // Assert
+        handler.Should().NotBeNull();
 
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchiveUrl = ARCHIVE_URL,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = githubPat
-            };
-            await _command.Invoke(args);
+        _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
+    }
 
-            // Assert
-            _mockGithubApi.Verify(m => m.StartBbsMigration(
-                MIGRATION_SOURCE_ID,
-                GITHUB_ORG_ID,
-                GITHUB_REPO,
-                githubPat,
-                ARCHIVE_URL
-            ));
-        }
+    [Fact]
+    public void BuildHandler_Creates_Azure_Api_Factory_When_Azure_Storage_Connection_String_Is_Provided_Via_Environment_Variables()
+    {
+        // Arrange
+        _mockEnvironmentVariableProvider.Setup(m => m.AzureStorageConnectionString(false)).Returns(AZURE_STORAGE_CONNECTION_STRING);
 
-        [Fact]
-        public async Task Skip_Migration_If_Target_Repo_Exists()
+        var args = new MigrateRepoCommandArgs();
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockAzureApiFactory.Verify(m => m.Create(AZURE_STORAGE_CONNECTION_STRING));
+    }
+
+    [Fact]
+    public void It_Gets_A_Kerberos_HttpClient_When_Kerberos_Is_True()
+    {
+        var args = new MigrateRepoCommandArgs
         {
-            // Arrange
-            _mockEnvironmentVariableProvider.Setup(m => m.GithubPersonalAccessToken()).Returns(GITHUB_PAT);
-            _mockGithubApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>())).Returns(_mockGithubApi.Object);
+            BbsServerUrl = BBS_SERVER_URL,
+            Kerberos = true
+        };
 
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-            _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL).Result)
-                .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
+        _command.BuildHandler(args, _mockServiceProvider.Object);
 
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchiveUrl = ARCHIVE_URL,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
-            };
-            await _command.Invoke(args);
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL));
+    }
 
-            // Assert
-            _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-        }
-
-        [Fact]
-        public async Task Hits_Bitbucket_With_The_Right_Options()
+    [Fact]
+    public void It_Gets_A_Default_HttpClient_When_Kerberos_Is_Not_Set()
+    {
+        var args = new MigrateRepoCommandArgs
         {
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+        };
 
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+        _command.BuildHandler(args, _mockServiceProvider.Object);
 
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
-            };
-            await _command.Invoke(args);
-
-            // Assert
-            _mockBbsApi.Verify(m => m.StartExport(
-                BBS_PROJECT,
-                BBS_REPO
-            ));
-
-        }
-
-        [Fact]
-        public async Task Throws_An_Error_If_Export_Fails()
-        {
-
-            // Arrange
-            _mockBbsApiFactory.Setup(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_mockBbsApi.Object);
-
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("FAILED", "The export failed", 0));
-
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                Wait = true
-            };
-
-            // Assert
-            await _command.Invoking(x => x.Invoke(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
     }
 }

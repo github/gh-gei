@@ -17,9 +17,6 @@ namespace OctoshiftCLI
         private readonly string _apiUrl;
         private readonly RetryPolicy _retryPolicy;
 
-        private readonly Dictionary<string, string> _internalSchemaHeader =
-            new() { { "GraphQL-schema", "internal" } };
-
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
@@ -104,7 +101,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
-            await _client.DeleteAsync(url);
+            await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
@@ -316,7 +313,7 @@ namespace OctoshiftCLI
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
 
-        public virtual async Task<string> StartOrganizationMigration(string sourceOrgUrl, string targetOrgName, string targetEnterpriseId, string sourceAccessToken, string targetAccessToken)
+        public virtual async Task<string> StartOrganizationMigration(string sourceOrgUrl, string targetOrgName, string targetEnterpriseId, string sourceAccessToken)
         {
             var url = $"{_apiUrl}/graphql";
 
@@ -325,16 +322,14 @@ namespace OctoshiftCLI
                         $sourceOrgUrl: URI!,
                         $targetOrgName: String!,
                         $targetEnterpriseId: ID!,
-                        $sourceAccessToken: String!,
-	                    $targetAccessToken: String!)";
+                        $sourceAccessToken: String!)";
             var gql = @"
                 startOrganizationMigration( 
                     input: {
                         sourceOrgUrl: $sourceOrgUrl,
                         targetOrgName: $targetOrgName,
                         targetEnterpriseId: $targetEnterpriseId,
-                        sourceAccessToken: $sourceAccessToken,
-		                targetAccessToken: $targetAccessToken
+                        sourceAccessToken: $sourceAccessToken
                     }) {
                         orgMigration {
                             id
@@ -349,13 +344,12 @@ namespace OctoshiftCLI
                     sourceOrgUrl,
                     targetOrgName,
                     targetEnterpriseId,
-                    sourceAccessToken,
-                    targetAccessToken
+                    sourceAccessToken
                 },
                 operationName = "startOrganizationMigration"
             };
 
-            var response = await _client.PostAsync(url, payload, _internalSchemaHeader);
+            var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
             EnsureSuccessGraphQLResponse(data);
@@ -372,11 +366,31 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload, _internalSchemaHeader),
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
                 _ => true);
             var data = JObject.Parse(response);
 
             return (string)data["data"]["node"]["state"];
+        }
+
+        public virtual async Task<(string State, string SourceOrgUrl, string TargetOrgName, string FailureReason)> GetOrganizationMigration(string migrationId)
+        {
+            var url = $"{_apiUrl}/graphql";
+
+            var query = "query($id: ID!)";
+            var gql = "node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } }";
+
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                _ => true);
+            var data = JObject.Parse(response);
+
+            return (
+                State: (string)data["data"]["node"]["state"],
+                SourceOrgUrl: (string)data["data"]["node"]["sourceOrgUrl"],
+                TargetOrgName: (string)data["data"]["node"]["targetOrgName"],
+                FailureReason: (string)data["data"]["node"]["failureReason"]);
         }
 
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
@@ -505,7 +519,8 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
             var payload = new { group_id = groupId };
 
-            await _client.PatchAsync(url, payload);
+            await _retryPolicy.HttpRetry(async () => await _client.PatchAsync(url, payload),
+                ex => ex.StatusCode == HttpStatusCode.BadRequest);
         }
 
         public virtual async Task<bool> GrantMigratorRole(string org, string actor, string actorType)

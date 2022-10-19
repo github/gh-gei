@@ -8,7 +8,7 @@ namespace OctoshiftCLI
     public class RetryPolicy
     {
         private readonly OctoLogger _log;
-        internal readonly int _httpRetryInterval = 1000;
+        internal int _httpRetryInterval = 1000;
         internal int _retryOnResultInterval = 4000;
 
         public RetryPolicy(OctoLogger log)
@@ -21,7 +21,7 @@ namespace OctoshiftCLI
             var policy = Policy.Handle(filter)
                                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_httpRetryInterval), (ex, _) =>
                                {
-                                   _log.LogVerbose($"Call failed with HTTP {((HttpRequestException)ex).StatusCode}, retrying...");
+                                   _log?.LogVerbose($"Call failed with HTTP {((HttpRequestException)ex).StatusCode}, retrying...");
                                });
 
             return await policy.ExecuteAsync(func);
@@ -32,10 +32,21 @@ namespace OctoshiftCLI
             var policy = Policy.HandleResult(resultFilter)
                                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryOnResultInterval), (_, _) =>
                                {
-                                   _log.LogVerbose(retryLogMessage ?? "Retrying...");
+                                   _log?.LogVerbose(retryLogMessage ?? "Retrying...");
                                });
 
             return await policy.ExecuteAndCaptureAsync(func);
+        }
+
+        public async Task Retry(Func<Task> func)
+        {
+            var policy = Policy.Handle<Exception>()
+                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryOnResultInterval), (_, _) =>
+                               {
+                                   _log?.LogVerbose("Retrying...");
+                               });
+
+            await policy.ExecuteAsync(func);
         }
     }
 }

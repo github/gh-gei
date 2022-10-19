@@ -1,133 +1,73 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using OctoshiftCLI.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Commands
 {
-    public class InventoryReportCommand : Command
+    public class InventoryReportCommand : CommandBase<InventoryReportCommandArgs, InventoryReportCommandHandler>
     {
-        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
-
-        private readonly OctoLogger _log;
-        private readonly AdoApiFactory _adoApiFactory;
-        private readonly AdoInspectorServiceFactory _adoInspectorServiceFactory;
-        private readonly OrgsCsvGeneratorService _orgsCsvGenerator;
-        private readonly TeamProjectsCsvGeneratorService _teamProjectsCsvGenerator;
-        private readonly ReposCsvGeneratorService _reposCsvGenerator;
-        private readonly PipelinesCsvGeneratorService _pipelinesCsvGenerator;
-
-        public InventoryReportCommand(
-            OctoLogger log,
-            AdoApiFactory adoApiFactory,
-            AdoInspectorServiceFactory adoInspectorServiceFactory,
-            OrgsCsvGeneratorService orgsCsvGeneratorService,
-            TeamProjectsCsvGeneratorService teamProjectsCsvGeneratorService,
-            ReposCsvGeneratorService reposCsvGeneratorService,
-            PipelinesCsvGeneratorService pipelinesCsvGeneratorService) : base("inventory-report")
+        public InventoryReportCommand() : base(
+                name: "inventory-report",
+                description: "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations." +
+                             Environment.NewLine +
+                             "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
-            _log = log;
-            _adoApiFactory = adoApiFactory;
-            _adoInspectorServiceFactory = adoInspectorServiceFactory;
-            _orgsCsvGenerator = orgsCsvGeneratorService;
-            _teamProjectsCsvGenerator = teamProjectsCsvGeneratorService;
-            _reposCsvGenerator = reposCsvGeneratorService;
-            _pipelinesCsvGenerator = pipelinesCsvGeneratorService;
-
-            Description = "Generates several CSV files containing lists of ADO orgs, team projects, repos, and pipelines. Useful for planning large migrations.";
-            Description += Environment.NewLine;
-            Description += "Note: Expects ADO_PAT env variable or --ado-pat option to be set.";
-
-            var adoOrg = new Option<string>("--ado-org")
-            {
-                IsRequired = false,
-                Description = "If not provided will iterate over all orgs that ADO_PAT has access to."
-            };
-            var adoPat = new Option<string>("--ado-pat")
-            {
-                IsRequired = false
-            };
-            var minimal = new Option<bool>("--minimal")
-            {
-                IsRequired = false,
-                Description = "Significantly speeds up the generation of the CSV files by including the bare minimum info."
-            };
-            var verbose = new Option("--verbose")
-            {
-                IsRequired = false
-            };
-
-            AddOption(adoOrg);
-            AddOption(adoPat);
-            AddOption(minimal);
-            AddOption(verbose);
-
-            Handler = CommandHandler.Create<string, string, bool, bool>(Invoke);
+            AddOption(AdoOrg);
+            AddOption(AdoPat);
+            AddOption(Minimal);
+            AddOption(Verbose);
         }
 
-        public async Task Invoke(string adoOrg, string adoPat = null, bool minimal = false, bool verbose = false)
+        public Option<string> AdoOrg { get; } = new("--ado-org")
         {
-            _log.Verbose = verbose;
+            Description = "If not provided will iterate over all orgs that ADO_PAT has access to."
+        };
+        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<bool> Minimal { get; } = new("--minimal")
+        {
+            Description = "Significantly speeds up the generation of the CSV files by including the bare minimum info."
+        };
+        public Option<bool> Verbose { get; } = new("--verbose");
 
-            _log.LogInformation("Creating inventory report...");
-
-            if (adoOrg.HasValue())
+        public override InventoryReportCommandHandler BuildHandler(InventoryReportCommandArgs args, IServiceProvider sp)
+        {
+            if (args is null)
             {
-                _log.LogInformation($"ADO ORG: {adoOrg}");
+                throw new ArgumentNullException(nameof(args));
             }
 
-            if (adoPat is not null)
+            if (sp is null)
             {
-                _log.LogInformation("ADO PAT: ***");
+                throw new ArgumentNullException(nameof(sp));
             }
 
-            if (minimal)
-            {
-                _log.LogInformation("MINIMAL: true");
-            }
+            var log = sp.GetRequiredService<OctoLogger>();
+            var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
+            var adoApi = adoApiFactory.Create(args.AdoPat);
+            var adoInspectorServiceFactory = sp.GetRequiredService<AdoInspectorServiceFactory>();
+            var adoInspectorService = adoInspectorServiceFactory.Create(adoApi);
+            var orgsCsvGeneratorService = sp.GetRequiredService<OrgsCsvGeneratorService>();
+            var teamProjectsCsvGeneratorService = sp.GetRequiredService<TeamProjectsCsvGeneratorService>();
+            var reposCsvGeneratorService = sp.GetRequiredService<ReposCsvGeneratorService>();
+            var pipelinesCsvGeneratorService = sp.GetRequiredService<PipelinesCsvGeneratorService>();
 
-            var ado = _adoApiFactory.Create(adoPat);
-            var inspector = _adoInspectorServiceFactory.Create(ado);
-            inspector.OrgFilter = adoOrg;
-
-            _log.LogInformation("Finding Orgs...");
-            var orgs = await inspector.GetOrgs();
-            _log.LogInformation($"Found {orgs.Count()} Orgs");
-
-            _log.LogInformation("Finding Team Projects...");
-            var teamProjectCount = await inspector.GetTeamProjectCount();
-            _log.LogInformation($"Found {teamProjectCount} Team Projects");
-
-            _log.LogInformation("Finding Repos...");
-            var repoCount = await inspector.GetRepoCount();
-            _log.LogInformation($"Found {repoCount} Repos");
-
-            _log.LogInformation("Finding Pipelines...");
-            var pipelineCount = await inspector.GetPipelineCount();
-            _log.LogInformation($"Found {pipelineCount} Pipelines");
-
-            _log.LogInformation("Generating orgs.csv...");
-            var orgsCsvText = await _orgsCsvGenerator.Generate(adoPat, minimal);
-            await WriteToFile("orgs.csv", orgsCsvText);
-            _log.LogSuccess("orgs.csv generated");
-
-            _log.LogInformation("Generating teamprojects.csv...");
-            var teamProjectsCsvText = await _teamProjectsCsvGenerator.Generate(adoPat, minimal);
-            await WriteToFile("team-projects.csv", teamProjectsCsvText);
-            _log.LogSuccess("team-projects.csv generated");
-
-            _log.LogInformation("Generating repos.csv...");
-            var reposCsvText = await _reposCsvGenerator.Generate(adoPat, minimal);
-            await WriteToFile("repos.csv", reposCsvText);
-            _log.LogSuccess("repos.csv generated");
-
-            _log.LogInformation("Generating pipelines.csv...");
-            var pipelinesCsvText = await _pipelinesCsvGenerator.Generate(adoPat);
-            await WriteToFile("pipelines.csv", pipelinesCsvText);
-            _log.LogSuccess("pipelines.csv generated");
+            return new InventoryReportCommandHandler(
+                log,
+                adoInspectorService,
+                orgsCsvGeneratorService,
+                teamProjectsCsvGeneratorService,
+                reposCsvGeneratorService,
+                pipelinesCsvGeneratorService);
         }
+    }
+
+    public class InventoryReportCommandArgs
+    {
+        public string AdoOrg { get; set; }
+        public string AdoPat { get; set; }
+        public bool Minimal { get; set; }
+        public bool Verbose { get; set; }
     }
 }
