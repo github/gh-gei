@@ -171,9 +171,9 @@ public class WaitForMigrationCommandHandlerTests
         const string sourceOrgUrl = "some_url";
         const string targetOrgName = "TARGET_ORG";
         _mockGithubApi.SetupSequence(x => x.GetOrganizationMigration(ORG_MIGRATION_ID).Result)
-            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.Succeeded, sourceOrgUrl, targetOrgName, FailureReason: null));
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 0))
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 1, 1))
+            .Returns((State: OrganizationMigrationStatus.Succeeded, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 1));
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -184,7 +184,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
-                $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress} - 0/1 repositories completed",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {ORG_MIGRATION_ID} succeeded"
             };
@@ -215,9 +215,9 @@ public class WaitForMigrationCommandHandlerTests
         const string sourceOrgUrl = "some_url";
         const string targetOrgName = "TARGET_ORG";
         _mockGithubApi.SetupSequence(x => x.GetOrganizationMigration(ORG_MIGRATION_ID).Result)
-            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null))
-            .Returns((State: OrganizationMigrationStatus.Failed, sourceOrgUrl, targetOrgName, failureReason));
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 0))
+            .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 1, 1))
+            .Returns((State: OrganizationMigrationStatus.Failed, sourceOrgUrl, targetOrgName, failureReason, 0, 1));
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -228,7 +228,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {ORG_MIGRATION_ID}) to finish...",
                 $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
-                $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress}",
+                $"Migration {ORG_MIGRATION_ID} is {RepositoryMigrationStatus.InProgress} - 0/1 repositories completed",
                 $"Waiting {WAIT_INTERVAL} seconds..."
             };
 
