@@ -53,92 +53,28 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         _log.RegisterSecret(args.AdoPat);
 
         _log.LogInformation("Generating Script...");
-
+        
         var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
         if (hasAdoSpecificArg)
         {
             _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
         }
 
-        if (args.GithubSourceOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
+        LogArgs(args);
+        ValidateArgs(args);
+        
+        var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
+            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
+            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
 
-        if (args.AdoTeamProject.HasValue())
+        if (script.HasValue() && args.Output.HasValue())
         {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+            await WriteToFile(args.Output.FullName, script);
         }
+    }
 
-        // GHES Migration Path
-        if (args.GhesApiUrl.HasValue())
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-
-            if (args.AzureStorageConnectionString.IsNullOrWhiteSpace() && args.AwsBucketName.IsNullOrWhiteSpace())
-            {
-                _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
-                args.AzureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
-
-                if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
-                }
-            }
-            else if (args.AzureStorageConnectionString.HasValue())
-            {
-                _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
-            }
-            else if (args.AwsBucketName.HasValue() && args.AwsAccessKey.HasValue() && args.AwsSecretKey.HasValue())
-            {
-                _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-                _log.LogInformation($"AWS ACCESS KEY: ***");
-                _log.LogInformation($"AWS SECRET KEY: ***");
-
-            }
-
-            if (args.NoSslVerify)
-            {
-                _log.LogInformation("SSL verification disabled");
-            }
-        }
-
-        if (args.SkipReleases)
-        {
-            _log.LogInformation("SKIP RELEASES: true");
-        }
-        if (args.LockSourceRepo)
-        {
-            _log.LogInformation("LOCK SOURCE REPO: true");
-        }
-        if (args.DownloadMigrationLogs)
-        {
-            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
-        }
-
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"OUTPUT: {args.Output}");
-        if (args.Sequential)
-        {
-            _log.LogInformation("SEQUENTIAL: true");
-        }
-        if (args.GithubSourcePat is not null)
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
+    private void ValidateArgs(GenerateScriptCommandArgs args)
+    {
         if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
@@ -149,13 +85,159 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
         }
 
-        var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
-            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
-            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.AwsBucketName, args.AwsAccessKey, args.AwsSecretKey, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
+        // GHES Migration Path
+        var shouldUseAzureStorage = args.AzureStorageConnectionString.HasValue() || _environmentVariableProvider.AzureStorageConnectionString().HasValue();
+        var shouldUseAwsS3 = args.AwsBucketName.HasValue()
+                             || args.AwsAccessKey.HasValue()
+                             || args.AwsSecretKey.HasValue()
+                             || _environmentVariableProvider.AwsAccessKey(false).HasValue()
+                             || _environmentVariableProvider.AwsSecretKey(false).HasValue();
 
-        if (script.HasValue() && args.Output.HasValue())
+        if (args.GhesApiUrl.HasValue())
         {
-            await WriteToFile(args.Output.FullName, script);
+            if (!shouldUseAzureStorage && !shouldUseAwsS3)
+            {
+                throw new OctoshiftCliException(
+                    "Eitehr Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
+                    "must be provided.");
+            }
+            
+            if (shouldUseAzureStorage && shouldUseAwsS3)
+            {
+                throw new OctoshiftCliException(
+                    "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
+                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                    "specified together.");
+            }
+            
+            if (shouldUseAzureStorage)
+            {
+                if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
+                {
+                    _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
+                    args.AzureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
+                }
+            }
+
+            if (shouldUseAwsS3)
+            {
+                if (args.AwsBucketName.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--aws-bucket-name must be provided.");
+                }
+
+                if (args.AwsAccessKey.IsNullOrWhiteSpace())
+                {
+                    _log.LogInformation("--aws-access-key not set, using environment variable AWS_ACCESS_KEY");
+                    args.AwsAccessKey = _environmentVariableProvider.AwsAccessKey();
+                }
+
+                if (args.AwsSecretKey.IsNullOrWhiteSpace())
+                {
+                    _log.LogInformation("--aws-secret-key not set, using environment variable AWS_SECRET_KEY");
+                    args.AwsSecretKey = _environmentVariableProvider.AwsSecretKey();
+                }
+            }
+        }
+        else if (shouldUseAzureStorage || shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "--ghes-api-url must be provided if either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) is provided.");
+        }
+    }
+
+    private void LogArgs(GenerateScriptCommandArgs args)
+    {
+        if (args.GithubSourceOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
+        }
+        
+        if (args.AdoServerUrl.HasValue())
+        {
+            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
+        }
+        
+        if (args.AdoSourceOrg.HasValue())
+        {
+            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
+        }
+
+        if (args.AdoTeamProject.HasValue())
+        {
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+        }
+        
+        if (args.SkipReleases)
+        {
+            _log.LogInformation("SKIP RELEASES: true");
+        }
+        
+        if (args.LockSourceRepo)
+        {
+            _log.LogInformation("LOCK SOURCE REPO: true");
+        }
+        
+        if (args.DownloadMigrationLogs)
+        {
+            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
+        }
+
+        if (args.GithubTargetOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+        }
+
+        if (args.Output.HasValue())
+        {
+            _log.LogInformation($"OUTPUT: {args.Output}");
+        }
+
+        if (args.Sequential)
+        {
+            _log.LogInformation("SEQUENTIAL: true");
+        }
+        
+        if (args.GithubSourcePat.HasValue())
+        {
+            _log.LogInformation("GITHUB SOURCE PAT: ***");
+        }
+        
+        if (args.AdoPat.HasValue())
+        {
+            _log.LogInformation("ADO PAT: ***");
+        }
+
+        if (args.GhesApiUrl.HasValue())
+        {
+            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+        }
+
+        if (args.AzureStorageConnectionString.HasValue())
+        {
+            _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
+        }
+
+        if (args.NoSslVerify.HasValue())
+        {
+            _log.LogInformation("SSL verification disabled");
+        }
+
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation("AWS ACCESS KEY: ***");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation("AWS SECRET KEY: ***");
         }
     }
 
@@ -473,7 +555,7 @@ if ($Failed -ne 0) {
 
     private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, string awsBucketName, string awsAccessKey, string awsSecretKey, bool noSslVerify)
     {
-        return $"--ghes-api-url \"{ghesApiUrl}\" {(azureStorageConnectionString.HasValue() ? $"--azure-storage-connection-string \"{azureStorageConnectionString}\"" : string.Empty )} {(awsBucketName.HasValue() ? $"--aws-bucket-name \"{awsBucketName}\"" : string.Empty )} {(awsAccessKey.HasValue() ? $"--aws-access-key \"{awsAccessKey}\"" : string.Empty )} {(awsSecretKey.HasValue() ? $"--aws-secret-key \"{awsSecretKey}\"" : string.Empty )} {(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
+        return $"--ghes-api-url \"{ghesApiUrl}\"{(azureStorageConnectionString.HasValue() ? $" --azure-storage-connection-string \"{azureStorageConnectionString}\"" : $" --aws-bucket-name \"{awsBucketName}\" --aws-access-key \"{awsAccessKey}\" --aws-secret-key \"{awsSecretKey}\"")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
     }
 
     private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
