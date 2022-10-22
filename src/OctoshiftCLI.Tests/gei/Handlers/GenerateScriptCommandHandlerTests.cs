@@ -1428,7 +1428,7 @@ if ($Failed -ne 0) {
             _script.Should().Be(expected);
             _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
         }
-        
+
         [Fact]
         public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_Ghes_Api_Url_Is_Not()
         {
@@ -1441,7 +1441,7 @@ if ($Failed -ne 0) {
                 AwsBucketName = AWS_BUCKET_NAME,
                 Sequential = true
             };
-            
+
             // Act, Assert
             await _handler
                 .Invoking(async handler => await handler.Handle(args))
@@ -1461,14 +1461,14 @@ if ($Failed -ne 0) {
                 NoSslVerify = true,
                 Sequential = true
             };
-            
+
             // Act, Assert
             await _handler
                 .Invoking(async handler => await handler.Handle(args))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>();
         }
-        
+
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
         {
             var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
