@@ -26,6 +26,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string SOURCE_ORG = "FOO-SOURCE-ORG";
         private const string TARGET_ORG = "FOO-TARGET-ORG";
         private const string REPO = "REPO";
+        private const string AWS_BUCKET_NAME = "AWS_BUCKET_NAME";
         private string _script;
 
         public GenerateScriptCommandHandlerTests()
@@ -56,6 +57,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 }
                 ))
                 .Should().ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task No_Github_Source_Org_Or_Ado_Source_Org_Throws()
+        {
+            await _handler.Invoking(async handler => await handler.Handle(new GenerateScriptCommandArgs { GithubTargetOrg = TARGET_ORG }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>();
         }
 
         [Fact]
@@ -1389,6 +1398,77 @@ if ($Failed -ne 0) {
             _script.Should().Contain(expectedCliVersionComment);
         }
 
+        [Fact]
+        public async Task Sequential_Ghes_Single_Repo_Aws_S3()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AwsBucketName = AWS_BUCKET_NAME,
+                Sequential = true
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+            _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
+        }
+        
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_Ghes_Api_Url_Is_Not()
+        {
+            // Arrange
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                AwsBucketName = AWS_BUCKET_NAME,
+                Sequential = true
+            };
+            
+            // Act, Assert
+            await _handler
+                .Invoking(async handler => await handler.Handle(args))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task It_Throws_When_No_Ssl_Verify_Is_Set_But_Ghes_Api_Url_Is_Not()
+        {
+            // Arrange
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                NoSslVerify = true,
+                Sequential = true
+            };
+            
+            // Act, Assert
+            await _handler
+                .Invoking(async handler => await handler.Handle(args))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>();
+        }
+        
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
         {
             var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
