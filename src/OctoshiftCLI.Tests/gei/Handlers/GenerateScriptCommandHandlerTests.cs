@@ -8,7 +8,6 @@ using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using Xunit;
@@ -19,7 +18,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-        private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
 
@@ -36,7 +34,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockOctoLogger.Object,
                 _mockGithubApi.Object,
                 _mockAdoApi.Object,
-                _mockEnvironmentVariableProvider.Object,
                 _mockVersionProvider.Object
                 )
             {
@@ -295,13 +292,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             // Arrange
             const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --wait }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --wait }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -310,7 +306,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString,
                 Sequential = true
             };
             await _handler.Handle(args);
@@ -319,7 +314,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation("AZURE STORAGE CONNECTION STRING: ***"));
             _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
@@ -658,7 +652,6 @@ if ($Failed -ne 0) {
         {
             // Arrange
             const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
@@ -699,7 +692,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -725,14 +718,12 @@ if ($Failed -ne 0) {
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
-                GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString
+                GhesApiUrl = ghesApiUrl
             };
             await _handler.Handle(args);
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation("AZURE STORAGE CONNECTION STRING: ***"));
             _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
@@ -1026,7 +1017,6 @@ if ($Failed -ne 0) {
         {
             // Arrange
             const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
@@ -1067,7 +1057,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1095,7 +1085,6 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString,
                 DownloadMigrationLogs = true
             };
             await _handler.Handle(args);
@@ -1109,7 +1098,6 @@ if ($Failed -ne 0) {
         {
             // Arrange
             const string ghesApiUrl = "https://foo.com/api/v3";
-            const string azureStorageConnectionString = "FOO-STORAGE-CONNECTION-STRING";
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
@@ -1150,7 +1138,7 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\" --no-ssl-verify }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --no-ssl-verify }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1177,7 +1165,6 @@ if ($Failed -ne 0) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = azureStorageConnectionString,
                 NoSslVerify = true
             };
             await _handler.Handle(args);

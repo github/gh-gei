@@ -24,10 +24,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubTargetOrg);
 
             AddOption(GhesApiUrl);
-            AddOption(AzureStorageConnectionString);
             AddOption(AwsBucketName);
-            AddOption(AwsAccessKey);
-            AddOption(AwsSecretKey);
             AddOption(NoSslVerify);
             AddOption(DownloadMigrationLogs);
 
@@ -68,10 +65,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             Description = "Required if migrating from GHES. The api endpoint for the hostname of your GHES instance. For example: http(s)://myghes.com/api/v3"
         };
-        public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
-        {
-            Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
-        };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
             Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
@@ -107,14 +100,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
         };
-        public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
-        {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable."
-        };
-        public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
-        {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
-        };
 
         public Option<bool> Verbose { get; } = new("--verbose");
 
@@ -132,7 +117,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var log = sp.GetRequiredService<OctoLogger>();
             var versionProvider = sp.GetRequiredService<IVersionProvider>();
-            var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
             GithubApi sourceGithubApi = null;
@@ -150,7 +134,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 sourceAdoApi = adoApiFactory.Create(args.AdoServerUrl, args.AdoPat);
             }
 
-            return new GenerateScriptCommandHandler(log, sourceGithubApi, sourceAdoApi, environmentVariableProvider, versionProvider);
+            return new GenerateScriptCommandHandler(log, sourceGithubApi, sourceAdoApi, versionProvider);
         }
     }
 
@@ -163,10 +147,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubTargetOrg { get; set; }
         public FileInfo Output { get; set; }
         public string GhesApiUrl { get; set; }
-        public string AzureStorageConnectionString { get; set; }
         public string AwsBucketName { get; set; }
-        public string AwsAccessKey { get; set; }
-        public string AwsSecretKey { get; set; }
         public bool NoSslVerify { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }

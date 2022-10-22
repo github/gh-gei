@@ -55,7 +55,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
               args.SourceRepo,
-              args.AzureStorageConnectionString,
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo
@@ -154,22 +153,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
       string githubSourceOrg,
       string sourceRepo,
-      string azureStorageConnectionString,
       string awsBucketName,
       bool skipReleases,
       bool lockSourceRepo)
     {
-        if (string.IsNullOrWhiteSpace(awsBucketName) && string.IsNullOrWhiteSpace(azureStorageConnectionString))
-        {
-            _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
-            azureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
-
-            if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
-            {
-                throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
-            }
-        }
-
         var gitDataArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
         _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
         var metadataArchiveId = await _sourceGithubApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo);
@@ -367,6 +354,54 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
         {
             throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
+        }
+
+        // GHES migration path
+        if (args.GhesApiUrl.HasValue())
+        {
+            var shouldUseAzureStorage = args.AzureStorageConnectionString.HasValue() || _environmentVariableProvider.AzureStorageConnectionString().HasValue();
+            var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+
+            if (!shouldUseAzureStorage && !shouldUseAwsS3)
+            {
+                throw new OctoshiftCliException(
+                    "Eitehr Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
+                    "must be provided.");
+            }
+
+            if (shouldUseAzureStorage && shouldUseAwsS3)
+            {
+                throw new OctoshiftCliException(
+                    "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
+                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                    "specified together.");
+            }
+
+            if (shouldUseAwsS3)
+            {
+                if (args.AwsAccessKey.IsNullOrWhiteSpace() && _environmentVariableProvider.AwsAccessKey(false).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
+                }
+
+                if (args.AwsSecretKey.IsNullOrWhiteSpace() && _environmentVariableProvider.AwsSecretKey(false).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+                }
+            }
+        }
+        else
+        {
+            if (args.AwsBucketName.HasValue())
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+            }
+
+            if (args.NoSslVerify)
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
         }
     }
 }
