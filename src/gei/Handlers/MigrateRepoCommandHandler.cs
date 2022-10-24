@@ -380,7 +380,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (!shouldUseAzureStorage && !shouldUseAwsS3)
             {
                 throw new OctoshiftCliException(
-                    "Eitehr Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                    "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
                     "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
                     "must be provided.");
             }
