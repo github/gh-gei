@@ -33,7 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(Output);
             AddOption(Sequential);
-            AddOption(GithubSourcePath);
+            AddOption(GithubSourcePat);
             AddOption(AdoPat);
             AddOption(Verbose);
         }
@@ -89,7 +89,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             Description = "Waits for each migration to finish before moving on to the next one."
         };
-        public Option<string> GithubSourcePath { get; } = new("--github-source-pat");
+        public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
 
         public Option<string> AdoPat { get; } = new("--ado-pat")
         {
