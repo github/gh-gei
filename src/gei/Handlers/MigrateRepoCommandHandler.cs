@@ -320,6 +320,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation("LOCK SOURCE REPO: true");
         }
+
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation($"AWS ACCESS KEY: {args.AwsAccessKey}");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation($"AWS SECRET KEY: {args.AwsSecretKey}");
+        }
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
