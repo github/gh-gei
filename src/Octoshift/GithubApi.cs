@@ -147,12 +147,9 @@ namespace OctoshiftCLI
                 return (string)data["data"]["organization"]["id"];
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new OctoshiftCliException("Failed to lookup the Organization ID", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new OctoshiftCliException("Failed to lookup the Organization ID", response.FinalException)
+                : response.Result;
         }
 
         public virtual async Task<string> GetEnterpriseId(string enterpriseName)
@@ -175,12 +172,9 @@ namespace OctoshiftCLI
                 return (string)data["data"]["enterprise"]["id"];
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new OctoshiftCliException("Failed to lookup the Enterprise ID", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new OctoshiftCliException("Failed to lookup the Enterprise ID", response.FinalException)
+                : response.Result;
         }
 
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
@@ -404,12 +398,9 @@ namespace OctoshiftCLI
                     FailureReason: (string)data["data"]["node"]["failureReason"]);
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
+                : response.Result;
         }
 
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
@@ -448,12 +439,9 @@ namespace OctoshiftCLI
                     FailureReason: (string)data["data"]["node"]["failureReason"]);
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
+                : response.Result;
         }
 
         public virtual async Task<string> GetMigrationLogUrl(string org, string repo)
@@ -485,12 +473,9 @@ namespace OctoshiftCLI
                 return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
             });
 
-            if (response.Outcome == OutcomeType.Failure)
-            {
-                throw new OctoshiftCliException($"Failed to get migration log URL.", response.FinalException);
-            }
-
-            return response.Result;
+            return response.Outcome == OutcomeType.Failure
+                ? throw new OctoshiftCliException($"Failed to get migration log URL.", response.FinalException)
+                : response.Result;
         }
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
