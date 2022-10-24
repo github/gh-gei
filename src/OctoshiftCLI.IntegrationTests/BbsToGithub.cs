@@ -84,7 +84,7 @@ public sealed class BbsToGithub : IDisposable
         // await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-target-org {githubTargetOrg} --bbs-server-url {BBS_URL} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
