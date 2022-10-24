@@ -389,7 +389,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 throw new OctoshiftCliException(
                     "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
-                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY evn. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
                     "specified together.");
             }
 
