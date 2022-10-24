@@ -37,6 +37,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsAccessKey);
         AddOption(AwsSecretKey);
         AddOption(Wait);
+        AddOption(Kerberos);
         AddOption(Verbose);
     }
 
@@ -134,6 +135,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--wait",
         description: "Synchronously waits for the repo migration to finish.");
 
+    public Option<bool> Kerberos { get; } = new(
+        name: "--kerberos",
+        description: "Use Kerberos authentication for downloading the export archive off of the Bitbucket server.")
+    { IsHidden = true };
+
     public Option<bool> Verbose { get; } = new("--verbose");
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
@@ -166,7 +172,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.BbsServerUrl.HasValue())
         {
             var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
-            bbsApi = bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+
+            bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
         }
 
         if (args.SshUser.HasValue())
@@ -208,6 +215,7 @@ public class MigrateRepoCommandArgs
     public string GithubRepo { get; set; }
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
+    public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 
     public string BbsServerUrl { get; set; }

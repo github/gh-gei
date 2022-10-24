@@ -52,6 +52,19 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
+    public void It_Doesnt_Add_Authorization_Header_When_No_Credentials_Passed()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+
+        // Act
+        _ = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Assert
+        httpClient.DefaultRequestHeaders.Authorization.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetAsync_Encodes_The_Url()
     {
         // Arrange
