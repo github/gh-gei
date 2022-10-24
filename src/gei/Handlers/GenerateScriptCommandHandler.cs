@@ -157,7 +157,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
         }
 
-        if (args.NoSslVerify.HasValue())
+        if (args.NoSslVerify)
         {
             _log.LogInformation("SSL verification disabled");
         }
