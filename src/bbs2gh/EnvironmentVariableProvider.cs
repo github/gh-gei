@@ -32,11 +32,11 @@ public class EnvironmentVariableProvider
             GetSecret(GH_PAT)
             ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
 
-    public virtual string BbsUsername() =>
+    public virtual string BbsUsername(bool throwIfNotFound = true) =>
             GetSecret(BBS_USERNAME)
             ?? throw new OctoshiftCliException($"{BBS_USERNAME} environment variable is not set.");
 
-    public virtual string BbsPassword() =>
+    public virtual string BbsPassword(bool throwIfNotFound = true) =>
             GetSecret(BBS_PASSWORD)
             ?? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.");
 
@@ -44,13 +44,13 @@ public class EnvironmentVariableProvider
         GetSecret(AZURE_STORAGE_CONNECTION_STRING)
         ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AZURE_STORAGE_CONNECTION_STRING} environment variable is not set.") : null);
 
-    public virtual string AwsSecretKey() =>
-            GetSecret(AWS_SECRET_KEY)
-            ?? throw new OctoshiftCliException($"{AWS_SECRET_KEY} environment variable is not set.");
+    public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
+        GetSecret(AWS_SECRET_KEY)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_SECRET_KEY} environment variable is not set.") : null);
 
-    public virtual string AwsAccessKey() =>
-            GetSecret(AWS_ACCESS_KEY)
-            ?? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.");
+    public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
+        GetSecret(AWS_ACCESS_KEY)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
 
     private string GetSecret(string secretName)
     {

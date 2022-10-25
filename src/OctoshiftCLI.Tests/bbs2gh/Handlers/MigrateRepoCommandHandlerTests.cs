@@ -32,6 +32,7 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY = "aws-access-key";
         private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
         private const string BBS_HOST = "our-bbs-server.com";
         private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
@@ -79,7 +80,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -111,7 +113,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = githubPat
+                GithubPat = githubPat,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -142,7 +145,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -167,7 +171,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 BbsProject = BBS_PROJECT,
                 BbsRepo = BBS_REPO,
                 SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY
+                SshPrivateKey = PRIVATE_KEY,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -258,7 +263,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             {
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -352,7 +358,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 BbsUsername = BBS_USERNAME,
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO
+                BbsRepo = BBS_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -370,7 +377,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             // Act
             var args = new MigrateRepoCommandArgs
             {
-                ArchivePath = ARCHIVE_PATH
+                ArchivePath = ARCHIVE_PATH,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -385,7 +393,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             // Act
             var args = new MigrateRepoCommandArgs
             {
-                ArchiveUrl = ARCHIVE_URL
+                ArchiveUrl = ARCHIVE_URL,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -431,6 +440,95 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             ));
 
             _mockAwsApi.Verify(m => m.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()));
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Both_Azure_Storage_Connection_String_And_Aws_Bucket_Name_Are_Not_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs { ArchiveUrl = ARCHIVE_URL, GithubOrg = GITHUB_ORG, GithubRepo = GITHUB_REPO }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*or*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Both_Azure_Storage_Connection_String_And_Aws_Bucket_Name_Are_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(
+                    new MigrateRepoCommandArgs
+                    {
+                        ArchiveUrl = ARCHIVE_URL,
+                        GithubOrg = GITHUB_ORG,
+                        GithubRepo = GITHUB_REPO,
+                        AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                        AwsBucketName = AWS_BUCKET_NAME
+                    }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*and*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_But_No_Aws_Access_Key()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AwsBucketName = AWS_BUCKET_NAME
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*AWS_ACCESS_KEY*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Key()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-secret-key*AWS_SECRET_KEY*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsAccessKey = AWS_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Secret_Key_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsSecretKey = AWS_SECRET_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*--aws-secret-key*");
         }
     }
 }

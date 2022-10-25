@@ -55,8 +55,8 @@ public class GenerateScriptCommandHandlerTests
             _mockBbsApi.Object,
             _mockEnvironmentVariableProvider.Object);
 
-        _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername()).Returns(BBS_USERNAME);
-        _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword()).Returns(BBS_PASSWORD);
+        _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername(It.IsAny<bool>())).Returns(BBS_USERNAME);
+        _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword(It.IsAny<bool>())).Returns(BBS_PASSWORD);
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (1, BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT_NAME) });
         _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[] { (1, BBS_FOO_REPO_1_SLUG, BBS_FOO_REPO_1_NAME) });
     }
@@ -149,8 +149,8 @@ public class GenerateScriptCommandHandlerTests
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand3))));
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand4))));
 
-        _mockEnvironmentVariableProvider.Verify(m => m.BbsUsername(), Times.Never);
-        _mockEnvironmentVariableProvider.Verify(m => m.BbsPassword(), Times.Never);
+        _mockEnvironmentVariableProvider.Verify(m => m.BbsUsername(It.IsAny<bool>()), Times.Never);
+        _mockEnvironmentVariableProvider.Verify(m => m.BbsPassword(It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]

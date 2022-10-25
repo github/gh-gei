@@ -320,15 +320,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.BbsServerUrl.HasValue())
         {
-            args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
-            args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
-
-            if (!args.BbsUsername.HasValue())
+            if (GetBbsUsername(args).IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
             }
 
-            if (!args.BbsPassword.HasValue())
+            if (GetBbsPassword(args).IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
             }
@@ -348,5 +345,57 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--smb-password must be specified.");
             }
         }
+
+        ValidateUploadOptions(args);
     }
+
+    private void ValidateUploadOptions(MigrateRepoCommandArgs args)
+    {
+        var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
+        var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
+                "must be provided.");
+        }
+
+        if (shouldUseAzureStorage && shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                "specified together.");
+        }
+
+        if (shouldUseAwsS3)
+        {
+            if (!GetAwsAccessKey(args).HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
+            }
+
+            if (!GetAwsSecretKey(args).HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+            }
+        }
+        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+        {
+            throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
+        }
+    }
+
+    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
+
+    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+
+    private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
+        ? args.AzureStorageConnectionString
+        : _environmentVariableProvider.AzureStorageConnectionString(false);
+
+    private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
+
+    private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 }
