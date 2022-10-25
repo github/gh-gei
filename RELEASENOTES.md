@@ -1,1 +1,1 @@
-
+- Added logging to `gh gei wait-for-migration`, showing the number of repos that have been migrated so far
