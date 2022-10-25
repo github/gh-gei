@@ -512,7 +512,7 @@ steps:
             }
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-            var p = new Process();
+            using var p = new Process();
             p.StartInfo = startInfo;
             p.OutputDataReceived += (sender, args) => _output.WriteLine(args.Data);
             p.ErrorDataReceived += (sender, args) => _output.WriteLine(args.Data);
