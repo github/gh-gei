@@ -374,7 +374,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         // GHES migration path
         if (args.GhesApiUrl.HasValue())
         {
-            var shouldUseAzureStorage = args.AzureStorageConnectionString.HasValue() || _environmentVariableProvider.AzureStorageConnectionString().HasValue();
+            var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
             var shouldUseAwsS3 = args.AwsBucketName.HasValue();
 
             if (!shouldUseAzureStorage && !shouldUseAwsS3)
@@ -395,15 +395,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (shouldUseAwsS3)
             {
-                if (args.AwsAccessKey.IsNullOrWhiteSpace() && _environmentVariableProvider.AwsAccessKey(false).IsNullOrWhiteSpace())
+                if (!GetAwsAccessKey(args).HasValue())
                 {
                     throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
                 }
 
-                if (args.AwsSecretKey.IsNullOrWhiteSpace() && _environmentVariableProvider.AwsSecretKey(false).IsNullOrWhiteSpace())
+                if (!GetAwsSecretKey(args).HasValue())
                 {
                     throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
                 }
+            }
+            else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+            {
+                throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can be provided with --aws-bucket-name.");
             }
         }
         else
@@ -419,4 +423,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
     }
+
+    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
+
+    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+
+    private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
+        ? args.AzureStorageConnectionString
+        : _environmentVariableProvider.AzureStorageConnectionString();
 }
