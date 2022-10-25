@@ -407,7 +407,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
             {
-                throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can be provided with --aws-bucket-name.");
+                throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
             }
         }
         else
