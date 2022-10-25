@@ -193,6 +193,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: troubleshooting
+      if: false
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GHEC_PAT: ${{ secrets.GHEC_PAT }}
