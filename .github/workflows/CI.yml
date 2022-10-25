@@ -192,6 +192,20 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: troubleshooting
+      env: 
+        ADO_PAT: ${{ secrets.ADO_PAT }}
+        GHEC_PAT: ${{ secrets.GHEC_PAT }}
+        GHES_PAT: ${{ secrets.GHES_PAT }}
+        BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
+        BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
+        SSH_KEY: ${{ secrets.SSH_KEY }}
+        AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
+        AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
+        AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
+        GEI_DEBUG_MODE: 'true'
+      run: gh bbs2gh generate-script --github-org e2e-testing-windows --bbs-server-url http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990 --ssh-user octoshift --ssh-private-key ssh_key.pem
+
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
