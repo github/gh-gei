@@ -1,2 +1,4 @@
 - Added additional retry logic covering the case when polling for migration status fails for any reason (along with a few other situations)
-- Added `--aws-bucket-name` to `gh gei generate-script` and removed `--azure-storage-connection-string`. 
+- Added `--aws-bucket-name` to `gh gei generate-script` and removed `--azure-storage-connection-string`.
+- Added `--aws-bucket-name` to `bbs2gh generate-script`. 
+- Fixed a bug where not providing Azure Storage or AWS S3 connection info would cause `bbs2gh` to crash.
