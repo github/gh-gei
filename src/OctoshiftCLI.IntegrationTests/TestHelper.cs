@@ -479,10 +479,12 @@ steps:
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
 
-            var p = Process.Start(startInfo);
+            using var p = new Process();
+            p.StartInfo = startInfo;
+            p.OutputDataReceived += (sender, args) => _output.WriteLine(args.Data);
+            p.ErrorDataReceived += (sender, args) => _output.WriteLine(args.Data);
+            p.Start();
             await p.WaitForExitAsync();
-
-            p.
 
             p.ExitCode.Should().Be(0, $"{script} should return an exit code of 0");
         }
