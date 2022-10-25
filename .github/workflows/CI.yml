@@ -208,6 +208,13 @@ jobs:
       run: gh bbs2gh generate-script --github-org e2e-testing-windows --bbs-server-url http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990 --ssh-user octoshift --ssh-private-key ssh_key.pem
       working-directory: ./dist
 
+    - name: Generate SSH key file
+      env:
+        SSH_KEY: ${{ secrets.SSH_KEY }}
+      run: |
+        echo "$SSH_KEY" > ./dist/linux-x64/ssh_key.pem
+        chmod 400 ./dist/linux-x64/ssh_key.pem
+
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
