@@ -76,15 +76,14 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
                 throw new OctoshiftCliException($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
             }
 
-            // TODO: Remove `== 0` condition once GraphQL API bug is fixed and we return `null` when count not computed
-            if (totalRepositoriesCount is 0 or null)
-            {
-                _log.LogInformation($"Migration {migrationId} is {state}");
-            }
-            else
+            if (OrganizationMigrationStatus.IsRepoMigration(state))
             {
                 var completedRepositoriesCount = (int)totalRepositoriesCount - (int)remainingRepositoriesCount;
                 _log.LogInformation($"Migration {migrationId} is {state} - {completedRepositoriesCount}/{totalRepositoriesCount} repositories completed");
+            }
+            else
+            {
+                _log.LogInformation($"Migration {migrationId} is {state}");
             }
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
