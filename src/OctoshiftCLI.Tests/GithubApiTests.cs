@@ -1170,7 +1170,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetOrganizationMigration_Returns_The_Migration_State_And_Org_URL_And_Name()
+        public async Task GetOrganizationMigration_Returns_The_Migration_State_And_Org_URL_And_Name_And_Progress_Information()
         {
             // Arrange
             const string migrationId = "MIGRATION_ID";
@@ -1178,9 +1178,11 @@ namespace OctoshiftCLI.Tests
             const string sourceOrgUrl = "https://github.com/import-testing";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
+            const int actualRemainingRepositoriesCount = 0;
+            const int actualTotalRepositoriesCount = 9000;
             var response = $@"
             {{
                 ""data"": {{
@@ -1188,7 +1190,9 @@ namespace OctoshiftCLI.Tests
                         ""sourceOrgUrl"": ""{sourceOrgUrl}"",
                         ""state"": ""{actualMigrationState}"",
                         ""failureReason"": """",
-                        ""targetOrgName"": ""{TARGET_ORG}""
+                        ""targetOrgName"": ""{TARGET_ORG}"",
+                        ""remainingRepositoriesCount"": {actualRemainingRepositoriesCount},
+                        ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
             }}";
@@ -1198,13 +1202,15 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, expectedSourceOrgUrl, expectedTargetOrgName, expectedFailureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+            var (expectedMigrationState, expectedSourceOrgUrl, expectedTargetOrgName, expectedFailureReason, expectedRemainingRepositoriesCount, expectedTotalRepositoriesCount) = await _githubApi.GetOrganizationMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
             expectedSourceOrgUrl.Should().Be(sourceOrgUrl);
             expectedTargetOrgName.Should().Be(TARGET_ORG);
             expectedFailureReason.Should().BeEmpty();
+            expectedRemainingRepositoriesCount.Should().Be(actualRemainingRepositoriesCount);
+            expectedTotalRepositoriesCount.Should().Be(actualTotalRepositoriesCount);
         }
 
         [Fact]
@@ -1216,9 +1222,11 @@ namespace OctoshiftCLI.Tests
             const string sourceOrgUrl = "https://github.com/import-testing";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
+            const int actualRemainingRepositoriesCount = 0;
+            const int actualTotalRepositoriesCount = 9000;
             var response = $@"
             {{
                 ""data"": {{
@@ -1226,7 +1234,9 @@ namespace OctoshiftCLI.Tests
                         ""sourceOrgUrl"": ""{sourceOrgUrl}"",
                         ""state"": ""{actualMigrationState}"",
                         ""failureReason"": """",
-                        ""targetOrgName"": ""{TARGET_ORG}""
+                        ""targetOrgName"": ""{TARGET_ORG}"",
+                        ""remainingRepositoriesCount"": {actualRemainingRepositoriesCount},
+                        ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
             }}";
@@ -1238,7 +1248,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
+            var (expectedMigrationState, _, _, _, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1253,7 +1263,7 @@ namespace OctoshiftCLI.Tests
             const string sourceOrgUrl = "https://github.com/import-testing";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
             var response = $@"
@@ -1275,7 +1285,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
+            var (expectedMigrationState, _, _, _, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1290,9 +1300,11 @@ namespace OctoshiftCLI.Tests
             const string sourceOrgUrl = "https://github.com/import-testing";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualFailureReason = "FAILURE_REASON";
+            const int actualRemainingRepositoriesCount = 9000;
+            const int actualTotalRepositoriesCount = 9000;
             var response = $@"
             {{
                 ""data"": {{
@@ -1300,7 +1312,9 @@ namespace OctoshiftCLI.Tests
                         ""sourceOrgUrl"": ""{sourceOrgUrl}"",
                         ""state"": ""FAILED"",
                         ""failureReason"": ""{actualFailureReason}"",
-                        ""targetOrgName"": ""{TARGET_ORG}""
+                        ""targetOrgName"": ""{TARGET_ORG}"",
+                        ""remainingRepositoriesCount"": {actualRemainingRepositoriesCount},
+                        ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
             }}";
@@ -1310,7 +1324,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (_, _, _, expectedFailureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+            var (_, _, _, expectedFailureReason, _, _) = await _githubApi.GetOrganizationMigration(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
