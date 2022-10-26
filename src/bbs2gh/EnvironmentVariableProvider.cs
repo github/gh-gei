@@ -33,12 +33,12 @@ public class EnvironmentVariableProvider
             ?? throw new OctoshiftCliException($"{GH_PAT} environment variable is not set.");
 
     public virtual string BbsUsername(bool throwIfNotFound = true) =>
-            GetSecret(BBS_USERNAME)
-            ?? throw new OctoshiftCliException($"{BBS_USERNAME} environment variable is not set.");
+        GetSecret(BBS_USERNAME)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{BBS_USERNAME} environment variable is not set.") : null);
 
     public virtual string BbsPassword(bool throwIfNotFound = true) =>
-            GetSecret(BBS_PASSWORD)
-            ?? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.");
+        GetSecret(BBS_PASSWORD)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.") : null);
 
     public virtual string AzureStorageConnectionString(bool throwIfNotFound = true) =>
         GetSecret(AZURE_STORAGE_CONNECTION_STRING)
