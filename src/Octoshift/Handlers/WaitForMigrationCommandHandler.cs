@@ -54,7 +54,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private async Task WaitForOrgMigration(string migrationId, string githubPat, GithubApi githubApi)
     {
-        var (state, sourceOrgUrl, targetOrgName, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
+        var (state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await githubApi.GetOrganizationMigration(migrationId);
 
         _log.LogInformation($"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {migrationId}) to finish...");
 
@@ -76,11 +76,19 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
                 throw new OctoshiftCliException($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
             }
 
-            _log.LogInformation($"Migration {migrationId} is {state}");
+            if (OrganizationMigrationStatus.IsRepoMigration(state))
+            {
+                var completedRepositoriesCount = (int)totalRepositoriesCount - (int)remainingRepositoriesCount;
+                _log.LogInformation($"Migration {migrationId} is {state} - {completedRepositoriesCount}/{totalRepositoriesCount} repositories completed");
+            }
+            else
+            {
+                _log.LogInformation($"Migration {migrationId} is {state}");
+            }
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            (state, sourceOrgUrl, targetOrgName, failureReason) = await githubApi.GetOrganizationMigration(migrationId);
+            (state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await githubApi.GetOrganizationMigration(migrationId);
         }
     }
 

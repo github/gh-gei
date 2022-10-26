@@ -375,12 +375,12 @@ namespace OctoshiftCLI
             return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
         }
 
-        public virtual async Task<(string State, string SourceOrgUrl, string TargetOrgName, string FailureReason)> GetOrganizationMigration(string migrationId)
+        public virtual async Task<(string State, string SourceOrgUrl, string TargetOrgName, string FailureReason, int? RemainingRepositoriesCount, int? TotalRepositoriesCount)> GetOrganizationMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
-            var gql = "node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason } }";
+            var gql = "node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } }";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
@@ -395,7 +395,9 @@ namespace OctoshiftCLI
                     State: (string)data["data"]["node"]["state"],
                     SourceOrgUrl: (string)data["data"]["node"]["sourceOrgUrl"],
                     TargetOrgName: (string)data["data"]["node"]["targetOrgName"],
-                    FailureReason: (string)data["data"]["node"]["failureReason"]);
+                    FailureReason: (string)data["data"]["node"]["failureReason"],
+                    RemainingRepositoriesCount: (int?)data["data"]["node"]["remainingRepositoriesCount"],
+                    TotalRepositoriesCount: (int?)data["data"]["node"]["totalRepositoriesCount"]);
             });
 
             return response.Outcome == OutcomeType.Failure
