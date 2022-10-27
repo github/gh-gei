@@ -49,7 +49,7 @@ public sealed class BbsToGithub : IDisposable
             ["AZURE_STORAGE_CONNECTION_STRING"] = azureStorageConnectionString
         };
 
-        // File.WriteAllText(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+        File.WriteAllText(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         _versionClient = new HttpClient();
 

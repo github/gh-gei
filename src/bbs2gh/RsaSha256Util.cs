@@ -25,10 +25,7 @@ public class RsaWithSha256SignatureKey : RsaKey
     {
         get
         {
-            if (_digitalSignature == null)
-            {
-                _digitalSignature = new RsaSha256DigitalSignature(this);
-            }
+            _digitalSignature ??= new RsaSha256DigitalSignature(this);
 
             return _digitalSignature;
         }
