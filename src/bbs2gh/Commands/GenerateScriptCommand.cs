@@ -25,6 +25,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(Output);
         AddOption(Kerberos);
         AddOption(Verbose);
+        AddOption(AwsBucketName);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -71,6 +72,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         description: "Use Kerberos authentication for Bitbucket Server.")
     { IsHidden = true };
 
+    public Option<string> AwsBucketName { get; } = new(
+        name: "--aws-bucket-name",
+        description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
+
     public Option<bool> Verbose { get; } = new("--verbose");
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
@@ -110,4 +115,5 @@ public class GenerateScriptCommandArgs
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
+    public string AwsBucketName { get; set; }
 }

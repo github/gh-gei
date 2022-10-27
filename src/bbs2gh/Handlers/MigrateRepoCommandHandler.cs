@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -143,7 +144,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var keyName = GenerateArchiveName();
         var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
 
-        return archiveBlobUrl.ToString();
+        return archiveBlobUrl;
     }
 
     private async Task ImportArchive(MigrateRepoCommandArgs args, string archiveUrl = null)
@@ -313,6 +314,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
         }
 
+        if (args.BbsServerUrl.HasValue() && args.ArchivePath.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-path can be specified.");
+        }
+
         if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
         {
             throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
@@ -320,33 +326,110 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.BbsServerUrl.HasValue())
         {
-            args.BbsUsername ??= _environmentVariableProvider.BbsUsername();
-            args.BbsPassword ??= _environmentVariableProvider.BbsPassword();
-
-            if (!args.BbsUsername.HasValue())
+            if (GetBbsUsername(args).IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
             }
 
-            if (!args.BbsPassword.HasValue())
+            if (GetBbsPassword(args).IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
             }
 
-            if (args.SshUser.HasValue() && args.SmbUser.HasValue())
+            ValidateDownloadOptions(args);
+        }
+        else
+        {
+            if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
             {
-                throw new OctoshiftCliException("Only one of --ssh-user or --smb-user can be specified.");
+                throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
             }
 
-            if (args.SshUser.HasValue() && args.SshPrivateKey.IsNullOrWhiteSpace())
+            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword }.Any(obj => obj.HasValue()))
             {
-                throw new OctoshiftCliException("--ssh-private-key must be specified for SSH download.");
-            }
-
-            if (args.SmbUser.HasValue() && args.SmbPassword.IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("--smb-password must be specified.");
+                throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
         }
+
+        // An empty archive url indicates that the archive needs to be uploaded,
+        // otherwise if it has a value, it means that the archive has already been uploaded so 
+        // there will be no need to validate the upload related options.
+        if (args.ArchiveUrl.IsNullOrWhiteSpace())
+        {
+            ValidateUploadOptions(args);
+        }
     }
+
+    private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
+    {
+        var sshArgs = new[] { args.SshUser, args.SshPrivateKey };
+        var smbArgs = new[] { args.SmbUser, args.SmbPassword };
+        var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
+        var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());
+
+        if (shouldUseSsh && shouldUseSmb)
+        {
+            throw new OctoshiftCliException("Either SSH or SMB download options can be specified.");
+        }
+
+        if (shouldUseSsh && sshArgs.Any(arg => arg.IsNullOrWhiteSpace()))
+        {
+            throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
+        }
+
+        if (shouldUseSmb && smbArgs.Any(arg => arg.IsNullOrWhiteSpace()))
+        {
+            throw new OctoshiftCliException("Both --smb-user and --smb-password must be specified for SMB download.");
+        }
+    }
+
+    private void ValidateUploadOptions(MigrateRepoCommandArgs args)
+    {
+        var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
+        var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
+                "must be provided.");
+        }
+
+        if (shouldUseAzureStorage && shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                "specified together.");
+        }
+
+        if (shouldUseAwsS3)
+        {
+            if (!GetAwsAccessKey(args).HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
+            }
+
+            if (!GetAwsSecretKey(args).HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+            }
+        }
+        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+        {
+            throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
+        }
+    }
+
+    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
+
+    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+
+    private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
+        ? args.AzureStorageConnectionString
+        : _environmentVariableProvider.AzureStorageConnectionString(false);
+
+    private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
+
+    private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 }

@@ -35,7 +35,7 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(11);
+        _command.Options.Count.Should().Be(12);
 
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
@@ -48,6 +48,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "output", false);
         TestHelpers.VerifyCommandOption(_command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "aws-bucket-name", false);
     }
 
     [Fact]
