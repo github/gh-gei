@@ -17,8 +17,18 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
 #pragma warning disable CA2000 // Incorrectly flagged as a not-disposing error
     public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
-    : this(log, fileSystemProvider, new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath)))
     {
+        var pkRsa = new PrivateKeyFile(privateKeyFileFullPath);
+        var newKey = RsaSha256Util.ConvertToKeyWithSha256Signature(pkRsa);
+        RsaSha256Util.UpdatePrivateKeyFile(pkRsa, newKey);
+        var authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, pkRsa);
+        var conn = new ConnectionInfo(host, sshPort, sshUser, authenticationMethodRsa);
+        RsaSha256Util.SetupConnection(conn);
+
+        _sftpClient = new SftpClient(conn);
+
+        _log = log;
+        _fileSystemProvider = fileSystemProvider;
     }
 #pragma warning restore CA2000
 
