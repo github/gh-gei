@@ -28,13 +28,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         public virtual string AzureStorageConnectionString() => GetSecret(AZURE_STORAGE_CONNECTION_STRING);
 
-        public virtual string AwsSecretKey() =>
-                GetSecret(AWS_SECRET_KEY)
-                ?? throw new OctoshiftCliException($"{AWS_SECRET_KEY} environment variable is not set.");
+        public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
+            GetSecret(AWS_SECRET_KEY)
+            ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_SECRET_KEY} environment variable is not set.") : null);
 
-        public virtual string AwsAccessKey() =>
-                GetSecret(AWS_ACCESS_KEY)
-                ?? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.");
+        public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
+            GetSecret(AWS_ACCESS_KEY)
+            ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
 
         private string GetSecret(string secretName)
         {

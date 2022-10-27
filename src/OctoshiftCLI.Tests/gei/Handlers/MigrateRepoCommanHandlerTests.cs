@@ -32,6 +32,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string ADO_PAT = "ado-pat";
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
+        private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string AWS_ACCESS_KEY = "aws-access-key";
+        private const string AWS_SECRET_KEY = "aws-secret-key";
 
         public MigrateRepoCommandHandlerTests()
         {
@@ -507,11 +510,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Ghes_Without_AzureConnectionString_Throws_Error()
+        public async Task Ghes_Without_AzureConnectionString_Or_Aws_Bucket_Name_Throws_Error()
         {
             await FluentActions
                 .Invoking(async () => await _handler.Handle(new MigrateRepoCommandArgs
                 {
+                    GithubSourceOrg = SOURCE_ORG,
                     SourceRepo = SOURCE_REPO,
                     GithubTargetOrg = TARGET_ORG,
                     TargetRepo = TARGET_REPO,
@@ -1200,6 +1204,127 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockAwsApi.Verify(m => m.UploadToBucket(awsBucketName, It.IsAny<byte[]>(), It.IsAny<string>()));
+        }
+
+        [Fact]
+        public async Task Ghes_With_Both_Azure_Storage_Connection_String_And_Aws_Bucket_Name_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsBucketName = AWS_BUCKET_NAME
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsSecretKey = AWS_SECRET_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Key_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsAccessKey = AWS_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Secret_Key_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsSecretKey = AWS_SECRET_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task Aws_Bucket_Name_Without_Ghes_Api_Url_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                AwsBucketName = AWS_BUCKET_NAME
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task No_Ssl_Verify_Without_Ghes_Api_Url_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                NoSslVerify = true
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--no-ssl-verify*");
         }
     }
 }

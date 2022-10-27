@@ -20,7 +20,7 @@ public class DownloadLogsCommandHandlerTests
             _mockLogger.Object,
             _mockGithubApi.Object,
             _mockHttpDownloadService.Object,
-            new RetryPolicy(_mockLogger.Object) { _retryOnResultInterval = 0 });
+            new RetryPolicy(_mockLogger.Object) { _retryInterval = 0 });
     }
 
     [Fact]
