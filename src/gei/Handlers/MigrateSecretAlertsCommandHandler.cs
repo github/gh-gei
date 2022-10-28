@@ -48,7 +48,7 @@ public class MigrateSecretAlertsCommandHandler : ICommandHandler<MigrateSecretAl
         if (args.SourceRepo.HasValue() && args.TargetRepo.IsNullOrWhiteSpace())
         {
             args.TargetRepo = args.SourceRepo;
-            _log.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo vaule.");
+            _log.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo.");
         }
         _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
 
