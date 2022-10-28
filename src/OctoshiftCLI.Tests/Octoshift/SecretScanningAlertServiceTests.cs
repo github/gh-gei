@@ -43,15 +43,12 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
@@ -69,15 +66,12 @@ public class SecretScanningAlertServiceTests
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
@@ -117,15 +111,12 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
@@ -143,15 +134,12 @@ public class SecretScanningAlertServiceTests
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 99,
-                EndLine = 103,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 99,
+            EndLine = 103,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
@@ -190,15 +178,12 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
@@ -250,15 +235,12 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
@@ -330,15 +312,12 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
-            Details = new GithubSecretScanningAlertLocationDetails()
-            {
-                Path = "my-file.txt",
-                StartLine = 17,
-                EndLine = 18,
-                StartColumn = 22,
-                EndColumn = 29,
-                BlobSha = "abc123"
-            }
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
         };
 
         _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))

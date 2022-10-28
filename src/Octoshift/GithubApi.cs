@@ -798,15 +798,12 @@ namespace OctoshiftCLI
         private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
             new()
             {
-                Details = new GithubSecretScanningAlertLocationDetails
-                {
-                    Path = (string)alertLocation["details"]["path"],
-                    StartLine = (int)alertLocation["details"]["start_line"],
-                    EndLine = (int)alertLocation["details"]["end_line"],
-                    StartColumn = (int)alertLocation["details"]["start_column"],
-                    EndColumn = (int)alertLocation["details"]["end_column"],
-                    BlobSha = (string)alertLocation["details"]["blob_sha"],
-                }
+                Path = (string)alertLocation["details"]["path"],
+                StartLine = (int)alertLocation["details"]["start_line"],
+                EndLine = (int)alertLocation["details"]["end_line"],
+                StartColumn = (int)alertLocation["details"]["start_column"],
+                EndColumn = (int)alertLocation["details"]["end_column"],
+                BlobSha = (string)alertLocation["details"]["blob_sha"],
             };
     }
 }

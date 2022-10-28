@@ -2497,11 +2497,11 @@ namespace OctoshiftCLI.Tests
 
             var location = locationsArray[0];
             var expectedData = JObject.Parse(alertLocation_1);
-            location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
+            location.Path.Should().Be((string)expectedData["details"]["path"]);
 
             location = locationsArray[1];
             expectedData = JObject.Parse(alertLocation_2);
-            location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
+            location.Path.Should().Be((string)expectedData["details"]["path"]);
         }
 
         private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)

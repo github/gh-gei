@@ -10,11 +10,6 @@ public class GithubSecretScanningAlert
 
 public class GithubSecretScanningAlertLocation
 {
-    public GithubSecretScanningAlertLocationDetails Details { get; set; }
-}
-
-public class GithubSecretScanningAlertLocationDetails
-{
     public string Path { get; set; }
     public int StartLine { get; set; }
     public int EndLine { get; set; }

@@ -116,17 +116,15 @@ public class SecretScanningAlertService
     private bool IsMatchedSecretAlertLocation(GithubSecretScanningAlertLocation sourceLocation,
         GithubSecretScanningAlertLocation[] targetLocations)
     {
-        var sourceDetails = sourceLocation.Details;
-
         // We cannot guarantee the ordering of things with the locations and the APIs, typically they would match, but cannot be sure
         // so we need to iterate over all the targets to ensure a match
         return targetLocations.Any(
-            target => sourceDetails.Path == target.Details.Path
-                   && sourceDetails.StartLine == target.Details.StartLine
-                   && sourceDetails.EndLine == target.Details.EndLine
-                   && sourceDetails.StartColumn == target.Details.StartColumn
-                   && sourceDetails.EndColumn == target.Details.EndColumn
-                   && sourceDetails.BlobSha == target.Details.BlobSha
+            target => sourceLocation.Path == target.Path
+                   && sourceLocation.StartLine == target.StartLine
+                   && sourceLocation.EndLine == target.EndLine
+                   && sourceLocation.StartColumn == target.StartColumn
+                   && sourceLocation.EndColumn == target.EndColumn
+                   && sourceLocation.BlobSha == target.BlobSha
                    // Technically this wil hold, but only if there is not commit rewriting going on, so we need to make this last one optional for now
                    // && sourceDetails.CommitSha == target.Details.CommitSha)       
                    );
