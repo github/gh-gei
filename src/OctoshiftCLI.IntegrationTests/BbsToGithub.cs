@@ -71,8 +71,8 @@ public sealed class BbsToGithub : IDisposable
     public async Task Basic()
     {
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
-        const string repo1 = "repo-1";
-        const string repo2 = "repo-2";
+        const string repo1 = "EEL-repo-1";
+        const string repo2 = "EEL-repo-2";
 
         await _targetHelper.ResetBlobContainers();
 
