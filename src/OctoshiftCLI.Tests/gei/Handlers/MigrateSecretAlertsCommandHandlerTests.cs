@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
-using Octoshift.Models;
-using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using Xunit;
@@ -21,7 +15,6 @@ public class MigrateSecretAlertsCommandHandlerTests
     private const string SOURCE_ORG = "foo-source-org";
     private const string SOURCE_REPO = "blah";
     private const string TARGET_ORG = "foo-target-org";
-    private const string TARGET_REPO = "abc-def";
 
     public MigrateSecretAlertsCommandHandlerTests()
     {

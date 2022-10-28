@@ -11,7 +11,7 @@ public class SecretScanningAlertServiceFactory
 
     public SecretScanningAlertServiceFactory(
         OctoLogger octoLogger,
-        ISourceGithubApiFactory sourceGithubApiFactory, 
+        ISourceGithubApiFactory sourceGithubApiFactory,
         ITargetGithubApiFactory targetGithubApiFactory,
         EnvironmentVariableProvider environmentVariableProvider)
     {
@@ -26,7 +26,7 @@ public class SecretScanningAlertServiceFactory
     {
         sourceToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
         targetToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
-        
+
         var sourceGithubApi = sourceApiNoSsl
             ? _sourceGithubApiFactory.CreateClientNoSsl(sourceApi, sourceToken)
             : _sourceGithubApiFactory.Create(sourceApi, sourceToken);
