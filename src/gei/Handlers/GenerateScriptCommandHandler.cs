@@ -20,20 +20,17 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly OctoLogger _log;
     private readonly GithubApi _sourceGithubApi;
     private readonly AdoApi _sourceAdoApi;
-    private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly IVersionProvider _versionProvider;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         GithubApi sourceGithubApi,
         AdoApi sourceAdoApi,
-        EnvironmentVariableProvider environmentVariableProvider,
         IVersionProvider versionProvider)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
         _sourceAdoApi = sourceAdoApi;
-        _environmentVariableProvider = environmentVariableProvider;
         _versionProvider = versionProvider;
     }
 
@@ -46,7 +43,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.Verbose = args.Verbose;
 
-        _log.RegisterSecret(args.AzureStorageConnectionString);
         _log.RegisterSecret(args.GithubSourcePat);
         _log.RegisterSecret(args.AdoPat);
 
@@ -58,78 +54,21 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
         }
 
-        if (args.GithubSourceOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
+        LogArgs(args);
+        ValidateArgs(args);
 
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        }
+        var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
+            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
+            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
 
-        // GHES Migration Path
-        if (args.GhesApiUrl.HasValue())
+        if (script.HasValue() && args.Output.HasValue())
         {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+            await WriteToFile(args.Output.FullName, script);
+        }
+    }
 
-            if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
-            {
-                _log.LogInformation("--azure-storage-connection-string not set, using environment variable AZURE_STORAGE_CONNECTION_STRING");
-                args.AzureStorageConnectionString = _environmentVariableProvider.AzureStorageConnectionString();
-
-                if (args.AzureStorageConnectionString.IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("Please set either --azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING");
-                }
-            }
-            else
-            {
-                _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
-            }
-
-            if (args.NoSslVerify)
-            {
-                _log.LogInformation("SSL verification disabled");
-            }
-        }
-
-        if (args.SkipReleases)
-        {
-            _log.LogInformation("SKIP RELEASES: true");
-        }
-        if (args.LockSourceRepo)
-        {
-            _log.LogInformation("LOCK SOURCE REPO: true");
-        }
-        if (args.DownloadMigrationLogs)
-        {
-            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
-        }
-
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"OUTPUT: {args.Output}");
-        if (args.Sequential)
-        {
-            _log.LogInformation("SEQUENTIAL: true");
-        }
-        if (args.GithubSourcePat is not null)
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
+    private void ValidateArgs(GenerateScriptCommandArgs args)
+    {
         if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
@@ -140,17 +79,96 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
         }
 
-        var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
-            await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
-            await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AzureStorageConnectionString, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs);
-
-        if (script.HasValue() && args.Output.HasValue())
+        if (args.AwsBucketName.HasValue() && args.GhesApiUrl.IsNullOrWhiteSpace())
         {
-            await WriteToFile(args.Output.FullName, script);
+            throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+        }
+
+        if (args.NoSslVerify && args.GhesApiUrl.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
         }
     }
 
-    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private void LogArgs(GenerateScriptCommandArgs args)
+    {
+        if (args.GithubSourceOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
+        }
+
+        if (args.AdoServerUrl.HasValue())
+        {
+            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
+        }
+
+        if (args.AdoSourceOrg.HasValue())
+        {
+            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
+        }
+
+        if (args.AdoTeamProject.HasValue())
+        {
+            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
+        }
+
+        if (args.SkipReleases)
+        {
+            _log.LogInformation("SKIP RELEASES: true");
+        }
+
+        if (args.LockSourceRepo)
+        {
+            _log.LogInformation("LOCK SOURCE REPO: true");
+        }
+
+        if (args.DownloadMigrationLogs)
+        {
+            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
+        }
+
+        if (args.GithubTargetOrg.HasValue())
+        {
+            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
+        }
+
+        if (args.Output.HasValue())
+        {
+            _log.LogInformation($"OUTPUT: {args.Output}");
+        }
+
+        if (args.Sequential)
+        {
+            _log.LogInformation("SEQUENTIAL: true");
+        }
+
+        if (args.GithubSourcePat.HasValue())
+        {
+            _log.LogInformation("GITHUB SOURCE PAT: ***");
+        }
+
+        if (args.AdoPat.HasValue())
+        {
+            _log.LogInformation("ADO PAT: ***");
+        }
+
+        if (args.GhesApiUrl.HasValue())
+        {
+            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+        }
+
+        if (args.NoSslVerify)
+        {
+            _log.LogInformation("SSL verification disabled");
+        }
+
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+    }
+
+    private async Task<string> InvokeGithub(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
@@ -160,8 +178,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         return sequential
-            ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs)
-            : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, azureStorageConnectionString, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
+            ? GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs)
+            : GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs);
     }
 
     private async Task<string> InvokeAdo(string adoServerUrl, string adoSourceOrg, string adoTeamProject, string githubTargetOrg, bool sequential, bool downloadMigrationLogs)
@@ -222,7 +240,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private string GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var content = new StringBuilder();
 
@@ -235,7 +253,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         foreach (var repo in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, true, skipReleases, lockSourceRepo)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, awsBucketName, noSslVerify, true, skipReleases, lockSourceRepo)));
 
             if (downloadMigrationLogs)
             {
@@ -246,7 +264,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return content.ToString();
     }
 
-    private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
+    private string GenerateParallelGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs)
     {
         var content = new StringBuilder();
 
@@ -270,7 +288,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Queuing migrations
         foreach (var repo in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, azureStorageConnectionString, noSslVerify, false, skipReleases, lockSourceRepo))}");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, awsBucketName, noSslVerify, false, skipReleases, lockSourceRepo))}");
             content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
             content.AppendLine();
         }
@@ -446,13 +464,9 @@ if ($Failed -ne 0) {
 
     private string GetGithubRepoName(string adoTeamProject, string repo) => $"{adoTeamProject}-{repo}".ReplaceInvalidCharactersWithDash();
 
-    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo)
+    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo)
     {
-        var ghesRepoOptions = "";
-        if (ghesApiUrl.HasValue())
-        {
-            ghesRepoOptions = GetGhesRepoOptions(ghesApiUrl, azureStorageConnectionString, noSslVerify);
-        }
+        var ghesRepoOptions = ghesApiUrl.HasValue() ? GetGhesRepoOptions(ghesApiUrl, awsBucketName, noSslVerify) : null;
 
         return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)}";
     }
@@ -462,9 +476,9 @@ if ($Failed -ne 0) {
         return $"gh gei migrate-repo{(adoServerUrl.HasValue() ? $" --ado-server-url \"{adoServerUrl}\"" : string.Empty)} --ado-source-org \"{adoSourceOrg}\" --ado-team-project \"{teamProject}\" --source-repo \"{adoRepo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? " --wait" : string.Empty)}";
     }
 
-    private string GetGhesRepoOptions(string ghesApiUrl, string azureStorageConnectionString, bool noSslVerify)
+    private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, bool noSslVerify)
     {
-        return $"--ghes-api-url \"{ghesApiUrl}\" --azure-storage-connection-string \"{azureStorageConnectionString}\"{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
+        return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
     }
 
     private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";

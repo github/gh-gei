@@ -9,7 +9,7 @@ namespace OctoshiftCLI
     {
         private readonly OctoLogger _log;
         internal int _httpRetryInterval = 1000;
-        internal int _retryOnResultInterval = 4000;
+        internal int _retryInterval = 4000;
 
         public RetryPolicy(OctoLogger log)
         {
@@ -30,7 +30,7 @@ namespace OctoshiftCLI
         public async Task<PolicyResult<T>> RetryOnResult<T>(Func<Task<T>> func, T resultFilter, string retryLogMessage)
         {
             var policy = Policy.HandleResult(resultFilter)
-                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryOnResultInterval), (_, _) =>
+                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (_, _) =>
                                {
                                    _log?.LogVerbose(retryLogMessage ?? "Retrying...");
                                });
@@ -41,12 +41,23 @@ namespace OctoshiftCLI
         public async Task Retry(Func<Task> func)
         {
             var policy = Policy.Handle<Exception>()
-                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryOnResultInterval), (_, _) =>
+                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (_, _) =>
                                {
                                    _log?.LogVerbose("Retrying...");
                                });
 
             await policy.ExecuteAsync(func);
+        }
+
+        public async Task<PolicyResult<T>> Retry<T>(Func<Task<T>> func)
+        {
+            var policy = Policy.Handle<Exception>()
+                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (ex, _) =>
+                               {
+                                   _log?.LogVerbose($"Failed with {ex.GetType().Name}. Retrying...");
+                               });
+
+            return await policy.ExecuteAndCaptureAsync(func);
         }
     }
 }

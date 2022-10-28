@@ -50,13 +50,21 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             return;
         }
 
-        var (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+        var (migrationState, _, _, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await _githubApi.GetOrganizationMigration(migrationId);
 
         while (OrganizationMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+            if (OrganizationMigrationStatus.IsRepoMigration(migrationState))
+            {
+                var migratedRepositoriesCount = (int)totalRepositoriesCount - (int)remainingRepositoriesCount;
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. {migratedRepositoriesCount}/{totalRepositoriesCount} repo(s) migrated. Waiting 10 seconds...");
+            }
+            else
+            {
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+            }
             await Task.Delay(10000);
-            (migrationState, _, _, failureReason) = await _githubApi.GetOrganizationMigration(migrationId);
+            (migrationState, _, _, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await _githubApi.GetOrganizationMigration(migrationId);
         }
 
         if (OrganizationMigrationStatus.IsFailed(migrationState))

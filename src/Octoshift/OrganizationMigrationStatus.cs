@@ -14,5 +14,6 @@ namespace OctoshiftCLI
         public static bool IsSucceeded(string migrationState) => migrationState?.Trim().ToUpper() is Succeeded;
         public static bool IsPending(string migrationState) => migrationState?.Trim().ToUpper() is Queued or InProgress or NotStarted or PostRepoMigration or PreRepoMigration or RepoMigration;
         public static bool IsFailed(string migrationState) => !(IsPending(migrationState) || IsSucceeded(migrationState));
+        public static bool IsRepoMigration(string migrationState) => migrationState?.Trim().ToUpper() is RepoMigration;
     }
 }
