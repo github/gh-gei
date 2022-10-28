@@ -2497,12 +2497,10 @@ namespace OctoshiftCLI.Tests
 
             var location = locationsArray[0];
             var expectedData = JObject.Parse(alertLocation_1);
-            location.Type.Should().Be((string)expectedData["type"]);
             location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
 
             location = locationsArray[1];
             expectedData = JObject.Parse(alertLocation_2);
-            location.Type.Should().Be((string)expectedData["type"]);
             location.Details.Path.Should().Be((string)expectedData["details"]["path"]);
         }
 
@@ -2513,17 +2511,6 @@ namespace OctoshiftCLI.Tests
             actual.SecretType.Should().Be((string)expectedData["secret_type"]);
             actual.Resolution.Should().Be((string)expectedData["resolution"]);
             actual.Secret.Should().Be((string)expectedData["secret"]);
-            actual.SecretTypeDisplayName.Should().Be((string)expectedData["secret_type_display_name"]);
-
-            if (expectedData["resolved_by"].Any())
-            {
-                var resolvedByLogin = (string)expectedData["resolved_by"]["login"];
-                actual.ResolvedBy.Should().Be(resolvedByLogin);
-            }
-            else
-            {
-                actual.ResolvedBy.Should().BeNull();
-            }
         }
 
         [Fact]

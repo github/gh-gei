@@ -789,24 +789,15 @@ namespace OctoshiftCLI
             new()
             {
                 Number = (int)secretAlert["number"],
-                CreatedAt = (string)secretAlert["created_at"],
-                Url = (string)secretAlert["url"],
                 State = (string)secretAlert["state"],
                 Resolution = (string)secretAlert["resolution"],
-                ResolvedAt = (string)secretAlert["resolved_at"],
-                ResolvedBy = secretAlert["resolved_by"].Any() ? (string)secretAlert["resolved_by"]["login"] : null,
                 SecretType = (string)secretAlert["secret_type"],
-                SecretTypeDisplayName = (string)secretAlert["secret_type_display_name"],
                 Secret = (string)secretAlert["secret"],
-                PushProtectionBypassed = (bool)secretAlert["push_protection_bypassed"],
-                PushProtectionBypassedAt = (string)secretAlert["push_protection_bypassed_at"],
-                PushProtectionBypassedBy = secretAlert["push_protection_bypassed_by"].Any() ? (string)secretAlert["push_protection_bypassed_by"]["login"] : null,
             };
 
         private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
             new()
             {
-                Type = (string)alertLocation["type"],
                 Details = new GithubSecretScanningAlertLocationDetails
                 {
                     Path = (string)alertLocation["details"]["path"],
@@ -815,9 +806,6 @@ namespace OctoshiftCLI
                     StartColumn = (int)alertLocation["details"]["start_column"],
                     EndColumn = (int)alertLocation["details"]["end_column"],
                     BlobSha = (string)alertLocation["details"]["blob_sha"],
-                    BlobUrl = (string)alertLocation["details"]["blob_url"],
-                    CommitSha = (string)alertLocation["details"]["commit_sha"],
-                    CommitUrl = (string)alertLocation["details"]["commit_url"],
                 }
             };
     }
