@@ -79,6 +79,15 @@ public class MigrateSecretAlertsCommand : CommandBase<MigrateSecretAlertsCommand
             throw new ArgumentNullException(nameof(sp));
         }
 
+        var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+        args.GithubSourcePat ??= environmentVariableProvider.SourceGithubPersonalAccessToken();
+        args.GithubTargetPat ??= environmentVariableProvider.TargetGithubPersonalAccessToken();
+
+        if (args.GithubSourcePat.IsNullOrWhiteSpace())
+        {
+            args.GithubSourcePat = args.GithubTargetPat;
+        }
+
         var log = sp.GetRequiredService<OctoLogger>();
         var secretScanningAlertServiceFactory = sp.GetRequiredService<SecretScanningAlertServiceFactory>();
         var secretScanningAlertService = secretScanningAlertServiceFactory.Create(args.GhesApiUrl, args.GithubSourcePat, args.TargetApiUrl, args.GithubTargetPat, args.NoSslVerify);
