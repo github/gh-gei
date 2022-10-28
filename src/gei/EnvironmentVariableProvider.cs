@@ -18,11 +18,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _logger = logger;
         }
 
-        public virtual string SourceGithubPersonalAccessToken() => GetSecret(SOURCE_GH_PAT) ?? TargetGithubPersonalAccessToken();
+        public virtual string SourceGithubPersonalAccessToken(bool throwIfNotFound = true) => GetSecret(SOURCE_GH_PAT) ?? TargetGithubPersonalAccessToken(throwIfNotFound);
 
-        public virtual string TargetGithubPersonalAccessToken() =>
-            GetSecret(TARGET_GH_PAT) ??
-            throw new OctoshiftCliException($"{TARGET_GH_PAT} environment variable is not set.");
+        public virtual string TargetGithubPersonalAccessToken(bool throwIfNotFound = true) =>
+            GetSecret(TARGET_GH_PAT)
+            ?? (throwIfNotFound ? throw new OctoshiftCliException($"{TARGET_GH_PAT} environment variable is not set.") : null);
 
         public virtual string AdoPersonalAccessToken() => GetSecret(ADO_PAT);
 
