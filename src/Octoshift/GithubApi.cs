@@ -695,39 +695,6 @@ namespace OctoshiftCLI
             return data.ToObject<MannequinReclaimResult>();
         }
 
-        public virtual async Task<IEnumerable<GithubCodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo)
-        {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?per_page=100";
-            return await _client.GetAllAsync(url)
-                .Select(codescan => BuildCodeScanningAnalysis(codescan))
-                .ToListAsync();
-        }
-
-        public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
-        {
-            if (!CodeScanningAlert.IsOpenOrDismissed(state))
-            {
-                throw new ArgumentException($"Invalid value for {nameof(state)}");
-            }
-
-            if (CodeScanningAlert.IsDismissed(state) && !CodeScanningAlert.IsValidDismissedReason(dismissedReason))
-            {
-                throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
-            }
-
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
-
-            object payload = state == CodeScanningAlert.AlertStateOpen
-                ? new { state }
-                : new
-                {
-                    state,
-                    dismissed_reason = dismissedReason,
-                    dismissed_comment = dismissedComment
-                };
-            await _client.PatchAsync(url, payload);
-        }
-
         public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts?per_page=100";
@@ -760,14 +727,6 @@ namespace OctoshiftCLI
 
             object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
             await _client.PatchAsync(url, payload);
-        }
-
-        public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
-        {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
-            // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
-            Dictionary<string, string> headers = new() { { "accept", "application/sarif+json" } };
-            return await _client.GetAsync(url, headers);
         }
 
         private static object GetMannequinsPayload(string orgId)
@@ -825,34 +784,6 @@ namespace OctoshiftCLI
                 throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
             }
         }
-
-        private static GithubCodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
-            new GithubCodeScanningAnalysis
-            {
-                Id = (int)codescan["id"],
-                SarifId = (string)codescan["sarif_id"],
-                CommitSha = (string)codescan["commit_sha"],
-                Ref = (string)codescan["ref"],
-                AnalysisKey = (string)codescan["analysis_key"],
-                Error = (string)codescan["error"],
-                Warning = (string)codescan["warning"],
-                Url = (string)codescan["url"],
-                CreatedAt = (string)codescan["created_at"],
-                ResultsCount = (int)codescan["results_count"],
-                RulesCount = (int)codescan["rules_count"],
-                Deletable = (bool)codescan["deletable"],
-                Environment = codescan["environment"].Any()
-                    ? new GithubCodeScanningEnvironment { Language = (string)codescan["environment"]["language"] }
-                    : null,
-                Tool = codescan["tool"].Any()
-                    ? new GithubCodeScanningTool
-                    {
-                        Name = (string)codescan["tool"]["name"],
-                        Guid = (string)codescan["tool"]["guid"],
-                        Version = (string)codescan["tool"]["version"]
-                    }
-                    : null,
-            };
 
         private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
             new()
