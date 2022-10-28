@@ -78,7 +78,7 @@ public class MigrateSecretAlertsCommand : CommandBase<MigrateSecretAlertsCommand
         }
 
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
-        args.GithubSourcePat ??= environmentVariableProvider.SourceGithubPersonalAccessToken();
+        args.GithubSourcePat ??= environmentVariableProvider.SourceGithubPersonalAccessToken(false);
         args.GithubTargetPat ??= environmentVariableProvider.TargetGithubPersonalAccessToken();
 
         if (args.GithubSourcePat.IsNullOrWhiteSpace())
