@@ -12,7 +12,6 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
     private readonly ISftpClient _sftpClient;
     private readonly RsaKey _rsaKey = new RsaKey();
-    private readonly ConnectionInfo _sftpConnection;
     private readonly PrivateKeyFile _pkRsa;
     private readonly PrivateKeyAuthenticationMethod _authenticationMethodRsa;
     private readonly OctoLogger _log;
@@ -27,11 +26,10 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         var newKey = RsaSha256Util.ConvertToKeyWithSha256Signature(_pkRsa);
         RsaSha256Util.UpdatePrivateKeyFile(_pkRsa, newKey);
         _authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, _pkRsa);
-        _sftpConnection = new ConnectionInfo(host, sshPort, sshUser, _authenticationMethodRsa);
-        _sftpConnection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", _rsaKey, data);
+        var connection = new ConnectionInfo(host, sshPort, sshUser, _authenticationMethodRsa);
+        connection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", _rsaKey, data);
 
-        _sftpClient = new SftpClient(_sftpConnection);
-
+        _sftpClient = new SftpClient(connection);
 
         _log = log;
         _fileSystemProvider = fileSystemProvider;
