@@ -76,11 +76,10 @@ public sealed class BbsToGithub : IDisposable
 
         await _targetHelper.ResetBlobContainers();
 
-        // await _sourceHelper.ResetBbsTestEnvironment(bbsSourceProject);
+        // TODO: Reset BBS test environment
         await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-        // await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
-        // await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+        // TODO: Generate BBS test data
 
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
@@ -92,8 +91,7 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
 
-        // _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
-        // _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
+        // TODO: Assert migration logs are downloaded
     }
 
     public void Dispose()
