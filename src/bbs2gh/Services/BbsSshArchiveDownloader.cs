@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Renci.SshNet;
+using Renci.SshNet.Security;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
@@ -10,6 +11,10 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISftpClient _sftpClient;
+    private readonly RsaKey _rsaKey = new RsaKey();
+    private readonly ConnectionInfo _sftpConnection;
+    private readonly PrivateKeyFile _pkRsa;
+    private readonly PrivateKeyAuthenticationMethod _authenticationMethodRsa;
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly object _mutex = new();
@@ -18,14 +23,15 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 #pragma warning disable CA2000 // Incorrectly flagged as a not-disposing error
     public BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22)
     {
-        var pkRsa = new PrivateKeyFile(privateKeyFileFullPath);
-        var newKey = RsaSha256Util.ConvertToKeyWithSha256Signature(pkRsa);
-        RsaSha256Util.UpdatePrivateKeyFile(pkRsa, newKey);
-        var authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, pkRsa);
-        var conn = new ConnectionInfo(host, sshPort, sshUser, authenticationMethodRsa);
-        RsaSha256Util.SetupConnection(conn);
+        _pkRsa = new PrivateKeyFile(privateKeyFileFullPath);
+        var newKey = RsaSha256Util.ConvertToKeyWithSha256Signature(_pkRsa);
+        RsaSha256Util.UpdatePrivateKeyFile(_pkRsa, newKey);
+        _authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, _pkRsa);
+        _sftpConnection = new ConnectionInfo(host, sshPort, sshUser, _authenticationMethodRsa);
+        _sftpConnection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", _rsaKey, data);
 
-        _sftpClient = new SftpClient(conn);
+        _sftpClient = new SftpClient(_sftpConnection);
+
 
         _log = log;
         _fileSystemProvider = fileSystemProvider;
@@ -122,5 +128,11 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         };
     }
 
-    public void Dispose() => (_sftpClient as IDisposable)?.Dispose();
+    public void Dispose()
+    {
+        (_sftpClient as IDisposable)?.Dispose();
+        (_rsaKey as IDisposable)?.Dispose();
+        (_pkRsa as IDisposable)?.Dispose();
+        (_authenticationMethodRsa as IDisposable)?.Dispose();
+    }
 }

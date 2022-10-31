@@ -75,25 +75,10 @@ public class RsaSha256DigitalSignature : CipherDigitalSignature, IDisposable
             _isDisposed = true;
         }
     }
-
-    ~RsaSha256DigitalSignature()
-    {
-        Dispose(false);
-    }
 }
 
 public static class RsaSha256Util
 {
-    public static void SetupConnection(ConnectionInfo connection)
-    {
-        if (connection is null)
-        {
-            throw new ArgumentNullException(nameof(connection));
-        }
-
-        connection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", new RsaKey(), data);
-    }
-
     public static RsaWithSha256SignatureKey ConvertToKeyWithSha256Signature(PrivateKeyFile keyFile)
     {
         return keyFile?.HostKey is not KeyHostAlgorithm oldKeyHostAlgorithm
