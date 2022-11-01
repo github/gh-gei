@@ -111,7 +111,7 @@ public class GenerateScriptCommandArgs
     public string BbsSharedHome { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
-    public string SshPort { get; set; }
+    public int SshPort { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
