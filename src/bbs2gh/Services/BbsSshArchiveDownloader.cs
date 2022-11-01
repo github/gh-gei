@@ -29,7 +29,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
         if (IsRsaKey(_privateKey))
         {
-            UpdatePrivateKeyFileToRsaSha256(_privateKey);
+            _rsaKey = UpdatePrivateKeyFileToRsaSha256(_privateKey);
             _authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, _privateKey);
             var connection = new ConnectionInfo(host, sshPort, sshUser, _authenticationMethodRsa);
             connection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", _rsaKey, data);
@@ -43,18 +43,24 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
     private bool IsRsaKey(PrivateKeyFile privateKeyFile) => privateKeyFile.HostKey is KeyHostAlgorithm keyHostAlgorithm && keyHostAlgorithm.Key is RsaKey;
 
-    private void UpdatePrivateKeyFileToRsaSha256(PrivateKeyFile privateKeyFile)
+    private RsaWithSha256SignatureKey UpdatePrivateKeyFileToRsaSha256(PrivateKeyFile privateKeyFile)
     {
-        var oldRsaKey = (privateKeyFile.HostKey as KeyHostAlgorithm).Key as RsaKey;
-        _rsaKey = new RsaWithSha256SignatureKey(oldRsaKey.Modulus, oldRsaKey.Exponent, oldRsaKey.D, oldRsaKey.P, oldRsaKey.Q, oldRsaKey.InverseQ);
+        if ((privateKeyFile.HostKey as KeyHostAlgorithm).Key is not RsaKey oldRsaKey)
+        {
+            throw new ArgumentException("The private key file is not an RSA key.", nameof(privateKeyFile));
+        }
 
-        var keyHostAlgorithm = new KeyHostAlgorithm(_rsaKey.ToString(), _rsaKey);
+        var rsaKey = new RsaWithSha256SignatureKey(oldRsaKey.Modulus, oldRsaKey.Exponent, oldRsaKey.D, oldRsaKey.P, oldRsaKey.Q, oldRsaKey.InverseQ);
+
+        var keyHostAlgorithm = new KeyHostAlgorithm(_rsaKey.ToString(), rsaKey);
 
         var hostKeyProperty = typeof(PrivateKeyFile).GetProperty(nameof(PrivateKeyFile.HostKey));
         hostKeyProperty.SetValue(privateKeyFile, keyHostAlgorithm);
 
         var keyField = typeof(PrivateKeyFile).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance);
-        keyField.SetValue(privateKeyFile, _rsaKey);
+        keyField.SetValue(privateKeyFile, rsaKey);
+
+        return rsaKey;
     }
 
     internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
