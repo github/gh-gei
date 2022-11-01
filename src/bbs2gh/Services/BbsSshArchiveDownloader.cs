@@ -52,7 +52,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
         var rsaKey = new RsaWithSha256SignatureKey(oldRsaKey.Modulus, oldRsaKey.Exponent, oldRsaKey.D, oldRsaKey.P, oldRsaKey.Q, oldRsaKey.InverseQ);
 
-        var keyHostAlgorithm = new KeyHostAlgorithm(_rsaKey.ToString(), rsaKey);
+        var keyHostAlgorithm = new KeyHostAlgorithm(rsaKey.ToString(), rsaKey);
 
         var hostKeyProperty = typeof(PrivateKeyFile).GetProperty(nameof(PrivateKeyFile.HostKey));
         hostKeyProperty.SetValue(privateKeyFile, keyHostAlgorithm);
