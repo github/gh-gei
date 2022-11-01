@@ -35,6 +35,9 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly AdoClient _adoClient;
         private readonly GithubClient _githubClient;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly BbsApi _bbsApi;
+        private readonly BbsClient _bbsClient;
+        private readonly string _bbsUrl;
 
         public TestHelper(ITestOutputHelper output, AdoApi adoApi, GithubApi githubApi, AdoClient adoClient, GithubClient githubClient)
         {
@@ -51,6 +54,14 @@ namespace OctoshiftCLI.IntegrationTests
             _githubApi = githubTargetApi;
             _githubClient = githubClient;
             _blobServiceClient = blobServiceClient;
+        }
+
+        public TestHelper(ITestOutputHelper output, BbsApi bbsApi, BbsClient bbsClient, string bbsUrl)
+        {
+            _output = output;
+            _bbsApi = bbsApi;
+            _bbsClient = bbsClient;
+            _bbsUrl = bbsUrl;
         }
 
         public string GithubApiBaseUrl { get; init; } = "https://api.github.com";
@@ -499,6 +510,7 @@ steps:
             }
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
 
@@ -510,6 +522,9 @@ steps:
 
         public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
+
+        public async Task RunBbsCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
+            await RunCliMigration($"bbs2gh {generateScriptCommand}", "gh", tokens);
 
         public static string GetOsDistPath()
         {
