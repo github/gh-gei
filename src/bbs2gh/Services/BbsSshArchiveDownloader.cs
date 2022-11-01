@@ -12,7 +12,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISftpClient _sftpClient;
-    private RsaKey _rsaKey;
+    private readonly RsaKey _rsaKey;
     private readonly PrivateKeyFile _privateKey;
     private readonly PrivateKeyAuthenticationMethod _authenticationMethodRsa;
     private readonly OctoLogger _log;
