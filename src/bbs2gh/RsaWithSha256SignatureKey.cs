@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Reflection;
 using System.Security.Cryptography;
-using Renci.SshNet;
 using Renci.SshNet.Common;
 using Renci.SshNet.Security;
 using Renci.SshNet.Security.Cryptography;
@@ -74,28 +72,5 @@ public class RsaSha256DigitalSignature : CipherDigitalSignature, IDisposable
 
             _isDisposed = true;
         }
-    }
-}
-
-public static class RsaSha256Util
-{
-    public static RsaWithSha256SignatureKey ConvertToKeyWithSha256Signature(PrivateKeyFile keyFile)
-    {
-        return keyFile?.HostKey is not KeyHostAlgorithm oldKeyHostAlgorithm
-            ? throw new ArgumentException("HostKey must be a KeyHostAlgorithm", nameof(keyFile))
-            : oldKeyHostAlgorithm.Key is not RsaKey oldRsaKey
-            ? throw new ArgumentException("HostKey.Key must be a RsaKey", nameof(keyFile))
-            : new RsaWithSha256SignatureKey(oldRsaKey.Modulus, oldRsaKey.Exponent, oldRsaKey.D, oldRsaKey.P, oldRsaKey.Q, oldRsaKey.InverseQ);
-    }
-
-    public static void UpdatePrivateKeyFile(PrivateKeyFile keyFile, RsaWithSha256SignatureKey key)
-    {
-        var keyHostAlgorithm = new KeyHostAlgorithm(key?.ToString(), key);
-
-        var hostKeyProperty = typeof(PrivateKeyFile).GetProperty(nameof(PrivateKeyFile.HostKey));
-        hostKeyProperty.SetValue(keyFile, keyHostAlgorithm);
-
-        var keyField = typeof(PrivateKeyFile).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance);
-        keyField.SetValue(keyFile, key);
     }
 }
