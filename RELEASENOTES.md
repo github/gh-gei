@@ -1,1 +1,1 @@
-
+- introduced a new command `gh gei migrate-secret-alerts` which migrates the state and resolution of secret scanning alerts. This is useful if you have existing secret scanning alerts which have been closed (e.g. revoked, false positive, etc). The state (closed) and resolution will be migrated over to the target repo with this command.
