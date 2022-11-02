@@ -37,11 +37,11 @@ public class SecretScanningAlertService
 
             if (SecretScanningAlert.IsOpen(alert.Alert.State))
             {
-                _log.LogSuccess("  secret alert is still open, nothing to do");
+                _log.LogInformation("  secret alert is still open, nothing to do");
                 continue;
             }
 
-            _log.LogInformation("  secret is resolved, looking for matching detection in target...");
+            _log.LogInformation("  secret is resolved, looking for matching secret in target...");
             var target = MatchTargetSecret(alert, targetAlerts);
 
             if (target == null)
@@ -56,24 +56,24 @@ public class SecretScanningAlertService
 
             if (alert.Alert.Resolution == target.Alert.Resolution && alert.Alert.State == target.Alert.State)
             {
-                _log.LogSuccess("  source and target alerts are already aligned.");
+                _log.LogInformation("  source and target alerts are already aligned.");
+                continue;
+            }
+
+            if (dryRun)
+            {
+                _log.LogInformation(
+                    $"  executing in dry run mode! Target alert {target.Alert.Number} would have been updated to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
                 continue;
             }
 
             _log.LogInformation(
                 $"  updating target alert:{target.Alert.Number} to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
 
-            if (dryRun)
-            {
-                _log.LogInformation(
-                    $"  executing in dry run mode! Secret alert, {target.Alert.Number}, in repository {targetOrg}/{targetRepo} would have been updated to resolution, {alert.Alert.Resolution}");
-                continue;
-            }
-
             await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, target.Alert.Number,
-                alert.Alert.State, alert.Alert.Resolution);
+            alert.Alert.State, alert.Alert.Resolution);
             _log.LogSuccess(
-                $"  source and target alert state and resolution have been aligned to {alert.Alert.Resolution}.");
+                $"  target alert successfully updated to {alert.Alert.Resolution}.");
         }
     }
 
