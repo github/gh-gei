@@ -695,6 +695,40 @@ namespace OctoshiftCLI
             return data.ToObject<MannequinReclaimResult>();
         }
 
+        public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts?per_page=100";
+            return await _client.GetAllAsync(url)
+                .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
+                .ToListAsync();
+        }
+
+        public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+            return await _client.GetAllAsync(url)
+                .Select(alertLocation => BuildSecretScanningAlertLocation(alertLocation))
+                .ToListAsync();
+        }
+
+        public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null)
+        {
+            if (!SecretScanningAlert.IsOpenOrResolved(state))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(state)}");
+            }
+
+            if (SecretScanningAlert.IsResolved(state) && !SecretScanningAlert.IsValidDismissedReason(resolution))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(resolution)}");
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}";
+
+            object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
+            await _client.PatchAsync(url, payload);
+        }
+
         private static object GetMannequinsPayload(string orgId)
         {
             var query = "query($id: ID!, $first: Int, $after: String)";
@@ -750,5 +784,26 @@ namespace OctoshiftCLI
                 throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
             }
         }
+
+        private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
+            new()
+            {
+                Number = (int)secretAlert["number"],
+                State = (string)secretAlert["state"],
+                Resolution = (string)secretAlert["resolution"],
+                SecretType = (string)secretAlert["secret_type"],
+                Secret = (string)secretAlert["secret"],
+            };
+
+        private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
+            new()
+            {
+                Path = (string)alertLocation["details"]["path"],
+                StartLine = (int)alertLocation["details"]["start_line"],
+                EndLine = (int)alertLocation["details"]["end_line"],
+                StartColumn = (int)alertLocation["details"]["start_column"],
+                EndColumn = (int)alertLocation["details"]["end_column"],
+                BlobSha = (string)alertLocation["details"]["blob_sha"],
+            };
     }
 }

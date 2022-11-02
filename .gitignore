@@ -349,6 +349,9 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# MacOS Finder
+.DS_Store
+
 # VS (full) launchSettings, this might have PATs in the env vars section
 /src/OctoshiftCLI/Properties/launchSettings.json
 

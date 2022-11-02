@@ -2255,6 +2255,303 @@ namespace OctoshiftCLI.Tests
             actualMigrationId.Should().Be(expectedMigrationId);
         }
 
+        [Fact]
+        public async Task GetSecretScanningAlertsData()
+        {
+            // Arrange
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+
+            var secretScanningAlert_1 = $@"
+                {{
+                    ""number"": 18,
+                    ""created_at"": ""2022-05-05T21:40:00Z"",
+                    ""updated_at"": ""2022-05-05T21:40:00Z"",
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/18"",
+                    ""html_url"": ""https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/secret-scanning/18"",
+                    ""locations_url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/18/locations"",
+                    ""state"": ""open"",
+                    ""secret_type"": ""mcantu_pattern"",
+                    ""secret_type_display_name"": ""mcantu pattern"",
+                    ""secret"": ""my_secret_pattern_129"",
+                    ""resolution"": null,
+                    ""resolved_by"": null,
+                    ""resolved_at"": null,
+                    ""push_protection_bypassed"": false,
+                    ""push_protection_bypassed_by"": null,
+                    ""push_protection_bypassed_at"": null
+                }}
+            ";
+
+            var secretScanningAlert_2 = $@"
+                {{
+                    ""number"": 15,
+                    ""created_at"": ""2021-12-21T16:41:07Z"",
+                    ""updated_at"": ""2022-04-05T20:57:03Z"",
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/15"",
+                    ""html_url"": ""https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/secret-scanning/15"",
+                    ""locations_url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/15/locations"",
+                    ""state"": ""resolved"",
+                    ""secret_type"": ""mcantu_pattern"",
+                    ""secret_type_display_name"": ""mcantu pattern"",
+                    ""secret"": ""my_secret_pattern_124"",
+                    ""resolution"": null,
+                    ""resolved_by"": {{
+                        ""login"": ""leftrightleft"",
+                        ""id"": 4910518,
+                        ""node_id"": ""MDQ6VXNlcjQ5MTA1MTg="",
+                        ""avatar_url"": ""https://avatars.githubusercontent.com/u/4910518?v=4"",
+                        ""gravatar_id"": """",
+                        ""url"": ""https://api.github.com/users/leftrightleft"",
+                        ""html_url"": ""https://github.com/leftrightleft"",
+                        ""followers_url"": ""https://api.github.com/users/leftrightleft/followers"",
+                        ""received_events_url"": ""https://api.github.com/users/leftrightleft/received_events"",
+                        ""type"": ""User"",
+                        ""site_admin"": true
+                    }},
+                    ""resolved_at"": ""2022-04-05T20:57:03"",
+                    ""push_protection_bypassed"": false,
+                    ""push_protection_bypassed_by"": null,
+                    ""push_protection_bypassed_at"": null
+                }}
+            ";
+
+            var secretScanningAlert_3 = $@"
+                {{
+                    ""number"": 1,
+		            ""created_at"": ""2020-04-17T03:30:33Z"",
+                    ""updated_at"": ""2021-10-01T15:27:33Z"",
+                    ""url"": ""https://api.github.com/repos/octodemo/demo-vulnerabilities-ghas/secret-scanning/alerts/1"",
+                    ""html_url"": ""https://github.com/octodemo/demo-vulnerabilities-ghas/security/secret-scanning/1"",
+                    ""locations_url"": ""https://api.github.com/repos/octodemo/demo-vulnerabilities-ghas/secret-scanning/alerts/1/locations"",
+                    ""state"": ""open"",
+                    ""secret_type"": ""github_personal_access_token"",
+                    ""secret_type_display_name"": ""GitHub Personal Access Token"",
+                    ""secret"": ""fb5xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx550b82"",
+                    ""resolution"": null,
+		            ""resolved_by"": null,
+		            ""resolved_at"": null,
+		            ""push_protection_bypassed"": false,
+		            ""push_protection_bypassed_by"": null,
+		            ""push_protection_bypassed_at"": null
+	            }}
+            ";
+
+            var secretScanningAlert_4 = $@"
+                {{
+                    ""number"": 1,
+		            ""created_at"": ""2022-08-10T07:58:30Z"",
+                    ""updated_at"": ""2022-08-15T13:53:42Z"",
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/1"",
+                    ""html_url"": ""https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/secret-scanning/1"",
+                    ""locations_url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/1/locations"",
+                    ""state"": ""resolved"",
+                    ""secret_type"": ""google_api_key"",
+                    ""secret_type_display_name"": ""Google API Key"",
+                    ""secret"": ""AIzaSyAxxxxxxxxxxxxxxxxxxxxxxxxxxxxt2Q"",
+                    ""resolution"": ""false_positive"",
+                    ""resolved_by"": {{
+                        ""login"": ""peter-murray"",
+                        ""id"": 681306,
+                        ""node_id"": ""MDQ6VXNlcjY4MTMwNg=="",
+                        ""avatar_url"": ""https://avatars.githubusercontent.com/u/681306?v=4"",
+                        ""gravatar_id"": """",
+                        ""url"": ""https://api.github.com/users/peter-murray"",
+                        ""html_url"": ""https://github.com/peter-murray"",
+                        ""followers_url"": ""https://api.github.com/users/peter-murray/followers"",
+                        ""following_url"": ""https://api.github.com/users/peter-murray/following{{/other_user}}"",
+                        ""gists_url"": ""https://api.github.com/users/peter-murray/gists{{/gist_id}}"",
+                        ""starred_url"": ""https://api.github.com/users/peter-murray/starred{{/owner}}{{/repo}}"",
+                        ""subscriptions_url"": ""https://api.github.com/users/peter-murray/subscriptions"",
+                        ""organizations_url"": ""https://api.github.com/users/peter-murray/orgs"",
+                        ""repos_url"": ""https://api.github.com/users/peter-murray/repos"",
+                        ""events_url"": ""https://api.github.com/users/peter-murray/events{{/privacy}}"",
+                        ""received_events_url"": ""https://api.github.com/users/peter-murray/received_events"",
+                        ""type"": ""User"",
+                        ""site_admin"": true
+                    }},
+                    ""resolved_at"": ""2022-08-15T13:53:42Z"",
+                    ""push_protection_bypassed"": false,
+		            ""push_protection_bypassed_by"": null,
+		            ""push_protection_bypassed_at"": null
+	            }}
+            ";
+
+            var responsePage1 = $@"
+                [
+                    {secretScanningAlert_1},
+                    {secretScanningAlert_2},
+                ]
+            ";
+
+            var responsePage2 = $@"
+                [
+                    {secretScanningAlert_3},
+                    {secretScanningAlert_4},
+                ]
+            ";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+                yield return jArrayPage2[1];
+
+                await Task.CompletedTask;
+            }
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(GetAllPages);
+
+            // Act
+            var scanResults = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            scanResults.Count().Should().Be(4);
+            var scanResultsArray = scanResults.ToArray();
+            AssertSecretScanningData(scanResultsArray[0], JObject.Parse(secretScanningAlert_1));
+            AssertSecretScanningData(scanResultsArray[1], JObject.Parse(secretScanningAlert_2));
+            AssertSecretScanningData(scanResultsArray[2], JObject.Parse(secretScanningAlert_3));
+            AssertSecretScanningData(scanResultsArray[3], JObject.Parse(secretScanningAlert_4));
+        }
+
+        [Fact]
+        public async Task GetSecretScanningAlertLocationData()
+        {
+            // Arrange
+            const int alert = 1;
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alert}/locations?per_page=100";
+
+            var alertLocation_1 = $@"
+                {{
+                    ""type"": ""commit"",
+                    ""details"": {{
+                        ""path"": ""src/test/java/com/github/demo/service/BookServiceTest.java"",
+                        ""start_line"": 18,
+                        ""end_line"": 18,
+                        ""start_column"": 46,
+                        ""end_column"": 85,
+                        ""blob_sha"": ""c9aaf762f939a1e5378d4c5b9584d64672f1069f"",
+                        ""blob_url"": ""https://api.github.com/repos/octodemo/pm-ghas-demo/git/blobs/c9aaf762f939a1e5378d4c5b9584d64672f1069f"",
+                        ""commit_sha"": ""5b4678d6a8986edf1fbc878ab90bd5efc35ef9db"",
+                        ""commit_url"": ""https://api.github.com/repos/octodemo/pm-ghas-demo/git/commits/5b4678d6a8986edf1fbc878ab90bd5efc35ef9db""
+                    }}
+                }}
+            ";
+
+            var alertLocation_2 = $@"
+                {{
+                    ""type"": ""commit"",
+                    ""details"": {{
+                        ""path"": ""src/index.js"",
+                        ""start_line"": 5,
+                        ""end_line"": 5,
+                        ""start_column"": 12,
+                        ""end_column"": 52,
+                        ""blob_sha"": ""2044bb6ccd535142b974776db108c32a19f89e80"",
+                        ""blob_url"": ""https://api.github.com/repos/octodemo/demo-vulnerabilities-ghas/git/blobs/2044bb6ccd535142b974776db108c32a19f89e80"",
+                        ""commit_sha"": ""c8d00bc80bad56d21bcec32a2a7b74c115dd7bc7"",
+                        ""commit_url"": ""https://api.github.com/repos/octodemo/demo-vulnerabilities-ghas/git/commits/c8d00bc80bad56d21bcec32a2a7b74c115dd7bc7""
+                    }}
+                }}
+            ";
+
+            var responsePage1 = $@"
+                [
+                    {alertLocation_1},
+                ]
+            ";
+
+            var responsePage2 = $@"
+                [
+                    {alertLocation_2},
+                ]
+            ";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+
+                await Task.CompletedTask;
+            }
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(GetAllPages);
+
+            // Act
+            var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alert);
+
+            // Assert
+            locations.Count().Should().Be(2);
+            var locationsArray = locations.ToArray();
+
+            var location = locationsArray[0];
+            var expectedData = JObject.Parse(alertLocation_1);
+            location.Path.Should().Be((string)expectedData["details"]["path"]);
+
+            location = locationsArray[1];
+            expectedData = JObject.Parse(alertLocation_2);
+            location.Path.Should().Be((string)expectedData["details"]["path"]);
+        }
+
+        private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)
+        {
+            actual.Number.Should().Be((int)expectedData["number"]);
+            actual.State.Should().Be((string)expectedData["state"]);
+            actual.SecretType.Should().Be((string)expectedData["secret_type"]);
+            actual.Resolution.Should().Be((string)expectedData["resolution"]);
+            actual.Secret.Should().Be((string)expectedData["secret"]);
+        }
+
+        [Fact]
+        public async Task UpdateSecretScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Resolved_State()
+        {
+            // Arrange
+            const int alertNumber = 100;
+            const string alertState = "resolved";
+            const string alertResolution = "wont_fix";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}";
+            var payload = new
+            {
+                state = alertState,
+                resolution = alertResolution
+            };
+
+            // Act
+            await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task UpdateSecretScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
+        {
+            // Arrange
+            const int alertNumber = 1;
+            const string alertState = "open";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}";
+            var payload = new { state = alertState };
+
+            // Act
+            await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
         private string Compact(string source) =>
             source
                 .Replace("\r", "")
