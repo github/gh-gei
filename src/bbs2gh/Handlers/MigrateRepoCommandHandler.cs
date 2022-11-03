@@ -72,19 +72,17 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (ShouldUploadArchive(args))
         {
-            if (args.ArchivePath.IsNullOrWhiteSpace() && args.ArchiveUrl.IsNullOrWhiteSpace())
+            // This is for the case where the CLI is being run on the BBS server itself
+            if (args.ArchivePath.IsNullOrWhiteSpace())
             {
                 args.ArchivePath = Path.Join(
                     args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
                     IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
             }
 
-            if (args.ArchivePath.HasValue())
-            {
-                args.ArchiveUrl = args.AwsBucketName.HasValue()
-                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                    : await UploadArchiveToAzure(args.ArchivePath);
-            }
+            args.ArchiveUrl = args.AwsBucketName.HasValue()
+                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                : await UploadArchiveToAzure(args.ArchivePath);
         }
 
         if (ShouldImportArchive(args))
