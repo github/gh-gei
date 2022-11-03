@@ -75,9 +75,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
             {
-                args.ArchivePath = Path.Join(
-                    args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
-                    IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
+                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
             }
 
             args.ArchiveUrl = args.AwsBucketName.HasValue()
