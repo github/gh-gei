@@ -18,6 +18,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GithubOrg);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
+        AddOption(BbsProjectKey);
         AddOption(BbsSharedHome);
         AddOption(SshUser);
         AddOption(SshPrivateKey);
