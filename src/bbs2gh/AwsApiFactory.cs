@@ -9,11 +9,12 @@ public class AwsApiFactory
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null)
+    public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null, string awsSessionToken = null)
     {
         var accessKey = awsAccessKey ?? _environmentVariableProvider.AwsAccessKey();
         var secretKey = awsSecretKey ?? _environmentVariableProvider.AwsSecretKey();
+        var sessionToken = awsSessionToken ?? _environmentVariableProvider.AwsSessionToken();
 
-        return new AwsApi(accessKey, secretKey);
+        return new AwsApi(accessKey, secretKey, sessionToken);
     }
 }
