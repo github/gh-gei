@@ -13,8 +13,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             name: "migrate-org",
             description: "Invokes the GitHub APIs to migrate a GitHub org with its teams and the repositories.")
         {
-            IsHidden = true;
-
             AddOption(GithubSourceOrg);
             AddOption(GithubTargetOrg);
             AddOption(GithubTargetEnterprise);
