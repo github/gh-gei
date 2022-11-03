@@ -60,34 +60,57 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var exportId = 0L;
 
-        if (args.BbsServerUrl.HasValue())
+        if (ShouldGenerateArchive(args))
         {
             exportId = await GenerateArchive(args);
+
+            if (ShouldDownloadArchive(args))
+            {
+                args.ArchivePath = await DownloadArchive(exportId);
+            }
         }
 
-        if (args.SshUser.HasValue())
+        if (ShouldUploadArchive(args))
         {
-            args.ArchivePath = await DownloadArchive(exportId);
+            if (args.ArchivePath.IsNullOrWhiteSpace() && args.ArchiveUrl.IsNullOrWhiteSpace())
+            {
+                args.ArchivePath = Path.Join(
+                    args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
+                    IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
+            }
+
+            if (args.ArchivePath.HasValue())
+            {
+                args.ArchiveUrl = args.AwsBucketName.HasValue()
+                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                    : await UploadArchiveToAzure(args.ArchivePath);
+            }
         }
 
-        if (args.ArchivePath.IsNullOrWhiteSpace() && args.ArchiveUrl.IsNullOrWhiteSpace())
-        {
-            args.ArchivePath = Path.Join(
-                args.BbsSharedHome ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY,
-                IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportId)).Replace('\\', '/');
-        }
-
-        if (args.ArchivePath.HasValue())
-        {
-            args.ArchiveUrl = args.AwsBucketName.HasValue()
-                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                : await UploadArchiveToAzure(args.ArchivePath);
-        }
-
-        if (args.ArchiveUrl.HasValue())
+        if (ShouldImportArchive(args))
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
+    }
+
+    private bool ShouldGenerateArchive(MigrateRepoCommandArgs args)
+    {
+        return args.BbsServerUrl.HasValue();
+    }
+
+    private bool ShouldDownloadArchive(MigrateRepoCommandArgs args)
+    {
+        return args.SshUser.HasValue();
+    }
+
+    private bool ShouldUploadArchive(MigrateRepoCommandArgs args)
+    {
+        return args.ArchiveUrl.IsNullOrWhiteSpace() && args.GithubOrg.HasValue();
+    }
+
+    private bool ShouldImportArchive(MigrateRepoCommandArgs args)
+    {
+        return args.ArchiveUrl.HasValue();
     }
 
     private async Task<string> DownloadArchive(long exportId)
@@ -324,7 +347,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
         }
 
-        if (args.BbsServerUrl.HasValue())
+        if (ShouldGenerateArchive(args))
         {
             if (GetBbsUsername(args).IsNullOrWhiteSpace())
             {
@@ -336,7 +359,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
             }
 
-            ValidateDownloadOptions(args);
+            if (ShouldDownloadArchive(args))
+            {
+                ValidateDownloadOptions(args);
+            }
         }
         else
         {
@@ -351,10 +377,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
 
-        // An empty archive url indicates that the archive needs to be uploaded,
-        // otherwise if it has a value, it means that the archive has already been uploaded so 
-        // there will be no need to validate the upload related options.
-        if (args.ArchiveUrl.IsNullOrWhiteSpace())
+        if (ShouldUploadArchive(args))
         {
             ValidateUploadOptions(args);
         }
@@ -369,7 +392,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (shouldUseSsh && shouldUseSmb)
         {
-            throw new OctoshiftCliException("Either SSH or SMB download options can be specified.");
+            throw new OctoshiftCliException("You can't provide both SSH and SMB credentials together.");
         }
 
         if (shouldUseSsh && sshArgs.Any(arg => arg.IsNullOrWhiteSpace()))

@@ -329,7 +329,8 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
                 BbsRepo = BBS_REPO,
-                SshPrivateKey = SSH_USER,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
                 SmbPassword = SMB_PASSWORD
             };
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
