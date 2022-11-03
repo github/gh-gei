@@ -8,5 +8,5 @@ public static class ExportState
 
     public static bool IsInProgress(string state) => state is not COMPLETED && !IsError(state);
 
-    public static bool IsError(string state) => state is FAILED or ABORTED;
+    public static bool IsError(string state) => state is FAILED or ABORTED or null;
 }
