@@ -33,9 +33,6 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         description: "The full URL of the Bitbucket Server/Data Center to migrate from.")
     { IsRequired = true };
 
-    public Option<string> GithubOrg { get; } = new("--github-org")
-    { IsRequired = true };
-
     public Option<string> BbsUsername { get; } = new(
         name: "--bbs-username",
         description: "The Bitbucket username of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_USERNAME environment variable.");
@@ -45,6 +42,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         description: "The Bitbucket password of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
                       $"{Environment.NewLine}" +
                       "Note: The password will not get included in the generated script and it has to be set as an env variable before running the script.");
+
+    public Option<string> BbsProjectKey { get; } = new(
+        name: "--bbs-project-key",
+        description: "The Bitbucket project to migrate. If not set will migrate all projects.");
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
@@ -62,6 +63,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--ssh-port",
         description: "The SSH port (default: 22).",
         getDefaultValue: () => 22);
+
+    public Option<string> GithubOrg { get; } = new("--github-org")
+    { IsRequired = true };
 
     public Option<FileInfo> Output { get; } = new(
         name: "--output",
@@ -108,6 +112,7 @@ public class GenerateScriptCommandArgs
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
+    public string BbsProjectkey { get; set; }
     public string BbsSharedHome { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
