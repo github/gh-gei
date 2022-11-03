@@ -154,6 +154,53 @@ public class GenerateScriptCommandHandlerTests
     }
 
     [Fact]
+    public async Task Filters_By_Project()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
+        {
+            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
+            (Id: 2, Key: BBS_BAR_PROJECT_KEY, Name: BBS_BAR_PROJECT_NAME)
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
+            (Id: 2, Slug: BBS_FOO_REPO_2_SLUG, Name: BBS_FOO_REPO_2_NAME)
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_BAR_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 3, Slug: BBS_BAR_REPO_1_SLUG, Name: BBS_BAR_REPO_1_NAME),
+            (Id: 4, Slug: BBS_BAR_REPO_2_SLUG, Name: BBS_BAR_REPO_2_NAME)
+        });
+
+        var migrateRepoCommand1 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait }}";
+        var migrateRepoCommand2 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_2_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_2_SLUG}\" --verbose --wait }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            BbsProjectkey = BBS_FOO_PROJECT_KEY,
+            BbsSharedHome = BBS_SHARED_HOME,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            Output = new FileInfo(OUTPUT),
+            Verbose = true
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand1))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand2))));
+
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(BBS_BAR_PROJECT_KEY))), Times.Never);
+    }
+
+    [Fact]
     public async Task One_Repo_With_Kerberos()
     {
         // Arrange
