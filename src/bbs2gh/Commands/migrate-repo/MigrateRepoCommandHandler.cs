@@ -341,18 +341,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
         }
 
-        if ((args.SshUser.HasValue() && args.SshPrivateKey.IsNullOrWhiteSpace()) ||
-            (args.SshPrivateKey.HasValue() && args.SshUser.IsNullOrWhiteSpace()))
-        {
-            throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
-        }
-
-        if ((args.SmbUser.HasValue() && args.SmbPassword.IsNullOrWhiteSpace()) ||
-            (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
-        {
-            throw new OctoshiftCliException("Both --smb-user and --smb-password must be specified for SMB download.");
-        }
-
         if (ShouldGenerateArchive(args))
         {
             if (GetBbsUsername(args).IsNullOrWhiteSpace())
@@ -399,6 +387,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (shouldUseSsh && shouldUseSmb)
         {
             throw new OctoshiftCliException("You can't provide both SSH and SMB credentials together.");
+        }
+
+        if ((args.SshUser.HasValue() && args.SshPrivateKey.IsNullOrWhiteSpace()) ||
+            (args.SshPrivateKey.HasValue() && args.SshUser.IsNullOrWhiteSpace()))
+        {
+            throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
+        }
+
+        if ((args.SmbUser.HasValue() && args.SmbPassword.IsNullOrWhiteSpace()) ||
+            (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
+        {
+            throw new OctoshiftCliException("Both --smb-user and --smb-password must be specified for SMB download.");
         }
     }
 
