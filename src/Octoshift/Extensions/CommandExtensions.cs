@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 
@@ -39,13 +40,26 @@ public static class CommandExtensions
     }
 
     [SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Called via reflection")]
-    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : class, new()
+    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : BaseCommandArgs, new()
                                                                                             where TCommand : CommandBase<TArgs, THandler>, new()
                                                                                             where THandler : ICommandHandler<TArgs>
     {
         var command = new TCommand();
         var argsBinder = new GenericArgsBinder<TCommand, TArgs>(command);
-        command.SetHandler(async args => await command.BuildHandler(args, sp).Handle(args), argsBinder);
+        command.SetHandler(async args => await RunHandler(args, sp, command), argsBinder);
         return command;
+    }
+
+    private static async Task RunHandler<TArgs, THandler>(TArgs args, ServiceProvider sp, CommandBase<TArgs, THandler> command) where TArgs : BaseCommandArgs
+                                                                                                                                where THandler : ICommandHandler<TArgs>
+    {
+        var log = sp.GetRequiredService<OctoLogger>();
+
+        args.RegisterSecrets(log);
+        args.Log(log);
+        args.Validate();
+
+        var handler = command.BuildHandler(args, sp);
+        await handler.Handle(args);
     }
 }

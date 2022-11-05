@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
