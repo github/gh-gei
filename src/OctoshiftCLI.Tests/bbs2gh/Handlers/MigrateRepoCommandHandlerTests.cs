@@ -463,23 +463,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         }
 
         [Fact]
-        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Ssh_Private_Key_Is_Provided_And_Ssh_User_Is_Not_Provided()
-        {
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshPrivateKey = PRIVATE_KEY
-            };
-
-            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
         public async Task Uses_Archive_Path_If_Provided()
         {
             // Arrange
@@ -547,23 +530,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 BbsProject = BBS_PROJECT,
                 BbsRepo = BBS_REPO,
                 SmbUser = SMB_USER
-            };
-
-            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Smb_Password_Is_Provided_And_Smb_User_Is_Not_Provided()
-        {
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SmbPassword = SMB_USER
             };
 
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
