@@ -52,6 +52,10 @@ public class EnvironmentVariableProvider
         GetSecret(AWS_ACCESS_KEY)
         ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
 
+    public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
+        GetSecret(AWS_SESSION_TOKEN)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_SESSION_TOKEN} environment variable is not set.") : null);
+
     private string GetSecret(string secretName)
     {
         var secret = _getEnvironmentVariable(secretName);
