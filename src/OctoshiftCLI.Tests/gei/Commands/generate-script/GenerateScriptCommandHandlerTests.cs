@@ -46,26 +46,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
         }
 
-        [Fact]
-        public async Task AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
-        {
-            await FluentActions
-                .Invoking(async () => await _handler.Handle(new GenerateScriptCommandArgs
-                {
-                    AdoServerUrl = "https://ado.contoso.com",
-                    GithubTargetOrg = TARGET_ORG
-                }
-                ))
-                .Should().ThrowAsync<OctoshiftCliException>();
-        }
+        
 
-        [Fact]
-        public async Task No_Github_Source_Org_Or_Ado_Source_Org_Throws()
-        {
-            await _handler.Invoking(async handler => await handler.Handle(new GenerateScriptCommandArgs { GithubTargetOrg = TARGET_ORG }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>();
-        }
+        
 
         [Fact]
         public async Task Sequential_Github_No_Data()
@@ -323,7 +306,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
         [Fact]
@@ -733,7 +715,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
         [Fact]
@@ -1180,7 +1161,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
@@ -1426,47 +1406,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
-        }
-
-        [Fact]
-        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_Ghes_Api_Url_Is_Not()
-        {
-            // Arrange
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                Output = new FileInfo("unit-test-output"),
-                AwsBucketName = AWS_BUCKET_NAME,
-                Sequential = true
-            };
-
-            // Act, Assert
-            await _handler
-                .Invoking(async handler => await handler.Handle(args))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public async Task It_Throws_When_No_Ssl_Verify_Is_Set_But_Ghes_Api_Url_Is_Not()
-        {
-            // Arrange
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                Output = new FileInfo("unit-test-output"),
-                NoSslVerify = true,
-                Sequential = true
-            };
-
-            // Act, Assert
-            await _handler
-                .Invoking(async handler => await handler.Handle(args))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>();
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
