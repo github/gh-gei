@@ -17,12 +17,10 @@ public class AwsApi : IDisposable
 
 #pragma warning disable CA2000
     public AwsApi(string awsAccessKey, string awsSecretKey, string awsSessionToken = null) : this(new TransferUtility( 
-        if (awsSessionToken == null) 
-        { 
+        if (awsSessionToken == null) { 
             new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)
-        } 
-        else 
-        {
+        }
+        else {
             CreateAmazonS3Client(new SessionAWSCredentials(awsAccessKey, awsSecretAccess, awsSessionToken))
         }
     ))
