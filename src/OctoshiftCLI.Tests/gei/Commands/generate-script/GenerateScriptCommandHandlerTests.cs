@@ -46,9 +46,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
         }
 
-        
 
-        
+
+
 
         [Fact]
         public async Task Sequential_Github_No_Data()
