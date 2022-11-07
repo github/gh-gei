@@ -390,8 +390,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("You can't provide both SSH and SMB credentials together.");
         }
 
-        if ((args.SshUser.HasValue() && args.SshPrivateKey.IsNullOrWhiteSpace()) ||
-            (args.SshPrivateKey.HasValue() && args.SshUser.IsNullOrWhiteSpace()))
+        if (args.SshUser.HasValue() ^ args.SshPrivateKey.HasValue())
         {
             throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
         }
