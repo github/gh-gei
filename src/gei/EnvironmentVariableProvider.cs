@@ -10,6 +10,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
         private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
         private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+        private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
 
         private readonly OctoLogger _logger;
 
@@ -36,6 +37,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             GetSecret(AWS_ACCESS_KEY)
             ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
 
+        public virtual string AwsSessionToken() =>
+            GetSecret(AWS_SESSION_TOKEN);
+            
         private string GetSecret(string secretName)
         {
             var secret = Environment.GetEnvironmentVariable(secretName);

@@ -28,6 +28,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsBucketName);
             AddOption(AwsAccessKey);
             AddOption(AwsSecretKey);
+            AddOption(AwsSessionToken);
+            AddOption(AwsRegion);
+            AddOption(AwsS3UseSignatureVersion4);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -99,6 +102,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
             Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
+        };
+        public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
+        {
+            Description = "If uploading to S3, the AWS session token."
+        };
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If uploading to S3, the AWS resion, Default valule is us-west-1"
+        };
+        public Option<string> AwsS3UseSignatureVersion4 { get; } = new("--aws-s3-useSignatureVersion4")
+        {
+            Description = "If uploading to S3, configures if the S3 client should use Signature Version 4 signing with requests. Default value is False"
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -174,7 +189,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion, args.AwsS3UseSignatureVersion4);
                 }
             }
 
@@ -197,6 +212,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsBucketName { get; set; }
         public string AwsAccessKey { get; set; }
         public string AwsSecretKey { get; set; }
+        public string AwsSessionToken { get; set; }
+        public string AwsRegion { get; set; }
+        public string AwsS3UseSignatureVersion4 { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }

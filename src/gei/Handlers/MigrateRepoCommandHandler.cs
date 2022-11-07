@@ -335,6 +335,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"AWS SECRET KEY: {args.AwsSecretKey}");
         }
+
+        if (args.AwsSessionToken.HasValue())
+        {
+            _log.LogInformation($"AWS SESSION TOKEN: {args.AwsSessionToken}");
+        }
+
+        if (args.AwsRegion.HasValue())
+        {
+            _log.LogInformation($"AWS Region: {args.AwsRegion}");
+        }
+
+        if (args.AwsS3UseSignatureVersion4.HasValue())
+        {
+            _log.LogInformation($"AWS S3 UseSignatureVersion4: {args.AwsS3UseSignatureVersion4}");
+        }        
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
