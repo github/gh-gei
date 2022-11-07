@@ -39,7 +39,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         public virtual string AwsSessionToken() =>
             GetSecret(AWS_SESSION_TOKEN);
-            
+
         private string GetSecret(string secretName)
         {
             var secret = Environment.GetEnvironmentVariable(secretName);

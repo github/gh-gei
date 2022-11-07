@@ -349,7 +349,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.AwsS3UseSignatureVersion4.HasValue())
         {
             _log.LogInformation($"AWS S3 UseSignatureVersion4: {args.AwsS3UseSignatureVersion4}");
-        }        
+        }
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)

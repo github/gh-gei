@@ -14,10 +14,8 @@ public class AwsApiFactory
         var accessKey = awsAccessKey ?? _environmentVariableProvider.AwsAccessKey();
         var secretKey = awsSecretKey ?? _environmentVariableProvider.AwsSecretKey();
         var sessionToken = awsSessionToken ?? _environmentVariableProvider.AwsSessionToken();
-        if (sessionToken is null) { 
-            return new AwsApi(accessKey, secretKey);
-        } else {
-            return new AwsApi(accessKey, secretKey, sessionToken, awsRegion, awsS3UseSignatureVersion4);
-        }
+        return sessionToken is null
+            ? new AwsApi(accessKey, secretKey)
+            : new AwsApi(accessKey, secretKey, sessionToken, awsRegion, awsS3UseSignatureVersion4);
     }
 }

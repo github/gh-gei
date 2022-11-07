@@ -23,16 +23,13 @@ public class AwsApi : IDisposable
 
     public AwsApi(string awsAccessKey, string awsSecretKey, string awsSessionToken, string awsRegionEndpoint, string awsS3UseSignatureVersion4)
     {
-        RegionEndpoint region = null;
-        if (string.IsNullOrEmpty(awsS3UseSignatureVersion4)) { //use default region
-            region = RegionEndpoint;
-        } else {
-            region =  RegionEndpoint.GetBySystemName(awsRegionEndpoint);
-        }
+        var region = string.IsNullOrEmpty(awsS3UseSignatureVersion4) ? RegionEndpoint : RegionEndpoint.GetBySystemName(awsRegionEndpoint);
+        //use default region
 #pragma warning disable CA2000
         _transferUtility = new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, awsSessionToken, region));
 #pragma warning restore CA2000
-        if (Convert.ToBoolean(awsS3UseSignatureVersion4) == true) {
+        if (Convert.ToBoolean(awsS3UseSignatureVersion4) == true)
+        {
             AWSConfigsS3.UseSignatureVersion4 = true;
         }
     }
