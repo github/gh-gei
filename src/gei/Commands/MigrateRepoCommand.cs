@@ -109,7 +109,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
-            Description = "If uploading to S3, the AWS resion, Default valule is us-west-1"
+            Description = "If uploading to S3, the AWS resion, Default valule is us-east-1"
         };
         public Option<string> AwsS3UseSignatureVersion4 { get; } = new("--aws-s3-useSignatureVersion4")
         {
