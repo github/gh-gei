@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Amazon;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
@@ -21,14 +22,30 @@ public class AwsApi : IDisposable
     {
     }
 
-    public AwsApi(string awsAccessKey, string awsSecretKey, string awsSessionToken, string awsRegionEndpoint, string awsS3UseSignatureVersion4)
+    public AwsApi(string awsAccessKey, string awsSecretKey, string awsSessionToken, string awsRegionEndpoint, bool awsS3UseSignatureVersion4)
     {
-        var region = string.IsNullOrEmpty(awsS3UseSignatureVersion4) ? RegionEndpoint : RegionEndpoint.GetBySystemName(awsRegionEndpoint);
+        var region = string.IsNullOrEmpty(awsRegionEndpoint) ? RegionEndpoint : RegionEndpoint.GetBySystemName(awsRegionEndpoint);
         //use default region
 #pragma warning disable CA2000
-        _transferUtility = new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, awsSessionToken, region));
+        _transferUtility = string.IsNullOrEmpty(awsSessionToken)
+            ? new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, region))
+            : (ITransferUtility)new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, awsSessionToken, region));
 #pragma warning restore CA2000
-        if (Convert.ToBoolean(awsS3UseSignatureVersion4) == true)
+        if (awsS3UseSignatureVersion4 == true)
+        {
+            AWSConfigsS3.UseSignatureVersion4 = true;
+        }
+    }
+
+    public AwsApi(string awsRegionEndpoint, bool awsS3UseSignatureVersion4)
+    {
+        var credential = AssumeRoleWithWebIdentityCredentials.FromEnvironmentVariables();
+        var region = string.IsNullOrEmpty(awsRegionEndpoint) ? RegionEndpoint : RegionEndpoint.GetBySystemName(awsRegionEndpoint);
+        //use default region
+#pragma warning disable CA2000
+        _transferUtility = new TransferUtility(new AmazonS3Client(credential, region));
+#pragma warning restore CA2000
+        if (awsS3UseSignatureVersion4 == true)
         {
             AWSConfigsS3.UseSignatureVersion4 = true;
         }
