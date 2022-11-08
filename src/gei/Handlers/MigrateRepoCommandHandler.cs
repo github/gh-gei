@@ -350,10 +350,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"AWS S3 UseSignatureVersion4: {args.AwsS3UseSignatureVersion4}");
         }
-        if (args.UseWebIdentityCredential.HasValue())
-        {
-            _log.LogInformation($"AWS S3 UseWebIdentityCredential: {args.UseWebIdentityCredential}");
-        }
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
@@ -414,14 +410,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (shouldUseAwsS3)
             {
-                if (!GetAwsAccessKey(args).HasValue() && !args.UseWebIdentityCredential)
+                if (!GetAwsAccessKey(args).HasValue())
                 {
-                    throw new OctoshiftCliException("Either --aws-access-key, --aws-s3-useWebIdentityCredential or AWS_ACCESS_KEY environment variable must be set.");
+                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
                 }
 
-                if (!GetAwsSecretKey(args).HasValue() && !args.UseWebIdentityCredential)
+                if (!GetAwsSecretKey(args).HasValue())
                 {
-                    throw new OctoshiftCliException("Either --aws-secret-key, --aws-s3-useWebIdentityCredential or AWS_SECRET_KEY environment variable must be set.");
+                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
                 }
             }
             else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())

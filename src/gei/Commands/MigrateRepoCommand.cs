@@ -31,7 +31,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsSessionToken);
             AddOption(AwsRegion);
             AddOption(AwsS3UseSignatureVersion4);
-            AddOption(UseWebIdentityCredential);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -112,13 +111,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             Description = "If uploading to S3, the AWS resion, Default valule is us-east-1"
         };
-        public Option<bool> AwsS3UseSignatureVersion4 { get; } = new("--aws-s3-useSignatureVersion4")
+        public Option<string> AwsS3UseSignatureVersion4 { get; } = new("--aws-s3-useSignatureVersion4")
         {
-            Description = "If uploading to S3, configures if the S3 client should use Signature Version 4 signing with requests."
-        };
-        public Option<bool> UseWebIdentityCredential { get; } = new("--aws-s3-useWebIdentityCredential")
-        {
-            Description = "If uploading to S3, load Aws credentials from environment variables."
+            Description = "If uploading to S3, configures if the S3 client should use Signature Version 4 signing with requests. Default value is False"
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -194,9 +189,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = args.UseWebIdentityCredential == true
-                        ? awsApiFactory.Create(args.AwsRegion, args.AwsS3UseSignatureVersion4)
-                        : awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion, args.AwsS3UseSignatureVersion4);
+                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion, args.AwsS3UseSignatureVersion4);
                 }
             }
 
@@ -221,8 +214,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsSecretKey { get; set; }
         public string AwsSessionToken { get; set; }
         public string AwsRegion { get; set; }
-        public bool AwsS3UseSignatureVersion4 { get; set; }
-        public bool UseWebIdentityCredential { get; set; }
+        public string AwsS3UseSignatureVersion4 { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
