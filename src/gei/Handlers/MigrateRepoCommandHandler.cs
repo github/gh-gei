@@ -411,8 +411,23 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                     "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
                     "specified together.");
             }
-            ValidateAWSCredentials(args);
 
+            if (shouldUseAwsS3)
+            {
+                if (!GetAwsAccessKey(args).HasValue() && !args.UseWebIdentityCredential)
+                {
+                    throw new OctoshiftCliException("Either --aws-access-key, --aws-s3-useWebIdentityCredential or AWS_ACCESS_KEY environment variable must be set.");
+                }
+
+                if (!GetAwsSecretKey(args).HasValue() && !args.UseWebIdentityCredential)
+                {
+                    throw new OctoshiftCliException("Either --aws-secret-key, --aws-s3-useWebIdentityCredential or AWS_SECRET_KEY environment variable must be set.");
+                }
+            }
+            else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+            {
+                throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
+            }
         }
         else
         {
@@ -425,28 +440,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
             }
-        }
-    }
-
-
-    private void ValidateAWSCredentials(MigrateRepoCommandArgs args)
-    {
-        var shouldUseAwsS3 = args.AwsBucketName.HasValue();
-        if (shouldUseAwsS3)
-        {
-            if (!GetAwsAccessKey(args).HasValue() && !args.UseWebIdentityCredential)
-            {
-                throw new OctoshiftCliException("Either --aws-access-key, --aws-s3-useWebIdentityCredential or AWS_ACCESS_KEY environment variable must be set.");
-            }
-
-            if (!GetAwsSecretKey(args).HasValue() && !args.UseWebIdentityCredential)
-            {
-                throw new OctoshiftCliException("Either --aws-secret-key, --aws-s3-useWebIdentityCredential or AWS_SECRET_KEY environment variable must be set.");
-            }
-        }
-        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue() || args.UseWebIdentityCredential.HasValue() || args.AwsS3UseSignatureVersion4.HasValue())
-        {
-            throw new OctoshiftCliException("--aws-access-key, --aws-secret-key, --aws-s3-useWebIdentityCredential and --aws-s3-useSignatureVersion4 can only be provided with --aws-bucket-name.");
         }
     }
 
