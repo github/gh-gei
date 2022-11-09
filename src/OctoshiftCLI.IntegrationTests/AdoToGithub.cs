@@ -60,16 +60,21 @@ namespace OctoshiftCLI.IntegrationTests
             var pipeline1 = "pipeline1";
             var pipeline2 = "pipeline2";
 
-            await _helper.ResetAdoTestEnvironment(adoOrg);
-            await _helper.ResetGithubTestEnvironment(githubOrg);
+            var retryPolicy = new RetryPolicy(null);
 
-            await _helper.CreateTeamProject(adoOrg, teamProject1);
-            var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
-            await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
+            await retryPolicy.Retry(async () =>
+            {
+                await _helper.ResetAdoTestEnvironment(adoOrg);
+                await _helper.ResetGithubTestEnvironment(githubOrg);
 
-            await _helper.CreateTeamProject(adoOrg, teamProject2);
-            commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
-            await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
+                await _helper.CreateTeamProject(adoOrg, teamProject1);
+                var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
+                await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
+
+                await _helper.CreateTeamProject(adoOrg, teamProject2);
+                commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
+                await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
+            });
 
             await _helper.RunCliCommand($"ado2gh inventory-report --ado-org {adoOrg}", "gh", _tokens);
             await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all --repo-list repos.csv", _tokens);
@@ -120,16 +125,21 @@ namespace OctoshiftCLI.IntegrationTests
             var pipeline1 = "pipeline1";
             var pipeline2 = "pipeline2";
 
-            await _helper.ResetAdoTestEnvironment(adoOrg);
-            await _helper.ResetGithubTestEnvironment(githubOrg);
+            var retryPolicy = new RetryPolicy(null);
 
-            await _helper.CreateTeamProject(adoOrg, teamProject1);
-            var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
-            await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
+            await retryPolicy.Retry(async () =>
+            {
+                await _helper.ResetAdoTestEnvironment(adoOrg);
+                await _helper.ResetGithubTestEnvironment(githubOrg);
 
-            await _helper.CreateTeamProject(adoOrg, teamProject2);
-            commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
-            await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
+                await _helper.CreateTeamProject(adoOrg, teamProject1);
+                var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
+                await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
+
+                await _helper.CreateTeamProject(adoOrg, teamProject2);
+                commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
+                await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
+            });
 
             await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all", _tokens);
 
