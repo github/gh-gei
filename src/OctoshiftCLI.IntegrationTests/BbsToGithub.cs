@@ -85,8 +85,6 @@ public sealed class BbsToGithub : IDisposable
         await _sourceHelper.CreateBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
         _sourceHelper.InitializeBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
 
-        // TODO: Generate BBS test data
-
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
 
