@@ -70,19 +70,25 @@ public sealed class BbsToGithub : IDisposable
     [Fact]
     public async Task Basic()
     {
+        var bbsProjectKey = "E2E-L";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
-        const string repo1 = "EEL-repo-1";
-        const string repo2 = "EEL-repo-2";
+        var repo1 = $"{bbsProjectKey}-repo-1";
+        var repo2 = $"{bbsProjectKey}-repo-2";
 
         await _targetHelper.ResetBlobContainers();
-
-        // TODO: Reset BBS test environment
+        await _sourceHelper.ResetBbsTestEnvironment(BBS_URL, bbsProjectKey);
         await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+
+        await _sourceHelper.CreateBbsProject(BBS_URL, bbsProjectKey);
+        await _sourceHelper.CreateBbsRepo(BBS_URL, bbsProjectKey, "repo-1");
+        _sourceHelper.InitializeBbsRepo(BBS_URL, bbsProjectKey, "repo-1");
+        await _sourceHelper.CreateBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
+        _sourceHelper.InitializeBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
 
         // TODO: Generate BBS test data
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
