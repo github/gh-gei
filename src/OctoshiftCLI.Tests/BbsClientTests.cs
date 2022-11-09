@@ -248,7 +248,7 @@ public sealed class BbsClientTests : IDisposable
 
         const string actualUrl = "http://example.com/param with space";
         const string expectedUrl = "http://example.com/param%20with%20space";
-        
+
         // Act
         await bbsClient.DeleteAsync(actualUrl);
 
