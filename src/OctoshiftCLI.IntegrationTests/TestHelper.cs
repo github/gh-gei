@@ -97,7 +97,7 @@ namespace OctoshiftCLI.IntegrationTests
             await CreateRepo(githubOrg, repo, true, true);
         }
 
-        public async Task ResetBbsTestEnvironment(string bbsServer, string bbsProjectKey)
+        public async Task ResetBbsTestEnvironment(string bbsProjectKey)
         {
             var retryPolicy = new RetryPolicy(null);
 
@@ -110,10 +110,10 @@ namespace OctoshiftCLI.IntegrationTests
                     foreach (var repo in bbsRepos)
                     {
                         _output.WriteLine($"Deleting BBS repo: {bbsProjectKey}\\{repo}...");
-                        await DeleteBbsRepo(bbsServer, bbsProjectKey, repo);
+                        await DeleteBbsRepo(bbsProjectKey, repo);
                     }
 
-                    await DeleteBbsProject(bbsServer, bbsProjectKey);
+                    await DeleteBbsProject(bbsProjectKey);
                 }
             });
         }
@@ -125,16 +125,16 @@ namespace OctoshiftCLI.IntegrationTests
             return bbsProjects.Any(x => x.Key == bbsProjectKey);
         }
 
-        private async Task DeleteBbsRepo(string bbsServer, string bbsProjectKey, string slug)
+        private async Task DeleteBbsRepo(string bbsProjectKey, string slug)
         {
-            var url = $"{bbsServer}/rest/api/1.0/projects/{bbsProjectKey}/repos/{slug}";
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}/repos/{slug}";
 
             await _bbsClient.DeleteAsync(url);
         }
 
-        private async Task DeleteBbsProject(string bbsServer, string bbsProjectKey)
+        private async Task DeleteBbsProject(string bbsProjectKey)
         {
-            var url = $"{bbsServer}/rest/api/1.0/projects/{bbsProjectKey}";
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}";
 
             await _bbsClient.DeleteAsync(url);
         }
@@ -166,7 +166,7 @@ namespace OctoshiftCLI.IntegrationTests
             });
         }
 
-        public void InitializeBbsRepo(string bbsServer, string bbsProjectKey, string repoName)
+        public void InitializeBbsRepo(string bbsProjectKey, string repoName)
         {
             var repoPath = Path.Combine(Path.GetTempPath(), repoName);
             Directory.CreateDirectory(repoPath);
@@ -178,7 +178,7 @@ namespace OctoshiftCLI.IntegrationTests
             repo.Index.Write();
             var author = new Signature("Octoshift", "octoshift@github.com", DateTime.Now);
             repo.Commit("Here's a commit i made!", author, author);
-            var origin = repo.Network.Remotes.Add("origin", $"{bbsServer}/scm/{bbsProjectKey}/{repoName}.git");
+            var origin = repo.Network.Remotes.Add("origin", $"{_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git");
             var options = new PushOptions
             {
                 CredentialsProvider = (url, user, cred) => new UsernamePasswordCredentials
@@ -190,9 +190,9 @@ namespace OctoshiftCLI.IntegrationTests
             repo.Network.Push(origin, @"refs/heads/master", options);
         }
 
-        public async Task CreateBbsRepo(string bbsServer, string bbsProjectKey, string repoName)
+        public async Task CreateBbsRepo(string bbsProjectKey, string repoName)
         {
-            var url = $"{bbsServer}/rest/api/1.0/projects/{bbsProjectKey}/repos";
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}/repos";
             var payload = new
             {
                 name = repoName,
@@ -203,9 +203,9 @@ namespace OctoshiftCLI.IntegrationTests
             await _bbsClient.PostAsync(url, payload);
         }
 
-        public async Task CreateBbsProject(string bbsServer, string bbsProjectKey)
+        public async Task CreateBbsProject(string bbsProjectKey)
         {
-            var url = $"{bbsServer}/rest/api/1.0/projects";
+            var url = $"{_bbsUrl}/rest/api/1.0/projects";
             var payload = new
             {
                 key = bbsProjectKey

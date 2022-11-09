@@ -12,19 +12,18 @@ namespace OctoshiftCLI.IntegrationTests;
 [Collection("Integration Tests")]
 public sealed class BbsToGithub : IDisposable
 {
-    private const string BBS_URL = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
+
     private const string SSH_KEY_FILE = "ssh_key.pem";
 
     private readonly ITestOutputHelper _output;
+    private readonly OctoLogger _logger;
     private readonly TestHelper _targetHelper;
-    private readonly TestHelper _sourceHelper;
     private readonly HttpClient _versionClient;
     private readonly HttpClient _targetGithubHttpClient;
     private readonly GithubClient _targetGithubClient;
     private readonly GithubApi _targetGithubApi;
     private readonly HttpClient _sourceBbsHttpClient;
     private readonly BbsClient _sourceBbsClient;
-    private readonly BbsApi _sourceBbsApi;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
@@ -34,7 +33,7 @@ public sealed class BbsToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
-        var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
+        _logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
@@ -54,39 +53,41 @@ public sealed class BbsToGithub : IDisposable
         _versionClient = new HttpClient();
 
         _sourceBbsHttpClient = new HttpClient();
-        _sourceBbsClient = new BbsClient(logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), sourceBbsUsername, sourceBbsPassword);
-        _sourceBbsApi = new BbsApi(_sourceBbsClient, BBS_URL, logger);
+        _sourceBbsClient = new BbsClient(_logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), sourceBbsUsername, sourceBbsPassword);
 
         _targetGithubHttpClient = new HttpClient();
-        _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger));
+        _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger));
 
         _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
 
-        _sourceHelper = new TestHelper(_output, _sourceBbsApi, _sourceBbsClient, BBS_URL);
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
     [Fact]
-    public async Task Basic()
+    public async Task Basic_Version_8_5_0()
     {
+        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
 
+        var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
+        var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
+
         await _targetHelper.ResetBlobContainers();
-        await _sourceHelper.ResetBbsTestEnvironment(BBS_URL, bbsProjectKey);
+        await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
         await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-        await _sourceHelper.CreateBbsProject(BBS_URL, bbsProjectKey);
-        await _sourceHelper.CreateBbsRepo(BBS_URL, bbsProjectKey, "repo-1");
-        _sourceHelper.InitializeBbsRepo(BBS_URL, bbsProjectKey, "repo-1");
-        await _sourceHelper.CreateBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
-        _sourceHelper.InitializeBbsRepo(BBS_URL, bbsProjectKey, "repo-2");
+        await sourceHelper.CreateBbsProject(bbsProjectKey);
+        await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
+        sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
+        await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
+        sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {BBS_URL} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
