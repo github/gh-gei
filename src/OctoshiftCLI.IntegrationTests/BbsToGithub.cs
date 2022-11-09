@@ -70,7 +70,7 @@ public sealed class BbsToGithub : IDisposable
     [Fact]
     public async Task Basic()
     {
-        var bbsProjectKey = "E2E-L";
+        var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";

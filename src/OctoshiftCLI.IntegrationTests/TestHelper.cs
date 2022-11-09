@@ -103,16 +103,26 @@ namespace OctoshiftCLI.IntegrationTests
 
             await retryPolicy.Retry(async () =>
             {
-                var bbsRepos = (await _bbsApi.GetRepos(bbsProjectKey)).Select(x => x.Slug);
-
-                foreach (var repo in bbsRepos)
+                if (await DoesBbsProjectExist(bbsProjectKey))
                 {
-                    _output.WriteLine($"Deleting BBS repo: {bbsProjectKey}\\{repo}...");
-                    await DeleteBbsRepo(bbsServer, bbsProjectKey, repo);
-                }
+                    var bbsRepos = (await _bbsApi.GetRepos(bbsProjectKey)).Select(x => x.Slug);
 
-                await DeleteBbsProject(bbsServer, bbsProjectKey);
+                    foreach (var repo in bbsRepos)
+                    {
+                        _output.WriteLine($"Deleting BBS repo: {bbsProjectKey}\\{repo}...");
+                        await DeleteBbsRepo(bbsServer, bbsProjectKey, repo);
+                    }
+
+                    await DeleteBbsProject(bbsServer, bbsProjectKey);
+                }
             });
+        }
+
+        private async Task<bool> DoesBbsProjectExist(string bbsProjectKey)
+        {
+            var bbsProjects = await _bbsApi.GetProjects();
+
+            return bbsProjects.Any(x => x.Key == bbsProjectKey);
         }
 
         private async Task DeleteBbsRepo(string bbsServer, string bbsProjectKey, string slug)
@@ -167,7 +177,7 @@ namespace OctoshiftCLI.IntegrationTests
             repo.Index.Add("README.md");
             repo.Index.Write();
             var author = new Signature("Octoshift", "octoshift@github.com", DateTime.Now);
-            var commit = repo.Commit("Here's a commit i made!", author, author);
+            repo.Commit("Here's a commit i made!", author, author);
             var origin = repo.Network.Remotes.Add("origin", $"{bbsServer}/scm/{bbsProjectKey}/{repoName}.git");
             var options = new PushOptions
             {
