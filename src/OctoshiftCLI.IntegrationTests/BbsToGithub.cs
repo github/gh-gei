@@ -64,10 +64,10 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    [Fact]
-    public async Task Basic_Version_8_5_0()
+    [Theory]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
+    public async Task Basic(string bbsServer)
     {
-        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";

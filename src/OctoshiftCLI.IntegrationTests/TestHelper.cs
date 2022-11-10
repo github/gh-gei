@@ -171,6 +171,8 @@ namespace OctoshiftCLI.IntegrationTests
             var repoPath = Path.Combine(Path.GetTempPath(), repoName);
             Directory.CreateDirectory(repoPath);
 
+            Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:./runtimes/ubuntu.18.04-x64/native");
+
             Repository.Init(repoPath);
             using var repo = new Repository(repoPath);
             File.WriteAllText(Path.Join(repo.Info.WorkingDirectory, "README.md"), "# Test Repo");
