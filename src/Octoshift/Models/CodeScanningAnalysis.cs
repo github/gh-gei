@@ -29,7 +29,7 @@ namespace Octoshift.Models
         public string Name { get; set; }
 #pragma warning disable CA1720
         public string Guid { get; set; }
-#pragma warning enable CA1720
+#pragma warning restore CA1720
         public string Version { get; set; }
     }
 
