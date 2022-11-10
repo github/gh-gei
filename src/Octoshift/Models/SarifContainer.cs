@@ -2,7 +2,7 @@ namespace Octoshift.Models;
 
 public class SarifContainer
 {
-    public string sarif { get; set; }
+    public string Sarif { get; set; }
 
     public string Ref { get; set; }
 

@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Octoshift.Models;
 
 // These models only contains the fields relevant for the current GHAS Migration Tasks.

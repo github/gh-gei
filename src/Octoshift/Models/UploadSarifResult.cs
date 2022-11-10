@@ -2,6 +2,6 @@ namespace Octoshift.Models;
 
 public class UploadSarifResult
 {
-    public string id { get; set; }
-    public string url { get; set; }
+    public string Id { get; set; }
+    public string Url { get; set; }
 }

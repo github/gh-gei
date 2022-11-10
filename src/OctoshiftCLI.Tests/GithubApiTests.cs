@@ -2552,10 +2552,10 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
-        
-        
-          [Fact]
-        public async Task getDefaultBranch_returns_default_branch_field()
+
+
+        [Fact]
+        public async Task GetDefaultBranch_Returns_Default_Branch_Field()
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
 
@@ -2694,7 +2694,7 @@ namespace OctoshiftCLI.Tests
 
 
         [Fact]
-        public async Task GetCodeScanningAnalysisData_passes_filtered_branch_as_queryString()
+        public async Task GetCodeScanningAnalysisData_Passes_Filtered_Branch_As_QueryString()
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
 
@@ -2722,7 +2722,7 @@ namespace OctoshiftCLI.Tests
                 }}
             ";
 
-            var responsePage1 = $@"[ { codeQLCodeScanning1 } ] ";
+            var responsePage1 = $@"[ {codeQLCodeScanning1} ] ";
             async IAsyncEnumerable<JToken> GetAllPages()
             {
                 var jArrayPage1 = JArray.Parse(responsePage1);
@@ -2981,7 +2981,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetCodeScanningAlertsData_passes_branch_as_query()
+        public async Task GetCodeScanningAlertsData_Passes_Branch_As_Query()
         {
             var emptyResult = Array.Empty<JToken>();
             const string url =
@@ -3004,7 +3004,7 @@ namespace OctoshiftCLI.Tests
                 actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
                 actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
                 actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
-                var resolvedByLogin = (string)expectedData["dismissed_by"]["login"]; 
+                var resolvedByLogin = (string)expectedData["dismissed_by"]["login"];
                 actual.DismissedByLogin.Should().Be(resolvedByLogin);
             }
             else
@@ -3015,7 +3015,7 @@ namespace OctoshiftCLI.Tests
                 actual.DismissedByLogin.Should().BeNull();
             }
 
-            if(expectedData["fixed_at"].Any())
+            if (expectedData["fixed_at"].Any())
             {
                 actual.FixedAt.Should().Be((string)expectedData["fixed_at"]);
             }
@@ -3035,7 +3035,7 @@ namespace OctoshiftCLI.Tests
             actual.Instance.Location.EndColumn.Should().Be((int)expectedData["most_recent_instance"]["location"]["end_column"]);
         }
 
-         [Fact]
+        [Fact]
         public async Task UpdateCodeScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
         {
             // Arrange
@@ -3111,10 +3111,13 @@ namespace OctoshiftCLI.Tests
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
             var sarifContainer = new SarifContainer()
             {
-                Ref = "refs/heads/main", CommitSha = "fake_commit_sha", sarif = "fake_gzip_sarif"
+                Ref = "refs/heads/main",
+                CommitSha = "fake_commit_sha",
+                sarif = "fake_gzip_sarif"
             };
 
-            var expectedPayload = new {
+            var expectedPayload = new
+            {
                 commit_sha = sarifContainer.CommitSha,
                 sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
                 @ref = sarifContainer.Ref

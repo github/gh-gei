@@ -22,7 +22,7 @@ public class CodeScanningAlertServiceFactory
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public virtual CodeScanningAlertService 
+    public virtual CodeScanningAlertService
         Create(string sourceApi, string sourceToken, string targetApi, string targetToken, bool sourceApiNoSsl = false)
     {
         sourceToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();

@@ -730,8 +730,8 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-        
-        
+
+
         public virtual async Task<IEnumerable<CodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo, string branch = null)
         {
             var queryString = "per_page=100&sort=created&direction=asc";
@@ -760,24 +760,18 @@ namespace OctoshiftCLI
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
 
-            object payload;
-            if (state == "open")
-            {
-                payload = new { state };
-            }
-            else
-            {
-                payload = new
+            var payload = state == "open"
+                ? (new { state })
+                : (object)(new
                 {
                     state,
                     dismissed_reason = dismissedReason,
                     dismissed_comment = dismissedComment
-                };
-            }
+                });
             await _client.PatchAsync(url, payload);
         }
-        
-        
+
+
         public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
@@ -788,13 +782,14 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> UploadSarifReport(string org, string repo, SarifContainer sarifContainer)
         {
-            if(sarifContainer == null)
+            if (sarifContainer == null)
             {
                 throw new ArgumentNullException(nameof(sarifContainer));
             }
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs";
-            var payload = new {
+            var payload = new
+            {
                 commit_sha = sarifContainer.CommitSha,
                 sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
                 @ref = sarifContainer.Ref
@@ -811,7 +806,7 @@ namespace OctoshiftCLI
 
             return (string)data["default_branch"];
         }
-        
+
         public virtual async Task<IEnumerable<CodeScanningAlert>> GetCodeScanningAlertsForRepository(string org, string repo, string branch = null)
         {
             var queryString = "per_page=100&sort=created&direction=asc";
@@ -824,7 +819,7 @@ namespace OctoshiftCLI
                 .Select(BuildCodeScanningAlert)
                 .ToListAsync();
         }
-        
+
         private static object GetMannequinsPayload(string orgId)
         {
             var query = "query($id: ID!, $first: Int, $after: String)";
@@ -880,7 +875,7 @@ namespace OctoshiftCLI
                 throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
             }
         }
-        
+
 
         private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
             new()
@@ -902,9 +897,9 @@ namespace OctoshiftCLI
                 EndColumn = (int)alertLocation["details"]["end_column"],
                 BlobSha = (string)alertLocation["details"]["blob_sha"],
             };
-        
+
         private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
-            new() 
+            new()
             {
                 Id = (int)codescan["id"],
                 SarifId = (string)codescan["sarif_id"],
@@ -934,7 +929,7 @@ namespace OctoshiftCLI
         private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>
 
             new()
-            { 
+            {
                 Number = (int)scanningAlert["number"],
                 FixedAt = scanningAlert["fixed_at"].Any() ? (string)scanningAlert["fixed_at"] : null,
                 Url = (string)scanningAlert["url"],

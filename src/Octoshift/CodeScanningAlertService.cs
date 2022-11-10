@@ -21,7 +21,7 @@ namespace Octoshift
             _targetGithubApi = targetGithubApi;
             _log = octoLogger;
         }
-        
+
         public virtual async Task MigrateCodeScanningAlerts(string sourceOrg, string sourceRepo, string targetOrg,
             string targetRepo, bool dryRun)
         {
@@ -63,18 +63,20 @@ namespace Octoshift
                     await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo,
                         new SarifContainer
                         {
-                            sarif = sarifReport, Ref = analysis.Ref, CommitSha = analysis.CommitSha
+                            Sarif = sarifReport,
+                            Ref = analysis.Ref,
+                            CommitSha = analysis.CommitSha
                         });
                     _log.LogInformation($"Successfully Migrated report for analysis {analysis.Id}");
                     ++successCount;
                 }
                 catch (HttpRequestException httpException)
                 {
-                    if (httpException.StatusCode.Equals(HttpStatusCode.NotFound)) 
+                    if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                      _log.LogVerbose($"No commit found on target. Skipping Analysis {analysis.Id}");  
-                    } 
-                    else 
+                        _log.LogVerbose($"No commit found on target. Skipping Analysis {analysis.Id}");
+                    }
+                    else
                     {
                         _log.LogWarning($"Http Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
                     }
@@ -85,7 +87,7 @@ namespace Octoshift
                     _log.LogWarning($"Fatal Error while uploading SARIF report for analysis {analysis.Id}: \n {exception.Message}");
                     _log.LogError(exception);
                     // Todo Maybe throw another exception here?
-                    throw exception;
+                    throw;
                 }
                 _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
             }
@@ -100,7 +102,7 @@ namespace Octoshift
             var sourceAlertTask = _sourceGithubApi.GetCodeScanningAlertsForRepository(sourceOrg, sourceRepo, branch);
 
             // no reason to call the target on a dry run - there will be no alerts 
-            var targetAlertTask = dryRun ? 
+            var targetAlertTask = dryRun ?
                 Task.FromResult(Enumerable.Empty<CodeScanningAlert>()) :
                 _targetGithubApi.GetCodeScanningAlertsForRepository(targetOrg, targetRepo, branch);
 
@@ -111,54 +113,54 @@ namespace Octoshift
                 }
             );
 
-             var sourceAlerts = sourceAlertTask.Result.ToList();
-             var targetAlerts = targetAlertTask.Result.ToList();
-             var successCount = 0;
+            var sourceAlerts = sourceAlertTask.Result.ToList();
+            var targetAlerts = targetAlertTask.Result.ToList();
+            var successCount = 0;
 
-             _log.LogInformation($"Found {sourceAlerts.Count} source and {targetAlerts.Count} target alerts. Starting migration of alert states...");
+            _log.LogInformation($"Found {sourceAlerts.Count} source and {targetAlerts.Count} target alerts. Starting migration of alert states...");
 
-             foreach (var sourceAlert in sourceAlerts)
-             {
-                 if (!CodeScanningAlerts.IsOpenOrDismissed(sourceAlert.State))
-                 {
-                     _log.LogInformation($"  skipping alert {sourceAlert.Number} ({sourceAlert.Url}) because state '{sourceAlert.State}' is not migratable.");
-                     continue;
-                 }
+            foreach (var sourceAlert in sourceAlerts)
+            {
+                if (!CodeScanningAlerts.IsOpenOrDismissed(sourceAlert.State))
+                {
+                    _log.LogInformation($"  skipping alert {sourceAlert.Number} ({sourceAlert.Url}) because state '{sourceAlert.State}' is not migratable.");
+                    continue;
+                }
 
-                 if (dryRun)
-                 {
-                     _log.LogInformation($"  running in dry-run mode. Would have tried to find target alert for {sourceAlert.Number} ({sourceAlert.Url}) and set state '{sourceAlert.State}'");
-                     successCount++;
-                     continue;
-                 }
+                if (dryRun)
+                {
+                    _log.LogInformation($"  running in dry-run mode. Would have tried to find target alert for {sourceAlert.Number} ({sourceAlert.Url}) and set state '{sourceAlert.State}'");
+                    successCount++;
+                    continue;
+                }
 
 
-                 var matchingTargetAlert = targetAlerts.Find(targetAlert => areAlertsEqual(sourceAlert, targetAlert));
+                var matchingTargetAlert = targetAlerts.Find(targetAlert => areAlertsEqual(sourceAlert, targetAlert));
 
-                 if (matchingTargetAlert == null)
-                 {
-                     _log.LogWarning($"Could not find target alert for {sourceAlert.Number} ({sourceAlert.Url})");
-                     continue;
-                 }
+                if (matchingTargetAlert == null)
+                {
+                    _log.LogWarning($"Could not find target alert for {sourceAlert.Number} ({sourceAlert.Url})");
+                    continue;
+                }
 
-                 // Todo: Add this to a queue to parallelize alert updates
-                 _log.LogVerbose($"Setting Status ${sourceAlert.State} for target alert ${matchingTargetAlert.Number} (${matchingTargetAlert.Url})");
-                 await _targetGithubApi.UpdateCodeScanningAlert(
-                     targetOrg, 
-                     targetRepo, 
-                     matchingTargetAlert.Number, 
-                     sourceAlert.State, 
-                     sourceAlert.DismissedReason, 
-                     sourceAlert.DismissedComment
-                     );
-                 successCount++;
-             }
+                // Todo: Add this to a queue to parallelize alert updates
+                _log.LogVerbose($"Setting Status ${sourceAlert.State} for target alert ${matchingTargetAlert.Number} (${matchingTargetAlert.Url})");
+                await _targetGithubApi.UpdateCodeScanningAlert(
+                    targetOrg,
+                    targetRepo,
+                    matchingTargetAlert.Number,
+                    sourceAlert.State,
+                    sourceAlert.DismissedReason,
+                    sourceAlert.DismissedComment
+                    );
+                successCount++;
+            }
 
-             _log.LogInformation($"Code Scanning Alerts done!\nSuccess-Count: {successCount}/ {sourceAlerts.Count} migrated!");
+            _log.LogInformation($"Code Scanning Alerts done!\nSuccess-Count: {successCount}/ {sourceAlerts.Count} migrated!");
 
         }
 
-        private Boolean areAlertsEqual(CodeScanningAlert sourceAlert, CodeScanningAlert targetAlert)
+        private bool AreAlertsEqual(CodeScanningAlert sourceAlert, CodeScanningAlert targetAlert)
         {
             return sourceAlert.RuleId == targetAlert.RuleId
                    && sourceAlert.Instance.Ref == targetAlert.Instance.Ref
