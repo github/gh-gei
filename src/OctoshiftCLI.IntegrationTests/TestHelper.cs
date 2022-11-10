@@ -69,26 +69,21 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetAdoTestEnvironment(string adoOrg)
         {
-            var retryPolicy = new RetryPolicy(null);
+            var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
 
-            await retryPolicy.Retry(async () =>
+            _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
+
+            foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
             {
-                var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
+                _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
+                var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
+                var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
 
-                _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
-
-                foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
+                while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
                 {
-                    _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
-                    var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
-                    var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
-
-                    while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
-                    {
-                        await Task.Delay(1000);
-                    }
+                    await Task.Delay(1000);
                 }
-            });
+            }
         }
 
         public async Task CreateGithubRepo(string githubOrg, string repo)
@@ -141,29 +136,24 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetGithubTestEnvironment(string githubOrg)
         {
-            var retryPolicy = new RetryPolicy(null);
+            var githubRepos = await _githubApi.GetRepos(githubOrg);
 
-            await retryPolicy.Retry(async () =>
+            foreach (var repo in githubRepos)
             {
-                var githubRepos = await _githubApi.GetRepos(githubOrg);
+                _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
+                DeleteMigrationLog(githubOrg, repo);
 
-                foreach (var repo in githubRepos)
-                {
-                    _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
-                    DeleteMigrationLog(githubOrg, repo);
+                _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
+                await _githubApi.DeleteRepo(githubOrg, repo);
+            }
 
-                    _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                    await _githubApi.DeleteRepo(githubOrg, repo);
-                }
+            var githubTeams = await GetTeamSlugs(githubOrg);
 
-                var githubTeams = await GetTeamSlugs(githubOrg);
-
-                foreach (var teamSlug in githubTeams)
-                {
-                    _output.WriteLine($"Deleting GitHub team: {teamSlug}");
-                    await DeleteTeam(githubOrg, teamSlug);
-                }
-            });
+            foreach (var teamSlug in githubTeams)
+            {
+                _output.WriteLine($"Deleting GitHub team: {teamSlug}");
+                await DeleteTeam(githubOrg, teamSlug);
+            }
         }
 
         public void InitializeBbsRepo(string bbsProjectKey, string repoName)
