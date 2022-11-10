@@ -113,7 +113,7 @@ public class GenerateScriptCommandArgs
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
-    public string BbsProjectkey { get; set; }
+    public string BbsProjectKey { get; set; }
     public string BbsSharedHome { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
