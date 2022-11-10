@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
@@ -729,6 +730,101 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
+        
+        
+        public virtual async Task<IEnumerable<CodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo, string branch = null)
+        {
+            var queryString = "per_page=100&sort=created&direction=asc";
+            if (!branch.IsNullOrWhiteSpace())
+            {
+                queryString += $"&ref={branch}";
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?{queryString}";
+            return await _client.GetAllAsync(url)
+                .Select(codescan => BuildCodeScanningAnalysis(codescan))
+                .ToListAsync();
+        }
+
+        public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
+        {
+            if (!CodeScanningAlerts.IsOpenOrDismissed(state))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(state)}");
+            }
+
+            if (CodeScanningAlerts.IsDismissed(state) && !CodeScanningAlerts.IsValidDismissedReason(dismissedReason))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
+
+            object payload;
+            if (state == "open")
+            {
+                payload = new { state };
+            }
+            else
+            {
+                payload = new
+                {
+                    state,
+                    dismissed_reason = dismissedReason,
+                    dismissed_comment = dismissedComment
+                };
+            }
+            await _client.PatchAsync(url, payload);
+        }
+        
+        
+        public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
+            // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
+            Dictionary<string, string> headers = new() { { "accept", "application/sarif+json" } };
+            return await _client.GetAsync(url, headers);
+        }
+
+        public virtual async Task<string> UploadSarifReport(string org, string repo, SarifContainer sarifContainer)
+        {
+            if(sarifContainer == null)
+            {
+                throw new ArgumentNullException(nameof(sarifContainer));
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs";
+            var payload = new {
+                commit_sha = sarifContainer.CommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
+                @ref = sarifContainer.Ref
+            };
+            return await _client.PostAsync(url, payload);
+        }
+
+        public virtual async Task<string> GetDefaultBranch(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["default_branch"];
+        }
+        
+        public virtual async Task<IEnumerable<CodeScanningAlert>> GetCodeScanningAlertsForRepository(string org, string repo, string branch = null)
+        {
+            var queryString = "per_page=100&sort=created&direction=asc";
+            if (!branch.IsNullOrWhiteSpace())
+            {
+                queryString += $"&ref={branch}";
+            }
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts?{queryString}";
+            return await _client.GetAllAsync(url)
+                .Select(BuildCodeScanningAlert)
+                .ToListAsync();
+        }
+        
         private static object GetMannequinsPayload(string orgId)
         {
             var query = "query($id: ID!, $first: Int, $after: String)";
@@ -784,6 +880,7 @@ namespace OctoshiftCLI
                 throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
             }
         }
+        
 
         private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
             new()
@@ -804,6 +901,64 @@ namespace OctoshiftCLI
                 StartColumn = (int)alertLocation["details"]["start_column"],
                 EndColumn = (int)alertLocation["details"]["end_column"],
                 BlobSha = (string)alertLocation["details"]["blob_sha"],
+            };
+        
+        private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
+            new() 
+            {
+                Id = (int)codescan["id"],
+                SarifId = (string)codescan["sarif_id"],
+                CommitSha = (string)codescan["commit_sha"],
+                Ref = (string)codescan["ref"],
+                AnalysisKey = (string)codescan["analysis_key"],
+                Error = (string)codescan["error"],
+                Warning = (string)codescan["warning"],
+                Url = (string)codescan["url"],
+                CreatedAt = (string)codescan["created_at"],
+                ResultsCount = (int)codescan["results_count"],
+                RulesCount = (int)codescan["rules_count"],
+                Deletable = (bool)codescan["deletable"],
+                Environment = codescan["environment"].Any()
+                    ? new CodeScanningEnvironment { Language = (string)codescan["environment"]["language"] }
+                    : null,
+                Tool = codescan["tool"].Any()
+                    ? new CodeScanningTool
+                    {
+                        Name = (string)codescan["tool"]["name"],
+                        Guid = (string)codescan["tool"]["guid"],
+                        Version = (string)codescan["tool"]["version"]
+                    }
+                    : null,
+            };
+
+        private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>
+
+            new()
+            { 
+                Number = (int)scanningAlert["number"],
+                FixedAt = scanningAlert["fixed_at"].Any() ? (string)scanningAlert["fixed_at"] : null,
+                Url = (string)scanningAlert["url"],
+                DismissedAt = scanningAlert.Value<string>("dismissed_at"),
+                DismissedComment = scanningAlert.Value<string>("dismissed_comment"),
+                DismissedReason = scanningAlert.Value<string>("dismissed_reason"),
+                DismissedByLogin = scanningAlert["dismissed_by"].Any() ? (string)scanningAlert["dismissed_by"]["login"] : null,
+                State = (string)scanningAlert["state"],
+                RuleId = (string)scanningAlert["rule"]["id"],
+                Instance = new CodeScanningAlertInstance
+                {
+                    Ref = (string)scanningAlert["most_recent_instance"]["ref"],
+                    State = (string)scanningAlert["most_recent_instance"]["state"],
+                    AnalysisKey = (string)scanningAlert["most_recent_instance"]["analysis_key"],
+                    CommitSha = (string)scanningAlert["most_recent_instance"]["commit_sha"],
+                    Location = new CodeScanningAlertLocation
+                    {
+                        Path = (string)scanningAlert["most_recent_instance"]["location"]["path"],
+                        StartLine = (int)scanningAlert["most_recent_instance"]["location"]["start_line"],
+                        EndLine = (int)scanningAlert["most_recent_instance"]["location"]["end_line"],
+                        StartColumn = (int)scanningAlert["most_recent_instance"]["location"]["start_column"],
+                        EndColumn = (int)scanningAlert["most_recent_instance"]["location"]["end_column"],
+                    }
+                }
             };
     }
 }

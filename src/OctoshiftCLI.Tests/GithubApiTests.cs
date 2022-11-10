@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
@@ -2551,7 +2552,580 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
+        
+        
+          [Fact]
+        public async Task getDefaultBranch_returns_default_branch_field()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
 
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync("{ \"default_branch\": \"main\" }");
+
+            var result = await _githubApi.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO);
+
+            result.Should().Be("main");
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAnalysisData()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
+
+            var tfsecCodeScanning = $@"
+                {{
+                    ""ref"": ""refs/heads/sg-tfsec-test"",
+                    ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
+                    ""analysis_key"": "".github/workflows/tfsec.yml:tfsec"",
+                    ""environment"": ""{{}}"",
+                    ""category"": "".github/workflows/tfsec.yml:tfsec"",
+                    ""error"": """",
+                    ""created_at"": ""2022-08-08T19:00:18Z"",
+                    ""results_count"": 0,
+                    ""rules_count"": 0,
+                    ""id"": 38200197,
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38200197"",
+                    ""sarif_id"": ""57d59784-174c-11ed-9b6f-f4a3e9f6301b"",
+                    ""tool"": {{
+                        ""name"": ""tfsec"",
+                        ""guid"": null,
+                        ""version"": null
+                    }},
+                    ""deletable"": true,
+                    ""warning"": """"
+                }}
+            ";
+
+            var codeQLCodeScanning1 = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
+                    ""environment"": ""{{\""language\"":\""javascript\""}}"",
+                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
+                    ""error"": """",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""results_count"": 956,
+                    ""rules_count"": 202,
+                    ""id"": 38026365,
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38026365"",
+                    ""sarif_id"": ""a5b745ee-15bf-11ed-9399-5b06f5cd9458"",
+                    ""tool"": {{
+                        ""name"": ""CodeQL"",
+                        ""guid"": null,
+                        ""version"": ""2.10.1""
+                    }},
+                    ""deletable"": true,
+                    ""warning"": """"
+                }}
+            ";
+
+            var codeQLCodeScanning2 = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
+                    ""environment"": ""{{\""language\"":\""java\""}}"",
+                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
+                    ""error"": """",
+                    ""created_at"": ""2022-08-06T19:30:25Z"",
+                    ""results_count"": 116,
+                    ""rules_count"": 200,
+                    ""id"": 38025984,
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38025984"",
+                    ""sarif_id"": ""37e07636-15be-11ed-8a01-f4546b5d2175"",
+                    ""tool"": {{
+                        ""name"": ""CodeQL"",
+                        ""guid"": null,
+                        ""version"": ""2.10.1""
+                    }},
+                    ""deletable"": true,
+                    ""warning"": """"
+                }}
+            ";
+
+            var responsePage1 = $@"
+                [
+                    {tfsecCodeScanning},
+                    {codeQLCodeScanning1}
+                ]
+            ";
+
+            var responsePage2 = $@"
+                [
+                    {codeQLCodeScanning2}
+                ]
+            ";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+
+                await Task.CompletedTask;
+            }
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(GetAllPages);
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+            var scanResultsArray = scanResults.ToArray();
+
+            var expectedData = JObject.Parse(tfsecCodeScanning);
+            scanResultsArray[0].Id.Should().Be((int)expectedData["id"]);
+
+            expectedData = JObject.Parse(codeQLCodeScanning1);
+            scanResultsArray[1].Id.Should().Be((int)expectedData["id"]);
+
+            expectedData = JObject.Parse(codeQLCodeScanning2);
+            scanResultsArray[2].Id.Should().Be((int)expectedData["id"]);
+        }
+
+
+        [Fact]
+        public async Task GetCodeScanningAnalysisData_passes_filtered_branch_as_queryString()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
+
+            var codeQLCodeScanning1 = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
+                    ""environment"": ""{{\""language\"":\""javascript\""}}"",
+                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
+                    ""error"": """",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""results_count"": 956,
+                    ""rules_count"": 202,
+                    ""id"": 38026365,
+                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38026365"",
+                    ""sarif_id"": ""a5b745ee-15bf-11ed-9399-5b06f5cd9458"",
+                    ""tool"": {{
+                        ""name"": ""CodeQL"",
+                        ""guid"": null,
+                        ""version"": ""2.10.1""
+                    }},
+                    ""deletable"": true,
+                    ""warning"": """"
+                }}
+            ";
+
+            var responsePage1 = $@"[ { codeQLCodeScanning1 } ] ";
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+
+                await Task.CompletedTask;
+            }
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(GetAllPages);
+
+            await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+            _githubClientMock.Verify(m => m.GetAllAsync(url, null));
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertsData()
+        {
+            // Arrange
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts?per_page=100&sort=created&direction=asc";
+
+            var codeScanningAlert_1 = $@"
+                {{
+                    ""number"": 1,
+                    ""created_at"": ""2022-07-15T11:34:54Z"",
+                    ""updated_at"": ""2022-07-15T11:34:54Z"",
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/3"",
+                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/3"",
+                    ""state"": ""fixed"",
+                    ""fixed_at"": ""2022-07-15T11:45:20Z"",
+                    ""dismissed_by"": null,
+                    ""dismissed_at"": null,
+                    ""dismissed_reason"": null,
+                    ""dismissed_comment"": null,
+                    ""rule"": {{
+                      ""id"": ""java/zipslip"",
+                      ""severity"": ""error"",
+                      ""description"": ""Query built from user-controlled sources"",
+                      ""name"": ""java/sql-injection"",
+                      ""tags"": [
+                        ""external/cwe/cwe-089"",
+                        ""external/cwe/cwe-564"",
+                        ""security""
+                      ],
+                      ""security_severity_level"": ""high""
+                    }},
+                    ""tool"": {{
+                      ""name"": ""CodeQL"",
+                      ""guid"": null,
+                      ""version"": ""2.10.0""
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
+                      ""environment"": ""{{}}"",
+                      ""category"": "".github/workflows/code_scanning.yml:build"",
+                      ""state"": ""fixed"",
+                      ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
+                      ""message"": {{
+                        ""text"": ""Query might include code from this user input.""
+                      }},
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 161,
+                        ""end_line"": 161,
+                        ""start_column"": 51,
+                        ""end_column"": 56
+                      }},
+                      ""classifications"": []
+                    }},
+                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/3/instances""
+                  }}
+                ";
+
+            var codeScanningAlert_2 = $@"
+                {{
+                    ""number"": 2,
+                    ""created_at"": ""2022-07-15T11:34:54Z"",
+                    ""updated_at"": ""2022-08-11T10:47:37Z"",
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/2"",
+                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/2"",
+                    ""state"": ""dismissed"",
+                    ""fixed_at"": null,
+                    ""dismissed_at"": ""2022-07-25T06:09:14Z"",
+                    ""dismissed_reason"": ""won't fix"",
+                    ""dismissed_comment"": ""Comment saying why this won't be fixed."",
+                    ""dismissed_by"": {{
+                      ""login"": ""davelosert"",
+                      ""id"": 4287128,
+                      ""node_id"": ""MDQ6VXNlcjQyODcxMjg="",
+                      ""avatar_url"": ""https://avatars.githubusercontent.com/u/4287128?v=4"",
+                      ""gravatar_id"": """",
+                      ""url"": ""https://api.github.com/users/davelosert"",
+                      ""html_url"": ""https://github.com/davelosert"",
+                      ""followers_url"": ""https://api.github.com/users/davelosert/followers"",
+                      ""following_url"": ""https://api.github.com/users/davelosert/following{{/other_user}}"",
+                      ""gists_url"": ""https://api.github.com/users/davelosert/gists{{/gist_id}}"",
+                      ""starred_url"": ""https://api.github.com/users/davelosert/starred{{/owner}}{{/repo}}"",
+                      ""subscriptions_url"": ""https://api.github.com/users/davelosert/subscriptions"",
+                      ""organizations_url"": ""https://api.github.com/users/davelosert/orgs"",
+                      ""repos_url"": ""https://api.github.com/users/davelosert/repos"",
+                      ""events_url"": ""https://api.github.com/users/davelosert/events{{/privacy}}"",
+                      ""received_events_url"": ""https://api.github.com/users/davelosert/received_events"",
+                      ""type"": ""User"",
+                      ""site_admin"": true
+                    }},
+                    ""rule"": {{
+                      ""id"": ""java/sql-injection"",
+                      ""severity"": ""error"",
+                      ""description"": ""Query built from user-controlled sources"",
+                      ""name"": ""java/sql-injection"",
+                      ""tags"": [
+                        ""external/cwe/cwe-089"",
+                        ""external/cwe/cwe-564"",
+                        ""security""
+                      ],
+                      ""security_severity_level"": ""high""
+                    }},
+                    ""tool"": {{
+                      ""name"": ""CodeQL"",
+                      ""guid"": null,
+                      ""version"": ""2.10.2""
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""analysis_key"": "".github/workflows/renamed_code_scanning.yml:build"",
+                      ""environment"": ""{{}}"",
+                      ""category"": "".github/workflows/renamed_code_scanning.yml:build"",
+                      ""state"": ""dismissed"",
+                      ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
+                      ""message"": {{
+                        ""text"": ""Query might include code from this user input.""
+                      }},
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 120,
+                        ""end_line"": 120,
+                        ""start_column"": 42,
+                        ""end_column"": 47
+                      }},
+                      ""classifications"": []
+                    }},
+                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/2/instances""
+                  }}
+                ";
+
+            var codeScanningAlert_3 = $@"
+                 {{
+                    ""number"": 3,
+                    ""created_at"": ""2022-07-13T08:22:25Z"",
+                    ""updated_at"": ""2022-07-15T10:59:29Z"",
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/1"",
+                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/1"",
+                    ""state"": ""fixed"",
+                    ""fixed_at"": ""2022-07-15T11:34:54Z"",
+                    ""dismissed_by"": {{
+                      ""login"": ""davelosert"",
+                      ""id"": 4287128,
+                      ""node_id"": ""MDQ6VXNlcjQyODcxMjg="",
+                      ""avatar_url"": ""https://avatars.githubusercontent.com/u/4287128?v=4"",
+                      ""gravatar_id"": """",
+                      ""url"": ""https://api.github.com/users/davelosert"",
+                      ""html_url"": ""https://github.com/davelosert"",
+                      ""followers_url"": ""https://api.github.com/users/davelosert/followers"",
+                      ""following_url"": ""https://api.github.com/users/davelosert/following{{/other_user}}"",
+                      ""gists_url"": ""https://api.github.com/users/davelosert/gists{{/gist_id}}"",
+                      ""starred_url"": ""https://api.github.com/users/davelosert/starred{{/owner}}{{/repo}}"",
+                      ""subscriptions_url"": ""https://api.github.com/users/davelosert/subscriptions"",
+                      ""organizations_url"": ""https://api.github.com/users/davelosert/orgs"",
+                      ""repos_url"": ""https://api.github.com/users/davelosert/repos"",
+                      ""events_url"": ""https://api.github.com/users/davelosert/events{{/privacy}}"",
+                      ""received_events_url"": ""https://api.github.com/users/davelosert/received_events"",
+                      ""type"": ""User"",
+                      ""site_admin"": true
+                    }},
+                    ""dismissed_at"": ""2022-07-15T07:58:06Z"",
+                    ""dismissed_reason"": ""used in tests"",
+                    ""dismissed_comment"": ""Closed again"",
+                    ""rule"": {{
+                      ""id"": ""java/sql-injection"",
+                      ""severity"": ""error"",
+                      ""description"": ""Query built from user-controlled sources"",
+                      ""name"": ""java/sql-injection"",
+                      ""tags"": [
+                        ""external/cwe/cwe-089"",
+                        ""external/cwe/cwe-564"",
+                        ""security""
+                      ],
+                      ""security_severity_level"": ""high""
+                    }},
+                    ""tool"": {{
+                      ""name"": ""CodeQL"",
+                      ""guid"": null,
+                      ""version"": ""2.10.0""
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
+                      ""environment"": ""{{}}"",
+                      ""category"": "".github/workflows/code_scanning.yml:build"",
+                      ""state"": ""fixed"",
+                      ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
+                      ""message"": {{
+                        ""text"": ""Query might include code from this user input.""
+                      }},
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 120,
+                        ""end_line"": 120,
+                        ""start_column"": 51,
+                        ""end_column"": 56
+                      }},
+                      ""classifications"": []
+                    }},
+                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/1/instances""
+                  }}
+                ";
+
+            var responsePage1 = $@"
+                [
+                    {codeScanningAlert_1},
+                    {codeScanningAlert_2}
+                ]
+            ";
+
+            var responsePage2 = $@"
+                [
+                    {codeScanningAlert_3}
+                ]
+            ";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+
+                await Task.CompletedTask;
+            }
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(GetAllPages);
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+            var scanResultsArray = scanResults.ToArray();
+            AssertCodeScanningData(scanResultsArray[0], JObject.Parse(codeScanningAlert_1));
+            AssertCodeScanningData(scanResultsArray[1], JObject.Parse(codeScanningAlert_2));
+            AssertCodeScanningData(scanResultsArray[2], JObject.Parse(codeScanningAlert_3));
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertsData_passes_branch_as_query()
+        {
+            var emptyResult = Array.Empty<JToken>();
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts?per_page=100&sort=created&direction=asc&ref=main";
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(emptyResult.ToAsyncEnumerable());
+
+            await _githubApi.GetCodeScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+
+            _githubClientMock.VerifyAll();
+        }
+
+        private void AssertCodeScanningData(CodeScanningAlert actual, JToken expectedData)
+        {
+            actual.Number.Should().Be((int)expectedData["number"]);
+            actual.State.Should().Be((string)expectedData["state"]);
+            actual.RuleId.Should().Be((string)expectedData["rule"]["id"]);
+
+            if (!expectedData.Value<string>("dismissed_at").IsNullOrWhiteSpace())
+            {
+                actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
+                actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
+                actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
+                var resolvedByLogin = (string)expectedData["dismissed_by"]["login"]; 
+                actual.DismissedByLogin.Should().Be(resolvedByLogin);
+            }
+            else
+            {
+                actual.DismissedAt.Should().BeNull();
+                actual.DismissedReason.Should().BeNull();
+                actual.DismissedComment.Should().BeNull();
+                actual.DismissedByLogin.Should().BeNull();
+            }
+
+            if(expectedData["fixed_at"].Any())
+            {
+                actual.FixedAt.Should().Be((string)expectedData["fixed_at"]);
+            }
+            else
+            {
+                actual.FixedAt.Should().BeNull();
+            }
+
+            actual.Instance.Ref.Should().Be((string)expectedData["most_recent_instance"]["ref"]);
+            actual.Instance.AnalysisKey.Should().Be((string)expectedData["most_recent_instance"]["analysis_key"]);
+            actual.Instance.State.Should().Be((string)expectedData["most_recent_instance"]["state"]);
+            actual.Instance.CommitSha.Should().Be((string)expectedData["most_recent_instance"]["commit_sha"]);
+            actual.Instance.Location.Path.Should().Be((string)expectedData["most_recent_instance"]["location"]["path"]);
+            actual.Instance.Location.StartLine.Should().Be((int)expectedData["most_recent_instance"]["location"]["start_line"]);
+            actual.Instance.Location.EndLine.Should().Be((int)expectedData["most_recent_instance"]["location"]["end_line"]);
+            actual.Instance.Location.StartColumn.Should().Be((int)expectedData["most_recent_instance"]["location"]["start_column"]);
+            actual.Instance.Location.EndColumn.Should().Be((int)expectedData["most_recent_instance"]["location"]["end_column"]);
+        }
+
+         [Fact]
+        public async Task UpdateCodeScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
+        {
+            // Arrange
+            const int alertNumber = 2;
+            const string state = "open";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/{alertNumber}";
+            var payload = new { state };
+
+            // Act
+            await _githubApi.UpdateCodeScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task GetSarifReport_For_Third_Party_Scanning_Tool()
+        {
+            // Arrange
+            const int analysisId = 37019295;
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
+
+            var response = $@"
+            {{
+	            ""runs"": [
+		            {{
+			            ""automationDetails"": {{
+				            ""id"": "".github/workflows/semgrep-analysis.yml:semgrep/""
+			            }},
+			            ""conversion"": {{
+				            ""tool"": {{
+					            ""driver"": {{
+						            ""name"": ""GitHub Code Scanning""
+					            }}
+				            }}
+			            }},
+			            ""tool"": {{
+				            ""driver"": {{
+					            ""name"": ""Semgrep"",
+					            ""semanticVersion"": ""0.106.0""
+				            }}
+			            }},
+			            ""versionControlProvenance"": [
+				            {{
+					            ""branch"": ""refs/heads/test-enhanced-codeql-workflow"",
+					            ""repositoryUri"": ""https://github.com/octodemo/demo-vulnerabilities-ghas"",
+					            ""revisionId"": ""235f50cc268427e72ea610e75b278edf89db2857""
+				            }}
+			            ]
+		            }}
+	            ],
+	            ""$schema"": ""https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"",
+	            ""version"": ""2.1.0""
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, new Dictionary<string, string>() { { "accept", "application/sarif+json" } }))
+                .ReturnsAsync(response);
+
+            // Act
+            var result = await _githubApi.GetSarifReport(GITHUB_ORG, GITHUB_REPO, analysisId);
+
+            // Assert
+            result.Should().Match(response);
+        }
+
+        [Fact]
+        public async Task UploadSarif_Constructs_Correct_Payload()
+        {
+
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
+            var sarifContainer = new SarifContainer()
+            {
+                Ref = "refs/heads/main", CommitSha = "fake_commit_sha", sarif = "fake_gzip_sarif"
+            };
+
+            var expectedPayload = new {
+                commit_sha = sarifContainer.CommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
+                @ref = sarifContainer.Ref
+            };
+
+            // Act
+            await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarifContainer);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null));
+        }
         private string Compact(string source) =>
             source
                 .Replace("\r", "")
