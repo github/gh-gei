@@ -66,6 +66,7 @@ public sealed class BbsToGithub : IDisposable
 
     [Theory]
     [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
+    [InlineData("http://e2e-bbs-5-14-0-linux-2004.eastus.cloudapp.azure.com:7990")]
     public async Task Basic(string bbsServer)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
@@ -76,15 +77,20 @@ public sealed class BbsToGithub : IDisposable
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
 
-        await _targetHelper.ResetBlobContainers();
-        await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
-        await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+        var retryPolicy = new RetryPolicy(null);
 
-        await sourceHelper.CreateBbsProject(bbsProjectKey);
-        await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-        sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
-        await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-        sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+        await retryPolicy.Retry(async () =>
+        {
+            await _targetHelper.ResetBlobContainers();
+            await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
+            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+
+            await sourceHelper.CreateBbsProject(bbsProjectKey);
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
+            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
+            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+        });
 
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
