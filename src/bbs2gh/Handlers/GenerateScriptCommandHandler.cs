@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 

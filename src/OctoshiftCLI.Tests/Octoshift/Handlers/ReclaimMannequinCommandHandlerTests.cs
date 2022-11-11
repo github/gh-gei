@@ -4,7 +4,6 @@ using FluentAssertions;
 using Moq;
 using Octoshift;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Handlers;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;

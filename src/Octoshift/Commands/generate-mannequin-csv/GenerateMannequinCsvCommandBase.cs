@@ -3,7 +3,6 @@ using System.CommandLine;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 

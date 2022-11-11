@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;

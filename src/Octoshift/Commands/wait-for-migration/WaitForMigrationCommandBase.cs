@@ -3,7 +3,6 @@ using System.CommandLine;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 

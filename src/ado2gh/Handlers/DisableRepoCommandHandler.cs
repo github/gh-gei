@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
