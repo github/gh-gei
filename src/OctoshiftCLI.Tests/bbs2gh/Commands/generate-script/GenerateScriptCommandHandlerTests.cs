@@ -5,13 +5,12 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
-using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
 
-namespace OctoshiftCLI.Tests.bbs2gh.Handlers;
+namespace OctoshiftCLI.Tests.bbs2gh.Commands;
 
 public class GenerateScriptCommandHandlerTests
 {
