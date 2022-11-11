@@ -791,7 +791,7 @@ namespace OctoshiftCLI
             var payload = new
             {
                 commit_sha = sarifContainer.CommitSha,
-                sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
+                sarif = StringCompressor.GZipAndBase64String(sarifContainer.Sarif),
                 @ref = sarifContainer.Ref
             };
             return await _client.PostAsync(url, payload);

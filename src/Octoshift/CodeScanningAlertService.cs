@@ -135,7 +135,7 @@ namespace Octoshift
                 }
 
 
-                var matchingTargetAlert = targetAlerts.Find(targetAlert => areAlertsEqual(sourceAlert, targetAlert));
+                var matchingTargetAlert = targetAlerts.Find(targetAlert => AreAlertsEqual(sourceAlert, targetAlert));
 
                 if (matchingTargetAlert == null)
                 {

@@ -96,7 +96,7 @@ public class CodeScanningServiceTest
 
         var expectedContainer = new SarifContainer
         {
-            sarif = SarifResponse,
+            Sarif = SarifResponse,
             Ref = Ref,
             CommitSha = CommitSha
         };
@@ -155,7 +155,7 @@ public class CodeScanningServiceTest
             x => x.UploadSarifReport(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.Is<SarifContainer>(c => c.CommitSha == analysis1.CommitSha && c.Ref == Ref && c.sarif == sarifResponse1)
+                It.Is<SarifContainer>(c => c.CommitSha == analysis1.CommitSha && c.Ref == Ref && c.Sarif == sarifResponse1)
             ),
             Times.Once);
 
@@ -163,7 +163,7 @@ public class CodeScanningServiceTest
             x => x.UploadSarifReport(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.Is<SarifContainer>(c => c.CommitSha == analysis2.CommitSha && c.Ref == Ref && c.sarif == sarifResponse2)
+                It.Is<SarifContainer>(c => c.CommitSha == analysis2.CommitSha && c.Ref == Ref && c.Sarif == sarifResponse2)
             ),
             Times.Once);
 

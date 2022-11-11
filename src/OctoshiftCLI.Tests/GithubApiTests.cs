@@ -3113,13 +3113,13 @@ namespace OctoshiftCLI.Tests
             {
                 Ref = "refs/heads/main",
                 CommitSha = "fake_commit_sha",
-                sarif = "fake_gzip_sarif"
+                Sarif = "fake_gzip_sarif"
             };
 
             var expectedPayload = new
             {
                 commit_sha = sarifContainer.CommitSha,
-                sarif = StringCompressor.GZipAndBase64String(sarifContainer.sarif),
+                sarif = StringCompressor.GZipAndBase64String(sarifContainer.Sarif),
                 @ref = sarifContainer.Ref
             };
 
