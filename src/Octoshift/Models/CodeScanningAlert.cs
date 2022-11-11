@@ -11,7 +11,7 @@ public class CodeScanningAlert
     public string DismissedReason { get; set; }
     public string DismissedComment { get; set; }
     public string DismissedByLogin { get; set; }
-    public CodeScanningAlertInstance Instance { get; set; }
+    public CodeScanningAlertInstance MostRecentInstance { get; set; }
 
     public string RuleId { get; set; }
 }

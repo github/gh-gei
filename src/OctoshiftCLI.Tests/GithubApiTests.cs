@@ -3024,15 +3024,133 @@ namespace OctoshiftCLI.Tests
                 actual.FixedAt.Should().BeNull();
             }
 
-            actual.Instance.Ref.Should().Be((string)expectedData["most_recent_instance"]["ref"]);
-            actual.Instance.AnalysisKey.Should().Be((string)expectedData["most_recent_instance"]["analysis_key"]);
-            actual.Instance.State.Should().Be((string)expectedData["most_recent_instance"]["state"]);
-            actual.Instance.CommitSha.Should().Be((string)expectedData["most_recent_instance"]["commit_sha"]);
-            actual.Instance.Location.Path.Should().Be((string)expectedData["most_recent_instance"]["location"]["path"]);
-            actual.Instance.Location.StartLine.Should().Be((int)expectedData["most_recent_instance"]["location"]["start_line"]);
-            actual.Instance.Location.EndLine.Should().Be((int)expectedData["most_recent_instance"]["location"]["end_line"]);
-            actual.Instance.Location.StartColumn.Should().Be((int)expectedData["most_recent_instance"]["location"]["start_column"]);
-            actual.Instance.Location.EndColumn.Should().Be((int)expectedData["most_recent_instance"]["location"]["end_column"]);
+            AssertCodeScanningInstanceData(actual.MostRecentInstance, expectedData["most_recent_instance"]);
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertInstanceData()
+        {
+            // Arrange
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/2/instances?per_page=100";
+
+            var codeScanningAlertInstance1 = $@"
+                {{
+                  ""ref"": ""refs/heads/main"",
+                  ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
+                  ""environment"": ""{{}}"",
+                  ""category"": "".github/workflows/code_scanning.yml:build"",
+                  ""state"": ""fixed"",
+                  ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
+                  ""message"": {{
+                    ""text"": ""Query might include code from this user input.""
+                  }},
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 161,
+                    ""end_line"": 161,
+                    ""start_column"": 51,
+                    ""end_column"": 56
+                  }},
+                  ""classifications"": []
+                }}
+            ";
+
+            var codeScanningAlertInstance2 = $@"
+                {{
+                  ""ref"": ""refs/heads/main"",
+                  ""analysis_key"": "".github/workflows/renamed_code_scanning.yml:build"",
+                  ""environment"": ""{{}}"",
+                  ""category"": "".github/workflows/renamed_code_scanning.yml:build"",
+                  ""state"": ""dismissed"",
+                  ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
+                  ""message"": {{
+                    ""text"": ""Query might include code from this user input.""
+                  }},
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 120,
+                    ""end_line"": 120,
+                    ""start_column"": 42,
+                    ""end_column"": 47
+                  }},
+                  ""classifications"": []
+                }}
+            ";
+
+            var codeScanningAlertInstance3 = $@"
+                 {{
+                  ""ref"": ""refs/heads/main"",
+                  ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
+                  ""environment"": ""{{}}"",
+                  ""category"": "".github/workflows/code_scanning.yml:build"",
+                  ""state"": ""fixed"",
+                  ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
+                  ""message"": {{
+                    ""text"": ""Query might include code from this user input.""
+                  }},
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 120,
+                    ""end_line"": 120,
+                    ""start_column"": 51,
+                    ""end_column"": 56
+                  }},
+                  ""classifications"": []
+                 }}
+                ";
+
+            var responsePage1 = $@"
+                [
+                    {codeScanningAlertInstance1},
+                    {codeScanningAlertInstance2}
+                ]
+            ";
+
+            var responsePage2 = $@"
+                [
+                    {codeScanningAlertInstance3}
+                ]
+            ";
+
+            async IAsyncEnumerable<JToken> GetAllPages()
+            {
+                var jArrayPage1 = JArray.Parse(responsePage1);
+                yield return jArrayPage1[0];
+                yield return jArrayPage1[1];
+
+                var jArrayPage2 = JArray.Parse(responsePage2);
+                yield return jArrayPage2[0];
+
+                await Task.CompletedTask;
+            }
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(GetAllPages);
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAlertInstances(GITHUB_ORG, GITHUB_REPO, 2);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+            var scanResultsArray = scanResults.ToArray();
+            AssertCodeScanningInstanceData(scanResultsArray[0], JObject.Parse(codeScanningAlertInstance1));
+            AssertCodeScanningInstanceData(scanResultsArray[1], JObject.Parse(codeScanningAlertInstance2));
+            AssertCodeScanningInstanceData(scanResultsArray[2], JObject.Parse(codeScanningAlertInstance3));
+        }
+        
+        private void AssertCodeScanningInstanceData(CodeScanningAlertInstance actual, JToken expectedData)
+        {
+            actual.Ref.Should().Be((string)expectedData["ref"]);
+            actual.AnalysisKey.Should().Be((string)expectedData["analysis_key"]);
+            actual.State.Should().Be((string)expectedData["state"]);
+            actual.CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            actual.Location.Path.Should().Be((string)expectedData["location"]["path"]);
+            actual.Location.StartLine.Should().Be((int)expectedData["location"]["start_line"]);
+            actual.Location.EndLine.Should().Be((int)expectedData["location"]["end_line"]);
+            actual.Location.StartColumn.Should().Be((int)expectedData["location"]["start_column"]);
+            actual.Location.EndColumn.Should().Be((int)expectedData["location"]["end_column"]);
         }
 
         [Fact]

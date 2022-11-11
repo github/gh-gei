@@ -116,6 +116,8 @@ namespace Octoshift
             var sourceAlerts = sourceAlertTask.Result.ToList();
             var targetAlerts = targetAlertTask.Result.ToList();
             var successCount = 0;
+            var skippedCount = 0;
+            var notFoundCount = 0;
 
             _log.LogInformation($"Found {sourceAlerts.Count} source and {targetAlerts.Count} target alerts. Starting migration of alert states...");
 
@@ -124,6 +126,7 @@ namespace Octoshift
                 if (!CodeScanningAlerts.IsOpenOrDismissed(sourceAlert.State))
                 {
                     _log.LogInformation($"  skipping alert {sourceAlert.Number} ({sourceAlert.Url}) because state '{sourceAlert.State}' is not migratable.");
+                    skippedCount++;
                     continue;
                 }
 
@@ -131,19 +134,19 @@ namespace Octoshift
                 {
                     _log.LogInformation($"  running in dry-run mode. Would have tried to find target alert for {sourceAlert.Number} ({sourceAlert.Url}) and set state '{sourceAlert.State}'");
                     successCount++;
+                    // No sense in continuing here, because we don't have the target alert as it is not migrated in dryRun mode
                     continue;
                 }
 
+                var matchingTargetAlert = await FindMatchingTargetAlert(sourceOrg, sourceRepo, targetAlerts, sourceAlert);
 
-                var matchingTargetAlert = targetAlerts.Find(targetAlert => AreAlertsEqual(sourceAlert, targetAlert));
-
-                if (matchingTargetAlert == null)
+                if(matchingTargetAlert == null)
                 {
-                    _log.LogWarning($"Could not find target alert for {sourceAlert.Number} ({sourceAlert.Url})");
+                    _log.LogWarning($"  could not find target alert for {sourceAlert.Number} ({sourceAlert.Url})");
+                    notFoundCount++;
                     continue;
                 }
 
-                // Todo: Add this to a queue to parallelize alert updates
                 _log.LogVerbose($"Setting Status ${sourceAlert.State} for target alert ${matchingTargetAlert.Number} (${matchingTargetAlert.Url})");
                 await _targetGithubApi.UpdateCodeScanningAlert(
                     targetOrg,
@@ -156,20 +159,50 @@ namespace Octoshift
                 successCount++;
             }
 
-            _log.LogInformation($"Code Scanning Alerts done!\nSuccess-Count: {successCount}/ {sourceAlerts.Count} migrated!");
+            _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n {successCount} statuses successfully migrated.\n  {skippedCount} alerts skipped (Status not migratable)\n  {notFoundCount} Alerts could not be matched with an alert on the target.");
 
         }
 
-        private bool AreAlertsEqual(CodeScanningAlert sourceAlert, CodeScanningAlert targetAlert)
+        private async Task<CodeScanningAlert> FindMatchingTargetAlert(string sourceOrg, string sourceRepo, List<CodeScanningAlert> targetAlerts,
+            CodeScanningAlert sourceAlert)
         {
-            return sourceAlert.RuleId == targetAlert.RuleId
-                   && sourceAlert.Instance.Ref == targetAlert.Instance.Ref
-                   && sourceAlert.Instance.CommitSha == targetAlert.Instance.CommitSha
-                   && sourceAlert.Instance.Location.Path == targetAlert.Instance.Location.Path
-                   && sourceAlert.Instance.Location.StartLine == targetAlert.Instance.Location.StartLine
-                   && sourceAlert.Instance.Location.StartColumn == targetAlert.Instance.Location.StartColumn
-                   && sourceAlert.Instance.Location.EndLine == targetAlert.Instance.Location.EndLine
-                   && sourceAlert.Instance.Location.EndColumn == targetAlert.Instance.Location.EndColumn;
+            var targetAlertsOfSameRule =
+                targetAlerts.FindAll(targetAlert => AreAlertRulesEqual(sourceAlert, targetAlert));
+                
+            var matchingTargetAlert = targetAlertsOfSameRule.Find(targetAlert =>
+                AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
+
+            if (matchingTargetAlert != null)
+            {
+                return matchingTargetAlert;
+            }
+
+            // Most Recent Instance is not equal, so we have to match the target alert by all instances of the source
+            var allSourceInstances =
+                await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
+            matchingTargetAlert = targetAlertsOfSameRule.Find(targetAlert =>
+                allSourceInstances.Any(sourceInstance =>
+                    AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
+
+            return matchingTargetAlert;
+        }
+
+        private bool AreAlertRulesEqual(CodeScanningAlert sourceRule, CodeScanningAlert targetRule)
+        {
+            return sourceRule.RuleId == targetRule.RuleId;
+        }
+
+        private bool AreInstancesEqual(CodeScanningAlertInstance sourceInstance,
+            CodeScanningAlertInstance targetInstance)
+        {
+            return sourceInstance.Ref == targetInstance.Ref
+                   && sourceInstance.CommitSha == targetInstance.CommitSha
+                   && sourceInstance.Location.Path == targetInstance.Location.Path
+                   && sourceInstance.Location.StartLine == targetInstance.Location.StartLine
+                   && sourceInstance.Location.StartColumn == targetInstance.Location.StartColumn
+                   && sourceInstance.Location.EndLine == targetInstance.Location.EndLine
+                   && sourceInstance.Location.EndColumn == targetInstance.Location.EndColumn;
+            
         }
     }
 
