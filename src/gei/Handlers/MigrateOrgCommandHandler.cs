@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 

@@ -5,10 +5,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Commands;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;

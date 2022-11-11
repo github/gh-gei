@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Octoshift;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.Commands;
 

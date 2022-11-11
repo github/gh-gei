@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 

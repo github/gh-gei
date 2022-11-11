@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 

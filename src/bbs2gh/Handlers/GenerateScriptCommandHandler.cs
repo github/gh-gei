@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 

@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.Commands;
 
