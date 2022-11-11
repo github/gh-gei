@@ -1,5 +1,4 @@
-﻿
-namespace OctoshiftCLI.Commands;
+﻿namespace OctoshiftCLI.Commands;
 
 public class DownloadLogsCommandArgs
 {
