@@ -65,7 +65,7 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
+    //[InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
     [InlineData("http://e2e-bbs-5-14-0-linux-2004.eastus.cloudapp.azure.com:7990")]
     public async Task Basic(string bbsServer)
     {
