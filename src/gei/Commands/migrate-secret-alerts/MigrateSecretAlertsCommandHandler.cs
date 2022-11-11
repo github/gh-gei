@@ -2,9 +2,8 @@
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 public class MigrateSecretAlertsCommandHandler : ICommandHandler<MigrateSecretAlertsCommandArgs>
 {

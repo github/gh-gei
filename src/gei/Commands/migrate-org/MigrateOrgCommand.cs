@@ -3,7 +3,6 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {

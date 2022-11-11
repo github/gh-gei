@@ -8,10 +8,9 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
-namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {
