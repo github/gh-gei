@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Octoshift;
 using OctoshiftCLI.Commands;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
 public class GenerateMannequinCsvCommandHandler : ICommandHandler<GenerateMannequinCsvCommandArgs>
 {

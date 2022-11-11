@@ -1,9 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
 public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
 {

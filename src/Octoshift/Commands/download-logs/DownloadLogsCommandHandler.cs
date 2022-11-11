@@ -8,7 +8,7 @@ using Polly;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
 public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArgs>
 {

@@ -1,11 +1,10 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
 public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCommandArgs>
 {

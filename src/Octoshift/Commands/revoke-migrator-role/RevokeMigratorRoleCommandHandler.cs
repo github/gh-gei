@@ -2,20 +2,20 @@ using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
-public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRoleCommandArgs>
+public class RevokeMigratorRoleCommandHandler : ICommandHandler<RevokeMigratorRoleCommandArgs>
 {
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
 
-    public GrantMigratorRoleCommandHandler(OctoLogger log, GithubApi githubApi)
+    public RevokeMigratorRoleCommandHandler(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
         _githubApi = githubApi;
     }
 
-    public async Task Handle(GrantMigratorRoleCommandArgs args)
+    public async Task Handle(RevokeMigratorRoleCommandArgs args)
     {
         if (args is null)
         {
@@ -28,8 +28,20 @@ public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRole
         _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
         _log.LogInformation($"ACTOR: {args.Actor}");
 
+        if (args.GhesApiUrl is not null)
+        {
+            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
+        }
+
+        if (args.GithubPat is not null)
+        {
+            _log.LogInformation($"GITHUB PAT: ***");
+        }
+
         args.ActorType = args.ActorType?.ToUpper();
         _log.LogInformation($"ACTOR TYPE: {args.ActorType}");
+
+        args.ActorType = args.ActorType.ToUpper();
 
         if (args.ActorType is "TEAM" or "USER")
         {
@@ -41,28 +53,18 @@ public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRole
             return;
         }
 
-        if (args.GhesApiUrl is not null)
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-        }
-
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
         _log.RegisterSecret(args.GithubPat);
 
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
-        var success = await _githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
+        var success = await _githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
         if (success)
         {
-            _log.LogSuccess($"Migrator role successfully set for the {args.ActorType} \"{args.Actor}\"");
+            _log.LogSuccess($"Migrator role successfully revoked for the {args.ActorType} \"{args.Actor}\"");
         }
         else
         {
-            _log.LogError($"Migrator role couldn't be set for the {args.ActorType} \"{args.Actor}\"");
+            _log.LogError($"Migrator role couldn't be revoked for the {args.ActorType} \"{args.Actor}\"");
         }
     }
 }

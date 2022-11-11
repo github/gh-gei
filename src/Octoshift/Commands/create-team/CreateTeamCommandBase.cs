@@ -2,7 +2,6 @@ using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
