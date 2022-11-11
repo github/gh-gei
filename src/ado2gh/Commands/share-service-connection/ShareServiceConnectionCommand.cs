@@ -54,13 +54,4 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             return new ShareServiceConnectionCommandHandler(log, adoApi);
         }
     }
-
-    public class ShareServiceConnectionCommandArgs
-    {
-        public string AdoOrg { get; set; }
-        public string AdoTeamProject { get; set; }
-        public string ServiceConnectionId { get; set; }
-        public string AdoPat { get; set; }
-        public bool Verbose { get; set; }
-    }
 }
