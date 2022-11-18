@@ -142,7 +142,7 @@ namespace Octoshift
 
                 if(matchingTargetAlert == null)
                 {
-                    _log.LogWarning($"  could not find target alert for {sourceAlert.Number} ({sourceAlert.Url})");
+                    _log.LogWarning($"  could not find a target alert for {sourceAlert.Number} ({sourceAlert.Url}).");
                     notFoundCount++;
                     continue;
                 }
@@ -159,7 +159,7 @@ namespace Octoshift
                 successCount++;
             }
 
-            _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n {successCount} statuses successfully migrated.\n  {skippedCount} alerts skipped (Status not migratable)\n  {notFoundCount} Alerts could not be matched with an alert on the target.");
+            _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n  Success: {successCount}\n  Skipped (status not migratable): {skippedCount}\n  No matching target found (see logs): {notFoundCount}.");
 
         }
 
