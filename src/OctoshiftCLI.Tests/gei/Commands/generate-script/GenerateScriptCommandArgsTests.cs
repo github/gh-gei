@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using FluentAssertions;
-using OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.gei.CommandArgs;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
 
 public class GenerateScriptCommandArgsTests
 {

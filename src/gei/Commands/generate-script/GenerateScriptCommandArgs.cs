@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 public class GenerateScriptCommandArgs : BaseCommandArgs
 {
