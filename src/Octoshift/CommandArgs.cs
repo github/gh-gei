@@ -8,7 +8,6 @@ namespace OctoshiftCLI
 {
     public abstract class CommandArgs
     {
-        [LogName("VERBOSE")]
         public bool Verbose { get; set; }
 
         public abstract void Validate();
