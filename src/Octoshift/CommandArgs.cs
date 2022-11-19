@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI
 {
@@ -50,12 +51,10 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(log));
             }
 
-            foreach (var property in GetType().GetProperties())
+            foreach (var property in GetType().GetProperties()
+                                              .Where(p => p.HasCustomAttribute<SecretAttribute>()))
             {
-                if (property.GetCustomAttributes(typeof(SecretAttribute), true).Any())
-                {
-                    log.RegisterSecret((string)property.GetValue(this));
-                }
+                log.RegisterSecret((string)property.GetValue(this));
             }
         }
     }
