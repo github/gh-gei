@@ -26,9 +26,7 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.GithubSourcePat);
-        _log.RegisterSecret(args.GithubTargetPat);
+        _log.LogInformation("Migrating Org...");
 
         LogAndValidateOptions(args);
 
@@ -82,20 +80,8 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
 
     private void LogAndValidateOptions(MigrateOrgCommandArgs args)
     {
-        _log.LogInformation("Migrating Org...");
-        _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"GITHUB TARGET ENTERPRISE: {args.GithubTargetEnterprise}");
-
-        if (args.GithubSourcePat.HasValue())
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-
         if (args.GithubTargetPat.HasValue())
         {
-            _log.LogInformation("GITHUB TARGET PAT: ***");
-
             if (args.GithubSourcePat.IsNullOrWhiteSpace())
             {
                 args.GithubSourcePat = args.GithubTargetPat;
