@@ -10,7 +10,8 @@ namespace OctoshiftCLI
     {
         public bool Verbose { get; set; }
 
-        public abstract void Validate();
+        public virtual void Validate()
+        { }
 
         public void Log(OctoLogger log)
         {
