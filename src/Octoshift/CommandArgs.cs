@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OctoshiftCLI
 {
-    public abstract class BaseCommandArgs
+    public abstract class CommandArgs
     {
         [LogName("VERBOSE")]
         public bool Verbose { get; set; }

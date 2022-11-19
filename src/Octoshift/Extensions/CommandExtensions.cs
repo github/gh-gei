@@ -40,7 +40,7 @@ public static class CommandExtensions
     }
 
     [SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Called via reflection")]
-    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : BaseCommandArgs, new()
+    private static TCommand ConfigureCommand<TCommand, TArgs, THandler>(ServiceProvider sp) where TArgs : CommandArgs, new()
                                                                                             where TCommand : CommandBase<TArgs, THandler>, new()
                                                                                             where THandler : ICommandHandler<TArgs>
     {
@@ -50,7 +50,7 @@ public static class CommandExtensions
         return command;
     }
 
-    private static async Task RunHandler<TArgs, THandler>(TArgs args, ServiceProvider sp, CommandBase<TArgs, THandler> command) where TArgs : BaseCommandArgs
+    private static async Task RunHandler<TArgs, THandler>(TArgs args, ServiceProvider sp, CommandBase<TArgs, THandler> command) where TArgs : CommandArgs
                                                                                                                                 where THandler : ICommandHandler<TArgs>
     {
         var log = sp.GetRequiredService<OctoLogger>();

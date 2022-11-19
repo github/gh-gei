@@ -3,7 +3,7 @@ using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
-public class GenerateScriptCommandArgs : BaseCommandArgs
+public class GenerateScriptCommandArgs : CommandArgs
 {
     [LogName("GITHUB SOURCE ORG")]
     public string GithubSourceOrg { get; set; }
