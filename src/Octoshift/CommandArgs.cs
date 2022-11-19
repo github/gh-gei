@@ -45,11 +45,16 @@ namespace OctoshiftCLI
 
         public void RegisterSecrets(OctoLogger log)
         {
+            if (log is null)
+            {
+                throw new ArgumentNullException(nameof(log));
+            }
+
             foreach (var property in GetType().GetProperties())
             {
                 if (property.GetCustomAttributes(typeof(SecretAttribute), true).Any())
                 {
-                    log?.RegisterSecret((string)property.GetValue(this));
+                    log.RegisterSecret((string)property.GetValue(this));
                 }
             }
         }
