@@ -5,13 +5,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
-using OctoshiftCLI.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
-namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {

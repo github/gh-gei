@@ -5,7 +5,6 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
-using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.BbsToGithub.Services;
 using Xunit;
 

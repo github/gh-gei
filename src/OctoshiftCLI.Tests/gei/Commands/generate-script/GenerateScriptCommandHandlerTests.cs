@@ -8,8 +8,7 @@ using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands

@@ -6,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.CommandArgs;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
