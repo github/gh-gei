@@ -8,7 +8,7 @@ using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.bbs2gh.Handlers
+namespace OctoshiftCLI.Tests.bbs2gh.Commands
 {
     public class MigrateRepoCommandHandlerTests
     {
