@@ -1,4 +1,6 @@
-﻿namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+﻿using OctoshiftCLI.Extensions;
+
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
 
 public class MigrateOrgCommandArgs : CommandArgs
 {
@@ -10,4 +12,16 @@ public class MigrateOrgCommandArgs : CommandArgs
     public string GithubSourcePat { get; set; }
     [Secret]
     public string GithubTargetPat { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        if (GithubTargetPat.HasValue())
+        {
+            if (GithubSourcePat.IsNullOrWhiteSpace())
+            {
+                GithubSourcePat = GithubTargetPat;
+                log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
+            }
+        }
+    }
 }

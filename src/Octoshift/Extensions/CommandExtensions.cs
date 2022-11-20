@@ -57,7 +57,7 @@ public static class CommandExtensions
 
         args.RegisterSecrets(log);
         args.Log(log);
-        args.Validate();
+        args.Validate(log);
 
         var handler = command.BuildHandler(args, sp);
         await handler.Handle(args);

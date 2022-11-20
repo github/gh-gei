@@ -23,7 +23,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     [Secret]
     public string AdoPat { get; set; }
 
-    public override void Validate()
+    public override void Validate(OctoLogger log)
     {
         if (GithubSourceOrg.IsNullOrWhiteSpace() && AdoSourceOrg.IsNullOrWhiteSpace())
         {

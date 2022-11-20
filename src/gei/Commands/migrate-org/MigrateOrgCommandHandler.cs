@@ -28,8 +28,6 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
 
         _log.LogInformation("Migrating Org...");
 
-        LogAndValidateOptions(args);
-
         var githubEnterpriseId = await _githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
         var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
         var sourceToken = GetSourceToken(args);
@@ -39,7 +37,6 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             args.GithubTargetOrg,
             githubEnterpriseId,
             sourceToken);
-
 
         if (!args.Wait)
         {
@@ -77,16 +74,4 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
         args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
     private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}".Replace(" ", "%20");
-
-    private void LogAndValidateOptions(MigrateOrgCommandArgs args)
-    {
-        if (args.GithubTargetPat.HasValue())
-        {
-            if (args.GithubSourcePat.IsNullOrWhiteSpace())
-            {
-                args.GithubSourcePat = args.GithubTargetPat;
-                _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-            }
-        }
-    }
 }

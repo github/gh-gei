@@ -21,7 +21,7 @@ public class GenerateScriptCommandArgsTests
         };
 
         FluentActions
-            .Invoking(() => args.Validate())
+            .Invoking(() => args.Validate(null))
             .Should()
             .Throw<OctoshiftCliException>();
     }
@@ -35,7 +35,7 @@ public class GenerateScriptCommandArgsTests
         };
 
         FluentActions
-            .Invoking(() => args.Validate())
+            .Invoking(() => args.Validate(null))
             .Should()
             .Throw<OctoshiftCliException>();
     }
@@ -53,7 +53,7 @@ public class GenerateScriptCommandArgsTests
         };
 
         FluentActions
-            .Invoking(() => args.Validate())
+            .Invoking(() => args.Validate(null))
             .Should()
             .Throw<OctoshiftCliException>();
     }
@@ -71,7 +71,7 @@ public class GenerateScriptCommandArgsTests
         };
 
         FluentActions
-            .Invoking(() => args.Validate())
+            .Invoking(() => args.Validate(null))
             .Should()
             .Throw<OctoshiftCliException>();
     }
