@@ -1,1 +1,1 @@
-
+- introduced a new command `gh gei migrate-code-scanning-alerts` which migrates all code-scanning analysis and alert states for the default branch. This is useful if you want to migrate the history of code-scanning alerts together with their current state (open, reopened, fixed). For dismissed alerts, the dismissed-reason (e.g. won't fix, false positive etc) and dismissed-comment will also be migrated to the target repo. 
