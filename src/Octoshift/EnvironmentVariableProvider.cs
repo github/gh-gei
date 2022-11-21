@@ -20,41 +20,39 @@ public class EnvironmentVariableProvider
         _logger = logger;
     }
 
-    public virtual string SourceGithubPersonalAccessToken(bool throwIfNotFound = true) => GetSecret(SOURCE_GH_PAT) ?? TargetGithubPersonalAccessToken(throwIfNotFound);
+    public virtual string SourceGithubPersonalAccessToken(bool throwIfNotFound = true) =>
+        GetSecret(SOURCE_GH_PAT, false) ?? TargetGithubPersonalAccessToken(throwIfNotFound);
 
     public virtual string TargetGithubPersonalAccessToken(bool throwIfNotFound = true) =>
-        GetSecret(TARGET_GH_PAT)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{TARGET_GH_PAT} environment variable is not set.") : null);
+        GetSecret(TARGET_GH_PAT, throwIfNotFound);
 
-    public virtual string AdoPersonalAccessToken() => GetSecret(ADO_PAT);
+    public virtual string AdoPersonalAccessToken(bool throwIfNotFound) =>
+        GetSecret(ADO_PAT, throwIfNotFound);
 
     public virtual string AzureStorageConnectionString(bool throwIfNotFound) =>
-        GetSecret(AZURE_STORAGE_CONNECTION_STRING)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AZURE_STORAGE_CONNECTION_STRING} environment variable is not set.") : null);
+        GetSecret(AZURE_STORAGE_CONNECTION_STRING, throwIfNotFound);
 
     public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_SECRET_KEY)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_SECRET_KEY} environment variable is not set.") : null);
+        GetSecret(AWS_SECRET_KEY, throwIfNotFound);
 
     public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_ACCESS_KEY)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
+        GetSecret(AWS_ACCESS_KEY, throwIfNotFound);
 
     public virtual string BbsUsername(bool throwIfNotFound = true) =>
-        GetSecret(BBS_USERNAME)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{BBS_USERNAME} environment variable is not set.") : null);
+        GetSecret(BBS_USERNAME, throwIfNotFound);
 
     public virtual string BbsPassword(bool throwIfNotFound = true) =>
-        GetSecret(BBS_PASSWORD)
-        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{BBS_PASSWORD} environment variable is not set.") : null);
+        GetSecret(BBS_PASSWORD, throwIfNotFound);
 
-    private string GetSecret(string secretName)
+    private string GetSecret(string secretName, bool throwIfNotFound)
     {
         var secret = Environment.GetEnvironmentVariable(secretName);
 
         if (string.IsNullOrEmpty(secret))
         {
-            return null;
+            return throwIfNotFound
+                ? throw new OctoshiftCliException($"{secretName} environment variable is not set.")
+                : null;
         }
 
         _logger?.RegisterSecret(secret);

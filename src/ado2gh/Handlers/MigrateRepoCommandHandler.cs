@@ -53,7 +53,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
 
-        args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
+        args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken(true);
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, null);
 
