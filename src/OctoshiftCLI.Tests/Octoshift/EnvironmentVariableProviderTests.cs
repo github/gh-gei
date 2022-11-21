@@ -1,5 +1,6 @@
 using System;
 using FluentAssertions;
+using Moq;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift;
@@ -7,14 +8,22 @@ namespace OctoshiftCLI.Tests.Octoshift;
 [Collection("Environment Variables")]
 public class EnvironmentVariableProviderTests
 {
-    private const string SOURCE_GH_PAT = "SOURCE_GH_PAT";
-    private const string TARGET_GH_PAT = "TARGET_GH_PAT";
+    private const string SOURCE_GH_PAT = "GH_SOURCE_PAT";
+    private const string TARGET_GH_PAT = "GH_PAT";
+    private const string ADO_PAT = "ADO_PAT";
+    private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
+    private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
+    private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+    private const string BBS_USERNAME = "BBS_USERNAME";
+    private const string BBS_PASSWORD = "BBS_PASSWORD";
 
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly Mock<OctoLogger> _mockLogger = TestHelpers.CreateMock<OctoLogger>();
 
     public EnvironmentVariableProviderTests()
     {
-        _environmentVariableProvider = new EnvironmentVariableProvider(TestHelpers.CreateMock<OctoLogger>().Object);
+        _environmentVariableProvider = new EnvironmentVariableProvider(_mockLogger.Object);
+        ResetEnvs();
     }
 
     [Fact]
@@ -73,7 +82,7 @@ public class EnvironmentVariableProviderTests
     }
 
     [Fact]
-    public void TargetGithubPersonalAccessToken_Throws_If_Github_Source_Pat_Is_Not_Set()
+    public void TargetGithubPersonalAccessToken_Throws_If_Github_Target_Pat_Is_Not_Set()
     {
         Environment.SetEnvironmentVariable("GH_SOURCE_PAT", SOURCE_GH_PAT);
         Environment.SetEnvironmentVariable("GH_PAT", null);
@@ -81,5 +90,38 @@ public class EnvironmentVariableProviderTests
         // Act, Assert
         _environmentVariableProvider.Invoking(env => env.TargetGithubPersonalAccessToken())
             .Should().Throw<OctoshiftCliException>();
+    }
+
+    [Fact]
+    public void TargetGithubPersonalAccessToken_Registers_Github_Pat_Against_Logger()
+    {
+        // Arrange
+        var secretValue = "foo";
+        Environment.SetEnvironmentVariable(TARGET_GH_PAT, secretValue);
+
+        // Act
+        var result = _environmentVariableProvider.TargetGithubPersonalAccessToken();
+
+        // Assert
+        _mockLogger.Verify(m => m.RegisterSecret(secretValue));
+    }
+
+    [Fact]
+    public void TargetGithubPersonalAccessToken_Throws_If_Github_Pat_Is_Not_Set()
+    {
+        _environmentVariableProvider.Invoking(env => env.TargetGithubPersonalAccessToken())
+            .Should().Throw<OctoshiftCliException>();
+    }
+
+    private void ResetEnvs()
+    {
+        Environment.SetEnvironmentVariable(SOURCE_GH_PAT, null);
+        Environment.SetEnvironmentVariable(TARGET_GH_PAT, null);
+        Environment.SetEnvironmentVariable(ADO_PAT, null);
+        Environment.SetEnvironmentVariable(AZURE_STORAGE_CONNECTION_STRING, null);
+        Environment.SetEnvironmentVariable(AWS_ACCESS_KEY, null);
+        Environment.SetEnvironmentVariable(AWS_SECRET_KEY, null);
+        Environment.SetEnvironmentVariable(BBS_USERNAME, null);
+        Environment.SetEnvironmentVariable(BBS_PASSWORD, null);
     }
 }
