@@ -125,7 +125,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetSourceToken(MigrateRepoCommandArgs args) =>
         args.GithubSourceOrg.HasValue()
             ? args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken()
-            : args.AdoPat ?? _environmentVariableProvider.AdoPersonalAccessToken(true);
+            : args.AdoPat ?? _environmentVariableProvider.AdoPersonalAccessToken();
 
     private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
         args.GithubSourceOrg.HasValue()

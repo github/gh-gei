@@ -26,10 +26,10 @@ public class EnvironmentVariableProvider
     public virtual string TargetGithubPersonalAccessToken(bool throwIfNotFound = true) =>
         GetSecret(TARGET_GH_PAT, throwIfNotFound);
 
-    public virtual string AdoPersonalAccessToken(bool throwIfNotFound) =>
+    public virtual string AdoPersonalAccessToken(bool throwIfNotFound = true) =>
         GetSecret(ADO_PAT, throwIfNotFound);
 
-    public virtual string AzureStorageConnectionString(bool throwIfNotFound) =>
+    public virtual string AzureStorageConnectionString(bool throwIfNotFound = true) =>
         GetSecret(AZURE_STORAGE_CONNECTION_STRING, throwIfNotFound);
 
     public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
