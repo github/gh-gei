@@ -100,7 +100,7 @@ public class EnvironmentVariableProviderTests
         Environment.SetEnvironmentVariable(TARGET_GH_PAT, secretValue);
 
         // Act
-        var result = _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
         // Assert
         _mockLogger.Verify(m => m.RegisterSecret(secretValue));
