@@ -641,7 +641,7 @@ namespace OctoshiftCLI
 
             return response.Outcome == OutcomeType.Failure
                 ? throw new OctoshiftCliException($"Failed to retrieve the list of mannequins", response.FinalException)
-                : (IEnumerable<Mannequin>)response.Result;
+                : response.Result;
         }
 
         public virtual async Task<string> GetUserId(string login)
@@ -819,15 +819,15 @@ namespace OctoshiftCLI
                 .Select(BuildCodeScanningAlert)
                 .ToListAsync();
         }
-        
-       public virtual async Task<IEnumerable<CodeScanningAlertInstance>> GetCodeScanningAlertInstances(string org, string repo, int alertNumber)
+
+        public virtual async Task<IEnumerable<CodeScanningAlertInstance>> GetCodeScanningAlertInstances(string org, string repo, int alertNumber)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}/instances?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(BuildCodeScanningAlertInstance)
                 .ToListAsync();
         }
-       
+
         private static object GetMannequinsPayload(string orgId)
         {
             var query = "query($id: ID!, $first: Int, $after: String)";

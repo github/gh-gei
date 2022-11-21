@@ -3139,7 +3139,7 @@ namespace OctoshiftCLI.Tests
             AssertCodeScanningInstanceData(scanResultsArray[1], JObject.Parse(codeScanningAlertInstance2));
             AssertCodeScanningInstanceData(scanResultsArray[2], JObject.Parse(codeScanningAlertInstance3));
         }
-        
+
         private void AssertCodeScanningInstanceData(CodeScanningAlertInstance actual, JToken expectedData)
         {
             actual.Ref.Should().Be((string)expectedData["ref"]);

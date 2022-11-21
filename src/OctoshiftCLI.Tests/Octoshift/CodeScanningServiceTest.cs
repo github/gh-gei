@@ -29,7 +29,6 @@ public class CodeScanningServiceTest
     public async Task MigrateCodeScanningAlerts_Uses_Found_Default_Branch()
     {
         var analysisId = 123456;
-        var SarifResponse = "MOCK_SARIF_REPORT";
         var CommitSha = "TEST_COMMIT_SHA";
         var Ref = "refs/heads/main";
         var CodeScanningAnalysisResult = new CodeScanningAnalysis
@@ -504,7 +503,7 @@ public class CodeScanningServiceTest
             sourceAlert2.DismissedComment
         ), Times.Once);
     }
-    
+
     [Fact]
     public async Task MigrateAlerts_Matches_By_All_Source_Instances_If_Most_Recent_Does_Not_Match()
     {
@@ -541,7 +540,7 @@ public class CodeScanningServiceTest
                 EndColumn = 2
             }
         };
-        
+
         var postLoadedInstance2 = new CodeScanningAlertInstance
         {
             Ref = Ref,
@@ -571,7 +570,7 @@ public class CodeScanningServiceTest
 
         var targetAlert1 = new CodeScanningAlert { Number = 3, State = "open", MostRecentInstance = CopyInstance(postLoadedInstance2), RuleId = "java/rule" };
 
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert1  });
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert1 });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert1 });
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertInstances(SOURCE_ORG, SOURCE_REPO, sourceAlert1.Number).Result).Returns(new[] { postLoadedInstance1, postLoadedInstance2 });
 

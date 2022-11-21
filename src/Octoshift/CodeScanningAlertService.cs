@@ -140,7 +140,7 @@ namespace Octoshift
 
                 var matchingTargetAlert = await FindMatchingTargetAlert(sourceOrg, sourceRepo, targetAlerts, sourceAlert);
 
-                if(matchingTargetAlert == null)
+                if (matchingTargetAlert == null)
                 {
                     _log.LogWarning($"  could not find a target alert for {sourceAlert.Number} ({sourceAlert.Url}).");
                     notFoundCount++;
@@ -168,7 +168,7 @@ namespace Octoshift
         {
             var targetAlertsOfSameRule =
                 targetAlerts.FindAll(targetAlert => AreAlertRulesEqual(sourceAlert, targetAlert));
-                
+
             var matchingTargetAlert = targetAlertsOfSameRule.Find(targetAlert =>
                 AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
 
@@ -202,7 +202,7 @@ namespace Octoshift
                    && sourceInstance.Location.StartColumn == targetInstance.Location.StartColumn
                    && sourceInstance.Location.EndLine == targetInstance.Location.EndLine
                    && sourceInstance.Location.EndColumn == targetInstance.Location.EndColumn;
-            
+
         }
     }
 
