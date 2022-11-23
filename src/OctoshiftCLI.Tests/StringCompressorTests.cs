@@ -14,7 +14,7 @@ public class StringCompressorTests
         var expectedStringPattern = "H4sIAAAAAAAA(Ey|Ci|Ay)vNS87PLShKLS5OTYkvSS0uiS8uKcrMSwcAdqGS8xgAAAA=";
 
         var actualString = StringCompressor.GZipAndBase64String(uncompressed);
-        
-        Assert.Matches(expectedStringPattern ,actualString);
+
+        Assert.Matches(expectedStringPattern, actualString);
     }
 }
