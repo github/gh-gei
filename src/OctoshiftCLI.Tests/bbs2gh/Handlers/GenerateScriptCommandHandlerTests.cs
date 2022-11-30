@@ -182,7 +182,7 @@ public class GenerateScriptCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             BbsUsername = BBS_USERNAME,
             BbsPassword = BBS_PASSWORD,
-            BbsProjectkey = BBS_FOO_PROJECT_KEY,
+            BbsProjectKey = BBS_FOO_PROJECT_KEY,
             BbsSharedHome = BBS_SHARED_HOME,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
