@@ -148,7 +148,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to lookup the Organization ID for {org}", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", response.FinalException)
                 : response.Result;
         }
 
