@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
 {
-    public RevokeMigratorRoleCommand() : base() => AddOptions();
+    public RevokeMigratorRoleCommand() => AddOptions();
 }

@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
 {
-    public GrantMigratorRoleCommand() : base() => AddOptions();
+    public GrantMigratorRoleCommand() => AddOptions();
 }

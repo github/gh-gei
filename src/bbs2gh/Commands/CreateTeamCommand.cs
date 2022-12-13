@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class CreateTeamCommand : CreateTeamCommandBase
 {
-    public CreateTeamCommand() : base() => AddOptions();
+    public CreateTeamCommand() => AddOptions();
 }

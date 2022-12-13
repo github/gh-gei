@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
 {
-    public WaitForMigrationCommand() : base() => AddOptions();
+    public WaitForMigrationCommand() => AddOptions();
 }

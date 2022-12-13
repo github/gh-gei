@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
 {
-    public ReclaimMannequinCommand() : base() => AddOptions();
+    public ReclaimMannequinCommand() => AddOptions();
 }

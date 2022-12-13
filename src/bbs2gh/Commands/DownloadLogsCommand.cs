@@ -7,5 +7,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public class DownloadLogsCommand : DownloadLogsCommandBase
 {
-    public DownloadLogsCommand() : base() => AddOptions();
+    public DownloadLogsCommand() => AddOptions();
 }

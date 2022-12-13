@@ -4,5 +4,5 @@ namespace OctoshiftCLI.BbsToGithub.Commands;
 
 public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBase
 {
-    public GenerateMannequinCsvCommand() : base() => AddOptions();
+    public GenerateMannequinCsvCommand() => AddOptions();
 }
