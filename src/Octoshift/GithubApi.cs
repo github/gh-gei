@@ -173,7 +173,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to lookup the Enterprise ID '{enterpriseName}'", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Enterprise ID for enterprise '{enterpriseName}'", response.FinalException)
                 : response.Result;
         }
 
