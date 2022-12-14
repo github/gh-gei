@@ -1,1 +1,1 @@
-
+- Improved error messages for handling the result of GitHub API requests.
