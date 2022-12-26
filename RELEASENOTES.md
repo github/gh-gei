@@ -1,1 +1,2 @@
 - Improved error messages when the specified organization or enterprise cannot be found
+- Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in the output for blobs storages.
