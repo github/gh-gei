@@ -148,7 +148,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException("Failed to lookup the Organization ID", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", response.FinalException)
                 : response.Result;
         }
 
@@ -173,7 +173,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException("Failed to lookup the Enterprise ID", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Enterprise ID for enterprise '{enterpriseName}'", response.FinalException)
                 : response.Result;
         }
 
