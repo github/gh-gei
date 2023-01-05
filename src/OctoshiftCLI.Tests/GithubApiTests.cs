@@ -2552,6 +2552,61 @@ namespace OctoshiftCLI.Tests
             _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
         }
 
+        [Fact]
+        public async Task GetEnterpriseServerVersion_Returns_Null_If_Not_Enterprise_Server()
+        {
+            // Arrange
+            var url = "https://api.github.com/meta";
+            var response = $@"
+            {{
+                ""verifiable_password_authentication"": true,
+                ""packages"": [
+                ],
+                ""dependabot"": [
+                ]
+            }}
+        ";
+
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var version = await _githubApi.GetEnterpriseServerVersion();
+
+            // Assert
+            version.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetEnterpriseServerVersion_Returns_Version()
+        {
+            // Arrange
+            var url = "https://api.github.com/meta";
+            var response = $@"
+            {{
+                ""verifiable_password_authentication"": true,
+                ""packages"": [
+                ],
+                ""dependabot"": [
+                ],
+                ""installed_version"": ""3.7.0""
+            }}
+        ";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var version = await _githubApi.GetEnterpriseServerVersion();
+
+
+            // Assert
+            version.Should().Be("3.7.0");
+        }
+
         private string Compact(string source) =>
             source
                 .Replace("\r", "")

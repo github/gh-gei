@@ -729,6 +729,16 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
+        public virtual async Task<string> GetEnterpriseServerVersion()
+        {
+            var url = $"{_apiUrl}/meta";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["installed_version"];
+        }
+
         private static object GetMannequinsPayload(string orgId)
         {
             var query = "query($id: ID!, $first: Int, $after: String)";
