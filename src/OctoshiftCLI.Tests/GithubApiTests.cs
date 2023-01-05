@@ -2564,8 +2564,7 @@ namespace OctoshiftCLI.Tests
                 ],
                 ""dependabot"": [
                 ]
-            }}
-        ";
+            }}";
 
 
             _githubClientMock
