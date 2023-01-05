@@ -2600,7 +2600,6 @@ namespace OctoshiftCLI.Tests
             // Act
             var version = await _githubApi.GetEnterpriseServerVersion();
 
-
             // Assert
             version.Should().Be("3.7.0");
         }
