@@ -2591,8 +2591,7 @@ namespace OctoshiftCLI.Tests
                 ""dependabot"": [
                 ],
                 ""installed_version"": ""3.7.0""
-            }}
-        ";
+            }}";
 
             _githubClientMock
                 .Setup(m => m.GetAsync(url, null))
