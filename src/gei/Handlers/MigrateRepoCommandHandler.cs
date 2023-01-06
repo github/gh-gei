@@ -169,11 +169,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitDataArchiveId);
         _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
 
-        _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveContent = await _httpDownloadService.DownloadToBytes(gitArchiveUrl);
-
         var metadataArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, metadataArchiveId);
         _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
+        // if GetEnterpriseServerVersion is 3.8.0 or higher, we can skip downloading/uploading and return the archive urls directly
+        var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+        if (ghesVersion != null && new Version(ghesVersion) >= new Version(3, 8, 0))
+        {
+            return (gitArchiveUrl, metadataArchiveUrl);
+        }
+
+        _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
+        var gitArchiveContent = await _httpDownloadService.DownloadToBytes(gitArchiveUrl);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveContent = await _httpDownloadService.DownloadToBytes(metadataArchiveUrl);
