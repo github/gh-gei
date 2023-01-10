@@ -74,11 +74,41 @@ public sealed class GhesToGithub : IDisposable
         {
             await _targetHelper.ResetBlobContainers();
 
-            await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
-            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+            try
+            {
+                await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
+            }
+            catch (HttpRequestException)
+            {
+                // ignore
+            }
 
-            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
-            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+            try
+            {
+                await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+            }
+            catch (HttpRequestException)
+            {
+                // ignore
+            }
+
+            try
+            {
+                await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
+            }
+            catch (HttpRequestException)
+            {
+                // ignore
+            }
+
+            try
+            {
+                await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+            }
+            catch (HttpRequestException)
+            {
+                // ignore
+            }
         });
 
         await _targetHelper.RunGeiCliMigration(

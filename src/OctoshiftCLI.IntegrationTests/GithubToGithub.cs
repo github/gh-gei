@@ -68,8 +68,23 @@ namespace OctoshiftCLI.IntegrationTests
                     // ignore
                 }
 
-                await _helper.CreateGithubRepo(githubSourceOrg, repo1);
-                await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+                try
+                {
+                    await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+                }
+                catch (HttpRequestException)
+                {
+                    // ignore
+                }
+
+                try
+                {
+                    await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+                }
+                catch (HttpRequestException)
+                {
+                    // ignore
+                }
             });
 
             await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs", _tokens);
