@@ -2256,6 +2256,31 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task StartGitArchiveGeneration_Throws_Octoshift_CLI_Exception_When_Blob_Storage_Settings_Are_Not_Set()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations";
+            var payload = new
+            {
+                repositories = new[] { GITHUB_REPO },
+                exclude_metadata = true
+            };
+            var exception_message = "Before you can start a migration, you must configure blob storage settings in your management console.";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                    .ThrowsAsync(new HttpRequestException(exception_message, null, HttpStatusCode.BadGateway));
+
+            // Act
+            Func<Task> act = async () => await _githubApi.StartGitArchiveGeneration(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            await act.Should().ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage(exception_message);
+        }
+
+
+        [Fact]
         public async Task GetSecretScanningAlertsData()
         {
             // Arrange

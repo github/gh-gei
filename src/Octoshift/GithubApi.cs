@@ -580,9 +580,21 @@ namespace OctoshiftCLI
                 exclude_metadata = true
             };
 
-            var response = await _client.PostAsync(url, options);
-            var data = JObject.Parse(response);
-            return (int)data["id"];
+            try
+            {
+                var response = await _client.PostAsync(url, options);
+                var data = JObject.Parse(response);
+                return (int)data["id"];
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.Message.Contains("configure blob storage"))
+                {
+                    throw new OctoshiftCliException(ex.Message, ex);
+                }
+
+                throw;
+            }
         }
 
         public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases, bool lockSource)

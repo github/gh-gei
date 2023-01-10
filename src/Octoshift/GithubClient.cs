@@ -170,13 +170,14 @@ namespace OctoshiftCLI
             {
                 (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders);
             }
-            else if (expectedStatus == HttpStatusCode.OK)
+            else if (response.StatusCode == HttpStatusCode.OK)
             {
                 response.EnsureSuccessStatusCode();
             }
             else if (response.StatusCode != expectedStatus)
             {
-                throw new HttpRequestException($"Expected status code {expectedStatus} but got {response.StatusCode}", null, response.StatusCode);
+
+                throw new HttpRequestException(content, null, response.StatusCode);
             }
 
             return (content, headers);
