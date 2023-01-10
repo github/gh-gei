@@ -403,6 +403,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
         }
 
+        ValidateGHESOptions(args, cloudCredentialsRequired);
+    }
+
+    private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
+    {
         // GHES migration path
         if (args.GhesApiUrl.HasValue())
         {
