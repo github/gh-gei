@@ -586,14 +586,9 @@ namespace OctoshiftCLI
                 var data = JObject.Parse(response);
                 return (int)data["id"];
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException ex) when (ex.Message.Contains("configure blob storage"))
             {
-                if (ex.Message.Contains("configure blob storage"))
-                {
-                    throw new OctoshiftCliException(ex.Message, ex);
-                }
-
-                throw;
+                throw new OctoshiftCliException(ex.Message, ex);
             }
         }
 
