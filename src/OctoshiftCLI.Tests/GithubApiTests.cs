@@ -2272,10 +2272,9 @@ namespace OctoshiftCLI.Tests
                     .ThrowsAsync(new HttpRequestException(exception_message, null, HttpStatusCode.BadGateway));
 
             // Act
-            Func<Task> act = async () => await _githubApi.StartGitArchiveGeneration(GITHUB_ORG, GITHUB_REPO);
-
-            // Assert
-            await act.Should().ThrowExactlyAsync<OctoshiftCliException>()
+            await _githubApi.Invoking(api => api.StartGitArchiveGeneration(GITHUB_ORG, GITHUB_REPO))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage(exception_message);
         }
 
