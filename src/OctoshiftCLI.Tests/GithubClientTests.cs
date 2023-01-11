@@ -557,7 +557,7 @@ namespace OctoshiftCLI.Tests
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>()
-                .WithMessage(EXPECTED_RESPONSE_CONTENT);
+                .WithMessage($"GitHub API error: {EXPECTED_RESPONSE_CONTENT}");
         }
 
         [Fact]
