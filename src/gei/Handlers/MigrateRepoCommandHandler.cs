@@ -476,5 +476,5 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString
-        : _environmentVariableProvider.AzureStorageConnectionString();
+        : _environmentVariableProvider.AzureStorageConnectionString(false);
 }
