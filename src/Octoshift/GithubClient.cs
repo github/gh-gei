@@ -172,7 +172,14 @@ namespace OctoshiftCLI
             }
             else if (expectedStatus == HttpStatusCode.OK)
             {
-                response.EnsureSuccessStatusCode();
+                try
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new HttpRequestException($"GitHub API error: {content}", ex, response.StatusCode);
+                }
             }
             else if (response.StatusCode != expectedStatus)
             {
