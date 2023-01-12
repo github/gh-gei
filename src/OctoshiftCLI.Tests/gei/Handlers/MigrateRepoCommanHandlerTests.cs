@@ -714,7 +714,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 NoSslVerify = true,
                 Wait = true
             };
