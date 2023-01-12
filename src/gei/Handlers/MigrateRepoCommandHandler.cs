@@ -48,7 +48,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.RegisterSecret(args.AzureStorageConnectionString);
 
         LogOptions(args);
-        ValidateOptions(args);
+
+        var blobCredentialsRequired = await DetermineIfBlobCredentialsRequired(args);
+
+        ValidateOptions(args, blobCredentialsRequired);
 
         if (args.GhesApiUrl.HasValue())
         {
@@ -57,10 +60,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.SourceRepo,
               args.AwsBucketName,
               args.SkipReleases,
-              args.LockSourceRepo
+              args.LockSourceRepo,
+              blobCredentialsRequired
             );
 
-            _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+            if (blobCredentialsRequired)
+            {
+                _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+            }
         }
 
         var githubOrgId = await _targetGithubApi.GetOrganizationId(args.GithubTargetOrg);
@@ -155,7 +162,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string sourceRepo,
       string awsBucketName,
       bool skipReleases,
-      bool lockSourceRepo)
+      bool lockSourceRepo,
+      bool blobCredentialsRequired)
     {
         var gitDataArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
         _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
@@ -169,11 +177,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitDataArchiveId);
         _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
 
-        _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveContent = await _httpDownloadService.DownloadToBytes(gitArchiveUrl);
-
         var metadataArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, metadataArchiveId);
         _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
+        if (!blobCredentialsRequired)
+        {
+            return (gitArchiveUrl, metadataArchiveUrl);
+        }
+
+        _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
+        var gitArchiveContent = await _httpDownloadService.DownloadToBytes(gitArchiveUrl);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveContent = await _httpDownloadService.DownloadToBytes(metadataArchiveUrl);
@@ -221,6 +234,26 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
         throw new TimeoutException($"Archive generation timed out after {ARCHIVE_GENERATION_TIMEOUT_IN_HOURS} hours");
+    }
+
+    private async Task<bool> DetermineIfBlobCredentialsRequired(MigrateRepoCommandArgs args)
+    {
+        var blobCredentialsRequired = true;
+        if (args.GhesApiUrl.HasValue())
+        {
+            _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
+            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+            if (ghesVersion != null)
+            {
+                _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");
+                if (new Version(ghesVersion) >= new Version(3, 8, 0))
+                {
+                    blobCredentialsRequired = false;
+                }
+            }
+        }
+
+        return blobCredentialsRequired;
     }
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}/{repo}".Replace(" ", "%20");
@@ -328,16 +361,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.AwsAccessKey.HasValue())
         {
-            _log.LogInformation($"AWS ACCESS KEY: {args.AwsAccessKey}");
+            _log.LogInformation("AWS ACCESS KEY: ***");
         }
 
         if (args.AwsSecretKey.HasValue())
         {
-            _log.LogInformation($"AWS SECRET KEY: {args.AwsSecretKey}");
+            _log.LogInformation("AWS SECRET KEY: ***");
         }
     }
-
-    private void ValidateOptions(MigrateRepoCommandArgs args)
+    private void ValidateOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
         if (args.GithubTargetPat.HasValue() && args.GithubSourcePat.IsNullOrWhiteSpace())
         {
@@ -371,11 +403,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
         }
 
+        ValidateGHESOptions(args, cloudCredentialsRequired);
+    }
+
+    private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
+    {
         // GHES migration path
         if (args.GhesApiUrl.HasValue())
         {
             var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
             var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+
+            if (!cloudCredentialsRequired)
+            {
+                if (shouldUseAzureStorage || shouldUseAwsS3)
+                {
+                    _log.LogInformation("GHES version is 3.8.0 or later, no need to set cloud storage options here, please set in GHES admin UI.");
+                }
+                return;
+            }
 
             if (!shouldUseAzureStorage && !shouldUseAwsS3)
             {

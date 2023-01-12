@@ -530,7 +530,10 @@ namespace OctoshiftCLI.Tests
         public async Task PostAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
+            };
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -553,7 +556,8 @@ namespace OctoshiftCLI.Tests
                     return githubClient.PostAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
-                .ThrowExactlyAsync<HttpRequestException>();
+                .ThrowExactlyAsync<HttpRequestException>()
+                .WithMessage($"GitHub API error: {EXPECTED_RESPONSE_CONTENT}");
         }
 
         [Fact]
