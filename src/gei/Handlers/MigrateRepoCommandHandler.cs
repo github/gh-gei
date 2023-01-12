@@ -66,7 +66,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (blobCredentialsRequired)
             {
-                _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+                _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
         }
 
