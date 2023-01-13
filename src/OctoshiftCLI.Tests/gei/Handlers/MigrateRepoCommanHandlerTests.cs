@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using Xunit;
@@ -218,7 +217,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(migrationId);
             _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
 
-            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken()).Returns(sourceAdoPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(sourceAdoPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
             var args = new MigrateRepoCommandArgs
@@ -266,7 +265,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(migrationId);
             _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
 
-            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken()).Returns(sourceAdoPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(sourceAdoPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
             var args = new MigrateRepoCommandArgs
@@ -577,7 +576,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
-            _mockEnvironmentVariableProvider.Setup(m => m.AzureStorageConnectionString()).Returns(azureConnectionStringEnv);
+            _mockEnvironmentVariableProvider.Setup(m => m.AzureStorageConnectionString(It.IsAny<bool>())).Returns(azureConnectionStringEnv);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -773,7 +772,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             actualLogOutput.Should().NotContain("GITHUB TARGET PAT: ***");
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
-            _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+            _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()), Times.Never);
             _mockTargetGithubApi.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), null));
             _mockTargetGithubApi.Verify(m => m.StartMigration(
                 It.IsAny<string>(),

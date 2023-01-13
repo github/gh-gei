@@ -66,7 +66,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (blobCredentialsRequired)
             {
-                _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+                _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
         }
 
@@ -476,5 +476,5 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString
-        : _environmentVariableProvider.AzureStorageConnectionString();
+        : _environmentVariableProvider.AzureStorageConnectionString(false);
 }

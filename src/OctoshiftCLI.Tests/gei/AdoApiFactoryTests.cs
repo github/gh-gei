@@ -19,7 +19,7 @@ public class AdoApiFactoryTests
     public void AdoApiFactory_Should_Create_Ado_Api_With_Ado_Pat_From_Environment_If_Not_Provided()
     {
         // Arrange
-        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
@@ -33,14 +33,14 @@ public class AdoApiFactoryTests
         httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
         httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
+        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()));
     }
 
     [Fact]
     public void AdoApiFactory_Should_Create_Ado_Api_With_Provided_Ado_Pat()
     {
         // Arrange
-        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+        _environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(ADO_PAT);
 
         using var httpClient = new HttpClient();
 
@@ -54,6 +54,6 @@ public class AdoApiFactoryTests
         httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
         httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+        _environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()), Times.Never);
     }
 }

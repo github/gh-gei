@@ -46,7 +46,7 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
         _log.RegisterSecret(args.AdoPat);
         _log.RegisterSecret(args.GithubPat);
 
-        args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
         var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
         var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
