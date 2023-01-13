@@ -29,7 +29,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
             _mockEnvironmentVariableProvider
-                .Setup(m => m.AzureStorageConnectionString())
+                .Setup(m => m.AzureStorageConnectionString(It.IsAny<bool>()))
                 .Returns(_connectionString);
 
             using var httpClient = new HttpClient();
@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var _connectionString = "DefaultEndpointsProtocol=https;AccountName=fakename;AccountKey=fakeaccount+hashnumber123;EndpointSuffix=core.windows.net";
 
             _mockEnvironmentVariableProvider
-                .Setup(m => m.AzureStorageConnectionString())
+                .Setup(m => m.AzureStorageConnectionString(It.IsAny<bool>()))
                 .Returns(_connectionString);
 
             using var httpClient = new HttpClient();

@@ -1,1 +1,5 @@
+- Improve error messages when the specified target organization or enterprise cannot be found
+- Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in log output
+- Fix log o
 - introduced a new command `gh gei migrate-code-scanning-alerts` which migrates all code-scanning analysis and alert states for the default branch. This is useful if you want to migrate the history of code-scanning alerts together with their current state (open, reopened, fixed). For dismissed alerts, the dismissed-reason (e.g. won't fix, false positive etc) and dismissed-comment will also be migrated to the target repo. 
+tput so we don't say we've finished upload to Azure Blob Storage when you're actually using Amazon S3
