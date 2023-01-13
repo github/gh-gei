@@ -1,3 +1,3 @@
 - Improved error messages when the specified organization or enterprise cannot be found
 - Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in the output for blobs storages.
-- Ignore blob storage configuration for GHES 3.8.0 and later as it will now be configured in server's admin UI. 
+- Skip the upload to Azure/AWS blob storage when migrating from GHES 3.8+, as GHES will now handle putting the archives into blob storage
