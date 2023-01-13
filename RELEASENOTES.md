@@ -1,3 +1,4 @@
 - Improve error messages when the specified target organization or enterprise cannot be found
 - Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in log output
 - Fix log output so we don't say we've finished upload to Azure Blob Storage when you're actually using Amazon S3
+- Extend the validity of blob storage signed URLs so migration can still be successful even if there is a long queue of migrations
