@@ -1,3 +1,4 @@
+using System;
 namespace OctoshiftCLI.GithubEnterpriseImporter;
 
 public class AwsApiFactory
@@ -11,6 +12,10 @@ public class AwsApiFactory
 
     public virtual AwsApi Create(AWSArgs awsArgs)
     {
+        if (awsArgs is null)
+        {
+            throw new ArgumentNullException(nameof(awsArgs));
+        }
         if (string.IsNullOrEmpty(awsArgs.AwsAccessKey))
         {
             awsArgs.AwsAccessKey = _environmentVariableProvider.AwsAccessKey(false);
