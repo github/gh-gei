@@ -48,6 +48,8 @@ public class BbsClient
 
     public virtual async Task<string> PostAsync(string url, object body) => await SendAsync(HttpMethod.Post, url, body);
 
+    public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
+
     private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
     {
         _log.LogVerbose($"HTTP {httpMethod}: {url}");

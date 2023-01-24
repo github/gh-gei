@@ -68,13 +68,18 @@ public sealed class GhesToGithub : IDisposable
         const string repo1 = "repo-1";
         const string repo2 = "repo-2";
 
-        await _targetHelper.ResetBlobContainers();
+        var retryPolicy = new RetryPolicy(null);
 
-        await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
-        await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+        await retryPolicy.Retry(async () =>
+        {
+            await _targetHelper.ResetBlobContainers();
 
-        await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
-        await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+            await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
+            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+
+            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
+            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+        });
 
         await _targetHelper.RunGeiCliMigration(
             $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs", _tokens);

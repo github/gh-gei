@@ -171,7 +171,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
-        args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
 

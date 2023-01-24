@@ -239,6 +239,69 @@ public sealed class BbsClientTests : IDisposable
         _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
     }
 
+    [Fact]
+    public async Task DeleteAsync_Encodes_The_Url()
+    {
+        var handlerMock = MockHttpHandlerForDelete();
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        const string actualUrl = "http://example.com/param with space";
+        const string expectedUrl = "http://example.com/param%20with%20space";
+
+        // Act
+        await bbsClient.DeleteAsync(actualUrl);
+
+        // Assert
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Logs_The_Url()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        await bbsClient.DeleteAsync(URL);
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogVerbose($"HTTP DELETE: {URL}"), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Returns_String_Response()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        var actualContent = await bbsClient.DeleteAsync(URL);
+
+        // Assert
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Logs_The_Response_Status_Code_And_Content()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        await bbsClient.DeleteAsync(URL);
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
+    }
+
     private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
         MockHttpHandler(req => req.Method == HttpMethod.Get);
 
@@ -246,6 +309,9 @@ public sealed class BbsClientTests : IDisposable
         MockHttpHandler(req =>
             req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
             && req.Method == HttpMethod.Post);
+
+    private Mock<HttpMessageHandler> MockHttpHandlerForDelete() =>
+        MockHttpHandler(req => req.Method == HttpMethod.Delete);
 
     private Mock<HttpMessageHandler> MockHttpHandler(
         Func<HttpRequestMessage, bool> requestMatcher,

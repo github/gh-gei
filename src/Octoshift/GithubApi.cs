@@ -148,7 +148,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException("Failed to lookup the Organization ID", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", response.FinalException)
                 : response.Result;
         }
 
@@ -173,7 +173,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException("Failed to lookup the Enterprise ID", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to lookup the Enterprise ID for enterprise '{enterpriseName}'", response.FinalException)
                 : response.Result;
         }
 
@@ -580,9 +580,16 @@ namespace OctoshiftCLI
                 exclude_metadata = true
             };
 
-            var response = await _client.PostAsync(url, options);
-            var data = JObject.Parse(response);
-            return (int)data["id"];
+            try
+            {
+                var response = await _client.PostAsync(url, options);
+                var data = JObject.Parse(response);
+                return (int)data["id"];
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("configure blob storage"))
+            {
+                throw new OctoshiftCliException(ex.Message, ex);
+            }
         }
 
         public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases, bool lockSource)
@@ -727,6 +734,16 @@ namespace OctoshiftCLI
 
             object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
             await _client.PatchAsync(url, payload);
+        }
+
+        public virtual async Task<string> GetEnterpriseServerVersion()
+        {
+            var url = $"{_apiUrl}/meta";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["installed_version"];
         }
 
         private static object GetMannequinsPayload(string orgId)

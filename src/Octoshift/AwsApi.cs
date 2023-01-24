@@ -10,7 +10,7 @@ namespace OctoshiftCLI;
 
 public class AwsApi : IDisposable
 {
-    private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
+    private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
     private static readonly RegionEndpoint RegionEndpoint = RegionEndpoint.USEast1;
 
     private ITransferUtility _transferUtility;

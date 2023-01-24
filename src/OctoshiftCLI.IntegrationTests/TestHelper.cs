@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using FluentAssertions;
+using LibGit2Sharp;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
 
@@ -68,26 +69,21 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task ResetAdoTestEnvironment(string adoOrg)
         {
-            var retryPolicy = new RetryPolicy(null);
+            var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
 
-            await retryPolicy.Retry(async () =>
+            _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
+
+            foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
             {
-                var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
+                _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
+                var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
+                var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
 
-                _output.WriteLine($"Found {teamProjects.Count()} Team Projects");
-
-                foreach (var teamProject in teamProjects.Where(x => x != "service-connection-project-do-not-delete"))
+                while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
                 {
-                    _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
-                    var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
-                    var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
-
-                    while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
-                    {
-                        await Task.Delay(1000);
-                    }
+                    await Task.Delay(1000);
                 }
-            });
+            }
         }
 
         public async Task CreateGithubRepo(string githubOrg, string repo)
@@ -96,31 +92,122 @@ namespace OctoshiftCLI.IntegrationTests
             await CreateRepo(githubOrg, repo, true, true);
         }
 
-        public async Task ResetGithubTestEnvironment(string githubOrg)
+        public async Task ResetBbsTestEnvironment(string bbsProjectKey)
         {
             var retryPolicy = new RetryPolicy(null);
 
             await retryPolicy.Retry(async () =>
             {
-                var githubRepos = await _githubApi.GetRepos(githubOrg);
-
-                foreach (var repo in githubRepos)
+                if (await DoesBbsProjectExist(bbsProjectKey))
                 {
-                    _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
-                    DeleteMigrationLog(githubOrg, repo);
+                    var bbsRepos = (await _bbsApi.GetRepos(bbsProjectKey)).Select(x => x.Slug);
 
-                    _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                    await _githubApi.DeleteRepo(githubOrg, repo);
-                }
+                    foreach (var repo in bbsRepos)
+                    {
+                        _output.WriteLine($"Deleting BBS repo: {bbsProjectKey}\\{repo}...");
+                        await DeleteBbsRepo(bbsProjectKey, repo);
+                    }
 
-                var githubTeams = await GetTeamSlugs(githubOrg);
-
-                foreach (var teamSlug in githubTeams)
-                {
-                    _output.WriteLine($"Deleting GitHub team: {teamSlug}");
-                    await DeleteTeam(githubOrg, teamSlug);
+                    await DeleteBbsProject(bbsProjectKey);
                 }
             });
+        }
+
+        private async Task<bool> DoesBbsProjectExist(string bbsProjectKey)
+        {
+            var bbsProjects = await _bbsApi.GetProjects();
+
+            return bbsProjects.Any(x => x.Key == bbsProjectKey);
+        }
+
+        private async Task DeleteBbsRepo(string bbsProjectKey, string slug)
+        {
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}/repos/{slug}";
+
+            await _bbsClient.DeleteAsync(url);
+        }
+
+        private async Task DeleteBbsProject(string bbsProjectKey)
+        {
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}";
+
+            await _bbsClient.DeleteAsync(url);
+        }
+
+        public async Task ResetGithubTestEnvironment(string githubOrg)
+        {
+            var githubRepos = await _githubApi.GetRepos(githubOrg);
+
+            foreach (var repo in githubRepos)
+            {
+                _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
+                DeleteMigrationLog(githubOrg, repo);
+
+                _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
+                await _githubApi.DeleteRepo(githubOrg, repo);
+            }
+
+            var githubTeams = await GetTeamSlugs(githubOrg);
+
+            foreach (var teamSlug in githubTeams)
+            {
+                _output.WriteLine($"Deleting GitHub team: {teamSlug}");
+                await DeleteTeam(githubOrg, teamSlug);
+            }
+        }
+
+        public void InitializeBbsRepo(string bbsProjectKey, string repoName)
+        {
+            var repoPath = Path.Combine(Path.GetTempPath(), repoName);
+
+            if (Directory.Exists(repoPath))
+            {
+                Directory.Delete(repoPath, true);
+            }
+
+            Directory.CreateDirectory(repoPath);
+
+            Repository.Init(repoPath);
+            using var repo = new Repository(repoPath);
+            File.WriteAllText(Path.Join(repo.Info.WorkingDirectory, "README.md"), "# Test Repo");
+            repo.Index.Add("README.md");
+            repo.Index.Write();
+            var author = new Signature("Octoshift", "octoshift@github.com", DateTime.Now);
+            repo.Commit("Here's a commit i made!", author, author);
+            var origin = repo.Network.Remotes.Add("origin", $"{_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git");
+            var options = new PushOptions
+            {
+                CredentialsProvider = (url, user, cred) => new UsernamePasswordCredentials
+                {
+                    Username = Environment.GetEnvironmentVariable("BBS_USERNAME"),
+                    Password = Environment.GetEnvironmentVariable("BBS_PASSWORD")
+                }
+            };
+            repo.Network.Push(origin, @"refs/heads/master", options);
+        }
+
+        public async Task CreateBbsRepo(string bbsProjectKey, string repoName)
+        {
+            var url = $"{_bbsUrl}/rest/api/1.0/projects/{bbsProjectKey}/repos";
+            var payload = new
+            {
+                name = repoName,
+                scmId = "git",
+                slug = repoName
+            };
+
+            await _bbsClient.PostAsync(url, payload);
+        }
+
+        public async Task CreateBbsProject(string bbsProjectKey)
+        {
+            var url = $"{_bbsUrl}/rest/api/1.0/projects";
+            var payload = new
+            {
+                key = bbsProjectKey
+            };
+
+            await _bbsClient.PostAsync(url, payload);
         }
 
         public async Task CreateTeamProject(string adoOrg, string teamProject)

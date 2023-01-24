@@ -47,11 +47,16 @@ namespace OctoshiftCLI.IntegrationTests
             var repo1 = "repo-1";
             var repo2 = "repo-2";
 
-            await _helper.ResetGithubTestEnvironment(githubSourceOrg);
-            await _helper.ResetGithubTestEnvironment(githubTargetOrg);
+            var retryPolicy = new RetryPolicy(null);
 
-            await _helper.CreateGithubRepo(githubSourceOrg, repo1);
-            await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+            await retryPolicy.Retry(async () =>
+            {
+                await _helper.ResetGithubTestEnvironment(githubSourceOrg);
+                await _helper.ResetGithubTestEnvironment(githubTargetOrg);
+
+                await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+                await _helper.CreateGithubRepo(githubSourceOrg, repo2);
+            });
 
             await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs", _tokens);
 

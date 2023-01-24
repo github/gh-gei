@@ -63,8 +63,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
-        var projects = args.BbsProjectkey.HasValue()
-            ? new List<string>() { args.BbsProjectkey }
+        var projects = args.BbsProjectKey.HasValue()
+            ? new List<string>() { args.BbsProjectKey }
             : (await _bbsApi.GetProjects()).Select(x => x.Key);
 
         foreach (var projectKey in projects)
@@ -141,9 +141,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation("BBS PASSWORD: ***");
         }
 
-        if (args.BbsProjectkey.HasValue())
+        if (args.BbsProjectKey.HasValue())
         {
-            _log.LogInformation($"BBS PROJECT KEY: {args.BbsProjectkey}");
+            _log.LogInformation($"BBS PROJECT KEY: {args.BbsProjectKey}");
         }
 
         if (args.SshUser.HasValue())

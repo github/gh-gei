@@ -88,19 +88,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
         {
-            Description = "Required if migrating from GHES. The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
+            Description = "Required if migrating from GHES (Not required for GHES 3.8.0 and later). The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
         };
         public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
         {
-            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
+            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to (Not required for GHES 3.8.0 and later)."
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable."
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable (Not required for GHES 3.8.0 and later)."
         };
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable."
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable (Not required for GHES 3.8.0 and later)."
         };
         public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
         {
@@ -178,7 +178,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
 
-                if (args.AzureStorageConnectionString.HasValue() || environmentVariableProvider.AzureStorageConnectionString().HasValue())
+                if (args.AzureStorageConnectionString.HasValue() || environmentVariableProvider.AzureStorageConnectionString(false).HasValue())
                 {
                     azureApi = args.NoSslVerify ? azureApiFactory.CreateClientNoSsl(args.AzureStorageConnectionString) : azureApiFactory.Create(args.AzureStorageConnectionString);
                 }
