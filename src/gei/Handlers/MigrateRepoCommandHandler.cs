@@ -60,7 +60,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.LockSourceRepo
             );
 
-            _log.LogInformation("Archives uploaded to Azure Blob Storage, now starting migration...");
+            _log.LogInformation("Archives uploaded to Azure Blob Storage or S3, now starting migration...");
         }
 
         var githubOrgId = await _targetGithubApi.GetOrganizationId(args.GithubTargetOrg);
@@ -328,27 +328,22 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.AwsAccessKey.HasValue())
         {
-            _log.LogInformation($"AWS ACCESS KEY: {args.AwsAccessKey}");
+            _log.LogInformation($"AWS ACCESS KEY: ***");
         }
 
         if (args.AwsSecretKey.HasValue())
         {
-            _log.LogInformation($"AWS SECRET KEY: {args.AwsSecretKey}");
+            _log.LogInformation($"AWS SECRET KEY: ***");
         }
 
         if (args.AwsSessionToken.HasValue())
         {
-            _log.LogInformation($"AWS SESSION TOKEN: {args.AwsSessionToken}");
+            _log.LogInformation($"AWS SESSION TOKEN: ***");
         }
-
+        
         if (args.AwsRegion.HasValue())
         {
             _log.LogInformation($"AWS Region: {args.AwsRegion}");
-        }
-
-        if (args.AwsS3UseSignatureVersion4.HasValue())
-        {
-            _log.LogInformation($"AWS S3 UseSignatureVersion4: {args.AwsS3UseSignatureVersion4}");
         }
     }
 
@@ -407,23 +402,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                     "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
                     "specified together.");
             }
-
-            if (shouldUseAwsS3)
-            {
-                if (!GetAwsAccessKey(args).HasValue())
-                {
-                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
-                }
-
-                if (!GetAwsSecretKey(args).HasValue())
-                {
-                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
-                }
-            }
-            else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
-            {
-                throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
-            }
+            ValidateAWSArgs(args);
         }
         else
         {
@@ -439,9 +418,36 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
+
+    private void ValidateAWSArgs(MigrateRepoCommandArgs args)
+    {
+        var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+        if (shouldUseAwsS3)
+        {
+            if (!args.AwsRegion.HasValue())
+            {
+                throw new OctoshiftCliException("--aws-region must be specified when --aws-bucket-name is specified.");
+            }
+            if (!GetAwsAccessKey(args).HasValue() && !GetAwsWebIdentityFilePath().HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable or AWS WebIdentity environment must be set.");
+            }
+            if (!GetAwsSecretKey(args).HasValue() && !GetAwsWebIdentityFilePath().HasValue())
+            {
+                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable or AWS WebIdentity environment must be set.");
+            }
+        }
+        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue() || args.AwsSessionToken.HasValue() || args.AwsRegion.HasValue())
+        {
+            throw new OctoshiftCliException("--aws-access-key, --aws-secret-key, --aws-session-token, --aws-region can only be provided with --aws-bucket-name.");
+        }
+    }
+
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
 
     private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+
+    private string GetAwsWebIdentityFilePath() => _environmentVariableProvider.AwsWebIdentityFilePath(false);
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString

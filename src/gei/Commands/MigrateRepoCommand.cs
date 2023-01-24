@@ -30,7 +30,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsSecretKey);
             AddOption(AwsSessionToken);
             AddOption(AwsRegion);
-            AddOption(AwsS3UseSignatureVersion4);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -105,16 +104,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
         {
-            Description = "If uploading to S3, the AWS session token."
+            Description = "If uploading to S3, the AWS session token. If not provided, it will read from AWS_SESSION_TOKEN environment variable."
         };
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
-            Description = "If uploading to S3, the AWS resion, Default valule is us-east-1"
+            Description = "If uploading to S3, the AWS resion."
         };
-        public Option<string> AwsS3UseSignatureVersion4 { get; } = new("--aws-s3-useSignatureVersion4")
-        {
-            Description = "If uploading to S3, configures if the S3 client should use Signature Version 4 signing with requests. Default value is False"
-        };
+
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
             Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
@@ -189,7 +185,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion, args.AwsS3UseSignatureVersion4);
+                    var awsArgs = new AWSArgs
+                    {
+                        AwsAccessKey = args.AwsAccessKey,
+                        AwsBucketName = args.AwsBucketName,
+                        AwsRegion = args.AwsRegion,
+                        AwsSecretKey = args.AwsSecretKey,
+                        AwsSessionToken = args.AwsSessionToken
+                    };
+                    awsApi = awsApiFactory.Create(awsArgs);
                 }
             }
 
@@ -214,7 +218,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsSecretKey { get; set; }
         public string AwsSessionToken { get; set; }
         public string AwsRegion { get; set; }
-        public string AwsS3UseSignatureVersion4 { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }

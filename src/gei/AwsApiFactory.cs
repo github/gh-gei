@@ -9,13 +9,25 @@ public class AwsApiFactory
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null, string awsSessionToken = null, string awsRegion = null, string awsS3UseSignatureVersion4 = null)
+    public virtual AwsApi Create(AWSArgs awsArgs)
     {
-        var accessKey = awsAccessKey ?? _environmentVariableProvider.AwsAccessKey();
-        var secretKey = awsSecretKey ?? _environmentVariableProvider.AwsSecretKey();
-        var sessionToken = awsSessionToken ?? _environmentVariableProvider.AwsSessionToken();
-        return sessionToken is null
-            ? new AwsApi(accessKey, secretKey)
-            : new AwsApi(accessKey, secretKey, sessionToken, awsRegion, awsS3UseSignatureVersion4);
+        if (string.IsNullOrEmpty(awsArgs.AwsAccessKey))
+        {
+            awsArgs.AwsAccessKey = _environmentVariableProvider.AwsAccessKey(false);
+        }
+        if (string.IsNullOrEmpty(awsArgs.AwsSecretKey))
+        {
+            awsArgs.AwsSecretKey = _environmentVariableProvider.AwsSecretKey(false);
+        }
+        if (string.IsNullOrEmpty(awsArgs.AwsSessionToken))
+        {
+            awsArgs.AwsSessionToken = _environmentVariableProvider.AwsSessionToken(false);
+        }
+        return new AwsApi(awsArgs);
+    }
+
+    public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null)
+    {
+        return new AwsApi(awsAccessKey, awsSecretKey);
     }
 }

@@ -33,6 +33,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string AWS_REGION = "aws-region";
         private const string AWS_ACCESS_KEY = "aws-access-key";
         private const string AWS_SECRET_KEY = "aws-secret-key";
 
@@ -1142,6 +1143,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var awsAccessKey = "awsAccessKey";
             var awsSecretKey = "awsSecretKey";
             var awsBucketName = "awsBucketName";
+            var awsRegion = "awsRegion";
             var archiveUrl = $"https://s3.amazonaws.com/{awsBucketName}/archive.tar";
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
@@ -1195,6 +1197,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = awsBucketName,
+                AwsRegion = awsRegion,
                 AwsAccessKey = awsAccessKey,
                 AwsSecretKey = awsSecretKey,
                 Wait = true
@@ -1224,6 +1227,25 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                AwsSecretKey = AWS_SECRET_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-region*");
+        }
+
+        [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Throws()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
@@ -1234,6 +1256,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 AwsSecretKey = AWS_SECRET_KEY
             }))
                 .Should()
@@ -1252,6 +1275,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 AwsAccessKey = AWS_ACCESS_KEY
             }))
                 .Should()

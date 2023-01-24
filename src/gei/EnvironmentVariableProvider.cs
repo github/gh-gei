@@ -11,6 +11,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
         private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
         private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
+        private const string AWS_WEB_IDENTITY_FILE_PATH = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
         private readonly OctoLogger _logger;
 
@@ -37,8 +38,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             GetSecret(AWS_ACCESS_KEY)
             ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_ACCESS_KEY} environment variable is not set.") : null);
 
-        public virtual string AwsSessionToken() =>
-            GetSecret(AWS_SESSION_TOKEN);
+        public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
+        GetSecret(AWS_SESSION_TOKEN)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_SESSION_TOKEN} environment variable is not set.") : null);
+        public virtual string AwsWebIdentityFilePath(bool throwIfNotFound = true) =>
+        GetSecret(AWS_WEB_IDENTITY_FILE_PATH)
+        ?? (throwIfNotFound ? throw new OctoshiftCliException($"{AWS_WEB_IDENTITY_FILE_PATH} environment variable is not set.") : null);
 
         private string GetSecret(string secretName)
         {
