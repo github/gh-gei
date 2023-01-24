@@ -824,6 +824,61 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         }
 
         [Fact]
+        public async Task It_Should_Not_Validate_Bbs_Username_And_Password_When_Kerberos_Is_Set()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.GetExport(It.IsAny<long>())).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                Kerberos = true
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Kerberos_Is_Set_And_Bbs_Username_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                Kerberos = true
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-username*--kerberos*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Kerberos_Is_Set_And_Bbs_Password_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsPassword = BBS_PASSWORD,
+                Kerberos = true
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-password*--kerberos*");
+        }
+
+        [Fact]
         public async Task Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Username_Is_Provided()
         {
             // Act
