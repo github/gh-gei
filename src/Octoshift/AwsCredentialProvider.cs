@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Amazon.Runtime;
 
 namespace OctoshiftCLI;
@@ -16,19 +15,18 @@ public class AwsCredentialProvider
     {
         if (string.IsNullOrEmpty(_awsArgs.AwsCredentialType)) //load credentials from provider chain
         {
-            var credentialsChain = new List<Func<AWSCredentials>>
+            AWSCredentials result = SessionCredentials();
+            if (result != null)
             {
-                SessionCredentials, BasicCredentials, WebIdentityCredentials
-            };
-            foreach (var credentials in credentialsChain)
-            {
-                AWSCredentials result = credentials();
-                if (result != null)
-                {
-                    return result;
-                }
+                return result;
             }
-            throw new OctoshiftCliException("No AWS credentials could be found");
+            result = BasicCredentials();
+            if (result != null)
+            {
+                return result;
+            }
+            result = WebIdentityCredentials();
+            return result ?? throw new OctoshiftCliException("No AWS credentials could be found");
         }
         else
         { //use specific way to load credentials
