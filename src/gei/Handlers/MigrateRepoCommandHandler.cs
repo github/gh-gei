@@ -64,12 +64,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               blobCredentialsRequired
             );
 
-
             if (blobCredentialsRequired)
             {
                 _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
-
         }
 
         var githubOrgId = await _targetGithubApi.GetOrganizationId(args.GithubTargetOrg);
@@ -368,12 +366,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.AwsSecretKey.HasValue())
         {
-            _log.LogInformation($"AWS SECRET KEY: ***");
+            _log.LogInformation("AWS SECRET KEY: ***");
         }
 
         if (args.AwsSessionToken.HasValue())
         {
-            _log.LogInformation($"AWS SESSION TOKEN: ***");
+            _log.LogInformation("AWS SESSION TOKEN: ***");
         }
 
         if (args.AwsRegion.HasValue())

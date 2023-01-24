@@ -22,7 +22,7 @@ public class AwsCredentialProvider
             };
             foreach (var credentials in credentialsChain)
             {
-                var result = credentials();
+                AWSCredentials result = credentials();
                 if (result != null)
                 {
                     return result;
