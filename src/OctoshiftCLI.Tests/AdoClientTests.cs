@@ -42,6 +42,20 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public void Error_Thrown_If_PAT_Not_Provided()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+            var failureReason = "No PAT provided, please provide a valid PAT as an argument or add a PAT as a environmental variable";
+
+            // Act
+            var ex = Assert.Throws<OctoshiftCliException>(() => new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, null));
+
+            // Assert
+            Assert.Equal(failureReason, ex.Message);
+        }
+
+        [Fact]
         public void It_Adds_The_Authorization_Header()
         {
             // Arrange

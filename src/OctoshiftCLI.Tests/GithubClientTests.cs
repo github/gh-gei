@@ -47,12 +47,27 @@ namespace OctoshiftCLI.Tests
             _httpResponse?.Dispose();
         }
 
+
+        [Fact]
+        public void Error_Thrown_If_PAT_Not_Provided()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+            var failureReason = "No PAT provided, please provide a valid PAT as an argument or add a PAT as a environmental variable";
+
+            // Act
+            var ex = Assert.Throws<OctoshiftCliException>(() => new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, null));
+
+            // Assert
+            Assert.Equal(failureReason, ex.Message);
+        }
+
         [Fact]
         public async Task GetAsync_Returns_String_Response()
         {
             // Arrange
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, null);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var actualContent = await githubClient.GetAsync("http://example.com");
@@ -69,7 +84,7 @@ namespace OctoshiftCLI.Tests
             const string graphQLSchemaHeaderValue = "internal";
             var handlerMock = MockHttpHandlerForGet();
             using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, null);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var internalSchemaHeader = new Dictionary<string, string>() { { graphQLSchemaHeaderName, graphQLSchemaHeaderValue } };

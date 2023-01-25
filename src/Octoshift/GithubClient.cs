@@ -41,6 +41,13 @@ namespace OctoshiftCLI
                     _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
                 }
             }
+
+            if (personalAccessToken.IsNullOrWhiteSpace())
+            {
+                var failureReason = "No PAT provided, please provide a valid PAT as an argument or add a PAT as a environmental variable";
+                throw new OctoshiftCliException(failureReason);
+            }
+
         }
 
         public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, expectedStatus: status)).Content;

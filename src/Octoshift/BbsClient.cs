@@ -21,6 +21,12 @@ public class BbsClient
         {
             var authCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authCredentials);
+
+            if (password.IsNullOrWhiteSpace())
+            {
+                var failureReason = "No password provided, please provide a valid password as an argument or add a password as a environmental variable";
+                throw new OctoshiftCliException(failureReason);
+            }
         }
     }
 

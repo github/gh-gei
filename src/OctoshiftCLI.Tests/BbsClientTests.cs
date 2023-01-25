@@ -36,6 +36,20 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
+    public void Error_Thrown_If_Password_Not_Provided()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+        var failureReason = "No password provided, please provide a valid password as an argument or add a password as a environmental variable";
+
+        // Act
+        var ex = Assert.Throws<OctoshiftCliException>(() => new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, ""));
+
+        // Assert
+        Assert.Equal(failureReason, ex.Message);
+    }
+
+    [Fact]
     public void It_Adds_The_Authorization_Header()
     {
         // Arrange
