@@ -235,7 +235,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -285,7 +285,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -333,6 +333,65 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PostAsync_Does_Not_Apply_Retry_Delay_To_Bad_Credentials_Response()
+        {
+            // Arrange
+            var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            var retryAt = now + 4;
+
+            _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
+
+            using var badCredentialResponse1 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
+            };
+
+            badCredentialResponse1.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            badCredentialResponse1.Headers.Add("X-RateLimit-Remaining", "0");
+
+            using var badCredentialResponse2 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
+            };
+
+            badCredentialResponse2.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            badCredentialResponse2.Headers.Add("X-RateLimit-Remaining", "0");
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(badCredentialResponse1)
+                .ReturnsAsync(badCredentialResponse2);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await FluentActions
+                .Invoking(async () =>
+                {
+                    await githubClient.PostAsync("http://example.com", "hello");
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+
+            await FluentActions
+                .Invoking(async () =>
+                {
+                    await githubClient.PostAsync("http://example.com", "hello");
+                })
+                .Should()
+                .ThrowAsync<HttpRequestException>();
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
         public async Task PostAsync_Applies_Retry_Delay()
         {
             // Arrange
@@ -348,7 +407,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -398,7 +457,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -586,7 +645,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -774,7 +833,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -948,7 +1007,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
