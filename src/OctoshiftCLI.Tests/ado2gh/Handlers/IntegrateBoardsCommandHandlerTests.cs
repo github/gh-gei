@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using Xunit;
@@ -45,7 +44,7 @@ public class IntegrateBoardsCommandHandlerTests
         _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
         _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
             .Returns(GITHUB_TOKEN);
 
         var args = new IntegrateBoardsCommandArgs
@@ -71,7 +70,7 @@ public class IntegrateBoardsCommandHandlerTests
         _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
         _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
             .Returns(GITHUB_TOKEN);
 
         var args = new IntegrateBoardsCommandArgs
@@ -100,7 +99,7 @@ public class IntegrateBoardsCommandHandlerTests
         _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
         _mockEnvironmentVariableProvider
-            .Setup(m => m.GithubPersonalAccessToken())
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
             .Returns(GITHUB_TOKEN);
 
         var args = new IntegrateBoardsCommandArgs

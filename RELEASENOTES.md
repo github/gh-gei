@@ -1,2 +1,5 @@
-- Improved error messages when the specified organization or enterprise cannot be found
-- Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in the output for blobs storages.
+- Improve error messages when the specified target organization or enterprise cannot be found
+- Mask the value for `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` parameters in log output
+- Fix log output so we don't say we've finished upload to Azure Blob Storage when you're actually using Amazon S3
+- Extend the expiration of blob storage signed URLs from 24hrs to 48hrs so migration can still be successful even if there is a long queue of migrations
+- Skip the upload to Azure/AWS blob storage when migrating from GHES 3.8+, as GHES will now handle putting the archives into blob storage

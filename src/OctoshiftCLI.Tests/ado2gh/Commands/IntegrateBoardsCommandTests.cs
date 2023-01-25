@@ -60,7 +60,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _command.BuildHandler(args, _serviceProvider);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
-            _mockEnvironmentVariableProvider.Verify(m => m.GithubPersonalAccessToken(), Times.Never);
+            _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
         }
     }
 }

@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.Contracts;

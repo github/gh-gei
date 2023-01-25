@@ -18,7 +18,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
         {
             // Arrange
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-            environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+            environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(ADO_PAT);
 
             using var httpClient = new HttpClient();
 
@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken());
+            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()));
         }
 
         [Fact]
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
         {
             // Arrange
             var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-            environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken()).Returns(ADO_PAT);
+            environmentVariableProviderMock.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(ADO_PAT);
 
             using var httpClient = new HttpClient();
 
@@ -56,7 +56,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub
             httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(authToken);
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
 
-            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(), Times.Never);
+            environmentVariableProviderMock.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()), Times.Never);
         }
     }
 }

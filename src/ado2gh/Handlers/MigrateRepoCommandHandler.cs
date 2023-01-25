@@ -49,7 +49,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.RegisterSecret(args.AdoPat);
         _log.RegisterSecret(args.GithubPat);
 
-        args.GithubPat ??= _environmentVariableProvider.GithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
         var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
 
