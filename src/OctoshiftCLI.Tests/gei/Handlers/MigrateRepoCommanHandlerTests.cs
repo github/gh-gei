@@ -47,7 +47,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockHttpDownloadService.Object);
         }
 
-        // TO DO: Reformat to actually work for our scenario
         [Fact]
         public async Task Dont_Generate_Archives_If_Target_Repo_Exists()
         {

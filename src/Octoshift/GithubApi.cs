@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Amazon.S3.Model;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -112,15 +111,12 @@ namespace OctoshiftCLI
             try
             {
                 await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
+                return false;
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.OK)
             {
-                if (ex.StatusCode == HttpStatusCode.OK)
-                {
-                    return true;
-                }
+                return true;
             }
-            return false;
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)

@@ -249,8 +249,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.GhesApiUrl.HasValue())
         {
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            // var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
-            var ghesVersion = "3.0.4";
+            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+
             if (ghesVersion != null)
             {
                 _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");
