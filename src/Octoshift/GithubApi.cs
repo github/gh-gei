@@ -111,16 +111,16 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/repos/{org}/{repo}";
             try
             {
-                await _client.GetAsync(url);
+                await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
             }
             catch (HttpRequestException ex)
             {
-                if (ex.StatusCode == HttpStatusCode.NotFound)
+                if (ex.StatusCode == HttpStatusCode.OK)
                 {
-                    return false;
+                    return true;
                 }
             }
-            return true;
+            return false;
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
