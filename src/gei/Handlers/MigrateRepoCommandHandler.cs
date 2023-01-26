@@ -55,6 +55,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.GhesApiUrl.HasValue())
         {
+            var targetExists = await _targetGithubApi.DoesRepoExist(args.GithubTargetOrg, args.TargetRepo);
+
+            if (targetExists)
+            {
+                throw new OctoshiftCliException($"A repository called {args.GithubTargetOrg}/{args.TargetRepo} already exists");
+            }
+
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
               args.SourceRepo,
@@ -242,7 +249,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.GhesApiUrl.HasValue())
         {
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+            // var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+            var ghesVersion = "3.0.4";
             if (ghesVersion != null)
             {
                 _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Amazon.S3.Model;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -103,6 +104,23 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
             await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
+        }
+
+        public virtual async Task<bool> DoesRepoExist(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+            try
+            {
+                await _client.GetAsync(url);
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
