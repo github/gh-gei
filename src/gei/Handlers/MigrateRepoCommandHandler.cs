@@ -165,16 +165,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       bool lockSourceRepo,
       bool blobCredentialsRequired)
     {
-        var gitSourceMigrationId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
-        _log.LogInformation($"Archive generation of git data started with id: {gitSourceMigrationId}");
+        var gitSourceMigrationApiId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+        _log.LogInformation($"Archive generation of git data started with id: {gitSourceMigrationApiId}");
         var metadataArchiveId = await _sourceGithubApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo);
         _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
         var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
-        var gitArchiveFileName = $"{timeNow}-{gitSourceMigrationId}-{GIT_ARCHIVE_FILE_NAME}";
+        var gitArchiveFileName = $"{timeNow}-{gitSourceMigrationApiId}-{GIT_ARCHIVE_FILE_NAME}";
         var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
 
-        var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitSourceMigrationId);
+        var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitSourceMigrationApiId);
         _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
 
         var metadataArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, metadataArchiveId);
@@ -216,20 +216,20 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }
 
-    private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int migrationId)
+    private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int sourceMigrationApiId)
     {
         var timeout = DateTime.Now.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
         while (DateTime.Now < timeout)
         {
-            var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, migrationId);
-            _log.LogInformation($"Waiting for archive with Migration ID {migrationId} generation to finish. Current status: {archiveStatus}");
+            var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, sourceMigrationApiId);
+            _log.LogInformation($"Waiting for archive with Migration ID {sourceMigrationApiId} generation to finish. Current status: {archiveStatus}");
             if (archiveStatus == ArchiveMigrationStatus.Exported)
             {
-                return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, migrationId);
+                return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, sourceMigrationApiId);
             }
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
-                throw new OctoshiftCliException($"Archive generation failed for Migration ID: {migrationId}");
+                throw new OctoshiftCliException($"Archive generation failed for Source Migration API ID: {sourceMigrationApiId}");
             }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
