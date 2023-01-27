@@ -37,10 +37,10 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
         string smbPassword,
         string domainName = null)
     {
-        _log = log;
-        _fileSystemProvider = fileSystemProvider;
-        _smbClient = smbClient;
-        _host = host;
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _fileSystemProvider = fileSystemProvider ?? throw new ArgumentNullException(nameof(fileSystemProvider));
+        _smbClient = smbClient ?? throw new ArgumentNullException(nameof(smbClient));
+        _host = host ?? throw new ArgumentNullException(nameof(host));
         _smbUser = smbUser;
         _smbPassword = smbPassword;
         _domainName = domainName;
@@ -107,7 +107,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
             }
 
             fileStore?.Disconnect();
-            _smbClient?.Disconnect();
+            _smbClient.Disconnect();
         }
     }
 
