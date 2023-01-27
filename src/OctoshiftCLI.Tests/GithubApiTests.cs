@@ -324,6 +324,51 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task DoesRepoExist_Returns_True_When_200()
+        {
+            // Arrange
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.OK));
+
+            // Act
+            var result = await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task DoesRepoExist_Returns_False_When_404()
+        {
+            // Arrange
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ReturnsAsync("Not Found");
+
+            // Act
+            var result = await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task DoesRepoExist_Throws_On_Unexpected_Response()
+        {
+            // Arrange
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.Unauthorized));
+
+            // Act
+            await FluentActions
+            .Invoking(async () => await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
         public async Task RemoveTeamMember_Calls_The_Right_Endpoint()
         {
             // Arrange
