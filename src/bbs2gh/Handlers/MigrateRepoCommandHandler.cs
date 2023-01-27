@@ -344,14 +344,24 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (ShouldGenerateArchive(args))
         {
-            if (GetBbsUsername(args).IsNullOrWhiteSpace())
+            if (args.Kerberos)
             {
-                throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+                if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
+                {
+                    throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
+                }
             }
-
-            if (GetBbsPassword(args).IsNullOrWhiteSpace())
+            else
             {
-                throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+                if (GetBbsUsername(args).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+                }
+
+                if (GetBbsPassword(args).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+                }
             }
 
             if (ShouldDownloadArchive(args))
