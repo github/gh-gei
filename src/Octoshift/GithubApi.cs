@@ -119,6 +119,20 @@ namespace OctoshiftCLI
             }
         }
 
+        public virtual async Task<bool> DoesOrgExist(string org)
+        {
+            var url = $"{_apiUrl}/orgs/{org}";
+            try
+            {
+                await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
+                return false;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.OK)
+            {
+                return true;
+            }
+        }
+
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
