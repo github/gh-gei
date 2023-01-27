@@ -304,6 +304,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"SMB PASSWORD: ********");
         }
 
+        if (args.Domain.HasValue())
+        {
+            _log.LogInformation($"DOMAIN: {args.Domain}");
+        }
+
         if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"GITHUB PAT: ********");

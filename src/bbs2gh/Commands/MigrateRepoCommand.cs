@@ -31,6 +31,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshPort);
         AddOption(SmbUser);
         AddOption(SmbPassword);
+        AddOption(Domain);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
         AddOption(AwsBucketName);
@@ -119,13 +120,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.");
 
     public Option<string> SmbPassword { get; } = new(
         name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.");
+
+    public Option<string> Domain { get; } = new(
+        name: "--domain",
+        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
@@ -182,7 +185,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             var bbsHost = new Uri(args.BbsServerUrl).Host;
             bbsArchiveDownloader = args.SshUser.HasValue()
                 ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, null, args.BbsSharedHome);
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.Domain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
@@ -233,4 +236,5 @@ public class MigrateRepoCommandArgs
 
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
+    public string Domain { get; set; }
 }

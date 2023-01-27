@@ -49,7 +49,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(23);
+        command.Options.Count.Should().Be(24);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -68,8 +68,9 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
-        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false, true);
-        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false);
+        TestHelpers.VerifyCommandOption(command.Options, "domain", false);
         TestHelpers.VerifyCommandOption(command.Options, "wait", false);
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
