@@ -17,7 +17,13 @@ public class BbsArchiveDownloaderFactory
     public virtual IBbsArchiveDownloader CreateSshDownloader(string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22, string bbsSharedHomeDirectory = null) =>
         new BbsSshArchiveDownloader(_log, _fileSystemProvider, host, sshUser, privateKeyFileFullPath, sshPort)
         {
-            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
+            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSshArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
+        };
+
+    public virtual IBbsArchiveDownloader CreateSmbDownloader(string host, string smbUser, string smbPassword, string domainName = null, string bbsSharedHomeDirectory = null) =>
+        new BbsSmbArchiveDownloader(_log, _fileSystemProvider, host, smbUser, smbPassword, domainName)
+        {
+            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSmbArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
         };
 
     public virtual IBbsArchiveDownloader CreateSmbDownloader() => throw new NotImplementedException();

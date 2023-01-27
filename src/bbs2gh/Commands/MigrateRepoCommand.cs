@@ -176,11 +176,13 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
         }
 
-        if (args.SshUser.HasValue())
+        if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
             var bbsHost = new Uri(args.BbsServerUrl).Host;
-            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome);
+            bbsArchiveDownloader = args.SshUser.HasValue()
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, null, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);

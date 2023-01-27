@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 
@@ -9,6 +10,7 @@ namespace OctoshiftCLI.BbsToGithub.Services;
 
 public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 {
+    public const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "/var/atlassian/application-data/bitbucket/shared";
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISftpClient _sftpClient;
@@ -70,11 +72,11 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _sftpClient = sftpClient;
     }
 
-    public string BbsSharedHomeDirectory { get; init; } = IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
     public string GetSourceExportArchiveAbsolutePath(long exportJobId)
     {
-        return Path.Join(BbsSharedHomeDirectory ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY, IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).Replace('\\', '/');
+        return Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY, IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).ToUnixPath();
     }
 
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
@@ -83,7 +85,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
         var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId);
         var targetExportArchiveFullPath =
-            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).Replace('\\', '/');
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {
