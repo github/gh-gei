@@ -42,16 +42,13 @@ public class BbsSmbArchiveDownloaderTests
             SMB_PASSWORD,
             DOMAIN)
         { BbsSharedHomeDirectory = BBS_HOME_DIRECTORY };
-
-        _mockSmbClient.Setup(m => m.MaxReadSize).Returns(1048576U);
-        _mockSmbClient.Setup(m => m.MaxWriteSize).Returns(1048576U);
     }
 
     [Fact]
     public async Task Download_Returns_Downloaded_Archive_Full_Name()
     {
         // Arrange
-        var expectedSourceArchiveFullName = Path.Join(BBS_HOME_DIRECTORY_FROM_SHARE, "data/migration/export", _exportArchiveFilename).ToWindowsPath();
+        var expectedSourceArchiveFullNameAfterShare = Path.Join(BBS_HOME_DIRECTORY_FROM_SHARE, "data/migration/export", _exportArchiveFilename).ToWindowsPath();
         var expectedTargetArchiveFullName = Path.Join(TARGET_DIRECTORY, _exportArchiveFilename).ToUnixPath();
 
         _mockSmbClient.Setup(m => m.Connect(HOST, SMBTransportType.DirectTCPTransport)).Returns(true);
@@ -64,7 +61,7 @@ public class BbsSmbArchiveDownloaderTests
         _mockSmbFileStore.Setup(m => m.CreateFile(
                 out sharedFileHandle,
                 out fileStatus,
-                expectedSourceArchiveFullName,
+                expectedSourceArchiveFullNameAfterShare,
                 AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE,
                 FileAttributes.Normal,
                 ShareAccess.Read,
@@ -98,7 +95,7 @@ public class BbsSmbArchiveDownloaderTests
         _mockSmbFileStore.Verify(m => m.CreateFile(
                 out sharedFileHandle,
                 out fileStatus,
-                expectedSourceArchiveFullName,
+                expectedSourceArchiveFullNameAfterShare,
                 AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE,
                 FileAttributes.Normal,
                 ShareAccess.Read,
@@ -108,9 +105,101 @@ public class BbsSmbArchiveDownloaderTests
             Times.Once);
         _mockSmbFileStore.Verify(m => m.GetFileInformation(out fileStandardInformation, sharedFileHandle, FileInformationClass.FileStandardInformation), Times.Once);
         _mockSmbFileStore.Verify(m => m.ReadFile(out data, sharedFileHandle, It.IsAny<long>(), It.IsAny<int>()), Times.Exactly(3));
+        _mockFileSystemProvider.Verify(m => m.CreateDirectory(TARGET_DIRECTORY), Times.Once);
         _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew), Times.Once);
         _mockFileSystemProvider.Verify(m => m.WriteAsync(It.IsAny<FileStream>(), data, It.IsAny<CancellationToken>()), Times.Exactly(2));
 
         actualTargetArchiveFullName.Should().Be(expectedTargetArchiveFullName);
+    }
+
+    [Fact]
+    public async Task Download_Throws_When_Cannot_Connect_To_Host()
+    {
+        // Arrange
+        _mockSmbClient.Setup(m => m.Connect(It.IsAny<string>(), SMBTransportType.DirectTCPTransport)).Returns(false);
+
+        // Act, Assert
+        await _bbsArchiveDownloader
+            .Invoking(async x => await x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+    }
+
+    [Fact]
+    public async Task Download_Throws_When_Cannot_Login()
+    {
+        // Arrange
+        _mockSmbClient.Setup(m => m.Connect(It.IsAny<string>(), SMBTransportType.DirectTCPTransport)).Returns(true);
+        _mockSmbClient.Setup(m => m.Login(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(NTStatus.STATUS_LOGON_FAILURE);
+
+        // Act, Assert
+        await _bbsArchiveDownloader
+            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage($"*{NTStatus.STATUS_LOGON_FAILURE}*");
+    }
+
+    [Fact]
+    public async Task Download_Throws_When_Cannot_Connect_To_Share()
+    {
+        // Arrange
+        _mockSmbClient.Setup(m => m.Connect(It.IsAny<string>(), SMBTransportType.DirectTCPTransport)).Returns(true);
+        _mockSmbClient.Setup(m => m.Login(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(NTStatus.STATUS_SUCCESS);
+        var status = NTStatus.STATUS_BAD_NETWORK_NAME;
+        _mockSmbClient.Setup(m => m.TreeConnect(It.IsAny<string>(), out status)).Returns(_mockSmbFileStore.Object);
+
+        // Act, Assert
+        await _bbsArchiveDownloader
+            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage($"*{NTStatus.STATUS_BAD_NETWORK_NAME}*");
+    }
+
+    [Fact]
+    public async Task Download_Throws_When_Source_Export_Archive_Does_Not_Exist()
+    {
+        // Arrange
+        _mockSmbClient.Setup(m => m.Connect(It.IsAny<string>(), SMBTransportType.DirectTCPTransport)).Returns(true);
+        _mockSmbClient.Setup(m => m.Login(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(NTStatus.STATUS_SUCCESS);
+        var status = NTStatus.STATUS_SUCCESS;
+        _mockSmbClient.Setup(m => m.TreeConnect(It.IsAny<string>(), out status)).Returns(_mockSmbFileStore.Object);
+
+        object sharedFileHandle;
+        FileStatus fileStatus;
+        _mockSmbFileStore.Setup(m => m.CreateFile(
+                out sharedFileHandle,
+                out fileStatus,
+                It.IsAny<string>(),
+                AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE,
+                FileAttributes.Normal,
+                ShareAccess.Read,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                null))
+            .Returns(NTStatus.STATUS_OBJECT_NAME_NOT_FOUND);
+
+        // Act, Assert
+        await _bbsArchiveDownloader
+            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage($"*{NTStatus.STATUS_OBJECT_NAME_NOT_FOUND}*");
+    }
+
+    [Fact]
+    public async Task Download_Throws_When_Target_Export_Archive_Already_Exists()
+    {
+        // Arrange
+        var targetArchiveFullName = Path.Join(TARGET_DIRECTORY, _exportArchiveFilename).ToUnixPath();
+        _mockFileSystemProvider.Setup(m => m.FileExists(targetArchiveFullName)).Returns(true);
+
+        // Act, Assert
+        await _bbsArchiveDownloader
+            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage($"*{targetArchiveFullName}*");
     }
 }

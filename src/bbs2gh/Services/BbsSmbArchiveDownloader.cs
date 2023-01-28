@@ -60,7 +60,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
         var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId);
         var share = sourceExportArchiveFullPath[..sourceExportArchiveFullPath.IndexOf("\\", StringComparison.Ordinal)];
-        var sourceExportArchivePathFromShare = sourceExportArchiveFullPath[(sourceExportArchiveFullPath.IndexOf("\\", StringComparison.Ordinal) + 1)..];
+        var sourceExportArchivePathAfterShare = sourceExportArchiveFullPath[(sourceExportArchiveFullPath.IndexOf("\\", StringComparison.Ordinal) + 1)..];
 
         var targetExportArchiveFullPath =
             Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
@@ -73,7 +73,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
             Login();
 
             fileStore = CreateSmbFileStore(share);
-            sourceExportArchiveHandle = CreateFileHandle(fileStore, sourceExportArchivePathFromShare);
+            sourceExportArchiveHandle = CreateFileHandle(fileStore, sourceExportArchivePathAfterShare);
             var sourceExportArchiveSize = GetFileSize(fileStore, sourceExportArchiveHandle);
 
             long bytesRead = 0;
@@ -192,7 +192,8 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
         return IsSuccessStatus(status)
             ? fileStore
-            : throw new OctoshiftCliException($"Unable to connect to share \"{shareName}\" (Status Code: {status}). Please make sure that the directory is shared.");
+            : throw new OctoshiftCliException($"Unable to connect to share \"{shareName}\" (Status Code: {status}). " +
+                                              "Please make sure that the directory is shared and the share name is correct.");
     }
 
     private object CreateFileHandle(ISMBFileStore fileStore, string sharedFilePath)
