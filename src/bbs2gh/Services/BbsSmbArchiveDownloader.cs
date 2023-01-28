@@ -74,7 +74,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
             fileStore = CreateSmbFileStore(share);
             sourceExportArchiveHandle = CreateFileHandle(fileStore, sourceExportArchivePathFromShare);
-            var sourceExportArchiveSize = GetFileInformation(fileStore, sourceExportArchiveHandle);
+            var sourceExportArchiveSize = GetFileSize(fileStore, sourceExportArchiveHandle);
 
             long bytesRead = 0;
             while (true)
@@ -92,7 +92,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
                 }
 
                 bytesRead += data.Length;
-                await targetExportArchive.WriteAsync(data);
+                await _fileSystemProvider.WriteAsync(targetExportArchive, data);
 
                 LogProgress(bytesRead, sourceExportArchiveSize);
             }
@@ -107,6 +107,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
             }
 
             fileStore?.Disconnect();
+            _smbClient.Logoff();
             _smbClient.Disconnect();
         }
     }
@@ -212,7 +213,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
             : throw new OctoshiftCliException($"Couldn't create SMB file handle for \"{sharedFilePath}\" (Status Code: {status}).");
     }
 
-    private long? GetFileInformation(ISMBFileStore fileStore, object sharedFileHandle)
+    private long? GetFileSize(ISMBFileStore fileStore, object sharedFileHandle)
     {
         var status = fileStore.GetFileInformation(out var fileInfo, sharedFileHandle, FileInformationClass.FileStandardInformation);
 
