@@ -84,7 +84,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockTargetGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, false).Result).Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -343,6 +342,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     false).Result)
                 .Returns(migrationId);
             _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
             _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
@@ -1087,6 +1087,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public async Task It_Locks_Repos_When_Option_Is_True_For_Ghes_Migration_Path()
         {
             // Arrange
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+
             _mockSourceGithubApi.Setup(m => m.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
             _mockHttpDownloadService.Setup(x => x.DownloadToBytes(It.IsAny<string>()).Result).Returns(Array.Empty<byte>());
