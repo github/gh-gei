@@ -161,7 +161,7 @@ namespace OctoshiftCLI
                 _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
             }
 
-            if (GetRateLimitRemaining(headers) <= 0)
+            if (GetRateLimitRemaining(headers) <= 0 && content.ToUpper().Contains("API RATE LIMIT EXCEEDED"))
             {
                 SetRetryDelay(headers);
             }
