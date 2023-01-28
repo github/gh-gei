@@ -40,7 +40,8 @@ public class BbsSmbArchiveDownloaderTests
             HOST,
             SMB_USER,
             SMB_PASSWORD,
-            DOMAIN) { BbsSharedHomeDirectory = BBS_HOME_DIRECTORY };
+            DOMAIN)
+        { BbsSharedHomeDirectory = BBS_HOME_DIRECTORY };
 
         _mockSmbClient.Setup(m => m.MaxReadSize).Returns(1048576U);
         _mockSmbClient.Setup(m => m.MaxWriteSize).Returns(1048576U);
@@ -71,7 +72,7 @@ public class BbsSmbArchiveDownloaderTests
                 CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
                 null))
             .Returns(NTStatus.STATUS_SUCCESS);
-        
+
         FileInformation fileStandardInformation = new FileStandardInformation
         {
             AllocationSize = 10 * 1024 * 1024 // 10 MB
@@ -109,7 +110,7 @@ public class BbsSmbArchiveDownloaderTests
         _mockSmbFileStore.Verify(m => m.ReadFile(out data, sharedFileHandle, It.IsAny<long>(), It.IsAny<int>()), Times.Exactly(3));
         _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew), Times.Once);
         _mockFileSystemProvider.Verify(m => m.WriteAsync(It.IsAny<FileStream>(), data, It.IsAny<CancellationToken>()), Times.Exactly(2));
-        
+
         actualTargetArchiveFullName.Should().Be(expectedTargetArchiveFullName);
     }
 }
