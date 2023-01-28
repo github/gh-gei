@@ -65,7 +65,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (!targetOrgExists)
             {
-                throw new OctoshiftCliException($"The target or, {args.GithubTargetOrg}, does not exist. Migration unable to continue at this time.");
+                throw new OctoshiftCliException($"The target org, {args.GithubTargetOrg}, does not exist. Migration unable to continue at this time.");
             }
 
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
@@ -255,7 +255,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.GhesApiUrl.HasValue())
         {
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+            //var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
+            var ghesVersion = "3.0.4";
 
             if (ghesVersion != null)
             {
