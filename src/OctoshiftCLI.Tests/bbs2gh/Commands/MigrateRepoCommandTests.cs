@@ -20,6 +20,9 @@ public class MigrateRepoCommandTests
     private const string BBS_USERNAME = "bbs-username";
     private const string BBS_PASSWORD = "bbs-password";
     private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
+    private const string SMB_USER = "smb-user";
+    private const string SMB_PASSWORD = "smb-password";
+    private const string DOMAIN = "domain";
 
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -98,6 +101,27 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            Domain = DOMAIN,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, DOMAIN, BBS_SHARED_HOME));
+    }
+
+    [Fact]
     public void BuildHandler_Creates_The_Handler()
     {
         // Arrange
@@ -112,7 +136,7 @@ public class MigrateRepoCommandTests
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
         _mockAzureApiFactory.Verify(m => m.CreateClientNoSsl(It.IsAny<string>()), Times.Never);
     }

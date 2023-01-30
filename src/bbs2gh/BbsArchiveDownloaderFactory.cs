@@ -1,4 +1,3 @@
-using System;
 using OctoshiftCLI.BbsToGithub.Services;
 
 namespace OctoshiftCLI.BbsToGithub;
@@ -25,6 +24,4 @@ public class BbsArchiveDownloaderFactory
         {
             BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSmbArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
         };
-
-    public virtual IBbsArchiveDownloader CreateSmbDownloader() => throw new NotImplementedException();
 }
