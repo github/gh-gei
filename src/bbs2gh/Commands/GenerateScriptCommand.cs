@@ -23,6 +23,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(SmbUser);
+        AddOption(SmbPassword);
+        AddOption(Domain);
         AddOption(Output);
         AddOption(Kerberos);
         AddOption(Verbose);
@@ -64,6 +67,18 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--ssh-port",
         description: "The SSH port (default: 22).",
         getDefaultValue: () => 22);
+
+    public Option<string> SmbUser { get; } = new(
+        name: "--smb-user",
+        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.");
+
+    public Option<string> SmbPassword { get; } = new(
+        name: "--smb-password",
+        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.");
+
+    public Option<string> Domain { get; } = new(
+        name: "--domain",
+        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubOrg { get; } = new("--github-org")
     { IsRequired = true };
@@ -118,6 +133,9 @@ public class GenerateScriptCommandArgs
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; }
+    public string SmbUser { get; set; }
+    public string SmbPassword { get; set; }
+    public string Domain { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }

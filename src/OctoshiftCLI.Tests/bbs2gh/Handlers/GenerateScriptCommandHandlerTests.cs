@@ -29,6 +29,9 @@ public class GenerateScriptCommandHandlerTests
     private const string SSH_USER = "SSH-USER";
     private const string SSH_PRIVATE_KEY = "path-to-ssh-private-key";
     private const int SSH_PORT = 2211;
+    private const string SMB_USER = "SMB-USER";
+    private const string SMB_PASSWORD = "SMB-PASSWORD";
+    private const string DOMAIN = "DOMAIN";
     private const string OUTPUT = "unit-test-output";
     private const string BBS_FOO_PROJECT_KEY = "FP";
     private const string BBS_FOO_PROJECT_NAME = "BBS-FOO-PROJECT-NAME";
@@ -152,6 +155,7 @@ public class GenerateScriptCommandHandlerTests
         _mockEnvironmentVariableProvider.Verify(m => m.BbsPassword(It.IsAny<bool>()), Times.Never);
     }
 
+
     [Fact]
     public async Task Filters_By_Project()
     {
@@ -228,6 +232,41 @@ public class GenerateScriptCommandHandlerTests
             Output = new FileInfo(OUTPUT),
             Verbose = true,
             Kerberos = true,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
+    }
+
+    [Fact]
+    public async Task One_Repo_With_Smb()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
+        {
+            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
+        });
+
+        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --smb-password \"{SMB_PASSWORD}\" --domain {DOMAIN} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            BbsSharedHome = BBS_SHARED_HOME,
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            Domain = DOMAIN,
+            Output = new FileInfo(OUTPUT),
+            Verbose = true
         };
         await _handler.Handle(args);
 
