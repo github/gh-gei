@@ -30,7 +30,6 @@ public class GenerateScriptCommandHandlerTests
     private const string SSH_PRIVATE_KEY = "path-to-ssh-private-key";
     private const int SSH_PORT = 2211;
     private const string SMB_USER = "SMB-USER";
-    private const string SMB_PASSWORD = "SMB-PASSWORD";
     private const string DOMAIN = "DOMAIN";
     private const string OUTPUT = "unit-test-output";
     private const string BBS_FOO_PROJECT_KEY = "FP";
@@ -252,7 +251,7 @@ public class GenerateScriptCommandHandlerTests
             (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
         });
 
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --smb-password \"{SMB_PASSWORD}\" --domain {DOMAIN} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait }}";
+        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --domain {DOMAIN} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait }}";
 
         // Act
         var args = new GenerateScriptCommandArgs
@@ -263,7 +262,6 @@ public class GenerateScriptCommandHandlerTests
             BbsPassword = BBS_PASSWORD,
             BbsSharedHome = BBS_SHARED_HOME,
             SmbUser = SMB_USER,
-            SmbPassword = SMB_PASSWORD,
             Domain = DOMAIN,
             Output = new FileInfo(OUTPUT),
             Verbose = true

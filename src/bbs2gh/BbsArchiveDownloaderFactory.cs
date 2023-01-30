@@ -6,11 +6,13 @@ public class BbsArchiveDownloaderFactory
 {
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
+    private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-    public BbsArchiveDownloaderFactory(OctoLogger log, FileSystemProvider fileSystemProvider)
+    public BbsArchiveDownloaderFactory(OctoLogger log, FileSystemProvider fileSystemProvider, EnvironmentVariableProvider environmentVariableProvider)
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
+        _environmentVariableProvider = environmentVariableProvider;
     }
 
     public virtual IBbsArchiveDownloader CreateSshDownloader(string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22, string bbsSharedHomeDirectory = null) =>
@@ -20,7 +22,7 @@ public class BbsArchiveDownloaderFactory
         };
 
     public virtual IBbsArchiveDownloader CreateSmbDownloader(string host, string smbUser, string smbPassword, string domainName = null, string bbsSharedHomeDirectory = null) =>
-        new BbsSmbArchiveDownloader(_log, _fileSystemProvider, host, smbUser, smbPassword, domainName)
+        new BbsSmbArchiveDownloader(_log, _fileSystemProvider, host, smbUser, smbPassword ?? _environmentVariableProvider.SmbPassword(), domainName)
         {
             BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSmbArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
         };

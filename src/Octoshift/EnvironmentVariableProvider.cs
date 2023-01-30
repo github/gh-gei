@@ -12,6 +12,7 @@ public class EnvironmentVariableProvider
     private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
+    private const string SMB_PASSWORD = "SMB_PASSWORD";
 
     private readonly OctoLogger _logger;
 
@@ -43,6 +44,9 @@ public class EnvironmentVariableProvider
 
     public virtual string BbsPassword(bool throwIfNotFound = true) =>
         GetSecret(BBS_PASSWORD, throwIfNotFound);
+
+    public virtual string SmbPassword(bool throwIfNotFound = true) =>
+        GetSecret(SMB_PASSWORD, throwIfNotFound);
 
     private string GetSecret(string secretName, bool throwIfNotFound)
     {

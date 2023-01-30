@@ -24,7 +24,6 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshPrivateKey);
         AddOption(SshPort);
         AddOption(SmbUser);
-        AddOption(SmbPassword);
         AddOption(Domain);
         AddOption(Output);
         AddOption(Kerberos);
@@ -53,7 +52,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used when using SSH to download the export archive " +
+                     $"{Environment.NewLine}" +
+                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" when using SMB.");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -70,11 +71,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.");
-
-    public Option<string> SmbPassword { get; } = new(
-        name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.");
+        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server." +
+                     $"{Environment.NewLine}" +
+                     "Note: The SMB password will also be required in order to connect to a SMB share which has to be set as an environment variable before running the script.");
 
     public Option<string> Domain { get; } = new(
         name: "--domain",
@@ -134,7 +133,6 @@ public class GenerateScriptCommandArgs
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; }
     public string SmbUser { get; set; }
-    public string SmbPassword { get; set; }
     public string Domain { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }

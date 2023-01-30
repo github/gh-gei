@@ -410,6 +410,25 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         }
 
         [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_Password_Environment_Variable_Are_Provided()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER
+            };
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_Private_Key_And_Smb_User_Are_Provided()
         {
             // Act, Assert
@@ -440,6 +459,26 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY,
                 SmbPassword = SMB_PASSWORD
+            };
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_Private_Key_And_Smb_Password_Environment_Variable_Are_Provided()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY
             };
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
@@ -532,6 +571,28 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
             };
 
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Invoke_With_Bbs_Server_Url_Should_Not_Throw_When_Smb_User_Is_Provided_And_Smb_Password_Is_Provided_Via_Environment_Variable()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+            };
+
+            // Act, Assert
+            await _handler.Invoking(x => x.Handle(args)).Should().NotThrowAsync();
         }
 
         [Fact]
