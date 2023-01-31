@@ -50,7 +50,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.RegisterSecret(args.AzureStorageConnectionString);
         _log.RegisterSecret(args.BbsPassword);
         _log.RegisterSecret(args.GithubPat);
-        _log.RegisterSecret(GetSmbPassword(args));
+        _log.RegisterSecret(args.SmbPassword);
 
         LogOptions(args);
         ValidateOptions(args);
