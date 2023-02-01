@@ -236,7 +236,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
-                var retryPolicy = new RetryPolicy(null);
+                var retryPolicy = new RetryPolicy(_log);
 
                 var result = await retryPolicy.RetryOnResult(async () => await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId), ArchiveMigrationStatus.Failed);
 
