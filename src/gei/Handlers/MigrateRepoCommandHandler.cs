@@ -236,7 +236,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
-                throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
+                var retryPolicy = new RetryPolicy(null);
+
+                var result = await retryPolicy.RetryOnResult(async () => await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId), ArchiveMigrationStatus.Failed);
+
+                if (result.Outcome == Polly.OutcomeType.Failure)
+                {
+                    throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
+                }
             }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
