@@ -65,7 +65,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (!targetOrgExists)
             {
-                throw new OctoshiftCliException($"The target org, {args.GithubTargetOrg}, does not exist. Migration unable to continue at this time.");
+                throw new OctoshiftCliException($"The target org \"{args.GithubTargetOrg}\" does not exist.");
             }
 
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
