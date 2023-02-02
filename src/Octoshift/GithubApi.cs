@@ -375,14 +375,14 @@ namespace OctoshiftCLI
             return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
         }
 
-        public virtual async Task<(string State, string SourceOrgUrl, string TargetOrgName, string FailureReason, int? RemainingRepositoriesCount, int? TotalRepositoriesCount)> GetOrganizationMigration(string archiveId)
+        public virtual async Task<(string State, string SourceOrgUrl, string TargetOrgName, string FailureReason, int? RemainingRepositoriesCount, int? TotalRepositoriesCount)> GetOrganizationMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } }";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = archiveId } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
             var response = await _retryPolicy.Retry(async () =>
             {
@@ -401,7 +401,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to get migration state for migration {archiveId}", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
                 : response.Result;
         }
 
@@ -419,14 +419,14 @@ namespace OctoshiftCLI
             );
         }
 
-        public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string archiveId)
+        public virtual async Task<(string State, string RepositoryName, string FailureReason)> GetMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
             var query = "query($id: ID!)";
             var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } }";
 
-            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = archiveId } };
+            var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
             var response = await _retryPolicy.Retry(async () =>
             {
@@ -442,7 +442,7 @@ namespace OctoshiftCLI
             });
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to get migration state for migration {archiveId}", response.FinalException)
+                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
                 : response.Result;
         }
 
