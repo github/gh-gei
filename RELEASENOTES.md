@@ -1,3 +1,3 @@
 - Added logic to check if a target repo exists before generating GHES archives
 - Fixed a bug when reclaiming a single mannequin with --mannequin-user and --target-user parameters. They were were not being passed to the reclaim command
-
+- Added logic to ensure target org exists before generating GHES archives
