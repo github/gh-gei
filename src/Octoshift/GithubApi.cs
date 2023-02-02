@@ -105,6 +105,20 @@ namespace OctoshiftCLI
             await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
         }
 
+        public virtual async Task<bool> DoesRepoExist(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+            try
+            {
+                await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
+                return false;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.OK)
+            {
+                return true;
+            }
+        }
+
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/team-sync/group-mappings";

@@ -1,1 +1,2 @@
 - Improved log messages for GitHub Migrations API execution.
+- Added logic to check if a target repo exists before generating GHES archives
