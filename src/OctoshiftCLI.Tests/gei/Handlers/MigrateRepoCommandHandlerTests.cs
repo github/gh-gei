@@ -53,6 +53,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
+            var retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
             _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
@@ -75,7 +76,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Invoking(async () => await _handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
 
             // Assert
-            _mockTargetGithubApi.Verify(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId), Times.Exactly(6));
+            retryPolicy.Verify(x => x.RetryOnResult(It.IsAny<Func<Task<object>>>(), It.IsAny<T>()), Times.Exactly(6));
         }
 
         [Fact]
