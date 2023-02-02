@@ -61,6 +61,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 Wait = false,
             };
             await FluentActions
@@ -68,6 +69,51 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Assert
             _mockSourceGithubApi.Verify(x => x.StartGitArchiveGeneration(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Start_Archive_Generation_If_Target_Repo_Does_Not_Exist()
+        {
+            // Arrange
+            var testBytes = new byte[] { 1, 2, 3 };
+            var testURL = "URL";
+
+            _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
+            _mockTargetGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO)).ReturnsAsync(1);
+            _mockTargetGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(2);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, It.IsAny<int>()).Result).Returns(testURL);
+
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(It.IsAny<string>()).Result).Returns(testBytes);
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(It.IsAny<string>()).Result).Returns(testBytes);
+
+            _mockAwsApi.Setup(m => m.UploadToBucket(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(testURL);
+
+            // Act
+            var handler = new MigrateRepoCommandHandler(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApi.Object,
+                _mockTargetGithubApi.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockAzureApi.Object,
+                _mockAwsApi.Object,
+                _mockHttpDownloadService.Object);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = false,
+            };
+            await handler.Handle(args);
+
+            // Assert
+            _mockSourceGithubApi.Verify(x => x.StartGitArchiveGeneration(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
