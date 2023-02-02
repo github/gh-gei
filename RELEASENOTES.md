@@ -1,3 +1,3 @@
+- Added support for x86 Windows machines with new `windows-386` build
 - Added logic to check if a target repo exists before generating GHES archives
 - Added logic to ensure target org exists before generating GHES archives
-
