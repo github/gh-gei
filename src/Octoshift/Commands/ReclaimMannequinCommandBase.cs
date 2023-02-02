@@ -33,7 +33,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         Description = "CSV file path with list of mannequins to be reclaimed."
     };
 
-    public virtual Option<string> MannequinUsername { get; } = new("--mannequin-user")
+    public virtual Option<string> MannequinUser { get; } = new("--mannequin-user")
     {
         Description = "The login of the mannequin to be remapped."
     };
@@ -43,7 +43,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         Description = "The Id of the mannequin, in case there are multiple mannequins with the same login you can specify the id to reclaim one of the mannequins."
     };
 
-    public virtual Option<string> TargetUsername { get; } = new("--target-user")
+    public virtual Option<string> TargetUser { get; } = new("--target-user")
     {
         Description = "The login of the target user to be mapped."
     };
@@ -84,9 +84,9 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
     {
         AddOption(GithubOrg);
         AddOption(Csv);
-        AddOption(MannequinUsername);
+        AddOption(MannequinUser);
         AddOption(MannequinId);
-        AddOption(TargetUsername);
+        AddOption(TargetUser);
         AddOption(Force);
         AddOption(GithubPat);
         AddOption(Verbose);
