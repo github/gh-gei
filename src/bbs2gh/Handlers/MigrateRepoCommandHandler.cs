@@ -396,8 +396,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
     {
         var sshArgs = new[] { args.SshUser, args.SshPrivateKey };
-        var smbPassword = GetSmbPassword(args);
-        var smbArgs = new[] { args.SmbUser, smbPassword };
+        var smbArgs = new[] { args.SmbUser, args.SmbPassword };
         var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
         var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());
 
@@ -411,7 +410,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
         }
 
-        if (args.SmbUser.HasValue() ^ smbPassword.HasValue())
+        if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
             throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
         }

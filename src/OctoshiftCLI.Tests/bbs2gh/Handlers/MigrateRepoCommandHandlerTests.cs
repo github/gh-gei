@@ -410,25 +410,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
         }
 
         [Fact]
-        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_Password_Environment_Variable_Are_Provided()
-        {
-            // Arrange
-            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER
-            };
-            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_Private_Key_And_Smb_User_Are_Provided()
         {
             // Act, Assert
@@ -459,26 +440,6 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY,
                 SmbPassword = SMB_PASSWORD
-            };
-            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_Private_Key_And_Smb_Password_Environment_Variable_Are_Provided()
-        {
-            // Arrange
-            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY
             };
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }
