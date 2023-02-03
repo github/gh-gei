@@ -65,8 +65,9 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
-    public async Task Basic(string bbsServer)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false)]
+    public async Task Basic(string bbsServer, bool useSsh)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
@@ -91,8 +92,15 @@ public sealed class BbsToGithub : IDisposable
             sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
         });
 
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        if (!useSsh)
+        {
+            archiveDownloadOptions = " --smb-user octoshift";
+            _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
+        }
+
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey}{archiveDownloadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
