@@ -369,6 +369,51 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task DoesTargetOrgExist_Returns_True_When_200()
+        {
+            // Arrange
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.OK));
+
+            // Act
+            var result = await _githubApi.DoesOrgExist(GITHUB_ORG);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task DoesTargetOrgExist_Returns_False_When_404()
+        {
+            // Arrange
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ReturnsAsync("Not Found");
+
+            // Act
+            var result = await _githubApi.DoesOrgExist(GITHUB_ORG);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task DoesTargetOrgExist_Throws_On_Unexpected_Response()
+        {
+            // Arrange
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
+
+            _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.Unauthorized));
+
+            // Act
+            await FluentActions
+            .Invoking(async () => await _githubApi.DoesOrgExist(GITHUB_ORG))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
         public async Task RemoveTeamMember_Calls_The_Right_Endpoint()
         {
             // Arrange

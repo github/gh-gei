@@ -55,11 +55,17 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.GhesApiUrl.HasValue())
         {
-            var targetExists = await _targetGithubApi.DoesRepoExist(args.GithubTargetOrg, args.TargetRepo);
+            var targetRepoExists = await _targetGithubApi.DoesRepoExist(args.GithubTargetOrg, args.TargetRepo);
+            var targetOrgExists = await _targetGithubApi.DoesOrgExist(args.GithubTargetOrg);
 
-            if (targetExists)
+            if (targetRepoExists)
             {
                 throw new OctoshiftCliException($"A repository called {args.GithubTargetOrg}/{args.TargetRepo} already exists");
+            }
+
+            if (!targetOrgExists)
+            {
+                throw new OctoshiftCliException($"The target org \"{args.GithubTargetOrg}\" does not exist.");
             }
 
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
