@@ -230,20 +230,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             var archiveStatus = await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId);
             _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
-            if (archiveStatus == ArchiveMigrationStatus.Exported)
-            {
-                return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
-            }
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
                 var retryPolicy = new RetryPolicy(_log);
 
                 var result = await retryPolicy.RetryOnResult(async () => await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId), ArchiveMigrationStatus.Failed);
 
-                if (result.Outcome == Polly.OutcomeType.Failure)
-                {
-                    throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
-                }
+                archiveStatus = result.Outcome == Polly.OutcomeType.Failure
+                    ? throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}")
+                    : result.Result;
+            }
+            if (archiveStatus == ArchiveMigrationStatus.Exported)
+            {
+                return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
             }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
