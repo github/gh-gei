@@ -75,8 +75,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             await FluentActions
                 .Invoking(async () => await _handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
 
-            // Assert
-            retryPolicy.Verify(x => x.RetryOnResult(It.IsAny<Func<Task<object>>>(), It.IsAny<T>()), Times.Exactly(6));
+            // Asser
+            retryPolicy.Verify(x => x.RetryOnResult(It.IsAny<Func<Task<object>>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(6));
         }
 
         [Fact]
