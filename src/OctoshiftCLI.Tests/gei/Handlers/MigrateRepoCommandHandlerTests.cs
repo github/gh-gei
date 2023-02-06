@@ -55,6 +55,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveId = 2;
             var retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
+            _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
             _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
             _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result)
@@ -104,6 +106,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveId = 2;
             var retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
+            _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
             _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
