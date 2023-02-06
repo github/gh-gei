@@ -158,12 +158,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         public void InitializeBbsRepo(string bbsProjectKey, string repoName)
         {
-            var repoPath = Path.Combine(Path.GetTempPath(), repoName);
-
-            if (Directory.Exists(repoPath))
-            {
-                Directory.Delete(repoPath, true);
-            }
+            var repoPath = Path.Combine(Path.GetTempPath(), $"{repoName}-{Guid.NewGuid()}");
 
             Directory.CreateDirectory(repoPath);
 
