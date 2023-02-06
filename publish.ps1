@@ -26,6 +26,20 @@ else {
     }
 
     Copy-Item ./dist/win-x64/ado2gh.exe ./dist/win-x64/ado2gh-windows-amd64.exe
+
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    Compress-Archive -Path ./dist/win-x86/ado2gh.exe -DestinationPath ./dist/ado2gh.$AssemblyVersion.win-x86.zip -Force
+    
+    if (Test-Path -Path ./dist/win-x86/ado2gh-windows-386.exe) {
+        Remove-Item ./dist/win-x86/ado2gh-windows-386.exe
+    }
+
+    Copy-Item ./dist/win-x86/ado2gh.exe ./dist/win-x86/ado2gh-windows-386.exe
 }
 
 if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
@@ -83,6 +97,18 @@ else {
     }
 
     Rename-Item ./dist/win-x64/gei.exe gei-windows-amd64.exe
+
+    dotnet publish src/gei/gei.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    if (Test-Path -Path ./dist/win-x86/gei-windows-386.exe) {
+        Remove-Item ./dist/win-x86/gei-windows-386.exe
+    }
+
+    Rename-Item ./dist/win-x86/gei.exe gei-windows-386.exe
 }
 
 if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
@@ -135,6 +161,18 @@ else {
     }
 
     Rename-Item ./dist/win-x64/bbs2gh.exe bbs2gh-windows-amd64.exe
+
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    if (Test-Path -Path ./dist/win-x86/bbs2gh-windows-386.exe) {
+        Remove-Item ./dist/win-x86/bbs2gh-windows-386.exe
+    }
+
+    Rename-Item ./dist/win-x86/bbs2gh.exe bbs2gh-windows-386.exe
 }
 
 if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
