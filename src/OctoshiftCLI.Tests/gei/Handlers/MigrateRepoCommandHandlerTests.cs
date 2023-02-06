@@ -53,7 +53,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
-            var retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
             _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
@@ -104,7 +103,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
-            var retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
             _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
