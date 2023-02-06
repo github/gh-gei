@@ -1,2 +1,1 @@
-- Renamed the parameter name from migrationId to archiveId for GitHub REST Migrations APIs
 - Added logic to check if a target repo exists before generating GHES archives
