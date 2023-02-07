@@ -39,7 +39,6 @@ public sealed class BbsToGithub : IDisposable
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
         var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
-        var sshKey = Environment.GetEnvironmentVariable("SSH_KEY");
         _tokens = new Dictionary<string, string>
         {
             ["BBS_USERNAME"] = sourceBbsUsername,
@@ -47,8 +46,6 @@ public sealed class BbsToGithub : IDisposable
             ["GH_PAT"] = targetGithubToken,
             ["AZURE_STORAGE_CONNECTION_STRING"] = azureStorageConnectionString
         };
-
-        File.WriteAllText(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         _versionClient = new HttpClient();
 
@@ -65,14 +62,17 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
-    [InlineData("http://e2e-bbs-5-14-0-linux-2004.eastus.cloudapp.azure.com:7990")]
-    public async Task Basic(string bbsServer)
+    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", "SSH_KEY_BBS_8_5_0")]
+    [InlineData("http://e2e-bbs-5-14-0-linux-2004.eastus.cloudapp.azure.com:7990", "SSH_KEY_BBS_5_14_0")]
+    public async Task Basic(string bbsServer, string sshKeySecretName)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
+        var sshKey = Environment.GetEnvironmentVariable(sshKeySecretName);
+
+        await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
