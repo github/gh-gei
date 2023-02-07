@@ -211,7 +211,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.Wait)
         {
-            _log.LogInformation($"Migration log available at: {_githubApi.GetMigrationLogUrl}");
+            var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
+            Console.WriteLine($"Migration log available at: {url}");
         }
     }
 
