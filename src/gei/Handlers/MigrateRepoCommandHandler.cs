@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
@@ -136,17 +137,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+            ConsoleWriter.OutputLogUrl(_targetGithubApi, args.GithubTargetOrg, args.TargetRepo, args.Wait);
             throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
 
-        if (args.Wait)
-        {
-            var url = await _targetGithubApi.GetMigrationLogUrl(args.GithubTargetOrg, args.TargetRepo);
-            Console.WriteLine($"Migration log available at: {url}");
-        }
+        ConsoleWriter.OutputLogUrl(_targetGithubApi, args.GithubTargetOrg, args.TargetRepo, args.Wait);
     }
+
 
     private string GetSourceToken(MigrateRepoCommandArgs args) =>
         args.GithubSourceOrg.HasValue()

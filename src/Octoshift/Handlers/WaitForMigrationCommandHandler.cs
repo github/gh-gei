@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Models;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
@@ -68,11 +69,13 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (OrganizationMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded");
+                ConsoleWriter.OutputLogUrl(githubApi, targetOrgName, "");
                 return;
             }
 
             if (OrganizationMigrationStatus.IsFailed(state))
             {
+                ConsoleWriter.OutputLogUrl(githubApi, targetOrgName, "");
                 throw new OctoshiftCliException($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
             }
 
@@ -107,6 +110,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
         {
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
+                ConsoleWriter.OutputLogUrl(githubApi, "", repositoryName);
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
                 return;
             }
@@ -114,6 +118,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                ConsoleWriter.OutputLogUrl(githubApi, "", repositoryName);
                 throw new OctoshiftCliException(failureReason);
             }
 

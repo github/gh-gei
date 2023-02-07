@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 
@@ -92,16 +93,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+            ConsoleWriter.OutputLogUrl(_githubApi, args.GithubOrg, args.GithubRepo, args.Wait);
             throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
 
-        if (args.Wait)
-        {
-            var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
-            Console.WriteLine($"Migration log available at: {url}");
-        }
+        ConsoleWriter.OutputLogUrl(_githubApi, args.GithubOrg, args.GithubRepo, args.Wait);
     }
 
     private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
