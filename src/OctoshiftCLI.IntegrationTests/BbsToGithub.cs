@@ -62,7 +62,7 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", "SSH_KEY_BBS_8_5_0")]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", "SSH_KEY")]
     [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990", "SSH_KEY_BBS_5_14_0")]
     public async Task Basic(string bbsServer, string sshKeySecretName)
     {
