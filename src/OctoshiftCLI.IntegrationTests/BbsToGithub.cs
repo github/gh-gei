@@ -74,24 +74,6 @@ public sealed class BbsToGithub : IDisposable
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
 
-        var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
-        var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
-
-        var retryPolicy = new RetryPolicy(null);
-
-        await retryPolicy.Retry(async () =>
-        {
-            await _targetHelper.ResetBlobContainers();
-            await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
-            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
-
-            await sourceHelper.CreateBbsProject(bbsProjectKey);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
-        });
-
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
 
