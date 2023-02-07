@@ -2,3 +2,4 @@
 - Added logic to check if a target repo exists before generating GHES archives
 - Fixed reclaiming a single mannequin using `reclaim-mannequin` with the `--mannequin-user` and `--target-user` parameters
 - Added logic to ensure target org exists before generating GHES archives
+- Added log output linking to migration log URL after migration completes

@@ -208,6 +208,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+
+        if (args.Wait)
+        {
+            _log.LogInformation($"Migration log available at: {_githubApi.GetMigrationLogUrl}");
+        }
     }
 
     private void LogOptions(MigrateRepoCommandArgs args)
