@@ -161,19 +161,19 @@ namespace OctoshiftCLI.IntegrationTests
 
             Directory.CreateDirectory(repoPath);
 
+            await RunGitCommand($"clone {_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git {repoPath}");
+            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
+            await RunGitCommand("add README.md", repoPath);
+            await RunGitCommand("commit --author \"Octoshift <octoshift@github.com>\" -m \"Initial commit\"", repoPath);
+
             var bbsUri = new Uri(_bbsUrl);
             var bbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
             var bbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
             var repoUrl = $"{bbsUri.Scheme}://{bbsUsername}:{bbsPassword}@{bbsUri.Authority}/scm/{bbsProjectKey}/{repoName}.git";
-
-            await RunGitCommand($"clone \"{repoUrl}\"");
-            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
-            await RunGitCommand("add README.md");
-            await RunGitCommand("commit --author \"Octoshift <octoshift@github.com>\" -m \"Initial commit\"");
-            await RunGitCommand($"push \"{repoUrl}\" master");
+            await RunGitCommand($"push \"{repoUrl}\" master", repoPath);
         }
 
-        private async Task RunGitCommand(string command) => await RunCliCommand(command, "git", null);
+        private async Task RunGitCommand(string command, string workingDirectory = null) => await RunCliCommand(command, "git", null, workingDirectory);
 
         public async Task CreateBbsRepo(string bbsProjectKey, string repoName)
         {
@@ -561,11 +561,11 @@ steps:
             p.ExitCode.Should().Be(0, $"{script} should return an exit code of 0");
         }
 
-        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens)
+        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens, string workingDirectory = null)
         {
             var startInfo = new ProcessStartInfo
             {
-                WorkingDirectory = GetOsDistPath(),
+                WorkingDirectory = workingDirectory ?? GetOsDistPath(),
                 FileName = cliName,
                 Arguments = command
             };
