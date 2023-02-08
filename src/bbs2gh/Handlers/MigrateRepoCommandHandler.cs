@@ -205,13 +205,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
-            ConsoleWriter.OutputLogUrl(_githubApi, args.GithubOrg, args.GithubRepo, args.Wait);
+            var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
+            _log.LogInformation($"Migration log available at: {url}");
             throw new OctoshiftCliException($"Migration #{migrationId} failed: {failureReason}");
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
 
-        ConsoleWriter.OutputLogUrl(_githubApi, args.GithubOrg, args.GithubRepo, args.Wait);
+        if (args.Wait)
+        {
+            var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
+            _log.LogInformation($"Migration log available at: {url}");
+        }
     }
 
     private void LogOptions(MigrateRepoCommandArgs args)

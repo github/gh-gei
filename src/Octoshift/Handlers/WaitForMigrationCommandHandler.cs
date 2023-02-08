@@ -108,7 +108,8 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
         {
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
-                ConsoleWriter.OutputLogUrl(githubApi, "", repositoryName);
+                var url = await _githubApi.GetMigrationLogUrl("", repositoryName);
+                _log.LogInformation($"Migration log available at: {url}");
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
                 return;
             }
@@ -116,7 +117,8 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
-                ConsoleWriter.OutputLogUrl(githubApi, "", repositoryName);
+                var url = await _githubApi.GetMigrationLogUrl("", repositoryName);
+                _log.LogInformation($"Migration log available at: {url}");
                 throw new OctoshiftCliException(failureReason);
             }
 
