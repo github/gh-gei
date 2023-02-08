@@ -75,11 +75,6 @@ namespace OctoshiftCLI.Tests
 
             _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(userJson.ToJson());
 
-            // Prevents flaky error if console disposed before test completes
-            using var mockConsole = new StringWriter();
-            Console.SetOut(mockConsole);
-            Console.SetError(mockConsole);
-
             await Assert.ThrowsAsync<InvalidDataException>(async () => await sut.GetUserId());
         }
 
