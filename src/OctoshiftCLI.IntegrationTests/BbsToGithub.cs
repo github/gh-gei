@@ -88,9 +88,9 @@ public sealed class BbsToGithub : IDisposable
 
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
             await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
         });
 
         await _targetHelper.RunBbsCliMigration(

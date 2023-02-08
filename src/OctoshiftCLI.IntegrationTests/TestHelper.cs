@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using FluentAssertions;
-using LibGit2Sharp;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
 
@@ -156,30 +155,25 @@ namespace OctoshiftCLI.IntegrationTests
             }
         }
 
-        public void InitializeBbsRepo(string bbsProjectKey, string repoName)
+        public async Task InitializeBbsRepo(string bbsProjectKey, string repoName)
         {
             var repoPath = Path.Combine(Path.GetTempPath(), $"{repoName}-{Guid.NewGuid()}");
 
             Directory.CreateDirectory(repoPath);
 
-            Repository.Init(repoPath);
-            using var repo = new Repository(repoPath);
-            File.WriteAllText(Path.Join(repo.Info.WorkingDirectory, "README.md"), "# Test Repo");
-            repo.Index.Add("README.md");
-            repo.Index.Write();
-            var author = new Signature("Octoshift", "octoshift@github.com", DateTime.Now);
-            repo.Commit("Here's a commit i made!", author, author);
-            var origin = repo.Network.Remotes.Add("origin", $"{_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git");
-            var options = new PushOptions
-            {
-                CredentialsProvider = (url, user, cred) => new UsernamePasswordCredentials
-                {
-                    Username = Environment.GetEnvironmentVariable("BBS_USERNAME"),
-                    Password = Environment.GetEnvironmentVariable("BBS_PASSWORD")
-                }
-            };
-            repo.Network.Push(origin, @"refs/heads/master", options);
+            var bbsUri = new Uri(_bbsUrl);
+            var bbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
+            var bbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
+            var repoUrl = $"{bbsUri.Scheme}://{bbsUsername}:{bbsPassword}@{bbsUri.Authority}/scm/{bbsProjectKey}/{repoName}.git";
+
+            await RunGitCommand($"clone \"{repoUrl}\"");
+            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
+            await RunGitCommand("add README.md");
+            await RunGitCommand("commit --author \"Octoshift <octoshift@github.com>\" -m \"Initial commit\"");
+            await RunGitCommand($"push \"{repoUrl}\" master");
         }
+
+        private async Task RunGitCommand(string command) => await RunCliCommand(command, "git", null);
 
         public async Task CreateBbsRepo(string bbsProjectKey, string repoName)
         {
