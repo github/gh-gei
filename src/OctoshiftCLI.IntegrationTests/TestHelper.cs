@@ -161,16 +161,16 @@ namespace OctoshiftCLI.IntegrationTests
 
             Directory.CreateDirectory(repoPath);
 
-            await RunGitCommand($"clone {_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git {repoPath}");
-            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
-            await RunGitCommand("add README.md", repoPath);
-            await RunGitCommand("commit --author \"Octoshift <octoshift@github.com>\" -m \"Initial commit\"", repoPath);
-
             var bbsUri = new Uri(_bbsUrl);
             var bbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
             var bbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
             var repoUrl = $"{bbsUri.Scheme}://{bbsUsername}:{bbsPassword}@{bbsUri.Authority}/scm/{bbsProjectKey}/{repoName}.git";
-            await RunGitCommand($"push \"{repoUrl}\" master", repoPath);
+
+            await RunGitCommand($"clone {repoUrl} {repoPath}");
+            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
+            await RunGitCommand("add README.md", repoPath);
+            await RunGitCommand("commit --author \"Octoshift <octoshift@github.com>\" -m \"Initial commit\"", repoPath);
+            await RunGitCommand("push", repoPath);
         }
 
         private async Task RunGitCommand(string command, string workingDirectory = null) => await RunShellCommand(command, "git", workingDirectory);
