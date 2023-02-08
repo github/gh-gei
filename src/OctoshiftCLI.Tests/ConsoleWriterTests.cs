@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests
 
         [Fact]
         public void No_Output_When_Wait_Is_False()
-        { 
+        {
             // Arrange
             _mockGithubApi.Setup(x => x.GetMigrationLogUrl(TARGET_ORG, TARGET_REPO)).ReturnsAsync(TEST_URL);
 
