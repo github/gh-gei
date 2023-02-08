@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Xunit;
@@ -39,7 +40,6 @@ public sealed class BbsToGithub : IDisposable
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
         var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
-        var sshKey = Environment.GetEnvironmentVariable("SSH_KEY");
         _tokens = new Dictionary<string, string>
         {
             ["BBS_USERNAME"] = sourceBbsUsername,
@@ -47,8 +47,6 @@ public sealed class BbsToGithub : IDisposable
             ["GH_PAT"] = targetGithubToken,
             ["AZURE_STORAGE_CONNECTION_STRING"] = azureStorageConnectionString
         };
-
-        File.WriteAllText(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         _versionClient = new HttpClient();
 
@@ -66,6 +64,7 @@ public sealed class BbsToGithub : IDisposable
 
     [Theory]
     [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
+    [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
     [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false)]
     public async Task Basic(string bbsServer, bool useSsh)
     {
@@ -87,13 +86,18 @@ public sealed class BbsToGithub : IDisposable
 
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
             await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-            sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
         });
 
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
-        if (!useSsh)
+        if (useSsh)
+        {
+            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyFileName(bbsServer));
+            await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+        }
+        else
         {
             archiveDownloadOptions = " --smb-user octoshift";
             _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
@@ -110,6 +114,12 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
 
         // TODO: Assert migration logs are downloaded
+    }
+
+    private string GetSshKeyFileName(string bbsServer)
+    {
+        var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
+        return $"SSH_KEY_BBS_{bbsVersion}";
     }
 
     public void Dispose()
