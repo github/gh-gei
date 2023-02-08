@@ -21,11 +21,11 @@ namespace OctoshiftCLI.Tests
 
         [Fact]
         public void No_Output_When_Wait_Is_False()
-        {
+        { 
             // Arrange
             _mockGithubApi.Setup(x => x.GetMigrationLogUrl(TARGET_ORG, TARGET_REPO)).ReturnsAsync(TEST_URL);
 
-            var mockConsole = new StringWriter();
+            using var mockConsole = new StringWriter();
             Console.SetOut(mockConsole);
             Console.SetError(mockConsole);
 
@@ -34,7 +34,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
-            mockConsole.Dispose();
         }
 
 
@@ -44,7 +43,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             _mockGithubApi.Setup(x => x.GetMigrationLogUrl(TARGET_ORG, TARGET_REPO)).ReturnsAsync(TEST_URL);
 
-            var mockConsole = new StringWriter();
+            using var mockConsole = new StringWriter();
             Console.SetOut(mockConsole);
             Console.SetError(mockConsole);
 
@@ -53,7 +52,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
-            mockConsole.Dispose();
         }
 
         [Fact]
@@ -62,7 +60,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             _mockGithubApi.Setup(x => x.GetMigrationLogUrl(TARGET_ORG, TARGET_REPO)).ReturnsAsync("");
 
-            var mockConsole = new StringWriter();
+            using var mockConsole = new StringWriter();
             Console.SetOut(mockConsole);
             Console.SetError(mockConsole);
 
@@ -71,7 +69,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
-            mockConsole.Dispose();
         }
 
         [Fact]
@@ -80,7 +77,7 @@ namespace OctoshiftCLI.Tests
             // Arrange
             _mockGithubApi.Setup(x => x.GetMigrationLogUrl(TARGET_ORG, TARGET_REPO)).ReturnsAsync(TEST_URL);
 
-            var mockConsole = new StringWriter();
+            using var mockConsole = new StringWriter();
             Console.SetOut(mockConsole);
             Console.SetError(mockConsole);
 
@@ -89,7 +86,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Equal(mockConsole.ToString(), WRITER_OUTPUT);
-            mockConsole.Dispose();
         }
     }
 }
