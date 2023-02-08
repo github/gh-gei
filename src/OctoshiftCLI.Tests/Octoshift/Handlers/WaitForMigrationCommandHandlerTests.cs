@@ -171,7 +171,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 0))
             .Returns((State: OrganizationMigrationStatus.RepoMigration, sourceOrgUrl, targetOrgName, FailureReason: null, 1, 1))
             .Returns((State: OrganizationMigrationStatus.Succeeded, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 1));
-        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("");
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -214,7 +213,6 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: OrganizationMigrationStatus.InProgress, sourceOrgUrl, targetOrgName, FailureReason: null, 0, 0))
             .Returns((State: OrganizationMigrationStatus.RepoMigration, sourceOrgUrl, targetOrgName, FailureReason: null, 1, 1))
             .Returns((State: OrganizationMigrationStatus.Failed, sourceOrgUrl, targetOrgName, failureReason, 0, 1));
-        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("");
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));

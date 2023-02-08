@@ -69,13 +69,11 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (OrganizationMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded");
-                ConsoleWriter.OutputLogUrl(githubApi, targetOrgName, "");
                 return;
             }
 
             if (OrganizationMigrationStatus.IsFailed(state))
             {
-                ConsoleWriter.OutputLogUrl(githubApi, targetOrgName, "");
                 throw new OctoshiftCliException($"Migration {migrationId} failed for {sourceOrgUrl} -> {targetOrgName}. Failure reason: {failureReason}");
             }
 
