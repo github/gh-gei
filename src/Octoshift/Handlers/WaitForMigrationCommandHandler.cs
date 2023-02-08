@@ -108,9 +108,9 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
         {
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
+                _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
                 var url = await _githubApi.GetMigrationLogUrl("", repositoryName);
                 _log.LogInformation($"Migration log available at: {url}");
-                _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
                 return;
             }
 
