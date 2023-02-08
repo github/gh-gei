@@ -144,11 +144,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
 
-        if (args.Wait)
-        {
-            var url = await _targetGithubApi.GetMigrationLogUrl(args.GithubTargetOrg, args.TargetRepo);
-            _log.LogInformation($"Migration log available at: {url}");
-        }
+        var url = await _targetGithubApi.GetMigrationLogUrl(args.GithubTargetOrg, args.TargetRepo);
+        _log.LogInformation($"Migration log available at: {url}");
     }
 
 

@@ -100,11 +100,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
 
-        if (args.Wait)
-        {
-            var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
-            _log.LogInformation($"Migration log available at: {url}");
-        }
+        var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
+        _log.LogInformation($"Migration log available at: {url}");
     }
 
     private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org}/{project}/_git/{repo}".Replace(" ", "%20");
