@@ -170,7 +170,7 @@ namespace OctoshiftCLI.IntegrationTests
             await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
             await RunGitCommand("add README.md", repoPath);
             await RunGitCommand("config user.name \"Octoshift\"", repoPath);
-            await RunGitCommand("config user.email \"octoshift@github.com\"", repoPath);            
+            await RunGitCommand("config user.email \"octoshift@github.com\"", repoPath);
             await RunGitCommand("commit -m \"Initial commit\"", repoPath);
             await RunGitCommand("push", repoPath);
         }
