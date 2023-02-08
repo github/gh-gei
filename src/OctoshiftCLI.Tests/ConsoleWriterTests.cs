@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Tests
     public sealed class ConsoleWriterTests
     {
         private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
-        private readonly string WRITER_OUTPUT = $"Migration log available at: {TEST_URL}\n";
+        private readonly string WRITER_OUTPUT = $"Migration log available at: {TEST_URL}";
 
         private const string TARGET_ORG = "TARGET_ORG";
         private const string TARGET_REPO = "TARGET_REPO";
@@ -85,7 +85,7 @@ namespace OctoshiftCLI.Tests
             ConsoleWriter.OutputLogUrl(_mockGithubApi.Object, TARGET_ORG, TARGET_REPO);
 
             // Assert
-            Assert.Equal(mockConsole.ToString(), WRITER_OUTPUT);
+            Assert.Equal(mockConsole.ToString().Trim(), WRITER_OUTPUT);
         }
     }
 }
