@@ -34,6 +34,7 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
+            mockConsole.Dispose();
         }
 
 
@@ -52,6 +53,7 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
+            mockConsole.Dispose();
         }
 
         [Fact]
@@ -69,6 +71,7 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Empty(mockConsole.ToString());
+            mockConsole.Dispose();
         }
 
         [Fact]
@@ -86,6 +89,7 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             Assert.Equal(mockConsole.ToString(), WRITER_OUTPUT);
+            mockConsole.Dispose();
         }
     }
 }
