@@ -1,4 +1,6 @@
+using System;
 using System.CommandLine;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -65,6 +67,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         public async Task Invalid_Role()
         {
             var role = "read";  // read is not a valid role
+
+            // Prevents flaky error if console disposed before test completes
+            using var mockConsole = new StringWriter();
+            Console.SetOut(mockConsole);
+            Console.SetError(mockConsole);
 
             var args = new string[] { "add-team-to-repo", "--github-org", "foo-org", "--github-repo", "blah-repo", "--team", "some-team", "--role", role };
             var command = new AddTeamToRepoCommand();
