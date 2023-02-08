@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Models
             {
                 var url = await api.GetMigrationLogUrl(org, repo);
 
-                if (string.IsNullOrEmpty(url))
+                if (!string.IsNullOrEmpty(url))
                 {
                     Console.WriteLine($"Migration log available at: {url}");
                 }
