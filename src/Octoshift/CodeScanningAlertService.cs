@@ -67,18 +67,18 @@ namespace Octoshift
                             Ref = analysis.Ref,
                             CommitSha = analysis.CommitSha
                         });
-                    _log.LogInformation($"Successfully Migrated report for analysis {analysis.Id}");
+                    _log.LogInformation($"Successfully migrated report for analysis {analysis.Id}");
                     ++successCount;
                 }
                 catch (HttpRequestException httpException)
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogVerbose($"No commit found on target. Skipping Analysis {analysis.Id}");
+                        _log.LogVerbose($"No commit found on target. Skipping analysis {analysis.Id}");
                     }
                     else
                     {
-                        _log.LogWarning($"Http Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
+                        _log.LogWarning($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
                     }
                     ++errorCount;
                 }
@@ -92,7 +92,7 @@ namespace Octoshift
                 _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
             }
 
-            _log.LogInformation($"Code Scanning Analyses done!\nSuccess-Count: {successCount}\nError-Count: {errorCount}\nOverall: {analyses.Count()}.");
+            _log.LogInformation($"Finished migrating Code Scanning analyses done! {successCount}/{analyses.Count()} migrated successfully");
         }
 
         protected internal virtual async Task MigrateAlerts(string sourceOrg, string sourceRepo, string targetOrg,
