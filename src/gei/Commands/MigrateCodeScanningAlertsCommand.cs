@@ -11,7 +11,7 @@ public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningA
 {
     public MigrateCodeScanningAlertsCommand() : base(
         name: "migrate-code-scanning-alerts",
-        description: "Migrates the state and resolution of code scanning alerts.")
+        description: "Migrates all code-scanning analyses, alert states and possible dismissed-reasons for the default branch. This let's you migrate the history of code-scanning alerts to the target repository.")
     {
         AddOption(SourceOrg);
         AddOption(SourceRepo);

@@ -36,7 +36,10 @@ public class MigrateCodeScanningAlertsCommandHandler : ICommandHandler<MigrateCo
             args.TargetRepo,
             args.DryRun);
 
-        _log.LogSuccess($"Secret scanning alerts successfully migrated.");
+        if (!args.DryRun)
+        {
+            _log.LogSuccess($"Secret scanning alerts successfully migrated.");
+        }
     }
 
 

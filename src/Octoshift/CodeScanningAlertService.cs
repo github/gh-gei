@@ -74,7 +74,7 @@ namespace Octoshift
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogVerbose($"No commit found on target. Skipping analysis {analysis.Id}");
+                        _log.LogWarning($"Received HTTP Status 404, skipping analysis upload for {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
                     }
                     else
                     {
@@ -92,7 +92,7 @@ namespace Octoshift
                 _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
             }
 
-            _log.LogInformation($"Finished migrating Code Scanning analyses done! {successCount}/{analyses.Count()} migrated successfully");
+            _log.LogInformation($"Finished migrating Code Scanning analyses done! {successCount}/{analyses.Count()} migrated successfully.");
         }
 
         protected internal virtual async Task MigrateAlerts(string sourceOrg, string sourceRepo, string targetOrg,
