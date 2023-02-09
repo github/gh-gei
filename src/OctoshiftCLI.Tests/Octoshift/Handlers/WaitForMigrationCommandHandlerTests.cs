@@ -35,9 +35,9 @@ public class WaitForMigrationCommandHandlerTests
     {
         // Arrange
         _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
-            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null));
+            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL));
         _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
 
         var actualLogOutput = new List<string>();
@@ -78,9 +78,9 @@ public class WaitForMigrationCommandHandlerTests
         const string failureReason = "FAILURE_REASON";
 
         _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
-            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, FailureReason: failureReason));
+            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, FailureReason: failureReason, LogUrl: MIGRATION_URL));
         _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
 
         var actualLogOutput = new List<string>();
@@ -125,9 +125,9 @@ public class WaitForMigrationCommandHandlerTests
         const string failureReason = "FAILURE_REASON";
 
         _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
-            .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null))
-            .Returns((State: RepositoryMigrationStatus.FailedValidation, RepositoryName: TARGET_REPO, FailureReason: failureReason));
+            .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null, LogUrl: MIGRATION_URL))
+            .Returns((State: RepositoryMigrationStatus.FailedValidation, RepositoryName: TARGET_REPO, FailureReason: failureReason, LogUrl: MIGRATION_URL));
         _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
 
         var actualLogOutput = new List<string>();

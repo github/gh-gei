@@ -194,16 +194,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        var (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
+        var (migrationState, _, failureReason, url) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
-            (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
+            (migrationState, _, failureReason, url) = await _githubApi.GetMigration(migrationId);
         }
-
-        var url = await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo);
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
