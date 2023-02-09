@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.Handlers;
-using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
@@ -144,7 +143,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _log.LogInformation($"Migration log available at: {url}");
     }
-
 
     private string GetSourceToken(MigrateRepoCommandArgs args) =>
         args.GithubSourceOrg.HasValue()

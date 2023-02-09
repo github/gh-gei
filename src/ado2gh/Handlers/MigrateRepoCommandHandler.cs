@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Handlers;
-using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI.AdoToGithub.Handlers;
 

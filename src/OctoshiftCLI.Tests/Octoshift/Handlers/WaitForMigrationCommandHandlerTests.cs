@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -116,6 +115,8 @@ public class WaitForMigrationCommandHandlerTests
         _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
+
+        _mockGithubApi.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -164,6 +165,8 @@ public class WaitForMigrationCommandHandlerTests
         _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
+
+        _mockGithubApi.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -205,6 +208,8 @@ public class WaitForMigrationCommandHandlerTests
         _mockGithubApi.Verify(m => m.GetOrganizationMigration(ORG_MIGRATION_ID), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
+
+        _mockGithubApi.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -249,6 +254,8 @@ public class WaitForMigrationCommandHandlerTests
         _mockGithubApi.Verify(m => m.GetOrganizationMigration(ORG_MIGRATION_ID), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
+
+        _mockGithubApi.VerifyNoOtherCalls();
     }
 
     [Fact]

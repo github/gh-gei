@@ -2,7 +2,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Models;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
