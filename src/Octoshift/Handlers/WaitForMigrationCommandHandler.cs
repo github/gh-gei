@@ -124,7 +124,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            (state, repositoryName, failureReason, _) = await githubApi.GetMigration(migrationId);
+            (state, repositoryName, failureReason, url) = await githubApi.GetMigration(migrationId);
         }
     }
 }
