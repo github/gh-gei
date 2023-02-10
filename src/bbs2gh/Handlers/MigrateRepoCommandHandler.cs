@@ -304,6 +304,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"SMB PASSWORD: ********");
         }
 
+        if (args.SmbDomain.HasValue())
+        {
+            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
+        }
+
         if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"GITHUB PAT: ********");
@@ -376,7 +381,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
@@ -405,9 +410,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
         }
 
-        if (args.SmbUser.HasValue() ^ args.SmbPassword.HasValue())
+        if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
-            throw new OctoshiftCliException("Both --smb-user and --smb-password must be specified for SMB download.");
+            throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
         }
     }
 
@@ -460,4 +465,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
 
     private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
+
+    private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 }

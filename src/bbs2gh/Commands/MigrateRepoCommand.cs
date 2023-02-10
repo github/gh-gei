@@ -31,6 +31,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshPort);
         AddOption(SmbUser);
         AddOption(SmbPassword);
+        AddOption(SmbDomain);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
         AddOption(AwsBucketName);
@@ -63,7 +64,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
+                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
 
     public Option<string> ArchiveUrl { get; } = new(
         name: "--archive-url",
@@ -119,13 +121,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance.");
 
     public Option<string> SmbPassword { get; } = new(
         name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB password used for authentication when downloading the export archive from the Bitbucket server instance. If not provided, it will be read from SMB_PASSWORD environment variable.");
+
+    public Option<string> SmbDomain { get; } = new(
+        name: "--smb-domain",
+        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
@@ -176,11 +180,13 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
         }
 
-        if (args.SshUser.HasValue())
+        if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
             var bbsHost = new Uri(args.BbsServerUrl).Host;
-            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome);
+            bbsArchiveDownloader = args.SshUser.HasValue()
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
@@ -231,4 +237,5 @@ public class MigrateRepoCommandArgs
 
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
+    public string SmbDomain { get; set; }
 }
