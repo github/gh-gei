@@ -72,7 +72,7 @@ public sealed class BbsToGithub : IDisposable
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
 
-        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyFileName(bbsServer));
+        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
@@ -106,7 +106,7 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
-    private string GetSshKeyFileName(string bbsServer)
+    private string GetSshKeyName(string bbsServer)
     {
         var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
         return $"SSH_KEY_BBS_{bbsVersion}";
