@@ -94,7 +94,7 @@ public sealed class BbsToGithub : IDisposable
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
         if (useSsh)
         {
-            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyFileName(bbsServer));
+            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
             await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
         }
         else
@@ -116,7 +116,7 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
-    private string GetSshKeyFileName(string bbsServer)
+    private string GetSshKeyName(string bbsServer)
     {
         var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
         return $"SSH_KEY_BBS_{bbsVersion}";

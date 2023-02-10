@@ -541,9 +541,7 @@ steps:
             {
                 WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory(),
                 FileName = fileName,
-                Arguments = command,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
+                Arguments = command
             };
 
             if (environmentVariables != null)
@@ -566,9 +564,7 @@ steps:
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
 
-            p.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0. " +
-                                      $"STANDARD OUTPUT: {await p.StandardOutput.ReadToEndAsync()}. " +
-                                      $"STANDARD ERROR: {await p.StandardError.ReadToEndAsync()}");
+            p.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0.");
         }
 
         public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
