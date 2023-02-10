@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using FluentAssertions;
-using LibGit2Sharp;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
 
@@ -156,35 +155,27 @@ namespace OctoshiftCLI.IntegrationTests
             }
         }
 
-        public void InitializeBbsRepo(string bbsProjectKey, string repoName)
+        public async Task InitializeBbsRepo(string bbsProjectKey, string repoName)
         {
-            var repoPath = Path.Combine(Path.GetTempPath(), repoName);
-
-            if (Directory.Exists(repoPath))
-            {
-                Directory.Delete(repoPath, true);
-            }
+            var repoPath = Path.Combine(Path.GetTempPath(), $"{repoName}-{Guid.NewGuid()}");
 
             Directory.CreateDirectory(repoPath);
 
-            Repository.Init(repoPath);
-            using var repo = new Repository(repoPath);
-            File.WriteAllText(Path.Join(repo.Info.WorkingDirectory, "README.md"), "# Test Repo");
-            repo.Index.Add("README.md");
-            repo.Index.Write();
-            var author = new Signature("Octoshift", "octoshift@github.com", DateTime.Now);
-            repo.Commit("Here's a commit i made!", author, author);
-            var origin = repo.Network.Remotes.Add("origin", $"{_bbsUrl}/scm/{bbsProjectKey}/{repoName}.git");
-            var options = new PushOptions
-            {
-                CredentialsProvider = (url, user, cred) => new UsernamePasswordCredentials
-                {
-                    Username = Environment.GetEnvironmentVariable("BBS_USERNAME"),
-                    Password = Environment.GetEnvironmentVariable("BBS_PASSWORD")
-                }
-            };
-            repo.Network.Push(origin, @"refs/heads/master", options);
+            var bbsUri = new Uri(_bbsUrl);
+            var bbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
+            var bbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
+            var repoUrl = $"{bbsUri.Scheme}://{bbsUsername}:{bbsPassword}@{bbsUri.Authority}/scm/{bbsProjectKey}/{repoName}.git";
+
+            await RunGitCommand($"clone {repoUrl} {repoPath}");
+            await File.WriteAllTextAsync(Path.Join(repoPath, "README.md"), "# Test Repo");
+            await RunGitCommand("add README.md", repoPath);
+            await RunGitCommand("config user.name \"Octoshift\"", repoPath);
+            await RunGitCommand("config user.email \"octoshift@github.com\"", repoPath);
+            await RunGitCommand("commit -m \"Initial commit\"", repoPath);
+            await RunGitCommand("push", repoPath);
         }
+
+        private async Task RunGitCommand(string command, string workingDirectory = null) => await RunShellCommand(command, "git", workingDirectory);
 
         public async Task CreateBbsRepo(string bbsProjectKey, string repoName)
         {
@@ -602,6 +593,36 @@ steps:
             await p.WaitForExitAsync();
 
             p.ExitCode.Should().Be(0, $"{cliName} should return an exit code of 0");
+        }
+
+        private async Task RunShellCommand(string command, string fileName, string workingDirectory = null, IDictionary<string, string> environmentVariables = null)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory(),
+                FileName = fileName,
+                Arguments = command
+            };
+
+            if (environmentVariables != null)
+            {
+                foreach (var token in environmentVariables)
+                {
+                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
+                    {
+                        startInfo.EnvironmentVariables[token.Key] = token.Value;
+                    }
+                    else
+                    {
+                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
+                    }
+                }
+            }
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+            var p = Process.Start(startInfo);
+            await p.WaitForExitAsync();
+
+            p.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0.");
         }
 
         public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
