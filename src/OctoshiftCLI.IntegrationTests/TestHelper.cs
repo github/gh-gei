@@ -529,71 +529,11 @@ steps:
             await RunPowershellScript("migrate.ps1", tokens);
         }
 
-        public async Task RunPowershellScript(string script, IDictionary<string, string> tokens)
-        {
-            var scriptPath = Path.Join(GetOsDistPath(), script);
+        public async Task RunPowershellScript(string script, IDictionary<string, string> tokens) =>
+            await RunShellCommand($"-File {Path.Join(GetOsDistPath(), script)}", "pwsh", GetOsDistPath(), tokens);
 
-            var startInfo = new ProcessStartInfo
-            {
-                WorkingDirectory = GetOsDistPath(),
-                FileName = "pwsh",
-                Arguments = $"-File {scriptPath}"
-            };
-
-            if (tokens != null)
-            {
-                foreach (var token in tokens)
-                {
-                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
-                    {
-                        startInfo.EnvironmentVariables[token.Key] = token.Value;
-                    }
-                    else
-                    {
-                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
-                    }
-                }
-            }
-
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-
-            var p = Process.Start(startInfo);
-            await p.WaitForExitAsync();
-
-            p.ExitCode.Should().Be(0, $"{script} should return an exit code of 0");
-        }
-
-        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens)
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                WorkingDirectory = GetOsDistPath(),
-                FileName = cliName,
-                Arguments = command
-            };
-
-            if (tokens != null)
-            {
-                foreach (var token in tokens)
-                {
-                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
-                    {
-                        startInfo.EnvironmentVariables[token.Key] = token.Value;
-                    }
-                    else
-                    {
-                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
-                    }
-                }
-            }
-
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-
-            var p = Process.Start(startInfo);
-            await p.WaitForExitAsync();
-
-            p.ExitCode.Should().Be(0, $"{cliName} should return an exit code of 0");
-        }
+        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens) =>
+            await RunShellCommand(command, cliName, GetOsDistPath(), tokens);
 
         private async Task RunShellCommand(string command, string fileName, string workingDirectory = null, IDictionary<string, string> environmentVariables = null)
         {
