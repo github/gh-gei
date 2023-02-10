@@ -110,7 +110,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}"
             : "";
         var smbArchiveDownloadOptions = args.SmbUser.HasValue()
-            ? $" --smb-user \"{args.SmbUser}\"{(args.Domain.HasValue() ? $" --domain {args.Domain}" : "")}"
+            ? $" --smb-user \"{args.SmbUser}\"{(args.SmbDomain.HasValue() ? $" --smb-domain {args.SmbDomain}" : "")}"
             : "";
         var bbsSharedHomeOption = args.BbsSharedHome.HasValue() ? $" --bbs-shared-home \"{args.BbsSharedHome}\"" : "";
         var awsBucketNameOption = args.AwsBucketName.HasValue() ? $" --aws-bucket-name \"{args.AwsBucketName}\"" : "";
@@ -169,9 +169,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation($"SMB USER: {args.SmbUser}");
         }
 
-        if (args.Domain.HasValue())
+        if (args.SmbDomain.HasValue())
         {
-            _log.LogInformation($"DOMAIN: {args.Domain}");
+            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
         }
 
         if (args.Output.HasValue())

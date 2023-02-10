@@ -47,7 +47,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
         TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "domain", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "smb-domain", false);
         TestHelpers.VerifyCommandOption(_command.Options, "output", false);
         TestHelpers.VerifyCommandOption(_command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
