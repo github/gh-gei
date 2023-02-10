@@ -158,49 +158,11 @@ namespace Octoshift
             return notFoundCount == 0;
         }
 
-        // private async Task<CodeScanningAlert> FindMatchingTargetAlert(string sourceOrg, string sourceRepo, List<CodeScanningAlert> targetAlerts,
-        //     CodeScanningAlert sourceAlert)
-        // {
-        //     var targetAlertsOfSameRule = targetAlerts.Where(targetAlert => targetAlert.RuleId == sourceAlert.RuleId);
-        //     var matchingTargetAlert = targetAlertsOfSameRule.FirstOrDefault(targetAlert => AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
-
-        //     if (matchingTargetAlert != null)
-        //     {
-        //         return matchingTargetAlert;
-        //     }
-
-        //     // Most Recent Instance is not equal, so we have to match the target alert by all instances of the source
-        //     var allSourceInstances = await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
-
-        //     return targetAlertsOfSameRule.FirstOrDefault(targetAlert => allSourceInstances.Any(sourceInstance => AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
-        // }
-
-        // private bool AreAlertRulesEqual(CodeScanningAlert sourceRule, CodeScanningAlert targetRule)
-        // {
-        //     return sourceRule.RuleId == targetRule.RuleId;
-        // }
-
-        // private bool AreInstancesEqual(CodeScanningAlertInstance sourceInstance,
-        //     CodeScanningAlertInstance targetInstance)
-        // {
-        //     return sourceInstance.Ref == targetInstance.Ref
-        //            && sourceInstance.CommitSha == targetInstance.CommitSha
-        //            && sourceInstance.Path == targetInstance.Path
-        //            && sourceInstance.StartLine == targetInstance.StartLine
-        //            && sourceInstance.StartColumn == targetInstance.StartColumn
-        //            && sourceInstance.EndLine == targetInstance.EndLine
-        //            && sourceInstance.EndColumn == targetInstance.EndColumn;
-
-        // }
-
         private async Task<CodeScanningAlert> FindMatchingTargetAlert(string sourceOrg, string sourceRepo, List<CodeScanningAlert> targetAlerts,
             CodeScanningAlert sourceAlert)
         {
-            var targetAlertsOfSameRule =
-                targetAlerts.FindAll(targetAlert => AreAlertRulesEqual(sourceAlert, targetAlert));
-
-            var matchingTargetAlert = targetAlertsOfSameRule.Find(targetAlert =>
-                AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
+            var targetAlertsOfSameRule = targetAlerts.Where(targetAlert => targetAlert.RuleId == sourceAlert.RuleId);
+            var matchingTargetAlert = targetAlertsOfSameRule.FirstOrDefault(targetAlert => AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
 
             if (matchingTargetAlert != null)
             {
@@ -208,13 +170,9 @@ namespace Octoshift
             }
 
             // Most Recent Instance is not equal, so we have to match the target alert by all instances of the source
-            var allSourceInstances =
-                await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
-            matchingTargetAlert = targetAlertsOfSameRule.Find(targetAlert =>
-                allSourceInstances.Any(sourceInstance =>
-                    AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
+            var allSourceInstances = await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
 
-            return matchingTargetAlert;
+            return targetAlertsOfSameRule.FirstOrDefault(targetAlert => allSourceInstances.Any(sourceInstance => AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
         }
 
         private bool AreAlertRulesEqual(CodeScanningAlert sourceRule, CodeScanningAlert targetRule)
@@ -235,5 +193,4 @@ namespace Octoshift
 
         }
     }
-
 }
