@@ -248,16 +248,19 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
+        content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+        content.AppendLine("$RepoMigrations = [ordered]@{}");
 
         content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
         foreach (var repo in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, awsBucketName, noSslVerify, true, skipReleases, lockSourceRepo)));
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo, ghesApiUrl, awsBucketName, noSslVerify, true, skipReleases, lockSourceRepo))}");
+            content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, repo)));
+                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, repo));
             }
         }
 
@@ -276,7 +279,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine();
         content.AppendLine("$Succeeded = 0");
-        content.AppendLine("$Failed = 0");
+        content.AppendLine("$global:failed = 0");
         content.AppendLine("$RepoMigrations = [ordered]@{}");
 
         content.AppendLine();
@@ -302,7 +305,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         foreach (var repo in repos)
         {
             content.AppendLine(WaitForMigrationScript(repo));
-            content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
 
             if (downloadMigrationLogs)
             {
@@ -316,10 +318,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
         content.AppendLine("Write-Host =============== Summary ===============");
         content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
-        content.AppendLine("Write-Host Total number of failed migrations: $Failed");
+        content.AppendLine("Write-Host Total number of failed migrations: $global:failed");
 
         content.AppendLine(@"
-if ($Failed -ne 0) {
+if ($global:failed -ne 0) {
     exit 1
 }");
 
@@ -338,6 +340,8 @@ if ($Failed -ne 0) {
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
+        content.AppendLine("$RepoMigrations = [ordered]@{}");
+
         content.AppendLine($"# =========== Organization: {adoSourceOrg} ===========");
 
         foreach (var teamProject in repos.Keys)
@@ -354,11 +358,12 @@ if ($Failed -ne 0) {
                 foreach (var repo in repos[teamProject])
                 {
                     var githubRepo = GetGithubRepoName(teamProject, repo);
-                    content.AppendLine(Exec(MigrateAdoRepoScript(adoServerUrl, adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, true)));
+                    content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateAdoRepoScript(adoServerUrl, adoSourceOrg, teamProject, repo, githubTargetOrg, githubRepo, true))}");
+                    content.AppendLine($"$RepoMigrations[\"{repo}\"] = $MigrationID");
 
                     if (downloadMigrationLogs)
                     {
-                        content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, githubRepo)));
+                        content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, githubRepo));
                     }
                 }
             }
@@ -379,7 +384,7 @@ if ($Failed -ne 0) {
 
         content.AppendLine();
         content.AppendLine("$Succeeded = 0");
-        content.AppendLine("$Failed = 0");
+        content.AppendLine("$global:failed = 0");
         content.AppendLine("$RepoMigrations = [ordered]@{}");
 
         content.AppendLine();
@@ -422,7 +427,6 @@ if ($Failed -ne 0) {
             foreach (var repo in repos[teamProject].Select(r => GetGithubRepoName(teamProject, r)))
             {
                 content.AppendLine(WaitForMigrationScript(repo));
-                content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
 
                 if (downloadMigrationLogs)
                 {
@@ -437,10 +441,10 @@ if ($Failed -ne 0) {
         content.AppendLine();
         content.AppendLine("Write-Host =============== Summary ===============");
         content.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
-        content.AppendLine("Write-Host Total number of failed migrations: $Failed");
+        content.AppendLine("Write-Host Total number of failed migrations: $global:failed");
 
         content.AppendLine(@"
-if ($Failed -ne 0) {
+if ($global:failed -ne 0) {
     exit 1
 }");
 
@@ -481,11 +485,13 @@ if ($Failed -ne 0) {
         return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}";
     }
 
-    private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+    private string WaitForMigrationScript(string repoMigrationKey = null) {
+        return $"if ($RepoMigrations[\"{repoMigrationKey}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]\nif ($lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $global:failed++ }} }}";
+    }
 
     private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo)
     {
-        return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
+        return $"if ($RepoMigrations[\"{targetRepo}\"]) {{ gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\" }}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
@@ -506,7 +512,9 @@ function Exec {
     )
     & @ScriptBlock
     if ($lastexitcode -ne 0) {
-        exit $lastexitcode
+        $global:failed++
+        $Today = Get-Date -Format 'yyyy-MM-dd'
+        Write-Host [$($Today)] [ERROR] Failed to start migration - see logs above for details. Continuing to next repo.
     }
 }";
 
