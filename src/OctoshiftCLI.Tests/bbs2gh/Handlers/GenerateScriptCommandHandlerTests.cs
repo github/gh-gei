@@ -9,7 +9,6 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using Xunit;
 
-
 namespace OctoshiftCLI.Tests.bbs2gh.Handlers;
 
 public class GenerateScriptCommandHandlerTests
@@ -153,7 +152,6 @@ public class GenerateScriptCommandHandlerTests
         _mockEnvironmentVariableProvider.Verify(m => m.BbsUsername(It.IsAny<bool>()), Times.Never);
         _mockEnvironmentVariableProvider.Verify(m => m.BbsPassword(It.IsAny<bool>()), Times.Never);
     }
-
 
     [Fact]
     public async Task Filters_By_Project()
