@@ -64,8 +64,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used when using SSH to download the export archive " +
-                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" when using SMB.");
+        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
+                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
 
     public Option<string> ArchiveUrl { get; } = new(
         name: "--archive-url",
