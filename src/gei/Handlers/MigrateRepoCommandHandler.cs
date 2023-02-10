@@ -17,13 +17,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly AwsApi _awsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly HttpDownloadService _httpDownloadService;
+    private readonly RetryPolicy _retryPolicy;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, RetryPolicy retryPolicy)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
@@ -32,6 +33,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _azureApi = azureApi;
         _awsApi = awsApi;
         _httpDownloadService = httpDownloadService;
+        _retryPolicy = retryPolicy;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -238,9 +240,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"Waiting for archive with id {archiveId} generation to finish. Current status: {archiveStatus}");
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
-                var retryPolicy = new RetryPolicy(_log);
-
-                var result = await retryPolicy.RetryOnResult(async () => await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId), ArchiveMigrationStatus.Failed);
+                var result = await _retryPolicy.RetryOnResult(async () => await githubApi.GetArchiveMigrationStatus(githubSourceOrg, archiveId), ArchiveMigrationStatus.Failed);
 
                 archiveStatus = result.Outcome == Polly.OutcomeType.Failure
                     ? throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}")

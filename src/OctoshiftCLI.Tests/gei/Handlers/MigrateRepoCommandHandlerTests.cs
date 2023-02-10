@@ -18,6 +18,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<AzureApi> _mockAzureApi = TestHelpers.CreateMock<AzureApi>();
         private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
         private readonly Mock<HttpDownloadService> _mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
+        private readonly Mock<RetryPolicy> _retryPolicy = TestHelpers.CreateMock<RetryPolicy>();
 
         private readonly MigrateRepoCommandHandler _handler;
 
@@ -44,7 +45,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 null,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _retryPolicy.Object);
         }
 
         [Fact]
@@ -77,7 +79,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _retryPolicy.Object);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -121,7 +124,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _retryPolicy.Object);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -1377,7 +1381,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _retryPolicy.Object);
 
             // Act
             var args = new MigrateRepoCommandArgs
