@@ -61,7 +61,7 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
     }
 
     [Fact]
-    public async Task Downlaod_Throws_When_Target_Export_Archive_Already_Exists()
+    public async Task Download_Throws_When_Target_Export_Archive_Already_Exists()
     {
         // Arrange
         _mockFileSystemProvider.Setup(m => m.FileExists(It.Is<string>(x => x.Contains(_exportArchiveFilename)))).Returns(true);
