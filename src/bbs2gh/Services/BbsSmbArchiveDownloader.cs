@@ -122,7 +122,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
         var totalProgressMessage = totalBytes.HasValue
             ? $" out of {GetLogFriendlySize(totalBytes.Value)} ({GetPercentage(downloadedBytes, totalBytes.Value)})"
             : "";
-        _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)}{totalProgressMessage} completed...");
+        _log.LogInformation($"Archive download in progress, {GetLogFriendlySize(downloadedBytes)}{totalProgressMessage} completed...");
 
         _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
     }
