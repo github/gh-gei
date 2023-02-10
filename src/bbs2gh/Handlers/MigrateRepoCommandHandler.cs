@@ -304,9 +304,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"SMB PASSWORD: ********");
         }
 
-        if (args.Domain.HasValue())
+        if (args.SmbDomain.HasValue())
         {
-            _log.LogInformation($"DOMAIN: {args.Domain}");
+            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
         }
 
         if (args.GithubPat.HasValue())
@@ -381,7 +381,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.Domain }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }

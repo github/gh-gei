@@ -31,7 +31,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshPort);
         AddOption(SmbUser);
         AddOption(SmbPassword);
-        AddOption(Domain);
+        AddOption(SmbDomain);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
         AddOption(AwsBucketName);
@@ -127,8 +127,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--smb-password",
         description: "The SMB password to be used for downloading the export archive off of the Bitbucket server. If not provided, it will be read from SMB_PASSWORD environment variable.");
 
-    public Option<string> Domain { get; } = new(
-        name: "--domain",
+    public Option<string> SmbDomain { get; } = new(
+        name: "--smb-domain",
         description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubPat { get; } = new(
@@ -186,7 +186,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             var bbsHost = new Uri(args.BbsServerUrl).Host;
             bbsArchiveDownloader = args.SshUser.HasValue()
                 ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.Domain, args.BbsSharedHome);
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
@@ -237,5 +237,5 @@ public class MigrateRepoCommandArgs
 
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
-    public string Domain { get; set; }
+    public string SmbDomain { get; set; }
 }

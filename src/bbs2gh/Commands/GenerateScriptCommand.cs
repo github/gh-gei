@@ -24,7 +24,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshPrivateKey);
         AddOption(SshPort);
         AddOption(SmbUser);
-        AddOption(Domain);
+        AddOption(SmbDomain);
         AddOption(Output);
         AddOption(Kerberos);
         AddOption(Verbose);
@@ -74,8 +74,8 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
                      $"{Environment.NewLine}" +
                      "Note: The SMB password will also be required in order to connect to a SMB share which has to be set as an environment variable before running the script.");
 
-    public Option<string> Domain { get; } = new(
-        name: "--domain",
+    public Option<string> SmbDomain { get; } = new(
+        name: "--smb-domain",
         description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubOrg { get; } = new("--github-org")
@@ -132,7 +132,7 @@ public class GenerateScriptCommandArgs
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; }
     public string SmbUser { get; set; }
-    public string Domain { get; set; }
+    public string SmbDomain { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }

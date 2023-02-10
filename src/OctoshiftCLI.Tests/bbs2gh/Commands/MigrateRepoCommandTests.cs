@@ -22,7 +22,7 @@ public class MigrateRepoCommandTests
     private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
     private const string SMB_USER = "smb-user";
     private const string SMB_PASSWORD = "smb-password";
-    private const string DOMAIN = "domain";
+    private const string SMB_DOMAIN = "smb-domain";
 
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -73,7 +73,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
         TestHelpers.VerifyCommandOption(command.Options, "smb-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "smb-password", false);
-        TestHelpers.VerifyCommandOption(command.Options, "domain", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-domain", false);
         TestHelpers.VerifyCommandOption(command.Options, "wait", false);
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
@@ -108,7 +108,7 @@ public class MigrateRepoCommandTests
         {
             SmbUser = SMB_USER,
             SmbPassword = SMB_PASSWORD,
-            Domain = DOMAIN,
+            SmbDomain = SMB_DOMAIN,
             BbsSharedHome = BBS_SHARED_HOME,
             BbsServerUrl = BBS_SERVER_URL
         };
@@ -118,7 +118,7 @@ public class MigrateRepoCommandTests
 
         // Assert
         handler.Should().NotBeNull();
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, DOMAIN, BBS_SHARED_HOME));
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
     }
 
     [Fact]
