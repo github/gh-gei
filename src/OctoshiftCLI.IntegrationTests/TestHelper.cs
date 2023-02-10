@@ -543,7 +543,8 @@ steps:
                 FileName = fileName,
                 Arguments = command,
                 RedirectStandardError = true,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
             };
 
             if (environmentVariables != null)
