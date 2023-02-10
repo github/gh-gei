@@ -121,11 +121,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.");
+        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance.");
 
     public Option<string> SmbPassword { get; } = new(
         name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server. If not provided, it will be read from SMB_PASSWORD environment variable.");
+        description: "The SMB password used for authentication when downloading the export archive from the Bitbucket server instance. If not provided, it will be read from SMB_PASSWORD environment variable.");
 
     public Option<string> SmbDomain { get; } = new(
         name: "--smb-domain",

@@ -70,7 +70,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server." +
+        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance." +
                      $"{Environment.NewLine}" +
                      "Note: You must also specify the SMB password using the SMB_PASSWORD environment variable.");
 
