@@ -66,18 +66,18 @@ namespace Octoshift
                 try
                 {
                     await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
-                    _log.LogInformation($"Successfully Migrated report for analysis {analysis.Id}");
+                    _log.LogInformation($"Successfully migrated report for analysis {analysis.Id}");
                     ++successCount;
                 }
                 catch (HttpRequestException httpException)
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogWarning($"No commit found on target. Skipping Analysis {analysis.Id}");
+                        _log.LogWarning($"Received HTTP Status 404, skipping analysis upload for {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
                     }
                     else
                     {
-                        _log.LogError($"Http Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
+                        _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
                     }
                     ++errorCount;
                 }
@@ -85,7 +85,7 @@ namespace Octoshift
                 _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
             }
 
-            _log.LogInformation($"Code Scanning Analyses done!\nSuccess-Count: {successCount}\nError-Count: {errorCount}\nOverall: {analyses.Count()}.");
+            _log.LogInformation($"Finished migrating Code Scanning analyses! {successCount}/{analyses.Count()} migrated successfully.");
 
             return errorCount == 0;
         }
