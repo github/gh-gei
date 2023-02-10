@@ -737,12 +737,10 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
-
-
         public virtual async Task<IEnumerable<CodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo, string branch = null)
         {
             var queryString = "per_page=100&sort=created&direction=asc";
-            if (!branch.IsNullOrWhiteSpace())
+            if (branch.HasValue())
             {
                 queryString += $"&ref={branch}";
             }
@@ -755,12 +753,12 @@ namespace OctoshiftCLI
 
         public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
         {
-            if (!CodeScanningAlerts.IsOpenOrDismissed(state))
+            if (!CodeScanningAlertState.IsOpenOrDismissed(state))
             {
                 throw new ArgumentException($"Invalid value for {nameof(state)}");
             }
 
-            if (CodeScanningAlerts.IsDismissed(state) && !CodeScanningAlerts.IsValidDismissedReason(dismissedReason))
+            if (CodeScanningAlertState.IsDismissed(state) && !CodeScanningAlertState.IsValidDismissedReason(dismissedReason))
             {
                 throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
             }
@@ -787,19 +785,14 @@ namespace OctoshiftCLI
             return await _client.GetAsync(url, headers);
         }
 
-        public virtual async Task<string> UploadSarifReport(string org, string repo, SarifContainer sarifContainer)
+        public virtual async Task<string> UploadSarifReport(string org, string repo, string sarifReport, string commitSha, string sarifRef)
         {
-            if (sarifContainer == null)
-            {
-                throw new ArgumentNullException(nameof(sarifContainer));
-            }
-
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs";
             var payload = new
             {
-                commit_sha = sarifContainer.CommitSha,
-                sarif = StringCompressor.GZipAndBase64String(sarifContainer.Sarif),
-                @ref = sarifContainer.Ref
+                commit_sha = commitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarifReport),
+                @ref = sarifRef
             };
             return await _client.PostAsync(url, payload);
         }
@@ -817,7 +810,7 @@ namespace OctoshiftCLI
         public virtual async Task<IEnumerable<CodeScanningAlert>> GetCodeScanningAlertsForRepository(string org, string repo, string branch = null)
         {
             var queryString = "per_page=100&sort=created&direction=asc";
-            if (!branch.IsNullOrWhiteSpace())
+            if (branch.HasValue())
             {
                 queryString += $"&ref={branch}";
             }
@@ -927,28 +920,9 @@ namespace OctoshiftCLI
             new()
             {
                 Id = (int)codescan["id"],
-                SarifId = (string)codescan["sarif_id"],
                 CommitSha = (string)codescan["commit_sha"],
                 Ref = (string)codescan["ref"],
-                AnalysisKey = (string)codescan["analysis_key"],
-                Error = (string)codescan["error"],
-                Warning = (string)codescan["warning"],
-                Url = (string)codescan["url"],
                 CreatedAt = (string)codescan["created_at"],
-                ResultsCount = (int)codescan["results_count"],
-                RulesCount = (int)codescan["rules_count"],
-                Deletable = (bool)codescan["deletable"],
-                Environment = codescan["environment"].Any()
-                    ? new CodeScanningEnvironment { Language = (string)codescan["environment"]["language"] }
-                    : null,
-                Tool = codescan["tool"].Any()
-                    ? new CodeScanningTool
-                    {
-                        Name = (string)codescan["tool"]["name"],
-                        Guid = (string)codescan["tool"]["guid"],
-                        Version = (string)codescan["tool"]["version"]
-                    }
-                    : null,
             };
 
         private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>
@@ -956,12 +930,10 @@ namespace OctoshiftCLI
             new()
             {
                 Number = (int)scanningAlert["number"],
-                FixedAt = scanningAlert["fixed_at"].Any() ? (string)scanningAlert["fixed_at"] : null,
                 Url = (string)scanningAlert["url"],
                 DismissedAt = scanningAlert.Value<string>("dismissed_at"),
                 DismissedComment = scanningAlert.Value<string>("dismissed_comment"),
                 DismissedReason = scanningAlert.Value<string>("dismissed_reason"),
-                DismissedByLogin = scanningAlert["dismissed_by"].Any() ? (string)scanningAlert["dismissed_by"]["login"] : null,
                 State = (string)scanningAlert["state"],
                 RuleId = (string)scanningAlert["rule"]["id"],
                 MostRecentInstance = BuildCodeScanningAlertInstance(scanningAlert["most_recent_instance"]),
@@ -971,17 +943,12 @@ namespace OctoshiftCLI
             new()
             {
                 Ref = (string)scanningAlertInstance["ref"],
-                State = (string)scanningAlertInstance["state"],
-                AnalysisKey = (string)scanningAlertInstance["analysis_key"],
                 CommitSha = (string)scanningAlertInstance["commit_sha"],
-                Location = new CodeScanningAlertLocation
-                {
-                    Path = (string)scanningAlertInstance["location"]["path"],
-                    StartLine = (int)scanningAlertInstance["location"]["start_line"],
-                    EndLine = (int)scanningAlertInstance["location"]["end_line"],
-                    StartColumn = (int)scanningAlertInstance["location"]["start_column"],
-                    EndColumn = (int)scanningAlertInstance["location"]["end_column"]
-                }
+                Path = (string)scanningAlertInstance["location"]["path"],
+                StartLine = (int)scanningAlertInstance["location"]["start_line"],
+                EndLine = (int)scanningAlertInstance["location"]["end_line"],
+                StartColumn = (int)scanningAlertInstance["location"]["start_column"],
+                EndColumn = (int)scanningAlertInstance["location"]["end_column"]
             };
     }
 }

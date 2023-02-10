@@ -7,7 +7,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests;
 
-public class CodeScanningServiceTest
+public class CodeScanningAlertServiceTests
 {
     private readonly Mock<GithubApi> _mockSourceGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<GithubApi> _mockTargetGithubApi = TestHelpers.CreateMock<GithubApi>();
@@ -20,7 +20,7 @@ public class CodeScanningServiceTest
     private const string TARGET_ORG = "TARGET-ORG";
     private const string TARGET_REPO = "TARGET-REPO";
 
-    public CodeScanningServiceTest()
+    public CodeScanningAlertServiceTests()
     {
         _alertService = new CodeScanningAlertService(_mockSourceGithubApi.Object, _mockTargetGithubApi.Object, _mockOctoLogger.Object);
     }
@@ -31,10 +31,9 @@ public class CodeScanningServiceTest
         var analysisId = 123456;
         var CommitSha = "TEST_COMMIT_SHA";
         var Ref = "refs/heads/main";
-        var CodeScanningAnalysisResult = new CodeScanningAnalysis
+        var analysis = new CodeScanningAnalysis
         {
             Id = analysisId,
-            Category = "Category",
             CreatedAt = "2022-03-30T00:00:00Z",
             CommitSha = CommitSha,
             Ref = Ref
@@ -42,19 +41,14 @@ public class CodeScanningServiceTest
         var instance = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "fixed",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
-        var sourceAlert = new CodeScanningAlert
+        var alert = new CodeScanningAlert
         {
             Number = 1,
             RuleId = "java/rule",
@@ -66,47 +60,43 @@ public class CodeScanningServiceTest
         };
 
         _mockSourceGithubApi.Setup(x => x.GetDefaultBranch(SOURCE_ORG, SOURCE_REPO).Result).Returns("main");
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { CodeScanningAnalysisResult });
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert });
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { alert });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { alert });
 
         await _alertService.MigrateCodeScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
 
         _mockSourceGithubApi.Verify(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main"), Times.Once);
         _mockSourceGithubApi.Verify(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main"), Times.Once);
+        _mockTargetGithubApi.Verify(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main"), Times.Once);
     }
 
     [Fact]
     public async Task MigrateAnalyses_Migrate_Single_Analysis()
     {
         var analysisId = 123456;
-        var SarifResponse = "MOCK_SARIF_REPORT";
-        var CommitSha = "TEST_COMMIT_SHA";
-        var Ref = "refs/heads/main";
-        var CodeScanningAnalysisResult = new CodeScanningAnalysis
+        var sarif = "MOCK_SARIF_REPORT";
+        var sarifCommitSha = "TEST_COMMIT_SHA";
+        var sarifRef = "refs/heads/main";
+        var analysis = new CodeScanningAnalysis
         {
             Id = analysisId,
-            Category = "Category",
             CreatedAt = "2022-03-30T00:00:00Z",
-            CommitSha = CommitSha,
-            Ref = Ref
+            CommitSha = sarifCommitSha,
+            Ref = sarifRef
         };
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { CodeScanningAnalysisResult });
-        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId).Result).Returns(SarifResponse);
-
-        var expectedContainer = new SarifContainer
-        {
-            Sarif = SarifResponse,
-            Ref = Ref,
-            CommitSha = CommitSha
-        };
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId).Result).Returns(sarif);
 
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
         _mockTargetGithubApi.Verify(
             x => x.UploadSarifReport(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                ItExt.IsDeep(expectedContainer)
+                TARGET_ORG,
+                TARGET_REPO,
+                sarif,
+                sarifCommitSha,
+                sarifRef
             ),
             Times.Once);
     }
@@ -118,7 +108,6 @@ public class CodeScanningServiceTest
         var analysis1 = new CodeScanningAnalysis
         {
             Id = 1,
-            Category = "Category",
             CreatedAt = "2022-03-30T00:00:00Z",
             CommitSha = "SHA_1",
             Ref = Ref
@@ -126,7 +115,6 @@ public class CodeScanningServiceTest
         var analysis2 = new CodeScanningAnalysis
         {
             Id = 2,
-            Category = "Category",
             CreatedAt = "2022-03-31T00:00:00Z",
             CommitSha = "SHA_2",
             Ref = Ref
@@ -134,7 +122,6 @@ public class CodeScanningServiceTest
 
         const string sarifResponse1 = "SARIF_RESPONSE_1";
         const string sarifResponse2 = "SARIF_RESPONSE_2";
-
 
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis1, analysis2 });
         _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysis1.Id).Result).Returns(sarifResponse1);
@@ -146,23 +133,29 @@ public class CodeScanningServiceTest
             x => x.UploadSarifReport(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<SarifContainer>()
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()
             ),
             Times.Exactly(2));
 
         _mockTargetGithubApi.Verify(
             x => x.UploadSarifReport(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.Is<SarifContainer>(c => c.CommitSha == analysis1.CommitSha && c.Ref == Ref && c.Sarif == sarifResponse1)
+                TARGET_ORG,
+                TARGET_REPO,
+                sarifResponse1,
+                analysis1.CommitSha,
+                Ref
             ),
             Times.Once);
 
         _mockTargetGithubApi.Verify(
             x => x.UploadSarifReport(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.Is<SarifContainer>(c => c.CommitSha == analysis2.CommitSha && c.Ref == Ref && c.Sarif == sarifResponse2)
+                TARGET_ORG,
+                TARGET_REPO,
+                sarifResponse2,
+                analysis2.CommitSha,
+                Ref
             ),
             Times.Once);
 
@@ -170,13 +163,12 @@ public class CodeScanningServiceTest
     }
 
     [Fact]
-    public async Task MigrateAnalyses_Dry_Run_Only_Logs_Count_But_Does_Not_Upload_Sarif()
+    public async Task MigrateAnalyses_Dry_Run_Does_Not_Upload_Sarif()
     {
         var Ref = "refs/heads/main";
         var analysis1 = new CodeScanningAnalysis
         {
             Id = 1,
-            Category = "Category",
             CreatedAt = "2022-03-30T00:00:00Z",
             CommitSha = "SHA_1",
             Ref = Ref
@@ -184,7 +176,6 @@ public class CodeScanningServiceTest
         var analysis2 = new CodeScanningAnalysis
         {
             Id = 2,
-            Category = "Category",
             CreatedAt = "2022-03-31T00:00:00Z",
             CommitSha = "SHA_2",
             Ref = Ref
@@ -203,7 +194,9 @@ public class CodeScanningServiceTest
             x => x.UploadSarifReport(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<SarifContainer>()
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()
             ),
             Times.Never);
     }
@@ -213,20 +206,15 @@ public class CodeScanningServiceTest
     {
         var CommitSha = "SHA_1";
         var Ref = "refs/heads/main";
-        var lastInstance = new CodeScanningAlertInstance
+        var instance = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert = new CodeScanningAlert
@@ -237,10 +225,10 @@ public class CodeScanningServiceTest
             DismissedAt = "2020-01-01T00:00:00Z",
             DismissedComment = "I was dismissed!",
             DismissedReason = "false positive",
-            MostRecentInstance = lastInstance
+            MostRecentInstance = instance
         };
 
-        var targetAlert = new CodeScanningAlert { Number = 2, State = "open", MostRecentInstance = CopyInstance(lastInstance), RuleId = "java/rule" };
+        var targetAlert = new CodeScanningAlert { Number = 2, State = "open", MostRecentInstance = CopyInstance(instance), RuleId = "java/rule" };
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert });
 
@@ -262,30 +250,26 @@ public class CodeScanningServiceTest
         var CommitSha1 = "SHA_1";
         var CommitSha2 = "SHA_2";
         var Ref = "refs/heads/main";
-        var Location = new CodeScanningAlertLocation
+        var instance1 = new CodeScanningAlertInstance
         {
+            Ref = Ref,
+            CommitSha = CommitSha1,
             Path = "path/to/file.cs",
             StartLine = 3,
             StartColumn = 4,
             EndLine = 6,
             EndColumn = 25
         };
-        var instance1 = new CodeScanningAlertInstance
-        {
-            Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
-            CommitSha = CommitSha1,
-            Location = Location
-        };
 
         var instance2 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123457",
             CommitSha = CommitSha2,
-            Location = Location
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert1 = new CodeScanningAlert
@@ -343,30 +327,26 @@ public class CodeScanningServiceTest
         var CommitSha = "SHA_1";
         var Ref1 = "refs/heads/main";
         var Ref2 = "refs/heads/dev";
-        var Location = new CodeScanningAlertLocation
+        var instance1 = new CodeScanningAlertInstance
         {
+            Ref = Ref1,
+            CommitSha = CommitSha,
             Path = "path/to/file.cs",
             StartLine = 3,
             StartColumn = 4,
             EndLine = 6,
             EndColumn = 25
         };
-        var instance1 = new CodeScanningAlertInstance
-        {
-            Ref = Ref1,
-            State = "open",
-            AnalysisKey = "123456",
-            CommitSha = CommitSha,
-            Location = Location
-        };
 
         var instance2 = new CodeScanningAlertInstance
         {
             Ref = Ref2,
-            State = "open",
-            AnalysisKey = "123457",
             CommitSha = CommitSha,
-            Location = Location
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert1 = new CodeScanningAlert
@@ -426,33 +406,23 @@ public class CodeScanningServiceTest
         var instance1 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var instance2 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123457",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 9,
-                StartColumn = 1,
-                EndLine = 35,
-                EndColumn = 2
-            }
+            Path = "path/to/file.cs",
+            StartLine = 9,
+            StartColumn = 1,
+            EndLine = 35,
+            EndColumn = 2
         };
 
         var sourceAlert1 = new CodeScanningAlert
@@ -509,52 +479,37 @@ public class CodeScanningServiceTest
     {
         var CommitSha = "SHA_1";
         var Ref = "refs/heads/main";
-        var mostRecentInstance = new CodeScanningAlertInstance
+        var firstInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
-        var postLoadedInstance1 = new CodeScanningAlertInstance
+        var secondInstance = new CodeScanningAlertInstance
         {
             Ref = "refs/pull/3171/merge",
-            State = "open",
-            AnalysisKey = "123457",
             CommitSha = "OTHER_SHA_2",
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 9,
-                StartColumn = 1,
-                EndLine = 35,
-                EndColumn = 2
-            }
+            Path = "path/to/file.cs",
+            StartLine = 9,
+            StartColumn = 1,
+            EndLine = 35,
+            EndColumn = 2
         };
 
-        var postLoadedInstance2 = new CodeScanningAlertInstance
+        var thirdInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123457",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 9,
-                StartColumn = 1,
-                EndLine = 35,
-                EndColumn = 2
-            }
+            Path = "path/to/file.cs",
+            StartLine = 9,
+            StartColumn = 1,
+            EndLine = 35,
+            EndColumn = 2
         };
 
         var sourceAlert1 = new CodeScanningAlert
@@ -565,14 +520,14 @@ public class CodeScanningServiceTest
             DismissedAt = "2020-01-01T00:00:00Z",
             DismissedComment = "I was dismissed!",
             DismissedReason = "false positive",
-            MostRecentInstance = mostRecentInstance
+            MostRecentInstance = thirdInstance
         };
 
-        var targetAlert1 = new CodeScanningAlert { Number = 3, State = "open", MostRecentInstance = CopyInstance(postLoadedInstance2), RuleId = "java/rule" };
+        var targetAlert1 = new CodeScanningAlert { Number = 3, State = "open", MostRecentInstance = CopyInstance(firstInstance), RuleId = "java/rule" };
 
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert1 });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert1 });
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertInstances(SOURCE_ORG, SOURCE_REPO, sourceAlert1.Number).Result).Returns(new[] { postLoadedInstance1, postLoadedInstance2 });
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertInstances(SOURCE_ORG, SOURCE_REPO, sourceAlert1.Number).Result).Returns(new[] { firstInstance, secondInstance, thirdInstance });
 
         await _alertService.MigrateAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
@@ -594,17 +549,12 @@ public class CodeScanningServiceTest
         var instance1 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "fixed",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert1 = new CodeScanningAlert
@@ -621,17 +571,12 @@ public class CodeScanningServiceTest
         var instance2 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "closed",
-            AnalysisKey = "123457",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 9,
-                StartColumn = 1,
-                EndLine = 35,
-                EndColumn = 2
-            }
+            Path = "path/to/file.cs",
+            StartLine = 9,
+            StartColumn = 1,
+            EndLine = 35,
+            EndColumn = 2
         };
 
 
@@ -649,17 +594,12 @@ public class CodeScanningServiceTest
         var instance3 = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert3 = new CodeScanningAlert
@@ -698,20 +638,15 @@ public class CodeScanningServiceTest
     {
         var CommitSha = "SHA_1";
         var Ref = "refs/heads/main";
-        var lastInstance = new CodeScanningAlertInstance
+        var instance = new CodeScanningAlertInstance
         {
             Ref = Ref,
-            State = "open",
-            AnalysisKey = "123456",
             CommitSha = CommitSha,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = "path/to/file.cs",
-                StartLine = 3,
-                StartColumn = 4,
-                EndLine = 6,
-                EndColumn = 25
-            }
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
         };
 
         var sourceAlert = new CodeScanningAlert
@@ -722,10 +657,10 @@ public class CodeScanningServiceTest
             DismissedAt = "2020-01-01T00:00:00Z",
             DismissedComment = "I was dismissed!",
             DismissedReason = "false positive",
-            MostRecentInstance = lastInstance
+            MostRecentInstance = instance
         };
 
-        var targetAlert = new CodeScanningAlert { Number = 2, State = "open", MostRecentInstance = CopyInstance(lastInstance), RuleId = "java/rule" };
+        var targetAlert = new CodeScanningAlert { Number = 2, State = "open", MostRecentInstance = CopyInstance(instance), RuleId = "java/rule" };
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert });
 
@@ -746,31 +681,13 @@ public class CodeScanningServiceTest
     {
         return new CodeScanningAlertInstance()
         {
-            AnalysisKey = codeScanningAlertInstance.AnalysisKey,
             CommitSha = codeScanningAlertInstance.CommitSha,
             Ref = codeScanningAlertInstance.Ref,
-            State = codeScanningAlertInstance.State,
-            Location = new CodeScanningAlertLocation
-            {
-                Path = codeScanningAlertInstance.Location.Path,
-                StartLine = codeScanningAlertInstance.Location.StartLine,
-                StartColumn = codeScanningAlertInstance.Location.StartColumn,
-                EndLine = codeScanningAlertInstance.Location.EndLine,
-                EndColumn = codeScanningAlertInstance.Location.EndColumn
-            }
+            Path = codeScanningAlertInstance.Path,
+            StartLine = codeScanningAlertInstance.StartLine,
+            StartColumn = codeScanningAlertInstance.StartColumn,
+            EndLine = codeScanningAlertInstance.EndLine,
+            EndColumn = codeScanningAlertInstance.EndColumn
         };
-    }
-}
-
-public static class ItExt
-{
-    public static T IsDeep<T>(T expected)
-    {
-        bool validate(T actual)
-        {
-            actual.Should().BeEquivalentTo(expected);
-            return true;
-        }
-        return Match.Create<T>(s => validate(s));
     }
 }

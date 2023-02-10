@@ -62,7 +62,7 @@ public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningA
     public Option<bool> DryRun { get; } = new("--dry-run")
     {
         Description =
-            "Execute in dry run mode to see what secrets will be matched and changes applied, but do not make any actual changes."
+            "Execute in dry run mode to see what alerts will be matched and changes applied, but do not make any actual changes."
     };
 
     public override MigrateCodeScanningAlertsCommandHandler BuildHandler(MigrateCodeScanningAlertsCommandArgs args, IServiceProvider sp)

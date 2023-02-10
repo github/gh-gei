@@ -2582,9 +2582,14 @@ namespace OctoshiftCLI.Tests
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
 
+            var response = $@"
+            {{
+                ""default_branch"": ""main"" 
+            }}";
+
             _githubClientMock
                 .Setup(m => m.GetAsync(url, null))
-                .ReturnsAsync("{ \"default_branch\": \"main\" }");
+                .ReturnsAsync(response);
 
             var result = await _githubApi.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO);
 
@@ -2592,104 +2597,59 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetCodeScanningAnalysisData()
+        public async Task GetCodeScanningAnalysisForRepository_Returns_Analyses()
         {
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
 
-            var tfsecCodeScanning = $@"
+            var analysis1 = $@"
                 {{
                     ""ref"": ""refs/heads/sg-tfsec-test"",
                     ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
-                    ""analysis_key"": "".github/workflows/tfsec.yml:tfsec"",
-                    ""environment"": ""{{}}"",
-                    ""category"": "".github/workflows/tfsec.yml:tfsec"",
-                    ""error"": """",
                     ""created_at"": ""2022-08-08T19:00:18Z"",
-                    ""results_count"": 0,
-                    ""rules_count"": 0,
                     ""id"": 38200197,
-                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38200197"",
-                    ""sarif_id"": ""57d59784-174c-11ed-9b6f-f4a3e9f6301b"",
-                    ""tool"": {{
-                        ""name"": ""tfsec"",
-                        ""guid"": null,
-                        ""version"": null
-                    }},
-                    ""deletable"": true,
-                    ""warning"": """"
                 }}
             ";
 
-            var codeQLCodeScanning1 = $@"
+            var analysis2 = $@"
                 {{
                     ""ref"": ""refs/heads/main"",
                     ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
-                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
-                    ""environment"": ""{{\""language\"":\""javascript\""}}"",
-                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
-                    ""error"": """",
                     ""created_at"": ""2022-08-06T19:40:39Z"",
-                    ""results_count"": 956,
-                    ""rules_count"": 202,
                     ""id"": 38026365,
-                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38026365"",
-                    ""sarif_id"": ""a5b745ee-15bf-11ed-9399-5b06f5cd9458"",
-                    ""tool"": {{
-                        ""name"": ""CodeQL"",
-                        ""guid"": null,
-                        ""version"": ""2.10.1""
-                    }},
-                    ""deletable"": true,
-                    ""warning"": """"
                 }}
             ";
 
-            var codeQLCodeScanning2 = $@"
+            var analysis3 = $@"
                 {{
                     ""ref"": ""refs/heads/main"",
                     ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
-                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
-                    ""environment"": ""{{\""language\"":\""java\""}}"",
-                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
-                    ""error"": """",
                     ""created_at"": ""2022-08-06T19:30:25Z"",
-                    ""results_count"": 116,
-                    ""rules_count"": 200,
                     ""id"": 38025984,
-                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38025984"",
-                    ""sarif_id"": ""37e07636-15be-11ed-8a01-f4546b5d2175"",
-                    ""tool"": {{
-                        ""name"": ""CodeQL"",
-                        ""guid"": null,
-                        ""version"": ""2.10.1""
-                    }},
-                    ""deletable"": true,
-                    ""warning"": """"
                 }}
             ";
 
             var responsePage1 = $@"
                 [
-                    {tfsecCodeScanning},
-                    {codeQLCodeScanning1}
+                    {analysis1},
+                    {analysis2}
                 ]
             ";
 
             var responsePage2 = $@"
                 [
-                    {codeQLCodeScanning2}
+                    {analysis3}
                 ]
             ";
 
             async IAsyncEnumerable<JToken> GetAllPages()
             {
-                var jArrayPage1 = JArray.Parse(responsePage1);
-                yield return jArrayPage1[0];
-                yield return jArrayPage1[1];
+                var page1 = JArray.Parse(responsePage1);
+                yield return page1[0];
+                yield return page1[1];
 
-                var jArrayPage2 = JArray.Parse(responsePage2);
-                yield return jArrayPage2[0];
+                var page2 = JArray.Parse(responsePage2);
+                yield return page2[0];
 
                 await Task.CompletedTask;
             }
@@ -2705,14 +2665,23 @@ namespace OctoshiftCLI.Tests
             scanResults.Count().Should().Be(3);
             var scanResultsArray = scanResults.ToArray();
 
-            var expectedData = JObject.Parse(tfsecCodeScanning);
+            var expectedData = JObject.Parse(analysis1);
             scanResultsArray[0].Id.Should().Be((int)expectedData["id"]);
+            scanResultsArray[0].Ref.Should().Be((string)expectedData["ref"]);
+            scanResultsArray[0].CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResultsArray[0].CreatedAt.Should().Be((string)expectedData["created_at"]);
 
-            expectedData = JObject.Parse(codeQLCodeScanning1);
+            expectedData = JObject.Parse(analysis2);
             scanResultsArray[1].Id.Should().Be((int)expectedData["id"]);
+            scanResultsArray[1].Ref.Should().Be((string)expectedData["ref"]);
+            scanResultsArray[1].CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResultsArray[1].CreatedAt.Should().Be((string)expectedData["created_at"]);
 
-            expectedData = JObject.Parse(codeQLCodeScanning2);
+            expectedData = JObject.Parse(analysis3);
             scanResultsArray[2].Id.Should().Be((int)expectedData["id"]);
+            scanResultsArray[2].Ref.Should().Be((string)expectedData["ref"]);
+            scanResultsArray[2].CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResultsArray[2].CreatedAt.Should().Be((string)expectedData["created_at"]);
         }
 
 
@@ -2721,31 +2690,16 @@ namespace OctoshiftCLI.Tests
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
 
-            var codeQLCodeScanning1 = $@"
+            var analysis = $@"
                 {{
                     ""ref"": ""refs/heads/main"",
                     ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
-                    ""analysis_key"": "".github/workflows/codeql.yml:analyze"",
-                    ""environment"": ""{{\""language\"":\""javascript\""}}"",
-                    ""category"": "".github/workflows/codeql.yml:analyze/language:javascript"",
-                    ""error"": """",
                     ""created_at"": ""2022-08-06T19:40:39Z"",
-                    ""results_count"": 956,
-                    ""rules_count"": 202,
                     ""id"": 38026365,
-                    ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/38026365"",
-                    ""sarif_id"": ""a5b745ee-15bf-11ed-9399-5b06f5cd9458"",
-                    ""tool"": {{
-                        ""name"": ""CodeQL"",
-                        ""guid"": null,
-                        ""version"": ""2.10.1""
-                    }},
-                    ""deletable"": true,
-                    ""warning"": """"
                 }}
             ";
 
-            var responsePage1 = $@"[ {codeQLCodeScanning1} ] ";
+            var responsePage1 = $@"[ {analysis} ] ";
             async IAsyncEnumerable<JToken> GetAllPages()
             {
                 var jArrayPage1 = JArray.Parse(responsePage1);
@@ -3028,23 +2982,12 @@ namespace OctoshiftCLI.Tests
                 actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
                 actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
                 var resolvedByLogin = (string)expectedData["dismissed_by"]["login"];
-                actual.DismissedByLogin.Should().Be(resolvedByLogin);
             }
             else
             {
                 actual.DismissedAt.Should().BeNull();
                 actual.DismissedReason.Should().BeNull();
                 actual.DismissedComment.Should().BeNull();
-                actual.DismissedByLogin.Should().BeNull();
-            }
-
-            if (expectedData["fixed_at"].Any())
-            {
-                actual.FixedAt.Should().Be((string)expectedData["fixed_at"]);
-            }
-            else
-            {
-                actual.FixedAt.Should().BeNull();
             }
 
             AssertCodeScanningInstanceData(actual.MostRecentInstance, expectedData["most_recent_instance"]);
@@ -3166,14 +3109,12 @@ namespace OctoshiftCLI.Tests
         private void AssertCodeScanningInstanceData(CodeScanningAlertInstance actual, JToken expectedData)
         {
             actual.Ref.Should().Be((string)expectedData["ref"]);
-            actual.AnalysisKey.Should().Be((string)expectedData["analysis_key"]);
-            actual.State.Should().Be((string)expectedData["state"]);
             actual.CommitSha.Should().Be((string)expectedData["commit_sha"]);
-            actual.Location.Path.Should().Be((string)expectedData["location"]["path"]);
-            actual.Location.StartLine.Should().Be((int)expectedData["location"]["start_line"]);
-            actual.Location.EndLine.Should().Be((int)expectedData["location"]["end_line"]);
-            actual.Location.StartColumn.Should().Be((int)expectedData["location"]["start_column"]);
-            actual.Location.EndColumn.Should().Be((int)expectedData["location"]["end_column"]);
+            actual.Path.Should().Be((string)expectedData["location"]["path"]);
+            actual.StartLine.Should().Be((int)expectedData["location"]["start_line"]);
+            actual.EndLine.Should().Be((int)expectedData["location"]["end_line"]);
+            actual.StartColumn.Should().Be((int)expectedData["location"]["start_column"]);
+            actual.EndColumn.Should().Be((int)expectedData["location"]["end_column"]);
         }
 
         [Fact]
@@ -3250,22 +3191,20 @@ namespace OctoshiftCLI.Tests
 
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
-            var sarifContainer = new SarifContainer()
-            {
-                Ref = "refs/heads/main",
-                CommitSha = "fake_commit_sha",
-                Sarif = "fake_gzip_sarif"
-            };
+
+            var sarifCommitSha = "fake_commit_sha";
+            var sarifRef = "refs/heads/main";
+            var sarif = "fake_gzip_sarif";
 
             var expectedPayload = new
             {
-                commit_sha = sarifContainer.CommitSha,
-                sarif = StringCompressor.GZipAndBase64String(sarifContainer.Sarif),
-                @ref = sarifContainer.Ref
+                commit_sha = sarifCommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarif),
+                @ref = sarifRef
             };
 
             // Act
-            await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarifContainer);
+            await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
 
             // Assert
             _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null));
@@ -3284,7 +3223,6 @@ namespace OctoshiftCLI.Tests
                 ""dependabot"": [
                 ]
             }}";
-
 
             _githubClientMock
                 .Setup(m => m.GetAsync(url, null))

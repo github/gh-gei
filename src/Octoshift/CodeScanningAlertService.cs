@@ -27,11 +27,16 @@ namespace Octoshift
         {
             var defaultBranch = await _sourceGithubApi.GetDefaultBranch(sourceOrg, sourceRepo);
             _log.LogInformation($"Found default branch: {defaultBranch} - migrating code scanning alerts only of this branch.");
-            await MigrateAnalyses(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
-            await MigrateAlerts(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
+            var analysesSuccess = await MigrateAnalyses(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
+            var alertsSuccess = await MigrateAlerts(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
+
+            if (!analysesSuccess || !alertsSuccess)
+            {
+                throw new OctoshiftCliException("Migration of Code Scanning Alerts failed.");
+            }
         }
 
-        protected internal virtual async Task MigrateAnalyses(string sourceOrg, string sourceRepo, string targetOrg,
+        protected internal virtual async Task<bool> MigrateAnalyses(string sourceOrg, string sourceRepo, string targetOrg,
             string targetRepo, string branch, bool dryRun)
         {
             _log.LogInformation($"Migrating Code Scanning Analyses from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
@@ -51,7 +56,7 @@ namespace Octoshift
                 {
                     _log.LogInformation($"    Report of Analysis with Id '{analysis.Id}' created at {analysis.CreatedAt}.");
                 }
-                return;
+                return true;
             }
 
             foreach (var analysis in analyses)
@@ -60,13 +65,7 @@ namespace Octoshift
                 _log.LogVerbose($"Downloaded SARIF report for analysis {analysis.Id}");
                 try
                 {
-                    await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo,
-                        new SarifContainer
-                        {
-                            Sarif = sarifReport,
-                            Ref = analysis.Ref,
-                            CommitSha = analysis.CommitSha
-                        });
+                    await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
                     _log.LogInformation($"Successfully Migrated report for analysis {analysis.Id}");
                     ++successCount;
                 }
@@ -74,31 +73,26 @@ namespace Octoshift
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogVerbose($"No commit found on target. Skipping Analysis {analysis.Id}");
+                        _log.LogWarning($"No commit found on target. Skipping Analysis {analysis.Id}");
                     }
                     else
                     {
-                        _log.LogWarning($"Http Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
+                        _log.LogError($"Http Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
                     }
                     ++errorCount;
                 }
-                catch (Exception exception)
-                {
-                    _log.LogWarning($"Fatal Error while uploading SARIF report for analysis {analysis.Id}: \n {exception.Message}");
-                    _log.LogError(exception);
-                    // Todo Maybe throw another exception here?
-                    throw;
-                }
+                
                 _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
             }
 
             _log.LogInformation($"Code Scanning Analyses done!\nSuccess-Count: {successCount}\nError-Count: {errorCount}\nOverall: {analyses.Count()}.");
+
+            return errorCount == 0;
         }
 
-        protected internal virtual async Task MigrateAlerts(string sourceOrg, string sourceRepo, string targetOrg,
+        protected internal virtual async Task<bool> MigrateAlerts(string sourceOrg, string sourceRepo, string targetOrg,
             string targetRepo, string branch, bool dryRun)
         {
-
             var sourceAlertTask = _sourceGithubApi.GetCodeScanningAlertsForRepository(sourceOrg, sourceRepo, branch);
 
             // no reason to call the target on a dry run - there will be no alerts 
@@ -123,7 +117,7 @@ namespace Octoshift
 
             foreach (var sourceAlert in sourceAlerts)
             {
-                if (!CodeScanningAlerts.IsOpenOrDismissed(sourceAlert.State))
+                if (!CodeScanningAlertState.IsOpenOrDismissed(sourceAlert.State))
                 {
                     _log.LogInformation($"  skipping alert {sourceAlert.Number} ({sourceAlert.Url}) because state '{sourceAlert.State}' is not migratable.");
                     skippedCount++;
@@ -161,7 +155,43 @@ namespace Octoshift
 
             _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n  Success: {successCount}\n  Skipped (status not migratable): {skippedCount}\n  No matching target found (see logs): {notFoundCount}.");
 
+            return notFoundCount == 0;
         }
+
+        // private async Task<CodeScanningAlert> FindMatchingTargetAlert(string sourceOrg, string sourceRepo, List<CodeScanningAlert> targetAlerts,
+        //     CodeScanningAlert sourceAlert)
+        // {
+        //     var targetAlertsOfSameRule = targetAlerts.Where(targetAlert => targetAlert.RuleId == sourceAlert.RuleId);
+        //     var matchingTargetAlert = targetAlertsOfSameRule.FirstOrDefault(targetAlert => AreInstancesEqual(sourceAlert.MostRecentInstance, targetAlert.MostRecentInstance));
+
+        //     if (matchingTargetAlert != null)
+        //     {
+        //         return matchingTargetAlert;
+        //     }
+
+        //     // Most Recent Instance is not equal, so we have to match the target alert by all instances of the source
+        //     var allSourceInstances = await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
+
+        //     return targetAlertsOfSameRule.FirstOrDefault(targetAlert => allSourceInstances.Any(sourceInstance => AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
+        // }
+
+        // private bool AreAlertRulesEqual(CodeScanningAlert sourceRule, CodeScanningAlert targetRule)
+        // {
+        //     return sourceRule.RuleId == targetRule.RuleId;
+        // }
+
+        // private bool AreInstancesEqual(CodeScanningAlertInstance sourceInstance,
+        //     CodeScanningAlertInstance targetInstance)
+        // {
+        //     return sourceInstance.Ref == targetInstance.Ref
+        //            && sourceInstance.CommitSha == targetInstance.CommitSha
+        //            && sourceInstance.Path == targetInstance.Path
+        //            && sourceInstance.StartLine == targetInstance.StartLine
+        //            && sourceInstance.StartColumn == targetInstance.StartColumn
+        //            && sourceInstance.EndLine == targetInstance.EndLine
+        //            && sourceInstance.EndColumn == targetInstance.EndColumn;
+
+        // }
 
         private async Task<CodeScanningAlert> FindMatchingTargetAlert(string sourceOrg, string sourceRepo, List<CodeScanningAlert> targetAlerts,
             CodeScanningAlert sourceAlert)
@@ -197,11 +227,11 @@ namespace Octoshift
         {
             return sourceInstance.Ref == targetInstance.Ref
                    && sourceInstance.CommitSha == targetInstance.CommitSha
-                   && sourceInstance.Location.Path == targetInstance.Location.Path
-                   && sourceInstance.Location.StartLine == targetInstance.Location.StartLine
-                   && sourceInstance.Location.StartColumn == targetInstance.Location.StartColumn
-                   && sourceInstance.Location.EndLine == targetInstance.Location.EndLine
-                   && sourceInstance.Location.EndColumn == targetInstance.Location.EndColumn;
+                   && sourceInstance.Path == targetInstance.Path
+                   && sourceInstance.StartLine == targetInstance.StartLine
+                   && sourceInstance.StartColumn == targetInstance.StartColumn
+                   && sourceInstance.EndLine == targetInstance.EndLine
+                   && sourceInstance.EndColumn == targetInstance.EndColumn;
 
         }
     }
