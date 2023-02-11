@@ -63,17 +63,15 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990")]
-    [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990")]
-    public async Task Basic(string bbsServer)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
+    [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false)]
+    public async Task Basic(string bbsServer, bool useSsh)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
-
-        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
-        await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
@@ -93,8 +91,20 @@ public sealed class BbsToGithub : IDisposable
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
         });
 
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        if (useSsh)
+        {
+            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+            await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+        }
+        else
+        {
+            archiveDownloadOptions = " --smb-user octoshift";
+            _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
+        }
+
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey}{archiveDownloadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
