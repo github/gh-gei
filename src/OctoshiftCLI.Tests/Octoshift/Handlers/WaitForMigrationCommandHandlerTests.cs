@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -51,8 +52,8 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} succeeded for {TARGET_REPO}",
-                $"Migration log available at: {MIGRATION_URL}"
-            };
+                $"Migration log available at {MIGRATION_URL} or by running `gh gei download-logs`"
+    };
 
         // Act
         var args = new WaitForMigrationCommandArgs
@@ -96,7 +97,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                $"Migration log available at: {MIGRATION_URL}"
+                $"Migration log available at {MIGRATION_URL} or by running `gh gei download-logs`"
             };
 
         // Act
@@ -145,7 +146,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                $"Migration log available at: {MIGRATION_URL}"
+                $"Migration log available at {MIGRATION_URL} or by running `gh gei download-logs`"
             };
 
         // Act
