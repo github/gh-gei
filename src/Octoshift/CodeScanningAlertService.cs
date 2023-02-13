@@ -79,7 +79,7 @@ namespace Octoshift
                     }
                     else
                     {
-                        _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: ${httpException.Message}");
+                        _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: {httpException.Message}");
                     }
                     ++errorCount;
                 }
