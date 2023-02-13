@@ -28,6 +28,8 @@ namespace Octoshift
             var defaultBranch = await _sourceGithubApi.GetDefaultBranch(sourceOrg, sourceRepo);
             _log.LogInformation($"Found default branch: {defaultBranch} - migrating code scanning alerts only of this branch.");
             var analysesSuccess = await MigrateAnalyses(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
+            _log.LogInformation("Sleeping for 10 minutes to allow SARIF processing to complete...");
+            await Task.Delay(TimeSpan.FromMinutes(10));
             var alertsSuccess = await MigrateAlerts(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
 
             if (!analysesSuccess || !alertsSuccess)
@@ -141,7 +143,7 @@ namespace Octoshift
                     continue;
                 }
 
-                _log.LogVerbose($"Setting Status ${sourceAlert.State} for target alert ${matchingTargetAlert.Number} (${matchingTargetAlert.Url})");
+                _log.LogVerbose($"Setting Status {sourceAlert.State} for target alert {matchingTargetAlert.Number} ({matchingTargetAlert.Url})");
                 await _targetGithubApi.UpdateCodeScanningAlert(
                     targetOrg,
                     targetRepo,
