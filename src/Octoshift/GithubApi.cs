@@ -467,7 +467,7 @@ namespace OctoshiftCLI
                     State: (string)data["data"]["node"]["state"],
                     RepositoryName: (string)data["data"]["node"]["repositoryName"],
                     FailureReason: (string)data["data"]["node"]["failureReason"],
-                    OrgName: (string)data["data"]["node"]["migrationLogUrl"]);
+                    MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
             });
 
             return response.Outcome == OutcomeType.Failure
