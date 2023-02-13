@@ -3135,6 +3135,24 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task UpdateCodeScanningAlert_Replaces_Null_Dismissed_Comment_With_Empty_String()
+        {
+            // Arrange
+            const int alertNumber = 2;
+            const string state = "dismissed";
+            const string reason = "false positive";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/{alertNumber}";
+            var payload = new { state, dismissed_reason = reason, dismissed_comment = string.Empty };
+
+            // Act
+            await _githubApi.UpdateCodeScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state, reason);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
         public async Task GetSarifReport_For_Third_Party_Scanning_Tool()
         {
             // Arrange

@@ -771,11 +771,10 @@ namespace OctoshiftCLI
                 {
                     state,
                     dismissed_reason = dismissedReason,
-                    dismissed_comment = dismissedComment
+                    dismissed_comment = dismissedComment ?? string.Empty
                 });
             await _client.PatchAsync(url, payload);
         }
-
 
         public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
         {
