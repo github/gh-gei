@@ -41,10 +41,12 @@ namespace Octoshift
         {
             _log.LogInformation($"Migrating Code Scanning Analyses from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
-            var analyses = await _sourceGithubApi.GetCodeScanningAnalysisForRepository(sourceOrg, sourceRepo, branch);
-            analyses = analyses.ToList();
+            // todo: Also get Target Analyses and only migrate those that are not already present
+            var sourceAnalyses = await _sourceGithubApi.GetCodeScanningAnalysisForRepository(sourceOrg, sourceRepo, branch);
+            var analyses = sourceAnalyses.ToList();
 
             var successCount = 0;
+            // Todo: Remove error count - we have to let the migration fail and/or retry if a SARIF Upload fails
             var errorCount = 0;
 
             _log.LogVerbose($"Found {analyses.Count()} analyses to migrate.");
@@ -65,7 +67,25 @@ namespace Octoshift
                 _log.LogVerbose($"Downloaded SARIF report for analysis {analysis.Id}");
                 try
                 {
-                    await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
+                    _log.LogInformation($"Uploading SARIF for analysis {analysis.Id} in target repository...");
+                    var id = await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
+                    var status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
+
+                    while (SarifProcessingStatus.IsPending(status))
+                    {   
+                        _log.LogInformation("   SARIF processing is still pending. Waiting 5 seconds...");
+                        // TODO: Make this testable with an exponential backoff delay dependency
+                        await Task.Delay(5000);
+                        status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
+                    }
+                    
+                    if (SarifProcessingStatus.IsFailed(status))
+                    {
+                        _log.LogError($"SARIF processing failed for analysis {analysis.Id}.");
+                        ++errorCount;
+                        continue;
+                    }
+ 
                     _log.LogInformation($"Successfully migrated report for analysis {analysis.Id}");
                     ++successCount;
                 }
@@ -173,11 +193,6 @@ namespace Octoshift
             var allSourceInstances = await _sourceGithubApi.GetCodeScanningAlertInstances(sourceOrg, sourceRepo, sourceAlert.Number);
 
             return targetAlertsOfSameRule.FirstOrDefault(targetAlert => allSourceInstances.Any(sourceInstance => AreInstancesEqual(sourceInstance, targetAlert.MostRecentInstance)));
-        }
-
-        private bool AreAlertRulesEqual(CodeScanningAlert sourceRule, CodeScanningAlert targetRule)
-        {
-            return sourceRule.RuleId == targetRule.RuleId;
         }
 
         private bool AreInstancesEqual(CodeScanningAlertInstance sourceInstance,

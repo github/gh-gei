@@ -799,6 +799,16 @@ namespace OctoshiftCLI
             
             return (string)data["id"];
         }
+        
+        public virtual async Task<string> GetSarifProcessingStatus(string org, string repo, string sarifId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+            
+            return (string)data["processing_status"];
+        }
+
 
         public virtual async Task<string> GetDefaultBranch(string org, string repo)
         {
