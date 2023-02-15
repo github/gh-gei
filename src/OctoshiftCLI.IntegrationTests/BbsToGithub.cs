@@ -15,6 +15,7 @@ public sealed class BbsToGithub : IDisposable
 {
 
     private const string SSH_KEY_FILE = "ssh_key.pem";
+    private const string AWS_BUCKET_NAME = "github-dev";
 
     private readonly ITestOutputHelper _output;
     private readonly OctoLogger _logger;
@@ -28,6 +29,7 @@ public sealed class BbsToGithub : IDisposable
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
+    private readonly string _azureStorageConnectionString;
 
     public BbsToGithub(ITestOutputHelper output)
     {
@@ -39,13 +41,12 @@ public sealed class BbsToGithub : IDisposable
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
         _tokens = new Dictionary<string, string>
         {
             ["BBS_USERNAME"] = sourceBbsUsername,
             ["BBS_PASSWORD"] = sourceBbsPassword,
-            ["GH_PAT"] = targetGithubToken,
-            ["AZURE_STORAGE_CONNECTION_STRING"] = azureStorageConnectionString
+            ["GH_PAT"] = targetGithubToken
         };
 
         _versionClient = new HttpClient();
@@ -57,16 +58,17 @@ public sealed class BbsToGithub : IDisposable
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger));
 
-        _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
+        _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
-    [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990", true)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false)]
-    public async Task Basic(string bbsServer, bool useSsh)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
+    [InlineData("http://e2e-bbs-5-14-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"e2e-testing-{TestHelper.GetOsName()}";
@@ -92,7 +94,7 @@ public sealed class BbsToGithub : IDisposable
         });
 
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
-        if (useSsh)
+        if (useSshForArchiveDownload)
         {
             var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
             await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
@@ -103,8 +105,20 @@ public sealed class BbsToGithub : IDisposable
             _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
         }
 
+        var archiveUploadOptions = "";
+        if (useAzureForArchiveUpload)
+        {
+            _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
+        }
+        else
+        {
+            _tokens.Add("--aws-access-key", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY"));
+            _tokens.Add("--aws-secret-key", Environment.GetEnvironmentVariable("AWS_SECRET_KEY"));
+            archiveUploadOptions = $" --aws-bucket-name {AWS_BUCKET_NAME}";
+        }
+
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey}{archiveDownloadOptions}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
