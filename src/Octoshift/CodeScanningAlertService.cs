@@ -62,9 +62,6 @@ namespace Octoshift
                     $"Already found ${targetAnalyses.Count} analyses on target - so the first ${targetAnalyses.Count} analyses from the source will be skipped.");
             }
 
-            var successCount = 0;
-            // Todo: Remove error count - we have to let the migration fail and/or retry if a SARIF Upload fails
-            var errorCount = 0;
 
             _log.LogVerbose($"Found {relevantAnalyses.Count} analyses to migrate.");
 
@@ -98,33 +95,29 @@ namespace Octoshift
                     
                     if (SarifProcessingStatus.IsFailed(status))
                     {
-                        _log.LogError($"SARIF processing failed for analysis {analysis.Id}.");
-                        ++errorCount;
-                        continue;
+                        _log.LogError($"SARIF processing failed for analysis {analysis.Id}. Aborting Migration, please try again.");
+                        return false;
                     }
  
-                    _log.LogInformation($"Successfully migrated report for analysis {analysis.Id}");
-                    ++successCount;
+                    _log.LogInformation($"    Successfully migrated report for analysis {analysis.Id}");
                 }
                 catch (HttpRequestException httpException)
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogWarning($"Received HTTP Status 404, skipping analysis upload for {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
+                        _log.LogError($"Received HTTP Status 404, skipping analysis upload for {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
                     }
                     else
                     {
                         _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: {httpException.Message}");
                     }
-                    ++errorCount;
+                    _log.LogError($"Aborting migration due to previous error. Please try again.");
+                    return false;
                 }
-                
-                _log.LogInformation($"Handled {successCount + errorCount} / {relevantAnalyses.Count()} Analyses.");
             }
 
-            _log.LogInformation($"Finished migrating Code Scanning analyses! {successCount}/{relevantAnalyses.Count()} migrated successfully.");
-
-            return errorCount == 0;
+            _log.LogInformation($"Successfully finished migrating {relevantAnalyses.Count} Code Scanning analyses! ");
+            return true;
         }
 
         protected internal virtual async Task<bool> MigrateAlerts(string sourceOrg, string sourceRepo, string targetOrg,
