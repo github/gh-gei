@@ -176,7 +176,7 @@ namespace Octoshift
                     skippedCount++;
                     continue;
                 }
-                
+
                 _log.LogVerbose($"Setting Status {sourceAlert.State} for target alert {matchingTargetAlert.Number} ({matchingTargetAlert.Url})");
                 await _targetGithubApi.UpdateCodeScanningAlert(
                     targetOrg,

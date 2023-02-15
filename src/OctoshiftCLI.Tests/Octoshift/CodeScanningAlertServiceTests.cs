@@ -710,7 +710,7 @@ public class CodeScanningAlertServiceTests
             State = "open",
             MostRecentInstance = openInstance
         };
-        
+
         var dismissedInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
@@ -750,7 +750,7 @@ public class CodeScanningAlertServiceTests
             openSourceAlert.DismissedReason,
             openSourceAlert.DismissedComment
         ), Times.Once);
-        
+
         _mockTargetGithubApi.Verify(x => x.UpdateCodeScanningAlert(
             TARGET_ORG,
             TARGET_REPO,
@@ -761,13 +761,13 @@ public class CodeScanningAlertServiceTests
         ), Times.Once);
         _mockTargetGithubApi.VerifyNoOtherCalls();
     }
-    
-       [Fact]
+
+    [Fact]
     public async Task MigrateAlerts_Skips_Alerts_With_Same_State()
     {
         var CommitSha = "SHA_1";
         var Ref = "refs/heads/main";
-  
+
         var openInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
@@ -786,7 +786,7 @@ public class CodeScanningAlertServiceTests
             State = "open",
             MostRecentInstance = openInstance
         };
-        
+
         var dismissedInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
@@ -820,7 +820,7 @@ public class CodeScanningAlertServiceTests
         _mockTargetGithubApi.Verify(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main"), Times.Once);
         _mockTargetGithubApi.VerifyNoOtherCalls();
     }
-    
+
 
     [Fact]
     public async Task MigrateAlerts_Dry_Run_Will_Not_Adjust_Any_Alerts_On_Target()
