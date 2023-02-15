@@ -41,27 +41,44 @@ namespace Octoshift
         {
             _log.LogInformation($"Migrating Code Scanning Analyses from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
-            // todo: Also get Target Analyses and only migrate those that are not already present
-            var sourceAnalyses = await _sourceGithubApi.GetCodeScanningAnalysisForRepository(sourceOrg, sourceRepo, branch);
-            var analyses = sourceAnalyses.ToList();
+            var sourceAnalysesTask = _sourceGithubApi.GetCodeScanningAnalysisForRepository(sourceOrg, sourceRepo, branch);
+            var targetAnalysesTask = _targetGithubApi.GetCodeScanningAnalysisForRepository(targetOrg, targetRepo, branch);
+            
+            await Task.WhenAll(new List<Task>
+                {
+                    sourceAnalysesTask,
+                    targetAnalysesTask
+                }
+            );
+
+            var sourceAnalyses = sourceAnalysesTask.Result.ToList();
+            var targetAnalyses = targetAnalysesTask.Result.ToList();
+            
+            var relevantAnalyses = sourceAnalyses.Skip(targetAnalyses.Count).ToList();
+
+            if (targetAnalyses.Count > 0)
+            {
+                _log.LogInformation(
+                    $"Already found ${targetAnalyses.Count} analyses on target - so the first ${targetAnalyses.Count} analyses from the source will be skipped.");
+            }
 
             var successCount = 0;
             // Todo: Remove error count - we have to let the migration fail and/or retry if a SARIF Upload fails
             var errorCount = 0;
 
-            _log.LogVerbose($"Found {analyses.Count()} analyses to migrate.");
+            _log.LogVerbose($"Found {relevantAnalyses.Count} analyses to migrate.");
 
             if (dryRun)
             {
                 _log.LogInformation($"Running in dry-run mode. The following Sarif-Reports would now be downloaded from '{sourceOrg}/{sourceRepo}' and then uploaded to '{targetOrg}/{targetRepo}':");
-                foreach (var analysis in analyses)
+                foreach (var analysis in relevantAnalyses)
                 {
                     _log.LogInformation($"    Report of Analysis with Id '{analysis.Id}' created at {analysis.CreatedAt}.");
                 }
                 return true;
             }
 
-            foreach (var analysis in analyses)
+            foreach (var analysis in relevantAnalyses)
             {
                 var sarifReport = await _sourceGithubApi.GetSarifReport(sourceOrg, sourceRepo, analysis.Id);
                 _log.LogVerbose($"Downloaded SARIF report for analysis {analysis.Id}");
@@ -102,10 +119,10 @@ namespace Octoshift
                     ++errorCount;
                 }
                 
-                _log.LogInformation($"Handled {successCount + errorCount} / {analyses.Count()} Analyses.");
+                _log.LogInformation($"Handled {successCount + errorCount} / {relevantAnalyses.Count()} Analyses.");
             }
 
-            _log.LogInformation($"Finished migrating Code Scanning analyses! {successCount}/{analyses.Count()} migrated successfully.");
+            _log.LogInformation($"Finished migrating Code Scanning analyses! {successCount}/{relevantAnalyses.Count()} migrated successfully.");
 
             return errorCount == 0;
         }

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -61,6 +62,7 @@ public class CodeScanningAlertServiceTests
 
         _mockSourceGithubApi.Setup(x => x.GetDefaultBranch(SOURCE_ORG, SOURCE_REPO).Result).Returns("main");
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(Enumerable.Empty<CodeScanningAnalysis>());
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { alert });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { alert });
         _mockTargetGithubApi.Setup(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()).Result).Returns("sarif-id");
@@ -89,10 +91,12 @@ public class CodeScanningAlertServiceTests
             Ref = sarifRef
         };
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(Enumerable.Empty<CodeScanningAnalysis>());
         _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId).Result).Returns(sarif);
 
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
+ 
         _mockTargetGithubApi.Verify(
             x => x.UploadSarifReport(
                 TARGET_ORG,
@@ -102,6 +106,7 @@ public class CodeScanningAlertServiceTests
                 sarifRef
             ),
             Times.Once);
+
     }
     
     [Fact]
@@ -134,7 +139,10 @@ public class CodeScanningAlertServiceTests
             .Returns(SarifProcessingStatus.Complete);
         
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
-
+        
+        _mockTargetGithubApi.Verify(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main"),
+            Times.Once);
+        
         _mockTargetGithubApi.Verify(
             x => x.UploadSarifReport(
                 TARGET_ORG,
@@ -174,6 +182,90 @@ public class CodeScanningAlertServiceTests
 
         _mockTargetGithubApi.VerifyNoOtherCalls();
     }
+    
+     [Fact]
+    public async Task MigrateAnalyses_Skips_Analysis_That_Exist_On_Target_By_Count()
+    {
+        var Ref = "refs/heads/main";
+        var analysis1 = new CodeScanningAnalysis
+        {
+            Id = 1,
+            CreatedAt = "2022-03-30T00:00:00Z",
+            CommitSha = "SHA_1",
+            Ref = Ref
+        };
+        var analysis2 = new CodeScanningAnalysis
+        {
+            Id = 2,
+            CreatedAt = "2022-03-31T00:00:00Z",
+            CommitSha = "SHA_2",
+            Ref = Ref
+        };
+        var analysis3 = new CodeScanningAnalysis
+        {
+            Id = 3,
+            CreatedAt = "2022-04-01T00:00:00Z",
+            CommitSha = "SHA_3",
+            Ref = Ref
+        };
+
+        const string sarifResponse2 = "SARIF_RESPONSE_2";
+        const string sarifResponse3 = "SARIF_RESPONSE_3";
+
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis1, analysis2, analysis3 });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { analysis1 });
+
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysis2.Id).Result).Returns(sarifResponse2);
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysis3.Id).Result).Returns(sarifResponse3);
+        _mockTargetGithubApi.Setup(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()).Result).Returns("sarif-id");
+        _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, It.IsAny<string>()).Result)
+            .Returns(SarifProcessingStatus.Complete);
+        
+        await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
+        
+        _mockTargetGithubApi.Verify(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main"),
+            Times.Once);
+        
+        _mockTargetGithubApi.Verify(
+            x => x.UploadSarifReport(
+                TARGET_ORG,
+                TARGET_REPO,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()
+            ),
+            Times.Exactly(2));
+
+        _mockTargetGithubApi.Verify(
+            x => x.UploadSarifReport(
+                TARGET_ORG,
+                TARGET_REPO,
+                sarifResponse2,
+                analysis2.CommitSha,
+                Ref
+            ),
+            Times.Once);
+
+        _mockTargetGithubApi.Verify(
+            x => x.UploadSarifReport(
+                TARGET_ORG,
+                TARGET_REPO,
+                sarifResponse3,
+                analysis3.CommitSha,
+                Ref
+            ),
+            Times.Once);
+        
+        _mockTargetGithubApi.Verify(
+            x => x.GetSarifProcessingStatus(
+                TARGET_ORG,
+                TARGET_REPO,
+                "sarif-id"),
+            Times.Exactly(2));
+
+        _mockTargetGithubApi.VerifyNoOtherCalls();
+    }
+    
 
     [Fact]
     public async Task MigrateAnalyses_Dry_Run_Does_Not_Upload_Sarif()
