@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
+using Renci.SshNet;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -3204,7 +3205,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task UploadSarif_Constructs_Correct_Payload()
+        public async Task UploadSarif_Constructs_Right_Payload()
         {
 
             // Arrange
@@ -3220,6 +3221,16 @@ namespace OctoshiftCLI.Tests
                 sarif = StringCompressor.GZipAndBase64String(sarif),
                 @ref = sarifRef
             };
+            
+            var response = $@"
+                {{
+                    ""id"": ""sarif-id"",
+                    ""url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id""
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.IsAny<object>(), null))
+                .ReturnsAsync(response);
 
             // Act
             await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
@@ -3227,6 +3238,35 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null));
         }
+        
+        [Fact]
+        public async Task UploadSarif_Returns_Id_From_Response()
+        {
+
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
+
+            var sarifCommitSha = "fake_commit_sha";
+            var sarifRef = "refs/heads/main";
+            var sarif = "fake_gzip_sarif";
+
+            var response = $@"
+                {{
+                    ""id"": ""sarif-id"",
+                    ""url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id""
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+                
+            // Act
+            var actualId = await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
+
+            // Assert
+            actualId.Should().Match("sarif-id");
+        }
+
 
         [Fact]
         public async Task GetEnterpriseServerVersion_Returns_Null_If_Not_Enterprise_Server()

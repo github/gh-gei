@@ -793,7 +793,11 @@ namespace OctoshiftCLI
                 sarif = StringCompressor.GZipAndBase64String(sarifReport),
                 @ref = sarifRef
             };
-            return await _client.PostAsync(url, payload);
+       
+            var response = await _client.PostAsync(url, payload);
+            var data = JObject.Parse(response);
+            
+            return (string)data["id"];
         }
 
         public virtual async Task<string> GetDefaultBranch(string org, string repo)
