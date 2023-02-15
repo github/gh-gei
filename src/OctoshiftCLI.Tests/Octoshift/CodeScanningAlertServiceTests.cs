@@ -650,7 +650,7 @@ public class CodeScanningAlertServiceTests
     {
         var CommitSha = "SHA_1";
         var Ref = "refs/heads/main";
-        var instance1 = new CodeScanningAlertInstance
+        var fixedInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
             CommitSha = CommitSha,
@@ -661,7 +661,7 @@ public class CodeScanningAlertServiceTests
             EndColumn = 25
         };
 
-        var sourceAlert1 = new CodeScanningAlert
+        var fixedSourceAlert = new CodeScanningAlert
         {
             Number = 1,
             RuleId = "java/rule",
@@ -669,10 +669,10 @@ public class CodeScanningAlertServiceTests
             DismissedAt = "2020-01-01T00:00:00Z",
             DismissedComment = "I was dismissed!",
             DismissedReason = "false positive",
-            MostRecentInstance = instance1
+            MostRecentInstance = fixedInstance
         };
 
-        var instance2 = new CodeScanningAlertInstance
+        var closedInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
             CommitSha = CommitSha,
@@ -684,18 +684,15 @@ public class CodeScanningAlertServiceTests
         };
 
 
-        var sourceAlert2 = new CodeScanningAlert
+        var closedSourceAlert = new CodeScanningAlert
         {
             Number = 2,
             RuleId = "java/rule",
             State = "closed",
-            DismissedAt = "2021-01-01T00:00:00Z",
-            DismissedComment = "2nd Dismissed Comment",
-            DismissedReason = "won't fix",
-            MostRecentInstance = instance2
+            MostRecentInstance = closedInstance
         };
 
-        var instance3 = new CodeScanningAlertInstance
+        var openInstance = new CodeScanningAlertInstance
         {
             Ref = Ref,
             CommitSha = CommitSha,
@@ -706,21 +703,41 @@ public class CodeScanningAlertServiceTests
             EndColumn = 25
         };
 
-        var sourceAlert3 = new CodeScanningAlert
+        var openSourceAlert = new CodeScanningAlert
         {
             Number = 3,
             RuleId = "java/rule",
             State = "open",
+            MostRecentInstance = openInstance
+        };
+        
+        var dismissedInstance = new CodeScanningAlertInstance
+        {
+            Ref = Ref,
+            CommitSha = CommitSha,
+            Path = "path/to/file-2.cs",
+            StartLine = 7,
+            StartColumn = 8,
+            EndLine = 9,
+            EndColumn = 30
+        };
+
+        var dismissedSourceAlert = new CodeScanningAlert
+        {
+            Number = 4,
+            RuleId = "java/rule2",
+            State = "dismissed",
             DismissedAt = "2020-01-01T00:00:00Z",
             DismissedComment = "I was dismissed!",
             DismissedReason = "false positive",
-            MostRecentInstance = instance3
+            MostRecentInstance = dismissedInstance
         };
 
-        var targetAlert1 = new CodeScanningAlert { Number = 4, State = "open", MostRecentInstance = CopyInstance(instance3), RuleId = "java/rule" };
+        var targetAlert1 = new CodeScanningAlert { Number = 5, State = "dismissed", MostRecentInstance = CopyInstance(openInstance), RuleId = "java/rule" };
+        var targetAlert2 = new CodeScanningAlert { Number = 6, State = "open", MostRecentInstance = CopyInstance(dismissedInstance), RuleId = "java/rule2" };
 
-        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { sourceAlert1, sourceAlert2, sourceAlert3 });
-        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert1 });
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { fixedSourceAlert, closedSourceAlert, openSourceAlert, dismissedSourceAlert });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { targetAlert1, targetAlert2 });
 
         await _alertService.MigrateAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
@@ -729,13 +746,81 @@ public class CodeScanningAlertServiceTests
             TARGET_ORG,
             TARGET_REPO,
             targetAlert1.Number,
-            sourceAlert3.State,
-            sourceAlert3.DismissedReason,
-            sourceAlert3.DismissedComment
+            openSourceAlert.State,
+            openSourceAlert.DismissedReason,
+            openSourceAlert.DismissedComment
+        ), Times.Once);
+        
+        _mockTargetGithubApi.Verify(x => x.UpdateCodeScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            targetAlert2.Number,
+            dismissedSourceAlert.State,
+            dismissedSourceAlert.DismissedReason,
+            dismissedSourceAlert.DismissedComment
         ), Times.Once);
         _mockTargetGithubApi.VerifyNoOtherCalls();
-
     }
+    
+       [Fact]
+    public async Task MigrateAlerts_Skips_Alerts_With_Same_State()
+    {
+        var CommitSha = "SHA_1";
+        var Ref = "refs/heads/main";
+  
+        var openInstance = new CodeScanningAlertInstance
+        {
+            Ref = Ref,
+            CommitSha = CommitSha,
+            Path = "path/to/file.cs",
+            StartLine = 3,
+            StartColumn = 4,
+            EndLine = 6,
+            EndColumn = 25
+        };
+
+        var openSourceAlert = new CodeScanningAlert
+        {
+            Number = 1,
+            RuleId = "java/rule",
+            State = "open",
+            MostRecentInstance = openInstance
+        };
+        
+        var dismissedInstance = new CodeScanningAlertInstance
+        {
+            Ref = Ref,
+            CommitSha = CommitSha,
+            Path = "path/to/file-2.cs",
+            StartLine = 7,
+            StartColumn = 8,
+            EndLine = 9,
+            EndColumn = 30
+        };
+
+        var dismissedSourceAlert = new CodeScanningAlert
+        {
+            Number = 2,
+            RuleId = "java/rule2",
+            State = "dismissed",
+            DismissedAt = "2020-01-01T00:00:00Z",
+            DismissedComment = "I was dismissed!",
+            DismissedReason = "false positive",
+            MostRecentInstance = dismissedInstance
+        };
+
+        var openTargetAlert = new CodeScanningAlert { Number = 3, State = "open", MostRecentInstance = CopyInstance(openInstance), RuleId = "java/rule" };
+        var dismissedTargetAlert = new CodeScanningAlert { Number = 4, State = "dismissed", MostRecentInstance = CopyInstance(dismissedInstance), RuleId = "java/rule2" };
+
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { openSourceAlert, dismissedSourceAlert });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(new[] { openTargetAlert, dismissedTargetAlert });
+
+        await _alertService.MigrateAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
+
+        _mockTargetGithubApi.Verify(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main"), Times.Once);
+        _mockTargetGithubApi.VerifyNoOtherCalls();
+    }
+    
 
     [Fact]
     public async Task MigrateAlerts_Dry_Run_Will_Not_Adjust_Any_Alerts_On_Target()

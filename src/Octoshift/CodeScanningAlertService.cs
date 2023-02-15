@@ -58,7 +58,7 @@ namespace Octoshift
             if (targetAnalyses.Count > 0)
             {
                 _log.LogInformation(
-                    $"Already found ${targetAnalyses.Count} analyses on target - so the first ${targetAnalyses.Count} analyses from the source will be skipped.");
+                    $"Already found {targetAnalyses.Count} analyses on target - so {targetAnalyses.Count} of {sourceAnalyses.Count} source analyses will be skipped.");
             }
 
 
@@ -170,6 +170,13 @@ namespace Octoshift
                     continue;
                 }
 
+                if (matchingTargetAlert.State == sourceAlert.State)
+                {
+                    _log.LogInformation("  skipping alert because target alert already has the same state.");
+                    skippedCount++;
+                    continue;
+                }
+                
                 _log.LogVerbose($"Setting Status {sourceAlert.State} for target alert {matchingTargetAlert.Number} ({matchingTargetAlert.Url})");
                 await _targetGithubApi.UpdateCodeScanningAlert(
                     targetOrg,
@@ -182,7 +189,7 @@ namespace Octoshift
                 successCount++;
             }
 
-            _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n  Success: {successCount}\n  Skipped (status not migratable): {skippedCount}\n  No matching target found (see logs): {notFoundCount}.");
+            _log.LogInformation($"Code Scanning Alerts done!\nStatus of {sourceAlerts.Count} Alerts:\n  Success: {successCount}\n  Skipped (status not migratable or already matches): {skippedCount}\n  No matching target found (see logs): {notFoundCount}.");
 
             return notFoundCount == 0;
         }
