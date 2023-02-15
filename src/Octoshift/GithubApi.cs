@@ -793,19 +793,19 @@ namespace OctoshiftCLI
                 sarif = StringCompressor.GZipAndBase64String(sarifReport),
                 @ref = sarifRef
             };
-       
+
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
-            
+
             return (string)data["id"];
         }
-        
+
         public virtual async Task<string> GetSarifProcessingStatus(string org, string repo, string sarifId)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
-            
+
             return (string)data["processing_status"];
         }
 

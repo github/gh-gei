@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -43,7 +42,7 @@ namespace Octoshift
 
             var sourceAnalysesTask = _sourceGithubApi.GetCodeScanningAnalysisForRepository(sourceOrg, sourceRepo, branch);
             var targetAnalysesTask = _targetGithubApi.GetCodeScanningAnalysisForRepository(targetOrg, targetRepo, branch);
-            
+
             await Task.WhenAll(new List<Task>
                 {
                     sourceAnalysesTask,
@@ -53,7 +52,7 @@ namespace Octoshift
 
             var sourceAnalyses = sourceAnalysesTask.Result.ToList();
             var targetAnalyses = targetAnalysesTask.Result.ToList();
-            
+
             var relevantAnalyses = sourceAnalyses.Skip(targetAnalyses.Count).ToList();
 
             if (targetAnalyses.Count > 0)
@@ -86,19 +85,19 @@ namespace Octoshift
                     var status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
 
                     while (SarifProcessingStatus.IsPending(status))
-                    {   
+                    {
                         _log.LogInformation("   SARIF processing is still pending. Waiting 5 seconds...");
                         // TODO: Make this testable with an exponential backoff delay dependency
                         await Task.Delay(5000);
                         status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
                     }
-                    
+
                     if (SarifProcessingStatus.IsFailed(status))
                     {
                         _log.LogError($"SARIF processing failed for analysis {analysis.Id}. Aborting Migration, please try again.");
                         return false;
                     }
- 
+
                     _log.LogInformation($"    Successfully migrated report for analysis {analysis.Id}");
                 }
                 catch (HttpRequestException httpException)
@@ -111,7 +110,7 @@ namespace Octoshift
                     {
                         _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: {httpException.Message}");
                     }
-                    _log.LogError($"Aborting migration due to previous error. Please try again.");
+                    _log.LogError("Aborting migration due to previous error. Please try again.");
                     return false;
                 }
             }

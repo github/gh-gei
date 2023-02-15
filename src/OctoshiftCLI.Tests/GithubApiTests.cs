@@ -11,7 +11,6 @@ using Newtonsoft.Json.Linq;
 using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
-using Renci.SshNet;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -2982,7 +2981,7 @@ namespace OctoshiftCLI.Tests
                 actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
                 actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
                 actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
-                var resolvedByLogin = (string)expectedData["dismissed_by"]["login"];
+                _ = (string)expectedData["dismissed_by"]["login"];
             }
             else
             {
@@ -3221,7 +3220,7 @@ namespace OctoshiftCLI.Tests
                 sarif = StringCompressor.GZipAndBase64String(sarif),
                 @ref = sarifRef
             };
-            
+
             var response = $@"
                 {{
                     ""id"": ""sarif-id"",
@@ -3238,7 +3237,7 @@ namespace OctoshiftCLI.Tests
             // Assert
             _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null));
         }
-        
+
         [Fact]
         public async Task UploadSarif_Returns_Id_From_Response()
         {
@@ -3259,7 +3258,7 @@ namespace OctoshiftCLI.Tests
             _githubClientMock
                 .Setup(m => m.PostAsync(url, It.IsAny<object>(), null))
                 .ReturnsAsync(response);
-                
+
             // Act
             var actualId = await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
 
