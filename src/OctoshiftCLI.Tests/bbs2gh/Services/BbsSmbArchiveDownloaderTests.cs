@@ -106,7 +106,7 @@ public class BbsSmbArchiveDownloaderTests
         _mockSmbFileStore.Verify(m => m.GetFileInformation(out fileStandardInformation, sharedFileHandle, FileInformationClass.FileStandardInformation), Times.Once);
         _mockSmbFileStore.Verify(m => m.ReadFile(out data, sharedFileHandle, It.IsAny<long>(), It.IsAny<int>()), Times.Exactly(3));
         _mockFileSystemProvider.Verify(m => m.CreateDirectory(TARGET_DIRECTORY), Times.Once);
-        _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew), Times.Once);
+        _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.Create), Times.Once);
         _mockFileSystemProvider.Verify(m => m.WriteAsync(It.IsAny<FileStream>(), data, It.IsAny<CancellationToken>()), Times.Exactly(2));
 
         actualTargetArchiveFullName.Should().Be(expectedTargetArchiveFullName);
@@ -186,20 +186,5 @@ public class BbsSmbArchiveDownloaderTests
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage($"*{NTStatus.STATUS_OBJECT_NAME_NOT_FOUND}*");
-    }
-
-    [Fact]
-    public async Task Download_Throws_When_Target_Export_Archive_Already_Exists()
-    {
-        // Arrange
-        var targetArchiveFullName = Path.Join(TARGET_DIRECTORY, _exportArchiveFilename).ToUnixPath();
-        _mockFileSystemProvider.Setup(m => m.FileExists(targetArchiveFullName)).Returns(true);
-
-        // Act, Assert
-        await _bbsArchiveDownloader
-            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage($"*{targetArchiveFullName}*");
     }
 }

@@ -87,11 +87,6 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         var targetExportArchiveFullPath =
             Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
 
-        if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
-        {
-            throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
-        }
-
         if (_sftpClient is BaseClient { IsConnected: false } client)
         {
             client.Connect();
@@ -105,7 +100,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _fileSystemProvider.CreateDirectory(targetDirectory);
 
         var sourceExportArchiveSize = _sftpClient.GetAttributes(sourceExportArchiveFullPath)?.Size ?? long.MaxValue;
-        await using var targetExportArchive = _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
+        await using var targetExportArchive = _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.Create);
         await Task.Factory.FromAsync(
             _sftpClient.BeginDownloadFile(
                 sourceExportArchiveFullPath,
