@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Octoshift.Models;
 using OctoshiftCLI;
+using OctoshiftCLI.Models;
 
 namespace Octoshift
 {
@@ -27,9 +28,14 @@ namespace Octoshift
             var defaultBranch = await _sourceGithubApi.GetDefaultBranch(sourceOrg, sourceRepo);
             _log.LogInformation($"Found default branch: {defaultBranch} - migrating code scanning alerts only of this branch.");
             var analysesSuccess = await MigrateAnalyses(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
+            if (!analysesSuccess)
+            {
+                _log.LogError("Aborting migration due to previous error. Please try again.");
+                throw new OctoshiftCliException("Migration of Code Scanning Alerts failed.");
+            }
+            
             var alertsSuccess = await MigrateAlerts(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
-
-            if (!analysesSuccess || !alertsSuccess)
+            if (!alertsSuccess)
             {
                 throw new OctoshiftCliException("Migration of Code Scanning Alerts failed.");
             }
@@ -82,19 +88,21 @@ namespace Octoshift
                 {
                     _log.LogInformation($"Uploading SARIF for analysis {analysis.Id} in target repository...");
                     var id = await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
+                    // Wait for SARIF processing to finish before first querying it
+                    await Task.Delay(500);
                     var status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
-
-                    while (SarifProcessingStatus.IsPending(status))
+      
+                    while (SarifProcessingStatus.IsPending(status.Status))
+                        
                     {
                         _log.LogInformation("   SARIF processing is still pending. Waiting 5 seconds...");
-                        // TODO: Make this testable with an exponential backoff delay dependency
                         await Task.Delay(5000);
                         status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
                     }
 
-                    if (SarifProcessingStatus.IsFailed(status))
+                    if (SarifProcessingStatus.IsFailed(status.Status))
                     {
-                        _log.LogError($"SARIF processing failed for analysis {analysis.Id}. Aborting Migration, please try again.");
+                        _log.LogError($"SARIF processing failed for analysis {analysis.Id}. Received the following Error(s): \n{string.Join("\n- ", status.Errors)}");
                         return false;
                     }
 
@@ -104,13 +112,16 @@ namespace Octoshift
                 {
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
-                        _log.LogError($"Received HTTP Status 404, skipping analysis upload for {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
+                        _log.LogError($"Received HTTP Status 404 for uploading analysis {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
+                    } 
+                    else if (httpException.StatusCode.Equals(HttpStatusCode.Forbidden))
+                    {
+                        _log.LogError($"Received HTTP Status 403 for uploading analysis {analysis.Id}. Please make sure to activate GitHub Advanced Security on the target.");
                     }
                     else
                     {
                         _log.LogError($"HTTP Error {httpException.StatusCode} while migrating analysis {analysis.Id}: {httpException.Message}");
                     }
-                    _log.LogError("Aborting migration due to previous error. Please try again.");
                     return false;
                 }
             }

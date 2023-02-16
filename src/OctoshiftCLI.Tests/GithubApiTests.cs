@@ -3265,6 +3265,60 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualId.Should().Match("sarif-id");
         }
+        
+        
+        [Fact]
+        public async Task GetSarifProcessingStatus_Returns_Processing_Status_From_Response()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id";
+
+            var response = $@"
+                {{
+                    ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
+                    ""processing_status"": ""pending""
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
+
+            // Assert
+            actualStatus.Status.Should().Match("pending");
+            actualStatus.Errors.Count.Should().Be(0);
+        }
+        
+        [Fact]
+        public async Task GetSarifProcessingStatus_Returns_Errors_From_Response()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id";
+
+            var response = $@"
+                {{
+                    ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
+                    ""processing_status"": ""failed"",
+                    ""errors"": [
+                        ""error1"",
+                        ""error2""
+                    ]
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
+
+            // Assert
+            actualStatus.Errors[0].Should().Match("error1");
+            actualStatus.Errors[1].Should().Match("error2");
+            actualStatus.Errors.Count.Should().Be(2);
+        }
 
 
         [Fact]

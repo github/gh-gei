@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -800,13 +801,15 @@ namespace OctoshiftCLI
             return (string)data["id"];
         }
 
-        public virtual async Task<string> GetSarifProcessingStatus(string org, string repo, string sarifId)
+        public virtual async Task<SarifProcessingStatus> GetSarifProcessingStatus(string org, string repo, string sarifId)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
-
-            return (string)data["processing_status"];
+            
+            var rawErrors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
+            var errors = new Collection<string>(rawErrors);
+            return new() { Status = (string)data["processing_status"], Errors = errors};
         }
 
 
