@@ -155,13 +155,8 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
     private FileStream OpenWriteTargetExportArchive(string targetExportArchiveFullPath)
     {
-        if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
-        {
-            throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
-        }
-
         _fileSystemProvider.CreateDirectory(Path.GetDirectoryName(targetExportArchiveFullPath));
-        return _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
+        return _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.Create);
     }
 
     private void ConnectToHost()

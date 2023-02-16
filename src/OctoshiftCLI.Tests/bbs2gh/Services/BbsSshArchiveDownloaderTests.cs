@@ -56,18 +56,8 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
                 null,
                 It.IsAny<Action<ulong>>()));
 
-        _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.CreateNew));
+        _mockFileSystemProvider.Verify(m => m.Open(expectedTargetArchiveFullName, FileMode.Create));
         actualDownloadedArchiveFullName.Should().Be(expectedTargetArchiveFullName);
-    }
-
-    [Fact]
-    public async Task Download_Throws_When_Target_Export_Archive_Already_Exists()
-    {
-        // Arrange
-        _mockFileSystemProvider.Setup(m => m.FileExists(It.Is<string>(x => x.Contains(_exportArchiveFilename)))).Returns(true);
-
-        // Act, Assert
-        await _bbsArchiveDownloader.Invoking(x => x.Download(EXPORT_JOB_ID)).Should().ThrowExactlyAsync<OctoshiftCliException>();
     }
 
     [Fact]
