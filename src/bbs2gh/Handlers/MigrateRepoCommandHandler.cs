@@ -65,7 +65,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (ShouldDownloadArchive(args))
             {
-                args.ArchivePath = await DownloadArchive(exportId);
+                args.ArchivePath = await DownloadArchive(exportId, args.BbsRepo);
             }
         }
 
@@ -74,7 +74,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
             {
-                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
+                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId, args.BbsRepo);
             }
 
             args.ArchiveUrl = args.AwsBucketName.HasValue()
@@ -108,10 +108,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return args.ArchiveUrl.HasValue();
     }
 
-    private async Task<string> DownloadArchive(long exportId)
+    private async Task<string> DownloadArchive(long exportId, string repoName)
     {
         _log.LogInformation($"Download archive {exportId} started...");
-        var downloadedArchiveFullPath = await _bbsArchiveDownloader.Download(exportId);
+        var downloadedArchiveFullPath = await _bbsArchiveDownloader.Download(exportId, repoName);
         _log.LogInformation($"Archive was successfully downloaded at \"{downloadedArchiveFullPath}\".");
 
         return downloadedArchiveFullPath;

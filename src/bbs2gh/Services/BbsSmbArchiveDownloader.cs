@@ -48,22 +48,22 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
     public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public string GetSourceExportArchiveAbsolutePath(long exportJobId) => Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY,
-        IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).ToWindowsPath();
+    public string GetSourceExportArchiveAbsolutePath(long exportJobId, string repoName) => Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY,
+        IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId, repoName)).ToWindowsPath();
 
-    public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
+    public async Task<string> Download(long exportJobId, string repoName, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
         ISMBFileStore fileStore = null;
         object sourceExportArchiveHandle = null;
 
-        var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId);
+        var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId, repoName);
         var share = sourceExportArchiveFullPath[..sourceExportArchiveFullPath.IndexOf("\\", StringComparison.Ordinal)];
         var sourceExportArchivePathAfterShare = sourceExportArchiveFullPath[(sourceExportArchiveFullPath.IndexOf("\\", StringComparison.Ordinal) + 1)..];
 
         var targetExportArchiveFullPath =
-            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId, repoName)).ToUnixPath();
 
         await using var targetExportArchive = OpenWriteTargetExportArchive(targetExportArchiveFullPath);
 

@@ -19,12 +19,13 @@ public class BbsSmbArchiveDownloaderTests
     private const string BBS_HOME_DIRECTORY_FROM_SHARE = "PATH\\TO\\BBS\\HOME\\DIRECTORY";
     private const string BBS_HOME_DIRECTORY = $"{SHARE_ROOT}\\{BBS_HOME_DIRECTORY_FROM_SHARE}";
     private const string TARGET_DIRECTORY = "TARGET";
+    private const string REPO_NAME = "REPO_NAME";
     private const string HOST = "HOST";
     private const string SMB_USER = "SMB_USER";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
     private const string DOMAIN = "DOMAIN";
 
-    private readonly string _exportArchiveFilename = $"Bitbucket_export_{EXPORT_JOB_ID}.tar";
+    private readonly string _exportArchiveFilename = $"Bitbucket_export_{REPO_NAME}_{EXPORT_JOB_ID}.tar";
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<ISMBClient> _mockSmbClient = new();
@@ -86,7 +87,7 @@ public class BbsSmbArchiveDownloaderTests
             .Returns(NTStatus.STATUS_END_OF_FILE);
 
         // Act
-        var actualTargetArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
+        var actualTargetArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY);
 
         // Assert
         _mockSmbClient.Verify(m => m.Connect(HOST, SMBTransportType.DirectTCPTransport), Times.Once);
@@ -120,7 +121,7 @@ public class BbsSmbArchiveDownloaderTests
 
         // Act, Assert
         await _bbsArchiveDownloader
-            .Invoking(async x => await x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Invoking(async x => await x.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>();
     }
@@ -134,7 +135,7 @@ public class BbsSmbArchiveDownloaderTests
 
         // Act, Assert
         await _bbsArchiveDownloader
-            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage($"*{NTStatus.STATUS_LOGON_FAILURE}*");
@@ -151,7 +152,7 @@ public class BbsSmbArchiveDownloaderTests
 
         // Act, Assert
         await _bbsArchiveDownloader
-            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage($"*{NTStatus.STATUS_BAD_NETWORK_NAME}*");
@@ -182,7 +183,7 @@ public class BbsSmbArchiveDownloaderTests
 
         // Act, Assert
         await _bbsArchiveDownloader
-            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage($"*{NTStatus.STATUS_OBJECT_NAME_NOT_FOUND}*");
@@ -197,7 +198,7 @@ public class BbsSmbArchiveDownloaderTests
 
         // Act, Assert
         await _bbsArchiveDownloader
-            .Invoking(x => x.Download(EXPORT_JOB_ID, TARGET_DIRECTORY))
+            .Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage($"*{targetArchiveFullName}*");

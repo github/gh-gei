@@ -15,7 +15,9 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
     private const string BBS_HOME_DIRECTORY = "BBS_HOME";
     private const string TARGET_DIRECTORY = "TARGET";
 
-    private readonly string _exportArchiveFilename = $"Bitbucket_export_{EXPORT_JOB_ID}.tar";
+    private const string REPO_NAME = "REPO_NAME";
+
+    private readonly string _exportArchiveFilename = $"Bitbucket_export_{REPO_NAME}_{EXPORT_JOB_ID}.tar";
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<ISftpClient> _mockSftpClient = new();
@@ -45,7 +47,7 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
         var expectedTargetArchiveFullName = Path.Join(TARGET_DIRECTORY, _exportArchiveFilename).Replace('\\', '/');
 
         // Act
-        var actualDownloadedArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
+        var actualDownloadedArchiveFullName = await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY);
 
         // Assert
         _mockSftpClient.Verify(m =>
@@ -67,7 +69,7 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
         _mockFileSystemProvider.Setup(m => m.FileExists(It.Is<string>(x => x.Contains(_exportArchiveFilename)))).Returns(true);
 
         // Act, Assert
-        await _bbsArchiveDownloader.Invoking(x => x.Download(EXPORT_JOB_ID)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        await _bbsArchiveDownloader.Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME)).Should().ThrowExactlyAsync<OctoshiftCliException>();
     }
 
     [Fact]
@@ -77,14 +79,14 @@ public sealed class BbsSshArchiveDownloaderTests : IDisposable
         _mockSftpClient.Setup(m => m.Exists(It.IsAny<string>())).Returns(false);
 
         // Act, Assert
-        await _bbsArchiveDownloader.Invoking(x => x.Download(EXPORT_JOB_ID)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        await _bbsArchiveDownloader.Invoking(x => x.Download(EXPORT_JOB_ID, REPO_NAME)).Should().ThrowExactlyAsync<OctoshiftCliException>();
     }
 
     [Fact]
     public async Task Download_Creates_Target_Directory()
     {
         // Arrange, Act
-        await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, TARGET_DIRECTORY);
+        await _bbsArchiveDownloader.Download(EXPORT_JOB_ID, REPO_NAME, TARGET_DIRECTORY);
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.CreateDirectory(TARGET_DIRECTORY), Times.Once);

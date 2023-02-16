@@ -74,18 +74,18 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
     public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public string GetSourceExportArchiveAbsolutePath(long exportJobId)
+    public string GetSourceExportArchiveAbsolutePath(long exportJobId, string repoName)
     {
-        return Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY, IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).ToUnixPath();
+        return Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY, IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId, repoName)).ToUnixPath();
     }
 
-    public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
+    public async Task<string> Download(long exportJobId, string repoName, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
         _nextProgressReport = DateTime.Now;
 
-        var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId);
+        var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId, repoName);
         var targetExportArchiveFullPath =
-            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId, repoName)).ToUnixPath();
 
         if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
         {
