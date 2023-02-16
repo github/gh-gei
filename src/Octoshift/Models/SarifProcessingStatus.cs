@@ -7,7 +7,7 @@ public class SarifProcessingStatus
     public const string Failed = "failed";
     public const string Complete = "complete";
     public const string Pending = "pending";
-    
+
     public string Status { get; set; }
     public Collection<string> Errors { get; set; }
 

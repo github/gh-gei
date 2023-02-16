@@ -3265,8 +3265,8 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualId.Should().Match("sarif-id");
         }
-        
-        
+
+
         [Fact]
         public async Task GetSarifProcessingStatus_Returns_Processing_Status_From_Response()
         {
@@ -3290,7 +3290,7 @@ namespace OctoshiftCLI.Tests
             actualStatus.Status.Should().Match("pending");
             actualStatus.Errors.Count.Should().Be(0);
         }
-        
+
         [Fact]
         public async Task GetSarifProcessingStatus_Returns_Errors_From_Response()
         {

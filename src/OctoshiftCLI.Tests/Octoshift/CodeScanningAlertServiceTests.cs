@@ -1,4 +1,3 @@
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -103,13 +102,13 @@ public class CodeScanningAlertServiceTests
             Status = SarifProcessingStatus.Complete,
             Errors = new Collection<string>()
         };
-        
+
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(Enumerable.Empty<CodeScanningAnalysis>());
         _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId).Result).Returns(sarif);
         _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, It.IsAny<string>()).Result)
             .Returns(processingStatus);
-            
+
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
 
@@ -124,8 +123,8 @@ public class CodeScanningAlertServiceTests
             Times.Once);
 
     }
-    
-    
+
+
     [Fact]
     public async Task MigrateAnalyses_Stops_If_SARIF_Processing_Status_Is_Failed()
     {
@@ -143,15 +142,15 @@ public class CodeScanningAlertServiceTests
         var processingStatus = new SarifProcessingStatus
         {
             Status = SarifProcessingStatus.Failed,
-            Errors = new Collection<string>(new []{"error1", "error2"})
+            Errors = new Collection<string>(new[] { "error1", "error2" })
         };
-        
+
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main").Result).Returns(new[] { analysis });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main").Result).Returns(Enumerable.Empty<CodeScanningAnalysis>());
         _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId).Result).Returns(sarif);
         _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, It.IsAny<string>()).Result)
             .Returns(processingStatus);
-            
+
         var result = await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
         result.Should().BeFalse();
 
@@ -166,7 +165,7 @@ public class CodeScanningAlertServiceTests
             Times.Once);
 
     }
-    
+
 
     [Fact]
     public async Task MigrateAnalyses_Migrate_Multiple_Analysis()
@@ -272,7 +271,7 @@ public class CodeScanningAlertServiceTests
             CommitSha = "SHA_3",
             Ref = Ref
         };
-        
+
         const string sarifResponse2 = "SARIF_RESPONSE_2";
         const string sarifResponse3 = "SARIF_RESPONSE_3";
         var processingStatus =

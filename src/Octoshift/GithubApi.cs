@@ -806,10 +806,10 @@ namespace OctoshiftCLI
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
-            
+
             var rawErrors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
             var errors = new Collection<string>(rawErrors);
-            return new() { Status = (string)data["processing_status"], Errors = errors};
+            return new() { Status = (string)data["processing_status"], Errors = errors };
         }
 
 

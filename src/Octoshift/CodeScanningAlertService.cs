@@ -33,7 +33,7 @@ namespace Octoshift
                 _log.LogError("Aborting migration due to previous error. Please try again.");
                 throw new OctoshiftCliException("Migration of Code Scanning Alerts failed.");
             }
-            
+
             var alertsSuccess = await MigrateAlerts(sourceOrg, sourceRepo, targetOrg, targetRepo, defaultBranch, dryRun);
             if (!alertsSuccess)
             {
@@ -91,9 +91,9 @@ namespace Octoshift
                     // Wait for SARIF processing to finish before first querying it
                     await Task.Delay(500);
                     var status = await _targetGithubApi.GetSarifProcessingStatus(targetOrg, targetRepo, id);
-      
+
                     while (SarifProcessingStatus.IsPending(status.Status))
-                        
+
                     {
                         _log.LogInformation("   SARIF processing is still pending. Waiting 5 seconds...");
                         await Task.Delay(5000);
@@ -113,7 +113,7 @@ namespace Octoshift
                     if (httpException.StatusCode.Equals(HttpStatusCode.NotFound))
                     {
                         _log.LogError($"Received HTTP Status 404 for uploading analysis {analysis.Id}. This is either due to the target token lacking permissions to upload analysis to or generally access the target repo, or the commit with the commit-sha '{analysis.CommitSha}' is missing on the target repo.");
-                    } 
+                    }
                     else if (httpException.StatusCode.Equals(HttpStatusCode.Forbidden))
                     {
                         _log.LogError($"Received HTTP Status 403 for uploading analysis {analysis.Id}. Please make sure to activate GitHub Advanced Security on the target.");
