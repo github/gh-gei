@@ -112,8 +112,8 @@ public sealed class BbsToGithub : IDisposable
         }
         else
         {
-            _tokens.Add("--aws-access-key", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY"));
-            _tokens.Add("--aws-secret-key", Environment.GetEnvironmentVariable("AWS_SECRET_KEY"));
+            _tokens.Add("AWS_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY"));
+            _tokens.Add("AWS_SECRET_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_KEY"));
             archiveUploadOptions = $" --aws-bucket-name {AWS_BUCKET_NAME}";
         }
 
