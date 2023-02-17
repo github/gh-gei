@@ -80,11 +80,31 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             args.ArchiveUrl = args.AwsBucketName.HasValue()
                 ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
                 : await UploadArchiveToAzure(args.ArchivePath);
+
+            if (!args.KeepArchive && ShouldDownloadArchive(args))
+            {
+                DeleteArchive(args.ArchivePath);
+            }
         }
 
         if (ShouldImportArchive(args))
         {
             await ImportArchive(args, args.ArchiveUrl);
+        }
+    }
+
+    private void DeleteArchive(string path)
+    {
+        try
+        {
+            _fileSystemProvider.Delete(path);
+        }
+#pragma warning disable CA1031
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            _log.LogWarning($"Couldn't delete the downloaded archive. Error message: \"{ex.Message}\"");
+            _log.LogVerbose(ex.ToString());
         }
     }
 

@@ -8,7 +8,7 @@ using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.BbsToGithub.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.bbs2gh.Handlers
+namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
 {
     public class MigrateRepoCommandHandlerTests
     {
@@ -294,6 +294,69 @@ namespace OctoshiftCLI.Tests.bbs2gh.Handlers
                 GITHUB_PAT,
                 ARCHIVE_URL
             ));
+        }
+
+        [Fact]
+        public async Task Happy_Path_Deletes_Downloaded_Archive()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _mockFileSystemProvider.Verify(m => m.Delete(ARCHIVE_PATH));
+        }
+
+        [Fact]
+        public async Task Happy_Path_Does_Not_Throw_If_Fails_To_Delete_Downloaded_Archive()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockFileSystemProvider.Setup(x => x.Delete(It.IsAny<string>())).Throws(new UnauthorizedAccessException("Access Denied"));
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _mockFileSystemProvider.Verify(x => x.Delete(ARCHIVE_PATH));
         }
 
         [Fact]
