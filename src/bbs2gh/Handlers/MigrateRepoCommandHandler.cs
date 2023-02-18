@@ -343,6 +343,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
         }
+
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
+        }
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)

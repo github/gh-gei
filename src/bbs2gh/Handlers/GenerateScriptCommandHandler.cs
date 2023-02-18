@@ -184,6 +184,11 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         {
             _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
         }
+
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
+        }
     }
 
     private string GetGithubRepoName(string bbsProjectKey, string bbsRepoSlug) => $"{bbsProjectKey}-{bbsRepoSlug}".ReplaceInvalidCharactersWithDash();
