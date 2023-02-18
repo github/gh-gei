@@ -243,6 +243,6 @@ public class MigrateRepoCommandArgs
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
     public string SmbDomain { get; set; }
-    
+
     public bool KeepArchive { get; set; }
 }
