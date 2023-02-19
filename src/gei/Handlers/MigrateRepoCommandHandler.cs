@@ -500,7 +500,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
         else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue() || args.AwsSessionToken.HasValue())
         {
-            throw new OctoshiftCliException("--aws-access-key, --aws-secret-key, --aws-session-token, --aws-region can only be provided with --aws-bucket-name.");
+            throw new OctoshiftCliException("--aws-access-key, --aws-secret-key, --aws-session-token can only be provided with --aws-bucket-name.");
         }
     }
 }
