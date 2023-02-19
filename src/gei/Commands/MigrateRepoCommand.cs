@@ -29,6 +29,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsAccessKey);
             AddOption(AwsSecretKey);
             AddOption(NoSslVerify);
+            AddOption(AwsSessionToken);
 
             AddOption(GitArchiveUrl);
             AddOption(MetadataArchiveUrl);
@@ -99,6 +100,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
             Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable (Not required for GHES 3.8.0 and later)."
+        };
+        public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
+        {
+            Description = "If uploading to S3, the AWS session token. If not provided, it will read from AWS_SESSION_TOKEN environment variable."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -174,7 +179,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                    var awsArgs = new AWSArgs
+                    {
+                        AwsAccessKey = args.AwsAccessKey,
+                        AwsBucketName = args.AwsBucketName,
+                        AwsSecretKey = args.AwsSecretKey,
+                        AwsSessionToken = args.AwsSessionToken
+                    };
+                    awsApi = awsApiFactory.Create(awsArgs);
                 }
             }
 
@@ -197,6 +209,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsBucketName { get; set; }
         public string AwsAccessKey { get; set; }
         public string AwsSecretKey { get; set; }
+        public string AwsSessionToken { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }

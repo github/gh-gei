@@ -10,6 +10,8 @@ public class EnvironmentVariableProvider
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
     private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
     private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+    private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
+    private const string AWS_WEB_IDENTITY_FILE_PATH = "AWS_WEB_IDENTITY_TOKEN_FILE";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
@@ -38,7 +40,10 @@ public class EnvironmentVariableProvider
 
     public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
         GetSecret(AWS_ACCESS_KEY, throwIfNotFound);
-
+    public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
+        GetSecret(AWS_SESSION_TOKEN, throwIfNotFound);
+    public virtual string AwsWebIdentityFilePath(bool throwIfNotFound = true) =>
+        GetSecret(AWS_WEB_IDENTITY_FILE_PATH, throwIfNotFound);
     public virtual string BbsUsername(bool throwIfNotFound = true) =>
         GetSecret(BBS_USERNAME, throwIfNotFound);
 

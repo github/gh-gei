@@ -1,3 +1,4 @@
+using System;
 namespace OctoshiftCLI.GithubEnterpriseImporter;
 
 public class AwsApiFactory
@@ -9,11 +10,25 @@ public class AwsApiFactory
         _environmentVariableProvider = environmentVariableProvider;
     }
 
-    public virtual AwsApi Create(string awsAccessKey = null, string awsSecretKey = null)
+    public virtual AwsApi Create(AWSArgs awsArgs)
     {
-        var accessKey = awsAccessKey ?? _environmentVariableProvider.AwsAccessKey();
-        var secretKey = awsSecretKey ?? _environmentVariableProvider.AwsSecretKey();
-
-        return new AwsApi(accessKey, secretKey);
+        if (awsArgs is null)
+        {
+            throw new ArgumentNullException(nameof(awsArgs));
+        }
+        if (string.IsNullOrEmpty(awsArgs.AwsAccessKey))
+        {
+            awsArgs.AwsAccessKey = _environmentVariableProvider.AwsAccessKey(false);
+        }
+        if (string.IsNullOrEmpty(awsArgs.AwsSecretKey))
+        {
+            awsArgs.AwsSecretKey = _environmentVariableProvider.AwsSecretKey(false);
+        }
+        if (string.IsNullOrEmpty(awsArgs.AwsSessionToken))
+        {
+            awsArgs.AwsSessionToken = _environmentVariableProvider.AwsSessionToken(false);
+        }
+        return new AwsApi(awsArgs);
     }
+
 }
