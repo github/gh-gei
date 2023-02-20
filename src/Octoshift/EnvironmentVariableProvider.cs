@@ -8,8 +8,6 @@ public class EnvironmentVariableProvider
     private const string TARGET_GH_PAT = "GH_PAT";
     private const string ADO_PAT = "ADO_PAT";
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
-    private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
-    private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
@@ -32,12 +30,6 @@ public class EnvironmentVariableProvider
 
     public virtual string AzureStorageConnectionString(bool throwIfNotFound = true) =>
         GetSecret(AZURE_STORAGE_CONNECTION_STRING, throwIfNotFound);
-
-    public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_SECRET_KEY, throwIfNotFound);
-
-    public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_ACCESS_KEY, throwIfNotFound);
 
     public virtual string BbsUsername(bool throwIfNotFound = true) =>
         GetSecret(BBS_USERNAME, throwIfNotFound);

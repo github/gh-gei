@@ -486,17 +486,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (shouldUseAwsS3)
         {
-            if (!GetAwsAccessKey(args).HasValue())
+            if (!args.AwsSecretKey.HasValue() || !args.AwsAccessKey.HasValue())
             {
-                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
-            }
-
-            if (!GetAwsSecretKey(args).HasValue())
-            {
-                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+                try
+                {
+                    AwsApiFactory.ResolveStaticCredentials();
+                }
+                catch (OctoshiftCliException e)
+                {
+                    throw new OctoshiftCliException("Unable to resolve AWS credentials. " +
+                                                    "Either --aws-access-key/--aws-secret-key must be set or AWS SDK environment keys have to be set. " +
+                                                    "More on credential resolution: https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/creds-assign.html", e);
+                }
             }
         }
-        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+        if (!shouldUseAwsS3 && (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue()))
         {
             throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
         }
@@ -514,10 +518,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("--github-repo must be provided in order to import the Bitbucket archive.");
         }
     }
-
-    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
-
-    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString

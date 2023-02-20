@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Amazon;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
@@ -16,11 +17,14 @@ public class AwsApi : IDisposable
     private readonly ITransferUtility _transferUtility;
 
 #pragma warning disable CA2000
-    public AwsApi(string awsAccessKey, string awsSecretKey) : this(new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)))
+    public AwsApi(AWSCredentials credentials) 
+        : this(new AmazonS3Client(credentials, RegionEndpoint))
+            
 #pragma warning restore CA2000
     {
     }
 
+    private AwsApi(IAmazonS3 s3Client) : this(new TransferUtility(s3Client)) { }
     internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
 
     public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
