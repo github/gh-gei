@@ -242,7 +242,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             if (archiveStatus == ArchiveMigrationStatus.Failed)
             {
-                throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
+                _log.LogInformation($"Archive generation failed for id: {archiveId}");
+                break;
             }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
