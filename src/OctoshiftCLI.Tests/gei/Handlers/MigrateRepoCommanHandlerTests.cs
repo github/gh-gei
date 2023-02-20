@@ -1338,7 +1338,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*");
+                .WithMessage("*--aws-access-key/--aws-secret-key*");
         }
 
         [Fact]
@@ -1356,7 +1356,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-secret-key*");
+                .WithMessage("*--aws-access-key/--aws-secret-key*");
         }
 
         [Fact]

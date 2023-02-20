@@ -500,7 +500,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 }
             }
         }
-        if (!shouldUseAwsS3 && (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue()))
+        else if (!shouldUseAwsS3 && (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue()))
         {
             throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
         }

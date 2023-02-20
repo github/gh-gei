@@ -17,9 +17,9 @@ public class AwsApi : IDisposable
     private readonly ITransferUtility _transferUtility;
 
 #pragma warning disable CA2000
-    public AwsApi(AWSCredentials credentials) 
+    public AwsApi(AWSCredentials credentials)
         : this(new AmazonS3Client(credentials, RegionEndpoint))
-            
+
 #pragma warning restore CA2000
     {
     }
