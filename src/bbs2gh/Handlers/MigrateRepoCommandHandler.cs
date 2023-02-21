@@ -97,7 +97,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         try
         {
-            _fileSystemProvider.Delete(path);
+            _fileSystemProvider.DeleteIfExists(path);
         }
 #pragma warning disable CA1031
         catch (Exception ex)

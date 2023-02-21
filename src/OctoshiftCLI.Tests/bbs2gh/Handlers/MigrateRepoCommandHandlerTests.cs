@@ -324,7 +324,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             await _handler.Handle(args);
 
             // Assert
-            _mockFileSystemProvider.Verify(m => m.Delete(ARCHIVE_PATH));
+            _mockFileSystemProvider.Verify(m => m.DeleteIfExists(ARCHIVE_PATH));
         }
 
         [Fact]
@@ -336,7 +336,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
-            _mockFileSystemProvider.Setup(x => x.Delete(It.IsAny<string>())).Throws(new UnauthorizedAccessException("Access Denied"));
+            _mockFileSystemProvider.Setup(x => x.DeleteIfExists(It.IsAny<string>())).Throws(new UnauthorizedAccessException("Access Denied"));
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -356,7 +356,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             await _handler.Handle(args);
 
             // Assert
-            _mockFileSystemProvider.Verify(x => x.Delete(ARCHIVE_PATH));
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(ARCHIVE_PATH));
         }
 
         [Fact]

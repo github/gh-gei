@@ -99,7 +99,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<bool> KeepArchive { get; } = new(
         name: "--keep-archive",
-        description: "Keeps the downloaded export archive after successfully uploading it.");
+        description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {

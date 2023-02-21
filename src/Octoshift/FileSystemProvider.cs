@@ -27,7 +27,7 @@ public class FileSystemProvider
         await fileStream.WriteAsync(buffer, cancellationToken);
     }
 
-    public virtual void Delete(string path)
+    public virtual void DeleteIfExists(string path)
     {
         if (File.Exists(path))
         {
