@@ -78,7 +78,7 @@ namespace OctoshiftCLI
 
                 ExpiresOn = DateTimeOffset.UtcNow.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS)
             };
-            sasBuilder.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Write);
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
             return blobClient.GenerateSasUri(sasBuilder);
         }
