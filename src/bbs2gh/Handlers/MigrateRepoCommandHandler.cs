@@ -77,13 +77,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
             }
 
-            args.ArchiveUrl = args.AwsBucketName.HasValue()
-                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                : await UploadArchiveToAzure(args.ArchivePath);
-
-            if (!args.KeepArchive && ShouldDownloadArchive(args))
+            try
             {
-                DeleteArchive(args.ArchivePath);
+                args.ArchiveUrl = args.AwsBucketName.HasValue()
+                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                    : await UploadArchiveToAzure(args.ArchivePath);
+            }
+            finally
+            {
+                if (!args.KeepArchive && ShouldDownloadArchive(args))
+                {
+                    DeleteArchive(args.ArchivePath);
+                }
             }
         }
 
