@@ -29,6 +29,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(AwsBucketName);
+        AddOption(KeepArchive);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -96,6 +97,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
+    public Option<bool> KeepArchive { get; } = new(
+        name: "--keep-archive",
+        description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
+
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
@@ -137,4 +142,5 @@ public class GenerateScriptCommandArgs
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
     public string AwsBucketName { get; set; }
+    public bool KeepArchive { get; set; }
 }

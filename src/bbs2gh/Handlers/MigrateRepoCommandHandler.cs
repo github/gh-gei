@@ -77,14 +77,39 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
             }
 
-            args.ArchiveUrl = args.AwsBucketName.HasValue()
-                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                : await UploadArchiveToAzure(args.ArchivePath);
+            try
+            {
+                args.ArchiveUrl = args.AwsBucketName.HasValue()
+                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                    : await UploadArchiveToAzure(args.ArchivePath);
+            }
+            finally
+            {
+                if (!args.KeepArchive && ShouldDownloadArchive(args))
+                {
+                    DeleteArchive(args.ArchivePath);
+                }
+            }
         }
 
         if (ShouldImportArchive(args))
         {
             await ImportArchive(args, args.ArchiveUrl);
+        }
+    }
+
+    private void DeleteArchive(string path)
+    {
+        try
+        {
+            _fileSystemProvider.DeleteIfExists(path);
+        }
+#pragma warning disable CA1031
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            _log.LogWarning($"Couldn't delete the downloaded archive. Error message: \"{ex.Message}\"");
+            _log.LogVerbose(ex.ToString());
         }
     }
 
@@ -322,6 +347,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.BbsSharedHome.HasValue())
         {
             _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
+        }
+
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
         }
     }
 

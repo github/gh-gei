@@ -40,6 +40,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(Wait);
         AddOption(Kerberos);
         AddOption(Verbose);
+        AddOption(KeepArchive);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -146,6 +147,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> Verbose { get; } = new("--verbose");
 
+    public Option<bool> KeepArchive { get; } = new(
+        name: "--keep-archive",
+        description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
+
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
@@ -238,4 +243,6 @@ public class MigrateRepoCommandArgs
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
     public string SmbDomain { get; set; }
+
+    public bool KeepArchive { get; set; }
 }
