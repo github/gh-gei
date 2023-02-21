@@ -1,1 +1,1 @@
-
+- Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
