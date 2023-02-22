@@ -11,7 +11,6 @@ namespace OctoshiftCLI.BbsToGithub.Services;
 
 public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 {
-    public const string DEFAULT_BBS_SHARED_HOME_DIRECTORY = "c$\\atlassian\\applicationdata\\bitbucket\\shared";
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISMBClient _smbClient;
@@ -46,10 +45,10 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
         _domainName = domainName;
     }
 
-    public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS;
 
     private string GetSourceExportArchiveAbsolutePath(long exportJobId) =>
-        IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY, exportJobId).ToWindowsPath();
+        IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(BbsSharedHomeDirectory ?? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS, exportJobId).ToWindowsPath();
 
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
