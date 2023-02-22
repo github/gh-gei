@@ -11,7 +11,8 @@ public interface IBbsArchiveDownloader
 
     Task<string> Download(long exportJobId, string targetDirectory = DEFAULT_TARGET_DIRECTORY);
 
-    string GetSourceExportArchiveAbsolutePath(long exportJobId);
+    static string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportJobId) =>
+        Path.Join(bbsSharedHomeDirectory, GetSourceExportArchiveRelativePath(exportJobId)).ToUnixPath();
 
     static string GetExportArchiveFileName(long exportJobId) => $"Bitbucket_export_{exportJobId}.tar";
 

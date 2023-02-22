@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -74,7 +75,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
             {
-                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
+                args.ArchivePath = GetSourceExportArchiveAbsolutePath(args.BbsSharedHome, exportId);
             }
 
             args.ArchiveUrl = args.AwsBucketName.HasValue()
@@ -86,6 +87,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
+    }
+
+    private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
+    {
+        static string GetDefaultBbsSharedHomeDirectory() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? BbsSmbArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
+            : BbsSshArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+
+        return IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory ?? GetDefaultBbsSharedHomeDirectory(), exportId);
     }
 
     private bool ShouldGenerateArchive(MigrateRepoCommandArgs args)

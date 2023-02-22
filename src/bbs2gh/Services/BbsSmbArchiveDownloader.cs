@@ -48,8 +48,8 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
     public string BbsSharedHomeDirectory { get; init; } = DEFAULT_BBS_SHARED_HOME_DIRECTORY;
 
-    public string GetSourceExportArchiveAbsolutePath(long exportJobId) => Path.Join(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY,
-        IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).ToWindowsPath();
+    private string GetSourceExportArchiveAbsolutePath(long exportJobId) =>
+        IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(BbsSharedHomeDirectory ?? DEFAULT_BBS_SHARED_HOME_DIRECTORY, exportJobId).ToWindowsPath();
 
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
