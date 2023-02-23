@@ -86,19 +86,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
         {
-            Description = "Required if migrating from GHES (Not required for GHES 3.8.0 and later). The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
+            Description = "Required if migrating from GHES (Not required if migrating from GitHub Enterprise Server 3.8.0 or later). The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
         };
         public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
         {
-            Description = "If using AWS, the name of the S3 bucket to upload the data archives to (Not required for GHES 3.8.0 and later)."
+            Description = "If using AWS, the name of the S3 bucket to upload the data archives to. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable (Not required for GHES 3.8.0 and later)."
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable (Not required for GHES 3.8.0 and later)."
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
