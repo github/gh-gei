@@ -130,7 +130,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private bool ShouldImportArchive(MigrateRepoCommandArgs args)
     {
-        return args.ArchiveUrl.HasValue();
+        return args.ArchiveUrl.HasValue() || args.GithubOrg.HasValue();
     }
 
     private async Task<string> DownloadArchive(long exportId)
@@ -421,6 +421,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             ValidateUploadOptions(args);
         }
+
+        if (ShouldImportArchive(args))
+        {
+            ValidateImportOptions(args);
+        }
     }
 
     private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
@@ -481,6 +486,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
         {
             throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
+        }
+    }
+
+    private void ValidateImportOptions(MigrateRepoCommandArgs args)
+    {
+        if (args.GithubOrg.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--github-org must be provided in order to import the Bitbucket archive.");
+        }
+
+        if (args.GithubRepo.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--github-repo must be provided in order to import the Bitbucket archive.");
         }
     }
 

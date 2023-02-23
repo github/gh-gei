@@ -724,6 +724,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 BbsRepo = BBS_REPO,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
             };
             await _handler.Handle(args);
 
@@ -744,6 +745,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchivePath = ARCHIVE_PATH,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
             };
             await _handler.Handle(args);
 
@@ -759,7 +761,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 ArchiveUrl = ARCHIVE_URL,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO
             };
             await _handler.Handle(args);
 
@@ -1070,6 +1074,67 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 .Should()
                 .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage("*SSH*SMB*--bbs-server-url*");
+        }
+
+        [Fact]
+        public async Task It_Throws_If_Github_Org_Is_Provided_But_Github_Repo_Is_Not()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubOrg = GITHUB_ORG,
+                BbsServerUrl = BBS_SERVER_URL,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                GithubPat = GITHUB_PAT,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--github-repo*");
+        }
+
+        [Fact]
+        public async Task It_Throws_If_Archive_Url_Is_Provided_But_Github_Org_Is_Not()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubPat = GITHUB_PAT,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubRepo = GITHUB_REPO
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--github-org*");
+        }
+
+        [Fact]
+        public async Task It_Throws_If_Archive_Url_Is_Provided_But_Github_Repo_Is_Not()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubPat = GITHUB_PAT,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--github-repo*");
         }
     }
 }
