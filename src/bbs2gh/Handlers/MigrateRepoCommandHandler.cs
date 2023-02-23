@@ -101,11 +101,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
     {
-        static string GetDefaultBbsSharedHomeDirectory() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
-            : BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
+        if (bbsSharedHomeDirectory.IsNullOrWhiteSpace())
+        {
+            bbsSharedHomeDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
+                : BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
+        }
 
-        return IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory ?? GetDefaultBbsSharedHomeDirectory(), exportId);
+        return IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory, exportId);
     }
 
     private void DeleteArchive(string path)
