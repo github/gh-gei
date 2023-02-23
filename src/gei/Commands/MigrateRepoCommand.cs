@@ -90,7 +90,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
         {
-            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to (Not required for GHES 3.8.0 and later)."
+            Description = "If using AWS, the name of the S3 bucket to upload the data archives to (Not required for GHES 3.8.0 and later)."
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
