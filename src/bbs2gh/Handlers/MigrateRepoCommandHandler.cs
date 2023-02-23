@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -74,7 +75,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
             {
-                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
+                args.ArchivePath = GetSourceExportArchiveAbsolutePath(args.BbsSharedHome, exportId);
             }
 
             try
@@ -96,6 +97,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
+    }
+
+    private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
+    {
+        if (bbsSharedHomeDirectory.IsNullOrWhiteSpace())
+        {
+            bbsSharedHomeDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
+                : BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
+        }
+
+        return IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory, exportId);
     }
 
     private void DeleteArchive(string path)

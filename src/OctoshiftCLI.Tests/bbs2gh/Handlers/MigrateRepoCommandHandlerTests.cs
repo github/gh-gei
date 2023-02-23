@@ -224,10 +224,12 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         public async Task Happy_Path_Full_Flow_Running_On_Bbs_Server()
         {
             // Arrange
+            const string bbsSharedHome = "bbs-shared-home";
+            var archivePath = $"{bbsSharedHome}/data/migration/export/Bitbucket_export_{BBS_EXPORT_ID}.tar";
+
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.GetSourceExportArchiveAbsolutePath(BBS_EXPORT_ID)).Returns(ARCHIVE_PATH);
-            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(archivePath)).ReturnsAsync(ARCHIVE_DATA);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -244,10 +246,24 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                BbsSharedHome = bbsSharedHome
             };
-            await _handler.Handle(args);
+
+            var handler = new MigrateRepoCommandHandler(
+                _mockOctoLogger.Object,
+                _mockGithubApi.Object,
+                _mockBbsApi.Object,
+                _mockEnvironmentVariableProvider.Object,
+                null, // in case of running on Bitbucket server, the downloader will be null
+                _mockAzureApi.Object,
+                _mockAwsApi.Object,
+                _mockFileSystemProvider.Object
+            );
+            await handler.Handle(args);
 
             // Assert
+            args.ArchivePath.Should().Be(archivePath);
+
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
                 GITHUB_ORG_ID,
@@ -703,34 +719,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 .Should()
                 .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage("*--bbs-server-url*--archive-path*--archive-url*");
-        }
-
-        [Fact]
-        public async Task It_Sets_The_Archive_Path_To_Default_Local_Path_When_Archive_Path_And_Archive_Url_Are_Not_Provided()
-        {
-            // Arrange
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>())).ReturnsAsync(new Uri(ARCHIVE_URL));
-            _mockBbsArchiveDownloader.Setup(x => x.GetSourceExportArchiveAbsolutePath(BBS_EXPORT_ID)).Returns(ARCHIVE_PATH);
-
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
-            };
-            await _handler.Handle(args);
-
-            // Assert
-            args.ArchivePath.Should().Be(ARCHIVE_PATH);
-            _mockFileSystemProvider.Verify(m => m.ReadAllBytesAsync(ARCHIVE_PATH));
         }
 
         [Fact]

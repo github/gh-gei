@@ -18,12 +18,12 @@ public class BbsArchiveDownloaderFactory
     public virtual IBbsArchiveDownloader CreateSshDownloader(string host, string sshUser, string privateKeyFileFullPath, int sshPort = 22, string bbsSharedHomeDirectory = null) =>
         new BbsSshArchiveDownloader(_log, _fileSystemProvider, host, sshUser, privateKeyFileFullPath, sshPort)
         {
-            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSshArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
+            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX
         };
 
     public virtual IBbsArchiveDownloader CreateSmbDownloader(string host, string smbUser, string smbPassword, string domainName = null, string bbsSharedHomeDirectory = null) =>
         new BbsSmbArchiveDownloader(_log, _fileSystemProvider, host, smbUser, smbPassword ?? _environmentVariableProvider.SmbPassword(), domainName)
         {
-            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSmbArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY
+            BbsSharedHomeDirectory = bbsSharedHomeDirectory ?? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
         };
 }
