@@ -271,7 +271,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(PWSH_SHEBANG);
         content.AppendLine();
         content.AppendLine(VersionComment);
-        content.AppendLine(EXEC_FUNCTION_BLOCK);
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine();
@@ -301,8 +300,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Query each migration's status
         foreach (var repo in repos)
         {
-            content.AppendLine(WaitForMigrationScript(repo));
-            content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            content.AppendLine(Wrap(WaitForMigrationScript(repo), $"if ($RepoMigrations[\"{repo}\"])"));
+            content.AppendLine($"if ($RepoMigrations[\"{repo}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
 
             if (downloadMigrationLogs)
             {
@@ -374,7 +373,6 @@ if ($Failed -ne 0) {
         content.AppendLine(PWSH_SHEBANG);
         content.AppendLine();
         content.AppendLine(VersionComment);
-        content.AppendLine(EXEC_FUNCTION_BLOCK);
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine();
@@ -421,8 +419,8 @@ if ($Failed -ne 0) {
 
             foreach (var repo in repos[teamProject].Select(r => GetGithubRepoName(teamProject, r)))
             {
-                content.AppendLine(WaitForMigrationScript(repo));
-                content.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+                content.AppendLine(Wrap(WaitForMigrationScript(repo), $"if ($RepoMigrations[\"{repo}\"])"));
+                content.AppendLine($"if ($RepoMigrations[\"{repo}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
 
                 if (downloadMigrationLogs)
                 {
@@ -515,7 +513,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
