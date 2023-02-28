@@ -1,1 +1,2 @@
 - Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
+- Make generated script by `gh gei generate-script` and `gh ado2gh generate-script` commands for parallel migrations more resilient by not halting the entire script executing if queuing a repo migration fails. 
