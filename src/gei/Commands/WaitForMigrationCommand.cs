@@ -9,7 +9,7 @@ public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
     public WaitForMigrationCommand() : base()
     {
         Description += Environment.NewLine;
-        Description += $"Note: Expects GH_PAT env variable or --{GithubPat.ArgumentHelpName} option to be set.";
+        Description += $"Note: Expects GH_PAT env variable or --{GithubPat.Name} option to be set.";
 
         AddOptions();
     }

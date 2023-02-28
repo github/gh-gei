@@ -7,6 +7,8 @@ on:
       - 'v*'
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '0 7 * * *'
   workflow_dispatch:
 
 jobs:
@@ -199,10 +201,14 @@ jobs:
         GHES_PAT: ${{ secrets.GHES_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
-        SSH_KEY: ${{ secrets.SSH_KEY }}
+        SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
+        SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
+        SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
         AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
         AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
         AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
+        AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+        AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
         GEI_DEBUG_MODE: 'true'
         LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net6.0/runtimes/ubuntu.18.04-x64/native'
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9

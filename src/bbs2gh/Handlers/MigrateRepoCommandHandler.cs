@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -74,17 +75,54 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
             {
-                args.ArchivePath = _bbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(exportId);
+                args.ArchivePath = GetSourceExportArchiveAbsolutePath(args.BbsSharedHome, exportId);
             }
 
-            args.ArchiveUrl = args.AwsBucketName.HasValue()
-                ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                : await UploadArchiveToAzure(args.ArchivePath);
+            try
+            {
+                args.ArchiveUrl = args.AwsBucketName.HasValue()
+                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
+                    : await UploadArchiveToAzure(args.ArchivePath);
+            }
+            finally
+            {
+                if (!args.KeepArchive && ShouldDownloadArchive(args))
+                {
+                    DeleteArchive(args.ArchivePath);
+                }
+            }
         }
 
         if (ShouldImportArchive(args))
         {
             await ImportArchive(args, args.ArchiveUrl);
+        }
+    }
+
+    private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
+    {
+        if (bbsSharedHomeDirectory.IsNullOrWhiteSpace())
+        {
+            bbsSharedHomeDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
+                : BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
+        }
+
+        return IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory, exportId);
+    }
+
+    private void DeleteArchive(string path)
+    {
+        try
+        {
+            _fileSystemProvider.DeleteIfExists(path);
+        }
+#pragma warning disable CA1031
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            _log.LogWarning($"Couldn't delete the downloaded archive. Error message: \"{ex.Message}\"");
+            _log.LogVerbose(ex.ToString());
         }
     }
 
@@ -105,7 +143,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private bool ShouldImportArchive(MigrateRepoCommandArgs args)
     {
-        return args.ArchiveUrl.HasValue();
+        return args.ArchiveUrl.HasValue() || args.GithubOrg.HasValue();
     }
 
     private async Task<string> DownloadArchive(long exportId)
@@ -304,6 +342,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"SMB PASSWORD: ********");
         }
 
+        if (args.SmbDomain.HasValue())
+        {
+            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
+        }
+
         if (args.GithubPat.HasValue())
         {
             _log.LogInformation($"GITHUB PAT: ********");
@@ -317,6 +360,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.BbsSharedHome.HasValue())
         {
             _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
+        }
+
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
         }
     }
 
@@ -376,7 +424,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
@@ -385,6 +433,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (ShouldUploadArchive(args))
         {
             ValidateUploadOptions(args);
+        }
+
+        if (ShouldImportArchive(args))
+        {
+            ValidateImportOptions(args);
         }
     }
 
@@ -405,9 +458,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
         }
 
-        if (args.SmbUser.HasValue() ^ args.SmbPassword.HasValue())
+        if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
-            throw new OctoshiftCliException("Both --smb-user and --smb-password must be specified for SMB download.");
+            throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
         }
     }
 
@@ -449,6 +502,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
+    private void ValidateImportOptions(MigrateRepoCommandArgs args)
+    {
+        if (args.GithubOrg.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--github-org must be provided in order to import the Bitbucket archive.");
+        }
+
+        if (args.GithubRepo.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--github-repo must be provided in order to import the Bitbucket archive.");
+        }
+    }
+
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
 
     private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
@@ -460,4 +526,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
 
     private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
+
+    private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 }
