@@ -1,1 +1,2 @@
 - Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
+- Add support for Implicit Credentials Resolution for the S3 bucket: https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/creds-assign.html
