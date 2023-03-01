@@ -108,7 +108,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
-            Description = "If using AWS, the AWS region. If not provided, us-east-1 will be used by default."
+            Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. Defaults to us-east-1."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {

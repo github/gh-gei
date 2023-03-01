@@ -484,9 +484,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                     throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
                 }
 
-                if (args.AwsRegion.IsNullOrWhiteSpace())
+                if (!GetAwsRegion(args).HasValue())
                 {
-                    _log.LogWarning("Please consider providing `--aws-region`. It will be required in future releases.");
+                    _log.LogWarning("Please consider providing --aws-region or AWS_REGION environment variable. It will be required in future releases.");
                 }
             }
             else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
@@ -511,6 +511,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
 
     private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+
+    private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString

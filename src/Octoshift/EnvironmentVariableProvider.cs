@@ -11,6 +11,7 @@ public class EnvironmentVariableProvider
     private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
     private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
     private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
+    private const string AWS_REGION = "AWS_REGION";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
@@ -42,6 +43,9 @@ public class EnvironmentVariableProvider
 
     public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
         GetSecret(AWS_SESSION_TOKEN, throwIfNotFound);
+
+    public virtual string AwsRegion(bool throwIfNotFound = true) =>
+        GetSecret(AWS_REGION, throwIfNotFound);
 
     public virtual string BbsUsername(bool throwIfNotFound = true) =>
         GetSecret(BBS_USERNAME, throwIfNotFound);
