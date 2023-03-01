@@ -13,7 +13,7 @@ public class AwsApiFactory
     {
         awsAccessKey ??= _environmentVariableProvider.AwsAccessKey();
         awsSecretKey ??= _environmentVariableProvider.AwsSecretKey();
-        awsSessionToken ??= _environmentVariableProvider.AwsSessionToken();
+        awsSessionToken ??= _environmentVariableProvider.AwsSessionToken(false);
 
         return new AwsApi(awsAccessKey, awsSecretKey, awsRegion, awsSessionToken);
     }
