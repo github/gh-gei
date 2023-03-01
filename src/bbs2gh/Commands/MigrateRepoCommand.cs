@@ -37,6 +37,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsBucketName);
         AddOption(AwsAccessKey);
         AddOption(AwsSecretKey);
+        AddOption(AwsSessionToken);
+        AddOption(AwsRegion);
         AddOption(Wait);
         AddOption(Kerberos);
         AddOption(Verbose);
@@ -92,6 +94,14 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
         description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
+
+    public Option<string> AwsSessionToken { get; } = new(
+        name: "--aws-session-token",
+        description: "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable.");
+
+    public Option<string> AwsRegion { get; } = new(
+        name: "--aws-region",
+        description: "If using AWS, the AWS region. If not provided, us-east-1 will be used by default.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 
@@ -204,7 +214,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.AwsBucketName.HasValue())
         {
             var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
-            awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+            awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
         }
 
         return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider);
@@ -221,6 +231,8 @@ public class MigrateRepoCommandArgs
     public string AwsBucketName { get; set; }
     public string AwsAccessKey { get; set; }
     public string AwsSecretKey { get; set; }
+    public string AwsSessionToken { get; set; }
+    public string AwsRegion { get; set; }
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }

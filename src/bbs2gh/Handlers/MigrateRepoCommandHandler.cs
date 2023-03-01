@@ -292,20 +292,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"AZURE STORAGE CONNECTION STRING: ********");
         }
 
-        if (args.AwsBucketName.HasValue())
-        {
-            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-        }
-
-        if (args.AwsAccessKey.HasValue())
-        {
-            _log.LogInformation($"AWS ACCESS KEY: ********");
-        }
-
-        if (args.AwsSecretKey.HasValue())
-        {
-            _log.LogInformation($"AWS SECRET KEY: ********");
-        }
+        LogAwsOptions(args);
 
         if (args.GithubOrg.HasValue())
         {
@@ -365,6 +352,34 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.KeepArchive)
         {
             _log.LogInformation("KEEP ARCHIVE: true");
+        }
+    }
+
+    private void LogAwsOptions(MigrateRepoCommandArgs args)
+    {
+        if (args.AwsBucketName.HasValue())
+        {
+            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsAccessKey.HasValue())
+        {
+            _log.LogInformation($"AWS ACCESS KEY: ********");
+        }
+
+        if (args.AwsSecretKey.HasValue())
+        {
+            _log.LogInformation($"AWS SECRET KEY: ********");
+        }
+
+        if (args.AwsSessionToken.HasValue())
+        {
+            _log.LogInformation("AWS SESSION TOKEN: ********");
+        }
+
+        if (args.AwsRegion.HasValue())
+        {
+            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
         }
     }
 
@@ -494,6 +509,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (!GetAwsSecretKey(args).HasValue())
             {
                 throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+            }
+
+            if (args.AwsRegion.IsNullOrWhiteSpace())
+            {
+                _log.LogWarning("Please consider providing `--aws-region`. It will be required in future releases.");
             }
         }
         else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
