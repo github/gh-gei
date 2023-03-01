@@ -367,12 +367,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.AwsAccessKey.HasValue())
         {
-            _log.LogInformation($"AWS ACCESS KEY: ********");
+            _log.LogInformation("AWS ACCESS KEY: ********");
         }
 
         if (args.AwsSecretKey.HasValue())
         {
-            _log.LogInformation($"AWS SECRET KEY: ********");
+            _log.LogInformation("AWS SECRET KEY: ********");
         }
 
         if (args.AwsSessionToken.HasValue())
