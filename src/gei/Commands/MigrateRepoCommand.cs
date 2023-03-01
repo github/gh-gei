@@ -28,6 +28,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsBucketName);
             AddOption(AwsAccessKey);
             AddOption(AwsSecretKey);
+            AddOption(AwsSessionToken);
+            AddOption(AwsRegion);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -99,6 +101,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
             Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+        };
+        public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
+        {
+            Description = "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable."
+        };
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If using AWS, the AWS region. If not provided, us-east-1 will be used by default."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -174,7 +184,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                    awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
                 }
             }
 
@@ -197,6 +207,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsBucketName { get; set; }
         public string AwsAccessKey { get; set; }
         public string AwsSecretKey { get; set; }
+        public string AwsSessionToken { get; set; }
+        public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
