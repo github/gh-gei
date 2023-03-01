@@ -52,6 +52,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.RegisterSecret(args.BbsPassword);
         _log.RegisterSecret(args.GithubPat);
         _log.RegisterSecret(args.SmbPassword);
+        _log.RegisterSecret(args.AwsAccessKey);
+        _log.RegisterSecret(args.AwsSecretKey);
+        _log.RegisterSecret(args.AwsSessionToken);
 
         LogOptions(args);
         ValidateOptions(args);
