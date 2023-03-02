@@ -251,18 +251,26 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<bool> DetermineIfBlobCredentialsRequired(MigrateRepoCommandArgs args)
     {
-        var blobCredentialsRequired = true;
+        var blobCredentialsRequired = false;
+
         if (args.GhesApiUrl.HasValue())
         {
+            blobCredentialsRequired = true;
+
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
             var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
 
             if (ghesVersion != null)
             {
                 _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");
-                if (new Version(ghesVersion) >= new Version(3, 8, 0))
+
+                if (Version.TryParse(ghesVersion, out var parsedVersion))
                 {
-                    blobCredentialsRequired = false;
+                    blobCredentialsRequired = parsedVersion < new Version(3, 8, 0);
+                }
+                else
+                {
+                    _log.LogInformation($"Unable to parse the version number, defaulting to using CLI for blob storage uploads");
                 }
             }
         }
