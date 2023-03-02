@@ -519,9 +519,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 _log.LogWarning("Please consider providing --aws-region or AWS_REGION environment variable. It will be required in future releases.");
             }
         }
-        else if (args.AwsAccessKey.HasValue() || args.AwsSecretKey.HasValue())
+        else if (new[] { args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion }.Any(x => x.HasValue()))
         {
-            throw new OctoshiftCliException("--aws-access-key and --aws-secret-key can only be provided with --aws-bucket-name.");
+            throw new OctoshiftCliException("Amazon S3 upload options can only be provided with --aws-bucket-name.");
         }
     }
 

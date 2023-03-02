@@ -32,6 +32,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY = "aws-access-key";
         private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AWS_SESSION_TOKEN = "aws-session-token";
+        private const string AWS_REGION = "aws-region";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
         private const string BBS_HOST = "our-bbs-server.com";
@@ -875,7 +877,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*Amazon S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -891,7 +893,39 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*Amazon S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Session_Token_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsSessionToken = AWS_SESSION_TOKEN
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*Amazon S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Region_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsRegion = AWS_REGION
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*Amazon S3*--aws-bucket-name*");
         }
 
         [Fact]
