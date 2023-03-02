@@ -268,6 +268,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 {
                     blobCredentialsRequired = parsedVersion < new Version(3, 8, 0);
                 }
+                else
+                {
+                    _log.LogInformation($"Unable to parse the version number, defaulting to GHES 3.7.0");
+                }
             }
         }
 
