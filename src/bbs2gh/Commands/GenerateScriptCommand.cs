@@ -29,6 +29,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(AwsBucketName);
+        AddOption(AwsRegion);
         AddOption(KeepArchive);
     }
 
@@ -95,6 +96,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--aws-bucket-name",
         description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
 
+    public Option<string> AwsRegion { get; } = new(
+        name: "--aws-region",
+        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. Defaults to us-east-1.");
+
     public Option<bool> Verbose { get; } = new("--verbose");
 
     public Option<bool> KeepArchive { get; } = new(
@@ -142,5 +147,6 @@ public class GenerateScriptCommandArgs
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
     public string AwsBucketName { get; set; }
+    public string AwsRegion { get; set; }
     public bool KeepArchive { get; set; }
 }
