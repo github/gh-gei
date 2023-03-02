@@ -270,7 +270,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 }
                 else
                 {
-                    _log.LogInformation($"Unable to parse the version number, defaulting to GHES 3.7.0");
+                    _log.LogInformation($"Unable to parse the version number, defaulting to using CLI for blob storage uploads");
                 }
             }
         }
