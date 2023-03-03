@@ -14,6 +14,7 @@ namespace OctoshiftCLI.Tests
     {
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+        private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
         [Fact]
         public async Task Downloads_File()
@@ -42,7 +43,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -80,7 +81,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -115,7 +116,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
 
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
 
             // Act
             var archiveContent = await httpDownloadService.DownloadToBytes(url);
@@ -141,7 +142,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
 
             // Act, Assert
             await httpDownloadService

@@ -14,11 +14,13 @@ namespace OctoshiftCLI
 
         private readonly OctoLogger _log;
         private readonly HttpClient _httpClient;
+        private readonly FileSystemProvider _fileSystemProvider;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient)
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient, FileSystemProvider fileSystemProvider)
         {
             _log = log;
             _httpClient = httpClient;
+            _fileSystemProvider = fileSystemProvider;
 
             if (_httpClient is not null)
             {
@@ -53,22 +55,14 @@ namespace OctoshiftCLI
 
         public virtual async Task<Stream> DownloadStream(string url)
         {
-            var path = System.IO.Path.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
+            var path = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
             var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
             using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            var streamToWriteTo = File.Open(path, FileMode.Create);
+            var streamToWriteTo = _fileSystemProvider.Open(path, FileMode.Create);
             await streamToReadFrom.CopyToAsync(streamToWriteTo);
             streamToWriteTo.Position = 0; // Reset position after copied to
-
-            try
-            {
-                File.Delete(path); // Clean up customer disc
-            }
-            catch (Exception)
-            {
-                _log.LogVerbose($"Unable to delete Archive Content at: " + path);
-            }
+            _fileSystemProvider.DeleteIfExists(path); // Clean up customer disc
             return streamToWriteTo;
         }
     }

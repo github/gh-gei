@@ -34,4 +34,6 @@ public class FileSystemProvider
             File.Delete(path);
         }
     }
+
+    public virtual string GetTempPath() => System.IO.Path.GetTempPath();
 }
