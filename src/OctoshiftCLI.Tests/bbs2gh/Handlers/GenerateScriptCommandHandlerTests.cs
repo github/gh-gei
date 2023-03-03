@@ -45,6 +45,7 @@ public class GenerateScriptCommandHandlerTests
     private const string BBS_BAR_REPO_2_NAME = "BBS-BAR-REPO-2-NAME";
     private const string BBS_SHARED_HOME = "BBS-SHARED-HOME";
     private const string AWS_BUCKET_NAME = "AWS-BUCKET-NAME";
+    private const string AWS_REGION = "AWS_REGION";
 
     public GenerateScriptCommandHandlerTests()
     {
@@ -344,7 +345,7 @@ function Exec {
     }
 
     [Fact]
-    public async Task One_Repo_With_Aws_Bucket_Name()
+    public async Task One_Repo_With_Aws_Bucket_Name_And_Region()
     {
         // Arrange
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
@@ -356,7 +357,11 @@ function Exec {
             (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
         });
 
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait --aws-bucket-name \"{AWS_BUCKET_NAME}\" }}";
+        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" " +
+                                 $"--bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" " +
+                                 $"--ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" " +
+                                 $"--github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait --aws-bucket-name \"{AWS_BUCKET_NAME}\" " +
+                                 $"--aws-region \"{AWS_REGION}\" }}";
 
         // Act
         var args = new GenerateScriptCommandArgs
@@ -371,7 +376,8 @@ function Exec {
             SshPort = SSH_PORT,
             Output = new FileInfo(OUTPUT),
             Verbose = true,
-            AwsBucketName = AWS_BUCKET_NAME
+            AwsBucketName = AWS_BUCKET_NAME,
+            AwsRegion = AWS_REGION
         };
         await _handler.Handle(args);
 

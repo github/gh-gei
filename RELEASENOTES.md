@@ -1,2 +1,3 @@
 - Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
 - Fixes bug where CLI would crash if the source was GHAE (while trying to parse the version)
+- Add support for authenticating with AWS session tokens when using AWS S3 for archive upload in `gh gei` and `gh bbs2gh`. When specifying a session token, the AWS region must also be specified.
