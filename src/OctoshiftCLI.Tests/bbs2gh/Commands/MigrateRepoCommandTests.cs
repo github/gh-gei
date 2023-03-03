@@ -52,7 +52,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(25);
+        command.Options.Count.Should().Be(27);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -64,6 +64,8 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-session-token", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-secret-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);

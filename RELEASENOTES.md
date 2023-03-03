@@ -1,2 +1,1 @@
-- Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
-- Fixes bug where CLI would crash if the source was GHAE (while trying to parse the version)
+
