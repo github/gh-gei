@@ -203,10 +203,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveContent = await _httpDownloadService.DownloadStream(gitArchiveUrl);
+        using var gitArchiveContent = await _httpDownloadService.DownloadStream(gitArchiveUrl);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-        var metadataArchiveContent = await _httpDownloadService.DownloadStream(metadataArchiveUrl);
+        using var metadataArchiveContent = await _httpDownloadService.DownloadStream(metadataArchiveUrl);
 
         return _awsApi.HasValue() ?
             await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :

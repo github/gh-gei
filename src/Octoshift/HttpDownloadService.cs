@@ -53,23 +53,23 @@ namespace OctoshiftCLI
 
         public virtual async Task<Stream> DownloadStream(string url)
         {
-            var client = new HttpClient();
-            var rnd = new Random();
-            var path = System.IO.Path.GetTempPath() + "MigrationStream" + rnd.Next(99999);
+            var path = System.IO.Path.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
+            var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
-            while (File.Exists(path))
-            {
-                path += rnd.Next(9); // Extra measure to prevent filename duplicity error
-            }
-
-            var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-
-            var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+            using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
             var streamToWriteTo = File.Open(path, FileMode.Create);
             await streamToReadFrom.CopyToAsync(streamToWriteTo);
-            File.Delete(path); // Clean up customer disc
-            return streamToWriteTo;
+            streamToWriteTo.Position = 0; // Reset position after copied to
 
+            try
+            {
+                File.Delete(path); // Clean up customer disc
+            }
+            catch (Exception)
+            {
+                _log.LogVerbose($"Unable to delete Archive Content at: " + path);
+            }
+            return streamToWriteTo;
         }
     }
 }

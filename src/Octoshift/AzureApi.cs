@@ -73,9 +73,7 @@ namespace OctoshiftCLI
                 },
             };
 
-            content.Position = 0;
             await blobClient.UploadAsync(content, options);
-            content.Dispose();
             return GetServiceSasUriForBlob(blobClient);
         }
 
