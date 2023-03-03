@@ -324,8 +324,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-            var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
-            var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
+            using var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
+            using var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
@@ -395,8 +395,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-            var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
-            var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
+            using var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
+            using var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
@@ -638,8 +638,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-            var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
-            var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
+            using var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
+            using var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
@@ -706,8 +706,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-            var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
-            var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
+            using var gitArchiveContent = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
+            using var metadataArchiveContent = new MemoryStream(new byte[] { 6, 7, 8, 9, 10 });
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
@@ -938,7 +938,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
-            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(new MemoryStream());
+            using var stream = new MemoryStream();
+
+            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(stream);
 
             _mockAzureApi.Setup(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<MemoryStream>()).Result).Returns(new Uri("https://example.com/resource"));
 
@@ -1098,7 +1100,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
-            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(new MemoryStream());
+            using var stream = new MemoryStream();
+
+            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(stream);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
@@ -1138,7 +1142,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
-            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(new MemoryStream());
+            using var stream = new MemoryStream();
+
+            _mockHttpDownloadService.Setup(x => x.DownloadStream(It.IsAny<string>()).Result).Returns(stream);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<MemoryStream>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
