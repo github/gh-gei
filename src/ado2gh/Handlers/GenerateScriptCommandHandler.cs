@@ -268,7 +268,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     var githubRepo = GetGithubRepoName(adoTeamProject, adoRepo.Name);
                     var repoMigrationKey = GetRepoMigrationKey(adoOrg, githubRepo);
 
-                    AppendLine(content, "$CanExecuteBatch = $true");
+                    AppendLine(content, "$CanExecuteBatch = $false");
                     AppendLine(content, $"if ($null -ne $RepoMigrations[\"{repoMigrationKey}\"]) {{");
                     AppendLine(content, "    " + WaitForMigrationScript(repoMigrationKey));
                     AppendLine(content, "    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -305,7 +305,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                         AppendLine(content, "    $Succeeded++");
                     }
 
-                    AppendLine(content, "} else {"); // if ($lastexitcode -ne 0)
+                    AppendLine(content, "} else {");
                     AppendLine(content, "    $Failed++");
                     AppendLine(content, "}");
                 }
@@ -504,7 +504,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
