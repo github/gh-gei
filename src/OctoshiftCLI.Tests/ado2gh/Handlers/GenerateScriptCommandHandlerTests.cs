@@ -596,7 +596,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -631,7 +631,7 @@ function ExecBatch {
         expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
         expected.AppendLine();
         expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -693,7 +693,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -728,7 +728,7 @@ function ExecBatch {
         expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
         expected.AppendLine();
         expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -821,7 +821,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -864,7 +864,7 @@ function ExecBatch {
         expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
         expected.AppendLine();
         expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -885,7 +885,7 @@ function ExecBatch {
         expected.AppendLine("}");
         expected.AppendLine();
         expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {BAR_REPO}. Will then complete the below post migration steps. ===");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{BAR_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{BAR_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -962,7 +962,7 @@ function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -1002,7 +1002,7 @@ function ExecBatch {
         expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {ADO_ORG} ===========");
         expected.AppendLine();
         expected.AppendLine($"# === Waiting for repo migration to finish for Team Project: {ADO_TEAM_PROJECT} and Repo: {FOO_REPO}. Will then complete the below post migration steps. ===");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1059,7 +1059,7 @@ if ($Failed -ne 0) {
         expected.AppendLine($"Exec {{ gh ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" }}");
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1104,7 +1104,7 @@ if ($Failed -ne 0) {
         expected.AppendLine($"Exec {{ gh ado2gh create-team --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" --idp-group \"{ADO_TEAM_PROJECT}-Admins\" }}");
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1148,7 +1148,7 @@ if ($Failed -ne 0) {
         expected.AppendLine($"Exec {{ gh ado2gh lock-ado-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" }}");
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1187,7 +1187,7 @@ if ($Failed -ne 0) {
         var expected = new StringBuilder();
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1229,7 +1229,7 @@ if ($Failed -ne 0) {
         var expected = new StringBuilder();
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
@@ -1277,7 +1277,7 @@ if ($Failed -ne 0) {
         expected.AppendLine($"Exec {{ gh ado2gh share-service-connection --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --service-connection-id \"{APP_ID}\" }}");
         expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" }}");
         expected.AppendLine($"$RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"] = $MigrationID");
-        expected.AppendLine("$CanExecuteBatch = $true");
+        expected.AppendLine("$CanExecuteBatch = $false");
         expected.AppendLine($"if ($null -ne $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]) {{");
         expected.AppendLine($"    gh ado2gh wait-for-migration --migration-id $RepoMigrations[\"{ADO_ORG}/{ADO_TEAM_PROJECT}-{FOO_REPO}\"]");
         expected.AppendLine("    $CanExecuteBatch = ($lastexitcode -eq 0)");
