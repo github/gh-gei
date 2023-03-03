@@ -48,7 +48,6 @@ public class AwsApi : IDisposable
     public virtual async Task<string> UploadToBucket(string bucketName, Stream content, string keyName)
     {
         await _transferUtility.UploadAsync(content, bucketName, keyName);
-        content.Dispose();
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 
