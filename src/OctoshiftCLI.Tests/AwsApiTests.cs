@@ -43,7 +43,7 @@ public class AwsApiTests
         // Arrange
         var bucketName = "bucket";
         var bytes = Encoding.ASCII.GetBytes("here are some bytes");
-        var stream = new MemoryStream();
+        using var stream = new MemoryStream();
         stream.Write(bytes, 0, bytes.Length);
         var keyName = "key";
         var url = "http://example.com/file.zip";
