@@ -16,6 +16,7 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private const string CONTAINER_PREFIX = "migration-archives";
         private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
+        private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
 
         public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
         {
@@ -48,8 +49,8 @@ namespace OctoshiftCLI
             {
                 TransferOptions = new Azure.Storage.StorageTransferOptions()
                 {
-                    InitialTransferSize = 4 * 1024 * 1024,
-                    MaximumTransferSize = 4 * 1024 * 1024
+                    InitialTransferSize = DEFAULT_BLOCK_SIZE,
+                    MaximumTransferSize = DEFAULT_BLOCK_SIZE
                 },
             };
 
@@ -67,8 +68,8 @@ namespace OctoshiftCLI
             {
                 TransferOptions = new Azure.Storage.StorageTransferOptions()
                 {
-                    InitialTransferSize = 4 * 1024 * 1024,
-                    MaximumTransferSize = 4 * 1024 * 1024
+                    InitialTransferSize = DEFAULT_BLOCK_SIZE,
+                    MaximumTransferSize = DEFAULT_BLOCK_SIZE
                 },
             };
 
