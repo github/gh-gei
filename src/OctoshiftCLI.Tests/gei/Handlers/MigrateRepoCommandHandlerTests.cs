@@ -32,8 +32,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
-        private const string AWS_ACCESS_KEY = "aws-access-key";
-        private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
+        private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
         private const string AWS_REGION = "aws-region";
 
@@ -1311,8 +1311,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveContent = new byte[] { 1, 2, 3, 4, 5 };
             var metadataArchiveContent = new byte[] { 6, 7, 8, 9, 10 };
 
-            var awsAccessKey = "awsAccessKey";
-            var awsSecretKey = "awsSecretKey";
+            var awsAccessKeyId = "awsAccessKeyId";
+            var awsSecretAccessKey = "awsSecretAccessKey";
             var awsBucketName = "awsBucketName";
             var archiveUrl = $"https://s3.amazonaws.com/{awsBucketName}/archive.tar";
 
@@ -1368,8 +1368,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = awsBucketName,
-                AwsAccessKey = awsAccessKey,
-                AwsSecretKey = awsSecretKey,
+                AwsAccessKey = awsAccessKeyId,
+                AwsSecretKey = awsSecretAccessKey,
                 Wait = true
             };
 
@@ -1407,7 +1407,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -1425,7 +1425,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -1443,8 +1443,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsSessionToken = AWS_SESSION_TOKEN
             }))
                 .Should()
@@ -1463,7 +1463,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -1481,7 +1481,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -1499,7 +1499,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSessionToken = AWS_SECRET_KEY
+                AwsSessionToken = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()

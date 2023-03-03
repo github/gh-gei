@@ -89,11 +89,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
-        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable.");
 
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
-        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable.");
 
     public Option<string> AwsSessionToken { get; } = new(
         name: "--aws-session-token",

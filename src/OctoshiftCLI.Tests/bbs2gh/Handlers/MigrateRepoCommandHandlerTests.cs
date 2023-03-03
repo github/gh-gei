@@ -30,8 +30,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
-        private const string AWS_ACCESS_KEY = "aws-access-key";
-        private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
+        private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
         private const string AWS_REGION = "aws-region";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
@@ -204,8 +204,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
@@ -782,8 +782,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 ArchivePath = ARCHIVE_PATH,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsBucketName = AWS_BUCKET_NAME
             };
 
@@ -813,7 +813,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                     }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*or*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*or*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY_ID*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
         }
 
         [Fact]
@@ -830,7 +830,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                     }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*and*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*and*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY_ID*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
         }
 
         [Fact]
@@ -845,7 +845,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*AWS_ACCESS_KEY*");
+                .WithMessage("*--aws-access-key*AWS_ACCESS_KEY_ID*");
         }
 
         [Fact]
@@ -857,11 +857,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
         }
 
         [Fact]
@@ -873,8 +873,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsSessionToken = AWS_SESSION_TOKEN
             }))
                 .Should()
@@ -891,7 +891,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -907,7 +907,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
