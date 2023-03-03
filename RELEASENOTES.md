@@ -1,2 +1,2 @@
 - Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
-- Add support of AWS session token and region when using AWS S3 for archive upload in `gh gei migrate-repo` and `gh bbs2gh migrate-repo`. AWS region can also be passed into `gh gei generate-script` and `gh bbs2gh generate-script` commands.
+- Add support for authenticating with AWS session tokens when using AWS S3 for archive upload in `gh gei` and `gh bbs2gh`. When specifying a session token, the AWS region must also be specified.

@@ -101,7 +101,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsRegion { get; } = new(
         name: "--aws-region",
-        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. Defaults to us-east-1.");
+        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 

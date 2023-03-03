@@ -34,6 +34,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY = "aws-access-key";
         private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AWS_SESSION_TOKEN = "aws-session-token";
+        private const string AWS_REGION = "aws-region";
 
         public MigrateRepoCommandHandlerTests()
         {
@@ -1360,6 +1362,26 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Ghes_When_Aws_Session_Token_Is_Provided_But_No_Aws_Region_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                AwsSecretKey = AWS_SECRET_KEY,
+                AwsSessionToken = AWS_SESSION_TOKEN
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
+        }
+
+        [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
@@ -1374,7 +1396,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -1392,7 +1414,43 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Session_Token_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsSessionToken = AWS_SECRET_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Region_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsRegion = AWS_REGION
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]

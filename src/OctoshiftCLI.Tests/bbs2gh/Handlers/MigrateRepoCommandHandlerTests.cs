@@ -865,6 +865,24 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         }
 
         [Fact]
+        public async Task It_Throws_When_Aws_Session_Token_Is_Provided_But_Aws_Region_Is_Not()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                AwsSecretKey = AWS_SECRET_KEY,
+                AwsSessionToken = AWS_SESSION_TOKEN
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
+        }
+
+        [Fact]
         public async Task It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
@@ -877,7 +895,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*Amazon S3*--aws-bucket-name*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -893,7 +911,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*Amazon S3*--aws-bucket-name*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -909,7 +927,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*Amazon S3*--aws-bucket-name*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -925,7 +943,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*Amazon S3*--aws-bucket-name*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
