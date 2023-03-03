@@ -27,6 +27,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string TARGET_ORG = "FOO-TARGET-ORG";
         private const string REPO = "REPO";
         private const string AWS_BUCKET_NAME = "AWS_BUCKET_NAME";
+        private const string AWS_REGION = "AWS_REGION";
         private string _script;
 
         public GenerateScriptCommandHandlerTests()
@@ -1338,7 +1339,7 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --wait }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --wait }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1348,6 +1349,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 Sequential = true
             };
             await _handler.Handle(args);
@@ -1357,6 +1359,7 @@ if ($Failed -ne 0) {
             // Assert
             _script.Should().Be(expected);
             _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
+            _mockOctoLogger.Verify(m => m.LogInformation($"AWS REGION: {AWS_REGION}"));
         }
 
         [Fact]
