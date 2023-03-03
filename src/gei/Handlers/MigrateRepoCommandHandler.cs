@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -199,17 +200,17 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveContent = await _httpDownloadService.DownloadToBytes(gitArchiveUrl);
+        var gitArchiveContent = await _httpDownloadService.DownloadStream(gitArchiveUrl);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-        var metadataArchiveContent = await _httpDownloadService.DownloadToBytes(metadataArchiveUrl);
+        var metadataArchiveContent = await _httpDownloadService.DownloadStream(metadataArchiveUrl);
 
         return _awsApi.HasValue() ?
             await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
             await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
     }
 
-    private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
     {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
         var authenticatedGitArchiveUri = await _azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
@@ -219,7 +220,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }
 
-    private async Task<(string, string)> UploadArchivesToAws(string bucketName, string gitArchiveFileName, byte[] gitArchiveContent, string metadataArchiveFileName, byte[] metadataArchiveContent)
+    private async Task<(string, string)> UploadArchivesToAws(string bucketName, string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
     {
         _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
         var authenticatedGitArchiveUri = await _awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);

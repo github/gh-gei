@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -54,6 +55,26 @@ namespace OctoshiftCLI
 
             var binaryDataContent = new BinaryData(content);
             await blobClient.UploadAsync(binaryDataContent, options);
+            return GetServiceSasUriForBlob(blobClient);
+        }
+
+        public virtual async Task<Uri> UploadToBlob(string fileName, Stream content)
+        {
+            var containerClient = await CreateBlobContainerAsync();
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            var options = new BlobUploadOptions
+            {
+                TransferOptions = new Azure.Storage.StorageTransferOptions()
+                {
+                    InitialTransferSize = 4 * 1024 * 1024,
+                    MaximumTransferSize = 4 * 1024 * 1024
+                },
+            };
+
+            content.Position = 0;
+            await blobClient.UploadAsync(content, options);
+            content.Dispose();
             return GetServiceSasUriForBlob(blobClient);
         }
 

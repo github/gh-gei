@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -23,7 +24,9 @@ namespace OctoshiftCLI.Tests
             var blobContainerClient = new Mock<BlobContainerClient>();
             var blobClient = new Mock<BlobClient>();
             var fileName = "file.zip";
-            var content = Encoding.UTF8.GetBytes("Upload content").ToArray();
+            var bytes = Encoding.UTF8.GetBytes("Upload content").ToArray();
+            var content = new MemoryStream();
+            content.Write(bytes, 0, bytes.Length);
 
             var azureApi = new AzureApi(client.Object, blobServiceClient.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 

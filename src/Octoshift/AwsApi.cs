@@ -29,10 +29,10 @@ public class AwsApi : IDisposable
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 
-    public virtual async Task<string> UploadToBucket(string bucketName, byte[] bytes, string keyName)
+    public virtual async Task<string> UploadToBucket(string bucketName, Stream content, string keyName)
     {
-        using var byteStream = new MemoryStream(bytes);
-        await _transferUtility.UploadAsync(byteStream, bucketName, keyName);
+        await _transferUtility.UploadAsync(content, bucketName, keyName);
+        content.Dispose();
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 
