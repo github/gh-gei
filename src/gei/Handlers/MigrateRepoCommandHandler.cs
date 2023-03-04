@@ -211,7 +211,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveFilePath = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
-        await _httpDownloadService.DownloadToFile(gitArchiveUrl, metadataArchiveFilePath);
+        await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
         using var metadataArchiveContent = _fileSystemProvider.Open(metadataArchiveFilePath, FileMode.Open);
 
         return _awsApi.HasValue() ?
