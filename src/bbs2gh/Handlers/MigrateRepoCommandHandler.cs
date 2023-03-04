@@ -506,12 +506,30 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             if (!GetAwsAccessKey(args).HasValue())
             {
-                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
+                }
             }
 
             if (!GetAwsSecretKey(args).HasValue())
             {
-                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
+                }
             }
 
             if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())

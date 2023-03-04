@@ -11,8 +11,14 @@ public class AwsApiFactory
 
     public virtual AwsApi Create(string awsRegion = null, string awsAccessKeyId = null, string awsSecretAccessKey = null, string awsSessionToken = null)
     {
-        awsAccessKeyId ??= _environmentVariableProvider.AwsAccessKeyId();
-        awsSecretAccessKey ??= _environmentVariableProvider.AwsSecretAccessKey();
+#pragma warning disable CS0618
+        awsAccessKeyId ??= _environmentVariableProvider.AwsAccessKeyId(false)
+                           ?? _environmentVariableProvider.AwsAccessKey(false)
+                           ?? _environmentVariableProvider.AwsAccessKeyId();
+        awsSecretAccessKey ??= _environmentVariableProvider.AwsSecretAccessKey(false)
+                               ?? _environmentVariableProvider.AwsSecretKey()
+                               ?? _environmentVariableProvider.AwsSecretAccessKey();
+#pragma warning restore CS0618
         awsSessionToken ??= _environmentVariableProvider.AwsSessionToken(false);
         awsRegion ??= _environmentVariableProvider.AwsRegion(false);
 
