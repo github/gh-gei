@@ -16,7 +16,7 @@ public class AwsApiFactory
                            ?? _environmentVariableProvider.AwsAccessKey(false)
                            ?? _environmentVariableProvider.AwsAccessKeyId();
         awsSecretAccessKey ??= _environmentVariableProvider.AwsSecretAccessKey(false)
-                               ?? _environmentVariableProvider.AwsSecretKey()
+                               ?? _environmentVariableProvider.AwsSecretKey(false)
                                ?? _environmentVariableProvider.AwsSecretAccessKey();
 #pragma warning restore CS0618
         awsSessionToken ??= _environmentVariableProvider.AwsSessionToken(false);
