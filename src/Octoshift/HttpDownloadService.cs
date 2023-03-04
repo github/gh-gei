@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
@@ -14,13 +13,11 @@ namespace OctoshiftCLI
 
         private readonly OctoLogger _log;
         private readonly HttpClient _httpClient;
-        private readonly FileSystemProvider _fileSystemProvider;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient, FileSystemProvider fileSystemProvider)
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient)
         {
             _log = log;
             _httpClient = httpClient;
-            _fileSystemProvider = fileSystemProvider;
 
             if (_httpClient is not null)
             {
@@ -51,19 +48,6 @@ namespace OctoshiftCLI
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsByteArrayAsync();
-        }
-
-        public virtual async Task<Stream> DownloadStream(string url)
-        {
-            var path = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
-            var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-
-            using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            var streamToWriteTo = _fileSystemProvider.Open(path, FileMode.Create);
-            await streamToReadFrom.CopyToAsync(streamToWriteTo);
-            streamToWriteTo.Position = 0; // Reset position after copied to
-            _fileSystemProvider.DeleteIfExists(path); // Clean up customer disc
-            return streamToWriteTo;
         }
     }
 }

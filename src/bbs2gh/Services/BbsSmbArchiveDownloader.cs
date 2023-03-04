@@ -155,7 +155,7 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
     private FileStream OpenWriteTargetExportArchive(string targetExportArchiveFullPath)
     {
         _fileSystemProvider.CreateDirectory(Path.GetDirectoryName(targetExportArchiveFullPath));
-        return _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.Create);
+        return (FileStream)_fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.Create);
     }
 
     private void ConnectToHost()

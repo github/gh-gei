@@ -25,7 +25,7 @@ namespace OctoshiftCLI.Tests
             var blobClient = new Mock<BlobClient>();
             var fileName = "file.zip";
             var bytes = Encoding.UTF8.GetBytes("Upload content").ToArray();
-            var content = new MemoryStream();
+            using var content = new MemoryStream();
             content.Write(bytes, 0, bytes.Length);
 
             var azureApi = new AzureApi(client.Object, blobServiceClient.Object, TestHelpers.CreateMock<OctoLogger>().Object);
