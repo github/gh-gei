@@ -1,1 +1,1 @@
-
+- Fix `gh bbs2gh grant-migrator-role` so it doesn't throw `System.InvalidOperationException`
