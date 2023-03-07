@@ -1,2 +1,3 @@
+- Fix `gh bbs2gh grant-migrator-role` so it doesn't throw `System.InvalidOperationException`
+- Rename `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables to `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` respectively to align with the environment variables that the AWS CLI already uses. Old environment variables are still supported but they will be removed in future. 
 - Add handling of files larger than 2GB
-
