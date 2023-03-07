@@ -204,6 +204,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return (gitArchiveUrl, metadataArchiveUrl);
         }
 
+
+        metadataArchiveUrl = "https://octoshiftlargefiles.blob.core.windows.net/large-files/GP020245.MP4?sp=r&st=2023-03-03T19:41:48Z&se=2023-03-18T02:41:48Z&sip=0.0.0.0-255.255.255.255&spr=https&sv=2021-06-08&sr=b&sig=kfy5c7ouS4x9WNh4chlYM7U2gawFUwKoO2VFZXXQcBE%3D";
+
+
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
         var gitArchiveFilePath = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
         await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);

@@ -9,15 +9,15 @@ namespace OctoshiftCLI
 {
     public class HttpDownloadService
     {
-        internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
-
         private readonly OctoLogger _log;
         private readonly HttpClient _httpClient;
+        private readonly FileSystemProvider _fileSystemProvider;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient)
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient, FileSystemProvider fileSystemProvider)
         {
             _log = log;
             _httpClient = httpClient;
+            _fileSystemProvider = fileSystemProvider;
 
             if (_httpClient is not null)
             {
@@ -29,13 +29,14 @@ namespace OctoshiftCLI
         {
             _log.LogVerbose($"HTTP GET: {url}");
 
-            using var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
 
             response.EnsureSuccessStatusCode();
 
-            var contents = await response.Content.ReadAsStringAsync();
-            await WriteToFile(file, contents);
+            using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+            using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
+            await streamToReadFrom.CopyToAsync(streamToWriteTo);
         }
 
         public virtual async Task<byte[]> DownloadToBytes(string url)
