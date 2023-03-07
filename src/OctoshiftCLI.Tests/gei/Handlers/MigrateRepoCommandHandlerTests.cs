@@ -1618,7 +1618,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockEnvironmentVariableProvider.Setup(m => m.AwsAccessKey(false)).Returns(AWS_ACCESS_KEY);
 #pragma warning restore CS0618
 
-            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
+            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
 
             var handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
@@ -1627,7 +1627,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _mockFileSystemProvider.Object);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
@@ -1718,7 +1719,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockEnvironmentVariableProvider.Setup(m => m.AwsSecretKey(false)).Returns(AWS_SECRET_KEY);
 #pragma warning restore CS0618
 
-            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
+            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
 
             var handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
@@ -1727,7 +1728,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockEnvironmentVariableProvider.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
+                _mockHttpDownloadService.Object,
+                _mockFileSystemProvider.Object);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
