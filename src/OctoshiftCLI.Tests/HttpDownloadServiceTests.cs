@@ -23,7 +23,6 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var url = "https://objects-staging-origin.githubusercontent.com/octoshiftmigrationlogs/github/example-repo.txt";
             var filePath = System.IO.Path.GetTempPath() + "empty";
-            var fileContents = System.Array.Empty<byte>();
             var expectedFileContents = new byte[] { 1, 2, 3, 4, 5 };
 
             using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
