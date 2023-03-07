@@ -38,8 +38,7 @@ namespace OctoshiftCLI.Tests
                 File.Delete(tempPath);
             }
 
-            using var fs = File.Create(tempPath);
-            fs.Write(expectedFileContents);
+            var fs = File.Create(tempPath);
 
             _mockFileSystemProvider.Setup(x => x.Open(filePath, It.IsAny<System.IO.FileMode>())).Returns(fs);
 
@@ -60,9 +59,12 @@ namespace OctoshiftCLI.Tests
 
             await httpDownloadService.DownloadToFile(url, filePath);
 
+            fs = File.Open(tempPath, FileMode.Open); // Re-establish stream due to auto dispose after DownloadToFile is called
+
             // Assert
-            using var results = File.OpenRead(filePath);
-            results.Should().BeSameAs(fs);
+            fs.Should().HaveLength(5);
+
+            fs.Dispose(); // Explicitly dispose due to the need to reassign fs variable
         }
 
         [Fact]
