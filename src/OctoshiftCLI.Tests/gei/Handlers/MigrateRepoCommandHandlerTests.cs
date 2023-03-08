@@ -921,9 +921,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
-
             _mockAzureApi.Setup(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
             var actualLogOutput = new List<string>();
@@ -1082,10 +1079,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
-
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
             // Act
@@ -1124,9 +1117,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(m => m.GetArchiveMigrationStatus(It.IsAny<string>(), It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
 
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
