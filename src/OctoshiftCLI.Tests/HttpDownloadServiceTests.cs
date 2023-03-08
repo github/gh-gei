@@ -53,15 +53,6 @@ namespace OctoshiftCLI.Tests
             _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
         }
 
-        private static string StreamToString(Stream stream)
-        {
-            stream.Position = 0;
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
-            {
-                return reader.ReadToEnd();
-            }
-        }
-
         [Fact]
         public async Task Raises_Exception_When_File_Cannot_Be_Downloaded()
         {
