@@ -42,21 +42,8 @@ namespace OctoshiftCLI
 
         public virtual async Task<Uri> UploadToBlob(string fileName, byte[] content)
         {
-            var containerClient = await CreateBlobContainerAsync();
-            var blobClient = containerClient.GetBlobClient(fileName);
-
-            var options = new BlobUploadOptions
-            {
-                TransferOptions = new Azure.Storage.StorageTransferOptions()
-                {
-                    InitialTransferSize = DEFAULT_BLOCK_SIZE,
-                    MaximumTransferSize = DEFAULT_BLOCK_SIZE
-                },
-            };
-
-            var binaryDataContent = new BinaryData(content);
-            await blobClient.UploadAsync(binaryDataContent, options);
-            return GetServiceSasUriForBlob(blobClient);
+            using var memoryStream = new MemoryStream(content);
+            return await UploadToBlob(fileName, memoryStream);
         }
 
         public virtual async Task<Uri> UploadToBlob(string fileName, Stream content)

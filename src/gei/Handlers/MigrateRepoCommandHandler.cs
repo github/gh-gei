@@ -207,12 +207,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
         var gitArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
-        using var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath);
+        await using var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
-        using var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath);
+        await using var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath);
 
         try
         {
