@@ -39,6 +39,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<BbsArchiveDownloaderFactory>()
+                .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("Kerberos")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {

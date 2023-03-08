@@ -1,5 +1,3 @@
-- Added support for x86 Windows machines with new `windows-386` build
-- Added logic to check if a target repo exists before generating GHES archives
-- Fixed reclaiming a single mannequin using `reclaim-mannequin` with the `--mannequin-user` and `--target-user` parameters
-- Added logic to ensure target org exists before generating GHES archives
+- Fix `gh bbs2gh grant-migrator-role` so it doesn't throw `System.InvalidOperationException`
+- Rename `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables to `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` respectively to align with the environment variables that the AWS CLI already uses. Old environment variables are still supported but they will be removed in future. 
 - Added log output linking to migration log URL after migration completes

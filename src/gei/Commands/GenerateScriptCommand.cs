@@ -25,6 +25,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(GhesApiUrl);
             AddOption(AwsBucketName);
+            AddOption(AwsRegion);
             AddOption(NoSslVerify);
             AddOption(DownloadMigrationLogs);
 
@@ -101,6 +102,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
         };
 
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
+        };
+
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
@@ -148,6 +156,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public FileInfo Output { get; set; }
         public string GhesApiUrl { get; set; }
         public string AwsBucketName { get; set; }
+        public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
