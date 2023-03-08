@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests
             await httpDownloadService.DownloadToFile(url, filePath);
 
             // Assert
-            _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.Create), Times.Once);
+            _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.OpenOrCreate), Times.Once);
             _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
             actualFileContents.Should().Be(expectedFileContents);
         }
