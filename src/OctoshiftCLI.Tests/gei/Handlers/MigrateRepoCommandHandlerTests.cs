@@ -33,8 +33,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
-        private const string AWS_ACCESS_KEY = "aws-access-key";
-        private const string AWS_SECRET_KEY = "aws-secret-key";
+        private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
+        private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
+        private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
+        private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+        private const string AWS_SESSION_TOKEN = "aws-session-token";
+        private const string AWS_REGION = "aws-region";
 
         public MigrateRepoCommandHandlerTests()
         {
@@ -424,6 +428,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
 
+            _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("3.7.1");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockTargetGithubApi
@@ -464,6 +469,76 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = true
+            };
+            await _handler.Handle(args);
+
+            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
+            _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
+            _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
+        }
+
+        [Fact]
+        public async Task Happy_Path_GithubSource_Ghae()
+        {
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
+            var migrationId = Guid.NewGuid().ToString();
+            var gitArchiveId = 1;
+            var metadataArchiveId = 2;
+
+            var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
+            var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
+            var gitArchiveContent = new byte[] { 1, 2, 3, 4, 5 };
+            var metadataArchiveContent = new byte[] { 6, 7, 8, 9, 10 };
+            var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
+            var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
+
+            _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("GitHub AE");
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            _mockTargetGithubApi
+                .Setup(x => x.StartMigration(
+                    migrationSourceId,
+                    githubRepoUrl,
+                    githubOrgId,
+                    TARGET_REPO,
+                    sourceGithubPat,
+                    targetGithubPat,
+                    authenticatedGitArchiveUrl.ToString(),
+                    authenticatedMetadataArchiveUrl.ToString(),
+                    false,
+                    false).Result)
+                .Returns(migrationId);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 Wait = true
@@ -1336,8 +1411,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveContent = new byte[] { 1, 2, 3, 4, 5 };
             var metadataArchiveContent = new byte[] { 6, 7, 8, 9, 10 };
 
-            var awsAccessKey = "awsAccessKey";
-            var awsSecretKey = "awsSecretKey";
+            var awsAccessKeyId = "awsAccessKeyId";
+            var awsSecretAccessKey = "awsSecretAccessKey";
             var awsBucketName = "awsBucketName";
             var archiveUrl = $"https://s3.amazonaws.com/{awsBucketName}/archive.tar";
 
@@ -1394,8 +1469,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = awsBucketName,
-                AwsAccessKey = awsAccessKey,
-                AwsSecretKey = awsSecretKey,
+                AwsAccessKey = awsAccessKeyId,
+                AwsSecretKey = awsSecretAccessKey,
                 Wait = true
             };
 
@@ -1423,7 +1498,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Throws()
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Id_Throws()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1433,11 +1508,93 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage("*--aws-access-key*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Access_Key_Environment_Variable_Does_Not_Throw()
+        {
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
+            var migrationId = Guid.NewGuid().ToString();
+            var gitArchiveId = 1;
+            var metadataArchiveId = 2;
+
+            var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
+            var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
+            var gitArchiveContent = new byte[] { 1, 2, 3, 4, 5 };
+            var metadataArchiveContent = new byte[] { 6, 7, 8, 9, 10 };
+
+            var archiveUrl = $"https://s3.amazonaws.com/{AWS_BUCKET_NAME}/archive.tar";
+
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            _mockTargetGithubApi
+                .Setup(x => x.StartMigration(
+                    migrationSourceId,
+                    githubRepoUrl,
+                    githubOrgId,
+                    TARGET_REPO,
+                    sourceGithubPat,
+                    targetGithubPat,
+                    archiveUrl,
+                    archiveUrl,
+                    false,
+                    false).Result)
+                .Returns(migrationId);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
+#pragma warning disable CS0618
+            _mockEnvironmentVariableProvider.Setup(m => m.AwsAccessKey(false)).Returns(AWS_ACCESS_KEY);
+#pragma warning restore CS0618
+
+            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
+
+            var handler = new MigrateRepoCommandHandler(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApi.Object,
+                _mockTargetGithubApi.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockAzureApi.Object,
+                _mockAwsApi.Object,
+                _mockHttpDownloadService.Object);
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                Wait = true
+            };
+            await handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
+
+            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_ACCESS_KEY"))));
         }
 
         [Fact]
@@ -1451,11 +1608,113 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage("*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Secret_Key_Environment_Variable_Does_Not_Throw()
+        {
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
+            var migrationId = Guid.NewGuid().ToString();
+            var gitArchiveId = 1;
+            var metadataArchiveId = 2;
+
+            var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
+            var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
+            var gitArchiveContent = new byte[] { 1, 2, 3, 4, 5 };
+            var metadataArchiveContent = new byte[] { 6, 7, 8, 9, 10 };
+
+            var archiveUrl = $"https://s3.amazonaws.com/{AWS_BUCKET_NAME}/archive.tar";
+
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            _mockTargetGithubApi
+                .Setup(x => x.StartMigration(
+                    migrationSourceId,
+                    githubRepoUrl,
+                    githubOrgId,
+                    TARGET_REPO,
+                    sourceGithubPat,
+                    targetGithubPat,
+                    archiveUrl,
+                    archiveUrl,
+                    false,
+                    false).Result)
+                .Returns(migrationId);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(gitArchiveUrl).Result).Returns(gitArchiveContent);
+            _mockHttpDownloadService.Setup(x => x.DownloadToBytes(metadataArchiveUrl).Result).Returns(metadataArchiveContent);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
+#pragma warning disable CS0618
+            _mockEnvironmentVariableProvider.Setup(m => m.AwsSecretKey(false)).Returns(AWS_SECRET_KEY);
+#pragma warning restore CS0618
+
+            _mockAwsApi.Setup(m => m.UploadToBucket(AWS_BUCKET_NAME, It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
+
+            var handler = new MigrateRepoCommandHandler(
+                _mockOctoLogger.Object,
+                _mockSourceGithubApi.Object,
+                _mockTargetGithubApi.Object,
+                _mockEnvironmentVariableProvider.Object,
+                _mockAzureApi.Object,
+                _mockAwsApi.Object,
+                _mockHttpDownloadService.Object);
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY,
+                Wait = true
+            };
+            await handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
+
+            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_SECRET_KEY"))));
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Session_Token_Is_Provided_But_No_Aws_Region_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                AwsSessionToken = AWS_SESSION_TOKEN
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
         }
 
         [Fact]
@@ -1469,11 +1728,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]
@@ -1487,11 +1746,47 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*--aws-secret-key*");
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Session_Token_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsSessionToken = AWS_SECRET_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Region_Provided()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsRegion = AWS_REGION
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
         }
 
         [Fact]

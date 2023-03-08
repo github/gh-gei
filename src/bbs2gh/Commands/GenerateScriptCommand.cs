@@ -23,10 +23,14 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(SmbUser);
+        AddOption(SmbDomain);
         AddOption(Output);
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(AwsBucketName);
+        AddOption(AwsRegion);
+        AddOption(KeepArchive);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -50,7 +54,8 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
+                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -64,6 +69,16 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--ssh-port",
         description: "The SSH port (default: 22).",
         getDefaultValue: () => 22);
+
+    public Option<string> SmbUser { get; } = new(
+        name: "--smb-user",
+        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance." +
+                     $"{Environment.NewLine}" +
+                     "Note: You must also specify the SMB password using the SMB_PASSWORD environment variable.");
+
+    public Option<string> SmbDomain { get; } = new(
+        name: "--smb-domain",
+        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubOrg { get; } = new("--github-org")
     { IsRequired = true };
@@ -81,7 +96,17 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--aws-bucket-name",
         description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
 
+    public Option<string> AwsRegion { get; } = new(
+        name: "--aws-region",
+        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
+
     public Option<bool> Verbose { get; } = new("--verbose");
+
+    public Option<bool> KeepArchive { get; } = new(
+        name: "--keep-archive",
+        description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
@@ -118,8 +143,12 @@ public class GenerateScriptCommandArgs
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; }
+    public string SmbUser { get; set; }
+    public string SmbDomain { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
     public string AwsBucketName { get; set; }
+    public string AwsRegion { get; set; }
+    public bool KeepArchive { get; set; }
 }

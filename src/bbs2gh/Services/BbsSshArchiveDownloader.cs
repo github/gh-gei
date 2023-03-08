@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 
@@ -70,12 +71,10 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _sftpClient = sftpClient;
     }
 
-    public string BbsSharedHomeDirectory { get; init; } = IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY;
+    public string BbsSharedHomeDirectory { get; init; } = BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
 
-    public string GetSourceExportArchiveAbsolutePath(long exportJobId)
-    {
-        return Path.Join(BbsSharedHomeDirectory ?? IBbsArchiveDownloader.DEFAULT_BBS_SHARED_HOME_DIRECTORY, IBbsArchiveDownloader.GetSourceExportArchiveRelativePath(exportJobId)).Replace('\\', '/');
-    }
+    private string GetSourceExportArchiveAbsolutePath(long exportJobId) =>
+        IBbsArchiveDownloader.GetSourceExportArchiveAbsolutePath(BbsSharedHomeDirectory ?? BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX, exportJobId).ToUnixPath();
 
     public async Task<string> Download(long exportJobId, string targetDirectory = IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY)
     {
@@ -83,12 +82,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
         var sourceExportArchiveFullPath = GetSourceExportArchiveAbsolutePath(exportJobId);
         var targetExportArchiveFullPath =
-            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).Replace('\\', '/');
-
-        if (_fileSystemProvider.FileExists(targetExportArchiveFullPath))
-        {
-            throw new OctoshiftCliException($"Target export archive ({targetExportArchiveFullPath}) already exists.");
-        }
+            Path.Join(targetDirectory ?? IBbsArchiveDownloader.DEFAULT_TARGET_DIRECTORY, IBbsArchiveDownloader.GetExportArchiveFileName(exportJobId)).ToUnixPath();
 
         if (_sftpClient is BaseClient { IsConnected: false } client)
         {
@@ -103,7 +97,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
         _fileSystemProvider.CreateDirectory(targetDirectory);
 
         var sourceExportArchiveSize = _sftpClient.GetAttributes(sourceExportArchiveFullPath)?.Size ?? long.MaxValue;
-        await using var targetExportArchive = _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.CreateNew);
+        await using var targetExportArchive = _fileSystemProvider.Open(targetExportArchiveFullPath, FileMode.Create);
         await Task.Factory.FromAsync(
             _sftpClient.BeginDownloadFile(
                 sourceExportArchiveFullPath,
@@ -125,7 +119,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
                 return;
             }
 
-            _log.LogInformation($"Download archive in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
+            _log.LogInformation($"Archive download in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
 
             _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
         }

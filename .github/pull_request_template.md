@@ -7,6 +7,7 @@ For the checkboxes below you must check each one to indicate that you either did
 - [ ] Appropriate logging output
 - [ ] Issue linked
 - [ ] Docs updated (or issue created)
+- [ ] New package licenses are added to `ThirdPartyNotices.txt` (if applicable)
 
 <!--
 For docs we should review the docs at:
