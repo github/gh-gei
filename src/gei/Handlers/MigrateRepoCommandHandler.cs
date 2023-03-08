@@ -205,18 +205,26 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-        var gitArchiveFilePath = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
+        var gitArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
-        using var gitArchiveContent = _fileSystemProvider.Open(gitArchiveFilePath, FileMode.Open);
+        using var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-        var metadataArchiveFilePath = _fileSystemProvider.GetTempPath() + "MigrationStream" + System.Guid.NewGuid();
+        var metadataArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
-        using var metadataArchiveContent = _fileSystemProvider.Open(metadataArchiveFilePath, FileMode.Open);
+        using var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath);
 
-        return _awsApi.HasValue() ?
+        try
+        {
+            return _awsApi.HasValue() ?
             await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
             await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+        }
+        finally
+        {
+            _fileSystemProvider.DeleteIfExists(gitArchiveFilePath);
+            _fileSystemProvider.DeleteIfExists(metadataArchiveFilePath);
+        }
     }
 
     private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -22,24 +23,13 @@ namespace OctoshiftCLI.Tests
         {
             // Arrange
             var url = "https://objects-staging-origin.githubusercontent.com/octoshiftmigrationlogs/github/example-repo.txt";
-            var filePath = System.IO.Path.GetTempPath() + "empty";
-            var expectedFileContents = new byte[] { 1, 2, 3, 4, 5 };
+            var filePath = "example-file";
+            var expectedFileContents = "expected-file-contents";
 
             using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new ByteArrayContent(expectedFileContents)
+                Content = new StringContent(expectedFileContents)
             };
-
-            var tempPath = System.IO.Path.GetTempPath() + "integration_test";
-
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
-
-            using var fs = File.Create(tempPath);
-
-            _mockFileSystemProvider.Setup(x => x.Open(filePath, It.IsAny<System.IO.FileMode>())).Returns(fs);
 
             var mockHttpHandler = new Mock<HttpMessageHandler>();
 
@@ -52,17 +42,24 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(mockHttpHandler.Object);
+            _mockFileSystemProvider.Setup(x => x.Open(filePath, It.IsAny<FileMode>())).Returns(It.IsAny<FileStream>());
 
             // Act
             var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
-
             await httpDownloadService.DownloadToFile(url, filePath);
 
-            using var editedStream = File.Open(tempPath, FileMode.Open); // Re-establish stream due to auto dispose after DownloadToFile is called
-
             // Assert
-            editedStream.Should().HaveLength(5);
+            _mockFileSystemProvider.Verify(m => m.OpenRead(filePath), Times.Once);
+            _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
+        }
 
+        private static string StreamToString(Stream stream)
+        {
+            stream.Position = 0;
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         [Fact]

@@ -334,30 +334,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveFilePath = "/";
             var metadataArchiveFilePath = "/";
 
-            var gitArchiveTempPath = System.IO.Path.GetTempPath() + "integration_test_archive";
-
-            if (File.Exists(gitArchiveTempPath))
-            {
-                File.Delete(gitArchiveTempPath);
-            }
-
-            using var gitArchiveContent = File.Create(gitArchiveTempPath);
-            gitArchiveContent.Write(new byte[] { 1, 2, 3, 4, 5 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(gitArchiveFilePath, System.IO.FileMode.Open)).Returns(gitArchiveContent);
-
-            var metadataPath = System.IO.Path.GetTempPath() + "integration_test_meta";
-
-            if (File.Exists(metadataPath))
-            {
-                File.Delete(metadataPath);
-            }
-
-            using var metadataArchiveContent = File.Create(metadataPath);
-            metadataArchiveContent.Write(new byte[] { 6, 7, 8, 9, 10 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(metadataArchiveFilePath, System.IO.FileMode.Open)).Returns(metadataArchiveContent);
-
             _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("3.7.1");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -387,10 +363,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
 
-            _mockFileSystemProvider.SetupSequence(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(gitArchiveContent).Returns(metadataArchiveContent);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -432,31 +407,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveFilePath = "/";
             var metadataArchiveFilePath = "/";
 
-            var gitArchiveTempPath = System.IO.Path.GetTempPath() + "integration_test_archive";
-
-            if (File.Exists(gitArchiveTempPath))
-            {
-                File.Delete(gitArchiveTempPath);
-            }
-
-            using var gitArchiveContent = File.Create(gitArchiveTempPath);
-            gitArchiveContent.Write(new byte[] { 1, 2, 3, 4, 5 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(gitArchiveFilePath, System.IO.FileMode.Open)).Returns(gitArchiveContent);
-
-            var metadataPath = System.IO.Path.GetTempPath() + "integration_test_meta";
-
-            if (File.Exists(metadataPath))
-            {
-                File.Delete(metadataPath);
-            }
-
-            using var metadataArchiveContent = File.Create(metadataPath);
-            metadataArchiveContent.Write(new byte[] { 6, 7, 8, 9, 10 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(metadataArchiveFilePath, System.IO.FileMode.Open)).Returns(metadataArchiveContent);
-
-
             _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("GitHub AE");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -486,10 +436,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
 
-            _mockFileSystemProvider.SetupSequence(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(gitArchiveContent).Returns(metadataArchiveContent);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -703,31 +652,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveFilePath = "/";
             var metadataArchiveFilePath = "/";
 
-            var gitArchiveTempPath = System.IO.Path.GetTempPath() + "integration_test_archive";
-
-            if (File.Exists(gitArchiveTempPath))
-            {
-                File.Delete(gitArchiveTempPath);
-            }
-
-            using var gitArchiveContent = File.Create(gitArchiveTempPath);
-            gitArchiveContent.Write(new byte[] { 1, 2, 3, 4, 5 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(gitArchiveFilePath, System.IO.FileMode.Open)).Returns(gitArchiveContent);
-
-            var metadataPath = System.IO.Path.GetTempPath() + "integration_test_meta";
-
-            if (File.Exists(metadataPath))
-            {
-                File.Delete(metadataPath);
-            }
-
-            using var metadataArchiveContent = File.Create(metadataPath);
-            metadataArchiveContent.Write(new byte[] { 6, 7, 8, 9, 10 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(metadataArchiveFilePath, System.IO.FileMode.Open)).Returns(metadataArchiveContent);
-
-
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockTargetGithubApi
@@ -756,10 +680,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
 
-            _mockFileSystemProvider.SetupSequence(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(gitArchiveContent).Returns(metadataArchiveContent);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -799,30 +722,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var gitArchiveFilePath = "/";
             var metadataArchiveFilePath = "/";
 
-            var gitArchiveTempPath = System.IO.Path.GetTempPath() + "integration_test_archive";
-
-            if (File.Exists(gitArchiveTempPath))
-            {
-                File.Delete(gitArchiveTempPath);
-            }
-
-            using var gitArchiveContent = File.Create(gitArchiveTempPath);
-            gitArchiveContent.Write(new byte[] { 1, 2, 3, 4, 5 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(gitArchiveFilePath, System.IO.FileMode.Open)).Returns(gitArchiveContent);
-
-            var metadataPath = System.IO.Path.GetTempPath() + "integration_test_meta";
-
-            if (File.Exists(metadataPath))
-            {
-                File.Delete(metadataPath);
-            }
-
-            using var metadataArchiveContent = File.Create(metadataPath);
-            metadataArchiveContent.Write(new byte[] { 6, 7, 8, 9, 10 });
-
-            _mockFileSystemProvider.Setup(x => x.Open(metadataArchiveFilePath, System.IO.FileMode.Open)).Returns(metadataArchiveContent);
-
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockTargetGithubApi
@@ -851,10 +750,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
 
-            _mockFileSystemProvider.SetupSequence(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(gitArchiveContent).Returns(metadataArchiveContent);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), gitArchiveContent).Result).Returns(authenticatedGitArchiveUrl);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), metadataArchiveContent).Result).Returns(authenticatedMetadataArchiveUrl);
+            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -1053,17 +951,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()).Result).Returns(ArchiveMigrationStatus.Exported);
 
-            var tempPath = System.IO.Path.GetTempPath() + "integration_test";
-
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
-
-            using var fs = File.Create(tempPath);
-
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(fs);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
 
             _mockAzureApi.Setup(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
@@ -1223,17 +1112,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
-            var tempPath = System.IO.Path.GetTempPath() + "integration_test";
-
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
-
-            using var fs = File.Create(tempPath);
 
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(fs);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
 
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 
@@ -1274,17 +1155,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
-            var tempPath = System.IO.Path.GetTempPath() + "integration_test";
-
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
-
-            using var fs = File.Create(tempPath);
-
             _mockHttpDownloadService.Setup(x => x.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
-            _mockFileSystemProvider.Setup(x => x.Open(It.IsAny<string>(), FileMode.Open)).Returns(fs);
+            _mockFileSystemProvider.Setup(x => x.OpenRead(It.IsAny<string>())).Returns(It.IsAny<FileStream>);
 
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
 

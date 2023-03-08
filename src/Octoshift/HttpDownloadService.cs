@@ -34,9 +34,9 @@ namespace OctoshiftCLI
 
             response.EnsureSuccessStatusCode();
 
-            using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
-            await streamToReadFrom.CopyToAsync(streamToWriteTo);
+            await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+            await using var streamToWriteTo = _fileSystemProvider.OpenRead(file);
+            await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
         }
 
         public virtual async Task<byte[]> DownloadToBytes(string url)
