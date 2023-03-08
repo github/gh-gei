@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace OctoshiftCLI
             response.EnsureSuccessStatusCode();
 
             await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            await using var streamToWriteTo = _fileSystemProvider.OpenRead(file);
+            using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
             await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
         }
 

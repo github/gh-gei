@@ -43,13 +43,23 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
             _mockFileSystemProvider.Setup(x => x.Open(filePath, It.IsAny<FileMode>())).Returns(It.IsAny<FileStream>());
 
+            string actualFileContents = null;
+            _mockFileSystemProvider.Setup(x => x.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>())).Callback<Stream, Stream>((s, _) =>
+            {
+                using var ms = new MemoryStream();
+                s.CopyTo(ms);
+                actualFileContents = Encoding.UTF8.GetString(ms.ToArray());
+            });
+
+
             // Act
             var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
             await httpDownloadService.DownloadToFile(url, filePath);
 
             // Assert
-            _mockFileSystemProvider.Verify(m => m.OpenRead(filePath), Times.Once);
+            _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.Create), Times.Once);
             _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
+            actualFileContents.Should().Be(expectedFileContents);
         }
 
         [Fact]
@@ -73,16 +83,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
-            var path = System.IO.Path.GetTempPath() + "integration_test";
-
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-
-            using var fs = File.Create(path);
-
-            _mockFileSystemProvider.Setup(x => x.Open(filePath, System.IO.FileMode.Open)).Returns(fs);
+            _mockFileSystemProvider.Setup(x => x.Open(filePath, System.IO.FileMode.Open)).Returns(It.IsAny<FileStream>());
 
             // Act
             var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);

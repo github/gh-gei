@@ -217,8 +217,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         try
         {
             return _awsApi.HasValue() ?
-            await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
-            await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+                await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
+                await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
         }
         finally
         {

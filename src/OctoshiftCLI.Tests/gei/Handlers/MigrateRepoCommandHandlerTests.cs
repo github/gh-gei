@@ -325,14 +325,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
-
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
-            var gitArchiveFilePath = "/";
-            var metadataArchiveFilePath = "/";
 
             _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("3.7.1");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
@@ -359,11 +355,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
-
-            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
@@ -404,8 +395,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
-            var gitArchiveFilePath = "/";
-            var metadataArchiveFilePath = "/";
 
             _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("GitHub AE");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
@@ -432,11 +421,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
-
-            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
@@ -649,8 +633,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
-            var gitArchiveFilePath = "/";
-            var metadataArchiveFilePath = "/";
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -676,11 +658,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
-
-            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
@@ -719,8 +696,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
-            var gitArchiveFilePath = "/";
-            var metadataArchiveFilePath = "/";
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -746,11 +721,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
-
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(gitArchiveUrl, gitArchiveFilePath));
-            _mockHttpDownloadService.Setup(x => x.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath));
-
-            _mockFileSystemProvider.Setup(x => x.OpenRead(gitArchiveFilePath)).Returns(It.IsAny<FileStream>());
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
