@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using OctoshiftCLI.Contracts;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI
@@ -14,7 +16,7 @@ namespace OctoshiftCLI
         private readonly OctoLogger _log;
         private readonly HttpClient _httpClient;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient)
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider)
         {
             _log = log;
             _httpClient = httpClient;
@@ -22,6 +24,11 @@ namespace OctoshiftCLI
             if (_httpClient is not null)
             {
                 _httpClient.Timeout = TimeSpan.FromHours(1);
+                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionProvider?.GetCurrentVersion()));
+                if (versionProvider?.GetVersionComments() is { } comments)
+                {
+                    _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
+                }
             }
         }
 
