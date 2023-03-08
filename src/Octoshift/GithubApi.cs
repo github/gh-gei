@@ -447,7 +447,7 @@ namespace OctoshiftCLI
             );
         }
 
-        public virtual async Task<(string State, string RepositoryName, string FailureReason, string LogUrl)> GetMigration(string migrationId)
+        public virtual async Task<(string State, string RepositoryName, string FailureReason, string MigrationLogUrl)> GetMigration(string migrationId)
         {
             var url = $"{_apiUrl}/graphql";
 
