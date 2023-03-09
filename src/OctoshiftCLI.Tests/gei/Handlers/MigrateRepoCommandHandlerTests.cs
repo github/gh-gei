@@ -329,6 +329,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
             var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
+            var gitArchiveFilePath = "path/to/git_archive";
+            var metadataArchiveFilePath = "path/to/metadata_archive";
 
             _mockSourceGithubApi.Setup(x => x.GetEnterpriseServerVersion()).ReturnsAsync("3.7.1");
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
@@ -358,6 +360,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(gitArchiveFilePath)
+                .Returns(metadataArchiveFilePath);
+
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
@@ -377,6 +384,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
             _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
             _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
         }
 
         [Fact]
@@ -390,6 +399,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var migrationId = Guid.NewGuid().ToString();
             var gitArchiveId = 1;
             var metadataArchiveId = 2;
+            var gitArchiveFilePath = "path/to/git_archive";
+            var metadataArchiveFilePath = "path/to/metadata_archive";
 
             var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
@@ -424,6 +435,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
 
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(gitArchiveFilePath)
+                .Returns(metadataArchiveFilePath);
+
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
@@ -442,6 +458,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
             _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
             _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
         }
 
         [Fact]
