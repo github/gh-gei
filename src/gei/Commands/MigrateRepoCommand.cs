@@ -190,7 +190,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, retryPolicy);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService);
         }
     }
 
