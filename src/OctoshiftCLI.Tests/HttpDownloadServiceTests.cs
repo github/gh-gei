@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
+using OctoshiftCLI.Contracts;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -42,7 +43,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, null)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -55,6 +56,27 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             fileContents.Should().Be(expectedFileContents);
+        }
+
+        [Fact]
+        public void It_Sets_User_Agent_Header_With_Comments()
+        {
+            // Arrange
+            const string currentVersion = "1.1.1.1";
+            const string versionComments = "(COMMENTS)";
+
+            using var httpClient = new HttpClient();
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns(currentVersion);
+            mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
+
+            // Act
+            _ = new HttpDownloadService(_mockOctoLogger.Object, httpClient, mockVersionProvider.Object);
+
+            // Assert
+            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
+            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
         }
 
         [Fact]
@@ -80,7 +102,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, null)
             {
                 WriteToFile = (_, contents) =>
                 {
@@ -115,7 +137,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
 
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, null);
 
             // Act
             var archiveContent = await httpDownloadService.DownloadToBytes(url);
@@ -141,7 +163,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, null);
 
             // Act, Assert
             await httpDownloadService
