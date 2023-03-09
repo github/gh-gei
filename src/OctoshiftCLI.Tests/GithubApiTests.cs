@@ -666,6 +666,46 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task CreateAdoMigrationSource_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""createMigrationSource"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""createMigrationSource""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.CreateAdoMigrationSource(
+                    It.IsAny<string>(),
+                    null))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
         public async Task CreateAdoMigrationSource_Uses_Ado_Server_Url()
         {
             // Arrange
@@ -772,6 +812,44 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateGhecMigrationSource_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""createMigrationSource"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""createMigrationSource""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.CreateGhecMigrationSource(It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
         }
 
         [Fact]
@@ -1002,6 +1080,50 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+        }
+
+        [Fact]
+        public async Task CreateBbsMigrationSource_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""createMigrationSource"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""createMigrationSource""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.StartBbsMigration(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()
+                ))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
         }
 
         [Fact]
@@ -1753,6 +1875,44 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GrantMigratorRole_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""grantMigratorRole"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""grantMigratorRole""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.GrantMigratorRole(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
         public async Task RevokeMigratorRole_Returns_True_On_Success()
         {
             // Arrange
@@ -1812,6 +1972,44 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task RevokeMigratorRole_Throws_When_GraphQL_Response_Has_Errors()
+        {
+            // Arrange
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""revokeMigratorRole"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""revokeMigratorRole""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .ReturnsAsync(response);
+
+            // Act, Assert
+            await _githubApi.Invoking(api => api.RevokeMigratorRole(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
         public async Task DeleteRepo_Calls_The_Right_Endpoint()
         {
             // Arrange
@@ -1859,45 +2057,41 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetUserId_For_No_Existant_User_Returns_Null()
+        public async Task GetUserId_Throws_When_GraphQL_Response_Has_Errors()
         {
             // Arrange
-            const string login = "idonotexist";
-
-            var url = $"https://api.github.com/graphql";
-            var payload =
-                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
-
-            var response = @"{
-	            ""data"": {
-                    ""user"": null
-                },
-	            ""errors"": [
-		            {
-			            ""type"": ""NOT_FOUND"",
-			            ""path"": [
-				            ""user""
-			            ],
-			            ""locations"": [
-				            {
-					            ""line"": 4,
-					            ""column"": 3
-                            }
-			            ],
-			            ""message"": ""Could not resolve to a User with the login of 'idonotexist'.""
-		            }
-	            ]
-            }";
+            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string response = $@"
+            {{
+                ""data"": {{ 
+                    ""grantMigratorRole"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""grantMigratorRole""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""{expectedErrorMessage}""
+                     }}
+                 ]
+            }}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
                 .ReturnsAsync(response);
 
-            // Act
-            var result = await _githubApi.GetUserId(login);
-
-            // Assert
-            result.Should().BeNull();
+            // Act, Assert
+            await _githubApi.Invoking(api => api.GetUserId(It.IsAny<string>()))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage(expectedErrorMessage);
         }
 
         [Fact]

@@ -230,6 +230,8 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
+            EnsureSuccessGraphQLResponse(data);
+
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
@@ -256,6 +258,8 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
+            EnsureSuccessGraphQLResponse(data);
+
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
 
@@ -281,6 +285,9 @@ namespace OctoshiftCLI
 
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
+
+            // {"data":{"createMigrationSource":null},"errors":[{"type":"FORBIDDEN","path":["createMigrationSource"],"extensions":{"saml_failure":true},"locations":[{"line":1,"column":109}],"message":"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization."}]}
+            EnsureSuccessGraphQLResponse(data);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
@@ -558,6 +565,8 @@ namespace OctoshiftCLI
                 var response = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(response);
 
+                EnsureSuccessGraphQLResponse(data);
+
                 return (bool)data["data"]["grantMigratorRole"]["success"];
             }
             catch (HttpRequestException)
@@ -584,6 +593,8 @@ namespace OctoshiftCLI
             {
                 var response = await _client.PostAsync(url, payload);
                 var data = JObject.Parse(response);
+
+                EnsureSuccessGraphQLResponse(data);
 
                 return (bool)data["data"]["revokeMigratorRole"]["success"];
             }
@@ -699,6 +710,8 @@ namespace OctoshiftCLI
             // TODO: Add retry logic here, but need to inspect the actual error message and differentiate between transient failure vs user doesn't exist (only retry on failure)
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
+
+            EnsureSuccessGraphQLResponse(data);
 
             return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
         }
