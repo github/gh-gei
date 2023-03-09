@@ -103,7 +103,6 @@ namespace OctoshiftCLI
 
                 var (content, _) = await SendAsync(HttpMethod.Post, url, jBody, customHeaders: customHeaders);
                 var jContent = JObject.Parse(content);
-
                 foreach (var jResult in resultCollectionSelector(jContent))
                 {
                     yield return jResult;

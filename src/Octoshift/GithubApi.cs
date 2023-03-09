@@ -286,7 +286,6 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
-            // {"data":{"createMigrationSource":null},"errors":[{"type":"FORBIDDEN","path":["createMigrationSource"],"extensions":{"saml_failure":true},"locations":[{"line":1,"column":109}],"message":"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization."}]}
             EnsureSuccessGraphQLResponse(data);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];

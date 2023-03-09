@@ -2060,17 +2060,17 @@ namespace OctoshiftCLI.Tests
         public async Task GetUserId_Throws_When_GraphQL_Response_Has_Errors()
         {
             // Arrange
-            const string expectedErrorMessage = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.";
+            const string expectedErrorMessage = "Could not resolve to a User with the login of 'idonotexist'.";
             const string response = $@"
             {{
                 ""data"": {{ 
-                    ""grantMigratorRole"": null
+                    ""user"": null
                  }},
                 ""errors"": [
                      {{
                         ""type"": ""FORBIDDEN"",
                         ""path"": [
-                            ""grantMigratorRole""
+                            ""user""
                          ],
                         ""locations"": [
                             {{
