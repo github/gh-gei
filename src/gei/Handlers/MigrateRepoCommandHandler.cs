@@ -204,16 +204,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return (gitArchiveUrl, metadataArchiveUrl);
         }
 
-        _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
         var gitArchiveFilePath = _fileSystemProvider.GetTempFileName();
-        await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
-
-        _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveFilePath = _fileSystemProvider.GetTempFileName();
-        await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
-
         try
         {
+            _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
+            await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
+
+            _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
+            await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
+
 #pragma warning disable IDE0063
             await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath))
             await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath))

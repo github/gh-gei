@@ -35,7 +35,7 @@ namespace OctoshiftCLI
             response.EnsureSuccessStatusCode();
 
             await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-            using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
+            await using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
             await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
         }
 
