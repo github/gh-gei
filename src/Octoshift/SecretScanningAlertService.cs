@@ -89,8 +89,8 @@ public class SecretScanningAlertService
             }
 
             if (source.Alert.SecretType == target.Alert.SecretType
-                && ((source.Alert.Secret.Contains(target.Alert.Secret)) ||
-                    (target.Alert.Secret.Contains(source.Alert.Secret))
+                && (source.Alert.Secret.Contains(target.Alert.Secret) ||
+                    target.Alert.Secret.Contains(source.Alert.Secret)
                    )
                 )
             {
