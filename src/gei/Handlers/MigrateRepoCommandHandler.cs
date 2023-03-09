@@ -207,23 +207,42 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
         var gitArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
-        await using var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath);
 
         _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
         var metadataArchiveFilePath = _fileSystemProvider.GetTempFileName();
         await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
-        await using var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath);
 
         try
         {
-            return _awsApi.HasValue() ?
-                await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent) :
-                await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+#pragma warning disable IDE0063
+            await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath))
+            await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath))
+#pragma warning restore IDE0063
+            {
+                return _awsApi.HasValue()
+                    ? await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent)
+                    : await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+            }
         }
         finally
         {
-            _fileSystemProvider.DeleteIfExists(gitArchiveFilePath);
-            _fileSystemProvider.DeleteIfExists(metadataArchiveFilePath);
+            DeleteArchive(gitArchiveFilePath);
+            DeleteArchive(metadataArchiveFilePath);
+        }
+    }
+
+    private void DeleteArchive(string path)
+    {
+        try
+        {
+            _fileSystemProvider.DeleteIfExists(path);
+        }
+#pragma warning disable CA1031
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            _log.LogWarning($"Couldn't delete the downloaded archive at \"{path}\". Error message: \"{ex.Message}\"");
+            _log.LogVerbose(ex.ToString());
         }
     }
 
