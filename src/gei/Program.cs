@@ -31,7 +31,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadService>()
+                .AddSingleton<IHttpDownloadServiceFactory>(sp => sp.GetRequiredService<HttpDownloadServiceFactory>())
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())

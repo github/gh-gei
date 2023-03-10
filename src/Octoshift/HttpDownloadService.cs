@@ -15,21 +15,11 @@ namespace OctoshiftCLI
         private readonly HttpClient _httpClient;
         private readonly FileSystemProvider _fileSystemProvider;
 
-        public HttpDownloadService(OctoLogger log, HttpClient httpClient, FileSystemProvider fileSystemProvider, IVersionProvider versionProvider)
+        public HttpDownloadService(OctoLogger log, HttpClient httpClient, FileSystemProvider fileSystemProvider)
         {
             _log = log;
             _httpClient = httpClient;
             _fileSystemProvider = fileSystemProvider;
-
-            if (_httpClient is not null)
-            {
-                _httpClient.Timeout = TimeSpan.FromHours(1);
-                _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionProvider?.GetCurrentVersion()));
-                if (versionProvider?.GetVersionComments() is { } comments)
-                {
-                    _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
-                }
-            }
         }
 
         public virtual async Task DownloadToFile(string url, string file)
