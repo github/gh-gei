@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using OctoshiftCLI.Contracts;
 
-namespace OctoshiftCLI
+namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public sealed class HttpDownloadServiceFactory : IHttpDownloadServiceFactory
     {
