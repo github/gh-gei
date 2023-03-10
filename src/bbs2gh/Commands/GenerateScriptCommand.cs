@@ -23,6 +23,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(SshHost);
         AddOption(SmbUser);
         AddOption(SmbDomain);
         AddOption(Output);
@@ -57,6 +58,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--bbs-shared-home",
         description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
                      "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
+
+    public Option<string> SshHost { get; } = new(
+        name: "--ssh-host",
+        description: "The host to use to connect to the Bitbucket Server via SSH. Defaults to the host from the Bitbucket Server URL (`--bbs-server-url`).");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -148,6 +153,7 @@ public class GenerateScriptCommandArgs
     public string BbsPassword { get; set; }
     public string BbsProjectKey { get; set; }
     public string BbsSharedHome { get; set; }
+    public string SshHost { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; }

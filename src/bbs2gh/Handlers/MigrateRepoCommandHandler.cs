@@ -136,7 +136,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private bool ShouldDownloadArchive(MigrateRepoCommandArgs args)
     {
-        return args.SshUser.HasValue() || args.SmbUser.HasValue();
+        return args.SshUser.HasValue() || args.SmbUser.HasValue() || args.SshHost.HasValue();
     }
 
     private bool ShouldUploadArchive(MigrateRepoCommandArgs args)
@@ -311,6 +311,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.SshUser.HasValue())
         {
+            _log.LogInformation($"SSH HOST: {args.SshHost}");
+        }
+
+        if (args.SshUser.HasValue())
+        {
             _log.LogInformation($"SSH USER: {args.SshUser}");
         }
 
@@ -454,7 +459,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.SshHost, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
@@ -473,7 +478,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
     {
-        var sshArgs = new[] { args.SshUser, args.SshPrivateKey };
+        var sshArgs = new[] { args.SshHost, args.SshUser, args.SshPrivateKey };
         var smbArgs = new[] { args.SmbUser, args.SmbPassword };
         var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
         var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());

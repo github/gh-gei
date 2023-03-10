@@ -29,6 +29,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(SshHost);
         AddOption(SmbUser);
         AddOption(SmbPassword);
         AddOption(SmbDomain);
@@ -109,6 +110,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> GithubOrg { get; } = new("--github-org");
 
     public Option<string> GithubRepo { get; } = new("--github-repo");
+
+    public Option<string> SshHost { get; } = new(
+        name: "--ssh-host",
+        description: "The host to use to connect to the Bitbucket Server via SSH. Defaults to the host from the Bitbucket Server URL (`--bbs-server-url`).");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -208,10 +213,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var bbsHost = new Uri(args.BbsServerUrl).Host;
+            var sshHost = args.SshHost.HasValue() ? args.SshHost : new Uri(args.BbsServerUrl).Host;
+
             bbsArchiveDownloader = args.SshUser.HasValue()
-                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(sshHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(sshHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
@@ -260,6 +266,7 @@ public class MigrateRepoCommandArgs
     public bool NoSslVerify { get; set; }
 
 
+    public string SshHost { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; } = 22;

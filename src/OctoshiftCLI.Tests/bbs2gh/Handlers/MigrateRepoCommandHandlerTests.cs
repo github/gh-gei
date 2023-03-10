@@ -38,8 +38,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         private const string AWS_REGION = "aws-region";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
-        private const string BBS_HOST = "our-bbs-server.com";
-        private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
+        private const string BBS_SERVER_URL = $"https://bbs-server-url-host";
         private const string BBS_USERNAME = "bbs-username";
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
