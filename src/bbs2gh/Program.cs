@@ -40,27 +40,9 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<BbsArchiveDownloaderFactory>()
                 .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
-                .AddHttpClient("Kerberos")
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
-                {
-                    UseDefaultCredentials = true
-                })
-                .Services
-                .AddHttpClient("NoSSL")
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
-                {
-                    CheckCertificateRevocationList = false,
-                    ServerCertificateCustomValidationCallback = delegate { return true; }
-                })
-                .Services
-                .AddHttpClient("KerberosNoSSL")
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
-                {
-                    UseDefaultCredentials = true,
-                    CheckCertificateRevocationList = false,
-                    ServerCertificateCustomValidationCallback = delegate { return true; }
-                })
-                .Services
+                .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
+                .AddHttpClient("NoSSL", kerberos: false, noSsl: true)
+                .AddHttpClient("KerberosNoSSL", kerberos: true, noSsl: true)
                 .AddHttpClient("Default");
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -112,5 +94,14 @@ namespace OctoshiftCLI.BbsToGithub
                 Logger.LogWarning($"Please update by running: gh extension upgrade bbs2gh");
             }
         }
+
+        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool kerberos, bool noSsl) => serviceCollection
+            .AddHttpClient(name)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                UseDefaultCredentials = kerberos,
+                ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
+            })
+            .Services;
     }
 }
