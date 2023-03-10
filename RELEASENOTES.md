@@ -1,3 +1,4 @@
 - Fix `gh bbs2gh grant-migrator-role` so it doesn't throw `System.InvalidOperationException`
 - Rename `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables to `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` respectively to align with the environment variables that the AWS CLI already uses. Old environment variables are still supported but they will be removed in future. 
 - Send a `User-Agent` header with the current CLI version when downloading migration archives from GitHub Enterprise Server
+- Add `--no-ssh-verify` option to `gh bbs2gh generate-script` and `gh bbs2gh migrate-repo` commands to support migrating from a Bitbucket instance that uses a self-signed SSL certificate.
