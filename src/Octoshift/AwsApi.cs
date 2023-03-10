@@ -39,14 +39,9 @@ public class AwsApi : IDisposable
             : new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, regionEndpoint);
     }
 
-    private static RegionEndpoint GetRegionEndpoint(string awsRegion)
-    {
-        var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
-
-        return regionEndpoint.DisplayName.ToLower() == "unknown"
-            ? throw new OctoshiftCliException($"Invalid AWS region \"{awsRegion}\".")
-            : regionEndpoint;
-    }
+    private static RegionEndpoint GetRegionEndpoint(string awsRegion) => RegionEndpoint.GetBySystemName(awsRegion) is { DisplayName: not "Unknown" } regionEndpoint
+        ? regionEndpoint
+        : throw new OctoshiftCliException($"Invalid AWS region \"{awsRegion}\".");
 
     public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
     {
