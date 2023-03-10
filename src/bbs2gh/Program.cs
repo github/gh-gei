@@ -46,6 +46,21 @@ namespace OctoshiftCLI.BbsToGithub
                     UseDefaultCredentials = true
                 })
                 .Services
+                .AddHttpClient("NoSSL")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                {
+                    CheckCertificateRevocationList = false,
+                    ServerCertificateCustomValidationCallback = delegate { return true; }
+                })
+                .Services
+                .AddHttpClient("KerberosNoSSL")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                {
+                    UseDefaultCredentials = true,
+                    CheckCertificateRevocationList = false,
+                    ServerCertificateCustomValidationCallback = delegate { return true; }
+                })
+                .Services
                 .AddHttpClient("Default");
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
