@@ -30,13 +30,22 @@ public class AwsApi : IDisposable
         var regionEndpoint = DefaultRegionEndpoint;
         if (awsRegion.HasValue())
         {
-            regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
+            regionEndpoint = GetRegionEndpoint(awsRegion);
             AWSConfigsS3.UseSignatureVersion4 = true;
         }
 
         return awsSessionToken.HasValue()
             ? new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsSessionToken, regionEndpoint)
             : new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, regionEndpoint);
+    }
+
+    private static RegionEndpoint GetRegionEndpoint(string awsRegion)
+    {
+        var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
+
+        return regionEndpoint.DisplayName.ToLower() == "unknown"
+            ? throw new OctoshiftCliException($"Invalid AWS region \"{awsRegion}\".")
+            : regionEndpoint;
     }
 
     public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
