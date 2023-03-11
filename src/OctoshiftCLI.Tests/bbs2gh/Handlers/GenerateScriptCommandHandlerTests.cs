@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.BbsToGithub.Handlers;
@@ -239,6 +240,42 @@ public class GenerateScriptCommandHandlerTests
     }
 
     [Fact]
+    public async Task One_Repo_With_No_Ssl_Verify()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
+        {
+            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
+        });
+
+        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --wait --no-ssl-verify }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            BbsSharedHome = BBS_SHARED_HOME,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            Output = new FileInfo(OUTPUT),
+            Verbose = true,
+            NoSslVerify = true
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
+    }
+
+    [Fact]
     public async Task One_Repo_With_Smb()
     {
         // Arrange
@@ -383,6 +420,22 @@ function Exec {
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
+    }
+
+    [Fact]
+    public async Task It_Throws_If_BbsServer_Url_Is_Not_Provided_But_No_Ssl_Verify_Is_Provided()
+    {
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            NoSslVerify = true
+        };
+
+        // Assert
+        await _handler.Invoking(x => x.Handle(args))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage("*--no-ssl-verify*--bbs-server-url*");
     }
 
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)

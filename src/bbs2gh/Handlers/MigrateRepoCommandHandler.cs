@@ -356,6 +356,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation("KEEP ARCHIVE: true");
         }
+
+        if (args.NoSslVerify)
+        {
+            _log.LogInformation("NO SSL VERIFY: true");
+        }
     }
 
     private void LogAwsOptions(MigrateRepoCommandArgs args)
@@ -440,6 +445,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
             {
                 throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
+            }
+
+            if (args.NoSslVerify)
+            {
+                throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
             }
 
             if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
