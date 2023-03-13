@@ -22,8 +22,31 @@ namespace OctoshiftCLI.Tests
         private readonly RetryPolicy _retryPolicy;
         private readonly Mock<DateTimeProvider> _dateTimeProvider = TestHelpers.CreateMock<DateTimeProvider>();
         private readonly object _rawRequestBody;
+        private const string GITHUB_REQUEST_ID = "123-456-789";
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
+        private const string EXPECTED_GRAPHQL_JSON_RESPONSE_BODY = "{\"id\":\"ID\"}";
+        private const string EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY = $@"
+            {{
+                ""data"": {{ 
+                    ""revokeMigratorRole"": null
+                 }},
+                ""errors"": [
+                     {{
+                        ""type"": ""FORBIDDEN"",
+                        ""path"": [
+                            ""revokeMigratorRole""
+                         ],
+                        ""locations"": [
+                            {{
+                                ""line"": 13,
+                                ""column"": 17
+                            }}
+                         ],
+                        ""message"": ""Oops! Something went wrong.""
+                     }}
+                 ]
+            }}";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
         private const string URL = "http://example.com/resource";
 
@@ -613,6 +636,145 @@ namespace OctoshiftCLI.Tests
                     using var httpClient = new HttpClient(handlerMock.Object);
                     var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
                     return githubClient.PostAsync("http://example.com", _rawRequestBody);
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>()
+                .WithMessage($"GitHub API error: {EXPECTED_RESPONSE_CONTENT}");
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Returns_JObject_Response()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var actualContent = await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            actualContent.Should().Equal(JObject.Parse(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Encodes_The_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForGraphQLPost();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            const string actualUrl = "http://example.com/param with space";
+            const string expectedUrl = "http://example.com/param%20with%20space";
+
+            // Act
+            await githubClient.PostGraphQLAsync(actualUrl, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Url()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "http://example.com";
+            var expectedLogMessage = $"HTTP POST: {url}";
+
+            // Act
+            await githubClient.PostGraphQLAsync(url, _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_GitHub_Request_Id_Header_Value()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Request_Body()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            var expectedLogMessage = "HTTP BODY: {\"id\":\"ID\",\"variables\":{}}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Response_Status_Code_And_Content()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_GRAPHQL_JSON_RESPONSE_BODY}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Throws_HttpRequestException_On_Non_Success_Response()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
+            };
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(x =>
+                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(httpResponse);
+
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            // Act
+            // Assert
+            await FluentActions
+                .Invoking(() =>
+                {
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+                    return githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>()
@@ -2220,8 +2382,19 @@ query($id: ID!, $first: Int, $after: String) {
 
         private Mock<HttpMessageHandler> MockHttpHandlerForPost() =>
             MockHttpHandler(req =>
-                req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
-                && req.Method == HttpMethod.Post);
+                req.Method == HttpMethod.Post);
+
+        private Mock<HttpMessageHandler> MockHttpHandlerForGraphQLPost(string responseBody = EXPECTED_GRAPHQL_JSON_RESPONSE_BODY, string requestId = GITHUB_REQUEST_ID) {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseBody)
+            };
+
+            response.Headers.Add("X-GitHub-Request-Id", requestId);
+
+            return MockHttpHandler(req =>
+                req.Method == HttpMethod.Post, response);
+        }
 
         private Mock<HttpMessageHandler> MockHttpHandlerForPut() =>
             MockHttpHandler(req =>

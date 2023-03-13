@@ -73,6 +73,27 @@ namespace OctoshiftCLI
         public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
             (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
+        public virtual async Task<JObject> PostGraphQLAsync(
+            string url,
+            object body,
+            Dictionary<string, string> customHeaders = null)
+        {
+            var jBody = JObject.FromObject(body);
+            jBody["variables"] ??= new JObject();
+
+            var (content, _) = await SendAsync(HttpMethod.Post, url, jBody, customHeaders: customHeaders);
+            var response = JObject.Parse(content);
+            
+            if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
+            {
+                var error = (JObject)errors[0];
+                var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
+                throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
+            }
+
+            return response;
+        }
+
         public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
             string url,
             object body,
