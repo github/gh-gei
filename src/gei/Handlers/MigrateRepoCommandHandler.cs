@@ -277,10 +277,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
             }
-            if (archiveStatus == ArchiveMigrationStatus.Failed)
-            {
-                throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
-            }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
         throw new TimeoutException($"Archive generation timed out after {ARCHIVE_GENERATION_TIMEOUT_IN_HOURS} hours");

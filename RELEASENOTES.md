@@ -1,2 +1,2 @@
+- Adds retry logic during GHES archive generation in cases of transient failure
 - Ensure `--no-ssh-verify` flag is honored when downloading archives from GHES
-
