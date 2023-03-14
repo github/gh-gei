@@ -18,7 +18,6 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
         [Fact]
         public async Task Downloads_File()
@@ -63,31 +62,6 @@ namespace OctoshiftCLI.Tests
             _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.Create), Times.Once);
             _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
             actualFileContents.Should().Be(expectedFileContents);
-        }
-        // TO DO: move to Factory tests
-        [Fact]
-        public void It_Sets_User_Agent_Header_With_Comments()
-        {
-            // Arrange
-            const string currentVersion = "1.1.1.1";
-            const string versionComments = "(COMMENTS)";
-
-            using var httpClient = new HttpClient();
-
-            var mockVersionProvider = new Mock<IVersionProvider>();
-            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns(currentVersion);
-            mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
-
-            _mockHttpClientFactory.Setup(m => m.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-            var httpDownloadServiceFactory = new HttpDownloadServiceFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockFileSystemProvider.Object, mockVersionProvider.Object);
-
-            // Act
-            _ = httpDownloadServiceFactory.Create();
-
-            // Assert
-            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
-            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
         }
 
         [Fact]
