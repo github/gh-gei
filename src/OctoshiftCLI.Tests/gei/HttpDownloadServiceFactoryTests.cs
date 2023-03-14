@@ -1,6 +1,4 @@
-﻿using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Net.Http;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Contracts;
