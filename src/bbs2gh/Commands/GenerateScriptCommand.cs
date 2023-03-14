@@ -31,6 +31,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(AwsBucketName);
         AddOption(AwsRegion);
         AddOption(KeepArchive);
+        AddOption(NoSslVerify);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -108,6 +109,11 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--keep-archive",
         description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
+    public Option<bool> NoSslVerify { get; } = new(
+        name: "--no-ssl-verify",
+        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
+                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
@@ -126,7 +132,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
         var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
-        var bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+        var bbsApi = args.Kerberos
+            ? bbsApiFactory.CreateKerberos(args.BbsServerUrl, args.NoSslVerify)
+            : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword, args.NoSslVerify);
 
         return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, bbsApi, environmentVariableProvider);
     }
@@ -151,4 +159,5 @@ public class GenerateScriptCommandArgs
     public string AwsBucketName { get; set; }
     public string AwsRegion { get; set; }
     public bool KeepArchive { get; set; }
+    public bool NoSslVerify { get; set; }
 }

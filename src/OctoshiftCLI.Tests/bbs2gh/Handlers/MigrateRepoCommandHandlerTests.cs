@@ -1149,6 +1149,25 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         }
 
         [Fact]
+        public async Task Errors_If_BbsServer_Url_Not_Provided_But_No_Ssl_Verify_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                NoSslVerify = true
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--no-ssl-verify*--bbs-server-url*");
+        }
+
+        [Fact]
         public async Task Errors_If_BbsServer_Url_Not_Provided_But_Ssh_User_Is_Provided()
         {
             // Act
