@@ -80,7 +80,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo,
-              blobCredentialsRequired
+              blobCredentialsRequired,
+              args.KeepArchive
             );
 
             if (blobCredentialsRequired)
@@ -184,7 +185,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string awsBucketName,
       bool skipReleases,
       bool lockSourceRepo,
-      bool blobCredentialsRequired)
+      bool blobCredentialsRequired,
+      bool keepArchive)
     {
         var gitDataArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
         _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
@@ -228,13 +230,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
         finally
         {
-            DeleteArchive(gitArchiveFilePath);
-            DeleteArchive(metadataArchiveFilePath);
+            DeleteArchive(gitArchiveFilePath, keepArchive);
+            DeleteArchive(metadataArchiveFilePath, keepArchive);
         }
     }
 
-    private void DeleteArchive(string path)
+    private void DeleteArchive(string path, bool keepArchive)
     {
+        if(keepArchive)
+            return;
+
         try
         {
             _fileSystemProvider.DeleteIfExists(path);
