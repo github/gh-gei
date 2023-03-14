@@ -1,5 +1,4 @@
-﻿using System;
-namespace OctoshiftCLI.Contracts
+﻿namespace OctoshiftCLI.Contracts
 {
     public interface IHttpDownloadServiceFactory
     {
