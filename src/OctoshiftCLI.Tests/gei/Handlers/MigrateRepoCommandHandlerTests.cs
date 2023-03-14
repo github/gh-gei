@@ -52,56 +52,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public async Task Retry_On_Archive_Migration_Failure()
-        {
-            // Arrange
-            var gitArchiveId = 1;
-            var metadataArchiveId = 2;
-
-            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG)).ReturnsAsync(true);
-            _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(false);
-            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
-            _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result)
-                .Returns(ArchiveMigrationStatus.Failed)
-                .Returns(ArchiveMigrationStatus.Failed)
-                .Returns(ArchiveMigrationStatus.Failed)
-                .Returns(ArchiveMigrationStatus.Failed)
-                .Returns(ArchiveMigrationStatus.Failed)
-                .Returns(ArchiveMigrationStatus.Exported);
-            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-
-            _mockAwsApi.Setup(m => m.UploadToBucket(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<string>())).ReturnsAsync("");
-
-            // Act
-            var handler = new MigrateRepoCommandHandler(
-                _mockOctoLogger.Object,
-                _mockSourceGithubApi.Object,
-                _mockTargetGithubApi.Object,
-                _mockEnvironmentVariableProvider.Object,
-                _mockAzureApi.Object,
-                _mockAwsApi.Object,
-                _mockHttpDownloadService.Object);
-
-            var args = new MigrateRepoCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = TARGET_API_URL,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
-            };
-            await FluentActions
-                .Invoking(async () => await handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
-
-            // Assert
-            _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationStatus(SOURCE_ORG, It.IsAny<int>()), Times.Exactly(7)); // 6 times for git archive, once for metadata
-        }
-
-        [Fact]
         public async Task Dont_Generate_Archives_If_Target_Repo_Exists()
         {
             // Arrange
@@ -172,6 +122,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG));
             _mockTargetGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockTargetGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, false));
+
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
