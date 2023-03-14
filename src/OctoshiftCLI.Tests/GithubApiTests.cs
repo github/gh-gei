@@ -891,7 +891,7 @@ namespace OctoshiftCLI.Tests
                 .Returns(failedResponse)
                 .Returns(successfulResponse);
             // Act
-            var migrationStatus = await _githubApi.GetArchiveMigrationStatus(GITHUB_ORG, 1);
+            _ = await _githubApi.GetArchiveMigrationStatus(GITHUB_ORG, 1);
 
             // Assert
             _githubClientMock.Verify(x => x.GetAsync(url, null), Times.Exactly(3));
