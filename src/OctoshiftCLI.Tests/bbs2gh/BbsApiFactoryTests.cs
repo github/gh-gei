@@ -55,5 +55,39 @@ namespace OctoshiftCLI.Tests.bbs2gh.Commands
             githubApi.Should().NotBeNull();
             httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
         }
+
+        [Fact]
+        public void Should_Create_BbsApi_With_No_Ssl_Verify()
+        {
+            using var httpClient = new HttpClient();
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient("NoSSL"))
+                .Returns(httpClient);
+
+            // Act
+            var githubApi = _bbsApiFactory.Create(BBS_SERVER_URL, "user", "pass", true);
+
+            // Assert
+            githubApi.Should().NotBeNull();
+            httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
+        }
+
+        [Fact]
+        public void Should_Create_BbsApi_With_Kerberos_And_No_Ssl_Verify()
+        {
+            using var httpClient = new HttpClient();
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient("KerberosNoSSL"))
+                .Returns(httpClient);
+
+            // Act
+            var githubApi = _bbsApiFactory.CreateKerberos(BBS_SERVER_URL, true);
+
+            // Assert
+            githubApi.Should().NotBeNull();
+            httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
+        }
     }
 }

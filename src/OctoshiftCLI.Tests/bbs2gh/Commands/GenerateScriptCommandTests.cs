@@ -35,7 +35,7 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(17);
+        _command.Options.Count.Should().Be(18);
 
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
@@ -54,6 +54,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "aws-bucket-name", false);
         TestHelpers.VerifyCommandOption(_command.Options, "aws-region", false);
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
     }
 
     [Fact]
@@ -67,11 +68,44 @@ public class GenerateScriptCommandTests
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL));
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, false));
     }
 
     [Fact]
-    public void It_Gets_A_Default_HttpClient_When_Kerberos_Is_Not_Set()
+    public void It_Gets_A_Kerberos_With_No_Ssl_Verify_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_True()
+    {
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            Kerberos = true,
+            NoSslVerify = true
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, true));
+    }
+
+    [Fact]
+    public void It_Gets_A_Default_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_Not_Set()
+    {
+        var bbsTestUser = "user";
+        var bbsTestPassword = "password";
+
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = bbsTestUser,
+            BbsPassword = bbsTestPassword
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, false));
+    }
+
+    [Fact]
+    public void It_Gets_A_No_Ssl_Verify_HttpClient_When_No_Ssl_Verify_Is_Set()
     {
         var bbsTestUser = "user";
         var bbsTestPassword = "password";
@@ -81,10 +115,11 @@ public class GenerateScriptCommandTests
             BbsServerUrl = BBS_SERVER_URL,
             BbsUsername = bbsTestUser,
             BbsPassword = bbsTestPassword,
+            NoSslVerify = true
         };
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword));
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, true));
     }
 }
