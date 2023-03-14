@@ -238,7 +238,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private void DeleteArchive(string path, bool keepArchive)
     {
         if(keepArchive)
+        {
             return;
+        }
 
         try
         {
