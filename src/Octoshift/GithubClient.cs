@@ -83,7 +83,7 @@ namespace OctoshiftCLI
 
             var (content, _) = await SendAsync(HttpMethod.Post, url, jBody, customHeaders: customHeaders);
             var response = JObject.Parse(content);
-            
+
             if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
             {
                 var error = (JObject)errors[0];
