@@ -68,7 +68,7 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
         var githubApi = githubApiFactory.Create(args.GithubApiUrl, args.GithubPat);
         var httpDownloadServiceFactory = sp.GetRequiredService<IHttpDownloadServiceFactory>();
-        var httpDownloadService = httpDownloadServiceFactory.Create();
+        var httpDownloadService = httpDownloadServiceFactory.Create(args.GithubPat);
         var retryPolicy = sp.GetRequiredService<RetryPolicy>();
 
         return new DownloadLogsCommandHandler(log, githubApi, httpDownloadService, retryPolicy);
