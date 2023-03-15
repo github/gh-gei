@@ -230,18 +230,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
         finally
         {
-            DeleteArchive(gitArchiveFilePath, keepArchive);
-            DeleteArchive(metadataArchiveFilePath, keepArchive);
+            if (!keepArchive)
+            {
+                DeleteArchive(gitArchiveFilePath);
+                DeleteArchive(metadataArchiveFilePath);
+            }
         }
     }
 
-    private void DeleteArchive(string path, bool keepArchive)
+    private void DeleteArchive(string path)
     {
-        if (keepArchive)
-        {
-            return;
-        }
-
         try
         {
             _fileSystemProvider.DeleteIfExists(path);
