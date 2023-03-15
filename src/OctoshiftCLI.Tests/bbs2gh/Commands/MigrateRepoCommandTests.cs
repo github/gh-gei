@@ -14,7 +14,7 @@ public class MigrateRepoCommandTests
     private const string SSH_PRIVATE_KEY = "ssh-private-key";
     private const int SSH_PORT = 1234;
     private const string BBS_SHARED_HOME = "shared-home";
-    private const string BBS_HOST = "bbs-server-url-host";
+    private const string BBS_HOST = "bbs-host";
     private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
     private const string GITHUB_ORG = "github-org";
     private const string GITHUB_PAT = "github-pat";

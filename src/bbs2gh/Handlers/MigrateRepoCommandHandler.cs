@@ -311,7 +311,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.SshUser.HasValue())
         {
-            _log.LogInformation($"SSH HOST: {args.ArchiveDownloadHost}");
+            _log.LogInformation($"ARCHIVE DOWNLOAD HOST: {args.ArchiveDownloadHost}");
         }
 
         if (args.SshUser.HasValue())
