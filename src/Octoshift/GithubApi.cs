@@ -673,7 +673,7 @@ namespace OctoshiftCLI
             // TODO: Add retry logic here, but need to inspect the actual error message and differentiate between transient failure vs user doesn't exist (only retry on failure)
             var data = await _client.PostGraphQLAsync(url, payload);
 
-            return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
+            return (string)data["data"]["user"]["id"];
         }
 
         public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
