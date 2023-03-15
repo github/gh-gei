@@ -213,11 +213,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var ArchiveDownloadHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
+            var ComputedArchiveDownloadHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
 
             bbsArchiveDownloader = args.SshUser.HasValue()
-                ? bbsArchiveDownloaderFactory.CreateSshDownloader(ArchiveDownloadHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(ArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(ComputedArchiveDownloadHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(ComputedArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);

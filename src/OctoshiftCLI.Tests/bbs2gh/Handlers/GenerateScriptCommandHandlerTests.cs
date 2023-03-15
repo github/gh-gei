@@ -314,7 +314,7 @@ public class GenerateScriptCommandHandlerTests
     }
 
     [Fact]
-    public async Task One_Repo_With_Smb_And_Archive_Download_host()
+    public async Task One_Repo_With_Smb_And_Archive_Download_Host()
     {
         // Arrange
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
