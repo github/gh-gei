@@ -9,12 +9,13 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
 
 public class MigrateRepoCommandTests
 {
-    private const string SSH_HOST = "ssh-host";
+    private const string ARCHIVE_DOWNLOAD_HOST = "archive-download-host";
     private const string SSH_USER = "ssh-user";
     private const string SSH_PRIVATE_KEY = "ssh-private-key";
     private const int SSH_PORT = 1234;
     private const string BBS_SHARED_HOME = "shared-home";
-    private const string BBS_SERVER_URL = $"https://bbs-server-url-host";
+    private const string BBS_HOST = "bbs-server-url-host";
+    private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
     private const string GITHUB_ORG = "github-org";
     private const string GITHUB_PAT = "github-pat";
     private const string BBS_USERNAME = "bbs-username";
@@ -70,7 +71,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
-        TestHelpers.VerifyCommandOption(command.Options, "ssh-host", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-download-host", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
@@ -102,16 +103,16 @@ public class MigrateRepoCommandTests
 
         // Assert
         handler.Should().NotBeNull();
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader("bbs-server-url-host", SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(BBS_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_And_Ssh_Host_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_And_Archive_Download_Host_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
         {
-            SshHost = SSH_HOST,
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
             SshUser = SSH_USER,
             SshPrivateKey = SSH_PRIVATE_KEY,
             SshPort = SSH_PORT,
@@ -124,11 +125,11 @@ public class MigrateRepoCommandTests
 
         // Assert
         handler.Should().NotBeNull();
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(SSH_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(ARCHIVE_DOWNLOAD_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_Based_On_Server_Url_When_Smb_User_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
@@ -145,7 +146,29 @@ public class MigrateRepoCommandTests
 
         // Assert
         handler.Should().NotBeNull();
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader("bbs-server-url-host", SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_And_Archive_Download_Host_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            SmbDomain = SMB_DOMAIN,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(ARCHIVE_DOWNLOAD_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
     }
 
     [Fact]

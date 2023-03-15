@@ -108,7 +108,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
         var sshArchiveDownloadOptions = args.SshUser.HasValue()
-            ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}{(args.SshHost.HasValue() ? $" --ssh-host {args.SshHost}" : "")}" : "";
+            ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}{(args.ArchiveDownloadHost.HasValue() ? $" --archive-download-host {args.ArchiveDownloadHost}" : "")}" : "";
         var smbArchiveDownloadOptions = args.SmbUser.HasValue()
             ? $" --smb-user \"{args.SmbUser}\"{(args.SmbDomain.HasValue() ? $" --smb-domain {args.SmbDomain}" : "")}"
             : "";
@@ -153,9 +153,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation($"BBS PROJECT KEY: {args.BbsProjectKey}");
         }
 
-        if (args.SshHost.HasValue())
+        if (args.ArchiveDownloadHost.HasValue())
         {
-            _log.LogInformation($"SSH HOST: {args.SshHost}");
+            _log.LogInformation($"SSH HOST: {args.ArchiveDownloadHost}");
         }
 
         if (args.SshUser.HasValue())
