@@ -26,27 +26,7 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private const string EXPECTED_GRAPHQL_JSON_RESPONSE_BODY = "{\"id\":\"ID\"}";
-        private const string EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY = $@"
-            {{
-                ""data"": {{ 
-                    ""revokeMigratorRole"": null
-                 }},
-                ""errors"": [
-                     {{
-                        ""type"": ""FORBIDDEN"",
-                        ""path"": [
-                            ""revokeMigratorRole""
-                         ],
-                        ""locations"": [
-                            {{
-                                ""line"": 13,
-                                ""column"": 17
-                            }}
-                         ],
-                        ""message"": ""Oops! Something went wrong.""
-                     }}
-                 ]
-            }}";
+        private const string EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY = "{\"data\":{\"createMigrationSource\":null},\"errors\":[{\"type\":\"FORBIDDEN\",\"path\":[\"createMigrationSource\"],\"extensions\":{\"saml_failure\":true},\"locations\":[{\"line\":1,\"column\":109}],\"message\":\"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.\"}]}";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
         private const string URL = "http://example.com/resource";
 
@@ -748,12 +728,12 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PostGraphQLAsync_Throws_HttpRequestException_On_Non_Success_Response()
+        public async Task PostGraphQLAsync_Throws_OctoshiftCliException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
+                Content = new StringContent(EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY)
             };
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
@@ -761,7 +741,7 @@ namespace OctoshiftCLI.Tests
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(x =>
-                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
+                        true),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
@@ -777,8 +757,8 @@ namespace OctoshiftCLI.Tests
                     return githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
                 })
                 .Should()
-                .ThrowExactlyAsync<HttpRequestException>()
-                .WithMessage($"GitHub API error: {EXPECTED_RESPONSE_CONTENT}");
+                .ThrowExactlyAsync<OctoshiftCLI.OctoshiftCliException>()
+                .WithMessage($"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.");
         }
 
         [Fact]
