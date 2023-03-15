@@ -9,7 +9,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 {
     public class HttpDownloadServiceFactoryTests
     {
-        const string GH_PAT = "GH_PAT";
+        private const string GH_PAT = "GH_PAT";
+
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new Mock<IHttpClientFactory>();
