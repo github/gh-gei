@@ -37,6 +37,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubSourcePat);
             AddOption(AdoPat);
             AddOption(Verbose);
+
+            AddOption(KeepArchive);
         }
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
         {
@@ -111,6 +113,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         public Option<bool> Verbose { get; } = new("--verbose");
 
+        public Option<bool> KeepArchive { get; } = new("--keep-archive")
+        {
+            Description = "Keeps the archive on the user machine after uploading to the storage account."
+        };
+
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
@@ -165,5 +172,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }
         public bool Verbose { get; set; }
+        public bool KeepArchive { get; set; }
     }
 }
