@@ -61,7 +61,8 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
 
     public Option<string> ArchiveDownloadHost { get; } = new(
         name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
+        description: "The host to use to connect to the Bitbucket Server via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
+    { IsHidden = true };
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
