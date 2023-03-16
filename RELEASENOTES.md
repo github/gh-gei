@@ -1,1 +1,2 @@
+- Adds retry logic during GHES archive generation in cases of transient failure
 - Validate AWS region when using Amazon S3 to upload the migration archive in `gh gei` and `gh bbs2gh` 
