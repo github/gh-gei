@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.BbsToGithub
@@ -29,12 +30,13 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<BbsApiFactory>()
                 .AddSingleton<GithubApiFactory>()
+                .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadService>()
+                .AddSingleton<IHttpDownloadServiceFactory>(sp => sp.GetRequiredService<HttpDownloadServiceFactory>())
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
