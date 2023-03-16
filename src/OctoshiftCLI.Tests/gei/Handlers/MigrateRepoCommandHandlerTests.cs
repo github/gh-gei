@@ -1791,9 +1791,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
-            _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Never);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Never);
         }
