@@ -416,6 +416,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("LOCK SOURCE REPO: true");
         }
 
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
+        }
+
         LogAwsOptions(args);
     }
 
