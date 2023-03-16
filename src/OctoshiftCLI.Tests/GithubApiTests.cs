@@ -26,6 +26,7 @@ namespace OctoshiftCLI.Tests
         private const string GITHUB_ENTERPRISE = "ENTERPRISE_NAME";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
         private const string TARGET_ORG = "TARGET_ORG";
+        private const string LOG_URL = "URL";
         private const string GQL_ERROR_RESPONSE = @"
         {
             ""data"": {
@@ -1131,7 +1132,7 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
             var response = $@"
@@ -1145,7 +1146,8 @@ namespace OctoshiftCLI.Tests
                         }},
                         ""state"": ""{actualMigrationState}"",
                         ""failureReason"": """",
-                        ""repositoryName"": ""{GITHUB_REPO}""
+                        ""repositoryName"": ""{GITHUB_REPO}"",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
             }}";
@@ -1155,12 +1157,13 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, expectedRepositoryName, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, expectedRepositoryName, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
             expectedRepositoryName.Should().Be(GITHUB_REPO);
             expectedFailureReason.Should().BeEmpty();
+            migrationLogUrl.Should().Be(LOG_URL);
         }
 
         [Fact]
@@ -1171,7 +1174,7 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
             var response = $@"
@@ -1184,7 +1187,8 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""failureReason"": """"
+                        ""failureReason"": """",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
             }}";
@@ -1196,7 +1200,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1210,7 +1214,7 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
 
@@ -1224,7 +1228,8 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""failureReason"": """"
+                        ""failureReason"": """",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
             }}";
@@ -1236,7 +1241,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1250,7 +1255,7 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualFailureReason = "FAILURE_REASON";
             var response = $@"
@@ -1264,7 +1269,8 @@ namespace OctoshiftCLI.Tests
                         }},
                         ""state"": ""FAILED"",
                         ""failureReason"": ""{actualFailureReason}"",
-                        ""repositoryName"": ""{GITHUB_REPO}""
+                        ""repositoryName"": ""{GITHUB_REPO}"",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
             }}";
@@ -1274,7 +1280,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var (_, _, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
+            var (_, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);

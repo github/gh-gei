@@ -53,7 +53,7 @@ public class MigrateRepoCommandHandlerTests
                 false,
                 false).Result)
             .Returns(MIGRATION_ID);
-        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
 
         _mockEnvironmentVariableProvider
             .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
@@ -167,7 +167,7 @@ public class MigrateRepoCommandHandlerTests
                     false,
                     false).Result)
             .Returns(MIGRATION_ID);
-        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
 
         _mockEnvironmentVariableProvider
             .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
@@ -194,7 +194,7 @@ public class MigrateRepoCommandHandlerTests
     public async Task It_Falls_Back_To_Ado_And_Github_Pats_From_Environment_When_Not_Provided()
     {
         _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<string>());
-        _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null));
+        _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
 
         _mockEnvironmentVariableProvider
             .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
