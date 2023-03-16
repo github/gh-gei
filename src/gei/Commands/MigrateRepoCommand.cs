@@ -96,11 +96,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
         {
@@ -163,6 +163,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var httpDownloadService = sp.GetRequiredService<HttpDownloadService>();
+            var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
@@ -190,7 +191,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider);
         }
     }
 

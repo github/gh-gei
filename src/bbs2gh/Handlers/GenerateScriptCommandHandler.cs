@@ -44,6 +44,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         _log.LogInformation("Generating Script...");
 
         LogOptions(args);
+        ValidateOptions(args);
 
         _log.RegisterSecret(args.BbsPassword);
 
@@ -116,9 +117,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var awsBucketNameOption = args.AwsBucketName.HasValue() ? $" --aws-bucket-name \"{args.AwsBucketName}\"" : "";
         var awsRegionOption = args.AwsRegion.HasValue() ? $" --aws-region \"{args.AwsRegion}\"" : "";
         var keepArchive = args.KeepArchive ? " --keep-archive" : "";
+        var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
 
         return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
-               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}";
+               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
@@ -195,6 +197,19 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         if (args.KeepArchive)
         {
             _log.LogInformation("KEEP ARCHIVE: true");
+        }
+
+        if (args.NoSslVerify)
+        {
+            _log.LogInformation("NO SSL VERIFY: true");
+        }
+    }
+
+    private void ValidateOptions(GenerateScriptCommandArgs args)
+    {
+        if (args.NoSslVerify && args.BbsServerUrl.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
     }
 

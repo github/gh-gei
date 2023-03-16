@@ -356,6 +356,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation("KEEP ARCHIVE: true");
         }
+
+        if (args.NoSslVerify)
+        {
+            _log.LogInformation("NO SSL VERIFY: true");
+        }
     }
 
     private void LogAwsOptions(MigrateRepoCommandArgs args)
@@ -442,6 +447,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
             }
 
+            if (args.NoSslVerify)
+            {
+                throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
+            }
+
             if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
@@ -490,7 +500,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             throw new OctoshiftCliException(
                 "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
-                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
                 "must be provided.");
         }
 
@@ -498,7 +508,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             throw new OctoshiftCliException(
                 "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
-                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY env. variable), --aws-secret-key (or AWS_SECRET_Key env.variable)) cannot be " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) cannot be " +
                 "specified together.");
         }
 
@@ -506,12 +516,30 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             if (!GetAwsAccessKey(args).HasValue())
             {
-                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY environment variable must be set.");
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
+                }
             }
 
             if (!GetAwsSecretKey(args).HasValue())
             {
-                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_KEY environment variable must be set.");
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
+                }
             }
 
             if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
@@ -545,9 +573,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKey(false);
+    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
 
-    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretKey(false);
+    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretAccessKey(false);
 
     private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
 
