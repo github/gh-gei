@@ -2,8 +2,8 @@
 {
     public interface IHttpDownloadServiceFactory
     {
-        HttpDownloadService Create(string personalAccessToken = null);
-        HttpDownloadService CreateClientNoSsl(string personalAccessToken = null);
+        HttpDownloadService Create();
+        HttpDownloadService CreateClientNoSsl();
     }
 }
 
