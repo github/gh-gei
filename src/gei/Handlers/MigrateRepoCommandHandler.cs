@@ -503,6 +503,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 {
                     _log.LogInformation("GHES version is 3.8.0 or later, no need to set cloud storage options here, please set in GHES admin UI.");
                 }
+
+                if (args.KeepArchive)
+                {
+                    _log.LogWarning("GHES version is 3.8.0 or later, there is no archive to keep on the user machine.");
+                }
+
                 return;
             }
 
