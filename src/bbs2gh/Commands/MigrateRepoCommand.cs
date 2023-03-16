@@ -43,6 +43,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
+        AddOption(NoSslVerify);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -89,11 +90,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
-        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable.");
 
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
-        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable.");
 
     public Option<string> AwsSessionToken { get; } = new(
         name: "--aws-session-token",
@@ -163,6 +164,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--keep-archive",
         description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
+    public Option<bool> NoSslVerify { get; } = new(
+        name: "--no-ssl-verify",
+        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
+                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
@@ -194,7 +200,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
 
-            bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+            bbsApi = args.Kerberos
+                ? bbsApiFactory.CreateKerberos(args.BbsServerUrl, args.NoSslVerify)
+                : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword, args.NoSslVerify);
         }
 
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
@@ -249,6 +257,8 @@ public class MigrateRepoCommandArgs
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
     public string BbsSharedHome { get; set; }
+    public bool NoSslVerify { get; set; }
+
 
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }

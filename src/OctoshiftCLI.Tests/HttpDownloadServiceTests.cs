@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
+using OctoshiftCLI.Contracts;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -14,6 +16,7 @@ namespace OctoshiftCLI.Tests
     {
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+        private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
         [Fact]
         public async Task Downloads_File()
@@ -21,7 +24,6 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var url = "https://objects-staging-origin.githubusercontent.com/octoshiftmigrationlogs/github/example-repo.txt";
             var filePath = "example-file";
-            var fileContents = (string)null;
             var expectedFileContents = "expected-file-contents";
 
             using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
@@ -40,21 +42,46 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(mockHttpHandler.Object);
+            _mockFileSystemProvider.Setup(x => x.Open(filePath, It.IsAny<FileMode>())).Returns(It.IsAny<FileStream>());
+
+            string actualFileContents = null;
+            _mockFileSystemProvider.Setup(x => x.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>())).Callback<Stream, Stream>((s, _) =>
+            {
+                using var ms = new MemoryStream();
+                s.CopyTo(ms);
+                actualFileContents = Encoding.UTF8.GetString(ms.ToArray());
+            });
+
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    fileContents = contents;
-                    return Task.CompletedTask;
-                }
-            };
-
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
             await httpDownloadService.DownloadToFile(url, filePath);
 
             // Assert
-            fileContents.Should().Be(expectedFileContents);
+            _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.Create), Times.Once);
+            _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
+            actualFileContents.Should().Be(expectedFileContents);
+        }
+
+        [Fact]
+        public void It_Sets_User_Agent_Header_With_Comments()
+        {
+            // Arrange
+            const string currentVersion = "1.1.1.1";
+            const string versionComments = "(COMMENTS)";
+
+            using var httpClient = new HttpClient();
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns(currentVersion);
+            mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
+
+            // Act
+            _ = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, mockVersionProvider.Object);
+
+            // Assert
+            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
+            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
         }
 
         [Fact]
@@ -63,7 +90,6 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var url = "https://objects-staging-origin.githubusercontent.com/octoshiftmigrationlogs/github/example-repo.txt";
             var filePath = "example-file";
-            var fileContents = (string)null;
 
             using var httpResponse = new HttpResponseMessage(HttpStatusCode.NotFound);
 
@@ -79,15 +105,10 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(mockHttpHandler.Object);
 
+            _mockFileSystemProvider.Setup(x => x.Open(filePath, System.IO.FileMode.Open)).Returns(It.IsAny<FileStream>());
+
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    fileContents = contents;
-                    return Task.CompletedTask;
-                }
-            };
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Assert
             await FluentActions
@@ -115,7 +136,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
 
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Act
             var archiveContent = await httpDownloadService.DownloadToBytes(url);
@@ -141,7 +162,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Act, Assert
             await httpDownloadService

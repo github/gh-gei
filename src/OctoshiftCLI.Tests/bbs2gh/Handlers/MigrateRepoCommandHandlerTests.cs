@@ -30,6 +30,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
+        private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
         private const string AWS_ACCESS_KEY = "aws-access-key";
         private const string AWS_SECRET_KEY = "aws-secret-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
@@ -204,8 +206,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
@@ -782,8 +784,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 ArchivePath = ARCHIVE_PATH,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsBucketName = AWS_BUCKET_NAME
             };
 
@@ -813,7 +815,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                     }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*or*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*or*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY_ID*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
         }
 
         [Fact]
@@ -830,11 +832,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                     }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*and*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--azure-storage-connection-string*AZURE_STORAGE_CONNECTION_STRING*and*--aws-bucket-name*--aws-access-key*AWS_ACCESS_KEY_ID*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
         }
 
         [Fact]
-        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_But_No_Aws_Access_Key()
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_But_No_Aws_Access_Key_Id()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -845,11 +847,46 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*AWS_ACCESS_KEY*");
+                .WithMessage("*--aws-access-key*AWS_ACCESS_KEY_ID*");
         }
 
         [Fact]
-        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Key()
+        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Access_Key_Environment_Variable()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+#pragma warning disable CS0618
+            _mockEnvironmentVariableProvider.Setup(x => x.AwsAccessKey(false)).Returns(AWS_ACCESS_KEY);
+#pragma warning restore CS0618
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+            };
+            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
+
+            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_ACCESS_KEY"))));
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Access_Key()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -857,11 +894,46 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-secret-key*AWS_SECRET_KEY*");
+                .WithMessage("*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Secret_Key_Environment_Variable()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+#pragma warning disable CS0618
+            _mockEnvironmentVariableProvider.Setup(x => x.AwsSecretKey(false)).Returns(AWS_SECRET_KEY);
+#pragma warning restore CS0618
+
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+            };
+            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
+
+            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_SECRET_KEY"))));
         }
 
         [Fact]
@@ -873,8 +945,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY,
-                AwsSecretKey = AWS_SECRET_KEY,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsSessionToken = AWS_SESSION_TOKEN
             }))
                 .Should()
@@ -891,7 +963,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY
+                AwsAccessKey = AWS_ACCESS_KEY_ID
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -907,7 +979,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_KEY
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
@@ -1074,6 +1146,25 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 .Should()
                 .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage("*--bbs-username*--bbs-password*--bbs-server-url*");
+        }
+
+        [Fact]
+        public async Task Errors_If_BbsServer_Url_Not_Provided_But_No_Ssl_Verify_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                NoSslVerify = true
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--no-ssl-verify*--bbs-server-url*");
         }
 
         [Fact]

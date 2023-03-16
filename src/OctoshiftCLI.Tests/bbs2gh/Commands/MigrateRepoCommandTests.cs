@@ -52,7 +52,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(27);
+        command.Options.Count.Should().Be(28);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -80,6 +80,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
+        TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
     }
 
     [Fact]
@@ -137,7 +138,7 @@ public class MigrateRepoCommandTests
         handler.Should().NotBeNull();
 
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
@@ -180,7 +181,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, false));
     }
 
     [Fact]
@@ -229,21 +230,52 @@ public class MigrateRepoCommandTests
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL));
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, false));
     }
 
     [Fact]
-    public void It_Gets_A_Default_HttpClient_When_Kerberos_Is_Not_Set()
+    public void It_Gets_A_Kerberos_With_No_Ssl_Verify_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_True()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            Kerberos = true,
+            NoSslVerify = true
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, true));
+    }
+
+    [Fact]
+    public void It_Gets_A_Default_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_Not_Set()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, false));
+    }
+
+    [Fact]
+    public void It_Gets_A_No_Ssl_Verify_HttpClient_When_No_Ssl_Verify_Is_True()
     {
         var args = new MigrateRepoCommandArgs
         {
             BbsServerUrl = BBS_SERVER_URL,
             BbsUsername = BBS_USERNAME,
             BbsPassword = BBS_PASSWORD,
+            NoSslVerify = true
         };
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, true));
     }
 }

@@ -17,15 +17,15 @@ public class AwsApi : IDisposable
     private readonly ITransferUtility _transferUtility;
 
 #pragma warning disable CA2000
-    public AwsApi(string awsAccessKey, string awsSecretKey, string awsRegion = null, string awsSessionToken = null)
-        : this(new TransferUtility(BuildAmazonS3Client(awsAccessKey, awsSecretKey, awsRegion, awsSessionToken)))
+    public AwsApi(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion = null, string awsSessionToken = null)
+        : this(new TransferUtility(BuildAmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken)))
 #pragma warning restore CA2000
     {
     }
 
     internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
 
-    private static AmazonS3Client BuildAmazonS3Client(string awsAccessKey, string awsSecretKey, string awsRegion, string awsSessionToken)
+    private static AmazonS3Client BuildAmazonS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion, string awsSessionToken)
     {
         var regionEndpoint = DefaultRegionEndpoint;
         if (awsRegion.HasValue())
@@ -35,8 +35,8 @@ public class AwsApi : IDisposable
         }
 
         return awsSessionToken.HasValue()
-            ? new AmazonS3Client(awsAccessKey, awsSecretKey, awsSessionToken, regionEndpoint)
-            : new AmazonS3Client(awsAccessKey, awsSecretKey, regionEndpoint);
+            ? new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsSessionToken, regionEndpoint)
+            : new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, regionEndpoint);
     }
 
     public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
@@ -45,10 +45,9 @@ public class AwsApi : IDisposable
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 
-    public virtual async Task<string> UploadToBucket(string bucketName, byte[] bytes, string keyName)
+    public virtual async Task<string> UploadToBucket(string bucketName, Stream content, string keyName)
     {
-        using var byteStream = new MemoryStream(bytes);
-        await _transferUtility.UploadAsync(byteStream, bucketName, keyName);
+        await _transferUtility.UploadAsync(content, bucketName, keyName);
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 

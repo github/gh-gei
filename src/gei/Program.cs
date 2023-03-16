@@ -32,6 +32,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadService>()
+                .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())

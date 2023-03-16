@@ -27,7 +27,7 @@ namespace OctoshiftCLI
             return await policy.ExecuteAsync(func);
         }
 
-        public async Task<PolicyResult<T>> RetryOnResult<T>(Func<Task<T>> func, T resultFilter, string retryLogMessage)
+        public async Task<PolicyResult<T>> RetryOnResult<T>(Func<Task<T>> func, T resultFilter, string retryLogMessage = null)
         {
             var policy = Policy.HandleResult(resultFilter)
                                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (_, _) =>
