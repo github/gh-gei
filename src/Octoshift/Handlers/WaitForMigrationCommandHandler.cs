@@ -108,14 +108,14 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
-                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh gei download-logs`");
+                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 return;
             }
 
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
-                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh gei download-logs`");
+                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 throw new OctoshiftCliException(failureReason);
             }
 
