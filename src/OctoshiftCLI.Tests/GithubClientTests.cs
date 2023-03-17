@@ -640,7 +640,7 @@ namespace OctoshiftCLI.Tests
             var response = await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
 
             // Assert
-            Assert.True(JToken.DeepEquals(response, JObject.Parse(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY)));
+            response.ToJson().Should().Be(EXPECTED_JSON_REQUEST_BODY);
         }
 
         [Fact]
