@@ -51,9 +51,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {
                     AllowAutoRedirect = false
-                })
-                .Services
-                .AddHttpClient("RedirectAllowed");
+                });
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var parser = BuildParser(serviceProvider);

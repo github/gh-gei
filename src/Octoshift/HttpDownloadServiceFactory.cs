@@ -36,14 +36,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
         }
 
-        public HttpDownloadService CreateWithRedirectAllowed()
-        {
-            var httpClient = _clientFactory.CreateClient("RedirectAllowed");
-            ConfigureClient(httpClient);
-
-            return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
-        }
-
         private void ConfigureClient(HttpClient httpClient)
         {
             if (httpClient is not null)
