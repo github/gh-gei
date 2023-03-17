@@ -442,10 +442,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 }
             }
 
-            if (ShouldDownloadArchive(args))
-            {
-                ValidateDownloadOptions(args);
-            }
+            ValidateDownloadOptions(args);
         }
         else
         {
@@ -478,7 +475,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
     {
-        var sshArgs = new[] { args.ArchiveDownloadHost, args.SshUser, args.SshPrivateKey };
+        var sshArgs = new[] { args.SshUser, args.SshPrivateKey };
         var smbArgs = new[] { args.SmbUser, args.SmbPassword };
         var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
         var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());
@@ -496,6 +493,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
             throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
+        }
+
+        if (args.ArchiveDownloadHost.HasValue() && !shouldUseSsh && !shouldUseSmb)
+        {
+            throw new OctoshiftCliException("--archive-download-host can only be provided if SSH or SMB download options are provided.");
         }
     }
 

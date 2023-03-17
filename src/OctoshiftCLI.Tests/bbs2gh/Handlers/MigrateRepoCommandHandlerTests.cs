@@ -38,8 +38,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         private const string AWS_REGION = "aws-region";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
-        private const string BBS_HOST = "bbs-server-url-host";
-        private const string BBS_SERVER_URL = $"https://${BBS_HOST}";
+        private const string BBS_HOST = "our-bbs-server.com";
+        private const string BBS_SERVER_URL = $"https://{BBS_HOST}";
         private const string BBS_USERNAME = "bbs-username";
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
@@ -502,6 +502,22 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 BbsRepo = BBS_REPO,
                 SshUser = SSH_USER,
                 SmbUser = SMB_USER
+            };
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Errors_When_Archive_Download_Host_Provided_Without_Ssh_Or_Smb_Options()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                ArchiveDownloadHost = "somehost"
             };
             await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
         }

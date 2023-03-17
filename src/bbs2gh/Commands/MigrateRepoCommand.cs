@@ -113,7 +113,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> ArchiveDownloadHost { get; } = new(
         name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
     { IsHidden = true };
 
     public Option<string> SshUser { get; } = new(
@@ -214,11 +214,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var ComputedArchiveDownloadHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
+            var bbsHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
 
             bbsArchiveDownloader = args.SshUser.HasValue()
-                ? bbsArchiveDownloaderFactory.CreateSshDownloader(ComputedArchiveDownloadHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(ComputedArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
