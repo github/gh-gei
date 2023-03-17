@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Tests
         private const string GITHUB_REPO = "REPOSITORY_NAME";
         private const string TARGET_ORG = "TARGET_ORG";
         private const string LOG_URL = "URL";
-        
+
         private readonly JObject GQL_ERROR_RESPONSE = JObject.Parse(@"
         {
             ""data"": {

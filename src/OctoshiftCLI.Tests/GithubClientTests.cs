@@ -637,10 +637,10 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var actualContent = await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+            var response = await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
 
             // Assert
-            actualContent.Should().Equal(JObject.Parse(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY));
+            Assert.True(JToken.DeepEquals(response, JObject.Parse(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY)));
         }
 
         [Fact]
@@ -708,7 +708,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = "HTTP BODY: {\"id\":\"ID\",\"variables\":{}}";
+            var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
 
             // Act
             await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
