@@ -1434,6 +1434,39 @@ if ($Failed -ne 0) {
         }
 
         [Fact]
+        public async Task Sequential_Ghes_Single_Repo_Keep_Archive()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
+                Sequential = true,
+                KeepArchive = true
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+            _mockOctoLogger.Verify(m => m.LogInformation("KEEP ARCHIVE: true"));
+        }
+
+        [Fact]
         public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_Ghes_Api_Url_Is_Not()
         {
             // Arrange
