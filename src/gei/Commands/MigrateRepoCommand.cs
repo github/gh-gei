@@ -151,7 +151,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
         public Option<bool> KeepArchive { get; } = new("--keep-archive")
         {
-            Description = "Keeps the archive on the user machine after uploading to the storage account."
+            Description = "Keeps the archive on this machine after uploading to the blob storage account. Only applicable for migrations from GitHub Enterprise Server versions before 3.8.0."
         };
 
         public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
