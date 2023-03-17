@@ -29,6 +29,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(ArchiveDownloadHost);
         AddOption(SmbUser);
         AddOption(SmbPassword);
         AddOption(SmbDomain);
@@ -109,6 +110,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> GithubOrg { get; } = new("--github-org");
 
     public Option<string> GithubRepo { get; } = new("--github-repo");
+
+    public Option<string> ArchiveDownloadHost { get; } = new(
+        name: "--archive-download-host",
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
+    { IsHidden = true };
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -208,7 +214,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var bbsHost = new Uri(args.BbsServerUrl).Host;
+            var bbsHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
+
             bbsArchiveDownloader = args.SshUser.HasValue()
                 ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
                 : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
@@ -260,6 +267,7 @@ public class MigrateRepoCommandArgs
     public bool NoSslVerify { get; set; }
 
 
+    public string ArchiveDownloadHost { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; } = 22;
