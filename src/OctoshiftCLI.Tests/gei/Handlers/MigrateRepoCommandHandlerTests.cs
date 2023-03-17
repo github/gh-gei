@@ -1724,6 +1724,22 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Keep_Archive_Without_Ghes_Api_Url_Throws()
+        {
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                KeepArchive = true
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--keep-archive*");
+        }
+
+        [Fact]
         public async Task Keep_Archive_Does_Not_Call_DeleteIfExists()
         {
             var githubOrgId = Guid.NewGuid().ToString();
