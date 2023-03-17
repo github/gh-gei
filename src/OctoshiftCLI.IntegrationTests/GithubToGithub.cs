@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests
 {
-    [Collection("Integration Tests")]
+    [Collection("gei-integration-tests")]
     public class GithubToGithub : IDisposable
     {
         private readonly ITestOutputHelper _output;

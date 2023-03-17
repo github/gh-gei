@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests
 {
-    [Collection("Integration Tests")]
+    [Collection("ado2gh-integration-tests")]
     public class AdoToGithub : IDisposable
     {
         private readonly ITestOutputHelper _output;

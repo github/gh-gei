@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests;
 
-[Collection("Integration Tests")]
+[Collection("bbs2gh-integration-tests")]
 public sealed class BbsToGithub : IDisposable
 {
 

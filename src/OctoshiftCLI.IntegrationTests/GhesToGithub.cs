@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests;
 
-[Collection("Integration Tests")]
+[Collection("gei-integration-tests")]
 public sealed class GhesToGithub : IDisposable
 {
     private const string GHES_API_URL = "https://octoshift-ghe.westus2.cloudapp.azure.com/api/v3";
