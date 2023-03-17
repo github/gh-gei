@@ -94,7 +94,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private async Task WaitForRepositoryMigration(string migrationId, string githubPat, GithubApi githubApi)
     {
-        var (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
+        var (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
 
         _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
 
@@ -108,12 +108,14 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 return;
             }
 
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 throw new OctoshiftCliException(failureReason);
             }
 
@@ -121,7 +123,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            (state, repositoryName, failureReason) = await githubApi.GetMigration(migrationId);
+            (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
         }
     }
 }

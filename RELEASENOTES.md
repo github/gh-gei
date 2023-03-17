@@ -1,1 +1,2 @@
 - Adds retry logic during GHES archive generation in cases of transient failure
+- Added log output linking to migration log URL after migration completes
