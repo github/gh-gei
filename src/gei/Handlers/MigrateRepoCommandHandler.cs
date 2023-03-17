@@ -506,7 +506,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
                 if (args.KeepArchive)
                 {
-                    _log.LogWarning("GHES version is 3.8.0 or later, there is no archive to keep on the user machine.");
+                    _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
                 }
 
                 return;
@@ -585,6 +585,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (args.NoSslVerify)
             {
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
+
+            if (args.KeepArchive)
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
             }
         }
     }
