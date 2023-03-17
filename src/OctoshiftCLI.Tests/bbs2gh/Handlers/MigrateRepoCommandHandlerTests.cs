@@ -507,6 +507,22 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         }
 
         [Fact]
+        public async Task Errors_When_Archive_Download_Host_Provided_Without_Ssh_Or_Smb_Options()
+        {
+            // Act, Assert
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                ArchiveDownloadHost = "somehost"
+            };
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Both_Ssh_User_And_Smb_Password_Are_Provided()
         {
             // Act, Assert

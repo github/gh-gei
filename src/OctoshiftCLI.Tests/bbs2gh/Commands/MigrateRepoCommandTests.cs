@@ -9,6 +9,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
 
 public class MigrateRepoCommandTests
 {
+    private const string ARCHIVE_DOWNLOAD_HOST = "archive-download-host";
     private const string SSH_USER = "ssh-user";
     private const string SSH_PRIVATE_KEY = "ssh-private-key";
     private const int SSH_PORT = 1234;
@@ -52,7 +53,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(28);
+        command.Options.Count.Should().Be(29);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -70,6 +71,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-download-host", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
@@ -84,7 +86,7 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_Based_On_Server_Url_When_Ssh_User_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
@@ -105,7 +107,29 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_And_Archive_Download_Host_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(ARCHIVE_DOWNLOAD_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_Based_On_Server_Url_When_Smb_User_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
@@ -123,6 +147,28 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_And_Archive_Download_Host_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            SmbDomain = SMB_DOMAIN,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(ARCHIVE_DOWNLOAD_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
     }
 
     [Fact]

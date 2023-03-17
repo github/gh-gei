@@ -311,6 +311,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.SshUser.HasValue())
         {
+            _log.LogInformation($"ARCHIVE DOWNLOAD HOST: {args.ArchiveDownloadHost}");
+        }
+
+        if (args.SshUser.HasValue())
+        {
             _log.LogInformation($"SSH USER: {args.SshUser}");
         }
 
@@ -437,10 +442,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 }
             }
 
-            if (ShouldDownloadArchive(args))
-            {
-                ValidateDownloadOptions(args);
-            }
+            ValidateDownloadOptions(args);
         }
         else
         {
@@ -454,7 +456,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.ArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
@@ -491,6 +493,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
             throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
+        }
+
+        if (args.ArchiveDownloadHost.HasValue() && !shouldUseSsh && !shouldUseSmb)
+        {
+            throw new OctoshiftCliException("--archive-download-host can only be provided if SSH or SMB download options are provided.");
         }
     }
 
