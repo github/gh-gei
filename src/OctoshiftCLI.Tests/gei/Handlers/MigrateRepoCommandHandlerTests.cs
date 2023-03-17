@@ -1758,7 +1758,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     false,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, "", ""));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
