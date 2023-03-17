@@ -37,7 +37,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubSourcePat);
             AddOption(AdoPat);
             AddOption(Verbose);
-
             AddOption(KeepArchive);
         }
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")

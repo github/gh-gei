@@ -174,7 +174,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         if (args.KeepArchive)
         {
-            _log.LogInformation($"KEEP ARCHIVE: true");
+            _log.LogInformation("KEEP ARCHIVE: true");
         }
     }
 

@@ -43,7 +43,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubTargetPat);
             AddOption(AdoPat);
             AddOption(Verbose);
-
             AddOption(KeepArchive);
         }
 
