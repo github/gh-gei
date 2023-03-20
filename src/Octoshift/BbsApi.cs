@@ -27,7 +27,7 @@ public class BbsApi
         return (string)JObject.Parse(content)["version"];
     }
 
-    public virtual async Task<long> StartExport(string projectKey = "*", string slug = "*")
+    public virtual async Task<long> StartExport(string projectKey, string slug)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/migration/exports";
         var payload = new
@@ -36,12 +36,12 @@ public class BbsApi
             {
                 includes = new[]
                 {
-                        new
-                        {
-                            projectKey = projectKey ?? "*",
-                            slug = slug ?? "*"
-                        }
+                    new
+                    {
+                        projectKey,
+                        slug
                     }
+                }
             }
         };
 
