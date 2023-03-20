@@ -2,4 +2,5 @@
 - Added log output linking to migration log URL after migration completes
 - Add support for specifying `--archive-download-host` with `gh bbs2gh migrate-repo` and `gh bbs2gh generate-script`, rather than taking the host from the `--bbs-server-url`
 - Improve handling of GraphQL errors, throwing an exception with the specific error message returned by the API
+- Validate AWS region when using Amazon S3 to upload the migration archive in `gh gei` and `gh bbs2gh` 
 - Ensure `--no-ssh-verify` flag is honored when downloading archives from GHES
