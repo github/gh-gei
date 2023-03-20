@@ -61,4 +61,15 @@ public class AwsApiTests
         result.Should().Be(url);
         transferUtility.Verify(m => m.UploadAsync(It.IsAny<MemoryStream>(), bucketName, keyName, It.IsAny<CancellationToken>()));
     }
+
+    [Fact]
+    public void It_Throws_If_Aws_Region_Is_Invalid()
+    {
+        // Arrange, Act
+        const string awsRegion = "invalid-region";
+        var awsApi = () => new AwsApi("awsAccessKeyId", "awsSecretAccessKey", awsRegion);
+
+        // Assert
+        awsApi.Should().Throw<OctoshiftCliException>().WithMessage($"*{awsRegion}*");
+    }
 }
