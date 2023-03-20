@@ -98,7 +98,7 @@ jobs:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
         source-vcs: [Ado, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
-    concurrency: integration-test-${{ matrix.runner-os }}
+    concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
     - uses: actions/checkout@v2
 
