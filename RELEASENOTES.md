@@ -1,1 +1,1 @@
-
+- `--bbs-project` and `--bbs-repo` are now both required in `gh bbs2gh migrate-repo` command when `--bbs-server-url` is set
