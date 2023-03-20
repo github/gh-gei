@@ -77,24 +77,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Assert
             httpDownloadService.Should().NotBeNull();
         }
-
-        [Fact]
-        public void Creates_HttpDownloadService_Allowing_Redirect()
-        {
-            // Arrange
-            using var httpClient = new HttpClient();
-
-            _mockHttpClientFactory
-                .Setup(x => x.CreateClient("NoSSL"))
-                .Returns(httpClient);
-
-
-            // Act
-            var httpDownloadService = _httpDownloadServiceFactory.CreateWithRedirectAllowed();
-
-            // Assert
-            httpDownloadService.Should().NotBeNull();
-        }
     }
 }
 
