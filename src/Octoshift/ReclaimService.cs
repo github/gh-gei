@@ -99,10 +99,6 @@ namespace Octoshift
             }
 
             var targetUserId = await _githubApi.GetUserId(targetUser);
-            if (targetUserId == null)
-            {
-                throw new OctoshiftCliException($"Target user {targetUser} not found.");
-            }
 
             var success = true;
 
