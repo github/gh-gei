@@ -36,7 +36,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockHttpClientFactory.Setup(m => m.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
             // Act
-            _ = _httpDownloadServiceFactory.Create();
+            _ = _httpDownloadServiceFactory.CreateDefault();
 
             // Assert
             httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
@@ -54,7 +54,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .Returns(httpClient);
 
             // Act
-            var httpDownloadService = _httpDownloadServiceFactory.Create();
+            var httpDownloadService = _httpDownloadServiceFactory.CreateDefault();
 
             // Assert
             httpDownloadService.Should().NotBeNull();

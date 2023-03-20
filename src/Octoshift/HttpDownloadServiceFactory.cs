@@ -22,6 +22,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         public HttpDownloadService Create()
         {
+            var httpClient = _clientFactory.CreateClient();
+            ConfigureClient(httpClient);
+
+            return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
+        }
+
+        public HttpDownloadService CreateDefault()
+        {
             var httpClient = _clientFactory.CreateClient("Default");
             ConfigureClient(httpClient);
 
