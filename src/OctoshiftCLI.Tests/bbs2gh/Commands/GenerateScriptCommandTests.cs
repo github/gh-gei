@@ -35,7 +35,7 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(18);
+        _command.Options.Count.Should().Be(19);
 
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
@@ -43,6 +43,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-project-key", false);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-shared-home", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "archive-download-host", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
