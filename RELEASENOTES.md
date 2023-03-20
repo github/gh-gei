@@ -1,2 +1,4 @@
 - Adds retry logic during GHES archive generation in cases of transient failure
+- Added log output linking to migration log URL after migration completes
+- Add support for specifying `--archive-download-host` with `gh bbs2gh migrate-repo` and `gh bbs2gh generate-script`, rather than taking the host from the `--bbs-server-url`
 - Validate AWS region when using Amazon S3 to upload the migration archive in `gh gei` and `gh bbs2gh` 

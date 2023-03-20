@@ -234,21 +234,23 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        var (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
+        var (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
-            (migrationState, _, failureReason) = await _githubApi.GetMigration(migrationId);
+            (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
+            _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
             throw new OctoshiftCliException($"Migration #{migrationId} failed: {failureReason}");
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+        _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 
     private void LogOptions(MigrateRepoCommandArgs args)
@@ -305,6 +307,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.GithubRepo.HasValue())
         {
             _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
+        }
+
+        if (args.SshUser.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE DOWNLOAD HOST: {args.ArchiveDownloadHost}");
         }
 
         if (args.SshUser.HasValue())
@@ -435,10 +442,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 }
             }
 
-            if (ShouldDownloadArchive(args))
-            {
-                ValidateDownloadOptions(args);
-            }
+            ValidateDownloadOptions(args);
         }
         else
         {
@@ -452,7 +456,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
             }
 
-            if (new[] { args.SshUser, args.SshPrivateKey, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
+            if (new[] { args.SshUser, args.SshPrivateKey, args.ArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
             {
                 throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
             }
@@ -489,6 +493,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
         {
             throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
+        }
+
+        if (args.ArchiveDownloadHost.HasValue() && !shouldUseSsh && !shouldUseSmb)
+        {
+            throw new OctoshiftCliException("--archive-download-host can only be provided if SSH or SMB download options are provided.");
         }
     }
 
