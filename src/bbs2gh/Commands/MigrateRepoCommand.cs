@@ -29,6 +29,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(ArchiveDownloadHost);
         AddOption(SmbUser);
         AddOption(SmbPassword);
         AddOption(SmbDomain);
@@ -37,10 +38,13 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsBucketName);
         AddOption(AwsAccessKey);
         AddOption(AwsSecretKey);
+        AddOption(AwsSessionToken);
+        AddOption(AwsRegion);
         AddOption(Wait);
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
+        AddOption(NoSslVerify);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -87,15 +91,30 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
-        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable.");
 
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
-        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable.");
+
+    public Option<string> AwsSessionToken { get; } = new(
+        name: "--aws-session-token",
+        description: "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable.");
+
+    public Option<string> AwsRegion { get; } = new(
+        name: "--aws-region",
+        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 
     public Option<string> GithubRepo { get; } = new("--github-repo");
+
+    public Option<string> ArchiveDownloadHost { get; } = new(
+        name: "--archive-download-host",
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
+    { IsHidden = true };
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -151,6 +170,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--keep-archive",
         description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
+    public Option<bool> NoSslVerify { get; } = new(
+        name: "--no-ssl-verify",
+        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
+                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
         if (args is null)
@@ -182,13 +206,16 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
 
-            bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+            bbsApi = args.Kerberos
+                ? bbsApiFactory.CreateKerberos(args.BbsServerUrl, args.NoSslVerify)
+                : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword, args.NoSslVerify);
         }
 
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var bbsHost = new Uri(args.BbsServerUrl).Host;
+            var bbsHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
+
             bbsArchiveDownloader = args.SshUser.HasValue()
                 ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
                 : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
@@ -204,7 +231,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.AwsBucketName.HasValue())
         {
             var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
-            awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+            awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
         }
 
         return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider);
@@ -221,6 +248,8 @@ public class MigrateRepoCommandArgs
     public string AwsBucketName { get; set; }
     public string AwsAccessKey { get; set; }
     public string AwsSecretKey { get; set; }
+    public string AwsSessionToken { get; set; }
+    public string AwsRegion { get; set; }
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }
@@ -235,7 +264,10 @@ public class MigrateRepoCommandArgs
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
     public string BbsSharedHome { get; set; }
+    public bool NoSslVerify { get; set; }
 
+
+    public string ArchiveDownloadHost { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; } = 22;

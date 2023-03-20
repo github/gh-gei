@@ -1,1 +1,3 @@
-- Create shared access signature (SAS) with read-only permissions - not read-write - when generating Azure Blob Storage URL
+- Adds retry logic during GHES archive generation in cases of transient failure
+- Added log output linking to migration log URL after migration completes
+- Add support for specifying `--archive-download-host` with `gh bbs2gh migrate-repo` and `gh bbs2gh generate-script`, rather than taking the host from the `--bbs-server-url`

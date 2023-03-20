@@ -12,8 +12,8 @@ public class EnvironmentVariableProviderTests
     private const string TARGET_GH_PAT = "GH_PAT";
     private const string ADO_PAT = "ADO_PAT";
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
-    private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
-    private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+    private const string AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
+    private const string AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
 
@@ -119,8 +119,8 @@ public class EnvironmentVariableProviderTests
         Environment.SetEnvironmentVariable(TARGET_GH_PAT, null);
         Environment.SetEnvironmentVariable(ADO_PAT, null);
         Environment.SetEnvironmentVariable(AZURE_STORAGE_CONNECTION_STRING, null);
-        Environment.SetEnvironmentVariable(AWS_ACCESS_KEY, null);
-        Environment.SetEnvironmentVariable(AWS_SECRET_KEY, null);
+        Environment.SetEnvironmentVariable(AWS_ACCESS_KEY_ID, null);
+        Environment.SetEnvironmentVariable(AWS_SECRET_ACCESS_KEY, null);
         Environment.SetEnvironmentVariable(BBS_USERNAME, null);
         Environment.SetEnvironmentVariable(BBS_PASSWORD, null);
     }

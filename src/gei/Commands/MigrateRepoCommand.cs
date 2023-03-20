@@ -28,6 +28,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsBucketName);
             AddOption(AwsAccessKey);
             AddOption(AwsSecretKey);
+            AddOption(AwsSessionToken);
+            AddOption(AwsRegion);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -94,11 +96,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+        };
+        public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
+        {
+            Description = "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable."
+        };
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -151,6 +163,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var httpDownloadService = sp.GetRequiredService<HttpDownloadService>();
+            var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
@@ -174,11 +187,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                    awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider);
         }
     }
 
@@ -197,6 +210,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsBucketName { get; set; }
         public string AwsAccessKey { get; set; }
         public string AwsSecretKey { get; set; }
+        public string AwsSessionToken { get; set; }
+        public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
