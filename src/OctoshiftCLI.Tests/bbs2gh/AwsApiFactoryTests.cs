@@ -19,12 +19,13 @@ public class AwsApiFactoryTests
     {
         // Arrange
         const string awsAccessKey = "AWS_ACCESS_KEY";
+        const string awsRegion = "us-east-2";
 #pragma warning disable CS0618
         _mockEnvironmentVariableProvider.Setup(m => m.AwsAccessKey(false)).Returns(awsAccessKey);
 #pragma warning restore CS0618
 
         // Act
-        _awsApiFactory.Create("aws-region", null, "aws-secret-access-key", "aws-session-token");
+        _awsApiFactory.Create(awsRegion, null, "aws-secret-access-key", "aws-session-token");
 
         // Assert
 #pragma warning disable CS0618
@@ -37,12 +38,13 @@ public class AwsApiFactoryTests
     {
         // Arrange
         const string awsSecretKey = "AWS_SECRET_KEY";
+        const string awsRegion = "us-east-2";
 #pragma warning disable CS0618
         _mockEnvironmentVariableProvider.Setup(m => m.AwsSecretKey(false)).Returns(awsSecretKey);
 #pragma warning restore CS0618
 
         // Act
-        _awsApiFactory.Create("aws-region", "aws-access-key-id", null, "aws-session-token");
+        _awsApiFactory.Create(awsRegion, "aws-access-key-id", null, "aws-session-token");
 
         // Assert
 #pragma warning disable CS0618
