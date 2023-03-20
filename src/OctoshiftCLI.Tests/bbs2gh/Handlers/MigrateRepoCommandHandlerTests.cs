@@ -1041,6 +1041,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO
             };
@@ -1059,6 +1061,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 BbsUsername = BBS_USERNAME
@@ -1072,6 +1076,48 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
         }
 
         [Fact]
+        public async Task Errors_If_BbsServer_Url_Provided_But_No_Bbs_Project()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsRepo = BBS_REPO,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-project*");
+        }
+
+        [Fact]
+        public async Task Errors_If_BbsServer_Url_Provided_But_No_Bbs_Repo()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-repo*");
+        }
+
+        [Fact]
         public async Task It_Should_Not_Validate_Bbs_Username_And_Password_When_Kerberos_Is_Set()
         {
             // Arrange
@@ -1081,6 +1127,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
                 Kerberos = true
             };
 
@@ -1097,6 +1145,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
                 BbsUsername = BBS_USERNAME,
                 Kerberos = true
             };
@@ -1115,6 +1165,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             var args = new MigrateRepoCommandArgs
             {
                 BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
                 BbsPassword = BBS_PASSWORD,
                 Kerberos = true
             };
@@ -1221,6 +1273,44 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 .Should()
                 .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage("*SSH*SMB*--bbs-server-url*");
+        }
+
+        [Fact]
+        public async Task Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Project_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                BbsProject = BBS_PROJECT
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-project*--bbs-server-url*");
+        }
+
+        [Fact]
+        public async Task Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Repo_Is_Provided()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                BbsRepo = BBS_REPO
+            };
+
+            // Assert
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("*--bbs-repo*--bbs-server-url*");
         }
 
         [Fact]
