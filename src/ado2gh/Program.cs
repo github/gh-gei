@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.AdoToGithub
@@ -30,6 +31,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
+                .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<OrgsCsvGeneratorService>()
                 .AddSingleton<TeamProjectsCsvGeneratorService>()
                 .AddSingleton<ReposCsvGeneratorService>()
@@ -38,6 +40,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoInspectorServiceFactory>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<FileSystemProvider>()
+                .AddSingleton<IHttpDownloadServiceFactory>(sp => sp.GetRequiredService<HttpDownloadServiceFactory>())
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
