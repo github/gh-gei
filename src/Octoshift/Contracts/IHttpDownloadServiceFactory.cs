@@ -4,7 +4,6 @@
     {
         HttpDownloadService Create();
         HttpDownloadService CreateClientNoSsl();
-        HttpDownloadService CreateWithRedirectAllowed();
     }
 }
 
