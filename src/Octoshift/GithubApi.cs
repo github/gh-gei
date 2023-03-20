@@ -167,10 +167,7 @@ namespace OctoshiftCLI
 
             var response = await _retryPolicy.Retry(async () =>
             {
-                var httpResponse = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(httpResponse);
-
-                EnsureSuccessGraphQLResponse(data);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (string)data["data"]["organization"]["id"];
             });
@@ -192,10 +189,7 @@ namespace OctoshiftCLI
 
             var response = await _retryPolicy.Retry(async () =>
             {
-                var httpResponse = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(httpResponse);
-
-                EnsureSuccessGraphQLResponse(data);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (string)data["data"]["enterprise"]["id"];
             });
@@ -227,8 +221,7 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
@@ -253,8 +246,7 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
@@ -279,8 +271,7 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
             return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
         }
@@ -351,10 +342,7 @@ namespace OctoshiftCLI
                 operationName = "startRepositoryMigration"
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
-
-            EnsureSuccessGraphQLResponse(data);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
             return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
         }
@@ -395,10 +383,7 @@ namespace OctoshiftCLI
                 operationName = "startOrganizationMigration"
             };
 
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
-
-            EnsureSuccessGraphQLResponse(data);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
             return (string)data["data"]["startOrganizationMigration"]["orgMigration"]["id"];
         }
@@ -414,10 +399,7 @@ namespace OctoshiftCLI
 
             var response = await _retryPolicy.Retry(async () =>
             {
-                var httpResponse = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(httpResponse);
-
-                EnsureSuccessGraphQLResponse(data);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (
                     State: (string)data["data"]["node"]["state"],
@@ -458,10 +440,7 @@ namespace OctoshiftCLI
 
             var response = await _retryPolicy.Retry(async () =>
             {
-                var httpResponse = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(httpResponse);
-
-                EnsureSuccessGraphQLResponse(data);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (
                     State: (string)data["data"]["node"]["state"],
@@ -494,10 +473,7 @@ namespace OctoshiftCLI
 
             var response = await _retryPolicy.Retry(async () =>
             {
-                var httpResponse = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(httpResponse);
-
-                EnsureSuccessGraphQLResponse(data);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
@@ -555,8 +531,7 @@ namespace OctoshiftCLI
 
             try
             {
-                var response = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(response);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (bool)data["data"]["grantMigratorRole"]["success"];
             }
@@ -582,8 +557,7 @@ namespace OctoshiftCLI
 
             try
             {
-                var response = await _client.PostAsync(url, payload);
-                var data = JObject.Parse(response);
+                var data = await _client.PostGraphQLAsync(url, payload);
 
                 return (bool)data["data"]["revokeMigratorRole"]["success"];
             }
@@ -697,10 +671,9 @@ namespace OctoshiftCLI
             };
 
             // TODO: Add retry logic here, but need to inspect the actual error message and differentiate between transient failure vs user doesn't exist (only retry on failure)
-            var response = await _client.PostAsync(url, payload);
-            var data = JObject.Parse(response);
+            var data = await _client.PostGraphQLAsync(url, payload);
 
-            return data["data"]["user"].Any() ? (string)data["data"]["user"]["id"] : null;
+            return (string)data["data"]["user"]["id"];
         }
 
         public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
@@ -826,16 +799,6 @@ namespace OctoshiftCLI
                                     }
                                     : null
             };
-        }
-
-        private void EnsureSuccessGraphQLResponse(JObject response)
-        {
-            if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
-            {
-                var error = (JObject)errors[0];
-                var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
-                throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
-            }
         }
 
         private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
