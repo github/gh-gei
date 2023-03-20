@@ -96,6 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
+        source-vcs: [Ado, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.runner-os }}
     steps:
@@ -132,7 +133,7 @@ jobs:
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
-      if: matrix.runner-os == 'ubuntu-latest'
+      if: matrix.runner-os == 'ubuntu-latest' && matrix.source-vcs == 'Ghec'
       with:
         name: publish-binaries
         path: |
@@ -211,20 +212,20 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         GEI_DEBUG_MODE: 'true'
         LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net6.0/runtimes/ubuntu.18.04-x64/native'
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
       if: matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
       with:
         files: "**/*-tests.xml"
-        check_name: "Integration Test Results"
+        check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
     
     - name: Upload test logs
       uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: integration-test-logs-${{ matrix.runner-os}}
+        name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
         path: dist/**/*.log
 
     - name: Test Logs

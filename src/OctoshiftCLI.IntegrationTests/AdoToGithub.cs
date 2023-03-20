@@ -52,7 +52,7 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task With_Inventory_Report_Csv()
         {
             var adoOrg = $"gei-e2e-testing-{TestHelper.GetOsName()}";
-            var githubOrg = $"e2e-testing-{TestHelper.GetOsName()}";
+            var githubOrg = $"e2e-testing-ado-{TestHelper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
@@ -117,7 +117,7 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task Basic()
         {
             var adoOrg = $"gei-e2e-testing-{TestHelper.GetOsName()}";
-            var githubOrg = $"e2e-testing-{TestHelper.GetOsName()}";
+            var githubOrg = $"e2e-testing-ado-{TestHelper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
