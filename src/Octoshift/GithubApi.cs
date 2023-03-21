@@ -18,6 +18,8 @@ namespace OctoshiftCLI
         private readonly string _apiUrl;
         private readonly RetryPolicy _retryPolicy;
 
+        private const string INSUFFICIENT_PERMISSIONS_HELP_MESSAGE = ". Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.";
+
         public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
         {
             _client = client;
@@ -226,11 +228,9 @@ namespace OctoshiftCLI
                 var data = await _client.PostGraphQLAsync(url, payload);
                 return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
             }
-            catch (OctoshiftCliException ex)
+            catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
             {
-                CheckForMissingPermissionsError(ex);
-
-                throw;
+                throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
             }
         }
 
@@ -259,11 +259,9 @@ namespace OctoshiftCLI
                 var data = await _client.PostGraphQLAsync(url, payload);
                 return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
             }
-            catch (OctoshiftCliException ex)
+            catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
             {
-                CheckForMissingPermissionsError(ex);
-
-                throw;
+                throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
             }
         }
 
@@ -292,11 +290,9 @@ namespace OctoshiftCLI
                 var data = await _client.PostGraphQLAsync(url, payload);
                 return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
             }
-            catch (OctoshiftCliException ex)
+            catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
             {
-                CheckForMissingPermissionsError(ex);
-
-                throw;
+                throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
             }
         }
 
@@ -845,13 +841,5 @@ namespace OctoshiftCLI
                 EndColumn = (int)alertLocation["details"]["end_column"],
                 BlobSha = (string)alertLocation["details"]["blob_sha"],
             };
-
-        private void CheckForMissingPermissionsError(OctoshiftCliException exception)
-        {
-            if (exception.Message.Contains("not have the correct permissions to execute"))
-            {
-                throw new OctoshiftCliException(exception.Message + ". Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
-            }
-        }
     }
 }
