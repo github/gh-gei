@@ -107,7 +107,7 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build Artifacts
+    - name: Build Artifacts (Linux)
       if: matrix.runner-os == 'ubuntu-latest'
       run: ./publish.ps1
       shell: pwsh
@@ -115,7 +115,7 @@ jobs:
         SKIP_WINDOWS: "true"
         SKIP_MACOS: "true"
 
-    - name: Build Artifacts
+    - name: Build Artifacts (Windows)
       if: matrix.runner-os == 'windows-latest'
       run: ./publish.ps1
       shell: pwsh
@@ -123,7 +123,7 @@ jobs:
         SKIP_LINUX: "true"
         SKIP_MACOS: "true"
 
-    - name: Build Artifacts
+    - name: Build Artifacts (MacOS)
       if: matrix.runner-os == 'macos-latest'
       run: ./publish.ps1
       shell: pwsh
