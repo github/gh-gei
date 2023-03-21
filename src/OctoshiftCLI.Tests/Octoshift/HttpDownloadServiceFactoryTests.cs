@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void Creates_HttpDownloadService()
+        public void Creates_Default_HttpDownloadService()
         {
             // Arrange
             using var httpClient = new HttpClient();
@@ -73,6 +73,24 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             // Act
             var httpDownloadService = _httpDownloadServiceFactory.CreateClientNoSsl();
+
+            // Assert
+            httpDownloadService.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Creates_HttpDownloadService()
+        {
+            // Arrange
+            using var httpClient = new HttpClient();
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient(string.Empty))
+                .Returns(httpClient);
+
+
+            // Act
+            var httpDownloadService = _httpDownloadServiceFactory.Create();
 
             // Assert
             httpDownloadService.Should().NotBeNull();
