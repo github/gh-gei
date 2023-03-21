@@ -36,7 +36,7 @@ public sealed class GhesToGithub : IDisposable
 
         var sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_{TestHelper.GetOsName().ToUpper()}");
+        var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpper()}");
         _tokens = new Dictionary<string, string>
         {
             ["GH_SOURCE_PAT"] = sourceGithubToken,
