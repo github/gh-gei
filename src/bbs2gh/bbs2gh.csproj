@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="SMBLibrary" Version="1.4.9" />
     <PackageReference Include="SSH.NET" Version="2020.0.2" />    
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />    
