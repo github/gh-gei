@@ -1,11 +1,9 @@
-﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.Net.Http;
 using OctoshiftCLI.Contracts;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter
+namespace OctoshiftCLI
 {
-    public sealed class HttpDownloadServiceFactory : IHttpDownloadServiceFactory
+    public sealed class HttpDownloadServiceFactory
     {
         private readonly OctoLogger _log;
         private readonly IHttpClientFactory _clientFactory;
@@ -20,41 +18,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             _versionProvider = versionProvider;
         }
 
-        public HttpDownloadService Create()
+        public HttpDownloadService CreateDefaultWithRedirects()
         {
             var httpClient = _clientFactory.CreateClient();
-            ConfigureClient(httpClient);
 
-            return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
+            return new HttpDownloadService(_log, httpClient, _fileSystemProvider, _versionProvider);
         }
 
         public HttpDownloadService CreateDefault()
         {
             var httpClient = _clientFactory.CreateClient("Default");
-            ConfigureClient(httpClient);
 
-            return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
+            return new HttpDownloadService(_log, httpClient, _fileSystemProvider, _versionProvider);
         }
 
         public HttpDownloadService CreateClientNoSsl()
         {
             var httpClient = _clientFactory.CreateClient("NoSSL");
-            ConfigureClient(httpClient);
 
-            return new HttpDownloadService(_log, httpClient, _fileSystemProvider);
-        }
-
-        private void ConfigureClient(HttpClient httpClient)
-        {
-            if (httpClient is not null)
-            {
-                httpClient.Timeout = TimeSpan.FromHours(1);
-                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", _versionProvider?.GetCurrentVersion()));
-                if (_versionProvider?.GetVersionComments() is { } comments)
-                {
-                    httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(comments));
-                }
-            }
+            return new HttpDownloadService(_log, httpClient, _fileSystemProvider, _versionProvider);
         }
     }
 }

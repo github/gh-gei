@@ -90,7 +90,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
 
             // Act
-            var httpDownloadService = _httpDownloadServiceFactory.Create();
+            var httpDownloadService = _httpDownloadServiceFactory.CreateDefaultWithRedirects();
 
             // Assert
             httpDownloadService.Should().NotBeNull();

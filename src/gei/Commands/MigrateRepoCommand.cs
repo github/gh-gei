@@ -177,7 +177,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
                 var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
-                var httpDownloadServiceFactory = sp.GetRequiredService<IHttpDownloadServiceFactory>();
+                var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
                 ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
                 httpDownloadService = args.NoSslVerify ? httpDownloadServiceFactory.CreateClientNoSsl() : httpDownloadServiceFactory.CreateDefault();
 

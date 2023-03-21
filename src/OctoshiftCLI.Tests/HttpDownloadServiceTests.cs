@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
+using OctoshiftCLI.Contracts;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
@@ -16,6 +17,7 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
+        private readonly Mock<IVersionProvider> _mockVersionProvider = new();
 
         [Fact]
         public async Task Downloads_File()
@@ -53,7 +55,7 @@ namespace OctoshiftCLI.Tests
 
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
             await httpDownloadService.DownloadToFile(url, filePath);
 
             // Assert
@@ -86,7 +88,7 @@ namespace OctoshiftCLI.Tests
             _mockFileSystemProvider.Setup(x => x.Open(filePath, System.IO.FileMode.Open)).Returns(It.IsAny<FileStream>());
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
 
             // Assert
             await FluentActions
@@ -114,7 +116,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
 
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
 
             // Act
             var archiveContent = await httpDownloadService.DownloadToBytes(url);
@@ -140,7 +142,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
 
             // Act, Assert
             await httpDownloadService
