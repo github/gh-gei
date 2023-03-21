@@ -17,7 +17,6 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-        private readonly Mock<IVersionProvider> _mockVersionProvider = new();
 
         [Fact]
         public async Task Downloads_File()
@@ -55,13 +54,34 @@ namespace OctoshiftCLI.Tests
 
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
             await httpDownloadService.DownloadToFile(url, filePath);
 
             // Assert
             _mockFileSystemProvider.Verify(m => m.Open(filePath, FileMode.Create), Times.Once);
             _mockFileSystemProvider.Verify(m => m.CopySourceToTargetStreamAsync(It.IsAny<Stream>(), It.IsAny<Stream>()), Times.Once);
             actualFileContents.Should().Be(expectedFileContents);
+        }
+
+        [Fact]
+        public void It_Sets_User_Agent_Header_With_Comments()
+        {
+            // Arrange
+            const string currentVersion = "1.1.1.1";
+            const string versionComments = "(COMMENTS)";
+
+            using var httpClient = new HttpClient();
+
+            var mockVersionProvider = new Mock<IVersionProvider>();
+            mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns(currentVersion);
+            mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
+
+            // Act
+            _ = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, mockVersionProvider.Object);
+
+            // Assert
+            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
+            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
         }
 
         [Fact]
@@ -88,7 +108,7 @@ namespace OctoshiftCLI.Tests
             _mockFileSystemProvider.Setup(x => x.Open(filePath, System.IO.FileMode.Open)).Returns(It.IsAny<FileStream>());
 
             // Act
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Assert
             await FluentActions
@@ -116,7 +136,7 @@ namespace OctoshiftCLI.Tests
 
             using var httpClient = new HttpClient(handlerMock.Object);
 
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Act
             var archiveContent = await httpDownloadService.DownloadToBytes(url);
@@ -142,7 +162,7 @@ namespace OctoshiftCLI.Tests
                 .ReturnsAsync(httpResponse);
 
             using var httpClient = new HttpClient(handlerMock.Object);
-            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
+            var httpDownloadService = new HttpDownloadService(_mockOctoLogger.Object, httpClient, _mockFileSystemProvider.Object, null);
 
             // Act, Assert
             await httpDownloadService

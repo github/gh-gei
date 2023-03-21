@@ -2,7 +2,6 @@
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -19,28 +18,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         public HttpDownloadServiceFactoryTests()
         {
             _httpDownloadServiceFactory = new HttpDownloadServiceFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockFileSystemProvider.Object, _mockVersionProvider.Object);
-        }
-
-        [Fact]
-        public void It_Sets_User_Agent_Header_With_Comments()
-        {
-            // Arrange
-            const string currentVersion = "1.1.1.1";
-            const string versionComments = "(COMMENTS)";
-
-            using var httpClient = new HttpClient();
-
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns(currentVersion);
-            _mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
-
-            _mockHttpClientFactory.Setup(m => m.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-            // Act
-            _ = _httpDownloadServiceFactory.CreateDefault();
-
-            // Assert
-            httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(2);
-            httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be($"OctoshiftCLI/{currentVersion} {versionComments}");
         }
 
         [Fact]
