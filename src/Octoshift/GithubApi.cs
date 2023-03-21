@@ -221,9 +221,17 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var data = await _client.PostGraphQLAsync(url, payload);
+            try
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+            }
+            catch (OctoshiftCliException ex)
+            {
+                CheckForMissingPermissionsError(ex);
 
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+                throw;
+            }
         }
 
         public virtual async Task<string> CreateBbsMigrationSource(string orgId)
@@ -246,9 +254,17 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var data = await _client.PostGraphQLAsync(url, payload);
+            try
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+            }
+            catch (OctoshiftCliException ex)
+            {
+                CheckForMissingPermissionsError(ex);
 
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+                throw;
+            }
         }
 
         public virtual async Task<string> CreateGhecMigrationSource(string orgId)
@@ -271,9 +287,17 @@ namespace OctoshiftCLI
                 operationName = "createMigrationSource"
             };
 
-            var data = await _client.PostGraphQLAsync(url, payload);
+            try
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+            }
+            catch (OctoshiftCliException ex)
+            {
+                CheckForMissingPermissionsError(ex);
 
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+                throw;
+            }
         }
 
         public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, bool lockSource = false)
@@ -821,5 +845,13 @@ namespace OctoshiftCLI
                 EndColumn = (int)alertLocation["details"]["end_column"],
                 BlobSha = (string)alertLocation["details"]["blob_sha"],
             };
+
+        private void CheckForMissingPermissionsError(OctoshiftCliException exception)
+        {
+            if (exception.Message.Contains("not have the correct permissions to execute"))
+            {
+                throw new OctoshiftCliException(exception.Message + ". Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+            }
+        }
     }
 }
