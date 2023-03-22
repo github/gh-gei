@@ -437,7 +437,7 @@ namespace OctoshiftCLI.Tests.Octoshift
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
             _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
-            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Returns(Task.FromResult<string>(null));
+            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Throws(new OctoshiftCliException($"Could not resolve to a User with the login of '{MANNEQUIN_LOGIN}'."));
 
             var csvContent = new string[] {
                 HEADER,
