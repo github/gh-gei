@@ -30,7 +30,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadService>()
+                .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<OrgsCsvGeneratorService>()
                 .AddSingleton<TeamProjectsCsvGeneratorService>()
                 .AddSingleton<ReposCsvGeneratorService>()
