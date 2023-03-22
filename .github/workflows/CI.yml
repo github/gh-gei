@@ -90,8 +90,63 @@ jobs:
         name: Event File
         path: ${{ github.event_path }}
 
+  build-for-integration-test:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
+    strategy:
+      fail-fast: false
+      matrix:
+        target-os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build Artifacts (Linux)
+      if: matrix.target-os == 'ubuntu-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts (Windows)
+      if: matrix.target-os == 'windows-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_LINUX: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts (MacOS)
+      if: matrix.target-os == 'macos-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_LINUX: "true"
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries-${{ matrix.target-os }}
+        path: |
+          dist/linux-x64/ado2gh-linux-amd64
+          dist/linux-x64/bbs2gh-linux-amd64
+          dist/linux-x64/gei-linux-amd64
+          dist/osx-x64/ado2gh-darwin-amd64
+          dist/osx-x64/bbs2gh-darwin-amd64
+          dist/osx-x64/gei-darwin-amd64
+          dist/win-x64/ado2gh-windows-amd64.exe
+          dist/win-x64/bbs2gh-windows-amd64.exe
+          dist/win-x64/gei-windows-amd64.exe
+
   integration-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
+    needs: [ build-for-integration-test ]
     strategy:
       fail-fast: false
       matrix:
@@ -130,16 +185,6 @@ jobs:
       env:
         SKIP_WINDOWS: "true"
         SKIP_LINUX: "true"
-
-    - name: Upload Binaries
-      uses: actions/upload-artifact@v2
-      if: matrix.runner-os == 'ubuntu-latest' && matrix.source-vcs == 'Ghec'
-      with:
-        name: publish-binaries
-        path: |
-          dist/
-          !dist/*.tar.gz
-          !dist/*.zip
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
