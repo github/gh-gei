@@ -90,7 +90,7 @@ jobs:
         name: Event File
         path: ${{ github.event_path }}
 
-  build-for-integration-test:
+  build-for-e2e-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
     strategy:
       fail-fast: false
@@ -144,9 +144,9 @@ jobs:
           dist/win-x64/bbs2gh-windows-amd64.exe
           dist/win-x64/gei-windows-amd64.exe
 
-  integration-test:
+  e2e-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
-    needs: [ build-for-integration-test ]
+    needs: [ build-for-e2e-test ]
     strategy:
       fail-fast: false
       matrix:
@@ -279,7 +279,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, integration-test ]
+    needs: [ build, e2e-test ]
     environment: PUBLISH_RELEASE
 
     steps:
