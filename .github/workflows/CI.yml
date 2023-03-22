@@ -162,29 +162,14 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build Artifacts (Linux)
-      if: matrix.runner-os == 'ubuntu-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_MACOS: "true"
+    - name: Download Binaries
+      uses: actions/download-artifact@v3
+      with:
+        name: binaries-${{ matrix.runner-os }}
+        path: dist
 
-    - name: Build Artifacts (Windows)
-      if: matrix.runner-os == 'windows-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_LINUX: "true"
-        SKIP_MACOS: "true"
-
-    - name: Build Artifacts (MacOS)
-      if: matrix.runner-os == 'macos-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_LINUX: "true"
+    - name: Display structure of downloaded files
+      run: ls -R
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
