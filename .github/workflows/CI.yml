@@ -129,6 +129,9 @@ jobs:
         SKIP_WINDOWS: "true"
         SKIP_LINUX: "true"
 
+    - name: Display structure of downloaded files
+      run: ls -lR
+
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
       with:
@@ -169,7 +172,7 @@ jobs:
         path: dist
 
     - name: Display structure of downloaded files
-      run: ls -R
+      run: ls -lR
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
@@ -205,7 +208,7 @@ jobs:
       shell: pwsh
 
     - name: Display structure of downloaded files
-      run: ls -R
+      run: ls -lR
 
     - name: Install gh-gei extension
       run: gh extension install .
