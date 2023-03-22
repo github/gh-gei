@@ -34,7 +34,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadService>()
+                .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())

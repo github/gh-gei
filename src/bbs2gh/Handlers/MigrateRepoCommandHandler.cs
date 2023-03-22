@@ -422,26 +422,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (ShouldGenerateArchive(args))
         {
-            if (args.Kerberos)
-            {
-                if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
-                {
-                    throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
-                }
-            }
-            else
-            {
-                if (GetBbsUsername(args).IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
-                }
-
-                if (GetBbsPassword(args).IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
-                }
-            }
-
+            ValidateGenerateOptions(args);
             ValidateDownloadOptions(args);
         }
         else
@@ -454,6 +435,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (args.NoSslVerify)
             {
                 throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
+            }
+
+            if (args.BbsProject.HasValue() || args.BbsRepo.HasValue())
+            {
+                throw new OctoshiftCliException("--bbs-project and --bbs-repo can only be provided with --bbs-server-url.");
             }
 
             if (new[] { args.SshUser, args.SshPrivateKey, args.ArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
@@ -470,6 +456,34 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (ShouldImportArchive(args))
         {
             ValidateImportOptions(args);
+        }
+    }
+
+    private void ValidateGenerateOptions(MigrateRepoCommandArgs args)
+    {
+        if (args.Kerberos)
+        {
+            if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
+            {
+                throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
+            }
+        }
+        else
+        {
+            if (GetBbsUsername(args).IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+            }
+
+            if (GetBbsPassword(args).IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+            }
+        }
+
+        if (args.BbsProject.IsNullOrWhiteSpace() || args.BbsRepo.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("Both --bbs-project and --bbs-repo must be provided.");
         }
     }
 
