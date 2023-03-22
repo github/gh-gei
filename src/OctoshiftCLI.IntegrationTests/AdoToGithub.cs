@@ -1,25 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading.Tasks;
-using Xunit;
 using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests
 {
     public abstract class AdoToGithub : IDisposable
     {
-        protected readonly ITestOutputHelper _output;
-        protected readonly TestHelper _helper;
+        private readonly ITestOutputHelper _output;
+        private readonly HttpClient _adoHttpClient;
+        private readonly HttpClient _githubHttpClient;
+        private readonly HttpClient _versionClient;
+        private bool disposedValue;
 
-        protected readonly HttpClient _adoHttpClient;
-        protected readonly HttpClient _githubHttpClient;
-        protected readonly HttpClient _versionClient;
-        protected bool disposedValue;
-        protected readonly Dictionary<string, string> _tokens;
-        protected readonly DateTime _startTime;
+        protected TestHelper _helper { get; }
+        protected Dictionary<string, string> _tokens { get; }
+        protected DateTime _startTime { get; }
 
-        public AdoToGithub(ITestOutputHelper output)
+        protected AdoToGithub(ITestOutputHelper output)
         {
             _startTime = DateTime.Now;
             _output = output;

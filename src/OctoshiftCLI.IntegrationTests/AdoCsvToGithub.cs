@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 namespace OctoshiftCLI.IntegrationTests
 {
     [Collection("Integration Tests")]
-    public class AdoCsvToGithub : IDisposable
+    public class AdoCsvToGithub : AdoToGithub
     {
         public AdoCsvToGithub(ITestOutputHelper output) : base(output)
         {
