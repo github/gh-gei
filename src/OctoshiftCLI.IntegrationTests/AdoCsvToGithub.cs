@@ -27,53 +27,53 @@ namespace OctoshiftCLI.IntegrationTests
 
             await retryPolicy.Retry(async () =>
             {
-                await _helper.ResetAdoTestEnvironment(adoOrg);
-                await _helper.ResetGithubTestEnvironment(githubOrg);
+                await Helper.ResetAdoTestEnvironment(adoOrg);
+                await Helper.ResetGithubTestEnvironment(githubOrg);
 
-                await _helper.CreateTeamProject(adoOrg, teamProject1);
-                var commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
-                await _helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
+                await Helper.CreateTeamProject(adoOrg, teamProject1);
+                var commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
+                await Helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
 
-                await _helper.CreateTeamProject(adoOrg, teamProject2);
-                commitId = await _helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
-                await _helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
+                await Helper.CreateTeamProject(adoOrg, teamProject2);
+                commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
+                await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
             });
 
-            await _helper.RunCliCommand($"ado2gh inventory-report --ado-org {adoOrg}", "gh", _tokens);
-            await _helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all --repo-list repos.csv", _tokens);
+            await Helper.RunCliCommand($"ado2gh inventory-report --ado-org {adoOrg}", "gh", Tokens);
+            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all --repo-list repos.csv", Tokens);
 
-            _helper.AssertNoErrorInLogs(_startTime);
+            Helper.AssertNoErrorInLogs(StartTime);
 
-            await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
-            await _helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
-            await _helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject1}-{teamProject1}");
-            await _helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject2}-{teamProject2}");
-            await _helper.AssertAutolinkConfigured(githubOrg, $"{teamProject1}-{teamProject1}", $"https://dev.azure.com/{adoOrg}/{teamProject1}/_workitems/edit/<num>/");
-            await _helper.AssertAutolinkConfigured(githubOrg, $"{teamProject2}-{teamProject2}", $"https://dev.azure.com/{adoOrg}/{teamProject2}/_workitems/edit/<num>/");
-            await _helper.AssertAdoRepoDisabled(adoOrg, teamProject1, adoRepo1);
-            await _helper.AssertAdoRepoDisabled(adoOrg, teamProject2, adoRepo2);
-            await _helper.AssertAdoRepoLocked(adoOrg, teamProject1, adoRepo1);
-            await _helper.AssertAdoRepoLocked(adoOrg, teamProject2, adoRepo2);
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Maintainers");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Admins");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Maintainers");
-            await _helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Admins");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-Maintainers");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-Admins");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-Maintainers");
-            await _helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-Admins");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-{teamProject1}", "maintain");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-{teamProject1}", "admin");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-{teamProject2}", "maintain");
-            await _helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-{teamProject2}", "admin");
-            await _helper.AssertServiceConnectionWasShared(adoOrg, teamProject1);
-            await _helper.AssertServiceConnectionWasShared(adoOrg, teamProject2);
-            await _helper.AssertPipelineRewired(adoOrg, teamProject1, pipeline1, githubOrg, $"{teamProject1}-{teamProject1}");
-            await _helper.AssertPipelineRewired(adoOrg, teamProject2, pipeline2, githubOrg, $"{teamProject2}-{teamProject2}");
-            await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject1);
-            await _helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject2);
-            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
-            _helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
+            await Helper.AssertGithubRepoExists(githubOrg, $"{teamProject1}-{teamProject1}");
+            await Helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
+            await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject1}-{teamProject1}");
+            await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject2}-{teamProject2}");
+            await Helper.AssertAutolinkConfigured(githubOrg, $"{teamProject1}-{teamProject1}", $"https://dev.azure.com/{adoOrg}/{teamProject1}/_workitems/edit/<num>/");
+            await Helper.AssertAutolinkConfigured(githubOrg, $"{teamProject2}-{teamProject2}", $"https://dev.azure.com/{adoOrg}/{teamProject2}/_workitems/edit/<num>/");
+            await Helper.AssertAdoRepoDisabled(adoOrg, teamProject1, adoRepo1);
+            await Helper.AssertAdoRepoDisabled(adoOrg, teamProject2, adoRepo2);
+            await Helper.AssertAdoRepoLocked(adoOrg, teamProject1, adoRepo1);
+            await Helper.AssertAdoRepoLocked(adoOrg, teamProject2, adoRepo2);
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Maintainers");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Admins");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Maintainers");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Admins");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-Maintainers");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-Admins");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-Maintainers");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-Admins");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-{teamProject1}", "maintain");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-{teamProject1}", "admin");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-{teamProject2}", "maintain");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-{teamProject2}", "admin");
+            await Helper.AssertServiceConnectionWasShared(adoOrg, teamProject1);
+            await Helper.AssertServiceConnectionWasShared(adoOrg, teamProject2);
+            await Helper.AssertPipelineRewired(adoOrg, teamProject1, pipeline1, githubOrg, $"{teamProject1}-{teamProject1}");
+            await Helper.AssertPipelineRewired(adoOrg, teamProject2, pipeline2, githubOrg, $"{teamProject2}-{teamProject2}");
+            await Helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject1);
+            await Helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject2);
+            Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
+            Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
         }
     }
 }

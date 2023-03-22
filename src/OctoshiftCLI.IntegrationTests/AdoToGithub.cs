@@ -13,13 +13,13 @@ namespace OctoshiftCLI.IntegrationTests
         private readonly HttpClient _versionClient;
         private bool disposedValue;
 
-        protected TestHelper _helper { get; }
-        protected Dictionary<string, string> _tokens { get; }
-        protected DateTime _startTime { get; }
+        protected TestHelper Helper { get; }
+        protected Dictionary<string, string> Tokens { get; }
+        protected DateTime StartTime { get; }
 
         protected AdoToGithub(ITestOutputHelper output)
         {
-            _startTime = DateTime.Now;
+            StartTime = DateTime.Now;
             _output = output;
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
@@ -36,13 +36,13 @@ namespace OctoshiftCLI.IntegrationTests
             var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
 
-            _tokens = new Dictionary<string, string>
+            Tokens = new Dictionary<string, string>
             {
                 ["GH_PAT"] = githubToken,
                 ["ADO_PAT"] = adoToken
             };
 
-            _helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
+            Helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
         }
 
         protected virtual void Dispose(bool disposing)
