@@ -204,6 +204,9 @@ jobs:
         Copy-Item ./dist/osx-x64/bbs2gh-darwin-amd64 ./gh-bbs2gh/gh-bbs2gh
       shell: pwsh
 
+    - name: Display structure of downloaded files
+      run: ls -R
+
     - name: Install gh-gei extension
       run: gh extension install .
       shell: pwsh
@@ -224,6 +227,12 @@ jobs:
       working-directory: ./gh-bbs2gh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: debug gh extension list
+      run: gh extension list
+
+    - name: debug gh gei
+      run: gh gei --help
 
     - name: Integration Test
       env: 
