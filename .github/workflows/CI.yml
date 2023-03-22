@@ -230,9 +230,13 @@ jobs:
       
     - name: debug gh extension list
       run: gh extension list
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: debug gh gei
       run: gh gei --help
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Integration Test
       env: 
