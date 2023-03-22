@@ -129,9 +129,6 @@ jobs:
         SKIP_WINDOWS: "true"
         SKIP_LINUX: "true"
 
-    - name: Display structure of downloaded files
-      run: ls -lR
-
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
       with:
@@ -170,9 +167,6 @@ jobs:
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
-
-    - name: Display structure of downloaded files
-      run: ls -lR
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
@@ -213,9 +207,6 @@ jobs:
         chmod +x ./gh-ado2gh/gh-ado2gh
         chmod +x ./gh-bbs2gh/gh-bbs2gh
 
-    - name: Display structure of downloaded files
-      run: ls -lR
-
     - name: Install gh-gei extension
       run: gh extension install .
       shell: pwsh
@@ -237,16 +228,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-    - name: debug gh extension list
-      run: gh extension list
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: debug gh gei
-      run: gh gei --help
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
