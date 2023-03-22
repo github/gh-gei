@@ -227,7 +227,7 @@ jobs:
       working-directory: ./gh-bbs2gh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
     - name: Integration Test
       env: 
         ADO_PAT: ${{ secrets.ADO_PAT }}
