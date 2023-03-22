@@ -26,7 +26,9 @@ namespace OctoshiftCLI.Tests
         private const string GITHUB_ENTERPRISE = "ENTERPRISE_NAME";
         private const string GITHUB_REPO = "REPOSITORY_NAME";
         private const string TARGET_ORG = "TARGET_ORG";
-        private const string GQL_ERROR_RESPONSE = @"
+        private const string LOG_URL = "URL";
+
+        private readonly JObject GQL_ERROR_RESPONSE = JObject.Parse(@"
         {
             ""data"": {
                 ""node"":null
@@ -38,7 +40,7 @@ namespace OctoshiftCLI.Tests
                     ""locations"":[{""line"":1,""column"":19}],
                     ""message"":""GitHub Enterprise Importer is currently unavailable. Please try again later.""
                 }]
-        }";
+        }");
 
         public GithubApiTests()
         {
@@ -501,7 +503,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/graphql";
             var payload =
                 $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": 
                     {{
@@ -512,10 +514,10 @@ namespace OctoshiftCLI.Tests
                                 ""name"": ""github"" 
                             }} 
                     }} 
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -535,7 +537,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
 
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": 
                     {{
@@ -546,10 +548,10 @@ namespace OctoshiftCLI.Tests
                                 ""name"": ""github"" 
                             }} 
                     }} 
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(response);
@@ -570,7 +572,7 @@ namespace OctoshiftCLI.Tests
             var url = $"https://api.github.com/graphql";
             var payload =
                 $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": 
                     {{
@@ -580,10 +582,10 @@ namespace OctoshiftCLI.Tests
                                 ""id"": ""{enterpriseId}""
                             }} 
                     }} 
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -603,7 +605,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
 
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": 
                     {{
@@ -613,10 +615,10 @@ namespace OctoshiftCLI.Tests
                                 ""id"": ""{enterpriseId}""
                             }} 
                     }} 
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(response);
@@ -639,7 +641,7 @@ namespace OctoshiftCLI.Tests
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"https://dev.azure.com\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""createMigrationSource"": {{
@@ -651,10 +653,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -676,7 +678,7 @@ namespace OctoshiftCLI.Tests
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"{adoServerUrl}\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""createMigrationSource"": {{
@@ -688,10 +690,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -699,6 +701,29 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateAdoMigrationSource_Decorates_Missing_Permissions_Error()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            const string adoServerUrl = "https://ado.contoso.com";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"{adoServerUrl}\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\"}},\"operationName\":\"createMigrationSource\"}}";
+
+            _githubClientMock
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            // Act
+            await _githubApi.Invoking(api => api.CreateAdoMigrationSource(orgId, adoServerUrl))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
         }
 
         [Fact]
@@ -712,7 +737,7 @@ namespace OctoshiftCLI.Tests
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"Bitbucket Server Source\",\"url\":\"https://not-used\",\"ownerId\":\"{orgId}\",\"type\":\"BITBUCKET_SERVER\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""createMigrationSource"": {{
@@ -724,10 +749,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -735,6 +760,28 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateBbsMigrationSource_Decorates_Missing_Permissions_Error()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"Bitbucket Server Source\",\"url\":\"https://not-used\",\"ownerId\":\"{orgId}\",\"type\":\"BITBUCKET_SERVER\"}},\"operationName\":\"createMigrationSource\"}}";
+
+            _githubClientMock
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            // Act
+            await _githubApi.Invoking(api => api.CreateBbsMigrationSource(orgId))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
         }
 
         [Fact]
@@ -748,7 +795,7 @@ namespace OctoshiftCLI.Tests
                 "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
                 $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\"}},\"operationName\":\"createMigrationSource\"}}";
             const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""createMigrationSource"": {{
@@ -760,10 +807,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -771,6 +818,28 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+        }
+
+        [Fact]
+        public async Task CreateGhecMigrationSource_Decorates_Missing_Permissions_Error()
+        {
+            // Arrange
+            const string url = "https://api.github.com/graphql";
+            const string orgId = "ORG_ID";
+            var payload =
+                "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+                "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+                $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\"}},\"operationName\":\"createMigrationSource\"}}";
+
+            _githubClientMock
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            // Act
+            await _githubApi.Invoking(api => api.CreateGhecMigrationSource(orgId))
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
         }
 
         [Fact]
@@ -847,7 +916,7 @@ namespace OctoshiftCLI.Tests
                 operationName = "startRepositoryMigration"
             };
             const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""startRepositoryMigration"": {{
@@ -864,10 +933,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -875,6 +944,27 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+        }
+
+        [Fact]
+        public async Task GetArchiveMigrationStatus_Retries_On_Failure_Status()
+        {
+            // Arrange
+            var url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations/1";
+
+            var failedResponse = "{\"state\": \"failed\"}";
+            var successfulResponse = "{\"state\": \"exported\"}";
+
+            _githubClientMock.SetupSequence(x => x.GetAsync(url, null).Result)
+                .Returns(failedResponse)
+                .Returns(failedResponse)
+                .Returns(successfulResponse);
+            // Act
+            var migrationStatus = await _githubApi.GetArchiveMigrationStatus(GITHUB_ORG, 1);
+
+            // Assert
+            migrationStatus.Should().Be("exported");
+            _githubClientMock.Verify(x => x.GetAsync(url, null), Times.Exactly(3));
         }
 
         [Fact]
@@ -952,7 +1042,7 @@ namespace OctoshiftCLI.Tests
                 operationName = "startRepositoryMigration"
             };
             const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""startRepositoryMigration"": {{
@@ -969,10 +1059,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -983,98 +1073,10 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task StartMigration_Throws_When_GraphQL_Response_Has_Errors()
-        {
-            // Arrange
-            const string expectedErrorMessage = "Please make sure that githubPat includes the workflow scope";
-            const string response = $@"
-            {{
-                ""data"": {{ 
-                    ""startRepositoryMigration"": null
-                 }},
-                ""errors"": [
-                     {{
-                        ""type"": ""FORBIDDEN"",
-                        ""path"": [
-                            ""startRepositoryMigration""
-                         ],
-                        ""locations"": [
-                            {{
-                                ""line"": 13,
-                                ""column"": 17
-                            }}
-                         ],
-                        ""message"": ""{expectedErrorMessage}""
-                     }}
-                 ]
-            }}";
-
-            _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
-                .ReturnsAsync(response);
-
-            // Act, Assert
-            await _githubApi.Invoking(api => api.StartMigration(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>()))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage(expectedErrorMessage);
-        }
-
-        [Fact]
-        public async Task StartMigration_Does_Not_Include_Error_Message_If_Missing()
-        {
-            // Arrange
-            const string response = @"
-            {
-                ""data"": { 
-                    ""startRepositoryMigration"": null
-                 },
-                ""errors"": [
-                     {
-                        ""type"": ""FORBIDDEN"",
-                        ""path"": [
-                            ""startRepositoryMigration""
-                         ],
-                        ""locations"": [
-                            {
-                                ""line"": 13,
-                                ""column"": 17
-                            }
-                         ]
-                     }
-                 ]
-            }";
-
-            const string expectedErrorMessage = "UNKNOWN";
-
-            _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
-                .ReturnsAsync(response);
-
-            // Act, Assert
-            await _githubApi.Invoking(api => api.StartMigration(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>()))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage(expectedErrorMessage);
-        }
-
-        [Fact]
         public async Task StartMigration_Does_Not_Throw_When_Errors_Is_Empty()
         {
             // Arrange
-            const string response = @"
+            var response = JObject.Parse(@"
             {
                 ""data"": { 
                     ""startRepositoryMigration"": {
@@ -1084,10 +1086,10 @@ namespace OctoshiftCLI.Tests
                      }
                  },
                 ""errors"": []
-            }";
+            }");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+                .Setup(m => m.PostGraphQLAsync(It.IsAny<string>(), It.IsAny<object>(), null))
                 .ReturnsAsync(response);
 
             // Act, Assert
@@ -1110,10 +1112,10 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1124,22 +1126,24 @@ namespace OctoshiftCLI.Tests
                         }},
                         ""state"": ""{actualMigrationState}"",
                         ""failureReason"": """",
-                        ""repositoryName"": ""{GITHUB_REPO}""
+                        ""repositoryName"": ""{GITHUB_REPO}"",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, expectedRepositoryName, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, expectedRepositoryName, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
             expectedRepositoryName.Should().Be(GITHUB_REPO);
             expectedFailureReason.Should().BeEmpty();
+            migrationLogUrl.Should().Be(LOG_URL);
         }
 
         [Fact]
@@ -1150,10 +1154,10 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1163,19 +1167,20 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""failureReason"": """"
+                        ""failureReason"": """",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1189,11 +1194,11 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
 
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1203,19 +1208,20 @@ namespace OctoshiftCLI.Tests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""failureReason"": """"
+                        ""failureReason"": """",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(response);
 
             // Act
-            var (expectedMigrationState, _, _) = await _githubApi.GetMigration(migrationId);
+            var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedMigrationState.Should().Be(actualMigrationState);
@@ -1229,10 +1235,10 @@ namespace OctoshiftCLI.Tests
             const string url = "https://api.github.com/graphql";
 
             var payload =
-                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
+                "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualFailureReason = "FAILURE_REASON";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1243,17 +1249,18 @@ namespace OctoshiftCLI.Tests
                         }},
                         ""state"": ""FAILED"",
                         ""failureReason"": ""{actualFailureReason}"",
-                        ""repositoryName"": ""{GITHUB_REPO}""
+                        ""repositoryName"": ""{GITHUB_REPO}"",
+                        ""migrationLogUrl"": ""{LOG_URL}""
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
-            var (_, _, expectedFailureReason) = await _githubApi.GetMigration(migrationId);
+            var (_, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
 
             // Assert
             expectedFailureReason.Should().Be(actualFailureReason);
@@ -1273,7 +1280,7 @@ namespace OctoshiftCLI.Tests
             const string actualMigrationState = "SUCCEEDED";
             const int actualRemainingRepositoriesCount = 0;
             const int actualTotalRepositoriesCount = 9000;
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1285,10 +1292,10 @@ namespace OctoshiftCLI.Tests
                         ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1317,7 +1324,7 @@ namespace OctoshiftCLI.Tests
             const string actualMigrationState = "SUCCEEDED";
             const int actualRemainingRepositoriesCount = 0;
             const int actualTotalRepositoriesCount = 9000;
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1329,10 +1336,10 @@ namespace OctoshiftCLI.Tests
                         ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
                 .ReturnsAsync(response);
@@ -1356,7 +1363,7 @@ namespace OctoshiftCLI.Tests
                 "{\"query\":\"query($id: ID!) { node(id: $id) { ... on OrganizationMigration { state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount } } }\"" +
                 $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
             const string actualMigrationState = "SUCCEEDED";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1366,10 +1373,10 @@ namespace OctoshiftCLI.Tests
                         ""targetOrgName"": ""{TARGET_ORG}""
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(response);
@@ -1395,7 +1402,7 @@ namespace OctoshiftCLI.Tests
             const string actualFailureReason = "FAILURE_REASON";
             const int actualRemainingRepositoriesCount = 9000;
             const int actualTotalRepositoriesCount = 9000;
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""node"": {{
@@ -1407,10 +1414,10 @@ namespace OctoshiftCLI.Tests
                         ""totalRepositoriesCount"": {actualTotalRepositoriesCount}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1440,7 +1447,7 @@ namespace OctoshiftCLI.Tests
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
 
             const string migrationLogUrl = "MIGRATION_LOG_URL";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""organization"": {{
@@ -1453,10 +1460,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1486,7 +1493,7 @@ namespace OctoshiftCLI.Tests
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
 
             const string migrationLogUrl = "MIGRATION_LOG_URL";
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""organization"": {{
@@ -1499,10 +1506,10 @@ namespace OctoshiftCLI.Tests
                         }}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(GQL_ERROR_RESPONSE)
                 .ReturnsAsync(response);
@@ -1532,7 +1539,7 @@ namespace OctoshiftCLI.Tests
             ";
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
-            var response = @"
+            var response = JObject.Parse(@"
             {
                 ""data"": {
                     ""organization"": {
@@ -1542,10 +1549,10 @@ namespace OctoshiftCLI.Tests
                         }
                     }
                 }
-            }";
+            }");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1680,17 +1687,17 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{GITHUB_ORG}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"grantMigratorRole\"}";
             const bool expectedSuccessState = true;
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""grantMigratorRole"": {{
                         ""success"": {expectedSuccessState.ToString().ToLower()}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1715,7 +1722,7 @@ namespace OctoshiftCLI.Tests
                 "\"operationName\":\"grantMigratorRole\"}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -1739,17 +1746,17 @@ namespace OctoshiftCLI.Tests
                 $",\"variables\":{{\"organizationId\":\"{GITHUB_ORG}\",\"actor\":\"{actor}\",\"actor_type\":\"{actorType}\"}}," +
                 "\"operationName\":\"revokeMigratorRole\"}";
             const bool expectedSuccessState = true;
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""revokeMigratorRole"": {{
                         ""success"": {expectedSuccessState.ToString().ToLower()}
                     }}
                 }}
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1774,7 +1781,7 @@ namespace OctoshiftCLI.Tests
                 "\"operationName\":\"revokeMigratorRole\"}";
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .Throws<HttpRequestException>();
 
             // Act
@@ -1808,7 +1815,7 @@ namespace OctoshiftCLI.Tests
             var payload =
                 $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
 
-            var response = $@"
+            var response = JObject.Parse($@"
             {{
                 ""data"": 
                     {{
@@ -1818,10 +1825,10 @@ namespace OctoshiftCLI.Tests
                                 ""name"": ""{login}"" 
                             }} 
                     }} 
-            }}";
+            }}");
 
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+                .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -1829,48 +1836,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             result.Should().Be(userId);
-        }
-
-        [Fact]
-        public async Task GetUserId_For_No_Existant_User_Returns_Null()
-        {
-            // Arrange
-            const string login = "idonotexist";
-
-            var url = $"https://api.github.com/graphql";
-            var payload =
-                $"{{\"query\":\"query($login: String!) {{user(login: $login) {{ id, name }} }}\",\"variables\":{{\"login\":\"{login}\"}}}}";
-
-            var response = @"{
-	            ""data"": {
-                    ""user"": null
-                },
-	            ""errors"": [
-		            {
-			            ""type"": ""NOT_FOUND"",
-			            ""path"": [
-				            ""user""
-			            ],
-			            ""locations"": [
-				            {
-					            ""line"": 4,
-					            ""column"": 3
-                            }
-			            ],
-			            ""message"": ""Could not resolve to a User with the login of 'idonotexist'.""
-		            }
-	            ]
-            }";
-
-            _githubClientMock
-                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
-                .ReturnsAsync(response);
-
-            // Act
-            var result = await _githubApi.GetUserId(login);
-
-            // Assert
-            result.Should().BeNull();
         }
 
         [Fact]

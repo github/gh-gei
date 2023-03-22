@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(16);
+            command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
@@ -56,6 +56,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
+            TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
         }
 
         [Fact]

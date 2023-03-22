@@ -30,7 +30,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadService>()
+                .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<OrgsCsvGeneratorService>()
                 .AddSingleton<TeamProjectsCsvGeneratorService>()
                 .AddSingleton<ReposCsvGeneratorService>()
@@ -38,6 +38,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
                 .AddSingleton<DateTimeProvider>()
+                .AddSingleton<FileSystemProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
