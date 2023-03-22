@@ -256,6 +256,7 @@ jobs:
       with:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
+        comment_mode: off
     
     - name: Upload test logs
       uses: actions/upload-artifact@v2
