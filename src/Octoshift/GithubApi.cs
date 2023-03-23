@@ -646,7 +646,7 @@ namespace OctoshiftCLI
             }, ArchiveMigrationStatus.Failed);
 
             return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Archive generation failed for id: {migrationId}")
+                ? throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}")
                 : response.Result;
         }
 
