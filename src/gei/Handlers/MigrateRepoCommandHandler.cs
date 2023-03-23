@@ -80,7 +80,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo,
-              blobCredentialsRequired
+              blobCredentialsRequired,
+              args.KeepArchive
             );
 
             if (blobCredentialsRequired)
@@ -184,7 +185,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string awsBucketName,
       bool skipReleases,
       bool lockSourceRepo,
-      bool blobCredentialsRequired)
+      bool blobCredentialsRequired,
+      bool keepArchive)
     {
         var gitDataArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
         _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
@@ -228,8 +230,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
         finally
         {
-            DeleteArchive(gitArchiveFilePath);
-            DeleteArchive(metadataArchiveFilePath);
+            if (!keepArchive)
+            {
+                DeleteArchive(gitArchiveFilePath);
+                DeleteArchive(metadataArchiveFilePath);
+            }
         }
     }
 
@@ -411,6 +416,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("LOCK SOURCE REPO: true");
         }
 
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
+        }
+
         LogAwsOptions(args);
     }
 
@@ -493,6 +503,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 {
                     _log.LogInformation("GHES version is 3.8.0 or later, no need to set cloud storage options here, please set in GHES admin UI.");
                 }
+
+                if (args.KeepArchive)
+                {
+                    _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
+                }
+
                 return;
             }
 
@@ -569,6 +585,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (args.NoSslVerify)
             {
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
+
+            if (args.KeepArchive)
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
             }
         }
     }

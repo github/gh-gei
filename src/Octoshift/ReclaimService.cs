@@ -162,9 +162,13 @@ namespace Octoshift
                     continue;
                 }
 
-                var claimantId = await _githubApi.GetUserId(claimantLogin);
+                string claimantId;
 
-                if (claimantId == null)
+                try
+                {
+                    claimantId = await _githubApi.GetUserId(claimantLogin);
+                }
+                catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login"))
                 {
                     _log.LogError($"Claimant \"{claimantLogin}\" not found. Will ignore it.");
                     continue;
