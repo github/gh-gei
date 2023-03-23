@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -14,7 +15,8 @@ namespace OctoshiftCLI
         private readonly BlobServiceClient _blobServiceClient;
         private readonly OctoLogger _log;
         private const string CONTAINER_PREFIX = "migration-archives";
-        private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
+        private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
+        private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
 
         public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
         {
@@ -40,6 +42,12 @@ namespace OctoshiftCLI
 
         public virtual async Task<Uri> UploadToBlob(string fileName, byte[] content)
         {
+            using var memoryStream = new MemoryStream(content);
+            return await UploadToBlob(fileName, memoryStream);
+        }
+
+        public virtual async Task<Uri> UploadToBlob(string fileName, Stream content)
+        {
             var containerClient = await CreateBlobContainerAsync();
             var blobClient = containerClient.GetBlobClient(fileName);
 
@@ -47,13 +55,12 @@ namespace OctoshiftCLI
             {
                 TransferOptions = new Azure.Storage.StorageTransferOptions()
                 {
-                    InitialTransferSize = 4 * 1024 * 1024,
-                    MaximumTransferSize = 4 * 1024 * 1024
+                    InitialTransferSize = DEFAULT_BLOCK_SIZE,
+                    MaximumTransferSize = DEFAULT_BLOCK_SIZE
                 },
             };
 
-            var binaryDataContent = new BinaryData(content);
-            await blobClient.UploadAsync(binaryDataContent, options);
+            await blobClient.UploadAsync(content, options);
             return GetServiceSasUriForBlob(blobClient);
         }
 
@@ -78,7 +85,7 @@ namespace OctoshiftCLI
 
                 ExpiresOn = DateTimeOffset.UtcNow.AddHours(AUTHORIZATION_TIMEOUT_IN_HOURS)
             };
-            sasBuilder.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Write);
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
             return blobClient.GenerateSasUri(sasBuilder);
         }

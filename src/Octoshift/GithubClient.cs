@@ -73,6 +73,18 @@ namespace OctoshiftCLI
         public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
             (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
+        public virtual async Task<JToken> PostGraphQLAsync(
+            string url,
+            object body,
+            Dictionary<string, string> customHeaders = null)
+        {
+            var response = await PostAsync(url, body, customHeaders);
+            var data = JObject.Parse(response);
+            EnsureSuccessGraphQLResponse(data);
+
+            return data;
+        }
+
         public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
             string url,
             object body,
@@ -161,7 +173,7 @@ namespace OctoshiftCLI
                 _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
             }
 
-            if (GetRateLimitRemaining(headers) <= 0)
+            if (GetRateLimitRemaining(headers) <= 0 && content.ToUpper().Contains("API RATE LIMIT EXCEEDED"))
             {
                 SetRetryDelay(headers);
             }
@@ -236,6 +248,16 @@ namespace OctoshiftCLI
             var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
 
             _retryDelay = (int)(resetUnixSeconds - currentUnixSeconds);
+        }
+
+        private void EnsureSuccessGraphQLResponse(JObject response)
+        {
+            if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
+            {
+                var error = (JObject)errors[0];
+                var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
+                throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
+            }
         }
     }
 }

@@ -32,17 +32,19 @@ public class AwsApiTests
 
         var result = await awsApi.UploadToBucket(bucketName, fileName, keyName);
 
-        // Assert
+        // Assert 
         result.Should().Be(url);
         transferUtility.Verify(m => m.UploadAsync(fileName, bucketName, keyName, It.IsAny<CancellationToken>()));
     }
 
     [Fact]
-    public async Task UploadToBucket_Uploads_Byte_Array()
+    public async Task UploadToBucket_Uploads_FileStream()
     {
         // Arrange
         var bucketName = "bucket";
         var bytes = Encoding.ASCII.GetBytes("here are some bytes");
+        using var stream = new MemoryStream();
+        stream.Write(bytes, 0, bytes.Length);
         var keyName = "key";
         var url = "http://example.com/file.zip";
 
@@ -53,10 +55,21 @@ public class AwsApiTests
         transferUtility.Setup(m => m.S3Client).Returns(s3Client.Object);
         using var awsApi = new AwsApi(transferUtility.Object);
 
-        var result = await awsApi.UploadToBucket(bucketName, bytes, keyName);
+        var result = await awsApi.UploadToBucket(bucketName, stream, keyName);
 
         // Assert
         result.Should().Be(url);
         transferUtility.Verify(m => m.UploadAsync(It.IsAny<MemoryStream>(), bucketName, keyName, It.IsAny<CancellationToken>()));
+    }
+
+    [Fact]
+    public void It_Throws_If_Aws_Region_Is_Invalid()
+    {
+        // Arrange, Act
+        const string awsRegion = "invalid-region";
+        var awsApi = () => new AwsApi("awsAccessKeyId", "awsSecretAccessKey", awsRegion);
+
+        // Assert
+        awsApi.Should().Throw<OctoshiftCliException>().WithMessage($"*{awsRegion}*");
     }
 }

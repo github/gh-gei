@@ -29,16 +29,22 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(SshUser);
         AddOption(SshPrivateKey);
         AddOption(SshPort);
+        AddOption(ArchiveDownloadHost);
         AddOption(SmbUser);
         AddOption(SmbPassword);
+        AddOption(SmbDomain);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
         AddOption(AwsBucketName);
         AddOption(AwsAccessKey);
         AddOption(AwsSecretKey);
+        AddOption(AwsSessionToken);
+        AddOption(AwsRegion);
         AddOption(Wait);
         AddOption(Kerberos);
         AddOption(Verbose);
+        AddOption(KeepArchive);
+        AddOption(NoSslVerify);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -63,7 +69,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> BbsSharedHome { get; } = new(
         name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. If not provided \"/var/atlassian/application-data/bitbucket/shared\" will be used.");
+        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
+                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
 
     public Option<string> ArchiveUrl { get; } = new(
         name: "--archive-url",
@@ -84,15 +91,30 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
-        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable.");
+        description: "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable.");
 
     public Option<string> AwsSecretKey { get; } = new(
         name: "--aws-secret-key",
-        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable.");
+        description: "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable.");
+
+    public Option<string> AwsSessionToken { get; } = new(
+        name: "--aws-session-token",
+        description: "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable.");
+
+    public Option<string> AwsRegion { get; } = new(
+        name: "--aws-region",
+        description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 
     public Option<string> GithubRepo { get; } = new("--github-repo");
+
+    public Option<string> ArchiveDownloadHost { get; } = new(
+        name: "--archive-download-host",
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
+    { IsHidden = true };
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -119,13 +141,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> SmbUser { get; } = new(
         name: "--smb-user",
-        description: "The SMB user to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance.");
 
     public Option<string> SmbPassword { get; } = new(
         name: "--smb-password",
-        description: "The SMB password to be used for downloading the export archive off of the Bitbucket server.")
-    { IsHidden = true };
+        description: "The SMB password used for authentication when downloading the export archive from the Bitbucket server instance. If not provided, it will be read from SMB_PASSWORD environment variable.");
+
+    public Option<string> SmbDomain { get; } = new(
+        name: "--smb-domain",
+        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
@@ -141,6 +165,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     { IsHidden = true };
 
     public Option<bool> Verbose { get; } = new("--verbose");
+
+    public Option<bool> KeepArchive { get; } = new(
+        name: "--keep-archive",
+        description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
+
+    public Option<bool> NoSslVerify { get; } = new(
+        name: "--no-ssl-verify",
+        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
+                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
@@ -173,14 +206,19 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var bbsApiFactory = sp.GetRequiredService<BbsApiFactory>();
 
-            bbsApi = args.Kerberos ? bbsApiFactory.CreateKerberos(args.BbsServerUrl) : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword);
+            bbsApi = args.Kerberos
+                ? bbsApiFactory.CreateKerberos(args.BbsServerUrl, args.NoSslVerify)
+                : bbsApiFactory.Create(args.BbsServerUrl, args.BbsUsername, args.BbsPassword, args.NoSslVerify);
         }
 
-        if (args.SshUser.HasValue())
+        if (args.SshUser.HasValue() || args.SmbUser.HasValue())
         {
             var bbsArchiveDownloaderFactory = sp.GetRequiredService<BbsArchiveDownloaderFactory>();
-            var bbsHost = new Uri(args.BbsServerUrl).Host;
-            bbsArchiveDownloader = bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome);
+            var bbsHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.BbsServerUrl).Host;
+
+            bbsArchiveDownloader = args.SshUser.HasValue()
+                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.BbsSharedHome)
+                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.BbsSharedHome);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
@@ -193,7 +231,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.AwsBucketName.HasValue())
         {
             var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
-            awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+            awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
         }
 
         return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider);
@@ -210,6 +248,8 @@ public class MigrateRepoCommandArgs
     public string AwsBucketName { get; set; }
     public string AwsAccessKey { get; set; }
     public string AwsSecretKey { get; set; }
+    public string AwsSessionToken { get; set; }
+    public string AwsRegion { get; set; }
 
     public string GithubOrg { get; set; }
     public string GithubRepo { get; set; }
@@ -224,11 +264,17 @@ public class MigrateRepoCommandArgs
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
     public string BbsSharedHome { get; set; }
+    public bool NoSslVerify { get; set; }
 
+
+    public string ArchiveDownloadHost { get; set; }
     public string SshUser { get; set; }
     public string SshPrivateKey { get; set; }
     public int SshPort { get; set; } = 22;
 
     public string SmbUser { get; set; }
     public string SmbPassword { get; set; }
+    public string SmbDomain { get; set; }
+
+    public bool KeepArchive { get; set; }
 }

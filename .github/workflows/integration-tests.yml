@@ -8,12 +8,67 @@ on:
         required: true
 
 jobs:
-  integration-test:
+  build-for-e2e-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        target-os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build Artifacts (Linux)
+      if: matrix.target-os == 'ubuntu-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts (Windows)
+      if: matrix.target-os == 'windows-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_LINUX: "true"
+        SKIP_MACOS: "true"
+
+    - name: Build Artifacts (MacOS)
+      if: matrix.target-os == 'macos-latest'
+      run: ./publish.ps1
+      shell: pwsh
+      env:
+        SKIP_WINDOWS: "true"
+        SKIP_LINUX: "true"
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries-${{ matrix.target-os }}
+        path: |
+          dist/linux-x64/ado2gh-linux-amd64
+          dist/linux-x64/bbs2gh-linux-amd64
+          dist/linux-x64/gei-linux-amd64
+          dist/osx-x64/ado2gh-darwin-amd64
+          dist/osx-x64/bbs2gh-darwin-amd64
+          dist/osx-x64/gei-darwin-amd64
+          dist/win-x64/ado2gh-windows-amd64.exe
+          dist/win-x64/bbs2gh-windows-amd64.exe
+          dist/win-x64/gei-windows-amd64.exe
+
+  e2e-test:
+    needs: [ build-for-e2e-test ]
     strategy:
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
+        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
-    concurrency: integration-test-${{ matrix.runner-os }}
+    concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -32,39 +87,11 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build Artifacts
-      if: matrix.runner-os == 'ubuntu-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_MACOS: "true"
-
-    - name: Build Artifacts
-      if: matrix.runner-os == 'windows-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_LINUX: "true"
-        SKIP_MACOS: "true"
-
-    - name: Build Artifacts
-      if: matrix.runner-os == 'macos-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_LINUX: "true"
-
-    - name: Upload Binaries
-      uses: actions/upload-artifact@v2
-      if: matrix.runner-os == 'ubuntu-latest'
+    - name: Download Binaries
+      uses: actions/download-artifact@v3
       with:
-        name: publish-binaries
-        path: |
-          dist/
-          !dist/*.tar.gz
-          !dist/*.zip
+        name: binaries-${{ matrix.runner-os }}
+        path: dist
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
@@ -99,6 +126,12 @@ jobs:
         Copy-Item ./dist/osx-x64/bbs2gh-darwin-amd64 ./gh-bbs2gh/gh-bbs2gh
       shell: pwsh
 
+    - name: Set execute permissions
+      run: |
+        chmod +x ./gh-gei/gh-gei
+        chmod +x ./gh-ado2gh/gh-ado2gh
+        chmod +x ./gh-bbs2gh/gh-bbs2gh
+
     - name: Install gh-gei extension
       run: gh extension install .
       shell: pwsh
@@ -127,27 +160,35 @@ jobs:
         GHES_PAT: ${{ secrets.GHES_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
-        SSH_KEY: ${{ secrets.SSH_KEY }}
-        AZURE_STORAGE_CONNECTION_STRING_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_LINUX }}
-        AZURE_STORAGE_CONNECTION_STRING_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_MACOS }}
-        AZURE_STORAGE_CONNECTION_STRING_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_WINDOWS }}
+        SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
+        SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
+        SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
+        AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX }}
+        AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS }}
+        AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS }}
+        AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX }}
+        AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS }}
+        AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         GEI_DEBUG_MODE: 'true'
         LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net6.0/runtimes/ubuntu.18.04-x64/native'
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
       if: always() && matrix.runner-os == 'ubuntu-latest'
       with:
         files: "**/*-tests.xml"
-        check_name: "Integration Test Results"
+        check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
+        comment_mode: off
         commit: ${{ env.PR_SHA }}
     
     - name: Upload test logs
       uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: integration-test-logs-${{ matrix.runner-os }}
+        name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
         path: dist/**/*.log
 
     - name: Test Logs

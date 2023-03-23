@@ -5,23 +5,43 @@ using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI;
 
 public class AwsApi : IDisposable
 {
-    private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 24;
-    private static readonly RegionEndpoint RegionEndpoint = RegionEndpoint.USEast1;
+    private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
+    private static readonly RegionEndpoint DefaultRegionEndpoint = RegionEndpoint.USEast1;
 
     private readonly ITransferUtility _transferUtility;
 
 #pragma warning disable CA2000
-    public AwsApi(string awsAccessKey, string awsSecretKey) : this(new TransferUtility(new AmazonS3Client(awsAccessKey, awsSecretKey, RegionEndpoint)))
+    public AwsApi(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion = null, string awsSessionToken = null)
+        : this(new TransferUtility(BuildAmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken)))
 #pragma warning restore CA2000
     {
     }
 
     internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
+
+    private static AmazonS3Client BuildAmazonS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion, string awsSessionToken)
+    {
+        var regionEndpoint = DefaultRegionEndpoint;
+        if (awsRegion.HasValue())
+        {
+            regionEndpoint = GetRegionEndpoint(awsRegion);
+            AWSConfigsS3.UseSignatureVersion4 = true;
+        }
+
+        return awsSessionToken.HasValue()
+            ? new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsSessionToken, regionEndpoint)
+            : new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, regionEndpoint);
+    }
+
+    private static RegionEndpoint GetRegionEndpoint(string awsRegion) => RegionEndpoint.GetBySystemName(awsRegion) is { DisplayName: not "Unknown" } regionEndpoint
+        ? regionEndpoint
+        : throw new OctoshiftCliException($"Invalid AWS region \"{awsRegion}\".");
 
     public virtual async Task<string> UploadToBucket(string bucketName, string fileName, string keyName)
     {
@@ -29,10 +49,9 @@ public class AwsApi : IDisposable
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 
-    public virtual async Task<string> UploadToBucket(string bucketName, byte[] bytes, string keyName)
+    public virtual async Task<string> UploadToBucket(string bucketName, Stream content, string keyName)
     {
-        using var byteStream = new MemoryStream(bytes);
-        await _transferUtility.UploadAsync(byteStream, bucketName, keyName);
+        await _transferUtility.UploadAsync(content, bucketName, keyName);
         return GetPreSignedUrlForFile(bucketName, keyName);
     }
 

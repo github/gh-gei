@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI;
@@ -13,5 +15,35 @@ public class FileSystemProvider
 
     public virtual FileStream Open(string path, FileMode mode) => File.Open(path, mode);
 
+    public virtual FileStream OpenRead(string path) => File.OpenRead(path);
+
     public virtual async Task WriteAllTextAsync(string path, string contents) => await File.WriteAllTextAsync(path, contents);
+
+    public virtual async ValueTask WriteAsync(FileStream fileStream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        if (fileStream is null)
+        {
+            return;
+        }
+
+        await fileStream.WriteAsync(buffer, cancellationToken);
+    }
+
+    public virtual void DeleteIfExists(string path)
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    public virtual string GetTempFileName() => Path.GetTempFileName();
+
+    public virtual async Task CopySourceToTargetStreamAsync(Stream source, Stream target)
+    {
+        if (source != null)
+        {
+            await source.CopyToAsync(target);
+        }
+    }
 }

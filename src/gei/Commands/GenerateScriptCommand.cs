@@ -25,6 +25,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(GhesApiUrl);
             AddOption(AwsBucketName);
+            AddOption(AwsRegion);
             AddOption(NoSslVerify);
             AddOption(DownloadMigrationLogs);
 
@@ -36,6 +37,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubSourcePat);
             AddOption(AdoPat);
             AddOption(Verbose);
+            AddOption(KeepArchive);
         }
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
         {
@@ -101,7 +103,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
         };
 
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
+        };
+
         public Option<bool> Verbose { get; } = new("--verbose");
+
+        public Option<bool> KeepArchive { get; } = new("--keep-archive")
+        {
+            Description = "Keeps the archive on this machine after uploading to the blob storage account. Only applicable for migrations from GitHub Enterprise Server versions before 3.8.0."
+        };
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
         {
@@ -148,6 +162,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public FileInfo Output { get; set; }
         public string GhesApiUrl { get; set; }
         public string AwsBucketName { get; set; }
+        public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
@@ -156,5 +171,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }
         public bool Verbose { get; set; }
+        public bool KeepArchive { get; set; }
     }
 }

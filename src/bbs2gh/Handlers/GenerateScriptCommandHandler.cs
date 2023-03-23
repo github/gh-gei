@@ -44,6 +44,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         _log.LogInformation("Generating Script...");
 
         LogOptions(args);
+        ValidateOptions(args);
 
         _log.RegisterSecret(args.BbsPassword);
 
@@ -106,13 +107,19 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var waitOption = wait ? " --wait" : "";
         var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
-        var archiveDownloadOptions = args.SshUser.HasValue()
-            ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}"
+        var sshArchiveDownloadOptions = args.SshUser.HasValue()
+            ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}{(args.ArchiveDownloadHost.HasValue() ? $" --archive-download-host {args.ArchiveDownloadHost}" : "")}" : "";
+        var smbArchiveDownloadOptions = args.SmbUser.HasValue()
+            ? $" --smb-user \"{args.SmbUser}\"{(args.SmbDomain.HasValue() ? $" --smb-domain {args.SmbDomain}" : "")}{(args.ArchiveDownloadHost.HasValue() ? $" --archive-download-host {args.ArchiveDownloadHost}" : "")}"
             : "";
         var bbsSharedHomeOption = args.BbsSharedHome.HasValue() ? $" --bbs-shared-home \"{args.BbsSharedHome}\"" : "";
         var awsBucketNameOption = args.AwsBucketName.HasValue() ? $" --aws-bucket-name \"{args.AwsBucketName}\"" : "";
+        var awsRegionOption = args.AwsRegion.HasValue() ? $" --aws-region \"{args.AwsRegion}\"" : "";
+        var keepArchive = args.KeepArchive ? " --keep-archive" : "";
+        var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
 
-        return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{archiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}";
+        return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
+               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
@@ -146,6 +153,11 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation($"BBS PROJECT KEY: {args.BbsProjectKey}");
         }
 
+        if (args.ArchiveDownloadHost.HasValue())
+        {
+            _log.LogInformation($"ARCHIVE DOWNLOAD HOST: {args.ArchiveDownloadHost}");
+        }
+
         if (args.SshUser.HasValue())
         {
             _log.LogInformation($"SSH USER: {args.SshUser}");
@@ -161,6 +173,16 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogInformation($"SSH PORT: {args.SshPort}");
         }
 
+        if (args.SmbUser.HasValue())
+        {
+            _log.LogInformation($"SMB USER: {args.SmbUser}");
+        }
+
+        if (args.SmbDomain.HasValue())
+        {
+            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
+        }
+
         if (args.Output.HasValue())
         {
             _log.LogInformation($"OUTPUT: {args.Output}");
@@ -169,6 +191,29 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         if (args.AwsBucketName.HasValue())
         {
             _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
+        }
+
+        if (args.AwsRegion.HasValue())
+        {
+            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
+        }
+
+        if (args.KeepArchive)
+        {
+            _log.LogInformation("KEEP ARCHIVE: true");
+        }
+
+        if (args.NoSslVerify)
+        {
+            _log.LogInformation("NO SSL VERIFY: true");
+        }
+    }
+
+    private void ValidateOptions(GenerateScriptCommandArgs args)
+    {
+        if (args.NoSslVerify && args.BbsServerUrl.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
     }
 

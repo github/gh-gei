@@ -28,6 +28,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(AwsBucketName);
             AddOption(AwsAccessKey);
             AddOption(AwsSecretKey);
+            AddOption(AwsSessionToken);
+            AddOption(AwsRegion);
             AddOption(NoSslVerify);
 
             AddOption(GitArchiveUrl);
@@ -41,6 +43,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(GithubTargetPat);
             AddOption(AdoPat);
             AddOption(Verbose);
+            AddOption(KeepArchive);
         }
 
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
@@ -86,19 +89,29 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
         {
-            Description = "Required if migrating from GHES (Not required for GHES 3.8.0 and later). The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
+            Description = "Required if migrating from GHES (Not required if migrating from GitHub Enterprise Server 3.8.0 or later). The connection string for the Azure storage account, used to upload data archives pre-migration. For example: \"DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net\""
         };
         public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
         {
-            Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to (Not required for GHES 3.8.0 and later)."
+            Description = "If using AWS, the name of the S3 bucket to upload the data archives to. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsAccessKey { get; } = new("--aws-access-key")
         {
-            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY environment variable (Not required for GHES 3.8.0 and later)."
+            Description = "If uploading to S3, the AWS access key. If not provided, it will be read from AWS_ACCESS_KEY_ID environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
         };
         public Option<string> AwsSecretKey { get; } = new("--aws-secret-key")
         {
-            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_KEY environment variable (Not required for GHES 3.8.0 and later)."
+            Description = "If uploading to S3, the AWS secret key. If not provided, it will be read from AWS_SECRET_ACCESS_KEY environment variable. Not required if migrating from GitHub Enterprise Server 3.8.0 or later."
+        };
+        public Option<string> AwsSessionToken { get; } = new("--aws-session-token")
+        {
+            Description = "If using AWS, the AWS session token. If not provided, it will be read from AWS_SESSION_TOKEN environment variable."
+        };
+        public Option<string> AwsRegion { get; } = new("--aws-region")
+        {
+            Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
+                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
+                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -136,6 +149,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<bool> Verbose { get; } = new("--verbose");
 
+        public Option<bool> KeepArchive { get; } = new("--keep-archive")
+        {
+            Description = "Keeps the archive on this machine after uploading to the blob storage account. Only applicable for migrations from GitHub Enterprise Server versions before 3.8.0."
+        };
+
         public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
@@ -150,7 +168,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
-            var httpDownloadService = sp.GetRequiredService<HttpDownloadService>();
+            var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
@@ -158,14 +176,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             GithubApi ghesApi = null;
             AzureApi azureApi = null;
             AwsApi awsApi = null;
+            HttpDownloadService httpDownloadService = null;
 
             if (args.GhesApiUrl.HasValue())
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
                 var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
-
+                var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
                 ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
+                httpDownloadService = args.NoSslVerify ? httpDownloadServiceFactory.CreateClientNoSsl() : httpDownloadServiceFactory.CreateDefault();
 
                 if (args.AzureStorageConnectionString.HasValue() || environmentVariableProvider.AzureStorageConnectionString(false).HasValue())
                 {
@@ -174,11 +194,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
                 if (args.AwsBucketName.HasValue())
                 {
-                    awsApi = awsApiFactory.Create(args.AwsAccessKey, args.AwsSecretKey);
+                    awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider);
         }
     }
 
@@ -197,6 +217,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string AwsBucketName { get; set; }
         public string AwsAccessKey { get; set; }
         public string AwsSecretKey { get; set; }
+        public string AwsSessionToken { get; set; }
+        public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
@@ -207,5 +229,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }
+        public bool KeepArchive { get; set; }
     }
 }

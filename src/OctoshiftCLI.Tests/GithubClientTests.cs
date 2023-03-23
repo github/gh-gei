@@ -18,12 +18,16 @@ namespace OctoshiftCLI.Tests
     public sealed class GithubClientTests : IDisposable
     {
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly HttpResponseMessage _httpResponse;
+        private readonly HttpResponseMessage _defaultHttpResponse;
+        private readonly HttpResponseMessage _graphqlHttpResponse;
         private readonly RetryPolicy _retryPolicy;
         private readonly Mock<DateTimeProvider> _dateTimeProvider = TestHelpers.CreateMock<DateTimeProvider>();
         private readonly object _rawRequestBody;
+        private const string GITHUB_REQUEST_ID = "123-456-789";
         private const string EXPECTED_JSON_REQUEST_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_RESPONSE_CONTENT = "RESPONSE_CONTENT";
+        private const string EXPECTED_GRAPHQL_JSON_RESPONSE_BODY = "{\"id\":\"ID\"}";
+        private const string EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY = "{\"data\":{\"createMigrationSource\":null},\"errors\":[{\"type\":\"FORBIDDEN\",\"path\":[\"createMigrationSource\"],\"extensions\":{\"saml_failure\":true},\"locations\":[{\"line\":1,\"column\":109}],\"message\":\"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.\"}]}";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
         private const string URL = "http://example.com/resource";
 
@@ -31,9 +35,14 @@ namespace OctoshiftCLI.Tests
         {
             _rawRequestBody = new { id = "ID" };
 
-            _httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            _defaultHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
+            };
+
+            _graphqlHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY)
             };
 
             _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
@@ -44,7 +53,8 @@ namespace OctoshiftCLI.Tests
 
         public void Dispose()
         {
-            _httpResponse?.Dispose();
+            _defaultHttpResponse?.Dispose();
+            _graphqlHttpResponse?.Dispose();
         }
 
         [Fact]
@@ -165,7 +175,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             const string githubRequestId = "123-456-789";
-            _httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
+            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
@@ -235,7 +245,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -285,7 +295,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -333,6 +343,65 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PostAsync_Does_Not_Apply_Retry_Delay_To_Bad_Credentials_Response()
+        {
+            // Arrange
+            var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            var retryAt = now + 4;
+
+            _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
+
+            using var badCredentialResponse1 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
+            };
+
+            badCredentialResponse1.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            badCredentialResponse1.Headers.Add("X-RateLimit-Remaining", "0");
+
+            using var badCredentialResponse2 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
+            };
+
+            badCredentialResponse2.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
+            badCredentialResponse2.Headers.Add("X-RateLimit-Remaining", "0");
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(badCredentialResponse1)
+                .ReturnsAsync(badCredentialResponse2);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            await FluentActions
+                .Invoking(async () =>
+                {
+                    await githubClient.PostAsync("http://example.com", "hello");
+                })
+                .Should()
+                .ThrowExactlyAsync<HttpRequestException>();
+
+            await FluentActions
+                .Invoking(async () =>
+                {
+                    await githubClient.PostAsync("http://example.com", "hello");
+                })
+                .Should()
+                .ThrowAsync<HttpRequestException>();
+
+            // Assert
+            _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
         public async Task PostAsync_Applies_Retry_Delay()
         {
             // Arrange
@@ -348,7 +417,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -398,7 +467,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -480,7 +549,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             const string githubRequestId = "123-456-789";
-            _httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
+            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
@@ -516,7 +585,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PostAsync("http://example.com", _rawRequestBody);
@@ -561,6 +630,138 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task PostGraphQLAsync_Returns_JObject_Response()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var response = await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            response.ToJson().Should().Be(EXPECTED_JSON_REQUEST_BODY);
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Encodes_The_Url()
+        {
+            // Arrange
+            var handlerMock = MockHttpHandlerForGraphQLPost();
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            const string actualUrl = "http://example.com/param with space";
+            const string expectedUrl = "http://example.com/param%20with%20space";
+
+            // Act
+            await githubClient.PostGraphQLAsync(actualUrl, _rawRequestBody);
+
+            // Assert
+            handlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Url()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            const string url = "http://example.com";
+            var expectedLogMessage = $"HTTP POST: {url}";
+
+            // Act
+            await githubClient.PostGraphQLAsync(url, _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_GitHub_Request_Id_Header_Value()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+            _graphqlHttpResponse.Headers.Add("X-GitHub-Request-Id", GITHUB_REQUEST_ID);
+
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Request_Body()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            var expectedLogMessage = $"HTTP BODY: {EXPECTED_JSON_REQUEST_BODY}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Logs_The_Response_Status_Code_And_Content()
+        {
+            // Arrange
+            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            var expectedLogMessage = $"RESPONSE ({_graphqlHttpResponse.StatusCode}): {EXPECTED_GRAPHQL_JSON_RESPONSE_BODY}";
+
+            // Act
+            await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+
+            // Assert
+            _mockOctoLogger.Verify(m =>
+                m.LogVerbose(It.Is<string>(actualLogMessage => actualLogMessage == expectedLogMessage)));
+        }
+
+        [Fact]
+        public async Task PostGraphQLAsync_Throws_OctoshiftCliException_On_Non_Success_Response()
+        {
+            // Arrange
+            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY)
+            };
+
+            var handlerMock = MockHttpHandlerForGraphQLPost(httpResponse);
+            var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            // Act
+            // Assert
+            await FluentActions
+                .Invoking(() =>
+                {
+                    using var httpClient = new HttpClient(handlerMock.Object);
+                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+                    return githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
+                })
+                .Should()
+                .ThrowExactlyAsync<OctoshiftCLI.OctoshiftCliException>()
+                .WithMessage($"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.");
+        }
+
+        [Fact]
         public async Task PutAsync_Returns_String_Response()
         {
             // Arrange
@@ -590,7 +791,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -672,7 +873,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             const string githubRequestId = "123-456-789";
-            _httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
+            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
@@ -708,7 +909,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PutAsync("http://example.com", _rawRequestBody);
@@ -778,7 +979,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -860,7 +1061,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             const string githubRequestId = "123-456-789";
-            _httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
+            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
@@ -896,7 +1097,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PatchAsync("http://example.com", _rawRequestBody);
@@ -952,7 +1153,7 @@ namespace OctoshiftCLI.Tests
 
             using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("SECOND_RESPONSE")
+                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
             };
 
             secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
@@ -1048,7 +1249,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             const string githubRequestId = "123-456-789";
-            _httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
+            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
@@ -2161,8 +2362,13 @@ query($id: ID!, $first: Int, $after: String) {
 
         private Mock<HttpMessageHandler> MockHttpHandlerForPost() =>
             MockHttpHandler(req =>
-                req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
-                && req.Method == HttpMethod.Post);
+                req.Method == HttpMethod.Post);
+
+        private Mock<HttpMessageHandler> MockHttpHandlerForGraphQLPost(HttpResponseMessage httpResponseMessage = null)
+        {
+            return MockHttpHandler(req =>
+                req.Method == HttpMethod.Post, httpResponseMessage ?? _graphqlHttpResponse);
+        }
 
         private Mock<HttpMessageHandler> MockHttpHandlerForPut() =>
             MockHttpHandler(req =>
@@ -2186,7 +2392,7 @@ query($id: ID!, $first: Int, $after: String) {
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(x => requestMatcher(x)),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse ?? _httpResponse);
+                .ReturnsAsync(httpResponse ?? _defaultHttpResponse);
             return handlerMock;
         }
     }

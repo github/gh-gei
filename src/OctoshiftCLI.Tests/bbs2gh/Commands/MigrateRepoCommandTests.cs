@@ -9,6 +9,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
 
 public class MigrateRepoCommandTests
 {
+    private const string ARCHIVE_DOWNLOAD_HOST = "archive-download-host";
     private const string SSH_USER = "ssh-user";
     private const string SSH_PRIVATE_KEY = "ssh-private-key";
     private const int SSH_PORT = 1234;
@@ -20,6 +21,9 @@ public class MigrateRepoCommandTests
     private const string BBS_USERNAME = "bbs-username";
     private const string BBS_PASSWORD = "bbs-password";
     private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
+    private const string SMB_USER = "smb-user";
+    private const string SMB_PASSWORD = "smb-password";
+    private const string SMB_DOMAIN = "smb-domain";
 
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -49,7 +53,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(23);
+        command.Options.Count.Should().Be(29);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -61,22 +65,28 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-session-token", false);
+        TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
         TestHelpers.VerifyCommandOption(command.Options, "aws-secret-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-download-host", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
-        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false, true);
-        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-user", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-password", false);
+        TestHelpers.VerifyCommandOption(command.Options, "smb-domain", false);
         TestHelpers.VerifyCommandOption(command.Options, "wait", false);
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+        TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
+        TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
     }
 
     [Fact]
-    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_Is_Provided()
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_Based_On_Server_Url_When_Ssh_User_Is_Provided()
     {
         // Arrange
         var args = new MigrateRepoCommandArgs
@@ -97,6 +107,71 @@ public class MigrateRepoCommandTests
     }
 
     [Fact]
+    public void BuildHandler_Creates_Bbs_Ssh_Archive_Downloader_When_Ssh_User_And_Archive_Download_Host_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            SshPort = SSH_PORT,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(ARCHIVE_DOWNLOAD_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_Based_On_Server_Url_When_Smb_User_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            SmbDomain = SMB_DOMAIN,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(BBS_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
+    }
+
+    [Fact]
+    public void BuildHandler_Creates_Bbs_Smb_Archive_Downloader_When_Smb_User_And_Archive_Download_Host_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
+            SmbUser = SMB_USER,
+            SmbPassword = SMB_PASSWORD,
+            SmbDomain = SMB_DOMAIN,
+            BbsSharedHome = BBS_SHARED_HOME,
+            BbsServerUrl = BBS_SERVER_URL
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(ARCHIVE_DOWNLOAD_HOST, SMB_USER, SMB_PASSWORD, SMB_DOMAIN, BBS_SHARED_HOME));
+    }
+
+    [Fact]
     public void BuildHandler_Creates_The_Handler()
     {
         // Arrange
@@ -109,9 +184,9 @@ public class MigrateRepoCommandTests
         handler.Should().NotBeNull();
 
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(), Times.Never);
+        _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAzureApiFactory.Verify(m => m.Create(It.IsAny<string>()), Times.Never);
         _mockAzureApiFactory.Verify(m => m.CreateClientNoSsl(It.IsAny<string>()), Times.Never);
     }
@@ -152,7 +227,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, false));
     }
 
     [Fact]
@@ -201,21 +276,52 @@ public class MigrateRepoCommandTests
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL));
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, false));
     }
 
     [Fact]
-    public void It_Gets_A_Default_HttpClient_When_Kerberos_Is_Not_Set()
+    public void It_Gets_A_Kerberos_With_No_Ssl_Verify_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_True()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            Kerberos = true,
+            NoSslVerify = true
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, true));
+    }
+
+    [Fact]
+    public void It_Gets_A_Default_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_Not_Set()
+    {
+        var args = new MigrateRepoCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD
+        };
+
+        _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, false));
+    }
+
+    [Fact]
+    public void It_Gets_A_No_Ssl_Verify_HttpClient_When_No_Ssl_Verify_Is_True()
     {
         var args = new MigrateRepoCommandArgs
         {
             BbsServerUrl = BBS_SERVER_URL,
             BbsUsername = BBS_USERNAME,
             BbsPassword = BBS_PASSWORD,
+            NoSslVerify = true
         };
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD));
+        _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, true));
     }
 }

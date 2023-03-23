@@ -27,6 +27,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private const string TARGET_ORG = "FOO-TARGET-ORG";
         private const string REPO = "REPO";
         private const string AWS_BUCKET_NAME = "AWS_BUCKET_NAME";
+        private const string AWS_REGION = "AWS_REGION";
         private string _script;
 
         public GenerateScriptCommandHandlerTests()
@@ -505,21 +506,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -543,11 +534,11 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine($"# === Migration status for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo1}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo1}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo2}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo2}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
@@ -589,21 +580,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -626,11 +607,11 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
@@ -673,21 +654,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -707,8 +678,8 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
@@ -861,21 +832,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -899,12 +860,12 @@ function ExecAndGetMigrationID {
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine($"# === Migration status for Team Project: {SOURCE_ORG}/{adoTeamProject} ===");
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo1}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo1}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo1}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo1}\"");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo2}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{adoTeamProject}-{repo2}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{adoTeamProject}-{repo2}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{adoTeamProject}-{repo2}\"");
             expected.AppendLine();
             expected.AppendLine();
@@ -951,21 +912,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -988,12 +939,12 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\"");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\"");
             expected.AppendLine();
             expected.AppendLine();
@@ -1038,21 +989,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -1072,8 +1013,8 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\"");
             expected.AppendLine();
             expected.AppendLine();
@@ -1119,21 +1060,11 @@ if ($Failed -ne 0) {
             expected.AppendLine();
             expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
             expected.AppendLine(@"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}");
-            expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
         [scriptblock]$ScriptBlock
     )
-    $MigrationID = Exec $ScriptBlock | ForEach-Object {
+    $MigrationID = & @ScriptBlock | ForEach-Object {
         Write-Host $_
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
@@ -1153,8 +1084,8 @@ function ExecAndGetMigrationID {
             expected.AppendLine();
             expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
-            expected.AppendLine($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
-            expected.AppendLine("if ($lastexitcode -eq 0) { $Succeeded++ } else { $Failed++ }");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
@@ -1181,6 +1112,77 @@ if ($Failed -ne 0) {
             // Assert
             _script.Should().Be(expected.ToString());
             _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Ghes_Single_Repo_Keep_Archive()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+
+            var expected = new StringBuilder();
+            expected.AppendLine("#!/usr/bin/env pwsh");
+            expected.AppendLine();
+            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine(@"
+function ExecAndGetMigrationID {
+    param (
+        [scriptblock]$ScriptBlock
+    )
+    $MigrationID = & @ScriptBlock | ForEach-Object {
+        Write-Host $_
+        $_
+    } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
+    return $MigrationID
+}");
+            expected.AppendLine();
+            expected.AppendLine("$Succeeded = 0");
+            expected.AppendLine("$Failed = 0");
+            expected.AppendLine("$RepoMigrations = [ordered]@{}");
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine("# === Queuing repo migrations ===");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --keep-archive }}");
+            expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine($"# =========== Waiting for all migrations to finish for Organization: {SOURCE_ORG} ===========");
+            expected.AppendLine();
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
+            expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
+            expected.AppendLine();
+            expected.AppendLine();
+            expected.AppendLine("Write-Host =============== Summary ===============");
+            expected.AppendLine("Write-Host Total number of successful migrations: $Succeeded");
+            expected.AppendLine("Write-Host Total number of failed migrations: $Failed");
+            expected.AppendLine(@"
+if ($Failed -ne 0) {
+    exit 1
+}");
+            expected.AppendLine();
+            expected.AppendLine();
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                KeepArchive = true
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+            _mockOctoLogger.Verify(m => m.LogInformation("KEEP ARCHIVE: true"));
         }
 
         [Fact]
@@ -1221,7 +1223,7 @@ if ($Failed -ne 0) {
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --skip-releases }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
-            expected.Append($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
+            expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1233,7 +1235,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 22, 7);
+            _script = TrimNonExecutableLines(_script, 13, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1277,7 +1279,7 @@ if ($Failed -ne 0) {
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
-            expected.Append($"gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"]");
+            expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1289,7 +1291,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 22, 7);
+            _script = TrimNonExecutableLines(_script, 13, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1408,7 +1410,7 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --wait }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --wait }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1418,6 +1420,7 @@ if ($Failed -ne 0) {
                 Output = new FileInfo("unit-test-output"),
                 GhesApiUrl = ghesApiUrl,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 Sequential = true
             };
             await _handler.Handle(args);
@@ -1427,6 +1430,40 @@ if ($Failed -ne 0) {
             // Assert
             _script.Should().Be(expected);
             _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
+            _mockOctoLogger.Verify(m => m.LogInformation($"AWS REGION: {AWS_REGION}"));
+        }
+
+        [Fact]
+        public async Task Sequential_Ghes_Single_Repo_Keep_Archive()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --wait }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
+                Sequential = true,
+                KeepArchive = true
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+            _mockOctoLogger.Verify(m => m.LogInformation("KEEP ARCHIVE: true"));
         }
 
         [Fact]

@@ -437,7 +437,7 @@ namespace OctoshiftCLI.Tests.Octoshift
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
             _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
-            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Returns(Task.FromResult<string>(null));
+            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Throws(new OctoshiftCliException($"Could not resolve to a User with the login of '{MANNEQUIN_LOGIN}'."));
 
             var csvContent = new string[] {
                 HEADER,
@@ -867,14 +867,14 @@ namespace OctoshiftCLI.Tests.Octoshift
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
             _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
-            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Returns(Task.FromResult<string>(null));
+            _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Throws(new OctoshiftCliException("Could not resolve to a User with the login of 'idonotexist'."));
 
             // Act
             var exception = await FluentActions
                 .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
                 .Should().ThrowAsync<OctoshiftCliException>();
 
-            exception.WithMessage($"Target user {TARGET_USER_LOGIN} not found.");
+            exception.WithMessage($"Could not resolve to a User with the login of 'idonotexist'.");
 
             _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once());
         }
