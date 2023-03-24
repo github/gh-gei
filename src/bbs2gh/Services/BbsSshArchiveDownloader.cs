@@ -94,10 +94,8 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
             throw new OctoshiftCliException(
                 $"Source export archive ({sourceExportArchiveFullPath}) does not exist." +
                 (BbsSharedHomeDirectory is BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX
-                    ? " This usually happens because the archive could not be found at the default Bitbucket's shared home " +
-                      $"which is located in \"{BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX}\" if Bitbucket is installed on a Linux machine " +
-                      $"or in \"{BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS}\" if installed on a Windows machine. " +
-                      "You can point to a non default shared directory by specifying the --bbs-shared-home option."
+                    ? "This most likely means that your Bitbucket instance uses a non-default Bitbucket shared home directory, so we couldn't find your archive. " +
+                      "You can point the CLI to a non-default shared directory by specifying the --bbs-shared-home option."
                     : ""));
         }
 
