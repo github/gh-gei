@@ -205,7 +205,12 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
 
         return IsSuccessStatus(status)
             ? sharedFileHandle
-            : throw new OctoshiftCliException($"Couldn't create SMB file handle for \"{sharedFilePath}\" (Status Code: {status}).");
+            : throw new OctoshiftCliException(
+                $"Couldn't create SMB file handle for \"{sharedFilePath}\" (Status Code: {status})." +
+                (IsObjectPathNotFoundStatus(status) && BbsSharedHomeDirectory is BbsSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
+                    ? "This most likely means that your Bitbucket instance uses a non-default Bitbucket shared home directory, so we couldn't find your archive. " +
+                      "You can point the CLI to a non-default shared directory by specifying the --bbs-shared-home option."
+                    : ""));
     }
 
     private long? GetFileSize(ISMBFileStore fileStore, object sharedFileHandle)
@@ -218,4 +223,6 @@ public sealed class BbsSmbArchiveDownloader : IBbsArchiveDownloader
     private bool IsSuccessStatus(NTStatus status) => status is NTStatus.STATUS_SUCCESS;
 
     private bool IsEndOfFileStatus(NTStatus status) => status is NTStatus.STATUS_END_OF_FILE;
+
+    private bool IsObjectPathNotFoundStatus(NTStatus status) => status is NTStatus.STATUS_OBJECT_PATH_NOT_FOUND;
 }
