@@ -1,1 +1,2 @@
 - Update `gh bbs2gh generate-script` so it supports more than 25 projects/repos
+- Rename `--bbs-project-key` to `--bbs-project` in `gh bbs2gh generate-script` for consistency
