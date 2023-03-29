@@ -1,1 +1,1 @@
-- Add support for getting paginated Bitbucket API responses in `gh bbs2gh generate-script` command   
+- Update `gh bbs2gh generate-script` so it supports more than 25 projects/repos
