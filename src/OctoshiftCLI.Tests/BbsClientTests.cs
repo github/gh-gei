@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
+using OctoshiftCLI.Extensions;
 using Xunit;
 
 namespace OctoshiftCLI.Tests;
@@ -32,7 +34,11 @@ public sealed class BbsClientTests : IDisposable
             Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
         };
 
-        _retryPolicy = new RetryPolicy(_mockOctoLogger.Object);
+        _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
+        {
+            _httpRetryInterval = 1,
+            _retryInterval = 1
+        };
     }
 
     [Fact]
@@ -302,6 +308,219 @@ public sealed class BbsClientTests : IDisposable
         _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
     }
 
+    [Fact]
+    public async Task GetAllAsync_Should_Get_All_Pages()
+    {
+        // Arrange
+        const string url = "http://localhost:7990/rest/api/1.0/projects";
+
+        var firstValue = new { key = "PR1", id = 1 };
+        var secondValue = new { key = "PR2", id = 2 };
+        var thirdValue = new { key = "PR3", id = 3 };
+        var fourthValue = new { key = "PR4", id = 4 };
+        var fifthValue = new { key = "PR5", id = 5 };
+
+        var firstResponseContent = new
+        {
+            isLastPage = false,
+            nextPageStart = 2,
+            values = new[]
+            {
+                firstValue,
+                secondValue
+            }
+        }.ToJson();
+        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(firstResponseContent)
+        };
+
+        var secondResponseContent = new
+        {
+            isLastPage = false,
+            nextPageStart = 4,
+            values = new[]
+            {
+                thirdValue,
+                fourthValue
+            }
+        }.ToJson();
+        using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(secondResponseContent)
+        };
+
+        var thirdResponseContent = new
+        {
+            isLastPage = true,
+            values = new[]
+            {
+                fifthValue
+            }
+        }.ToJson();
+        using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(thirdResponseContent)
+        };
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        // first request
+        MockHttpHandler(
+            req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == $"{url}?start=0&limit=100",
+            firstResponse,
+            handlerMock);
+
+        // second request
+        MockHttpHandler(
+            req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == $"{url}?start=2&limit=100",
+            secondResponse,
+            handlerMock);
+
+        // third request
+        MockHttpHandler(
+            req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == $"{url}?start=4&limit=100",
+            thirdResponse,
+            handlerMock);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        var results = await bbsClient.GetAllAsync(url).ToListAsync();
+
+        // Assert
+        results.Should().HaveCount(5);
+        results[0].ToJson().Should().Be(firstValue.ToJson());
+        results[1].ToJson().Should().Be(secondValue.ToJson());
+        results[2].ToJson().Should().Be(thirdValue.ToJson());
+        results[3].ToJson().Should().Be(fourthValue.ToJson());
+        results[4].ToJson().Should().Be(fifthValue.ToJson());
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Logs_The_Url_Per_Each_Page_Request()
+    {
+        // Arrange
+        const string url = "http://example.com/resource";
+
+        var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = Array.Empty<object>() }.ToJson();
+        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) };
+
+        var secondResponseContent = new { isLastPage = true, values = Array.Empty<object>() }.ToJson();
+        using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(secondResponseContent) };
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        // first request
+        const string firstRequestUrl = $"{url}?start=0&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl, firstResponse, handlerMock);
+
+        // second request
+        const string secondRequestUrl = $"{url}?start=2&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl, secondResponse, handlerMock);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        await bbsClient.GetAllAsync(url).ToListAsync();
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogVerbose($"HTTP GET: {firstRequestUrl}"));
+        _mockOctoLogger.Verify(m => m.LogVerbose($"HTTP GET: {secondRequestUrl}"));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Logs_The_Response_Per_Each_Page_Request()
+    {
+        // Arrange
+        const string url = "http://example.com/resource";
+
+        var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = new[] { new { key = "value 1" } } }.ToJson();
+        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) };
+
+        var secondResponseContent = new { isLastPage = true, values = new[] { new { key = "value 2" } } }.ToJson();
+        using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(secondResponseContent) };
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        // first request
+        const string firstRequestUrl = $"{url}?start=0&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl, firstResponse, handlerMock);
+
+        // second request
+        const string secondRequestUrl = $"{url}?start=2&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl, secondResponse, handlerMock);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        await bbsClient.GetAllAsync(url).ToListAsync();
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({HttpStatusCode.OK}): {firstResponseContent}"));
+        _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({HttpStatusCode.OK}): {secondResponseContent}"));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Throws_HttpRequestException_On_Non_Success_Response()
+    {
+        // Arrange
+        const string url = "http://example.com/resource";
+
+        var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = Array.Empty<object>() }.ToJson();
+        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) };
+
+        using var secondResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        // first request
+        const string firstRequestUrl = $"{url}?start=0&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl, firstResponse, handlerMock);
+
+        // second request
+        const string secondRequestUrl = $"{url}?start=2&limit=100";
+        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl, secondResponse, handlerMock);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act, Assert
+        await bbsClient
+            .Invoking(async x => await x.GetAllAsync(url).ToListAsync())
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Overrides_Pagination_Query_Params_In_Request_Url()
+    {
+        // Arrange
+        const string actualUrl = "http://example.com/resource?start=1&limit=1";
+        const string expectedUrl = "http://example.com/resource?start=0&limit=100";
+
+        var responseContent = new { values = Array.Empty<object>() }.ToJson();
+        using var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(responseContent) };
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, response);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        await bbsClient.GetAllAsync(actualUrl).ToListAsync();
+
+        // Assert
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.ToString() == expectedUrl),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
     private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
         MockHttpHandler(req => req.Method == HttpMethod.Get);
 
@@ -315,9 +534,10 @@ public sealed class BbsClientTests : IDisposable
 
     private Mock<HttpMessageHandler> MockHttpHandler(
         Func<HttpRequestMessage, bool> requestMatcher,
-        HttpResponseMessage httpResponse = null)
+        HttpResponseMessage httpResponse = null,
+        Mock<HttpMessageHandler> handlerMock = null)
     {
-        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock ??= new Mock<HttpMessageHandler>();
         handlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
