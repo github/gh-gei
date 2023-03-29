@@ -521,6 +521,39 @@ public sealed class BbsClientTests : IDisposable
             ItExpr.IsAny<CancellationToken>());
     }
 
+    [Fact]
+    public async Task GetAllAsync_Retries_On_Non_Success_Response()
+    {
+        const string url = "http://example.com/resource";
+
+        var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = new[] { new { key = "value 1" } } }.ToJson();
+        using var firstResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent(firstResponseContent) };
+
+        var expectedValue = new { key = "value 2" };
+        var secondResponseContent = new { isLastPage = true, values = new[] { expectedValue } }.ToJson();
+        using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(secondResponseContent) };
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstResponse)
+            .ReturnsAsync(secondResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        var results = await bbsClient.GetAllAsync(url).ToListAsync();
+
+        // Assert
+        results.Should().HaveCount(1);
+        results[0].ToJson().Should().Be(expectedValue.ToJson());
+    }
+
     private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
         MockHttpHandler(req => req.Method == HttpMethod.Get);
 
