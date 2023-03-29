@@ -41,7 +41,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-project-key", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-shared-home", false);
         TestHelpers.VerifyCommandOption(_command.Options, "archive-download-host", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);

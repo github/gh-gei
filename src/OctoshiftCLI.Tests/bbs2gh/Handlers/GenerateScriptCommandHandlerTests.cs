@@ -188,7 +188,7 @@ public class GenerateScriptCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             BbsUsername = BBS_USERNAME,
             BbsPassword = BBS_PASSWORD,
-            BbsProjectKey = BBS_FOO_PROJECT_KEY,
+            BbsProject = BBS_FOO_PROJECT_KEY,
             BbsSharedHome = BBS_SHARED_HOME,
             ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
             SshUser = SSH_USER,
