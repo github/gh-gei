@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Octoshift;
 using Xunit;
 
@@ -15,6 +16,6 @@ public class StringCompressorTests
 
         var actualString = StringCompressor.GZipAndBase64String(uncompressed);
 
-        Assert.Matches(expectedStringPattern, actualString);
+        actualString.Should().MatchRegex(expectedStringPattern);
     }
 }

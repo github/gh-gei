@@ -776,9 +776,17 @@ namespace OctoshiftCLI
             }
 
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?{queryString}";
-            return await _client.GetAllAsync(url)
-                .Select(codescan => BuildCodeScanningAnalysis(codescan))
-                .ToListAsync();
+
+            try
+            {
+                return await _client.GetAllAsync(url)
+                    .Select(BuildCodeScanningAnalysis)
+                    .ToListAsync();
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound && ex.Message.Contains("no analysis found"))
+            {
+                return Enumerable.Empty<CodeScanningAnalysis>();
+            }
         }
 
         public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
@@ -810,7 +818,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
             // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
-            Dictionary<string, string> headers = new() { { "accept", "application/sarif+json" } };
+            var headers = new Dictionary<string, string>() { { "accept", "application/sarif+json" } };
             return await _client.GetAsync(url, headers);
         }
 
@@ -836,11 +844,9 @@ namespace OctoshiftCLI
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            var rawErrors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
-            var errors = new Collection<string>(rawErrors);
+            var errors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
             return new() { Status = (string)data["processing_status"], Errors = errors };
         }
-
 
         public virtual async Task<string> GetDefaultBranch(string org, string repo)
         {

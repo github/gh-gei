@@ -2684,64 +2684,39 @@ namespace OctoshiftCLI.Tests
                 }}
             ";
 
-            var responsePage1 = $@"
-                [
-                    {analysis1},
-                    {analysis2}
-                ]
-            ";
-
-            var responsePage2 = $@"
-                [
-                    {analysis3}
-                ]
-            ";
-
-            async IAsyncEnumerable<JToken> GetAllPages()
-            {
-                var page1 = JArray.Parse(responsePage1);
-                yield return page1[0];
-                yield return page1[1];
-
-                var page2 = JArray.Parse(responsePage2);
-                yield return page2[0];
-
-                await Task.CompletedTask;
-            }
+            var analyses = new List<JToken> { JToken.Parse(analysis1), JToken.Parse(analysis2), JToken.Parse(analysis3) };
 
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
-                .Returns(GetAllPages);
+                .Returns(analyses.ToAsyncEnumerable());
 
             // Act
             var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
 
             // Assert
             scanResults.Count().Should().Be(3);
-            var scanResultsArray = scanResults.ToArray();
 
             var expectedData = JObject.Parse(analysis1);
-            scanResultsArray[0].Id.Should().Be((int)expectedData["id"]);
-            scanResultsArray[0].Ref.Should().Be((string)expectedData["ref"]);
-            scanResultsArray[0].CommitSha.Should().Be((string)expectedData["commit_sha"]);
-            scanResultsArray[0].CreatedAt.Should().Be((string)expectedData["created_at"]);
+            scanResults.ElementAt(0).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(0).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(0).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(0).CreatedAt.Should().Be((string)expectedData["created_at"]);
 
             expectedData = JObject.Parse(analysis2);
-            scanResultsArray[1].Id.Should().Be((int)expectedData["id"]);
-            scanResultsArray[1].Ref.Should().Be((string)expectedData["ref"]);
-            scanResultsArray[1].CommitSha.Should().Be((string)expectedData["commit_sha"]);
-            scanResultsArray[1].CreatedAt.Should().Be((string)expectedData["created_at"]);
+            scanResults.ElementAt(1).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(1).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(1).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(1).CreatedAt.Should().Be((string)expectedData["created_at"]);
 
             expectedData = JObject.Parse(analysis3);
-            scanResultsArray[2].Id.Should().Be((int)expectedData["id"]);
-            scanResultsArray[2].Ref.Should().Be((string)expectedData["ref"]);
-            scanResultsArray[2].CommitSha.Should().Be((string)expectedData["commit_sha"]);
-            scanResultsArray[2].CreatedAt.Should().Be((string)expectedData["created_at"]);
+            scanResults.ElementAt(2).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(2).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(2).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(2).CreatedAt.Should().Be((string)expectedData["created_at"]);
         }
 
-
         [Fact]
-        public async Task GetCodeScanningAnalysisData_Passes_Filtered_Branch_As_QueryString()
+        public async Task GetCodeScanningAnalysisForRepository_Passes_Filtered_Branch_As_QueryString()
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
 
@@ -2754,22 +2729,37 @@ namespace OctoshiftCLI.Tests
                 }}
             ";
 
-            var responsePage1 = $@"[ {analysis} ] ";
-            async IAsyncEnumerable<JToken> GetAllPages()
-            {
-                var jArrayPage1 = JArray.Parse(responsePage1);
-                yield return jArrayPage1[0];
-
-                await Task.CompletedTask;
-            }
-            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(GetAllPages);
+            var analyses = new List<JToken> { JToken.Parse(analysis) };
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(analyses.ToAsyncEnumerable());
 
             await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
             _githubClientMock.Verify(m => m.GetAllAsync(url, null));
         }
 
         [Fact]
-        public async Task GetCodeScanningAlertsData()
+        public async Task GetCodeScanningAnalysisForRepository_Returns_Empty_List_When_404()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
+
+            var analysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""id"": 38026365,
+                }}
+            ";
+
+            var analyses = new List<JToken> { JToken.Parse(analysis) };
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Throws(new HttpRequestException("blah blah no analysis found", null, HttpStatusCode.NotFound));
+
+            var result = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+            
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertsForRepository_Returns_Correct_Data()
         {
             // Arrange
             const string url =
@@ -2778,43 +2768,17 @@ namespace OctoshiftCLI.Tests
             var codeScanningAlert_1 = $@"
                 {{
                     ""number"": 1,
-                    ""created_at"": ""2022-07-15T11:34:54Z"",
-                    ""updated_at"": ""2022-07-15T11:34:54Z"",
                     ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/3"",
-                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/3"",
                     ""state"": ""fixed"",
-                    ""fixed_at"": ""2022-07-15T11:45:20Z"",
-                    ""dismissed_by"": null,
                     ""dismissed_at"": null,
                     ""dismissed_reason"": null,
                     ""dismissed_comment"": null,
                     ""rule"": {{
                       ""id"": ""java/zipslip"",
-                      ""severity"": ""error"",
-                      ""description"": ""Query built from user-controlled sources"",
-                      ""name"": ""java/sql-injection"",
-                      ""tags"": [
-                        ""external/cwe/cwe-089"",
-                        ""external/cwe/cwe-564"",
-                        ""security""
-                      ],
-                      ""security_severity_level"": ""high""
-                    }},
-                    ""tool"": {{
-                      ""name"": ""CodeQL"",
-                      ""guid"": null,
-                      ""version"": ""2.10.0""
                     }},
                     ""most_recent_instance"": {{
                       ""ref"": ""refs/heads/main"",
-                      ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
-                      ""environment"": ""{{}}"",
-                      ""category"": "".github/workflows/code_scanning.yml:build"",
-                      ""state"": ""fixed"",
                       ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
-                      ""message"": {{
-                        ""text"": ""Query might include code from this user input.""
-                      }},
                       ""location"": {{
                         ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                         ""start_line"": 161,
@@ -2822,71 +2786,24 @@ namespace OctoshiftCLI.Tests
                         ""start_column"": 51,
                         ""end_column"": 56
                       }},
-                      ""classifications"": []
                     }},
-                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/3/instances""
                   }}
                 ";
 
             var codeScanningAlert_2 = $@"
                 {{
                     ""number"": 2,
-                    ""created_at"": ""2022-07-15T11:34:54Z"",
-                    ""updated_at"": ""2022-08-11T10:47:37Z"",
                     ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/2"",
-                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/2"",
                     ""state"": ""dismissed"",
-                    ""fixed_at"": null,
                     ""dismissed_at"": ""2022-07-25T06:09:14Z"",
                     ""dismissed_reason"": ""won't fix"",
                     ""dismissed_comment"": ""Comment saying why this won't be fixed."",
-                    ""dismissed_by"": {{
-                      ""login"": ""davelosert"",
-                      ""id"": 4287128,
-                      ""node_id"": ""MDQ6VXNlcjQyODcxMjg="",
-                      ""avatar_url"": ""https://avatars.githubusercontent.com/u/4287128?v=4"",
-                      ""gravatar_id"": """",
-                      ""url"": ""https://api.github.com/users/davelosert"",
-                      ""html_url"": ""https://github.com/davelosert"",
-                      ""followers_url"": ""https://api.github.com/users/davelosert/followers"",
-                      ""following_url"": ""https://api.github.com/users/davelosert/following{{/other_user}}"",
-                      ""gists_url"": ""https://api.github.com/users/davelosert/gists{{/gist_id}}"",
-                      ""starred_url"": ""https://api.github.com/users/davelosert/starred{{/owner}}{{/repo}}"",
-                      ""subscriptions_url"": ""https://api.github.com/users/davelosert/subscriptions"",
-                      ""organizations_url"": ""https://api.github.com/users/davelosert/orgs"",
-                      ""repos_url"": ""https://api.github.com/users/davelosert/repos"",
-                      ""events_url"": ""https://api.github.com/users/davelosert/events{{/privacy}}"",
-                      ""received_events_url"": ""https://api.github.com/users/davelosert/received_events"",
-                      ""type"": ""User"",
-                      ""site_admin"": true
-                    }},
                     ""rule"": {{
                       ""id"": ""java/sql-injection"",
-                      ""severity"": ""error"",
-                      ""description"": ""Query built from user-controlled sources"",
-                      ""name"": ""java/sql-injection"",
-                      ""tags"": [
-                        ""external/cwe/cwe-089"",
-                        ""external/cwe/cwe-564"",
-                        ""security""
-                      ],
-                      ""security_severity_level"": ""high""
-                    }},
-                    ""tool"": {{
-                      ""name"": ""CodeQL"",
-                      ""guid"": null,
-                      ""version"": ""2.10.2""
                     }},
                     ""most_recent_instance"": {{
                       ""ref"": ""refs/heads/main"",
-                      ""analysis_key"": "".github/workflows/renamed_code_scanning.yml:build"",
-                      ""environment"": ""{{}}"",
-                      ""category"": "".github/workflows/renamed_code_scanning.yml:build"",
-                      ""state"": ""dismissed"",
                       ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
-                      ""message"": {{
-                        ""text"": ""Query might include code from this user input.""
-                      }},
                       ""location"": {{
                         ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                         ""start_line"": 120,
@@ -2894,71 +2811,24 @@ namespace OctoshiftCLI.Tests
                         ""start_column"": 42,
                         ""end_column"": 47
                       }},
-                      ""classifications"": []
                     }},
-                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/2/instances""
                   }}
                 ";
 
             var codeScanningAlert_3 = $@"
                  {{
                     ""number"": 3,
-                    ""created_at"": ""2022-07-13T08:22:25Z"",
-                    ""updated_at"": ""2022-07-15T10:59:29Z"",
                     ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/1"",
-                    ""html_url"": ""https://github.com/Braustuben/gei-import-test-repo/security/code-scanning/1"",
                     ""state"": ""fixed"",
-                    ""fixed_at"": ""2022-07-15T11:34:54Z"",
-                    ""dismissed_by"": {{
-                      ""login"": ""davelosert"",
-                      ""id"": 4287128,
-                      ""node_id"": ""MDQ6VXNlcjQyODcxMjg="",
-                      ""avatar_url"": ""https://avatars.githubusercontent.com/u/4287128?v=4"",
-                      ""gravatar_id"": """",
-                      ""url"": ""https://api.github.com/users/davelosert"",
-                      ""html_url"": ""https://github.com/davelosert"",
-                      ""followers_url"": ""https://api.github.com/users/davelosert/followers"",
-                      ""following_url"": ""https://api.github.com/users/davelosert/following{{/other_user}}"",
-                      ""gists_url"": ""https://api.github.com/users/davelosert/gists{{/gist_id}}"",
-                      ""starred_url"": ""https://api.github.com/users/davelosert/starred{{/owner}}{{/repo}}"",
-                      ""subscriptions_url"": ""https://api.github.com/users/davelosert/subscriptions"",
-                      ""organizations_url"": ""https://api.github.com/users/davelosert/orgs"",
-                      ""repos_url"": ""https://api.github.com/users/davelosert/repos"",
-                      ""events_url"": ""https://api.github.com/users/davelosert/events{{/privacy}}"",
-                      ""received_events_url"": ""https://api.github.com/users/davelosert/received_events"",
-                      ""type"": ""User"",
-                      ""site_admin"": true
-                    }},
                     ""dismissed_at"": ""2022-07-15T07:58:06Z"",
                     ""dismissed_reason"": ""used in tests"",
                     ""dismissed_comment"": ""Closed again"",
                     ""rule"": {{
                       ""id"": ""java/sql-injection"",
-                      ""severity"": ""error"",
-                      ""description"": ""Query built from user-controlled sources"",
-                      ""name"": ""java/sql-injection"",
-                      ""tags"": [
-                        ""external/cwe/cwe-089"",
-                        ""external/cwe/cwe-564"",
-                        ""security""
-                      ],
-                      ""security_severity_level"": ""high""
-                    }},
-                    ""tool"": {{
-                      ""name"": ""CodeQL"",
-                      ""guid"": null,
-                      ""version"": ""2.10.0""
                     }},
                     ""most_recent_instance"": {{
                       ""ref"": ""refs/heads/main"",
-                      ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
-                      ""environment"": ""{{}}"",
-                      ""category"": "".github/workflows/code_scanning.yml:build"",
-                      ""state"": ""fixed"",
                       ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
-                      ""message"": {{
-                        ""text"": ""Query might include code from this user input.""
-                      }},
                       ""location"": {{
                         ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                         ""start_line"": 120,
@@ -2966,54 +2836,28 @@ namespace OctoshiftCLI.Tests
                         ""start_column"": 51,
                         ""end_column"": 56
                       }},
-                      ""classifications"": []
                     }},
-                    ""instances_url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/1/instances""
                   }}
                 ";
 
-            var responsePage1 = $@"
-                [
-                    {codeScanningAlert_1},
-                    {codeScanningAlert_2}
-                ]
-            ";
-
-            var responsePage2 = $@"
-                [
-                    {codeScanningAlert_3}
-                ]
-            ";
-
-            async IAsyncEnumerable<JToken> GetAllPages()
-            {
-                var jArrayPage1 = JArray.Parse(responsePage1);
-                yield return jArrayPage1[0];
-                yield return jArrayPage1[1];
-
-                var jArrayPage2 = JArray.Parse(responsePage2);
-                yield return jArrayPage2[0];
-
-                await Task.CompletedTask;
-            }
+            var alerts = new List<JToken> { JToken.Parse(codeScanningAlert_1), JToken.Parse(codeScanningAlert_2), JToken.Parse(codeScanningAlert_3) };
 
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
-                .Returns(GetAllPages);
+                .Returns(alerts.ToAsyncEnumerable());
 
             // Act
             var scanResults = await _githubApi.GetCodeScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
 
             // Assert
             scanResults.Count().Should().Be(3);
-            var scanResultsArray = scanResults.ToArray();
-            AssertCodeScanningData(scanResultsArray[0], JObject.Parse(codeScanningAlert_1));
-            AssertCodeScanningData(scanResultsArray[1], JObject.Parse(codeScanningAlert_2));
-            AssertCodeScanningData(scanResultsArray[2], JObject.Parse(codeScanningAlert_3));
+            AssertCodeScanningData(scanResults.ElementAt(0), JObject.Parse(codeScanningAlert_1));
+            AssertCodeScanningData(scanResults.ElementAt(1), JObject.Parse(codeScanningAlert_2));
+            AssertCodeScanningData(scanResults.ElementAt(2), JObject.Parse(codeScanningAlert_3));
         }
 
         [Fact]
-        public async Task GetCodeScanningAlertsData_Passes_Branch_As_Query()
+        public async Task GetCodeScanningAlertsForRepository_Passes_Branch_As_Query()
         {
             var emptyResult = Array.Empty<JToken>();
             const string url =
@@ -3030,26 +2874,15 @@ namespace OctoshiftCLI.Tests
             actual.Number.Should().Be((int)expectedData["number"]);
             actual.State.Should().Be((string)expectedData["state"]);
             actual.RuleId.Should().Be((string)expectedData["rule"]["id"]);
-
-            if (!expectedData.Value<string>("dismissed_at").IsNullOrWhiteSpace())
-            {
-                actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
-                actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
-                actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
-                _ = (string)expectedData["dismissed_by"]["login"];
-            }
-            else
-            {
-                actual.DismissedAt.Should().BeNull();
-                actual.DismissedReason.Should().BeNull();
-                actual.DismissedComment.Should().BeNull();
-            }
+            actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
+            actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
+            actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
 
             AssertCodeScanningInstanceData(actual.MostRecentInstance, expectedData["most_recent_instance"]);
         }
 
         [Fact]
-        public async Task GetCodeScanningAlertInstanceData()
+        public async Task GetCodeScanningAlertInstances_Returns_Correct_Data()
         {
             // Arrange
             const string url =
@@ -3058,14 +2891,7 @@ namespace OctoshiftCLI.Tests
             var codeScanningAlertInstance1 = $@"
                 {{
                   ""ref"": ""refs/heads/main"",
-                  ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
-                  ""environment"": ""{{}}"",
-                  ""category"": "".github/workflows/code_scanning.yml:build"",
-                  ""state"": ""fixed"",
                   ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
-                  ""message"": {{
-                    ""text"": ""Query might include code from this user input.""
-                  }},
                   ""location"": {{
                     ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                     ""start_line"": 161,
@@ -3073,21 +2899,13 @@ namespace OctoshiftCLI.Tests
                     ""start_column"": 51,
                     ""end_column"": 56
                   }},
-                  ""classifications"": []
                 }}
             ";
 
             var codeScanningAlertInstance2 = $@"
                 {{
                   ""ref"": ""refs/heads/main"",
-                  ""analysis_key"": "".github/workflows/renamed_code_scanning.yml:build"",
-                  ""environment"": ""{{}}"",
-                  ""category"": "".github/workflows/renamed_code_scanning.yml:build"",
-                  ""state"": ""dismissed"",
                   ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
-                  ""message"": {{
-                    ""text"": ""Query might include code from this user input.""
-                  }},
                   ""location"": {{
                     ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                     ""start_line"": 120,
@@ -3095,21 +2913,13 @@ namespace OctoshiftCLI.Tests
                     ""start_column"": 42,
                     ""end_column"": 47
                   }},
-                  ""classifications"": []
                 }}
             ";
 
             var codeScanningAlertInstance3 = $@"
                  {{
                   ""ref"": ""refs/heads/main"",
-                  ""analysis_key"": "".github/workflows/code_scanning.yml:build"",
-                  ""environment"": ""{{}}"",
-                  ""category"": "".github/workflows/code_scanning.yml:build"",
-                  ""state"": ""fixed"",
                   ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
-                  ""message"": {{
-                    ""text"": ""Query might include code from this user input.""
-                  }},
                   ""location"": {{
                     ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
                     ""start_line"": 120,
@@ -3117,48 +2927,23 @@ namespace OctoshiftCLI.Tests
                     ""start_column"": 51,
                     ""end_column"": 56
                   }},
-                  ""classifications"": []
                  }}
                 ";
 
-            var responsePage1 = $@"
-                [
-                    {codeScanningAlertInstance1},
-                    {codeScanningAlertInstance2}
-                ]
-            ";
-
-            var responsePage2 = $@"
-                [
-                    {codeScanningAlertInstance3}
-                ]
-            ";
-
-            async IAsyncEnumerable<JToken> GetAllPages()
-            {
-                var jArrayPage1 = JArray.Parse(responsePage1);
-                yield return jArrayPage1[0];
-                yield return jArrayPage1[1];
-
-                var jArrayPage2 = JArray.Parse(responsePage2);
-                yield return jArrayPage2[0];
-
-                await Task.CompletedTask;
-            }
+            var instances = new List<JToken> { JToken.Parse(codeScanningAlertInstance1), JToken.Parse(codeScanningAlertInstance2), JToken.Parse(codeScanningAlertInstance3) };
 
             _githubClientMock
                 .Setup(m => m.GetAllAsync(url, null))
-                .Returns(GetAllPages);
+                .Returns(instances.ToAsyncEnumerable());
 
             // Act
             var scanResults = await _githubApi.GetCodeScanningAlertInstances(GITHUB_ORG, GITHUB_REPO, 2);
 
             // Assert
             scanResults.Count().Should().Be(3);
-            var scanResultsArray = scanResults.ToArray();
-            AssertCodeScanningInstanceData(scanResultsArray[0], JObject.Parse(codeScanningAlertInstance1));
-            AssertCodeScanningInstanceData(scanResultsArray[1], JObject.Parse(codeScanningAlertInstance2));
-            AssertCodeScanningInstanceData(scanResultsArray[2], JObject.Parse(codeScanningAlertInstance3));
+            AssertCodeScanningInstanceData(scanResults.ElementAt(0), JObject.Parse(codeScanningAlertInstance1));
+            AssertCodeScanningInstanceData(scanResults.ElementAt(1), JObject.Parse(codeScanningAlertInstance2));
+            AssertCodeScanningInstanceData(scanResults.ElementAt(2), JObject.Parse(codeScanningAlertInstance3));
         }
 
         private void AssertCodeScanningInstanceData(CodeScanningAlertInstance actual, JToken expectedData)
@@ -3214,38 +2999,7 @@ namespace OctoshiftCLI.Tests
             const int analysisId = 37019295;
             var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
 
-            var response = $@"
-            {{
-	            ""runs"": [
-		            {{
-			            ""automationDetails"": {{
-				            ""id"": "".github/workflows/semgrep-analysis.yml:semgrep/""
-			            }},
-			            ""conversion"": {{
-				            ""tool"": {{
-					            ""driver"": {{
-						            ""name"": ""GitHub Code Scanning""
-					            }}
-				            }}
-			            }},
-			            ""tool"": {{
-				            ""driver"": {{
-					            ""name"": ""Semgrep"",
-					            ""semanticVersion"": ""0.106.0""
-				            }}
-			            }},
-			            ""versionControlProvenance"": [
-				            {{
-					            ""branch"": ""refs/heads/test-enhanced-codeql-workflow"",
-					            ""repositoryUri"": ""https://github.com/octodemo/demo-vulnerabilities-ghas"",
-					            ""revisionId"": ""235f50cc268427e72ea610e75b278edf89db2857""
-				            }}
-			            ]
-		            }}
-	            ],
-	            ""$schema"": ""https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"",
-	            ""version"": ""2.1.0""
-            }}";
+            var response = "SARIF_DATA";
 
             _githubClientMock
                 .Setup(m => m.GetAsync(url, new Dictionary<string, string>() { { "accept", "application/sarif+json" } }))
@@ -3259,9 +3013,8 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task UploadSarif_Constructs_Right_Payload()
+        public async Task UploadSarif_Returns_Id_From_Response()
         {
-
             // Arrange
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
 
@@ -3279,39 +3032,10 @@ namespace OctoshiftCLI.Tests
             var response = $@"
                 {{
                     ""id"": ""sarif-id"",
-                    ""url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id""
                 }}  
             ";
             _githubClientMock
-                .Setup(m => m.PostAsync(url, It.IsAny<object>(), null))
-                .ReturnsAsync(response);
-
-            // Act
-            await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
-
-            // Assert
-            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null));
-        }
-
-        [Fact]
-        public async Task UploadSarif_Returns_Id_From_Response()
-        {
-
-            // Arrange
-            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
-
-            var sarifCommitSha = "fake_commit_sha";
-            var sarifRef = "refs/heads/main";
-            var sarif = "fake_gzip_sarif";
-
-            var response = $@"
-                {{
-                    ""id"": ""sarif-id"",
-                    ""url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id""
-                }}  
-            ";
-            _githubClientMock
-                .Setup(m => m.PostAsync(url, It.IsAny<object>(), null))
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
                 .ReturnsAsync(response);
 
             // Act
@@ -3320,7 +3044,6 @@ namespace OctoshiftCLI.Tests
             // Assert
             actualId.Should().Match("sarif-id");
         }
-
 
         [Fact]
         public async Task GetSarifProcessingStatus_Returns_Processing_Status_From_Response()
@@ -3342,8 +3065,8 @@ namespace OctoshiftCLI.Tests
             var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
 
             // Assert
-            actualStatus.Status.Should().Match("pending");
-            actualStatus.Errors.Count.Should().Be(0);
+            actualStatus.Status.Should().Be("pending");
+            actualStatus.Errors.Count().Should().Be(0);
         }
 
         [Fact]
@@ -3354,7 +3077,6 @@ namespace OctoshiftCLI.Tests
 
             var response = $@"
                 {{
-                    ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
                     ""processing_status"": ""failed"",
                     ""errors"": [
                         ""error1"",
@@ -3370,11 +3092,10 @@ namespace OctoshiftCLI.Tests
             var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
 
             // Assert
-            actualStatus.Errors[0].Should().Match("error1");
-            actualStatus.Errors[1].Should().Match("error2");
-            actualStatus.Errors.Count.Should().Be(2);
+            actualStatus.Errors.ElementAt(0).Should().Be("error1");
+            actualStatus.Errors.ElementAt(1).Should().Be("error2");
+            actualStatus.Errors.Count().Should().Be(2);
         }
-
 
         [Fact]
         public async Task GetEnterpriseServerVersion_Returns_Null_If_Not_Enterprise_Server()
