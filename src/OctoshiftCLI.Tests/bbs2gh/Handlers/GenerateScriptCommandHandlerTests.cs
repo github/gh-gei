@@ -107,7 +107,7 @@ if (-not $env:GH_PAT) {
     Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
     exit 1
 } else {
-    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
 }
 
 if (-not $env:BBS_PASSWORD) {
