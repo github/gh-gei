@@ -2755,7 +2755,7 @@ namespace OctoshiftCLI.Tests
             _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Throws(new HttpRequestException("blah blah no analysis found", null, HttpStatusCode.NotFound));
 
             var result = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
-            
+
             result.Should().BeEmpty();
         }
 

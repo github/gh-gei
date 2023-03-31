@@ -71,7 +71,7 @@ public class CodeScanningAlertServiceTests
         _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId)).ReturnsAsync(sarif);
         _mockTargetGithubApi.Setup(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, sarif, sarifCommitSha, sarifRef)).ReturnsAsync(sarifId);
         _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, sarifId)).ReturnsAsync(processingStatus);
-        
+
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
         _mockTargetGithubApi.Verify(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, sarifId));
