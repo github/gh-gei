@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Handlers;
 
@@ -38,18 +39,16 @@ public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
         _log.RegisterSecret(args.GithubPat);
 
         var teams = await _githubApi.GetTeams(args.GithubOrg);
-        if (teams.Contains(args.TeamName))
+        var teamSlug = teams.FirstOrDefault(t => t.Name == args.TeamName).Slug;
+        if (teamSlug.HasValue())
         {
-            _log.LogSuccess($"Team '{args.TeamName}' already exists - New team will not be created");
+            _log.LogSuccess($"Team '{args.TeamName}' already exists. New team will not be created");
         }
         else
         {
-            await _githubApi.CreateTeam(args.GithubOrg, args.TeamName);
+            (_, teamSlug) = await _githubApi.CreateTeam(args.GithubOrg, args.TeamName);
             _log.LogSuccess("Successfully created team");
         }
-
-        // TODO: Can improve perf by capturing slug in the response from CreateTeam or GetTeams
-        var teamSlug = await _githubApi.GetTeamSlug(args.GithubOrg, args.TeamName);
 
         if (string.IsNullOrWhiteSpace(args.IdpGroup))
         {

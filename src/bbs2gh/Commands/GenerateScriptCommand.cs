@@ -18,7 +18,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GithubOrg);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
-        AddOption(BbsProjectKey);
+        AddOption(BbsProject);
         AddOption(BbsSharedHome);
         AddOption(SshUser);
         AddOption(SshPrivateKey);
@@ -50,8 +50,8 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
                       $"{Environment.NewLine}" +
                       "Note: The password will not get included in the generated script and it has to be set as an env variable before running the script.");
 
-    public Option<string> BbsProjectKey { get; } = new(
-        name: "--bbs-project-key",
+    public Option<string> BbsProject { get; } = new(
+        name: "--bbs-project",
         description: "The Bitbucket project to migrate. If not set will migrate all projects.");
 
     public Option<string> BbsSharedHome { get; } = new(
@@ -152,7 +152,7 @@ public class GenerateScriptCommandArgs
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
     public string BbsPassword { get; set; }
-    public string BbsProjectKey { get; set; }
+    public string BbsProject { get; set; }
     public string BbsSharedHome { get; set; }
     public string ArchiveDownloadHost { get; set; }
     public string SshUser { get; set; }

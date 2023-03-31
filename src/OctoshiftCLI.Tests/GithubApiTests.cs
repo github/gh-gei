@@ -129,7 +129,7 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task CreateTeam_Returns_Created_Team_Id()
+        public async Task CreateTeam_Returns_Created_Team_Id_And_Slug()
         {
             // Arrange
             const string teamName = "TEAM_NAME";
@@ -138,7 +138,8 @@ namespace OctoshiftCLI.Tests
             var payload = new { name = teamName, privacy = "closed" };
 
             const string teamId = "TEAM_ID";
-            var response = $"{{\"id\": \"{teamId}\"}}";
+            const string teamSlug = "TEAM_SLUG";
+            var response = $"{{\"id\": \"{teamId}\", \"slug\": \"{teamSlug}\"}}";
 
             _githubClientMock
                 .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
@@ -148,7 +149,7 @@ namespace OctoshiftCLI.Tests
             var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
 
             // Assert
-            result.Should().Be(teamId);
+            result.Should().Be((teamId, teamSlug));
         }
 
         [Fact]
@@ -157,17 +158,17 @@ namespace OctoshiftCLI.Tests
             // Arrange
             var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
 
-            const string team1 = "TEAM_1";
-            const string team2 = "TEAM_2";
-            const string team3 = "TEAM_3";
-            const string team4 = "TEAM_4";
+            var team1 = (Name: "TEAM_1", Slug: "SLUG_1");
+            var team2 = (Name: "TEAM_2", Slug: "SLUG_2");
+            var team3 = (Name: "TEAM_3", Slug: "SLUG_3");
+            var team4 = (Name: "TEAM_4", Slug: "SLUG_4");
 
             var teamsResult = new[]
             {
-                new { id = 1, name = team1 },
-                new { id = 2, name = team2 },
-                new { id = 3, name = team3 },
-                new { id = 4, name = team4 }
+                new { id = 1, name = team1.Name, slug = team1.Slug },
+                new { id = 2, name = team2.Name, slug = team2.Slug },
+                new { id = 3, name = team3.Name, slug = team3.Slug },
+                new { id = 4, name = team4.Name, slug = team4.Slug }
             }.ToAsyncJTokenEnumerable();
 
             _githubClientMock

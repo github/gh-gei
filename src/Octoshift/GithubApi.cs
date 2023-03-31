@@ -67,7 +67,7 @@ namespace OctoshiftCLI
             await _client.DeleteAsync(url);
         }
 
-        public virtual async Task<string> CreateTeam(string org, string teamName)
+        public virtual async Task<(string Id, string Slug)> CreateTeam(string org, string teamName)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
             var payload = new { name = teamName, privacy = "closed" };
@@ -75,15 +75,15 @@ namespace OctoshiftCLI
             var response = await _client.PostAsync(url, payload);
             var data = JObject.Parse(response);
 
-            return (string)data["id"];
+            return ((string)data["id"], (string)data["slug"]);
         }
 
-        public virtual async Task<IEnumerable<string>> GetTeams(string org)
+        public virtual async Task<IEnumerable<(string Name, string Slug)>> GetTeams(string org)
         {
             var url = $"{_apiUrl}/orgs/{org}/teams";
 
             return await _client.GetAllAsync(url)
-                .Select(t => (string)t["name"])
+                .Select(t => ((string)t["name"], (string)t["slug"]))
                 .ToListAsync();
         }
 

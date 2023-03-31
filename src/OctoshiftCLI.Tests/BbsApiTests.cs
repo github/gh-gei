@@ -110,35 +110,28 @@ public class BbsApiTests
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects";
         var projectFoo = (Id: 1, Key: "PF", Name: "Foo");
         var projectBar = (Id: 2, Key: "PB", Name: "Bar");
-        var responsePayload = new
+        var response = new[]
         {
-            size = 2,
-            limit = 25,
-            isLastPage = true,
-            values = new[]
+            new
             {
-                new
-                {
-                    key = projectFoo.Key,
-                    id = projectFoo.Id,
-                    name = projectFoo.Name
-                },
-                new
-                {
-                    key = projectBar.Key,
-                    id = projectBar.Id,
-                    name = projectBar.Name
-                }
+                key = projectFoo.Key,
+                id = projectFoo.Id,
+                name = projectFoo.Name
             },
-            start = 0
-        };
-        _mockBbsClient.Setup(m => m.GetAsync(url)).ReturnsAsync(responsePayload.ToJson());
+            new
+            {
+                key = projectBar.Key,
+                id = projectBar.Id,
+                name = projectBar.Name
+            }
+        }.ToAsyncJTokenEnumerable();
+        _mockBbsClient.Setup(m => m.GetAllAsync(url)).Returns(response);
 
         // Act
-        var response = await _sut.GetProjects();
+        var result = await _sut.GetProjects();
 
         //Assert
-        response.Should().BeEquivalentTo(new[] { projectFoo, projectBar });
+        result.Should().BeEquivalentTo(new[] { projectFoo, projectBar });
     }
 
     [Fact]
@@ -149,34 +142,28 @@ public class BbsApiTests
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos";
         var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo");
         var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo");
-        var responsePayload = new
+        var response = new[]
         {
-            size = 2,
-            limit = 25,
-            isLastPage = true,
-            values = new[]
+            new
             {
-                new
-                {
-                    slug = fooRepo.Slug,
-                    id = fooRepo.Id,
-                    name = fooRepo.Name
-                },
-                new
-                {
-                    slug = barRepo.Slug,
-                    id = barRepo.Id,
-                    name = barRepo.Name
-                }
+                slug = fooRepo.Slug,
+                id = fooRepo.Id,
+                name = fooRepo.Name
             },
-            start = 0
-        };
-        _mockBbsClient.Setup(m => m.GetAsync(url)).ReturnsAsync(responsePayload.ToJson());
+            new
+            {
+                slug = barRepo.Slug,
+                id = barRepo.Id,
+                name = barRepo.Name
+            }
+        }.ToAsyncJTokenEnumerable();
+
+        _mockBbsClient.Setup(m => m.GetAllAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
-        var response = await _sut.GetRepos(fooProjectKey);
+        var result = await _sut.GetRepos(fooProjectKey);
 
         // Assert
-        response.Should().BeEquivalentTo(new[] { fooRepo, barRepo });
+        result.Should().BeEquivalentTo(new[] { fooRepo, barRepo });
     }
 }

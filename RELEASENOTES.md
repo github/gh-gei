@@ -1,1 +1,4 @@
 - Introduce a new command `gh gei migrate-code-scanning-alerts` which migrates all code-scanning analysis and alert states for the default branch. This is useful if you want to migrate the history of code-scanning alerts together with their current state (open, reopened, fixed). For dismissed alerts, the dismissed-reason (e.g. won't fix, false positive etc) and dismissed-comment will also be migrated to the target repo. 
+- Update `gh bbs2gh generate-script` so it supports more than 25 projects/repos
+- Rename `--bbs-project-key` to `--bbs-project` in `gh bbs2gh generate-script` for consistency
+- Fix a bug where `create-team` might not work due to a race condition

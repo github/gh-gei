@@ -118,7 +118,7 @@ public sealed class BbsToGithub : IDisposable
         }
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project-key {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
