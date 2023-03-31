@@ -259,6 +259,17 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
+        content.AppendLine(VALIDATE_GH_PAT);
+        if (awsBucketName.HasValue() || awsRegion.HasValue())
+        {
+            content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
+            content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
+        }
+        else
+        {
+            content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
+        }
+
         content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
         foreach (var repo in repos)
@@ -282,6 +293,17 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
+
+        content.AppendLine(VALIDATE_GH_PAT);
+        if (awsBucketName.HasValue() || awsRegion.HasValue())
+        {
+            content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
+            content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
+        }
+        else
+        {
+            content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
+        }
 
         content.AppendLine();
         content.AppendLine("$Succeeded = 0");
@@ -528,5 +550,33 @@ function ExecAndGetMigrationID {
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
+}";
+    private const string VALIDATE_GH_PAT = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}";
+    private const string VALIDATE_AZURE_STORAGE_CONNECTION_STRING = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+    private const string VALIDATE_AWS_ACCESS_KEY_ID = @"
+if (-not $env:AWS_ACCESS_KEY_ID) {
+    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+    private const string VALIDATE_AWS_SECRET_ACCESS_KEY = @"
+if (-not $env:AWS_SECRET_ACCESS_KEY) {
+    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
 }";
 }
