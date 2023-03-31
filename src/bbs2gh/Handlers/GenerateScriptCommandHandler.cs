@@ -64,6 +64,29 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(VersionComment);
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
+        content.AppendLine(VALIDATE_GH_PAT);
+        if (!args.Kerberos)
+        {
+            content.AppendLine(VALIDATE_BBS_PASSWORD);
+        }
+        if (args.BbsUsername.IsNullOrWhiteSpace())
+        {
+            content.AppendLine(VALIDATE_BBS_USERNAME);
+        }
+        if (args.AwsBucketName.HasValue() || args.AwsRegion.HasValue())
+        {
+            content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
+            content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
+        }
+        else
+        {
+            content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
+        }
+        if (args.SmbUser.HasValue())
+        {
+            content.AppendLine(VALIDATE_SMB_PASSWORD);
+        }
+
         var projects = args.BbsProject.HasValue()
             ? new List<string>() { args.BbsProject }
             : (await _bbsApi.GetProjects()).Select(x => x.Key);
@@ -232,5 +255,54 @@ function Exec {
     if ($lastexitcode -ne 0) {
         exit $lastexitcode
     }
+}";
+    private const string VALIDATE_GH_PAT = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+}";
+    private const string VALIDATE_BBS_USERNAME = @"
+if (-not $env:BBS_USERNAME) {
+    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call BBS API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to BBS APIs.""
+}";
+    private const string VALIDATE_BBS_PASSWORD = @"
+if (-not $env:BBS_PASSWORD) {
+    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call BBS API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to BBS APIs.""
+}";
+    private const string VALIDATE_AZURE_STORAGE_CONNECTION_STRING = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+    private const string VALIDATE_AWS_ACCESS_KEY_ID = @"
+if (-not $env:AWS_ACCESS_KEY_ID) {
+    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+    private const string VALIDATE_AWS_SECRET_ACCESS_KEY = @"
+if (-not $env:AWS_SECRET_ACCESS_KEY) {
+    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+    private const string VALIDATE_SMB_PASSWORD = @"
+if (-not $env:SMB_PASSWORD) {
+    Write-Error ""SMB_PASSWORD environment variable must be set to a valid password that will be used to download the migration archive from your BBS server using SMB.""
+    exit 1
+} else {
+    Write-Host ""SMB_PASSWORD environment variable is set and will be used to download the migration archive from your BBS server using SMB.""
 }";
 }
