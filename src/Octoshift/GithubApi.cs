@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
@@ -677,7 +678,7 @@ namespace OctoshiftCLI
 
             return response.Outcome == OutcomeType.Failure
                 ? throw new OctoshiftCliException($"Failed to retrieve the list of mannequins", response.FinalException)
-                : (IEnumerable<Mannequin>)response.Result;
+                : response.Result;
         }
 
         public virtual async Task<string> GetUserId(string login)
@@ -765,6 +766,119 @@ namespace OctoshiftCLI
             await _client.PatchAsync(url, payload);
         }
 
+        public virtual async Task<IEnumerable<CodeScanningAnalysis>> GetCodeScanningAnalysisForRepository(string org, string repo, string branch = null)
+        {
+            var queryString = "per_page=100&sort=created&direction=asc";
+            if (branch.HasValue())
+            {
+                queryString += $"&ref={branch}";
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?{queryString}";
+
+            try
+            {
+                return await _client.GetAllAsync(url)
+                    .Select(BuildCodeScanningAnalysis)
+                    .ToListAsync();
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound && ex.Message.Contains("no analysis found"))
+            {
+                return Enumerable.Empty<CodeScanningAnalysis>();
+            }
+        }
+
+        public virtual async Task UpdateCodeScanningAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
+        {
+            if (!CodeScanningAlertState.IsOpenOrDismissed(state))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(state)}");
+            }
+
+            if (CodeScanningAlertState.IsDismissed(state) && !CodeScanningAlertState.IsValidDismissedReason(dismissedReason))
+            {
+                throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
+            }
+
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
+
+            var payload = state == "open"
+                ? (new { state })
+                : (object)(new
+                {
+                    state,
+                    dismissed_reason = dismissedReason,
+                    dismissed_comment = dismissedComment ?? string.Empty
+                });
+            await _client.PatchAsync(url, payload);
+        }
+
+        public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
+            // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
+            var headers = new Dictionary<string, string>() { { "accept", "application/sarif+json" } };
+            return await _client.GetAsync(url, headers);
+        }
+
+        public virtual async Task<string> UploadSarifReport(string org, string repo, string sarifReport, string commitSha, string sarifRef)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs";
+            var payload = new
+            {
+                commit_sha = commitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarifReport),
+                @ref = sarifRef
+            };
+
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                                                        ex => ex.StatusCode == HttpStatusCode.BadGateway);
+            var data = JObject.Parse(response);
+
+            return (string)data["id"];
+        }
+
+        public virtual async Task<SarifProcessingStatus> GetSarifProcessingStatus(string org, string repo, string sarifId)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            var errors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
+            return new() { Status = (string)data["processing_status"], Errors = errors };
+        }
+
+        public virtual async Task<string> GetDefaultBranch(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["default_branch"];
+        }
+
+        public virtual async Task<IEnumerable<CodeScanningAlert>> GetCodeScanningAlertsForRepository(string org, string repo, string branch = null)
+        {
+            var queryString = "per_page=100&sort=created&direction=asc";
+            if (branch.HasValue())
+            {
+                queryString += $"&ref={branch}";
+            }
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts?{queryString}";
+            return await _client.GetAllAsync(url)
+                .Select(BuildCodeScanningAlert)
+                .ToListAsync();
+        }
+
+        public virtual async Task<IEnumerable<CodeScanningAlertInstance>> GetCodeScanningAlertInstances(string org, string repo, int alertNumber)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}/instances?per_page=100";
+            return await _client.GetAllAsync(url)
+                .Select(BuildCodeScanningAlertInstance)
+                .ToListAsync();
+        }
+
         public virtual async Task<string> GetEnterpriseServerVersion()
         {
             var url = $"{_apiUrl}/meta";
@@ -840,6 +954,41 @@ namespace OctoshiftCLI
                 StartColumn = (int)alertLocation["details"]["start_column"],
                 EndColumn = (int)alertLocation["details"]["end_column"],
                 BlobSha = (string)alertLocation["details"]["blob_sha"],
+            };
+
+        private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
+            new()
+            {
+                Id = (int)codescan["id"],
+                CommitSha = (string)codescan["commit_sha"],
+                Ref = (string)codescan["ref"],
+                CreatedAt = (string)codescan["created_at"],
+            };
+
+        private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>
+
+            new()
+            {
+                Number = (int)scanningAlert["number"],
+                Url = (string)scanningAlert["url"],
+                DismissedAt = scanningAlert.Value<string>("dismissed_at"),
+                DismissedComment = scanningAlert.Value<string>("dismissed_comment"),
+                DismissedReason = scanningAlert.Value<string>("dismissed_reason"),
+                State = (string)scanningAlert["state"],
+                RuleId = (string)scanningAlert["rule"]["id"],
+                MostRecentInstance = BuildCodeScanningAlertInstance(scanningAlert["most_recent_instance"]),
+            };
+
+        private static CodeScanningAlertInstance BuildCodeScanningAlertInstance(JToken scanningAlertInstance) =>
+            new()
+            {
+                Ref = (string)scanningAlertInstance["ref"],
+                CommitSha = (string)scanningAlertInstance["commit_sha"],
+                Path = (string)scanningAlertInstance["location"]["path"],
+                StartLine = (int)scanningAlertInstance["location"]["start_line"],
+                EndLine = (int)scanningAlertInstance["location"]["end_line"],
+                StartColumn = (int)scanningAlertInstance["location"]["start_column"],
+                EndColumn = (int)scanningAlertInstance["location"]["end_column"]
             };
     }
 }
