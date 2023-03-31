@@ -3037,6 +3037,41 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task UploadSarif_Retries_On_502()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
+
+            var sarifCommitSha = "fake_commit_sha";
+            var sarifRef = "refs/heads/main";
+            var sarif = "fake_gzip_sarif";
+
+            var expectedPayload = new
+            {
+                commit_sha = sarifCommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarif),
+                @ref = sarifRef
+            };
+
+            var response = $@"
+                {{
+                    ""id"": ""sarif-id"",
+                }}  
+            ";
+            _githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
+                .ThrowsAsync(new HttpRequestException("\"message\": \"Server Error\"", null, HttpStatusCode.BadGateway))
+                .ThrowsAsync(new HttpRequestException("\"message\": \"Server Error\"", null, HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualId = await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
+
+            // Assert
+            actualId.Should().Match("sarif-id");
+        }
+
+        [Fact]
         public async Task GetSarifProcessingStatus_Returns_Processing_Status_From_Response()
         {
             // Arrange

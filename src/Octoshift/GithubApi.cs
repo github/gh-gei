@@ -831,7 +831,8 @@ namespace OctoshiftCLI
                 @ref = sarifRef
             };
 
-            var response = await _client.PostAsync(url, payload);
+            var response = await _retryPolicy.HttpRetry(async () => await _client.PostAsync(url, payload),
+                                                        ex => ex.StatusCode == HttpStatusCode.BadGateway);
             var data = JObject.Parse(response);
 
             return (string)data["id"];
