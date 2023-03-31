@@ -2742,16 +2742,6 @@ namespace OctoshiftCLI.Tests
         {
             const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
 
-            var analysis = $@"
-                {{
-                    ""ref"": ""refs/heads/main"",
-                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
-                    ""created_at"": ""2022-08-06T19:40:39Z"",
-                    ""id"": 38026365,
-                }}
-            ";
-
-            var analyses = new List<JToken> { JToken.Parse(analysis) };
             _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Throws(new HttpRequestException("blah blah no analysis found", null, HttpStatusCode.NotFound));
 
             var result = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
