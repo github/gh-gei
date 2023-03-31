@@ -38,6 +38,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddSingleton<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddSingleton<SecretScanningAlertServiceFactory>()
+                .AddSingleton<CodeScanningAlertServiceFactory>()
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {

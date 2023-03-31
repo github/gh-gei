@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using Xunit;
@@ -2633,6 +2634,496 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetDefaultBranch_Returns_Default_Branch_Field()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+            var response = $@"
+            {{
+                ""default_branch"": ""main"" 
+            }}";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            var result = await _githubApi.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO);
+
+            result.Should().Be("main");
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAnalysisForRepository_Returns_Analyses()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
+
+            var analysis1 = $@"
+                {{
+                    ""ref"": ""refs/heads/sg-tfsec-test"",
+                    ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
+                    ""created_at"": ""2022-08-08T19:00:18Z"",
+                    ""id"": 38200197,
+                }}
+            ";
+
+            var analysis2 = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""id"": 38026365,
+                }}
+            ";
+
+            var analysis3 = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:30:25Z"",
+                    ""id"": 38025984,
+                }}
+            ";
+
+            var analyses = new List<JToken> { JToken.Parse(analysis1), JToken.Parse(analysis2), JToken.Parse(analysis3) };
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(analyses.ToAsyncEnumerable());
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+
+            var expectedData = JObject.Parse(analysis1);
+            scanResults.ElementAt(0).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(0).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(0).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(0).CreatedAt.Should().Be((string)expectedData["created_at"]);
+
+            expectedData = JObject.Parse(analysis2);
+            scanResults.ElementAt(1).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(1).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(1).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(1).CreatedAt.Should().Be((string)expectedData["created_at"]);
+
+            expectedData = JObject.Parse(analysis3);
+            scanResults.ElementAt(2).Id.Should().Be((int)expectedData["id"]);
+            scanResults.ElementAt(2).Ref.Should().Be((string)expectedData["ref"]);
+            scanResults.ElementAt(2).CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            scanResults.ElementAt(2).CreatedAt.Should().Be((string)expectedData["created_at"]);
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAnalysisForRepository_Passes_Filtered_Branch_As_QueryString()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
+
+            var analysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""id"": 38026365,
+                }}
+            ";
+
+            var analyses = new List<JToken> { JToken.Parse(analysis) };
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(analyses.ToAsyncEnumerable());
+
+            await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+            _githubClientMock.Verify(m => m.GetAllAsync(url, null));
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAnalysisForRepository_Returns_Empty_List_When_404()
+        {
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc&ref=main";
+
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Throws(new HttpRequestException("blah blah no analysis found", null, HttpStatusCode.NotFound));
+
+            var result = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertsForRepository_Returns_Correct_Data()
+        {
+            // Arrange
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts?per_page=100&sort=created&direction=asc";
+
+            var codeScanningAlert_1 = $@"
+                {{
+                    ""number"": 1,
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/3"",
+                    ""state"": ""fixed"",
+                    ""dismissed_at"": null,
+                    ""dismissed_reason"": null,
+                    ""dismissed_comment"": null,
+                    ""rule"": {{
+                      ""id"": ""java/zipslip"",
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 161,
+                        ""end_line"": 161,
+                        ""start_column"": 51,
+                        ""end_column"": 56
+                      }},
+                    }},
+                  }}
+                ";
+
+            var codeScanningAlert_2 = $@"
+                {{
+                    ""number"": 2,
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/2"",
+                    ""state"": ""dismissed"",
+                    ""dismissed_at"": ""2022-07-25T06:09:14Z"",
+                    ""dismissed_reason"": ""won't fix"",
+                    ""dismissed_comment"": ""Comment saying why this won't be fixed."",
+                    ""rule"": {{
+                      ""id"": ""java/sql-injection"",
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 120,
+                        ""end_line"": 120,
+                        ""start_column"": 42,
+                        ""end_column"": 47
+                      }},
+                    }},
+                  }}
+                ";
+
+            var codeScanningAlert_3 = $@"
+                 {{
+                    ""number"": 3,
+                    ""url"": ""https://api.github.com/repos/Braustuben/gei-import-test-repo/code-scanning/alerts/1"",
+                    ""state"": ""fixed"",
+                    ""dismissed_at"": ""2022-07-15T07:58:06Z"",
+                    ""dismissed_reason"": ""used in tests"",
+                    ""dismissed_comment"": ""Closed again"",
+                    ""rule"": {{
+                      ""id"": ""java/sql-injection"",
+                    }},
+                    ""most_recent_instance"": {{
+                      ""ref"": ""refs/heads/main"",
+                      ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
+                      ""location"": {{
+                        ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                        ""start_line"": 120,
+                        ""end_line"": 120,
+                        ""start_column"": 51,
+                        ""end_column"": 56
+                      }},
+                    }},
+                  }}
+                ";
+
+            var alerts = new List<JToken> { JToken.Parse(codeScanningAlert_1), JToken.Parse(codeScanningAlert_2), JToken.Parse(codeScanningAlert_3) };
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(alerts.ToAsyncEnumerable());
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+            AssertCodeScanningData(scanResults.ElementAt(0), JObject.Parse(codeScanningAlert_1));
+            AssertCodeScanningData(scanResults.ElementAt(1), JObject.Parse(codeScanningAlert_2));
+            AssertCodeScanningData(scanResults.ElementAt(2), JObject.Parse(codeScanningAlert_3));
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertsForRepository_Passes_Branch_As_Query()
+        {
+            var emptyResult = Array.Empty<JToken>();
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts?per_page=100&sort=created&direction=asc&ref=main";
+            _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(emptyResult.ToAsyncEnumerable());
+
+            await _githubApi.GetCodeScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO, "main");
+
+            _githubClientMock.VerifyAll();
+        }
+
+        private void AssertCodeScanningData(CodeScanningAlert actual, JToken expectedData)
+        {
+            actual.Number.Should().Be((int)expectedData["number"]);
+            actual.State.Should().Be((string)expectedData["state"]);
+            actual.RuleId.Should().Be((string)expectedData["rule"]["id"]);
+            actual.DismissedAt.Should().Be((string)expectedData["dismissed_at"]);
+            actual.DismissedReason.Should().Be((string)expectedData["dismissed_reason"]);
+            actual.DismissedComment.Should().Be((string)expectedData["dismissed_comment"]);
+
+            AssertCodeScanningInstanceData(actual.MostRecentInstance, expectedData["most_recent_instance"]);
+        }
+
+        [Fact]
+        public async Task GetCodeScanningAlertInstances_Returns_Correct_Data()
+        {
+            // Arrange
+            const string url =
+                $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/2/instances?per_page=100";
+
+            var codeScanningAlertInstance1 = $@"
+                {{
+                  ""ref"": ""refs/heads/main"",
+                  ""commit_sha"": ""d80eeb44bb13ebd76ee6fdf61d0245c6c341152f"",
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 161,
+                    ""end_line"": 161,
+                    ""start_column"": 51,
+                    ""end_column"": 56
+                  }},
+                }}
+            ";
+
+            var codeScanningAlertInstance2 = $@"
+                {{
+                  ""ref"": ""refs/heads/main"",
+                  ""commit_sha"": ""4f8ecaaca41c4121a07fbc9d1bc8e69a1f2271dc"",
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 120,
+                    ""end_line"": 120,
+                    ""start_column"": 42,
+                    ""end_column"": 47
+                  }},
+                }}
+            ";
+
+            var codeScanningAlertInstance3 = $@"
+                 {{
+                  ""ref"": ""refs/heads/main"",
+                  ""commit_sha"": ""b42f07d50e5ce4451d599e6cc9ac46f3a03fc352"",
+                  ""location"": {{
+                    ""path"": ""src/main/java/com/github/demo/service/BookDatabaseImpl.java"",
+                    ""start_line"": 120,
+                    ""end_line"": 120,
+                    ""start_column"": 51,
+                    ""end_column"": 56
+                  }},
+                 }}
+                ";
+
+            var instances = new List<JToken> { JToken.Parse(codeScanningAlertInstance1), JToken.Parse(codeScanningAlertInstance2), JToken.Parse(codeScanningAlertInstance3) };
+
+            _githubClientMock
+                .Setup(m => m.GetAllAsync(url, null))
+                .Returns(instances.ToAsyncEnumerable());
+
+            // Act
+            var scanResults = await _githubApi.GetCodeScanningAlertInstances(GITHUB_ORG, GITHUB_REPO, 2);
+
+            // Assert
+            scanResults.Count().Should().Be(3);
+            AssertCodeScanningInstanceData(scanResults.ElementAt(0), JObject.Parse(codeScanningAlertInstance1));
+            AssertCodeScanningInstanceData(scanResults.ElementAt(1), JObject.Parse(codeScanningAlertInstance2));
+            AssertCodeScanningInstanceData(scanResults.ElementAt(2), JObject.Parse(codeScanningAlertInstance3));
+        }
+
+        private void AssertCodeScanningInstanceData(CodeScanningAlertInstance actual, JToken expectedData)
+        {
+            actual.Ref.Should().Be((string)expectedData["ref"]);
+            actual.CommitSha.Should().Be((string)expectedData["commit_sha"]);
+            actual.Path.Should().Be((string)expectedData["location"]["path"]);
+            actual.StartLine.Should().Be((int)expectedData["location"]["start_line"]);
+            actual.EndLine.Should().Be((int)expectedData["location"]["end_line"]);
+            actual.StartColumn.Should().Be((int)expectedData["location"]["start_column"]);
+            actual.EndColumn.Should().Be((int)expectedData["location"]["end_column"]);
+        }
+
+        [Fact]
+        public async Task UpdateCodeScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
+        {
+            // Arrange
+            const int alertNumber = 2;
+            const string state = "open";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/{alertNumber}";
+            var payload = new { state };
+
+            // Act
+            await _githubApi.UpdateCodeScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task UpdateCodeScanningAlert_Replaces_Null_Dismissed_Comment_With_Empty_String()
+        {
+            // Arrange
+            const int alertNumber = 2;
+            const string state = "dismissed";
+            const string reason = "false positive";
+
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/alerts/{alertNumber}";
+            var payload = new { state, dismissed_reason = reason, dismissed_comment = string.Empty };
+
+            // Act
+            await _githubApi.UpdateCodeScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state, reason);
+
+            // Assert
+            _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+        }
+
+        [Fact]
+        public async Task GetSarifReport_For_Third_Party_Scanning_Tool()
+        {
+            // Arrange
+            const int analysisId = 37019295;
+            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
+
+            var response = "SARIF_DATA";
+
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, new Dictionary<string, string>() { { "accept", "application/sarif+json" } }))
+                .ReturnsAsync(response);
+
+            // Act
+            var result = await _githubApi.GetSarifReport(GITHUB_ORG, GITHUB_REPO, analysisId);
+
+            // Assert
+            result.Should().Match(response);
+        }
+
+        [Fact]
+        public async Task UploadSarif_Returns_Id_From_Response()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
+
+            var sarifCommitSha = "fake_commit_sha";
+            var sarifRef = "refs/heads/main";
+            var sarif = "fake_gzip_sarif";
+
+            var expectedPayload = new
+            {
+                commit_sha = sarifCommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarif),
+                @ref = sarifRef
+            };
+
+            var response = $@"
+                {{
+                    ""id"": ""sarif-id"",
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualId = await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
+
+            // Assert
+            actualId.Should().Match("sarif-id");
+        }
+
+        [Fact]
+        public async Task UploadSarif_Retries_On_502()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs";
+
+            var sarifCommitSha = "fake_commit_sha";
+            var sarifRef = "refs/heads/main";
+            var sarif = "fake_gzip_sarif";
+
+            var expectedPayload = new
+            {
+                commit_sha = sarifCommitSha,
+                sarif = StringCompressor.GZipAndBase64String(sarif),
+                @ref = sarifRef
+            };
+
+            var response = $@"
+                {{
+                    ""id"": ""sarif-id"",
+                }}  
+            ";
+            _githubClientMock
+                .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
+                .ThrowsAsync(new HttpRequestException("\"message\": \"Server Error\"", null, HttpStatusCode.BadGateway))
+                .ThrowsAsync(new HttpRequestException("\"message\": \"Server Error\"", null, HttpStatusCode.BadGateway))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualId = await _githubApi.UploadSarifReport(GITHUB_ORG, GITHUB_REPO, sarif, sarifCommitSha, sarifRef);
+
+            // Assert
+            actualId.Should().Match("sarif-id");
+        }
+
+        [Fact]
+        public async Task GetSarifProcessingStatus_Returns_Processing_Status_From_Response()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id";
+
+            var response = $@"
+                {{
+                    ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
+                    ""processing_status"": ""pending""
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
+
+            // Assert
+            actualStatus.Status.Should().Be("pending");
+            actualStatus.Errors.Count().Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetSarifProcessingStatus_Returns_Errors_From_Response()
+        {
+            // Arrange
+            const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id";
+
+            var response = $@"
+                {{
+                    ""processing_status"": ""failed"",
+                    ""errors"": [
+                        ""error1"",
+                        ""error2""
+                    ]
+                }}  
+            ";
+            _githubClientMock
+                .Setup(m => m.GetAsync(url, null))
+                .ReturnsAsync(response);
+
+            // Act
+            var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
+
+            // Assert
+            actualStatus.Errors.ElementAt(0).Should().Be("error1");
+            actualStatus.Errors.ElementAt(1).Should().Be("error2");
+            actualStatus.Errors.Count().Should().Be(2);
+        }
+
+        [Fact]
         public async Task GetEnterpriseServerVersion_Returns_Null_If_Not_Enterprise_Server()
         {
             // Arrange
@@ -2645,7 +3136,6 @@ namespace OctoshiftCLI.Tests
                 ""dependabot"": [
                 ]
             }}";
-
 
             _githubClientMock
                 .Setup(m => m.GetAsync(url, null))
