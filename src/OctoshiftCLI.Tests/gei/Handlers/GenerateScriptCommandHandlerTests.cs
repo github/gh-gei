@@ -1689,7 +1689,7 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
         {
             // Arrange
             const string ghesApiUrl = "https://foo.com/api/v3";
-            
+
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
