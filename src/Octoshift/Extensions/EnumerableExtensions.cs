@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OctoshiftCLI.Extensions
@@ -20,5 +21,7 @@ namespace OctoshiftCLI.Extensions
 
             return result;
         }
+
+        public static IEnumerable<T> ToEmptyEnumerableIfNull<T>(this IEnumerable<T> enumerable) => enumerable ?? Enumerable.Empty<T>();
     }
 }

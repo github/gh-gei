@@ -43,24 +43,16 @@ namespace OctoshiftCLI
             }
         }
 
-        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await SendAsync(HttpMethod.Get, url, expectedStatus: status)).Content;
+        public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await GetWithRetry(url, expectedStatus: status)).Content;
 
-        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null)
-        {
-            var (content, _) = await _retryPolicy.HttpRetry(
-                async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders),
-                _ => true
-            );
-
-            return content;
-        }
+        public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) => (await GetWithRetry(url, customHeaders)).Content;
 
         public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
         {
             var nextUrl = url;
             do
             {
-                var (content, headers) = await SendAsync(HttpMethod.Get, nextUrl, customHeaders: customHeaders);
+                var (content, headers) = await GetWithRetry(nextUrl, customHeaders: customHeaders);
                 foreach (var jToken in JArray.Parse(content))
                 {
                     yield return jToken;
@@ -138,6 +130,12 @@ namespace OctoshiftCLI
             (await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders)).Content;
 
         public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
+
+        private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> GetWithRetry(
+            string url,
+            Dictionary<string, string> customHeaders = null,
+            HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
+            await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus), _ => true);
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
             HttpMethod httpMethod,
