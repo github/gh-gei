@@ -63,32 +63,7 @@ namespace OctoshiftCLI.Tests
             var payload = new
             {
                 key_prefix = keyPrefix,
-                url_template = urlTemplate.Replace(" ", "%20")
-            };
-
-            // Act
-            await _githubApi.AddAutoLink(GITHUB_ORG, GITHUB_REPO, keyPrefix, urlTemplate);
-
-            // Assert
-            _githubClientMock.Verify(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
-        }
-
-        [Fact]
-        public async Task AddAutoLink_Replaces_Spaces_In_Url_Template()
-        {
-            // Arrange
-            const string adoOrg = "ADO_ORG";
-            const string adoTeamProject = "ADO TEAM PROJECT";
-
-            var keyPrefix = "AB#";
-            var urlTemplate = $"https://dev.azure.com/{adoOrg}/{adoTeamProject}/_workitems/edit/<num>/";
-
-            var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/autolinks";
-
-            var payload = new
-            {
-                key_prefix = keyPrefix,
-                url_template = urlTemplate.Replace(" ", "%20")
+                url_template = urlTemplate
             };
 
             // Act

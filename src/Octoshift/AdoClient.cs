@@ -53,8 +53,6 @@ namespace OctoshiftCLI
 
         private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
         {
-            url = url?.Replace(" ", "%20");
-
             await ApplyRetryDelayAsync();
             _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
@@ -101,28 +99,26 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(url));
             }
 
-            var updatedUrl = url.Replace(" ", "%20");
-
             if (!string.IsNullOrWhiteSpace(continuationToken))
             {
-                if (!updatedUrl.Contains('?'))
+                if (!url.Contains('?'))
                 {
-                    updatedUrl += "?";
+                    url += "?";
                 }
                 else
                 {
-                    updatedUrl += "&";
+                    url += "&";
                 }
 
-                updatedUrl += $"continuationToken={continuationToken}";
+                url += $"continuationToken={continuationToken}";
             }
 
             await ApplyRetryDelayAsync();
-            _log.LogVerbose($"HTTP GET: {updatedUrl}");
+            _log.LogVerbose($"HTTP GET: {url}");
 
             var response = await _retryPolicy.HttpRetry(async () =>
             {
-                var httpResponse = await _httpClient.GetAsync(updatedUrl);
+                var httpResponse = await _httpClient.GetAsync(url);
                 var httpContent = await httpResponse.Content.ReadAsStringAsync();
                 _log.LogVerbose($"RESPONSE ({httpResponse.StatusCode}): {httpContent}");
                 httpResponse.EnsureSuccessStatusCode();
@@ -218,20 +214,18 @@ namespace OctoshiftCLI
                 throw new ArgumentNullException(nameof(url));
             }
 
-            var updatedUrl = url.Replace(" ", "%20");
-
-            if (!updatedUrl.Contains('?'))
+            if (!url.Contains('?'))
             {
-                updatedUrl += "?";
+                url += "?";
             }
             else
             {
-                updatedUrl += "&";
+                url += "&";
             }
 
-            updatedUrl += $"$top=1&$skip={skip}";
+            url += $"$top=1&$skip={skip}";
 
-            var content = await GetAsync(updatedUrl);
+            var content = await GetAsync(url);
             var count = (int)JObject.Parse(content)["count"];
 
             return count > 0;

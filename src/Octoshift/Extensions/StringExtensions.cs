@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace OctoshiftCLI.Extensions
 {
@@ -21,5 +22,7 @@ namespace OctoshiftCLI.Extensions
         public static string ToWindowsPath(this string path) => path?.Replace("/", "\\");
 
         public static string ToUnixPath(this string path) => path?.Replace("\\", "/");
+
+        public static string UrlEncode(this string value) => HttpUtility.UrlEncode(value);
     }
 }
