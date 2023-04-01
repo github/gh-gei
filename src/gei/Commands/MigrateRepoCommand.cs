@@ -39,6 +39,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(LockSourceRepo);
 
             AddOption(Wait);
+            AddOption(QueueOnly);
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
             AddOption(AdoPat);

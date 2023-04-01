@@ -125,7 +125,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw;
         }
 
-        if (!args.Wait)
+        if (args.QueueOnly)
         {
             _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
             return;
@@ -494,6 +494,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.Wait)
         {
             _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
+        }
+
+        if (args.Wait && args.QueueOnly)
+        {
+            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
         }
 
         ValidateGHESOptions(args, cloudCredentialsRequired);
