@@ -3,3 +3,4 @@
 - Rename `--bbs-project-key` to `--bbs-project` in `gh bbs2gh generate-script` for consistency
 - Fix a bug where `create-team` might not work due to a race condition
 - When using `gh ado2gh generate-script` the script will now validate that the necessary environment variables are set
+- Make API calls to GitHub.com that require pagination more resilient by retrying on HTTP failures
