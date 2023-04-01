@@ -321,7 +321,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 21);
 
             // Assert
             _script.Should().Be(expected);
@@ -1595,6 +1595,8 @@ if ($Failed -ne 0) {
         public async Task Validates_Env_Vars()
         {
             // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
@@ -1622,7 +1624,8 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
-                Sequential = true
+                GhesApiUrl = ghesApiUrl,
+                Sequential = true,
             };
             await _handler.Handle(args);
 
@@ -1722,7 +1725,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             _script.Should().NotContain(expected);
         }
 
-        private string TrimNonExecutableLines(string script, int skipFirst = 21, int skipLast = 0)
+        private string TrimNonExecutableLines(string script, int skipFirst = 15, int skipLast = 0)
         {
             var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
 
