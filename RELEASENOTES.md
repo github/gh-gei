@@ -2,4 +2,4 @@
 - Update `gh bbs2gh generate-script` so it supports more than 25 projects/repos
 - Rename `--bbs-project-key` to `--bbs-project` in `gh bbs2gh generate-script` for consistency
 - Fix a bug where `create-team` might not work due to a race condition
-- When using `gh ado2gh generate-script` or `gh bbs2gh generate-script` the script will now validate that the necessary environment variables are set
+- When using `generate-script` the script will now validate that the necessary environment variables are set
