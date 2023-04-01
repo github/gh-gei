@@ -384,7 +384,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected);
@@ -413,7 +413,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected);
@@ -443,7 +443,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected);
@@ -482,7 +482,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -590,6 +590,20 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -664,6 +678,20 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -732,7 +760,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -765,7 +793,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -808,7 +836,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 9, 0);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -922,6 +950,20 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -999,6 +1041,20 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -1070,6 +1126,20 @@ function ExecAndGetMigrationID {
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
 }");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -1140,6 +1210,20 @@ function ExecAndGetMigrationID {
         $_
     } | Select-String -Pattern ""\(ID: (.+)\)"" | ForEach-Object { $_.matches.groups[1] }
     return $MigrationID
+}");
+            expected.AppendLine(@"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
+            expected.AppendLine(@"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
 }");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
@@ -1235,7 +1319,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 13, 7);
+            _script = TrimNonExecutableLines(_script, 25, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1291,7 +1375,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 13, 7);
+            _script = TrimNonExecutableLines(_script, 25, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1425,7 +1509,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 27, 0);
 
             // Assert
             _script.Should().Be(expected);
@@ -1459,7 +1543,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script);
+            _script = TrimNonExecutableLines(_script, 27, 0);
 
             // Assert
             _script.Should().Be(expected);
@@ -1506,7 +1590,7 @@ if ($Failed -ne 0) {
                 .ThrowAsync<OctoshiftCliException>();
         }
 
-        private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
+        private string TrimNonExecutableLines(string script, int skipFirst = 21, int skipLast = 0)
         {
             var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
 
