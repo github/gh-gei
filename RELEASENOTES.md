@@ -3,3 +3,4 @@
 - Rename `--bbs-project-key` to `--bbs-project` in `gh bbs2gh generate-script` for consistency
 - Fix a bug where `create-team` might not work due to a race condition
 - Make API calls to GitHub.com that require pagination more resilient by retrying on HTTP failures
+- Fixed a bug where ADO Team Projects or Organizations with special characters would fail to migrate
