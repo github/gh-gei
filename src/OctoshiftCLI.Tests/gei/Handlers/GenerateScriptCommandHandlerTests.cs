@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.Contracts;
@@ -1588,6 +1589,137 @@ if ($Failed -ne 0) {
                 .Invoking(async handler => await handler.Handle(args))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task Validates_Env_Vars()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}
+
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+            expected = TrimNonExecutableLines(expected, 0, 0);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script, 0, 0);
+
+            // Assert
+            _script.Should().Contain(expected);
+        }
+
+        [Fact]
+        public async Task Validates_Env_Vars_AWS()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}
+
+if (-not $env:AWS_ACCESS_KEY_ID) {
+    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
+}
+
+if (-not $env:AWS_SECRET_ACCESS_KEY) {
+    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+
+            expected = TrimNonExecutableLines(expected, 0, 0);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                GhesApiUrl = ghesApiUrl,
+                Output = new FileInfo("unit-test-output"),
+                AwsBucketName = AWS_BUCKET_NAME,
+                Sequential = true,
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script, 0, 0);
+
+            // Assert
+            _script.Should().Contain(expected);
+        }
+
+        [Fact]
+        public async Task Validates_Env_Vars_AZURE_STORAGE_CONNECTION_STRING_Not_Validated_When_Aws()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+            
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+
+            var expected = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+            expected = TrimNonExecutableLines(expected, 0, 0);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                AwsBucketName = AWS_BUCKET_NAME,
+                GhesApiUrl = ghesApiUrl,
+                Sequential = true,
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script, 0, 0);
+
+            // Assert
+            _script.Should().NotContain(expected);
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 21, int skipLast = 0)
