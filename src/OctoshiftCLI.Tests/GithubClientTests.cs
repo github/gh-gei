@@ -15,11 +15,9 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests
 {
-    public sealed class GithubClientTests : IDisposable
+    public sealed class GithubClientTests
     {
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly HttpResponseMessage _defaultHttpResponse;
-        private readonly HttpResponseMessage _graphqlHttpResponse;
         private readonly RetryPolicy _retryPolicy;
         private readonly Mock<DateTimeProvider> _dateTimeProvider = TestHelpers.CreateMock<DateTimeProvider>();
         private readonly object _rawRequestBody;
@@ -29,32 +27,16 @@ namespace OctoshiftCLI.Tests
         private const string EXPECTED_GRAPHQL_JSON_RESPONSE_BODY = "{\"id\":\"ID\"}";
         private const string EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY = "{\"data\":{\"createMigrationSource\":null},\"errors\":[{\"type\":\"FORBIDDEN\",\"path\":[\"createMigrationSource\"],\"extensions\":{\"saml_failure\":true},\"locations\":[{\"line\":1,\"column\":109}],\"message\":\"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.\"}]}";
         private const string PERSONAL_ACCESS_TOKEN = "PERSONAL_ACCESS_TOKEN";
-        private const string URL = "http://example.com/resource";
+        private const string URL = "https://api.github.com/resource";
 
         public GithubClientTests()
         {
             _rawRequestBody = new { id = "ID" };
 
-            _defaultHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
-            };
-
-            _graphqlHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(EXPECTED_GRAPHQL_JSON_RESPONSE_BODY)
-            };
-
             _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
             {
                 _httpRetryInterval = 0
             };
-        }
-
-        public void Dispose()
-        {
-            _defaultHttpResponse?.Dispose();
-            _graphqlHttpResponse?.Dispose();
         }
 
         [Fact]
@@ -121,14 +103,6 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
         {
             // Arrange
-            using var firstHttpResponse = new HttpResponseMessage(httpStatusCode)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("SECOND_RESPONSE")
-            };
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -136,8 +110,8 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(statusCode: httpStatusCode, content: "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -146,7 +120,7 @@ namespace OctoshiftCLI.Tests
             var returnedContent = await githubClient.GetAsync(URL);
 
             // Assert
-            returnedContent.Should().Be("SECOND_RESPONSE");
+            returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
         }
 
         [Fact]
@@ -156,11 +130,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP GET: {url}";
+            var expectedLogMessage = $"HTTP GET: {URL}";
 
             // Act
-            await githubClient.GetAsync(url);
+            await githubClient.GetAsync(URL);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -171,13 +144,11 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            var mockHandler = MockHttpHandlerForGet(CreateHttpResponseFactory(headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string githubRequestId = "123-456-789";
-            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-
-            const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
             // Act
             await githubClient.GetAsync("http://example.com");
@@ -208,23 +179,15 @@ namespace OctoshiftCLI.Tests
         public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            var httpResponse = () => new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, CreateHttpResponseFactory(HttpStatusCode.InternalServerError));
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(async () =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return await githubClient.GetAsync("http://example.com");
-                })
+                .Invoking(async () => await githubClient.GetAsync("http://example.com"))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -238,24 +201,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -263,9 +208,11 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(content: "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -288,24 +235,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -313,9 +242,12 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(content: "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.Forbidden,
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -351,22 +283,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var badCredentialResponse1 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
-            {
-                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
-            };
-
-            badCredentialResponse1.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            badCredentialResponse1.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var badCredentialResponse2 = new HttpResponseMessage(HttpStatusCode.Unauthorized)
-            {
-                Content = new StringContent("{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}")
-            };
-
-            badCredentialResponse2.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            badCredentialResponse2.Headers.Add("X-RateLimit-Remaining", "0");
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -374,8 +290,14 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(badCredentialResponse1)
-                .ReturnsAsync(badCredentialResponse2);
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.Unauthorized,
+                    content: "{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.Unauthorized,
+                    content: "{\"message\":\"Bad credentials\",\"documentation_url\":\"https://docs.github.com/graphql\"}",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -410,24 +332,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -435,9 +339,11 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(content: "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -460,24 +366,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.Forbidden)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -485,9 +373,12 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(content: "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.Forbidden,
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -530,11 +421,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP POST: {url}";
+            var expectedLogMessage = $"HTTP POST: {URL}";
 
             // Act
-            await githubClient.PostAsync(url, _rawRequestBody);
+            await githubClient.PostAsync(URL, _rawRequestBody);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -545,13 +435,12 @@ namespace OctoshiftCLI.Tests
         public async Task PostAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            var mockHandler = MockHttpHandlerForPost(CreateHttpResponseFactory(headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string githubRequestId = "123-456-789";
-            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-
-            const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
             // Act
             await githubClient.PostAsync("http://example.com", _rawRequestBody);
@@ -585,7 +474,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PostAsync("http://example.com", _rawRequestBody);
@@ -599,31 +488,16 @@ namespace OctoshiftCLI.Tests
         public async Task PostAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
-            {
-                Content = new StringContent(EXPECTED_RESPONSE_CONTENT)
-            };
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x =>
-                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
+            var handlerMock = MockHttpHandlerForPost(CreateHttpResponseFactory(HttpStatusCode.InternalServerError, EXPECTED_RESPONSE_CONTENT));
             var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.PostAsync("http://example.com", _rawRequestBody);
-                })
+                .Invoking(() => githubClient.PostAsync("http://example.com", _rawRequestBody))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>()
                 .WithMessage($"GitHub API error: {EXPECTED_RESPONSE_CONTENT}");
@@ -672,11 +546,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP POST: {url}";
+            var expectedLogMessage = $"HTTP POST: {URL}";
 
             // Act
-            await githubClient.PostGraphQLAsync(url, _rawRequestBody);
+            await githubClient.PostGraphQLAsync(URL, _rawRequestBody);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -687,9 +560,11 @@ namespace OctoshiftCLI.Tests
         public async Task PostGraphQLAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
+            var mockHandler = MockHttpHandlerForGraphQLPost(CreateHttpResponseFactory(
+                content: EXPECTED_GRAPHQL_JSON_RESPONSE_BODY,
+                headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-            _graphqlHttpResponse.Headers.Add("X-GitHub-Request-Id", GITHUB_REQUEST_ID);
 
             const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
 
@@ -725,7 +600,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForGraphQLPost().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_graphqlHttpResponse.StatusCode}): {EXPECTED_GRAPHQL_JSON_RESPONSE_BODY}";
+            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_GRAPHQL_JSON_RESPONSE_BODY}";
 
             // Act
             await githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
@@ -739,26 +614,19 @@ namespace OctoshiftCLI.Tests
         public async Task PostGraphQLAsync_Throws_OctoshiftCliException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY)
-            };
-
-            var handlerMock = MockHttpHandlerForGraphQLPost(httpResponse);
+            var handlerMock = MockHttpHandlerForGraphQLPost(CreateHttpResponseFactory(content: EXPECTED_GRAPHQL_JSON_ERROR_RESPONSE_BODY));
             var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody);
-                })
+                .Invoking(() => githubClient.PostGraphQLAsync("http://example.com", _rawRequestBody))
                 .Should()
-                .ThrowExactlyAsync<OctoshiftCLI.OctoshiftCliException>()
-                .WithMessage($"Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.");
+                .ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.");
         }
 
         [Fact]
@@ -784,24 +652,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -809,9 +659,12 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Put),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.OK,
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -854,11 +707,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP PUT: {url}";
+            var expectedLogMessage = $"HTTP PUT: {URL}";
 
             // Act
-            await githubClient.PutAsync(url, _rawRequestBody);
+            await githubClient.PutAsync(URL, _rawRequestBody);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -869,13 +721,11 @@ namespace OctoshiftCLI.Tests
         public async Task PutAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            var mockHandler = MockHttpHandlerForPut(CreateHttpResponseFactory(headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string githubRequestId = "123-456-789";
-            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-
-            const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
             // Act
             await githubClient.PutAsync("http://example.com", _rawRequestBody);
@@ -909,7 +759,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPut().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PutAsync("http://example.com", _rawRequestBody);
@@ -923,28 +773,16 @@ namespace OctoshiftCLI.Tests
         public async Task PutAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x =>
-                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
+            var handlerMock = MockHttpHandlerForPut(CreateHttpResponseFactory(HttpStatusCode.InternalServerError));
             var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.PutAsync("http://example.com", _rawRequestBody);
-                })
+                .Invoking(() => githubClient.PutAsync("http://example.com", _rawRequestBody))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -972,24 +810,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -997,9 +817,12 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Patch),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.OK,
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1042,11 +865,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP PATCH: {url}";
+            var expectedLogMessage = $"HTTP PATCH: {URL}";
 
             // Act
-            await githubClient.PatchAsync(url, _rawRequestBody);
+            await githubClient.PatchAsync(URL, _rawRequestBody);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -1057,13 +879,11 @@ namespace OctoshiftCLI.Tests
         public async Task PatchAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            var mockHandler = MockHttpHandlerForPatch(CreateHttpResponseFactory(headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string githubRequestId = "123-456-789";
-            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-
-            const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
             // Act
             await githubClient.PatchAsync("http://example.com", _rawRequestBody);
@@ -1097,7 +917,7 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForPatch().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            var expectedLogMessage = $"RESPONSE ({_defaultHttpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}";
+            var expectedLogMessage = $"RESPONSE ({HttpStatusCode.OK}): {EXPECTED_RESPONSE_CONTENT}";
 
             // Act
             await githubClient.PatchAsync("http://example.com", _rawRequestBody);
@@ -1111,28 +931,16 @@ namespace OctoshiftCLI.Tests
         public async Task PatchAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(x =>
-                        x.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
+            var handlerMock = MockHttpHandlerForPatch(CreateHttpResponseFactory(HttpStatusCode.InternalServerError));
             var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.PatchAsync("http://example.com", _rawRequestBody);
-                })
+                .Invoking(() => githubClient.PatchAsync("http://example.com", _rawRequestBody))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -1146,24 +954,6 @@ namespace OctoshiftCLI.Tests
 
             _dateTimeProvider.Setup(m => m.CurrentUnixTimeSeconds()).Returns(now);
 
-            using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("FIRST_RESPONSE")
-            };
-
-            using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("API RATE LIMIT EXCEEDED blah blah blah")
-            };
-
-            secondHttpResponse.Headers.Add("X-RateLimit-Reset", retryAt.ToString());
-            secondHttpResponse.Headers.Add("X-RateLimit-Remaining", "0");
-
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("THIRD_RESPONSE")
-            };
-
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
                 .Protected()
@@ -1171,9 +961,12 @@ namespace OctoshiftCLI.Tests
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Delete),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstHttpResponse)
-                .ReturnsAsync(secondHttpResponse)
-                .ReturnsAsync(thirdResponse);
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "FIRST_RESPONSE"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    statusCode: HttpStatusCode.OK,
+                    content: "API RATE LIMIT EXCEEDED blah blah blah",
+                    headers: new[] { ("X-RateLimit-Reset", retryAt.ToString()), ("X-RateLimit-Remaining", "0") }))
+                .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1230,11 +1023,10 @@ namespace OctoshiftCLI.Tests
             using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-            const string url = "http://example.com";
-            var expectedLogMessage = $"HTTP DELETE: {url}";
+            var expectedLogMessage = $"HTTP DELETE: {URL}";
 
             // Act
-            await githubClient.DeleteAsync(url);
+            await githubClient.DeleteAsync(URL);
 
             // Assert
             _mockOctoLogger.Verify(m =>
@@ -1245,13 +1037,11 @@ namespace OctoshiftCLI.Tests
         public async Task DeleteAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpClient = new HttpClient(MockHttpHandlerForDelete().Object);
+            const string expectedLogMessage = $"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}";
+
+            var mockHandler = MockHttpHandlerForDelete(CreateHttpResponseFactory(headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
+            using var httpClient = new HttpClient(mockHandler.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string githubRequestId = "123-456-789";
-            _defaultHttpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-
-            const string expectedLogMessage = $"GITHUB REQUEST ID: {githubRequestId}";
 
             // Act
             await githubClient.DeleteAsync("http://example.com");
@@ -1265,22 +1055,14 @@ namespace OctoshiftCLI.Tests
         public async Task GetNonSuccessAsync_Is_Unsuccessful()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.NotFound);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
+            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, CreateHttpResponseFactory(HttpStatusCode.NotFound));
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
-                })
+                .Invoking(async () => await githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -1289,13 +1071,7 @@ namespace OctoshiftCLI.Tests
         public async Task GetNonSuccessAsync_With_302_Is_Successful()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.Moved);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
+            var handlerMock = MockHttpHandlerForGet(CreateHttpResponseFactory(HttpStatusCode.Moved));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1311,10 +1087,9 @@ namespace OctoshiftCLI.Tests
         public async Task GetNonSuccessAsync_Logs_The_GitHub_Request_Id_Header_Value()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.Moved);
-            const string githubRequestId = "123-456-789";
-            httpResponse.Headers.Add("X-GitHub-Request-Id", githubRequestId);
-            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
+            var handlerMock = MockHttpHandler(
+                req => req.Method == HttpMethod.Get,
+                CreateHttpResponseFactory(HttpStatusCode.Moved, headers: new[] { ("X-GitHub-Request-Id", GITHUB_REQUEST_ID) }));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1323,7 +1098,7 @@ namespace OctoshiftCLI.Tests
             await githubClient.GetNonSuccessAsync("http://example.com", HttpStatusCode.Moved);
 
             // Assert
-            _mockOctoLogger.Verify(m => m.LogVerbose($"GITHUB REQUEST ID: {githubRequestId}"));
+            _mockOctoLogger.Verify(m => m.LogVerbose($"GITHUB REQUEST ID: {GITHUB_REQUEST_ID}"));
         }
 
         [Fact]
@@ -1347,25 +1122,17 @@ namespace OctoshiftCLI.Tests
         public async Task DeleteAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-            var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
+            var handlerMock = MockHttpHandlerForDelete(CreateHttpResponseFactory(HttpStatusCode.InternalServerError));
 
             var loggerMock = TestHelpers.CreateMock<OctoLogger>();
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             // Assert
             await FluentActions
-                .Invoking(() =>
-                {
-                    using var httpClient = new HttpClient(handlerMock.Object);
-                    var githubClient = new GithubClient(loggerMock.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-                    return githubClient.DeleteAsync("http://example.com");
-                })
+                .Invoking(() => githubClient.DeleteAsync("http://example.com"))
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -1378,71 +1145,51 @@ namespace OctoshiftCLI.Tests
 
             const string firstItem = "first";
             const string secondItem = "second";
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent($"[\"{firstItem}\", \"{secondItem}\"]"),
-            };
-            firstResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=2>; rel=\"next\", " +
-                $"<{url}&page=4>; rel=\"last\""
-            });
-
             const string thirdItem = "third";
             const string fourthItem = "fourth";
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent($"[\"{thirdItem}\", \"{fourthItem}\"]")
-            };
-            secondResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=1>; rel=\"prev\", " +
-                $"<{url}&page=3>; rel=\"next\", " +
-                $"<{url}&page=3>; rel=\"last\", " +
-                $"<{url}&page=1>; rel=\"first\""
-            });
-
             const string fifthItem = "fifth";
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent($"[\"{fifthItem}\"]")
-            };
 
             var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock // first request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == url),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstResponse);
-            handlerMock // second request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == $"{url}&page=2"),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(secondResponse);
-            handlerMock // third request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == $"{url}&page=3"),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(thirdResponse);
+
+            // first request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
+                CreateHttpResponseFactory(
+                    content: $"[\"{firstItem}\", \"{secondItem}\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=4>; rel=\"last\""
+                        )
+                    }),
+                handlerMock);
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
+                CreateHttpResponseFactory(
+                    content: $"[\"{thirdItem}\", \"{fourthItem}\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=1>; rel=\"prev\", " +
+                                 $"<{url}&page=3>; rel=\"next\", " +
+                                 $"<{url}&page=3>; rel=\"last\", " +
+                                 $"<{url}&page=1>; rel=\"first\""
+                        )
+                    }),
+                handlerMock);
+
+            // third request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=3",
+                CreateHttpResponseFactory(content: $"[\"{fifthItem}\"]"),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            var results = new List<JToken>();
-            await foreach (var result in githubClient.GetAllAsync(url))
-            {
-                results.Add(result);
-            }
+            var results = await githubClient.GetAllAsync(url).ToListAsync();
 
             // Assert
             results.Should().HaveCount(5);
@@ -1457,41 +1204,28 @@ namespace OctoshiftCLI.Tests
         public async Task GetAllAsync_Logs_The_Url_Per_Each_Page_Request()
         {
             // Arrange
-            const string url = "https://example.com/resource";
-
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[\"first\"]"),
-            };
-            firstResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=2>; rel=\"next\", " +
-                $"<{url}&page=2>; rel=\"last\""
-            });
-
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[\"second\"]"),
-            };
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
 
             var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock // first request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == url),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstResponse);
 
-            handlerMock // second request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == $"{url}&page=2"),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(secondResponse);
+            // first request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
+                CreateHttpResponseFactory(
+                    content: "[\"first\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=2>; rel=\"last\""
+                        )
+                    }),
+                handlerMock);
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
+                CreateHttpResponseFactory(content: "[\"second\"]"),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1508,39 +1242,32 @@ namespace OctoshiftCLI.Tests
         public async Task GetAllAsync_Logs_The_GitHub_Request_Id_Header_Value_Per_Each_Page_Request()
         {
             // Arrange
-            const string url = "https://example.com/resource";
-
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[\"first\"]"),
-            };
-            firstResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=2>; rel=\"next\", " +
-                $"<{url}&page=2>; rel=\"last\""
-            });
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
             const string firstGithubRequestId = "123-456";
-            firstResponse.Headers.Add("X-GitHub-Request-Id", firstGithubRequestId);
-
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[\"second\"]"),
-            };
             const string secondGithubRequestId = "456-789";
-            secondResponse.Headers.Add("X-GitHub-Request-Id", secondGithubRequestId);
 
             var handlerMock = new Mock<HttpMessageHandler>();
 
             // first request
             MockHttpHandler(
                 req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
-                firstResponse,
+                CreateHttpResponseFactory(
+                    content: "[\"first\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=2>; rel=\"last\""
+                        ),
+                        ("X-GitHub-Request-Id", firstGithubRequestId)
+                    }),
                 handlerMock);
 
             // second request
             MockHttpHandler(
                 req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
-                secondResponse,
+                CreateHttpResponseFactory(
+                    content: "[\"second\"]",
+                    headers: new[] { ("X-GitHub-Request-Id", secondGithubRequestId) }),
                 handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
@@ -1558,43 +1285,31 @@ namespace OctoshiftCLI.Tests
         public async Task GetAllAsync_Logs_The_Response_Per_Each_Page_Request()
         {
             // Arrange
-            const string url = "https://example.com/resource";
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
 
-            var firstResponseContent = "[\"firs\"]";
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(firstResponseContent),
-            };
-            firstResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=2>; rel=\"next\", " +
-                $"<{url}&page=2>; rel=\"last\""
-            });
-
-            var secondResponseContent = "[\"second\"]";
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(secondResponseContent),
-            };
+            const string firstResponseContent = "[\"first\"]";
+            const string secondResponseContent = "[\"second\"]";
 
             var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock // first request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == url),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstResponse);
 
-            handlerMock // second request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == $"{url}&page=2"),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(secondResponse);
+            // first request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
+                CreateHttpResponseFactory(
+                    content: firstResponseContent,
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=2>; rel=\"last\""
+                        )
+                    }),
+                handlerMock);
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
+                CreateHttpResponseFactory(content: secondResponseContent),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
@@ -1616,48 +1331,35 @@ namespace OctoshiftCLI.Tests
         public async Task GetAllAsync_Throws_HttpRequestException_On_Non_Success_Response()
         {
             // Arrange
-            const string url = "https://example.com/resource";
-
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[\"first\"]"),
-            };
-            firstResponse.Headers.Add("Link", new[]
-            {
-                $"<{url}&page=2>; rel=\"next\", " +
-                $"<{url}&page=2>; rel=\"last\""
-            });
-
-            using var failureResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
 
             var handlerMock = new Mock<HttpMessageHandler>();
-            handlerMock // first request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == url),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(firstResponse);
 
-            handlerMock // second request
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get &&
-                                                         req.RequestUri.ToString() == $"{url}&page=2"),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(failureResponse);
+            // first request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
+                CreateHttpResponseFactory(
+                    content: "[\"first\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=2>; rel=\"last\""
+                        )
+                    }),
+                handlerMock);
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
+                CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act, Assert
             await FluentActions
-                .Invoking(async () =>
-                {
-                    await foreach (var _ in githubClient.GetAllAsync(url)) { }
-                })
+                .Invoking(async () => await githubClient.GetAllAsync(url).ToListAsync())
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
         }
@@ -1666,7 +1368,6 @@ namespace OctoshiftCLI.Tests
         public async Task PostGraphQLWithPaginationAsync_Should_Return_All_Pages()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string orgId = "ORG_ID";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
@@ -1714,10 +1415,6 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(firstResponseContent.ToJson())
-            };
 
             // second request/response
             var secondRequestVariables = new { id = orgId, first = 2, after = firstResponseEndCursor };
@@ -1740,10 +1437,6 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(secondResponseContent.ToJson())
-            };
             var secondRequestBody = new { query, variables = secondRequestVariables };
 
             // third request/response
@@ -1765,30 +1458,34 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var thirdResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(thirdResponseContent.ToJson())
-            };
             var thirdRequestBody = new { query, variables = thirdRequestVariables };
 
-            var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == firstRequestBody.ToJson(),
-                firstResponse); // first request
+            var handlerMock = new Mock<HttpMessageHandler>();
+
+            // first request
             MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == secondRequestBody.ToJson(),
-                secondResponse,
-                handlerMock); // second request
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == firstRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: firstResponseContent.ToJson()),
+                handlerMock);
+
+            // second request
             MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == thirdRequestBody.ToJson(),
-                thirdResponse,
-                handlerMock); // third request
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == secondRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: secondResponseContent.ToJson()),
+                handlerMock);
+
+            // third request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == thirdRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: thirdResponseContent.ToJson()),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     firstRequestBody,
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -1809,7 +1506,6 @@ query($id: ID!, $first: Int, $after: String) {
         public async Task PostGraphQLWithPaginationAsync_Should_Create_Query_Variables_If_Missing()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
     node(id: $id) { 
@@ -1854,21 +1550,17 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseContent.ToJson())
-            };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
-                response);
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: responseContent.ToJson()));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     new { query },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -1885,7 +1577,6 @@ query($id: ID!, $first: Int, $after: String) {
         public async Task PostGraphQLWithPaginationAsync_Should_Create_First_And_After_In_Query_Variables_If_Missing()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
     node(id: $id) { 
@@ -1930,21 +1621,17 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseContent.ToJson())
-            };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
-                response);
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: responseContent.ToJson()));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     new { query, variables = new { id = "ORG_ID" } },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -1961,7 +1648,6 @@ query($id: ID!, $first: Int, $after: String) {
         public async Task PostGraphQLWithPaginationAsync_Should_Override_First_And_After_In_Query_Variables()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
     node(id: $id) { 
@@ -2006,21 +1692,17 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseContent.ToJson())
-            };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
-                response);
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == expectedRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: responseContent.ToJson()));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     new { query, variables = new { first = 10, after = Guid.NewGuid().ToString() } },
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -2037,23 +1719,22 @@ query($id: ID!, $first: Int, $after: String) {
         public async Task PostGraphQLWithPaginationAsync_Throws_If_Result_Collection_Selector_Is_Null()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             using var httpClient = new HttpClient();
             var githubClient = new GithubClient(null, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act, Assert
             await githubClient
-                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", null, null).ToListAsync())
+                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(URL, "", null, null).ToListAsync())
                 .Should()
                 .ThrowAsync<ArgumentNullException>()
                 .WithParameterName("resultCollectionSelector");
         }
 
+#pragma warning disable CA1506
         [Fact]
         public async Task PostGraphQLWithPaginationAsync_Returns_When_PageInfo_Is_Missing()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
     node(id: $id) { 
@@ -2097,21 +1778,17 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseContent.ToJson())
-            };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
-                response);
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                CreateHttpResponseFactory(content: responseContent.ToJson()));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     requestBody,
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -2128,12 +1805,13 @@ query($id: ID!, $first: Int, $after: String) {
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>());
         }
+#pragma warning restore
 
+#pragma warning disable CA1506
         [Fact]
         public async Task PostGraphQLWithPaginationAsync_Does_Not_Continue_When_HasNextPage_Is_Missing()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string query = @"
 query($id: ID!, $first: Int, $after: String) {
     node(id: $id) { 
@@ -2178,21 +1856,17 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseContent.ToJson())
-            };
 
             var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
-                response);
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == requestBody.ToJson(),
+                CreateHttpResponseFactory(content: responseContent.ToJson()));
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             var result = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     requestBody,
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -2209,18 +1883,18 @@ query($id: ID!, $first: Int, $after: String) {
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>());
         }
+#pragma warning restore
 
         [Fact]
         public async Task PostGraphQLWithPaginationAsync_Throws_If_PageInfo_Selector_Is_Null()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             using var httpClient = new HttpClient();
             var githubClient = new GithubClient(null, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act, Assert
             await githubClient
-                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(url, "", x => (JArray)x["item"], null).ToListAsync())
+                .Invoking(async client => await client.PostGraphQLWithPaginationAsync(URL, "", x => (JArray)x["item"], null).ToListAsync())
                 .Should()
                 .ThrowAsync<ArgumentNullException>()
                 .WithParameterName("pageInfoSelector");
@@ -2230,7 +1904,6 @@ query($id: ID!, $first: Int, $after: String) {
         public async Task PostGraphQLWithPaginationAsync_Logs_The_GitHub_Request_Id_Header_Value_Per_Each_Page()
         {
             // Arrange
-            const string url = "https://example.com/graphql";
             const string orgId = "ORG_ID";
             const string query = "QUERY";
 
@@ -2252,12 +1925,7 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(firstResponseContent.ToJson())
-            };
             const string firstGithubRequestId = "123-456";
-            firstResponse.Headers.Add("X-GitHub-Request-Id", firstGithubRequestId);
 
             // second request/response
             var secondRequestVariables = new { id = orgId, first = 2, after = firstResponseEndCursor };
@@ -2276,28 +1944,29 @@ query($id: ID!, $first: Int, $after: String) {
                     }
                 }
             };
-            using var secondResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(secondResponseContent.ToJson())
-            };
             const string secondGithubRequestId = "456-789";
-            secondResponse.Headers.Add("X-GitHub-Request-Id", secondGithubRequestId);
             var secondRequestBody = new { query, variables = secondRequestVariables };
 
-            var handlerMock = MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == firstRequestBody.ToJson(),
-                firstResponse); // first request
+            var handlerMock = new Mock<HttpMessageHandler>();
+
+            // first request
             MockHttpHandler(
-                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == url && req.Content.ReadAsStringAsync().Result == secondRequestBody.ToJson(),
-                secondResponse,
-                handlerMock); // second request
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == firstRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: firstResponseContent.ToJson(), headers: new[] { ("X-GitHub-Request-Id", firstGithubRequestId) }),
+                handlerMock);
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Post && req.RequestUri.ToString() == URL && req.Content.ReadAsStringAsync().Result == secondRequestBody.ToJson(),
+                CreateHttpResponseFactory(content: secondResponseContent.ToJson(), headers: new[] { ("X-GitHub-Request-Id", secondGithubRequestId) }),
+                handlerMock);
 
             using var httpClient = new HttpClient(handlerMock.Object);
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
             _ = await githubClient.PostGraphQLWithPaginationAsync(
-                    url,
+                    URL,
                     firstRequestBody,
                     obj => (JArray)obj["data"]["node"]["repositoryMigrations"]["nodes"],
                     obj => (JObject)obj["data"]["node"]["repositoryMigrations"]["pageInfo"],
@@ -2354,35 +2023,32 @@ query($id: ID!, $first: Int, $after: String) {
             createdAt = DateTime.UtcNow
         };
 
-        private Mock<HttpMessageHandler> MockHttpHandlerForGet() =>
-            MockHttpHandler(req => req.Method == HttpMethod.Get);
+        private Mock<HttpMessageHandler> MockHttpHandlerForGet(Func<HttpResponseMessage> httpResponseFactory = null) =>
+            MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponseFactory);
 
-        private Mock<HttpMessageHandler> MockHttpHandlerForDelete() =>
-            MockHttpHandler(req => req.Method == HttpMethod.Delete);
+        private Mock<HttpMessageHandler> MockHttpHandlerForDelete(Func<HttpResponseMessage> httpResponseFactory = null) =>
+            MockHttpHandler(req => req.Method == HttpMethod.Delete, httpResponseFactory);
 
-        private Mock<HttpMessageHandler> MockHttpHandlerForPost() =>
+        private Mock<HttpMessageHandler> MockHttpHandlerForPost(Func<HttpResponseMessage> httpResponseFactory = null) =>
+            MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY, httpResponseFactory);
+
+        private Mock<HttpMessageHandler> MockHttpHandlerForGraphQLPost(Func<HttpResponseMessage> httpResponseFactory = null) =>
             MockHttpHandler(req =>
-                req.Method == HttpMethod.Post);
+                req.Method == HttpMethod.Post, httpResponseFactory ?? CreateHttpResponseFactory(content: EXPECTED_GRAPHQL_JSON_RESPONSE_BODY));
 
-        private Mock<HttpMessageHandler> MockHttpHandlerForGraphQLPost(HttpResponseMessage httpResponseMessage = null)
-        {
-            return MockHttpHandler(req =>
-                req.Method == HttpMethod.Post, httpResponseMessage ?? _graphqlHttpResponse);
-        }
-
-        private Mock<HttpMessageHandler> MockHttpHandlerForPut() =>
+        private Mock<HttpMessageHandler> MockHttpHandlerForPut(Func<HttpResponseMessage> httpResponseFactory = null) =>
             MockHttpHandler(req =>
-                req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
-                && req.Method == HttpMethod.Put);
+                    req.Method == HttpMethod.Put && req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY,
+                httpResponseFactory);
 
-        private Mock<HttpMessageHandler> MockHttpHandlerForPatch() =>
+        private Mock<HttpMessageHandler> MockHttpHandlerForPatch(Func<HttpResponseMessage> httpResponseFactory = null) =>
             MockHttpHandler(req =>
-                req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY
-                && req.Method == HttpMethod.Patch);
+                    req.Method == HttpMethod.Patch && req.Content.ReadAsStringAsync().Result == EXPECTED_JSON_REQUEST_BODY,
+                httpResponseFactory);
 
         private Mock<HttpMessageHandler> MockHttpHandler(
             Func<HttpRequestMessage, bool> requestMatcher,
-            HttpResponseMessage httpResponse = null,
+            Func<HttpResponseMessage> httpResponseFactory = null,
             Mock<HttpMessageHandler> handlerMock = null)
         {
             handlerMock ??= new Mock<HttpMessageHandler>();
@@ -2392,8 +2058,28 @@ query($id: ID!, $first: Int, $after: String) {
                     "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(x => requestMatcher(x)),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse ?? _defaultHttpResponse);
+                .ReturnsAsync(httpResponseFactory ?? CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
             return handlerMock;
         }
+
+        private Func<HttpResponseMessage> CreateHttpResponseFactory(
+            HttpStatusCode statusCode = HttpStatusCode.OK,
+            string content = null,
+            IEnumerable<(string Name, string Value)> headers = null) => () =>
+        {
+            var httpResponse = new HttpResponseMessage(statusCode);
+
+            if (content.HasValue())
+            {
+                httpResponse.Content = new StringContent(content!);
+            }
+
+            foreach (var (name, value) in headers.ToEmptyEnumerableIfNull())
+            {
+                httpResponse.Headers.Add(name, value);
+            }
+
+            return httpResponse;
+        };
     }
 }
