@@ -139,7 +139,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         };
         public Option<bool> Wait { get; } = new("--wait")
         {
+            IsHidden = true,
             Description = "Synchronously waits for the repo migration to finish."
+        };
+        public Option<bool> QueueOnly { get; } = new("--queue-only")
+        {
+            Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
         };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
         public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
@@ -225,6 +230,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
         public bool Wait { get; set; }
+        public bool QueueOnly { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }

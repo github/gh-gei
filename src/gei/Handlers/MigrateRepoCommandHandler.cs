@@ -366,6 +366,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("WAIT: true");
         }
 
+        if (args.QueueOnly)
+        {
+            _log.LogInformation("QUEUE ONLY: true");
+        }
+
         if (args.GithubSourcePat.HasValue())
         {
             _log.LogInformation("GITHUB SOURCE PAT: ***");
@@ -484,6 +489,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
         {
             throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
+        }
+
+        if (args.Wait)
+        {
+            _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
         }
 
         ValidateGHESOptions(args, cloudCredentialsRequired);
