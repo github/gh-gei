@@ -1255,7 +1255,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await foreach (var _ in githubClient.GetAllAsync(url)) { }
+            await githubClient.GetAllAsync(url).ToListAsync();
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(actual => actual == $"HTTP GET: {url}")));
@@ -1298,7 +1298,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await foreach (var _ in githubClient.GetAllAsync(url)) { }
+            await githubClient.GetAllAsync(url).ToListAsync();
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(actual => actual == $"GITHUB REQUEST ID: {firstGithubRequestId}")));
@@ -1339,7 +1339,7 @@ namespace OctoshiftCLI.Tests
             var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
             // Act
-            await foreach (var _ in githubClient.GetAllAsync(url)) { }
+            await githubClient.GetAllAsync(url).ToListAsync();
 
             // Assert
             _mockOctoLogger.Verify(m =>
