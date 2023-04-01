@@ -1102,6 +1102,30 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetNonSuccessAsync_Retries_On_Non_Success()
+        {
+            // Arrange
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError))
+                .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.Found, content: EXPECTED_RESPONSE_CONTENT));
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var result = await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.Found);
+
+            // Assert
+            result.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
         public async Task DeleteAsync_Logs_The_Response_Status_Code_And_Content()
         {
             // Arrange
@@ -1362,6 +1386,50 @@ namespace OctoshiftCLI.Tests
                 .Invoking(async () => await githubClient.GetAllAsync(url).ToListAsync())
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task GetAllAsync_Retries_On_Non_Success()
+        {
+            // Arrange
+            const string url = "https://api.github.com/search/code?q=addClass+user%3Amozilla";
+            const string firstItem = "first";
+            const string secondItem = "second";
+
+            var handlerMock = new Mock<HttpMessageHandler>();
+
+            // first request
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError, content: "error"))
+                .ReturnsAsync(CreateHttpResponseFactory(
+                    content: $"[\"{firstItem}\"]",
+                    headers: new[]
+                    {
+                        ("Link", $"<{url}&page=2>; rel=\"next\", " +
+                                 $"<{url}&page=2>; rel=\"last\""
+                        )
+                    }));
+
+            // second request
+            MockHttpHandler(
+                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
+                CreateHttpResponseFactory(content: $"[\"{secondItem}\"]"),
+                handlerMock);
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var results = await githubClient.GetAllAsync(url).Select(x => x.Value<string>()).ToListAsync();
+
+            // Assert
+            results.Should().HaveCount(2);
+            results.Should().BeEquivalentTo(firstItem, secondItem);
         }
 
         [Fact]
