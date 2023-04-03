@@ -638,17 +638,10 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations/{archiveId}";
 
-            var response = await _retryPolicy.RetryOnResult(async () =>
-            {
-                var httpResponse = await _client.GetAsync(url);
-                var data = JObject.Parse(httpResponse);
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
 
-                return (string)data["state"];
-            }, ArchiveMigrationStatus.Failed);
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}")
-                : response.Result;
+            return (string)data["state"];
         }
 
         public virtual async Task<string> GetArchiveMigrationUrl(string org, int archiveId)
