@@ -25,7 +25,7 @@ jobs:
 
     - name: Initialize CodeQL
       if: matrix.runner-os == 'ubuntu-latest'
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: 'csharp'
         config-file: ./.github/codeql/codeql-config.yml
@@ -77,7 +77,7 @@ jobs:
         path: code-coverage-results.md
     
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
       if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
