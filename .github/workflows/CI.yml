@@ -52,7 +52,7 @@ jobs:
       run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
     - name: Code Coverage Summary Report
-      uses: irongut/CodeCoverageSummary@v1.1.0
+      uses: irongut/CodeCoverageSummary@v1.3.0
       if: always() && matrix.runner-os == 'ubuntu-latest'
       with:
         filename: coverage/coverage.cobertura.xml
@@ -63,7 +63,7 @@ jobs:
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Unit Test Results
       if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Unit Test Results
         path: src/OctoshiftCLI.Tests/unit-tests.xml
@@ -71,7 +71,7 @@ jobs:
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Code Coverage Report
       if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Code Coverage Report
         path: code-coverage-results.md
@@ -85,7 +85,7 @@ jobs:
     steps:
     # This is used by the subsequent publish-test-results.yaml
     - name: Upload Event File
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -130,7 +130,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -259,7 +259,7 @@ jobs:
         comment_mode: off
     
     - name: Upload test logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
