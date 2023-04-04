@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
@@ -19,13 +20,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly HttpDownloadService _httpDownloadService;
     private readonly FileSystemProvider _fileSystemProvider;
+    private readonly GhesVersionCheckerService _ghesVersionCheckerService;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, FileSystemProvider fileSystemProvider)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, FileSystemProvider fileSystemProvider, GhesVersionCheckerService ghesVersionCheckerService)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
@@ -35,6 +37,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _awsApi = awsApi;
         _httpDownloadService = httpDownloadService;
         _fileSystemProvider = fileSystemProvider;
+        _ghesVersionCheckerService = ghesVersionCheckerService;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -55,7 +58,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         LogOptions(args);
 
-        var blobCredentialsRequired = await DetermineIfBlobCredentialsRequired(args);
+        var blobCredentialsRequired = await _ghesVersionCheckerService.AreBlobCredentialsRequired(args.GhesApiUrl, _sourceGithubApi);
 
         ValidateOptions(args, blobCredentialsRequired);
 
@@ -287,35 +290,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }
         throw new TimeoutException($"Archive generation timed out after {ARCHIVE_GENERATION_TIMEOUT_IN_HOURS} hours");
-    }
-
-    private async Task<bool> DetermineIfBlobCredentialsRequired(MigrateRepoCommandArgs args)
-    {
-        var blobCredentialsRequired = false;
-
-        if (args.GhesApiUrl.HasValue())
-        {
-            blobCredentialsRequired = true;
-
-            _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
-
-            if (ghesVersion != null)
-            {
-                _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");
-
-                if (Version.TryParse(ghesVersion, out var parsedVersion))
-                {
-                    blobCredentialsRequired = parsedVersion < new Version(3, 8, 0);
-                }
-                else
-                {
-                    _log.LogInformation($"Unable to parse the version number, defaulting to using CLI for blob storage uploads");
-                }
-            }
-        }
-
-        return blobCredentialsRequired;
     }
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org}/{repo}".Replace(" ", "%20");

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
@@ -21,17 +22,20 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly GithubApi _sourceGithubApi;
     private readonly AdoApi _sourceAdoApi;
     private readonly IVersionProvider _versionProvider;
+    private readonly GhesVersionCheckerService _ghesVersionCheckerService;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         GithubApi sourceGithubApi,
         AdoApi sourceAdoApi,
-        IVersionProvider versionProvider)
+        IVersionProvider versionProvider,
+        GhesVersionCheckerService ghesVersionCheckerService)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
         _sourceAdoApi = sourceAdoApi;
         _versionProvider = versionProvider;
+        _ghesVersionCheckerService = ghesVersionCheckerService;
     }
 
     public async Task Handle(GenerateScriptCommandArgs args)
@@ -250,35 +254,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private async Task<bool> DetermineIfBlobCredentialsRequired(string ghesApiUrl)
-    {
-        var blobCredentialsRequired = false;
-
-        if (ghesApiUrl.HasValue())
-        {
-            blobCredentialsRequired = true;
-
-            _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            var ghesVersion = await _sourceGithubApi.GetEnterpriseServerVersion();
-
-            if (ghesVersion != null)
-            {
-                _log.LogInformation($"GitHub Enterprise Server version {ghesVersion} detected");
-
-                if (Version.TryParse(ghesVersion, out var parsedVersion))
-                {
-                    blobCredentialsRequired = parsedVersion < new Version(3, 8, 0);
-                }
-                else
-                {
-                    _log.LogInformation($"Unable to parse the version number, defaulting to using CLI for blob storage uploads");
-                }
-            }
-        }
-
-        return blobCredentialsRequired;
-    }
-
     private async Task<string> GenerateSequentialGithubScript(IEnumerable<string> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
     {
         var content = new StringBuilder();
@@ -289,7 +264,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await DetermineIfBlobCredentialsRequired(ghesApiUrl))
+        if (await _ghesVersionCheckerService.AreBlobCredentialsRequired(ghesApiUrl, _sourceGithubApi))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
@@ -327,7 +302,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await DetermineIfBlobCredentialsRequired(ghesApiUrl))
+        if (await _ghesVersionCheckerService.AreBlobCredentialsRequired(ghesApiUrl, _sourceGithubApi))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {

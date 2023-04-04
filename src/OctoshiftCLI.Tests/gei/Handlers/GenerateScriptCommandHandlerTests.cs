@@ -10,6 +10,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -20,6 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
+        private readonly Mock<GhesVersionCheckerService> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionCheckerService>();
 
         private readonly GenerateScriptCommandHandler _handler;
 
@@ -36,7 +38,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockOctoLogger.Object,
                 _mockGithubApi.Object,
                 _mockAdoApi.Object,
-                _mockVersionProvider.Object
+                _mockVersionProvider.Object,
+                _mockGhesVersionCheckerService.Object
                 )
             {
                 WriteToFile = (_, contents) =>
@@ -306,6 +309,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --wait }}";
 
@@ -655,6 +659,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1011,6 +1016,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1096,6 +1102,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1181,6 +1188,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(false);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1203,13 +1211,6 @@ if (-not $env:GH_PAT) {
     exit 1
 } else {
     Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
-}");
-            expected.AppendLine(@"
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
 }");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
@@ -1479,6 +1480,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --wait }}";
 
@@ -1512,6 +1514,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --wait }}";
 
@@ -1585,6 +1588,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:GH_PAT) {
@@ -1629,6 +1633,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:GH_PAT) {
@@ -1681,6 +1686,7 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
@@ -1708,6 +1714,52 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             // Assert
             _script.Should().NotContain(expected);
+        }
+
+        [Fact]
+        public async Task Validates_Env_Vars_Blob_Storage_Not_Validated_When_GHES_3_8()
+        {
+            // Arrange
+            const string ghesApiUrl = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { REPO });
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(false);
+
+            var expected = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}";
+            var notExpected = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+            expected = TrimNonExecutableLines(expected, 0, 0);
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GhesApiUrl = ghesApiUrl,
+                Sequential = true,
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script, 0, 0);
+
+            // Assert
+            _script.Should().Contain(expected);
+            _script.Should().NotContain(notExpected);
         }
 
         private string TrimNonExecutableLines(string script, int skipFirst = 15, int skipLast = 0)
