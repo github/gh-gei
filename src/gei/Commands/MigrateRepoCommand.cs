@@ -169,6 +169,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+            var retryPolicy = sp.GetRequiredService<RetryPolicy>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
@@ -198,7 +199,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider);
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider, retryPolicy);
         }
     }
 

@@ -21,6 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<HttpDownloadService> _mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
+        private readonly RetryPolicy _retryPolicy;
         private readonly MigrateRepoCommandHandler _handler;
 
         private const string TARGET_API_URL = "https://api.github.com";
@@ -43,6 +44,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
         public MigrateRepoCommandHandlerTests()
         {
+            _retryPolicy = new RetryPolicy(_mockOctoLogger.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
             _handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
                 _mockSourceGithubApi.Object,
@@ -51,7 +53,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockAzureApi.Object,
                 null,
                 _mockHttpDownloadService.Object,
-                _mockFileSystemProvider.Object);
+                _mockFileSystemProvider.Object,
+                _retryPolicy);
         }
 
         [Fact]
@@ -1357,7 +1360,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
                 _mockHttpDownloadService.Object,
-                _mockFileSystemProvider.Object);
+                _mockFileSystemProvider.Object,
+                _retryPolicy);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -1478,7 +1482,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
                 _mockHttpDownloadService.Object,
-                _mockFileSystemProvider.Object);
+                _mockFileSystemProvider.Object,
+                _retryPolicy);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
@@ -1579,7 +1584,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
                 _mockHttpDownloadService.Object,
-                _mockFileSystemProvider.Object);
+                _mockFileSystemProvider.Object,
+                _retryPolicy);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
