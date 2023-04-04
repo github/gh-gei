@@ -597,13 +597,6 @@ if (-not $env:GH_PAT) {
 } else {
     Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
 }");
-            expected.AppendLine(@"
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
-}");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
             expected.AppendLine("$Failed = 0");
@@ -956,13 +949,6 @@ if (-not $env:GH_PAT) {
     exit 1
 } else {
     Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
-}");
-            expected.AppendLine(@"
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
 }");
             expected.AppendLine();
             expected.AppendLine("$Succeeded = 0");
@@ -1319,7 +1305,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 25, 7);
+            _script = TrimNonExecutableLines(_script, 19, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
@@ -1375,7 +1361,7 @@ if ($Failed -ne 0) {
             };
             await _handler.Handle(args);
 
-            _script = TrimNonExecutableLines(_script, 25, 7);
+            _script = TrimNonExecutableLines(_script, 19, 7);
 
             // Assert
             _script.Should().Be(expected.ToString());
