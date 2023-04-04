@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.Contracts;
