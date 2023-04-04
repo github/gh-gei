@@ -22,14 +22,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly GithubApi _sourceGithubApi;
     private readonly AdoApi _sourceAdoApi;
     private readonly IVersionProvider _versionProvider;
-    private readonly GhesVersionCheckerService _ghesVersionCheckerService;
+    private readonly GhesVersionChecker _ghesVersionCheckerService;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         GithubApi sourceGithubApi,
         AdoApi sourceAdoApi,
         IVersionProvider versionProvider,
-        GhesVersionCheckerService ghesVersionCheckerService)
+        GhesVersionChecker ghesVersionCheckerService)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;

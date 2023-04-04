@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new Mock<IVersionProvider>();
-        private readonly Mock<GhesVersionCheckerService> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionCheckerService>();
+        private readonly Mock<GhesVersionChecker> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionChecker>();
 
         private readonly GenerateScriptCommandHandler _handler;
 

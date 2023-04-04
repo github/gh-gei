@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
         private readonly Mock<HttpDownloadService> _mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-        private readonly Mock<GhesVersionCheckerService> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionCheckerService>();
+        private readonly Mock<GhesVersionChecker> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionChecker>();
 
         private readonly MigrateRepoCommandHandler _handler;
 

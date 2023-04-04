@@ -170,7 +170,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
-            var ghesVersionCheckerService = sp.GetRequiredService<GhesVersionCheckerService>();
+            var ghesVersionCheckerService = sp.GetRequiredService<GhesVersionChecker>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
