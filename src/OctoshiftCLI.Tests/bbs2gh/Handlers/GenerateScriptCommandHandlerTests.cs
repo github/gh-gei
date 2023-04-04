@@ -82,7 +82,211 @@ public class GenerateScriptCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 33, 0) == "")));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            Output = new FileInfo(OUTPUT),
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}
+
+if (-not $env:BBS_PASSWORD) {
+    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
+}
+
+if (-not $env:BBS_USERNAME) {
+    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
+}
+
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == TrimNonExecutableLines(expected, 0, 0))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_BBS_USERNAME_Not_Validated_When_Passed_As_Arg()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            Output = new FileInfo(OUTPUT),
+            BbsUsername = BBS_USERNAME,
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:BBS_USERNAME) {
+    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call BBS API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to BBS APIs.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_BBS_PASSWORD_Not_Validated_When_Kerberos()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            Output = new FileInfo(OUTPUT),
+            Kerberos = true,
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:BBS_PASSWORD) {
+    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call BBS API's to generate a migration archive.""
+    exit 1
+} else {
+    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to BBS APIs.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_AWS()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            AwsBucketName = AWS_BUCKET_NAME,
+            Output = new FileInfo(OUTPUT),
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:AWS_ACCESS_KEY_ID) {
+    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
+}
+if (-not $env:AWS_SECRET_ACCESS_KEY) {
+    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_AZURE_STORAGE_CONNECTION_STRING_Not_Validated_When_Aws()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            Output = new FileInfo(OUTPUT),
+            AwsBucketName = AWS_BUCKET_NAME,
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_SMB_PASSWORD()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo(OUTPUT),
+            SmbUser = SMB_USER,
+        };
+        await _handler.Handle(args);
+
+        var expected = @"
+if (-not $env:SMB_PASSWORD) {
+    Write-Error ""SMB_PASSWORD environment variable must be set to a valid password that will be used to download the migration archive from your BBS server using SMB.""
+    exit 1
+} else {
+    Write-Host ""SMB_PASSWORD environment variable is set and will be used to download the migration archive from your BBS server using SMB.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
     }
 
     [Fact]
@@ -102,7 +306,7 @@ public class GenerateScriptCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == "")));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 33, 0) == "")));
     }
 
     [Fact]
@@ -488,6 +692,7 @@ function Exec {
             .Skip(skipFirst)
             .SkipLast(skipLast);
 
-        return string.Join(Environment.NewLine, lines);
+        var result = string.Join(Environment.NewLine, lines);
+        return result;
     }
 }

@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
@@ -47,7 +47,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -83,7 +83,7 @@ jobs:
         echo "PR_SHA=$(echo $prsha)" >> $GITHUB_ENV
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
@@ -185,7 +185,7 @@ jobs:
         commit: ${{ env.PR_SHA }}
     
     - name: Upload test logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
