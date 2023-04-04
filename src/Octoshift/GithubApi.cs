@@ -168,7 +168,7 @@ namespace OctoshiftCLI
                 variables = new { login = org }
             };
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
@@ -190,7 +190,7 @@ namespace OctoshiftCLI
                 variables = new { slug = enterpriseName }
             };
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
@@ -418,7 +418,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
@@ -459,7 +459,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
@@ -492,7 +492,7 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
@@ -658,7 +658,7 @@ namespace OctoshiftCLI
 
             var payload = GetMannequinsPayload(orgId);
 
-            var response = await _retryPolicy.Retry(async () =>
+            var response = await _retryPolicy.RetryAndCapture(async () =>
             {
                 return await _client.PostGraphQLWithPaginationAsync(
                     url,
