@@ -265,17 +265,17 @@ if (-not $env:GH_PAT) {
 }";
     private const string VALIDATE_BBS_USERNAME = @"
 if (-not $env:BBS_USERNAME) {
-    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call BBS API's to generate a migration archive.""
+    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
     exit 1
 } else {
-    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to BBS APIs.""
+    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
 }";
     private const string VALIDATE_BBS_PASSWORD = @"
 if (-not $env:BBS_PASSWORD) {
-    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call BBS API's to generate a migration archive.""
+    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
     exit 1
 } else {
-    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to BBS APIs.""
+    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
 }";
     private const string VALIDATE_AZURE_STORAGE_CONNECTION_STRING = @"
 if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
