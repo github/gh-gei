@@ -22,7 +22,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
                 blobCredentialsRequired = true;
 
                 _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-                var ghesVersion = await api.GetEnterpriseServerVersion();
+                var ghesVersion = await api?.GetEnterpriseServerVersion();
 
                 if (ghesVersion != null)
                 {
