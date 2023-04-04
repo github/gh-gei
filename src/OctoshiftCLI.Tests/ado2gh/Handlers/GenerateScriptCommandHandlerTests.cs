@@ -616,6 +616,20 @@ function ExecBatch {
         }
     }
 }");
+        expected.AppendLine(@"
+if (-not $env:ADO_PAT) {
+    Write-Error ""ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops""
+    exit 1
+} else {
+    Write-Host ""ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+}
+
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
         expected.AppendLine();
         expected.AppendLine("$Succeeded = 0");
         expected.AppendLine("$Failed = 0");
@@ -712,6 +726,20 @@ function ExecBatch {
             $Global:LastBatchFailures++
         }
     }
+}");
+        expected.AppendLine(@"
+if (-not $env:ADO_PAT) {
+    Write-Error ""ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops""
+    exit 1
+} else {
+    Write-Host ""ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+}
+
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
 }");
         expected.AppendLine();
         expected.AppendLine("$Succeeded = 0");
@@ -840,6 +868,20 @@ function ExecBatch {
             $Global:LastBatchFailures++
         }
     }
+}");
+        expected.AppendLine(@"
+if (-not $env:ADO_PAT) {
+    Write-Error ""ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops""
+    exit 1
+} else {
+    Write-Host ""ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+}
+
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
 }");
         expected.AppendLine();
         expected.AppendLine("$Succeeded = 0");
@@ -982,6 +1024,20 @@ function ExecBatch {
         }
     }
 }");
+        expected.AppendLine(@"
+if (-not $env:ADO_PAT) {
+    Write-Error ""ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops""
+    exit 1
+} else {
+    Write-Host ""ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps.""
+}
+
+if (-not $env:GH_PAT) {
+    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
+    exit 1
+} else {
+    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
+}");
         expected.AppendLine();
         expected.AppendLine("$Succeeded = 0");
         expected.AppendLine("$Failed = 0");
@@ -1084,7 +1140,7 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1129,7 +1185,7 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1169,7 +1225,7 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1211,7 +1267,7 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1254,7 +1310,7 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
@@ -1301,13 +1357,13 @@ if ($Failed -ne 0) {
         };
         await _handler.Handle(args);
 
-        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 35, 6);
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput, 47, 6);
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
     }
 
-    private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
+    private string TrimNonExecutableLines(string script, int skipFirst = 21, int skipLast = 0)
     {
         var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
 
