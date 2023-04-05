@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]

@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
