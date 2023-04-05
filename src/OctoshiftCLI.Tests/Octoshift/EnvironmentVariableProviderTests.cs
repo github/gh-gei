@@ -1,6 +1,7 @@
 using System;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift;

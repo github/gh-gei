@@ -7,6 +7,7 @@ using Moq;
 using Moq.Protected;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands

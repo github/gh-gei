@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Services;
+using OctoshiftCLI.Services;
 using Renci.SshNet;
 using Xunit;
 

@@ -1,5 +1,6 @@
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter;

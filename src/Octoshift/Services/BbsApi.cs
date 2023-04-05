@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class BbsApi
 {

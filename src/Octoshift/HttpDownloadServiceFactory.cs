@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI
 {

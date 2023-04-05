@@ -8,6 +8,7 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 

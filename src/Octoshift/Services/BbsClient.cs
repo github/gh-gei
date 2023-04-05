@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class BbsClient
 {

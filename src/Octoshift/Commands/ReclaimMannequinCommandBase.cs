@@ -1,9 +1,9 @@
 using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
-using Octoshift;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Commands;
 

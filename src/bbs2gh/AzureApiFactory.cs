@@ -1,4 +1,5 @@
 using System.Net.Http;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.BbsToGithub
 {

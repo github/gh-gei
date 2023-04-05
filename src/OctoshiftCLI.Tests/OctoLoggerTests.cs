@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using FluentAssertions;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests

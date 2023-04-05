@@ -2,7 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Binding;
 using System.Linq;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class GenericArgsBinder<TCommand, TArgs> : BinderBase<TArgs>
     where TCommand : notnull

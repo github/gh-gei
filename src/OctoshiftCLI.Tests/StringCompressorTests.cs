@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Octoshift;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests;

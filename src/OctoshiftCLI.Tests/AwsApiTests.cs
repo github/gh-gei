@@ -7,6 +7,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.Services;
 using Xunit;
 
 

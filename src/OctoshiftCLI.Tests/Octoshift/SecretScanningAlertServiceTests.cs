@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Moq;
 using Octoshift.Models;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;

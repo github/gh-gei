@@ -1,3 +1,5 @@
+using OctoshiftCLI.Services;
+
 namespace OctoshiftCLI.GithubEnterpriseImporter
 {
     public interface IAzureApiFactory

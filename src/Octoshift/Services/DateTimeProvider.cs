@@ -1,6 +1,6 @@
 using System;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class DateTimeProvider
 {

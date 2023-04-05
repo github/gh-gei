@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 

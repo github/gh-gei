@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Extensions;
 

@@ -3,6 +3,7 @@ using System.Net.Http;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.bbs2gh.Commands

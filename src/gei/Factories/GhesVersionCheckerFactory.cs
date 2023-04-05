@@ -1,4 +1,5 @@
 ﻿using OctoshiftCLI.GithubEnterpriseImporter.Services;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Factories;
 

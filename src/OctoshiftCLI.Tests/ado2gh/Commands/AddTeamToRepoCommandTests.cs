@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands

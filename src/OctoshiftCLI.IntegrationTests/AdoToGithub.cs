@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using OctoshiftCLI.Services;
 using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests

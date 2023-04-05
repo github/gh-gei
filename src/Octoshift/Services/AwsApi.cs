@@ -7,7 +7,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using OctoshiftCLI.Extensions;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class AwsApi : IDisposable
 {

@@ -4,6 +4,7 @@ using System.Text;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;

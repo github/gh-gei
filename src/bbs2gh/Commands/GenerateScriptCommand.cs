@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.BbsToGithub.Commands;
 

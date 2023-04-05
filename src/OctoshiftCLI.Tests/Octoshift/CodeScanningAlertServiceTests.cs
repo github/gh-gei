@@ -3,9 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Models;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests;

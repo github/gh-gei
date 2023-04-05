@@ -1,3 +1,5 @@
+using OctoshiftCLI.Services;
+
 namespace OctoshiftCLI.AdoToGithub
 {
     public class AdoInspectorServiceFactory

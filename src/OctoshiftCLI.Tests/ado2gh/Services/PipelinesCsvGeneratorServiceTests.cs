@@ -5,6 +5,7 @@ using FluentAssertions;
 using Moq;
 using Octoshift.Models;
 using OctoshiftCLI.AdoToGithub;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands

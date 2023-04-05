@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace Octoshift;
+namespace OctoshiftCLI.Services;
 
 public static class StringCompressor
 {

@@ -1,5 +1,6 @@
 using Moq;
 using OctoshiftCLI.BbsToGithub;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.BbsToGithub;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Services;
 

@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
 
-namespace OctoshiftCLI;
+namespace OctoshiftCLI.Services;
 
 public class SecretScanningAlertService
 {

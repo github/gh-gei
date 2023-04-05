@@ -11,6 +11,7 @@ using Moq.Protected;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests
