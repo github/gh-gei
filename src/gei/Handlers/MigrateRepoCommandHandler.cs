@@ -21,13 +21,24 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly HttpDownloadService _httpDownloadService;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly GhesVersionChecker _ghesVersionChecker;
+    private readonly RetryPolicy _retryPolicy;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, FileSystemProvider fileSystemProvider, GhesVersionChecker ghesVersionChecker)
+    public MigrateRepoCommandHandler(
+        OctoLogger log,
+        GithubApi sourceGithubApi,
+        GithubApi targetGithubApi,
+        EnvironmentVariableProvider environmentVariableProvider,
+        AzureApi azureApi,
+        AwsApi awsApi,
+        HttpDownloadService httpDownloadService,
+        FileSystemProvider fileSystemProvider,
+        GhesVersionChecker ghesVersionChecker,
+        RetryPolicy retryPolicy)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
@@ -38,6 +49,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _httpDownloadService = httpDownloadService;
         _fileSystemProvider = fileSystemProvider;
         _ghesVersionChecker = ghesVersionChecker;
+        _retryPolicy = retryPolicy;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -191,54 +203,65 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       bool blobCredentialsRequired,
       bool keepArchive)
     {
-        var gitDataArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
-        _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-        var metadataArchiveId = await _sourceGithubApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo);
-        _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
-
-        var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
-        var gitArchiveFileName = $"{timeNow}-{gitDataArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
-        var metadataArchiveFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
-
-        var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitDataArchiveId);
-        _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
-
-        var metadataArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, metadataArchiveId);
-        _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+        var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
+            async () => await GenerateArchive(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
 
         if (!blobCredentialsRequired)
         {
             return (gitArchiveUrl, metadataArchiveUrl);
         }
 
-        var gitArchiveFilePath = _fileSystemProvider.GetTempFileName();
-        var metadataArchiveFilePath = _fileSystemProvider.GetTempFileName();
+        var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+        var gitArchiveUploadFileName = $"{timeNow}-{gitArchiveId}-{GIT_ARCHIVE_FILE_NAME}";
+        var metadataArchiveUploadFileName = $"{timeNow}-{metadataArchiveId}-{METADATA_ARCHIVE_FILE_NAME}";
+        var gitArchiveDownloadFilePath = _fileSystemProvider.GetTempFileName();
+        var metadataArchiveDownloadFilePath = _fileSystemProvider.GetTempFileName();
         try
         {
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-            await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveFilePath);
+            await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-            await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveFilePath);
+            await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
 
 #pragma warning disable IDE0063
-            await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveFilePath))
-            await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveFilePath))
+            await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveDownloadFilePath))
+            await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
 #pragma warning restore IDE0063
             {
                 return _awsApi.HasValue()
-                    ? await UploadArchivesToAws(awsBucketName, gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent)
-                    : await UploadArchivesToAzure(gitArchiveFileName, gitArchiveContent, metadataArchiveFileName, metadataArchiveContent);
+                    ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
+                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent);
             }
         }
         finally
         {
             if (!keepArchive)
             {
-                DeleteArchive(gitArchiveFilePath);
-                DeleteArchive(metadataArchiveFilePath);
+                DeleteArchive(gitArchiveDownloadFilePath);
+                DeleteArchive(metadataArchiveDownloadFilePath);
             }
         }
+    }
+
+    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchive(
+        string githubSourceOrg,
+        string sourceRepo,
+        bool skipReleases,
+        bool lockSourceRepo)
+    {
+        var gitArchiveId = await _sourceGithubApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+        _log.LogInformation($"Archive generation of git data started with id: {gitArchiveId}");
+        var metadataArchiveId = await _sourceGithubApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo);
+        _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
+
+        var gitArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, gitArchiveId);
+        _log.LogInformation($"Archive (git) download url: {gitArchiveUrl}");
+
+        var metadataArchiveUrl = await WaitForArchiveGeneration(_sourceGithubApi, githubSourceOrg, metadataArchiveId);
+        _log.LogInformation($"Archive (metadata) download url: {metadataArchiveUrl}");
+
+        return (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId);
     }
 
     private void DeleteArchive(string path)
@@ -286,6 +309,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (archiveStatus == ArchiveMigrationStatus.Exported)
             {
                 return await githubApi.GetArchiveMigrationUrl(githubSourceOrg, archiveId);
+            }
+            if (archiveStatus == ArchiveMigrationStatus.Failed)
+            {
+                throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}");
             }
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
         }

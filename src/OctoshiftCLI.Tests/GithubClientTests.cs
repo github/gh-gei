@@ -35,7 +35,8 @@ namespace OctoshiftCLI.Tests
 
             _retryPolicy = new RetryPolicy(_mockOctoLogger.Object)
             {
-                _httpRetryInterval = 0
+                _httpRetryInterval = 0,
+                _retryInterval = 0
             };
         }
 
