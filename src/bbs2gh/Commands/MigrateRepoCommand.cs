@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.BbsToGithub.Handlers;
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Commands;

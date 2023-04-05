@@ -1,7 +1,7 @@
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.BbsToGithub;
+namespace OctoshiftCLI.BbsToGithub.Factories;
 
 public class BbsArchiveDownloaderFactory
 {

@@ -1,6 +1,6 @@
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.BbsToGithub;
+namespace OctoshiftCLI.BbsToGithub.Factories;
 
 public class AwsApiFactory
 {
