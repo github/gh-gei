@@ -47,7 +47,7 @@ public class BbsClient
 
     public virtual async Task<string> GetAsync(string url)
     {
-        return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url), _ => true);
+        return await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
     }
 
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)
