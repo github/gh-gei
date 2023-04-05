@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
+using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.AdoToGithub.Handlers;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;

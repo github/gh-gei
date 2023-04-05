@@ -1,7 +1,7 @@
 using System.Net.Http;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.AdoToGithub;
+using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
