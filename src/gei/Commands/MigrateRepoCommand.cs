@@ -6,7 +6,6 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
-using OctoshiftCLI.GithubEnterpriseImporter.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {
