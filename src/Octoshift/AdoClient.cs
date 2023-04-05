@@ -40,7 +40,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetAsync(string url)
         {
-            return await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url), _ => true);
+            return await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
         }
 
         public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
