@@ -9,7 +9,6 @@ using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
-using Polly;
 
 namespace OctoshiftCLI
 {
