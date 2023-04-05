@@ -924,27 +924,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task GetArchiveMigrationStatus_Retries_On_Failure_Status()
-        {
-            // Arrange
-            var url = $"https://api.github.com/orgs/{GITHUB_ORG}/migrations/1";
-
-            var failedResponse = "{\"state\": \"failed\"}";
-            var successfulResponse = "{\"state\": \"exported\"}";
-
-            _githubClientMock.SetupSequence(x => x.GetAsync(url, null).Result)
-                .Returns(failedResponse)
-                .Returns(failedResponse)
-                .Returns(successfulResponse);
-            // Act
-            var migrationStatus = await _githubApi.GetArchiveMigrationStatus(GITHUB_ORG, 1);
-
-            // Assert
-            migrationStatus.Should().Be("exported");
-            _githubClientMock.Verify(x => x.GetAsync(url, null), Times.Exactly(3));
-        }
-
-        [Fact]
         public async Task StartBbsMigration_Returns_New_Repository_Migration_Id()
         {
             // Arrange

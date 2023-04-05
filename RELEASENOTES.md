@@ -1,2 +1,3 @@
 - Fixed a bug where ADO Team Projects or Organizations with special characters would fail to migrate
 - More robust retry logic, especially on http request timeouts
+- Retry GHES archive generation process in `gh gei migrate-repo` in case of any failure 
