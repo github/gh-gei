@@ -1,2 +1,3 @@
+- When using `gh gei generate-script` the script will now validate that the necessary environment variables are set
 - More robust retry logic, especially on http request timeouts
 - Retry GHES archive generation process in `gh gei migrate-repo` in case of any failure 
