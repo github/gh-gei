@@ -40,7 +40,7 @@ public class ConfigureAutoLinkCommandHandler : ICommandHandler<ConfigureAutoLink
         _log.RegisterSecret(args.GithubPat);
 
         var keyPrefix = "AB#";
-        var urlTemplate = $"https://dev.azure.com/{args.AdoOrg.UrlEncode()}/{args.AdoTeamProject.UrlEncode()}/_workitems/edit/<num>/";
+        var urlTemplate = $"https://dev.azure.com/{args.AdoOrg.EscapeDataString()}/{args.AdoTeamProject.EscapeDataString()}/_workitems/edit/<num>/";
 
         var autoLinks = await _githubApi.GetAutoLinks(args.GithubOrg, args.GithubRepo);
         if (autoLinks.Any(al => al.KeyPrefix == keyPrefix && al.UrlTemplate == urlTemplate))

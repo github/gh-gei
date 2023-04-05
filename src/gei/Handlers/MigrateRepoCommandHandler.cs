@@ -318,12 +318,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return blobCredentialsRequired;
     }
 
-    private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.UrlEncode()}/{repo.UrlEncode()}";
+    private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
     private string GetAdoRepoUrl(string serverUrl, string org, string project, string repo)
     {
         serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
-        return $"{serverUrl}/{org.UrlEncode()}/{project.UrlEncode()}/_git/{repo.UrlEncode()}";
+        return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
     }
 
     private void LogOptions(MigrateRepoCommandArgs args)

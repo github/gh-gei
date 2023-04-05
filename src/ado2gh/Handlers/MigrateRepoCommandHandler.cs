@@ -101,5 +101,5 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 
-    private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org.UrlEncode()}/{project.UrlEncode()}/_git/{repo.UrlEncode()}";
+    private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
 }

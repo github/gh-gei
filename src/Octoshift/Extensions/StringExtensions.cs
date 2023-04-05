@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -23,6 +24,6 @@ namespace OctoshiftCLI.Extensions
 
         public static string ToUnixPath(this string path) => path?.Replace("\\", "/");
 
-        public static string UrlEncode(this string value) => HttpUtility.UrlEncode(value);
+        public static string EscapeDataString(this string value) => Uri.EscapeDataString(value);
     }
 }

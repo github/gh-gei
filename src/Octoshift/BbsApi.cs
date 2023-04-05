@@ -75,7 +75,7 @@ public class BbsApi
 
     public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
     {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.UrlEncode()}/repos";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos";
         return await _client.GetAllAsync(url)
             .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"]))
             .ToListAsync();
