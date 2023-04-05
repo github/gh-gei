@@ -17,14 +17,14 @@ public class GhesVersionCheckerTests
 
     public GhesVersionCheckerTests()
     {
-        _service = new GhesVersionChecker(_mockOctoLogger.Object);
+        _service = new GhesVersionChecker(_mockOctoLogger.Object, _mockGithubApi.Object);
     }
 
     [Fact]
     public async Task Older_GHES_Version_Returns_True()
     {
         _mockGithubApi.Setup(m => m.GetEnterpriseServerVersion()).ReturnsAsync("3.7.1");
-        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL, _mockGithubApi.Object);
+        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL);
         result.Should().Be(true);
     }
 
@@ -32,7 +32,7 @@ public class GhesVersionCheckerTests
     public async Task Newer_GHES_Version_Returns_False()
     {
         _mockGithubApi.Setup(m => m.GetEnterpriseServerVersion()).ReturnsAsync("3.8.0");
-        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL, _mockGithubApi.Object);
+        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL);
         result.Should().Be(false);
     }
 
@@ -40,7 +40,14 @@ public class GhesVersionCheckerTests
     public async Task Unrecognized_Version_Returns_True()
     {
         _mockGithubApi.Setup(m => m.GetEnterpriseServerVersion()).ReturnsAsync("Github AE");
-        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL, _mockGithubApi.Object);
+        var result = await _service.AreBlobCredentialsRequired(GHES_API_URL);
         result.Should().Be(true);
+    }
+
+    [Fact]
+    public async Task Empty_Ghes_Url_Returns_False()
+    {
+        var result = await _service.AreBlobCredentialsRequired("");
+        result.Should().Be(false);
     }
 }

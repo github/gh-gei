@@ -7,13 +7,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services;
 public class GhesVersionChecker
 {
     private readonly OctoLogger _log;
+    private readonly GithubApi _githubApi;
 
-    public GhesVersionChecker(OctoLogger log)
+    public GhesVersionChecker(OctoLogger log, GithubApi githubApi)
     {
         _log = log;
+        _githubApi = githubApi;
     }
 
-    public virtual async Task<bool> AreBlobCredentialsRequired(string ghesApiUrl, GithubApi api)
+    public virtual async Task<bool> AreBlobCredentialsRequired(string ghesApiUrl)
     {
         var blobCredentialsRequired = false;
 
@@ -22,7 +24,7 @@ public class GhesVersionChecker
             blobCredentialsRequired = true;
 
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
-            var ghesVersion = await api?.GetEnterpriseServerVersion();
+            var ghesVersion = await _githubApi.GetEnterpriseServerVersion();
 
             if (ghesVersion != null)
             {

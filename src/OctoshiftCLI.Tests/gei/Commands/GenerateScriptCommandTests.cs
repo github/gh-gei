@@ -4,7 +4,7 @@ using Moq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GithubEnterpriseImporter;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.GithubEnterpriseImporter.Services;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
@@ -16,7 +16,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new();
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
-        private readonly Mock<GhesVersionChecker> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionChecker>();
+        private readonly Mock<GhesVersionCheckerFactory> _mockGhesVersionCheckerFactory = TestHelpers.CreateMock<GhesVersionCheckerFactory>();
 
         private readonly ServiceProvider _serviceProvider;
         private readonly GenerateScriptCommand _command = new();
@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .AddSingleton(_mockGithubApiFactory.Object)
                 .AddSingleton(_mockVersionProvider.Object)
                 .AddSingleton(_mockAdoApiFactory.Object)
-                .AddSingleton(_mockGhesVersionCheckerService.Object);
+                .AddSingleton(_mockGhesVersionCheckerFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }

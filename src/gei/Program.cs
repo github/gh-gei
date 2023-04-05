@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
@@ -40,7 +41,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddSingleton<SecretScanningAlertServiceFactory>()
                 .AddSingleton<CodeScanningAlertServiceFactory>()
-                .AddSingleton<GhesVersionChecker>()
+                .AddSingleton<GhesVersionCheckerFactory>()
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {

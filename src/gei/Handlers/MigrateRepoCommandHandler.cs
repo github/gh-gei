@@ -58,7 +58,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         LogOptions(args);
 
-        var blobCredentialsRequired = await _ghesVersionCheckerService.AreBlobCredentialsRequired(args.GhesApiUrl, _sourceGithubApi);
+        var blobCredentialsRequired = await _ghesVersionCheckerService.AreBlobCredentialsRequired(args.GhesApiUrl);
 
         ValidateOptions(args, blobCredentialsRequired);
 

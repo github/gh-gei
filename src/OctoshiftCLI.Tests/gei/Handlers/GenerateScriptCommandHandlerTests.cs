@@ -309,7 +309,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --wait }}";
 
@@ -659,7 +659,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1016,7 +1016,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1102,7 +1102,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1188,7 +1188,7 @@ if ($Failed -ne 0) {
                 .ReturnsAsync(new[] { REPO });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(false);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
@@ -1480,7 +1480,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --wait }}";
 
@@ -1514,7 +1514,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --wait }}";
 
@@ -1588,7 +1588,7 @@ if ($Failed -ne 0) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:GH_PAT) {
@@ -1633,7 +1633,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:GH_PAT) {
@@ -1686,7 +1686,7 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(true);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
 if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
@@ -1725,7 +1725,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { REPO });
-            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl, _mockGithubApi.Object)).ReturnsAsync(false);
+            _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
 
             var expected = @"
 if (-not $env:GH_PAT) {

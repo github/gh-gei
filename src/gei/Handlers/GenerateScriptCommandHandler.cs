@@ -22,7 +22,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly GithubApi _sourceGithubApi;
     private readonly AdoApi _sourceAdoApi;
     private readonly IVersionProvider _versionProvider;
-    private readonly GhesVersionChecker _ghesVersionCheckerService;
+    private readonly GhesVersionChecker _ghesVersionChecker;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
@@ -35,7 +35,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         _sourceGithubApi = sourceGithubApi;
         _sourceAdoApi = sourceAdoApi;
         _versionProvider = versionProvider;
-        _ghesVersionCheckerService = ghesVersionCheckerService;
+        _ghesVersionChecker = ghesVersionCheckerService;
     }
 
     public async Task Handle(GenerateScriptCommandArgs args)
@@ -264,7 +264,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await _ghesVersionCheckerService.AreBlobCredentialsRequired(ghesApiUrl, _sourceGithubApi))
+        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
@@ -302,7 +302,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await _ghesVersionCheckerService.AreBlobCredentialsRequired(ghesApiUrl, _sourceGithubApi))
+        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
