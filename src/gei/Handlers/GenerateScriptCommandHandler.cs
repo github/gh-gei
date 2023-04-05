@@ -29,13 +29,13 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         GithubApi sourceGithubApi,
         AdoApi sourceAdoApi,
         IVersionProvider versionProvider,
-        GhesVersionChecker ghesVersionCheckerService)
+        GhesVersionChecker ghesVersionChecker)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
         _sourceAdoApi = sourceAdoApi;
         _versionProvider = versionProvider;
-        _ghesVersionChecker = ghesVersionCheckerService;
+        _ghesVersionChecker = ghesVersionChecker;
     }
 
     public async Task Handle(GenerateScriptCommandArgs args)

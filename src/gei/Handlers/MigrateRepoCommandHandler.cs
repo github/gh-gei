@@ -20,14 +20,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly HttpDownloadService _httpDownloadService;
     private readonly FileSystemProvider _fileSystemProvider;
-    private readonly GhesVersionChecker _ghesVersionCheckerService;
+    private readonly GhesVersionChecker _ghesVersionChecker;
     private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, FileSystemProvider fileSystemProvider, GhesVersionChecker ghesVersionCheckerService)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi sourceGithubApi, GithubApi targetGithubApi, EnvironmentVariableProvider environmentVariableProvider, AzureApi azureApi, AwsApi awsApi, HttpDownloadService httpDownloadService, FileSystemProvider fileSystemProvider, GhesVersionChecker ghesVersionChecker)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
@@ -37,7 +37,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _awsApi = awsApi;
         _httpDownloadService = httpDownloadService;
         _fileSystemProvider = fileSystemProvider;
-        _ghesVersionCheckerService = ghesVersionCheckerService;
+        _ghesVersionChecker = ghesVersionChecker;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -58,7 +58,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         LogOptions(args);
 
-        var blobCredentialsRequired = await _ghesVersionCheckerService.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
 
         ValidateOptions(args, blobCredentialsRequired);
 
