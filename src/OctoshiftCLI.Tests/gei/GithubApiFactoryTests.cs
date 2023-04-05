@@ -6,7 +6,7 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 

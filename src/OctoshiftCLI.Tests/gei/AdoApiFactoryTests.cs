@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Text;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 

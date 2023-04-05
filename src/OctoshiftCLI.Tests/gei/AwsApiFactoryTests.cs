@@ -1,5 +1,5 @@
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
