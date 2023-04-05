@@ -135,7 +135,7 @@ namespace OctoshiftCLI
             string url,
             Dictionary<string, string> customHeaders = null,
             HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
-            await _retryPolicy.HttpRetry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus), _ => true);
+            await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus));
 
         private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
             HttpMethod httpMethod,

@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Polly;
+using Polly.Retry;
 
 namespace OctoshiftCLI
 {
@@ -38,26 +39,16 @@ namespace OctoshiftCLI
             return await policy.ExecuteAndCaptureAsync(func);
         }
 
-        public async Task Retry(Func<Task> func)
-        {
-            var policy = Policy.Handle<Exception>()
-                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (_, _) =>
-                               {
-                                   _log?.LogVerbose("Retrying...");
-                               });
+        public async Task Retry(Func<Task> func) => await CreateRetryPolicyForException<Exception>().ExecuteAsync(func);
 
-            await policy.ExecuteAsync(func);
-        }
+        public async Task<T> Retry<T>(Func<Task<T>> func) => await CreateRetryPolicyForException<Exception>().ExecuteAsync(func);
 
-        public async Task<PolicyResult<T>> Retry<T>(Func<Task<T>> func)
-        {
-            var policy = Policy.Handle<Exception>()
-                               .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (ex, _) =>
-                               {
-                                   _log?.LogVerbose($"Failed with {ex.GetType().Name}. Retrying...");
-                               });
-
-            return await policy.ExecuteAndCaptureAsync(func);
-        }
+        private AsyncRetryPolicy CreateRetryPolicyForException<TException>() where TException : Exception => Policy
+                .Handle<TException>()
+                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (ex, _) =>
+                {
+                    _log?.LogVerbose(ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString());
+                    _log?.LogVerbose("Retrying...");
+                });
     }
 }

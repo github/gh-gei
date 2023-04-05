@@ -124,6 +124,30 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
+        public async Task GetAsync_Retries_On_Timeout_Exception()
+        {
+            // Arrange
+            var handlerMock = new Mock<HttpMessageHandler>();
+            handlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new TimeoutException())
+                .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
+
+            using var httpClient = new HttpClient(handlerMock.Object);
+            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+            // Act
+            var returnedContent = await githubClient.GetAsync(URL);
+
+            // Assert
+            returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        }
+
+        [Fact]
         public async Task GetAsync_Logs_The_Url()
         {
             // Arrange
