@@ -74,6 +74,7 @@ public class MigrateRepoCommandHandlerTests
             $"ADO REPO: {ADO_REPO}",
             $"GITHUB ORG: {GITHUB_ORG}",
             $"GITHUB REPO: {GITHUB_REPO}",
+            "QUEUE ONLY: true",
             $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
         };
 
@@ -85,7 +86,7 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            Wait = false,
+            QueueOnly = true,
         };
         await _handler.Handle(args);
 
@@ -94,7 +95,7 @@ public class MigrateRepoCommandHandlerTests
         _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
         _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, false));
 
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
         actualLogOutput.Should().Equal(expectedLogOutput);
 
         _mockGithubApi.VerifyNoOtherCalls();
@@ -141,7 +142,7 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            Wait = false,
+            QueueOnly = true,
         };
         await _handler.Handle(args);
 

@@ -460,7 +460,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
