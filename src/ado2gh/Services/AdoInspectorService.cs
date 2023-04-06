@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualBasic.FileIO;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub
 {

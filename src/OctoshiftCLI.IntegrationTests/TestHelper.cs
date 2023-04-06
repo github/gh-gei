@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Services;
 using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests

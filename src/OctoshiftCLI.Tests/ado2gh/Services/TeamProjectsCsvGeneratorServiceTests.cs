@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub;
+using OctoshiftCLI.AdoToGithub.Factories;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands

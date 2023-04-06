@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Handlers;
 

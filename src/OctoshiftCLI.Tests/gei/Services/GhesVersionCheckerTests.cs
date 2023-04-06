@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Services;

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 
