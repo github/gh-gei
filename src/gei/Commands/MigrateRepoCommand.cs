@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
@@ -175,6 +176,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var log = sp.GetRequiredService<OctoLogger>();
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+            var ghesVersionCheckerFactory = sp.GetRequiredService<GhesVersionCheckerFactory>();
+            var retryPolicy = sp.GetRequiredService<RetryPolicy>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
@@ -204,7 +207,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 }
             }
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider);
+            var ghesVersionChecker = ghesVersionCheckerFactory.Create(ghesApi);
+
+            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider, ghesVersionChecker, retryPolicy);
         }
     }
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
@@ -131,6 +132,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var log = sp.GetRequiredService<OctoLogger>();
             var versionProvider = sp.GetRequiredService<IVersionProvider>();
+            var ghesVersionCheckerFactory = sp.GetRequiredService<GhesVersionCheckerFactory>();
 
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
             GithubApi sourceGithubApi = null;
@@ -148,7 +150,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 sourceAdoApi = adoApiFactory.Create(args.AdoServerUrl, args.AdoPat);
             }
 
-            return new GenerateScriptCommandHandler(log, sourceGithubApi, sourceAdoApi, versionProvider);
+            var ghesVersionChecker = ghesVersionCheckerFactory.Create(sourceGithubApi);
+
+            return new GenerateScriptCommandHandler(log, sourceGithubApi, sourceAdoApi, versionProvider, ghesVersionChecker);
         }
     }
 

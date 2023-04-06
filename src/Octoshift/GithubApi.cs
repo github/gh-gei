@@ -9,7 +9,6 @@ using Octoshift;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
-using Polly;
 
 namespace OctoshiftCLI
 {
@@ -105,7 +104,7 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
 
-            await _retryPolicy.HttpRetry(() => _client.DeleteAsync(url), _ => true);
+            await _retryPolicy.Retry(() => _client.DeleteAsync(url));
         }
 
         public virtual async Task<bool> DoesRepoExist(string org, string repo)
@@ -168,16 +167,19 @@ namespace OctoshiftCLI
                 variables = new { login = org }
             };
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                return await _retryPolicy.Retry(async () =>
+                {
+                    var data = await _client.PostGraphQLAsync(url, payload);
 
-                return (string)data["data"]["organization"]["id"];
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", response.FinalException)
-                : response.Result;
+                    return (string)data["data"]["organization"]["id"];
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", ex);
+            }
         }
 
         public virtual async Task<string> GetEnterpriseId(string enterpriseName)
@@ -190,16 +192,19 @@ namespace OctoshiftCLI
                 variables = new { slug = enterpriseName }
             };
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                return await _retryPolicy.Retry(async () =>
+                {
+                    var data = await _client.PostGraphQLAsync(url, payload);
 
-                return (string)data["data"]["enterprise"]["id"];
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to lookup the Enterprise ID for enterprise '{enterpriseName}'", response.FinalException)
-                : response.Result;
+                    return (string)data["data"]["enterprise"]["id"];
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to lookup the Enterprise ID for enterprise '{enterpriseName}'", ex);
+            }
         }
 
         public virtual async Task<string> CreateAdoMigrationSource(string orgId, string adoServerUrl)
@@ -418,22 +423,25 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                return await _retryPolicy.Retry(async () =>
+                {
+                    var data = await _client.PostGraphQLAsync(url, payload);
 
-                return (
-                    State: (string)data["data"]["node"]["state"],
-                    SourceOrgUrl: (string)data["data"]["node"]["sourceOrgUrl"],
-                    TargetOrgName: (string)data["data"]["node"]["targetOrgName"],
-                    FailureReason: (string)data["data"]["node"]["failureReason"],
-                    RemainingRepositoriesCount: (int?)data["data"]["node"]["remainingRepositoriesCount"],
-                    TotalRepositoriesCount: (int?)data["data"]["node"]["totalRepositoriesCount"]);
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
-                : response.Result;
+                    return (
+                        State: (string)data["data"]["node"]["state"],
+                        SourceOrgUrl: (string)data["data"]["node"]["sourceOrgUrl"],
+                        TargetOrgName: (string)data["data"]["node"]["targetOrgName"],
+                        FailureReason: (string)data["data"]["node"]["failureReason"],
+                        RemainingRepositoriesCount: (int?)data["data"]["node"]["remainingRepositoriesCount"],
+                        TotalRepositoriesCount: (int?)data["data"]["node"]["totalRepositoriesCount"]);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", ex);
+            }
         }
 
         public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
@@ -459,20 +467,23 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                return await _retryPolicy.Retry(async () =>
+                {
+                    var data = await _client.PostGraphQLAsync(url, payload);
 
-                return (
-                    State: (string)data["data"]["node"]["state"],
-                    RepositoryName: (string)data["data"]["node"]["repositoryName"],
-                    FailureReason: (string)data["data"]["node"]["failureReason"],
-                    MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", response.FinalException)
-                : response.Result;
+                    return (
+                        State: (string)data["data"]["node"]["state"],
+                        RepositoryName: (string)data["data"]["node"]["repositoryName"],
+                        FailureReason: (string)data["data"]["node"]["failureReason"],
+                        MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to get migration state for migration {migrationId}", ex);
+            }
         }
 
         public virtual async Task<string> GetMigrationLogUrl(string org, string repo)
@@ -492,18 +503,21 @@ namespace OctoshiftCLI
 
             var payload = new { query = $"{query} {{ {gql} }}", variables = new { org, repo } };
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                return await _retryPolicy.Retry(async () =>
+                {
+                    var data = await _client.PostGraphQLAsync(url, payload);
 
-                var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
+                    var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-                return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to get migration log URL.", response.FinalException)
-                : response.Result;
+                    return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to get migration log URL.", ex);
+            }
         }
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
@@ -638,17 +652,10 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/orgs/{org}/migrations/{archiveId}";
 
-            var response = await _retryPolicy.RetryOnResult(async () =>
-            {
-                var httpResponse = await _client.GetAsync(url);
-                var data = JObject.Parse(httpResponse);
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
 
-                return (string)data["state"];
-            }, ArchiveMigrationStatus.Failed);
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Archive generation failed for id: {archiveId}")
-                : response.Result;
+            return (string)data["state"];
         }
 
         public virtual async Task<string> GetArchiveMigrationUrl(string org, int archiveId)
@@ -665,20 +672,23 @@ namespace OctoshiftCLI
 
             var payload = GetMannequinsPayload(orgId);
 
-            var response = await _retryPolicy.Retry(async () =>
+            try
             {
-                return await _client.PostGraphQLWithPaginationAsync(
-                    url,
-                    payload,
-                    data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
-                    data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
-                .Select(mannequin => BuildMannequin(mannequin))
-                .ToListAsync();
-            });
-
-            return response.Outcome == OutcomeType.Failure
-                ? throw new OctoshiftCliException($"Failed to retrieve the list of mannequins", response.FinalException)
-                : response.Result;
+                return await _retryPolicy.Retry(async () =>
+                {
+                    return await _client.PostGraphQLWithPaginationAsync(
+                        url,
+                        payload,
+                        data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                        data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+                    .Select(mannequin => BuildMannequin(mannequin))
+                    .ToListAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Failed to retrieve the list of mannequins", ex);
+            }
         }
 
         public virtual async Task<string> GetUserId(string login)
