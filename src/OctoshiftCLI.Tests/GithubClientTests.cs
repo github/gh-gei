@@ -77,28 +77,6 @@ namespace OctoshiftCLI.Tests
                 ItExpr.IsAny<CancellationToken>());
         }
 
-        [Fact]
-        public async Task GetAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForGet();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.GetAsync(actualUrl);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
         [Theory]
         [InlineData(HttpStatusCode.Unauthorized)]
         [InlineData(HttpStatusCode.ServiceUnavailable)]
@@ -419,28 +397,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PostAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForPost();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.PostAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
-        [Fact]
         public async Task PostAsync_Logs_The_Url()
         {
             // Arrange
@@ -541,28 +497,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             response.ToJson().Should().Be(EXPECTED_JSON_REQUEST_BODY);
-        }
-
-        [Fact]
-        public async Task PostGraphQLAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForGraphQLPost();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.PostGraphQLAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -705,28 +639,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PutAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForPut();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.PutAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
-        [Fact]
         public async Task PutAsync_Logs_The_Url()
         {
             // Arrange
@@ -863,28 +775,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PatchAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForPatch();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.PatchAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
-        [Fact]
         public async Task PatchAsync_Logs_The_Url()
         {
             // Arrange
@@ -1018,28 +908,6 @@ namespace OctoshiftCLI.Tests
 
             // Assert
             actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForDelete();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await githubClient.DeleteAsync(actualUrl);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]

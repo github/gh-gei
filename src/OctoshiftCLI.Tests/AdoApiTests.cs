@@ -25,9 +25,9 @@ namespace OctoshiftCLI.Tests
 
         private const string ADO_SERVICE_URL = "https://dev.azure.com";
         private const string USER_ID = "foo-user-id";
-        private const string ADO_ORG = "foo-org";
+        private const string ADO_ORG = "foo org";
         private const string ADO_ORG_ID = "blah";
-        private const string ADO_TEAM_PROJECT = "foo-tp";
+        private const string ADO_TEAM_PROJECT = "foo (tp)";
         private readonly string ADO_TEAM_PROJECT_ID = Guid.NewGuid().ToString();
         private const string ADO_REPO = "repo-1";
         private const string GITHUB_ORG = "foo-gh-org";
@@ -135,7 +135,7 @@ namespace OctoshiftCLI.Tests
         public async Task GetTeamProjects_Should_Return_All_Team_Projects()
         {
             var teamProject2 = "foo-tp2";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/projects?api-version=6.1-preview";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/projects?api-version=6.1-preview";
             var json = new object[]
             {
                 new
@@ -162,7 +162,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetEnabledRepos_Should_Not_Return_Disabled_Repos()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories?api-version=6.1-preview.1";
             var repo1 = new AdoRepository { Id = "1", Name = ADO_REPO, Size = 123, IsDisabled = false };
             var repo2 = new AdoRepository { Id = "2", Name = "foo-repo2", Size = 5678, IsDisabled = false };
             var json = new object[]
@@ -216,8 +216,8 @@ namespace OctoshiftCLI.Tests
             };
             var response = JArray.Parse(json.ToJson());
 
-            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
-            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{teamProject2.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
             var result = await sut.GetGithubAppId(ADO_ORG, GITHUB_ORG, teamProjects);
 
@@ -242,8 +242,8 @@ namespace OctoshiftCLI.Tests
             };
             var response = JArray.Parse(json.ToJson());
 
-            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
-            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG}/{teamProject2}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(JArray.Parse("[]"));
+            _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{teamProject2.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
 
             var result = await sut.GetGithubAppId(ADO_ORG, GITHUB_ORG, teamProjects);
 
@@ -256,7 +256,7 @@ namespace OctoshiftCLI.Tests
             var githubToken = Guid.NewGuid().ToString();
 
             var handle = "FOO-LOGIN";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
             var payload = new
             {
                 contributionIds = new[]
@@ -295,7 +295,7 @@ namespace OctoshiftCLI.Tests
             var endpointId = "foo-endpoint-id";
             var connectionName = "foo-name";
             var repo2 = "repo-2";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -339,7 +339,7 @@ namespace OctoshiftCLI.Tests
             var githubHandle = "foo-handle";
             var endpointName = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT_ID}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT_ID.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -382,7 +382,7 @@ namespace OctoshiftCLI.Tests
             var endpointId = Guid.NewGuid().ToString();
             var repo2 = "repo-2";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -427,7 +427,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetTeamProjectId_Should_Return_TeamProjectId()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/projects/{ADO_TEAM_PROJECT}?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/projects/{ADO_TEAM_PROJECT.EscapeDataString()}?api-version=5.0-preview.1";
             var response = new { id = ADO_TEAM_PROJECT_ID };
 
             _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
@@ -442,7 +442,7 @@ namespace OctoshiftCLI.Tests
         {
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}?api-version=4.1";
             var response = new { id = repoId };
 
             _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
@@ -457,8 +457,8 @@ namespace OctoshiftCLI.Tests
         {
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
-            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories?api-version=4.1";
             var response = new[] {
                 new { name = "blah", id = Guid.NewGuid().ToString() },
                 new { name = ADO_REPO, id = repoId }
@@ -477,8 +477,8 @@ namespace OctoshiftCLI.Tests
         {
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}?api-version=4.1";
-            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories?api-version=4.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}?api-version=4.1";
+            var allReposEndpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories?api-version=4.1";
             var response = new[] {
                 new { name = ADO_REPO, id = repoId },
                 new { name = ADO_REPO, id = Guid.NewGuid().ToString() }
@@ -495,7 +495,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetPullRequestCount_Should_Return_Count()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
             var expectedCount = 12;
 
             _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
@@ -508,7 +508,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetLastPushDate_Should_Return_LastPushDate()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?$top=1&api-version=7.1-preview.2";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
             var expectedDate = new DateTime(2022, 2, 14);
 
             var response = new
@@ -529,7 +529,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetLastPushDate_Should_Return_MinDate_When_No_Pushes()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?$top=1&api-version=7.1-preview.2";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
 
             var response = "{ count: 0, value: [] }";
 
@@ -543,7 +543,7 @@ namespace OctoshiftCLI.Tests
         [Fact]
         public async Task GetLastPushDate_Should_Be_Locale_Independent()
         {
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?$top=1&api-version=7.1-preview.2";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
             var expectedDate = new DateTime(2016, 4, 22);
 
             var response = new
@@ -568,7 +568,7 @@ namespace OctoshiftCLI.Tests
         {
             var fromDate = new DateTime(2022, 2, 14);
             var fromDateIso = "02/14/2022";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
             var expectedCount = 12;
 
             _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
@@ -583,7 +583,7 @@ namespace OctoshiftCLI.Tests
         {
             var fromDate = new DateTime(2022, 2, 14);
             var fromDateIso = "02/14/2022";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
             var expectedCount = 12;
 
             _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
@@ -600,7 +600,7 @@ namespace OctoshiftCLI.Tests
         {
             var fromDate = new DateTime(2022, 2, 14);
             var fromDateIso = "02/14/2022";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
             var pusher1DisplayName = "Dylan";
             var pusher1UniqueName = "dsmith";
             var pusher2DisplayName = "Tom";
@@ -634,7 +634,7 @@ namespace OctoshiftCLI.Tests
         {
             var fromDate = new DateTime(2022, 2, 14);
             var fromDateIso = "02/14/2022";
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{ADO_REPO}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
             var pusher1DisplayName = "Dylan";
             var pusher1UniqueName = "dsmith";
             var pusher2DisplayName = "Tom";
@@ -672,7 +672,7 @@ namespace OctoshiftCLI.Tests
             var pipeline1 = "foo-pipe-1";
             var pipeline2 = "foo-pipe-2";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
             var response = new object[]
             {
                 new
@@ -702,7 +702,7 @@ namespace OctoshiftCLI.Tests
             var pipeline = "foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -732,7 +732,7 @@ namespace OctoshiftCLI.Tests
             var pipeline = "\\some-folder\\another\\foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -762,7 +762,7 @@ namespace OctoshiftCLI.Tests
             var pipeline = "foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -792,7 +792,7 @@ namespace OctoshiftCLI.Tests
             var pipeline = "foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -823,7 +823,7 @@ namespace OctoshiftCLI.Tests
             var pipeline = "\\some-folder\\foo-pipe";
             var pipelineId = 36383;
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
             var response = new object[]
             {
                 new
@@ -852,7 +852,7 @@ namespace OctoshiftCLI.Tests
         {
             var serviceConnectionId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
             _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns("null");
 
@@ -867,7 +867,7 @@ namespace OctoshiftCLI.Tests
         {
             var serviceConnectionId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
 
             var payload = new[]
             {
@@ -895,7 +895,7 @@ namespace OctoshiftCLI.Tests
             var defaultBranch = $"refs/heads/{branchName}";
             var clean = "True";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
             var response = new
             {
                 repository = new
@@ -941,7 +941,7 @@ namespace OctoshiftCLI.Tests
                 oneLastThing = false
             };
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var newJson = new
             {
@@ -991,7 +991,7 @@ namespace OctoshiftCLI.Tests
             var endpointId = Guid.NewGuid().ToString();
             var githubRepo = "foo-repo";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -1033,7 +1033,7 @@ namespace OctoshiftCLI.Tests
             var endpointId = Guid.NewGuid().ToString();
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -1078,7 +1078,7 @@ namespace OctoshiftCLI.Tests
             var ownerName = "Dave";
             var ownerEmail = "dave@gmail.com";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -1115,7 +1115,7 @@ namespace OctoshiftCLI.Tests
         {
             var repoId = Guid.NewGuid().ToString();
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
 
             await sut.DisableRepo(ADO_ORG, ADO_TEAM_PROJECT, repoId);
 
@@ -1130,7 +1130,7 @@ namespace OctoshiftCLI.Tests
             var groupName = "foo-group";
             var identityDescriptor = "foo-id";
 
-            var endpoint = $"https://vssps.dev.azure.com/{ADO_ORG}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
+            var endpoint = $"https://vssps.dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/identities?searchFilter=General&filterValue={groupName}&queryMembership=None&api-version=6.1-preview.1";
             var response = $@"[{{ properties: {{ LocalScopeId: {{ $value: ""wrong"" }} }}, descriptor: ""blah"" }}, {{ descriptor: ""{identityDescriptor}"", properties: {{ LocalScopeId: {{ $value: ""{ADO_TEAM_PROJECT_ID}"" }} }} }}]";
 
             _mockAdoClient.Setup(x => x.GetWithPagingAsync(endpoint).Result).Returns(JArray.Parse(response));
@@ -1147,7 +1147,7 @@ namespace OctoshiftCLI.Tests
             var identityDescriptor = "foo-id";
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
 
-            var endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
 
             var payload = new
             {
@@ -1180,7 +1180,7 @@ namespace OctoshiftCLI.Tests
         public async Task IsCallerOrgAdmin_Returns_True_When_Caller_Is_Org_Admin()
         {
             // Arrange
-            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
             const string responseJson = "{\"count\":1,\"value\":[true]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
@@ -1196,7 +1196,7 @@ namespace OctoshiftCLI.Tests
         public async Task IsCallerOrgAdmin_Returns_False_When_Caller_Is_Not_Org_Admin()
         {
             // Arrange
-            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
             const string responseJson = "{\"count\":1,\"value\":[false]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
@@ -1212,7 +1212,7 @@ namespace OctoshiftCLI.Tests
         public async Task IsCallerOrgAdmin_Returns_First_Value_From_Value_Array()
         {
             // Arrange
-            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
             const string responseJson = "{\"count\":3,\"value\":[true, false, false]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
@@ -1228,7 +1228,7 @@ namespace OctoshiftCLI.Tests
         public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_Empty_Value_Array()
         {
             // Arrange
-            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
             const string responseJson = "{\"count\":0,\"value\":[]}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);
@@ -1244,7 +1244,7 @@ namespace OctoshiftCLI.Tests
         public async Task IsCallerOrgAdmin_Returns_False_When_Response_Payload_Has_No_Value()
         {
             // Arrange
-            const string endpoint = $"https://dev.azure.com/{ADO_ORG}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
+            var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2?api-version=6.0";
             const string responseJson = "{}";
 
             _mockAdoClient.Setup(m => m.GetAsync(endpoint)).ReturnsAsync(responseJson);

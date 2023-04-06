@@ -72,28 +72,6 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAsync_Encodes_The_Url()
-    {
-        // Arrange
-        var handlerMock = MockHttpHandlerForGet();
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
-
-        const string actualUrl = "http://example.com/param with space";
-        const string expectedUrl = "http://example.com/param%20with%20space";
-
-        // Act
-        await bbsClient.GetAsync(actualUrl);
-
-        // Assert
-        handlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-            ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Fact]
     public async Task GetAsync_Logs_The_Url()
     {
         // Arrange
@@ -170,27 +148,6 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
-    public async Task PostAsync_Encodes_The_Url()
-    {
-        var handlerMock = MockHttpHandlerForPost();
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
-
-        const string actualUrl = "http://example.com/param with space";
-        const string expectedUrl = "http://example.com/param%20with%20space";
-
-        // Act
-        await bbsClient.PostAsync(actualUrl, _rawRequestBody);
-
-        // Assert
-        handlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-            ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Fact]
     public async Task PostAsync_Logs_The_Url()
     {
         // Arrange
@@ -244,27 +201,6 @@ public sealed class BbsClientTests : IDisposable
 
         // Assert
         _mockOctoLogger.Verify(m => m.LogVerbose($"RESPONSE ({_httpResponse.StatusCode}): {EXPECTED_RESPONSE_CONTENT}"), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteAsync_Encodes_The_Url()
-    {
-        var handlerMock = MockHttpHandlerForDelete();
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
-
-        const string actualUrl = "http://example.com/param with space";
-        const string expectedUrl = "http://example.com/param%20with%20space";
-
-        // Act
-        await bbsClient.DeleteAsync(actualUrl);
-
-        // Assert
-        handlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-            ItExpr.IsAny<CancellationToken>());
     }
 
     [Fact]

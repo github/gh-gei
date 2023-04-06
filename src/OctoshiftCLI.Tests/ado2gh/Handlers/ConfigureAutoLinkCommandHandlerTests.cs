@@ -21,7 +21,7 @@ public class ConfigureAutoLinkCommandHandlerTests
     private const string ADO_ORG = "foo-ado-org";
     private const string ADO_TEAM_PROJECT = "foo-ado-tp";
     private const string KEY_PREFIX = "AB#";
-    private readonly string URL_TEMPLATE = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_workitems/edit/<num>/".Replace(" ", "%20");
+    private readonly string URL_TEMPLATE = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_workitems/edit/<num>/";
 
     public ConfigureAutoLinkCommandHandlerTests()
     {
