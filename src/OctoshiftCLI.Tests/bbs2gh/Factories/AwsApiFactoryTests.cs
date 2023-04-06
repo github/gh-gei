@@ -1,9 +1,9 @@
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter;
+namespace OctoshiftCLI.Tests.bbs2gh.Factories;
 
 public class AwsApiFactoryTests
 {

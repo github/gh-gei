@@ -12,7 +12,7 @@ using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests;
+namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public sealed class BbsClientTests : IDisposable
 {

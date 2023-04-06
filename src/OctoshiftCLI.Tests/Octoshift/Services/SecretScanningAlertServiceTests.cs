@@ -4,7 +4,8 @@ using Octoshift.Models;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Services;
+
 public class SecretScanningAlertServiceTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();

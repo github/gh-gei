@@ -8,7 +8,7 @@ using OctoshiftCLI.Models;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests;
+namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public class CodeScanningAlertServiceTests
 {
