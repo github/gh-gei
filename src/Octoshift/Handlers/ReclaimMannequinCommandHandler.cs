@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.Services;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Handlers;
 
