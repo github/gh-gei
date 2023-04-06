@@ -7,6 +7,7 @@ using OctoshiftCLI.BbsToGithub.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.BbsToGithub.Handlers;
 

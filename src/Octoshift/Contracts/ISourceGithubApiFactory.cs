@@ -1,3 +1,5 @@
+using OctoshiftCLI.Services;
+
 namespace OctoshiftCLI.Contracts;
 
 public interface ISourceGithubApiFactory

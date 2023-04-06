@@ -10,6 +10,7 @@ using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Services;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;

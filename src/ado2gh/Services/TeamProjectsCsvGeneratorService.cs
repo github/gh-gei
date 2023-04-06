@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using OctoshiftCLI.AdoToGithub.Factories;
 
 namespace OctoshiftCLI.AdoToGithub
 {

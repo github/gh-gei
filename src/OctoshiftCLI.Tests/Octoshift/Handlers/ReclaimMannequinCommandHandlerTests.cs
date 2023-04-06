@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Octoshift;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Commands;

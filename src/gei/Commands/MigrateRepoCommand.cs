@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 {

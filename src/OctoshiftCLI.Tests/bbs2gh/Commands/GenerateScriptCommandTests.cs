@@ -1,9 +1,10 @@
 using System;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.BbsToGithub.Commands;

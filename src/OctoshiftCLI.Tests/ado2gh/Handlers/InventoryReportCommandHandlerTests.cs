@@ -4,6 +4,7 @@ using Moq;
 using OctoshiftCLI.AdoToGithub;
 using OctoshiftCLI.AdoToGithub.Commands;
 using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands;

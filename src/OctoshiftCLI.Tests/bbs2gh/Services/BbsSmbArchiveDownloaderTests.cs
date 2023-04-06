@@ -5,6 +5,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 using SMBLibrary;
 using SMBLibrary.Client;
 using Xunit;

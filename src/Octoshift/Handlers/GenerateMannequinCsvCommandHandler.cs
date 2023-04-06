@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Octoshift;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Handlers;
 

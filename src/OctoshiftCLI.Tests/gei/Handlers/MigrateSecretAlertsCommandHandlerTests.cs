@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
