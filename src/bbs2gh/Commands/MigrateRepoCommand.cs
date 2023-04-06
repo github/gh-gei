@@ -43,6 +43,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsSessionToken);
         AddOption(AwsRegion);
         AddOption(Wait);
+        AddOption(QueueOnly);
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
@@ -264,6 +265,7 @@ public class MigrateRepoCommandArgs
     public string GithubRepo { get; set; }
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
+    public bool QueueOnly { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 

@@ -39,6 +39,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation("WAIT: true");
         }
+        if (args.QueueOnly)
+        {
+            _log.LogInformation("QUEUE ONLY: true");
+        }
         if (args.AdoPat is not null)
         {
             _log.LogInformation("ADO PAT: ***");

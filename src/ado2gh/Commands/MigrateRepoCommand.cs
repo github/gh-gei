@@ -22,6 +22,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(GithubOrg);
             AddOption(GithubRepo);
             AddOption(Wait);
+            AddOption(QueueOnly);
             AddOption(AdoPat);
             AddOption(GithubPat);
             AddOption(Verbose);
@@ -89,6 +90,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         public string GithubOrg { get; set; }
         public string GithubRepo { get; set; }
         public bool Wait { get; set; }
+        public bool QueueOnly { get; set; }
         public string AdoPat { get; set; }
         public string GithubPat { get; set; }
         public bool Verbose { get; set; }
