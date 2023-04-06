@@ -58,28 +58,6 @@ namespace OctoshiftCLI.Tests
             httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
         }
 
-        [Fact]
-        public async Task GetAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForGet();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.GetAsync(actualUrl);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
         [Theory]
         [InlineData(HttpStatusCode.Unauthorized)]
         [InlineData(HttpStatusCode.ServiceUnavailable)]
@@ -249,27 +227,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PostAsync_Encodes_The_Url()
-        {
-            var handlerMock = MockHttpHandlerForPost();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.PostAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
-        [Fact]
         public async Task PostAsync_Applies_Retry_Delay()
         {
             // Arrange
@@ -385,27 +342,6 @@ namespace OctoshiftCLI.Tests
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
-        }
-
-        [Fact]
-        public async Task PutAsync_Encodes_The_Url()
-        {
-            var handlerMock = MockHttpHandlerForPut();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.PutAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -527,27 +463,6 @@ namespace OctoshiftCLI.Tests
         }
 
         [Fact]
-        public async Task PatchAsync_Encodes_The_Url()
-        {
-            var handlerMock = MockHttpHandlerForPatch();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.PatchAsync(actualUrl, _rawRequestBody);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
-        }
-
-        [Fact]
         public async Task PatchAsync_Applies_Retry_Delay()
         {
             // Arrange
@@ -663,28 +578,6 @@ namespace OctoshiftCLI.Tests
                 })
                 .Should()
                 .ThrowExactlyAsync<HttpRequestException>();
-        }
-
-        [Fact]
-        public async Task DeleteAsync_Encodes_The_Url()
-        {
-            // Arrange
-            var handlerMock = MockHttpHandlerForDelete();
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.DeleteAsync(actualUrl);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]
@@ -829,32 +722,6 @@ namespace OctoshiftCLI.Tests
                 .Should()
                 .ThrowExactlyAsync<ArgumentNullException>() // Assert
                 .WithParameterName("url");
-        }
-
-        [Fact]
-        public async Task GetWithPagingAsync_Encodes_The_Url()
-        {
-            // Arrange
-            using var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(new { value = new[] { "item1", "item2", "item3" } }.ToJson())
-            };
-            var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get, httpResponse);
-            using var httpClient = new HttpClient(handlerMock.Object);
-            var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
-
-            const string actualUrl = "http://example.com/param with space";
-            const string expectedUrl = "http://example.com/param%20with%20space";
-
-            // Act
-            await adoClient.GetWithPagingAsync(actualUrl);
-
-            // Assert
-            handlerMock.Protected().Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri == expectedUrl),
-                ItExpr.IsAny<CancellationToken>());
         }
 
         [Fact]

@@ -27,7 +27,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetOrgOwner(string org)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -61,7 +61,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<DateTime> GetLastPushDate(string org, string teamProject, string repo)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?$top=1&api-version=7.1-preview.2";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repo.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
             var response = await _client.GetAsync(url);
 
             var data = JObject.Parse(response);
@@ -72,13 +72,13 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> GetCommitCountSince(string org, string teamProject, string repo, DateTime fromDate)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/commits?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repo.EscapeDataString()}/commits?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
             return await _client.GetCountUsingSkip(url);
         }
 
         public virtual async Task<IEnumerable<string>> GetPushersSince(string org, string teamProject, string repo, DateTime fromDate)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pushes?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repo.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDate.ToString("d", CultureInfo.InvariantCulture)}&api-version=7.1-preview.1";
             var response = await _client.GetWithPagingTopSkipAsync(url, x => $"{x["pushedBy"]["displayName"]} ({x["pushedBy"]["uniqueName"]})");
 
             return response;
@@ -86,7 +86,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> GetPullRequestCount(string org, string teamProject, string repo)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repo.EscapeDataString()}/pullrequests?searchCriteria.status=all&api-version=7.1-preview.1";
             var count = await _client.GetCountUsingSkip(url);
             return count;
         }
@@ -114,7 +114,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetOrganizations(string userId)
         {
-            var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}?api-version=5.0-preview.1";
+            var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId.EscapeDataString()}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
             return JArray.Parse(response)
                          .Children()
@@ -124,7 +124,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetOrganizationId(string userId, string adoOrganization)
         {
-            var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId}&api-version=5.0-preview.1";
+            var url = $"https://app.vssps.visualstudio.com/_apis/accounts?memberId={userId.EscapeDataString()}&api-version=5.0-preview.1";
 
             var data = await _client.GetWithPagingAsync(url);
 
@@ -134,7 +134,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetTeamProjects(string org)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/projects?api-version=6.1-preview";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/projects?api-version=6.1-preview";
             var data = await _client.GetWithPagingAsync(url);
             return data.Select(x => (string)x["name"]).ToList();
         }
@@ -143,7 +143,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<AdoRepository>> GetRepos(string org, string teamProject)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories?api-version=6.1-preview.1";
             var data = await _client.GetWithPagingAsync(url);
             return data
                 .Select(x => new AdoRepository
@@ -177,7 +177,7 @@ namespace OctoshiftCLI
 
         private async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
             var response = await _client.GetWithPagingAsync(url);
 
             var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
@@ -187,7 +187,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetGithubHandle(string org, string teamProject, string githubToken)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -219,7 +219,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string teamProject)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -260,7 +260,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> CreateBoardsGithubEndpoint(string org, string teamProjectId, string githubToken, string githubHandle, string endpointName)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProjectId}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProjectId.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -289,7 +289,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddRepoToBoardsGithubConnection(string org, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -327,7 +327,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/projects/{teamProject}?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/projects/{teamProject.EscapeDataString()}?api-version=5.0-preview.1";
             var response = await _client.GetAsync(url);
             return (string)JObject.Parse(response)["id"];
         }
@@ -342,7 +342,7 @@ namespace OctoshiftCLI
 
             if (!_repoIds.ContainsKey((org.ToUpper(), teamProject.ToUpper())))
             {
-                var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repo}?api-version=4.1";
+                var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repo.EscapeDataString()}?api-version=4.1";
 
                 try
                 {
@@ -371,7 +371,7 @@ namespace OctoshiftCLI
 
             var ids = new Dictionary<string, string>();
 
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories?api-version=4.1";
 
             var response = await _client.GetWithPagingAsync(url);
 
@@ -393,7 +393,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetPipelines(string org, string teamProject, string repoId)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions?repositoryId={repoId}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions?repositoryId={repoId.EscapeDataString()}&repositoryType=TfsGit&queryOrder=lastModifiedDescending";
             var response = await _client.GetWithPagingAsync(url);
 
             var result = response.Select(x =>
@@ -423,7 +423,7 @@ namespace OctoshiftCLI
                 return result;
             }
 
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions";
             var response = await _client.GetWithPagingAsync(url);
 
             foreach (var item in response)
@@ -465,7 +465,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<bool> ContainsServiceConnection(string adoOrg, string adoTeamProject, string serviceConnectionId)
         {
-            var url = $"{_adoBaseUrl}/{adoOrg}/{adoTeamProject}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{adoTeamProject.EscapeDataString()}/_apis/serviceendpoint/endpoints/{serviceConnectionId.EscapeDataString()}?api-version=6.0-preview.4";
 
             var response = await _client.GetAsync(url);
 
@@ -475,7 +475,7 @@ namespace OctoshiftCLI
 
         public virtual async Task ShareServiceConnection(string adoOrg, string adoTeamProject, string adoTeamProjectId, string serviceConnectionId)
         {
-            var url = $"{_adoBaseUrl}/{adoOrg}/_apis/serviceendpoint/endpoints/{serviceConnectionId}?api-version=6.0-preview.4";
+            var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/_apis/serviceendpoint/endpoints/{serviceConnectionId.EscapeDataString()}?api-version=6.0-preview.4";
 
             var payload = new[]
             {
@@ -495,7 +495,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -518,7 +518,7 @@ namespace OctoshiftCLI
 
         public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
         {
-            var url = $"{_adoBaseUrl}/{adoOrg}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -527,23 +527,23 @@ namespace OctoshiftCLI
             {
                 properties = new
                 {
-                    apiUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}",
-                    branchesUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/branches",
-                    cloneUrl = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                    apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
+                    branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches",
+                    cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
                     connectedServiceId,
                     defaultBranch,
                     fullName = $"{githubOrg}/{githubRepo}",
-                    manageUrl = $"https://github.com/{githubOrg}/{githubRepo}",
+                    manageUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
                     orgName = githubOrg,
-                    refsUrl = $"https://api.github.com/repos/{githubOrg}/{githubRepo}/git/refs",
-                    safeRepository = $"{githubOrg}/{githubRepo}",
+                    refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs",
+                    safeRepository = $"{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
                     shortName = githubRepo,
                     reportBuildStatus = true
                 },
                 id = $"{githubOrg}/{githubRepo}",
                 type = "GitHub",
                 name = $"{githubOrg}/{githubRepo}",
-                url = $"https://github.com/{githubOrg}/{githubRepo}.git",
+                url = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
                 defaultBranch,
                 clean,
                 checkoutSubmodules
@@ -566,7 +566,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -600,7 +600,7 @@ namespace OctoshiftCLI
 
         public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
         {
-            var url = $"{_adoBaseUrl}/{org}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
             var payload = new
             {
@@ -639,7 +639,7 @@ namespace OctoshiftCLI
 
         public virtual async Task DisableRepo(string org, string teamProject, string repoId)
         {
-            var url = $"{_adoBaseUrl}/{org}/{teamProject}/_apis/git/repositories/{repoId}?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repoId.EscapeDataString()}?api-version=6.1-preview.1";
 
             var payload = new { isDisabled = true };
             await _client.PatchAsync(url, payload);
@@ -647,7 +647,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetIdentityDescriptor(string org, string teamProjectId, string groupName)
         {
-            var url = $"https://vssps.dev.azure.com/{org}/_apis/identities?searchFilter=General&filterValue={groupName?.Replace(" ", "%20")}&queryMembership=None&api-version=6.1-preview.1";
+            var url = $"https://vssps.dev.azure.com/{org.EscapeDataString()}/_apis/identities?searchFilter=General&filterValue={groupName.EscapeDataString()}&queryMembership=None&api-version=6.1-preview.1";
 
             var identities = await _client.GetWithPagingAsync(url);
 
@@ -659,7 +659,7 @@ namespace OctoshiftCLI
         {
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
 
-            var url = $"{_adoBaseUrl}/{org}/_apis/accesscontrolentries/{gitReposNamespace}?api-version=6.1-preview.1";
+            var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/accesscontrolentries/{gitReposNamespace.EscapeDataString()}?api-version=6.1-preview.1";
 
             var payload = new
             {
@@ -695,7 +695,7 @@ namespace OctoshiftCLI
 
         private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)
         {
-            var response = await _client.GetAsync($"{_adoBaseUrl}/{org}/_apis/permissions/{securityNamespaceId}/{permission}?api-version=6.0");
+            var response = await _client.GetAsync($"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/permissions/{securityNamespaceId.EscapeDataString()}/{permission}?api-version=6.0");
             return ((string)JObject.Parse(response)["value"]?.FirstOrDefault()).ToBool();
         }
     }
