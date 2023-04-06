@@ -49,7 +49,12 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         };
         public Option<bool> Wait { get; } = new("--wait")
         {
-            Description = "Synchronously waits for the repo migration to finish."
+            IsHidden = true,
+            Description = "Synchronously waits for the repo migration to finish.",
+        };
+        public Option<bool> QueueOnly { get; } = new("--queue-only")
+        {
+            Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
         };
         public Option<string> AdoPat { get; } = new("--ado-pat");
         public Option<string> GithubPat { get; } = new("--github-pat");
