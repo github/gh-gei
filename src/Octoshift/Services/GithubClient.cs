@@ -144,8 +144,6 @@ public class GithubClient
         HttpStatusCode expectedStatus = HttpStatusCode.OK,
         Dictionary<string, string> customHeaders = null)
     {
-        url = url?.Replace(" ", "%20");
-
         await ApplyRetryDelayAsync();
         _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
