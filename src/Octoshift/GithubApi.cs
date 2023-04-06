@@ -38,12 +38,12 @@ namespace OctoshiftCLI
                 throw new ArgumentException($"Invalid value for {nameof(urlTemplate)}");
             }
 
-            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/autolinks";
 
             var payload = new
             {
                 key_prefix = keyPrefix,
-                url_template = urlTemplate.Replace(" ", "%20")
+                url_template = urlTemplate
             };
 
             await _client.PostAsync(url, payload);
@@ -51,7 +51,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<List<(int Id, string KeyPrefix, string UrlTemplate)>> GetAutoLinks(string org, string repo)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/autolinks";
 
             return await _client.GetAllAsync(url)
                                 .Select(al => ((int)al["id"], (string)al["key_prefix"], (string)al["url_template"]))
@@ -60,14 +60,14 @@ namespace OctoshiftCLI
 
         public virtual async Task DeleteAutoLink(string org, string repo, int autoLinkId)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/autolinks/{autoLinkId}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/autolinks/{autoLinkId}";
 
             await _client.DeleteAsync(url);
         }
 
         public virtual async Task<(string Id, string Slug)> CreateTeam(string org, string teamName)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
             var payload = new { name = teamName, privacy = "closed" };
 
             var response = await _client.PostAsync(url, payload);
@@ -78,7 +78,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<(string Name, string Slug)>> GetTeams(string org)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
 
             return await _client.GetAllAsync(url)
                 .Select(t => ((string)t["name"], (string)t["slug"]))
@@ -87,7 +87,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetTeamMembers(string org, string teamSlug)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/members?per_page=100";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/members?per_page=100";
 
             return await _retryPolicy.HttpRetry(async () => await _client.GetAllAsync(url).Select(x => (string)x["login"]).ToListAsync(),
                                             ex => ex.StatusCode == HttpStatusCode.NotFound);
@@ -95,21 +95,21 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<string>> GetRepos(string org)
         {
-            var url = $"{_apiUrl}/orgs/{org}/repos?per_page=100";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/repos?per_page=100";
 
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
         public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/memberships/{member}";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/memberships/{member.EscapeDataString()}";
 
             await _retryPolicy.Retry(() => _client.DeleteAsync(url));
         }
 
         public virtual async Task<bool> DoesRepoExist(string org, string repo)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
             try
             {
                 await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
@@ -123,7 +123,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<bool> DoesOrgExist(string org)
         {
-            var url = $"{_apiUrl}/orgs/{org}";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}";
             try
             {
                 await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
@@ -137,7 +137,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddTeamSync(string org, string teamName, string groupId, string groupName, string groupDesc)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamName}/team-sync/group-mappings";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamName.EscapeDataString()}/team-sync/group-mappings";
             var payload = new
             {
                 groups = new[]
@@ -151,7 +151,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddTeamToRepo(string org, string repo, string teamSlug, string role)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
             var payload = new { permission = role };
 
             await _client.PutAsync(url, payload);
@@ -522,7 +522,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> GetIdpGroupId(string org, string groupName)
         {
-            var url = $"{_apiUrl}/orgs/{org}/external-groups";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
             // TODO: Need to implement paging
             var response = await _client.GetAsync(url);
@@ -533,7 +533,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetTeamSlug(string org, string teamName)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
 
             var response = await _client.GetAllAsync(url)
                                         .SingleAsync(x => ((string)x["name"]).ToUpper() == teamName.ToUpper());
@@ -543,7 +543,7 @@ namespace OctoshiftCLI
 
         public virtual async Task AddEmuGroupToTeam(string org, string teamSlug, int groupId)
         {
-            var url = $"{_apiUrl}/orgs/{org}/teams/{teamSlug}/external-groups";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/external-groups";
             var payload = new { group_id = groupId };
 
             await _retryPolicy.HttpRetry(async () => await _client.PatchAsync(url, payload),
@@ -604,13 +604,13 @@ namespace OctoshiftCLI
 
         public virtual async Task DeleteRepo(string org, string repo)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
             await _client.DeleteAsync(url);
         }
 
         public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)
         {
-            var url = $"{_apiUrl}/orgs/{org}/migrations";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/migrations";
 
             var options = new
             {
@@ -632,7 +632,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<int> StartMetadataArchiveGeneration(string org, string repo, bool skipReleases, bool lockSource)
         {
-            var url = $"{_apiUrl}/orgs/{org}/migrations";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/migrations";
 
             var options = new
             {
@@ -650,7 +650,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetArchiveMigrationStatus(string org, int archiveId)
         {
-            var url = $"{_apiUrl}/orgs/{org}/migrations/{archiveId}";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/migrations/{archiveId}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -660,7 +660,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetArchiveMigrationUrl(string org, int archiveId)
         {
-            var url = $"{_apiUrl}/orgs/{org}/migrations/{archiveId}/archive";
+            var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/migrations/{archiveId}/archive";
 
             var response = await _client.GetNonSuccessAsync(url, HttpStatusCode.Found);
             return response;
@@ -744,7 +744,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts?per_page=100";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
                 .ToListAsync();
@@ -752,7 +752,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(alertLocation => BuildSecretScanningAlertLocation(alertLocation))
                 .ToListAsync();
@@ -770,7 +770,7 @@ namespace OctoshiftCLI
                 throw new ArgumentException($"Invalid value for {nameof(resolution)}");
             }
 
-            var url = $"{_apiUrl}/repos/{org}/{repo}/secret-scanning/alerts/{alertNumber}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts/{alertNumber}";
 
             object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
             await _client.PatchAsync(url, payload);
@@ -781,10 +781,10 @@ namespace OctoshiftCLI
             var queryString = "per_page=100&sort=created&direction=asc";
             if (branch.HasValue())
             {
-                queryString += $"&ref={branch}";
+                queryString += $"&ref={branch.EscapeDataString()}";
             }
 
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses?{queryString}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/analyses?{queryString}";
 
             try
             {
@@ -810,7 +810,7 @@ namespace OctoshiftCLI
                 throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
             }
 
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/alerts/{alertNumber}";
 
             var payload = state == "open"
                 ? (new { state })
@@ -825,7 +825,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/analyses/{analysisId}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/analyses/{analysisId}";
             // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
             var headers = new Dictionary<string, string>() { { "accept", "application/sarif+json" } };
             return await _client.GetAsync(url, headers);
@@ -833,7 +833,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> UploadSarifReport(string org, string repo, string sarifReport, string commitSha, string sarifRef)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/sarifs";
             var payload = new
             {
                 commit_sha = commitSha,
@@ -850,7 +850,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<SarifProcessingStatus> GetSarifProcessingStatus(string org, string repo, string sarifId)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/sarifs/{sarifId}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/sarifs/{sarifId.EscapeDataString()}";
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
@@ -860,7 +860,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<string> GetDefaultBranch(string org, string repo)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
@@ -873,9 +873,9 @@ namespace OctoshiftCLI
             var queryString = "per_page=100&sort=created&direction=asc";
             if (branch.HasValue())
             {
-                queryString += $"&ref={branch}";
+                queryString += $"&ref={branch.EscapeDataString()}";
             }
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts?{queryString}";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/alerts?{queryString}";
             return await _client.GetAllAsync(url)
                 .Select(BuildCodeScanningAlert)
                 .ToListAsync();
@@ -883,7 +883,7 @@ namespace OctoshiftCLI
 
         public virtual async Task<IEnumerable<CodeScanningAlertInstance>> GetCodeScanningAlertInstances(string org, string repo, int alertNumber)
         {
-            var url = $"{_apiUrl}/repos/{org}/{repo}/code-scanning/alerts/{alertNumber}/instances?per_page=100";
+            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/alerts/{alertNumber}/instances?per_page=100";
             return await _client.GetAllAsync(url)
                 .Select(BuildCodeScanningAlertInstance)
                 .ToListAsync();
