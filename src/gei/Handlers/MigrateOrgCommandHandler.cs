@@ -44,8 +44,7 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             githubEnterpriseId,
             sourceToken);
 
-
-        if (!args.Wait)
+        if (args.QueueOnly)
         {
             _log.LogInformation($"A organization migration (ID: {migrationId}) was successfully queued.");
             return;
