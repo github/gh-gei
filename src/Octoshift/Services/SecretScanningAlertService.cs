@@ -89,7 +89,10 @@ public class SecretScanningAlertService
             }
 
             if (source.Alert.SecretType == target.Alert.SecretType
-                && source.Alert.Secret == target.Alert.Secret)
+                && (source.Alert.Secret.Contains(target.Alert.Secret) ||
+                    target.Alert.Secret.Contains(source.Alert.Secret)
+                   )
+                )
             {
                 _log.LogVerbose(
                     $"Secret type and value match between source:{source.Alert.Number} and target:{source.Alert.Number}");
