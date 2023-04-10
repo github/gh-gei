@@ -158,11 +158,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--github-pat",
         description: "The GitHub personal access token to be used for the migration. If not set will be read from GH_PAT environment variable.");
 
-    public Option<bool> Wait { get; } = new("--wait")
-    {
-        IsHidden = true,
-        Description = "Synchronously waits for the repo migration to finish.",
-    };
+    public Option<bool> Wait { get; } = new(
+        name: "--wait",
+        description: "Synchronously waits for the repo migration to finish.")
+    { IsHidden = true };
 
     public Option<bool> QueueOnly { get; } = new("--queue-only")
     {
