@@ -128,7 +128,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var bbsRepoOption = $" --bbs-repo \"{bbsRepoSlug}\"";
         var githubOrgOption = $" --github-org \"{args.GithubOrg}\"";
         var githubRepoOption = $" --github-repo \"{GetGithubRepoName(bbsProjectKey, bbsRepoSlug)}\"";
-        var waitOption = wait ? " --wait" : "";
+        var waitOption = wait ? string.Empty : " --queue-only";
         var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
         var sshArchiveDownloadOptions = args.SshUser.HasValue()
