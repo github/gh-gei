@@ -163,10 +163,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         description: "Synchronously waits for the repo migration to finish.")
     { IsHidden = true };
 
-    public Option<bool> QueueOnly { get; } = new("--queue-only")
-    {
-        Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
-    };
+    public Option<bool> QueueOnly { get; } = new(
+        name: "--queue-only",
+        description: "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status.");
 
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",
