@@ -43,6 +43,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsSessionToken);
         AddOption(AwsRegion);
         AddOption(Wait);
+        AddOption(QueueOnly);
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
@@ -159,7 +160,12 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> Wait { get; } = new(
         name: "--wait",
-        description: "Synchronously waits for the repo migration to finish.");
+        description: "Synchronously waits for the repo migration to finish.")
+    { IsHidden = true };
+
+    public Option<bool> QueueOnly { get; } = new(
+        name: "--queue-only",
+        description: "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status.");
 
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",
@@ -257,6 +263,7 @@ public class MigrateRepoCommandArgs
     public string GithubRepo { get; set; }
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
+    public bool QueueOnly { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 

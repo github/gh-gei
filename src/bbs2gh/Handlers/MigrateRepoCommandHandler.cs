@@ -229,7 +229,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        if (!args.Wait)
+        if (args.QueueOnly)
         {
             _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
             return;
@@ -355,6 +355,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("WAIT: true");
         }
 
+        if (args.QueueOnly)
+        {
+            _log.LogInformation("QUEUE ONLY: true");
+        }
+
         if (args.BbsSharedHome.HasValue())
         {
             _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
@@ -457,6 +462,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (ShouldImportArchive(args))
         {
             ValidateImportOptions(args);
+        }
+
+        if (args.Wait)
+        {
+            _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
+        }
+
+        if (args.Wait && args.QueueOnly)
+        {
+            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
+        }
+
+        if (!args.Wait && !args.QueueOnly)
+        {
+            _log.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
         }
     }
 

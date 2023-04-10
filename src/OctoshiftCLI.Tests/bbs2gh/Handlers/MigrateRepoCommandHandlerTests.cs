@@ -133,6 +133,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -171,7 +172,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -212,6 +214,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -251,7 +254,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
-                BbsSharedHome = bbsSharedHome
+                BbsSharedHome = bbsSharedHome,
+                QueueOnly = true,
             };
 
             var handler = new MigrateRepoCommandHandler(
@@ -303,7 +307,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -340,7 +345,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -403,7 +409,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -429,7 +436,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = githubPat
+                GithubPat = githubPat,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -460,7 +468,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
             {
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -615,7 +624,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -754,7 +764,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchivePath = ARCHIVE_PATH,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -772,7 +783,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchiveUrl = ARCHIVE_URL,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -803,7 +815,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 ArchivePath = ARCHIVE_PATH,
                 AwsAccessKey = AWS_ACCESS_KEY_ID,
                 AwsSecretKey = AWS_SECRET_ACCESS_KEY,
-                AwsBucketName = AWS_BUCKET_NAME
+                AwsBucketName = AWS_BUCKET_NAME,
+                QueueOnly = true,
             };
 
             await _handler.Handle(args);
@@ -896,6 +909,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
 
@@ -947,6 +961,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                QueueOnly = true,
             };
             await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
 
@@ -1373,6 +1388,79 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
                 .Should()
                 .ThrowExactlyAsync<OctoshiftCliException>()
                 .WithMessage("*--github-repo*");
+        }
+
+        [Fact]
+        public async Task Validates_Wait_And_QueueOnly_Not_Passed_Together()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = true,
+                QueueOnly = true,
+            };
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowExactlyAsync<OctoshiftCliException>()
+                               .WithMessage("*wait*");
+        }
+
+        [Fact]
+        public async Task Wait_Flag_Shows_Warning()
+        {
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                Wait = true,
+            };
+
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowAsync<Exception>();
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
+        }
+
+        [Fact]
+        public async Task No_Wait_And_No_Queue_Only_Flags_Shows_Warning()
+        {
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+            };
+
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowAsync<Exception>();
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
         }
     }
 }

@@ -77,7 +77,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
-                Wait = false,
             };
             await FluentActions
                 .Invoking(async () => await _handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
@@ -115,6 +114,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 $"GITHUB TARGET ORG: {TARGET_ORG}",
                 $"TARGET REPO: {TARGET_REPO}",
                 $"TARGET API URL: {TARGET_API_URL}",
+                "QUEUE ONLY: true",
                 $"A repository migration (ID: {migrationId}) was successfully queued."
             };
 
@@ -126,7 +126,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = false
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -135,7 +135,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockTargetGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockTargetGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, false));
 
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockTargetGithubApi.VerifyNoOtherCalls();
@@ -174,7 +174,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = false
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -220,7 +220,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = true
+                Wait = true,
             };
             await _handler.Handle(args);
 
@@ -899,7 +899,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                AdoPat = ADO_PAT
+                AdoPat = ADO_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -939,7 +940,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 GithubTargetPat = GITHUB_TARGET_PAT,
-                GithubSourcePat = GITHUB_SOURCE_PAT
+                GithubSourcePat = GITHUB_SOURCE_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -988,7 +990,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                GithubSourcePat = GITHUB_SOURCE_PAT
+                GithubSourcePat = GITHUB_SOURCE_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1028,7 +1031,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                GithubTargetPat = GITHUB_TARGET_PAT
+                GithubTargetPat = GITHUB_TARGET_PAT,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1068,7 +1072,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                SkipReleases = true
+                SkipReleases = true,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1104,7 +1109,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 SkipReleases = false,
-                LockSourceRepo = true
+                LockSourceRepo = true,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1146,7 +1152,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 SkipReleases = true,
-                LockSourceRepo = true
+                QueueOnly = true,
+                LockSourceRepo = true,
             };
             await _handler.Handle(args);
 
@@ -1184,7 +1191,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                SkipReleases = true
+                SkipReleases = true,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1214,7 +1222,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 SkipReleases = true,
-                LockSourceRepo = true
+                LockSourceRepo = true,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1258,7 +1267,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1312,7 +1322,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = ghesApiUrl,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                QueueOnly = true,
             };
             await _handler.Handle(args);
 
@@ -1874,6 +1885,72 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Never);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Never);
+        }
+
+        [Fact]
+        public async Task Validates_Wait_And_QueueOnly_Not_Passed_Together()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = true,
+                KeepArchive = true,
+                QueueOnly = true,
+            };
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowExactlyAsync<OctoshiftCliException>()
+                               .WithMessage("*wait*");
+        }
+
+        [Fact]
+        public async Task Wait_Flag_Shows_Warning()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = true,
+                KeepArchive = true,
+            };
+
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowAsync<Exception>();
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
+        }
+
+        [Fact]
+        public async Task No_Wait_And_No_Queue_Only_Flags_Shows_Warning()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                Wait = false,
+                QueueOnly = false,
+                KeepArchive = true,
+            };
+
+            await FluentActions.Invoking(async () => await _handler.Handle(args))
+                               .Should()
+                               .ThrowAsync<Exception>();
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
         }
     }
 }
