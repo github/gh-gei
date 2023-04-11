@@ -1,1 +1,2 @@
 - `migrate-repo` commands now take a `--target-repo-visibility` flag (`"public"`, `"private"`, or `"internal"`; defaults to `"private"`) to set the visibility of the imported repo
+- Fixed a bug when migrating from GHES where we would do a bunch of unnecessary retries at the start making things slower than they needed to be

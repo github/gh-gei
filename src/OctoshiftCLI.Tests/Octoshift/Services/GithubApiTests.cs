@@ -348,12 +348,12 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task DoesTargetOrgExist_Returns_True_When_200()
+    public async Task DoesOrgExist_Returns_True_When_200()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
 
-        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.OK));
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ReturnsAsync("OK");
 
         // Act
         var result = await _githubApi.DoesOrgExist(GITHUB_ORG);
@@ -363,12 +363,12 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task DoesTargetOrgExist_Returns_False_When_404()
+    public async Task DoesOrgExist_Returns_False_When_404()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
 
-        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ReturnsAsync("Not Found");
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // Act
         var result = await _githubApi.DoesOrgExist(GITHUB_ORG);
@@ -378,12 +378,12 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task DoesTargetOrgExist_Throws_On_Unexpected_Response()
+    public async Task DoesOrgExist_Throws_On_Unexpected_Response()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
 
-        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.Unauthorized));
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.Unauthorized));
 
         // Act
         await FluentActions
