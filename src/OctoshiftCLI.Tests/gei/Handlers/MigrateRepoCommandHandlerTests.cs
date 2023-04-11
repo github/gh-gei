@@ -1266,7 +1266,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     false,
-                    null,
+                    It.IsAny<string>(),
                     false).Result)
                 .Returns("migrationId");
 
@@ -1323,7 +1323,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     false,
-                    null,
+                    It.IsAny<string>(),
                     false).Result)
                 .Returns("migrationId");
 
@@ -1358,7 +1358,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 false,
-                null,
+                It.IsAny<string>(),
                 false));
         }
 
