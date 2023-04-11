@@ -1977,5 +1977,39 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
         }
+
+        [Fact]
+        public async Task Sets_Target_Repo_Visibility()
+        {
+            // Arrange
+            var targetRepoVisibility = "internal";
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                QueueOnly = true,
+                TargetRepoVisibility = targetRepoVisibility,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _mockTargetGithubApi.Verify(m => m.StartMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                targetRepoVisibility,
+                It.IsAny<bool>()));
+        }
     }
 }

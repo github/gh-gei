@@ -279,4 +279,38 @@ public class MigrateRepoCommandHandlerTests
 
         _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
     }
+
+    [Fact]
+    public async Task Sets_Target_Repo_Visibility_When_Specified()
+    {
+        // Arrange
+        var targetRepoVisibility = "public";
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+            TargetRepoVisibility = targetRepoVisibility,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.StartMigration(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<bool>(),
+            targetRepoVisibility,
+            It.IsAny<bool>()));
+    }
 }

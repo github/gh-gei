@@ -1470,5 +1470,33 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Handlers
 
             _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
         }
+
+        [Fact]
+        public async Task Sets_Target_Repo_Visibility()
+        {
+            // Arrange
+            var targetRepoVisibility = "public";
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
+                TargetRepoVisibility = targetRepoVisibility,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                targetRepoVisibility
+            ));
+        }
     }
 }
