@@ -128,6 +128,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 args.GitArchiveUrl,
                 args.MetadataArchiveUrl,
                 args.SkipReleases,
+                args.TargetRepoVisibility,
                 args.GhesApiUrl.IsNullOrWhiteSpace() && args.LockSourceRepo);
         }
         catch (OctoshiftCliException ex)
@@ -371,6 +372,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.QueueOnly)
         {
             _log.LogInformation("QUEUE ONLY: true");
+        }
+
+        if (args.TargetRepoVisibility.HasValue())
+        {
+            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
         }
 
         if (args.GithubSourcePat.HasValue())

@@ -1,1 +1,1 @@
-
+- `migrate-repo` commands now take a `--target-repo-visibility` flag (`"public"`, `"private"`, or `"internal"`; defaults to `"private"`) to set the visibility of the imported repo
