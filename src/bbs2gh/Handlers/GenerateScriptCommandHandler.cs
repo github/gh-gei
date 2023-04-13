@@ -141,9 +141,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var awsRegionOption = args.AwsRegion.HasValue() ? $" --aws-region \"{args.AwsRegion}\"" : "";
         var keepArchive = args.KeepArchive ? " --keep-archive" : "";
         var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
+        var targetRepoVisibility = " --target-repo-visibility private";
 
         return $"gh bbs2gh migrate-repo{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
-               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}";
+               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
