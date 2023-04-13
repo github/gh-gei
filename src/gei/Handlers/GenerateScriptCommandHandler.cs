@@ -279,13 +279,13 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
-        foreach (var (Name, Visibility) in repos)
+        foreach (var (name, visibility) in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, Visibility)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility)));
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, Name)));
+                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, name)));
             }
         }
 
@@ -327,10 +327,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine("# === Queuing repo migrations ===");
 
         // Queuing migrations
-        foreach (var (Name, Visibility) in repos)
+        foreach (var (name, visibility) in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, Visibility))}");
-            content.AppendLine($"$RepoMigrations[\"{Name}\"] = $MigrationID");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility))}");
+            content.AppendLine($"$RepoMigrations[\"{name}\"] = $MigrationID");
             content.AppendLine();
         }
 
@@ -340,14 +340,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
 
         // Query each migration's status
-        foreach (var (Name, _) in repos)
+        foreach (var (name, _) in repos)
         {
-            content.AppendLine(Wrap(WaitForMigrationScript(Name), $"if ($RepoMigrations[\"{Name}\"])"));
-            content.AppendLine($"if ($RepoMigrations[\"{Name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
+            content.AppendLine(Wrap(WaitForMigrationScript(name), $"if ($RepoMigrations[\"{name}\"])"));
+            content.AppendLine($"if ($RepoMigrations[\"{name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, Name));
+                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, name));
             }
 
             content.AppendLine();
