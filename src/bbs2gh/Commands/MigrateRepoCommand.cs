@@ -44,6 +44,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsRegion);
         AddOption(Wait);
         AddOption(QueueOnly);
+        AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
@@ -167,6 +168,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--queue-only",
         description: "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status.");
 
+    public Option<string> TargetRepoVisibility { get; } = new(
+        name: "--target-repo-visibility",
+        description: "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal.");
+
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",
         description: "Use Kerberos authentication for downloading the export archive off of the Bitbucket server.")
@@ -264,6 +269,7 @@ public class MigrateRepoCommandArgs
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
     public bool QueueOnly { get; set; }
+    public string TargetRepoVisibility { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 

@@ -301,7 +301,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, bool lockSource = false)
+    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -317,6 +317,7 @@ public class GithubApi
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         var gql = @"
                 startRepositoryMigration(
@@ -331,6 +332,7 @@ public class GithubApi
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -362,6 +364,7 @@ public class GithubApi
                 accessToken = sourceToken,
                 githubPat = targetToken,
                 skipReleases,
+                targetRepoVisibility,
                 lockSource
             },
             operationName = "startRepositoryMigration"
@@ -443,7 +446,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
+    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
     {
         return await StartMigration(
             migrationSourceId,
@@ -453,7 +456,10 @@ public class GithubApi
             "not-used",  // source access token
             targetToken,
             archiveUrl,
-            "https://not-used"  // metadata archive URL
+            "https://not-used",  // metadata archive URL
+            false,  // skip releases
+            targetRepoVisibility,
+            false  // lock source
         );
     }
 

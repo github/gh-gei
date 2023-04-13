@@ -844,6 +844,7 @@ public class GithubApiTests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
@@ -858,6 +859,7 @@ public class GithubApiTests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -888,6 +890,7 @@ public class GithubApiTests
                 accessToken = sourceToken,
                 githubPat = targetToken,
                 skipReleases = false,
+                targetRepoVisibility = (string)null,
                 lockSource = false
             },
             operationName = "startRepositoryMigration"
@@ -949,6 +952,7 @@ public class GithubApiTests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
@@ -963,6 +967,7 @@ public class GithubApiTests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -993,6 +998,7 @@ public class GithubApiTests
                 accessToken = unusedSourceToken,
                 githubPat = targetToken,
                 skipReleases = false,
+                targetRepoVisibility = (string)null,
                 lockSource = false
             },
             operationName = "startRepositoryMigration"
