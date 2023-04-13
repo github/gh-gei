@@ -125,12 +125,12 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}";
         try
         {
-            await _client.GetNonSuccessAsync(url, HttpStatusCode.NotFound);
-            return false;
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.OK)
-        {
+            await _client.GetAsync(url);
             return true;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
         }
     }
 
