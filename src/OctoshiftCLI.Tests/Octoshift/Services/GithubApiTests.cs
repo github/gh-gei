@@ -255,11 +255,13 @@ public class GithubApiTests
             [
                 {{
                     ""id"": 1,
-                    ""name"": ""{repoName1}""
+                    ""name"": ""{repoName1}"",
+                    ""visibility"": ""private"",
                 }},
                 {{
                     ""id"": 2,
-                    ""name"": ""{repoName2}""
+                    ""name"": ""{repoName2}"",
+                    ""visibility"": ""private"",
                 }}
             ]";
 
@@ -269,11 +271,13 @@ public class GithubApiTests
             [
                 {{
                     ""id"": 3,
-                    ""name"": ""{repoName3}""
+                    ""name"": ""{repoName3}"",
+                    ""visibility"": ""private"",
                 }},
                 {{
                     ""id"": 4,
-                    ""name"": ""{repoName4}""
+                    ""name"": ""{repoName4}"",
+                    ""visibility"": ""private"",
                 }}
             ]";
 
@@ -299,7 +303,7 @@ public class GithubApiTests
 
         // Assert
         result.Should().HaveCount(4);
-        result.Should().Equal(repoName1, repoName2, repoName3, repoName4);
+        result.Should().Equal((repoName1, "private"), (repoName2, "private"), (repoName3, "private"), (repoName4, "private"));
     }
 
     [Fact]
