@@ -220,9 +220,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation($"GITHUB ORG: {githubOrg}");
         var repos = await github.GetRepos(githubOrg);
-        foreach (var (Name, _) in repos)
+        foreach (var (name, _) in repos)
         {
-            _log.LogInformation($"    Repo: {Name}");
+            _log.LogInformation($"    Repo: {name}");
         }
 
         return repos;
