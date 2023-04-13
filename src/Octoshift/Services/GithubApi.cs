@@ -92,11 +92,11 @@ public class GithubApi
                                         ex => ex.StatusCode == HttpStatusCode.NotFound);
     }
 
-    public virtual async Task<IEnumerable<string>> GetRepos(string org)
+    public virtual async Task<IEnumerable<(string Name, string Visibility)>> GetRepos(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/repos?per_page=100";
 
-        return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
+        return await _client.GetAllAsync(url).Select(x => ((string)x["name"], (string)x["visibility"])).ToListAsync();
     }
 
     public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)

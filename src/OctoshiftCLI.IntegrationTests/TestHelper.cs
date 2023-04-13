@@ -141,10 +141,10 @@ namespace OctoshiftCLI.IntegrationTests
             foreach (var repo in githubRepos)
             {
                 _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
-                DeleteMigrationLog(githubOrg, repo);
+                DeleteMigrationLog(githubOrg, repo.Name);
 
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubApi.DeleteRepo(githubOrg, repo);
+                await _githubApi.DeleteRepo(githubOrg, repo.Name);
             }
 
             var githubTeams = await GetTeamSlugs(githubOrg);
@@ -592,7 +592,7 @@ steps:
         {
             _output.WriteLine("Checking that the repos in GitHub exist...");
             var repos = await _githubApi.GetRepos(githubOrg);
-            repos.Should().Contain(repo);
+            repos.Select(x => x.Name).Should().Contain(repo);
         }
 
         public async Task AssertGithubRepoInitialized(string githubOrg, string repo)

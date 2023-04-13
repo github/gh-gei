@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -136,7 +136,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -158,9 +158,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -188,12 +188,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { repo1, repo2, repo3 });
+                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "internal"), (repo3, "public") });
 
             var expected = new StringBuilder();
-            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" }}");
-            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" }}");
-            expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --target-repo-visibility private }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --target-repo-visibility internal }}");
+            expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" --target-repo-visibility public }}");
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -309,10 +309,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -577,7 +577,7 @@ if ($Failed -ne 0) {
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
 
-            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { repo1, repo2 });
+            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private"), (repo2, "public") });
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
@@ -610,10 +610,10 @@ if (-not $env:GH_PAT) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{repo1}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only --target-repo-visibility public }}");
             expected.AppendLine($"$RepoMigrations[\"{repo2}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -657,7 +657,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -699,7 +699,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -930,7 +930,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { repo1, repo2 });
+                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -964,10 +964,10 @@ if (-not $env:GH_PAT) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{repo1}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{repo2}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1014,7 +1014,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -1056,7 +1056,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1100,7 +1100,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -1142,7 +1142,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --no-ssl-verify --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --no-ssl-verify --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1186,7 +1186,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
@@ -1221,7 +1221,7 @@ if (-not $env:GH_PAT) {
             expected.AppendLine($"# =========== Organization: {SOURCE_ORG} ===========");
             expected.AppendLine();
             expected.AppendLine("# === Queuing repo migrations ===");
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --keep-archive --queue-only }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --keep-archive --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
@@ -1263,9 +1263,9 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --skip-releases }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --skip-releases --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1290,10 +1290,10 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             var expected = new StringBuilder();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --skip-releases }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --skip-releases --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
 
@@ -1319,9 +1319,9 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1346,10 +1346,10 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             var expected = new StringBuilder();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --lock-source-repo }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --lock-source-repo --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
 
@@ -1375,7 +1375,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1399,7 +1399,7 @@ if ($Failed -ne 0) {
         public async Task Parallel_Github_Contains_Cli_Version()
         {
             // Arrange
-            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { REPO });
+            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (REPO, "private") });
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1480,10 +1480,10 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1514,10 +1514,10 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1588,7 +1588,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1633,7 +1633,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1686,7 +1686,7 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1725,7 +1725,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { REPO });
+                .ReturnsAsync(new[] { (REPO, "private") });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
 
             var expected = @"
