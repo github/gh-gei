@@ -244,7 +244,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetRepos_Returns_Names_Of_All_Repositories()
+    public async Task GetRepos_Returns_Names_And_Visibility_Of_All_Repositories()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/repos?per_page=100";
@@ -272,12 +272,12 @@ public class GithubApiTests
                 {{
                     ""id"": 3,
                     ""name"": ""{repoName3}"",
-                    ""visibility"": ""private"",
+                    ""visibility"": ""internal"",
                 }},
                 {{
                     ""id"": 4,
                     ""name"": ""{repoName4}"",
-                    ""visibility"": ""private"",
+                    ""visibility"": ""public"",
                 }}
             ]";
 
@@ -303,7 +303,7 @@ public class GithubApiTests
 
         // Assert
         result.Should().HaveCount(4);
-        result.Should().Equal((repoName1, "private"), (repoName2, "private"), (repoName3, "private"), (repoName4, "private"));
+        result.Should().Equal((repoName1, "private"), (repoName2, "private"), (repoName3, "internal"), (repoName4, "public"));
     }
 
     [Fact]

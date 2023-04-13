@@ -188,12 +188,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "private"), (repo3, "private") });
+                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "internal"), (repo3, "public") });
 
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --target-repo-visibility private }}");
-            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --target-repo-visibility private }}");
-            expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" --target-repo-visibility private }}");
+            expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --target-repo-visibility internal }}");
+            expected.Append($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo3}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo3}\" --target-repo-visibility public }}");
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -577,7 +577,7 @@ if ($Failed -ne 0) {
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
 
-            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private"), (repo2, "private") });
+            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private"), (repo2, "public") });
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
@@ -613,7 +613,7 @@ if (-not $env:GH_PAT) {
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{repo1}\"] = $MigrationID");
             expected.AppendLine();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only --target-repo-visibility private }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo2}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\" --queue-only --target-repo-visibility public }}");
             expected.AppendLine($"$RepoMigrations[\"{repo2}\"] = $MigrationID");
             expected.AppendLine();
             expected.AppendLine();
