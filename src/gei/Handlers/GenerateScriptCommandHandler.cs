@@ -220,10 +220,9 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation($"GITHUB ORG: {githubOrg}");
         var repos = await github.GetRepos(githubOrg);
-
-        foreach (var repo in repos)
+        foreach (var (Name, _) in repos)
         {
-            _log.LogInformation($"    Repo: {repo.Name}");
+            _log.LogInformation($"    Repo: {Name}");
         }
 
         return repos;
@@ -280,13 +279,13 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
-        foreach (var repo in repos)
+        foreach (var (Name, Visibility) in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo.Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, repo.Visibility)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, Visibility)));
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, repo.Name)));
+                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, Name)));
             }
         }
 
@@ -328,10 +327,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine("# === Queuing repo migrations ===");
 
         // Queuing migrations
-        foreach (var repo in repos)
+        foreach (var (Name, Visibility) in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, repo.Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, repo.Visibility))}");
-            content.AppendLine($"$RepoMigrations[\"{repo.Name}\"] = $MigrationID");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, Name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, Visibility))}");
+            content.AppendLine($"$RepoMigrations[\"{Name}\"] = $MigrationID");
             content.AppendLine();
         }
 
@@ -341,14 +340,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
 
         // Query each migration's status
-        foreach (var repo in repos)
+        foreach (var (Name, _) in repos)
         {
-            content.AppendLine(Wrap(WaitForMigrationScript(repo.Name), $"if ($RepoMigrations[\"{repo.Name}\"])"));
-            content.AppendLine($"if ($RepoMigrations[\"{repo.Name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
+            content.AppendLine(Wrap(WaitForMigrationScript(Name), $"if ($RepoMigrations[\"{Name}\"])"));
+            content.AppendLine($"if ($RepoMigrations[\"{Name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, repo.Name));
+                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, Name));
             }
 
             content.AppendLine();
