@@ -21,6 +21,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(AdoRepo);
             AddOption(GithubOrg);
             AddOption(GithubRepo);
+            AddOption(AdoServerUrl);
             AddOption(Wait);
             AddOption(QueueOnly);
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
@@ -48,6 +49,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         public Option<string> GithubRepo { get; } = new("--github-repo")
         {
             IsRequired = true
+        };
+        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
+        {
+            IsHidden = true,
+            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
         };
         public Option<bool> Wait { get; } = new("--wait")
         {
@@ -94,6 +100,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         public string AdoRepo { get; set; }
         public string GithubOrg { get; set; }
         public string GithubRepo { get; set; }
+        public string AdoServerUrl { get; set; }
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }

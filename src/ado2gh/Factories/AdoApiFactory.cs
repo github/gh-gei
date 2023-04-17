@@ -23,10 +23,11 @@ public class AdoApiFactory
         _retryPolicy = retryPolicy;
     }
 
-    public virtual AdoApi Create(string personalAccessToken)
+    public virtual AdoApi Create(string adoServerUrl, string personalAccessToken)
     {
+        adoServerUrl ??= DEFAULT_API_URL;
         personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
         var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, _retryPolicy, personalAccessToken);
-        return new AdoApi(adoClient, DEFAULT_API_URL, _octoLogger);
+        return new AdoApi(adoClient, adoServerUrl, _octoLogger);
     }
 }

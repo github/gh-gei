@@ -21,6 +21,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             AddOption(GithubOrg);
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
+            AddOption(AdoServerUrl);
             AddOption(Output);
             AddOption(Sequential);
             AddOption(AdoPat);
@@ -42,6 +43,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         };
         public Option<string> AdoOrg { get; } = new("--ado-org");
         public Option<string> AdoTeamProject { get; } = new("--ado-team-project");
+        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
+        {
+            IsHidden = true,
+            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
+        };
         public Option<FileInfo> Output { get; } = new("--output", () => new FileInfo("./migrate.ps1"));
         public Option<bool> Sequential { get; } = new("--sequential")
         {
@@ -104,7 +110,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
             var versionProvider = sp.GetRequiredService<IVersionProvider>();
             var adoInspectorServiceFactory = sp.GetRequiredService<AdoInspectorServiceFactory>();
 
-            var adoApi = adoApiFactory.Create(args.AdoPat);
+            var adoApi = adoApiFactory.Create(args.AdoServerUrl, args.AdoPat);
             var adoInspectorService = adoInspectorServiceFactory.Create(adoApi);
 
             return new GenerateScriptCommandHandler(log, adoApi, versionProvider, adoInspectorService);
@@ -116,6 +122,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands
         public string GithubOrg { get; set; }
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
+        public string AdoServerUrl { get; set; }
         public FileInfo Output { get; set; }
         public bool Sequential { get; set; }
         public string AdoPat { get; set; }
