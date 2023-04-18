@@ -63,8 +63,6 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             _log.LogInformation($"MIGRATION LOG FILE: {args.MigrationLogFile}");
         }
 
-        args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}.log";
-
         if (FileExists(args.MigrationLogFile))
         {
             if (!args.Overwrite)
@@ -75,20 +73,17 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
         }
 
-        var result = await _retryPolicy.RetryOnResult(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), string.Empty,
+        var result = await _retryPolicy.RetryOnResult<(string MigrationLogURL, string MigrationID)>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), result => string.IsNullOrEmpty(result.MigrationLogURL),
             "Waiting for migration log to populate...");
-
-        if (result.Outcome == OutcomeType.Successful && result.Result is null)
-        {
-            throw new OctoshiftCliException($"Migration for repository {args.GithubRepo} not found!");
-        }
 
         if (result.Outcome == OutcomeType.Failure)
         {
             throw new OctoshiftCliException($"Migration log for repository {args.GithubRepo} unavailable!");
         }
 
-        var logUrl = result.Result;
+        (var logUrl, var migrationId) = result.Result;
+
+        args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}-{migrationId}.log";
 
         _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
         await _httpDownloadService.DownloadToFile(logUrl, args.MigrationLogFile);

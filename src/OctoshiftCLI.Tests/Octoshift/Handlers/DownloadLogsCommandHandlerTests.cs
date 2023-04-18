@@ -31,9 +31,10 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = "some-url";
-        const string defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
+        const string migrationId = "RM123";
+        const string defaultFileName = $"migration-log-{githubOrg}-{repo}-{migrationId}.log";
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
@@ -55,8 +56,9 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = "some-url";
+        const string migrationId = "RM123";
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
@@ -78,9 +80,10 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = "some-url";
+        const string migrationId = "RM123";
         const string migrationLogFile = "migration-log-file";
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
@@ -104,15 +107,16 @@ public class DownloadLogsCommandHandlerTests
         const string repo = "foo-repo";
         const string logUrlEmpty = "";
         const string logUrlPopulated = "some-url";
-        const string defaultFileName = $"migration-log-{githubOrg}-{repo}.log";
+        const string migrationId = "RM123";
+        const string defaultFileName = $"migration-log-{githubOrg}-{repo}-{migrationId}.log";
 
         _mockGithubApi.SetupSequence(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(logUrlEmpty)
-            .ReturnsAsync(logUrlEmpty)
-            .ReturnsAsync(logUrlEmpty)
-            .ReturnsAsync(logUrlEmpty)
-            .ReturnsAsync(logUrlEmpty)
-            .ReturnsAsync(logUrlPopulated);
+            .ReturnsAsync((logUrlEmpty, migrationId))
+            .ReturnsAsync((logUrlEmpty, migrationId))
+            .ReturnsAsync((logUrlEmpty, migrationId))
+            .ReturnsAsync((logUrlEmpty, migrationId))
+            .ReturnsAsync((logUrlEmpty, migrationId))
+            .ReturnsAsync((logUrlPopulated, migrationId));
 
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
@@ -136,9 +140,10 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = "some-url";
+        const string migrationId = "RM123";
         const bool overwrite = true;
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
@@ -182,8 +187,9 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = null;
+        const string migrationId = "RM123";
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
 
         // Assert
         var args = new DownloadLogsCommandArgs
@@ -203,8 +209,9 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
         const string logUrl = "";
+        const string migrationId = "RM123";
 
-        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(logUrl);
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act

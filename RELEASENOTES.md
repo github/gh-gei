@@ -1,1 +1,1 @@
-
+- Include the migration ID in the default output filename when running `download-logs`

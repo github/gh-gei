@@ -491,7 +491,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> GetMigrationLogUrl(string org, string repo)
+    public virtual async Task<(string MigrationLogURL, string MigrationID)> GetMigrationLogUrl(string org, string repo)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -500,6 +500,7 @@ public class GithubApi
                 organization(login: $org) {
                     repositoryMigrations(last: 1, repositoryName: $repo) {
                         nodes {
+                            id
                             migrationLogUrl
                         }
                     }
@@ -516,8 +517,14 @@ public class GithubApi
 
                 var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-                return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
+                return nodes.Count == 0
+                    ? throw new OctoshiftCliException($"Migration for repository {repo} not found")
+                    : (MigrationLogURL: (string)nodes[0]["migrationLogUrl"], MigrationID: (string)nodes[0]["id"]);
             });
+        }
+        catch (OctoshiftCliException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
