@@ -71,8 +71,8 @@ public class OctoLogger
     }
 
     private string FormatMessage(string msg, string level)
-    {   
-        var timeFormat = _debugMode ? DateTime.Now:o : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    {
+        var timeFormat = _debugMode ? DateTime.Now.ToString("o") : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         return $"[{timeFormat}] [{level}] {msg}\n";
     }
 
