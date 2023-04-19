@@ -1494,7 +1494,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetMigrationLogUrl_Throws_Error_When_No_Migration()
+    public async Task GetMigrationLogUrl_Returns_Null_When_No_Migration()
     {
         // Arrange
         const string url = "https://api.github.com/graphql";
@@ -1528,10 +1528,9 @@ public class GithubApiTests
             .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(response);
 
-        await _githubApi.Invoking(api => api.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage("Migration for repository REPOSITORY_NAME not found");
+        var result = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
+
+        result.Should().BeNull();
     }
 
     [Fact]

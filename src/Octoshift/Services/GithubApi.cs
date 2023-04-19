@@ -517,7 +517,9 @@ public class GithubApi
 
                 var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-                return nodes.Count == 0 ? null : (MigrationLogUrl: (string)nodes[0]["migrationLogUrl"], MigrationId: (string)nodes[0]["id"]);
+                return nodes.Count == 0 || nodes[0]["migrationLogUrl"] is null
+                    ? ((string MigrationLogUrl, string MigrationId)?)null
+                    : (MigrationLogUrl: (string)nodes[0]["migrationLogUrl"], MigrationId: (string)nodes[0]["id"]);
             });
         }
         catch (Exception ex)
