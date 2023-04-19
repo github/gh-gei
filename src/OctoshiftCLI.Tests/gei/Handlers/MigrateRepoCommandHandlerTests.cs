@@ -895,6 +895,37 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
+        public async Task Throws_Decorated_Error_When_Create_Migration_Source_Fails_With_Permissions_Error()
+        {
+            // Arrange
+            var githubOrgId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi
+                .Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result)
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
+
+            // Act
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                QueueOnly = true,
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are a member of the `{TARGET_ORG}` organization, (b) you are an organization owner or you have been granted the migrator role and (c) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+        }
+
+        [Fact]
         public async Task It_Uses_Ado_Pat_When_Provided()
         {
             // Arrange

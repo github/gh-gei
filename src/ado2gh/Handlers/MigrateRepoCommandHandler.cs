@@ -80,7 +80,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
-        var migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, null);
+
+        string migrationSourceId;
+
+        try
+        {
+            migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, null);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var exception = MigrateRepoErrorHandler.DecorateInsufficientPermissionsException(ex, args.GithubOrg);
+            throw exception;
+        }
 
         string migrationId;
 
