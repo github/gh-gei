@@ -11,7 +11,6 @@ internal static class LogLevel
     public const string INFO = "INFO";
     public const string WARNING = "WARNING";
     public const string ERROR = "ERROR";
-    public const string SUCCESS = "INFO";
     public const string VERBOSE = "DEBUG";
 }
 
@@ -73,8 +72,8 @@ public class OctoLogger
 
     private string FormatMessage(string msg, string level)
     {   
-        var timestamp = _debugMode ? DateTime.Now:o : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        return $"[{timestamp}] [{level}] {msg}\n";
+        var timeFormat = _debugMode ? DateTime.Now:o : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        return $"[{timeFormat}] [{level}] {msg}\n";
     }
 
     private string MaskSecrets(string msg)
@@ -150,7 +149,7 @@ public class OctoLogger
     public virtual void LogSuccess(string msg)
     {
         Console.ForegroundColor = ConsoleColor.Green;
-        Log(msg, LogLevel.SUCCESS);
+        Log(msg, LogLevel.INFO);
         Console.ResetColor();
     }
 
