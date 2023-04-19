@@ -73,7 +73,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
         }
 
-        var result = await _retryPolicy.RetryOnResult<(string MigrationLogURL, string MigrationID)>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), result => string.IsNullOrEmpty(result.MigrationLogURL),
+        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), null,
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Failure)
@@ -81,13 +81,20 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             throw new OctoshiftCliException($"Migration log for repository {args.GithubRepo} unavailable!");
         }
 
-        (var logUrl, var migrationId) = result.Result;
+        if (result.Outcome == OutcomeType.Successful && result.Result is null)
+        {
+            throw new OctoshiftCliException($"Migration for repository {args.GithubRepo} not found!");
+        }
+        else
+        {
+            var (logUrl, migrationId) = result.Result.Value;
 
-        args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}-{migrationId}.log";
+            args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}-{migrationId}.log";
 
-        _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
-        await _httpDownloadService.DownloadToFile(logUrl, args.MigrationLogFile);
+            _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
+            await _httpDownloadService.DownloadToFile(logUrl, args.MigrationLogFile);
 
-        _log.LogSuccess($"Downloaded {args.GithubRepo} log to {args.MigrationLogFile}.");
+            _log.LogSuccess($"Downloaded {args.GithubRepo} log to {args.MigrationLogFile}.");
+        }
     }
 }

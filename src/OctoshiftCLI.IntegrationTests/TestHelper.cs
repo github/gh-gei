@@ -694,9 +694,9 @@ steps:
             _output.WriteLine("Checking that the migration log was downloaded...");
 
             var logFiles = new DirectoryInfo(GetOsDistPath()).GetFiles("*.log");
-            
+
             _output.WriteLine(string.Join(", ", logFiles.Select(fi => fi.FullName).ToArray()));
-            
+
             var matchingLogFiles = logFiles.Where(fi => fi.FullName.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.FullName.EndsWith(".log"));
 
             matchingLogFiles.Any().Should().BeTrue();
