@@ -695,8 +695,6 @@ steps:
 
             var logFiles = new DirectoryInfo(GetOsDistPath()).GetFiles("*.log");
 
-            _output.WriteLine(string.Join(", ", logFiles.Select(fi => fi.Name).ToArray()));
-
             var matchingLogFiles = logFiles.Where(fi => fi.Name.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.Name.EndsWith(".log"));
 
             matchingLogFiles.Any().Should().BeTrue();
