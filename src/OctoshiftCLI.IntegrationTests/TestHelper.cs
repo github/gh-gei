@@ -697,7 +697,7 @@ steps:
 
             _output.WriteLine(string.Join(", ", logFiles.Select(fi => fi.FullName).ToArray()));
 
-            var matchingLogFiles = logFiles.Where(fi => fi.FullName.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.FullName.EndsWith(".log"));
+            var matchingLogFiles = logFiles.Where(fi => fi.Name.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.Name.EndsWith(".log"));
 
             matchingLogFiles.Any().Should().BeTrue();
         }
