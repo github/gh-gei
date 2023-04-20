@@ -73,7 +73,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
         }
 
-        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), null,
+        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), result => string.IsNullOrEmpty(result.Value.MigrationLogUrl),
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Failure)

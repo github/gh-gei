@@ -517,8 +517,10 @@ public class GithubApi
 
                 var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-                return nodes.Count == 0 || nodes[0]["migrationLogUrl"] is null
+                return nodes.Count == 0
+                    // No matching migration was found
                     ? ((string MigrationLogUrl, string MigrationId)?)null
+                    // A matching migration was found, which may or may not have a migration log URL. If there is no migration log, it's an empty string.
                     : (MigrationLogUrl: (string)nodes[0]["migrationLogUrl"], MigrationId: (string)nodes[0]["id"]);
             });
         }
