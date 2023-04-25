@@ -1,3 +1,1 @@
-- `migrate-repo` commands now take a `--target-repo-visibility` flag (`"public"`, `"private"`, or `"internal"`; defaults to `"private"`) to set the visibility of the imported repo
-- `gh gei generate-script` will now inspect the source repo visibility and add the appropriate `--target-repo-visibility` flag to the generated script. `ado2gh generate-script` and `bbs2gh generate-script` will include the `--target-repo-visibility` flag in the generated script but it will always be set to private.
 - When blob storage credentials are provided to the CLI but will not be used for a GHES migration, log a clear warning, not an info message
