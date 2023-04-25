@@ -1,1 +1,1 @@
-
+- When blob storage credentials are provided to the CLI but will not be used for a GHES migration, log a clear warning, not an info message
