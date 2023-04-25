@@ -63,9 +63,14 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             _log.LogInformation($"MIGRATION LOG FILE: {args.MigrationLogFile}");
         }
 
-        CheckIfOutputFileAlreadyExists(args.MigrationLogFile, args.Overwrite);
+        // We check again below whether the file exists - but this is an extra check so we can fail early
+        // where the user has defined a custom filename, rather than using the auto-generated one
+        if (!args.Overwrite && FileExists(args.MigrationLogFile))
+        {
+            throw new OctoshiftCliException($"File {args.MigrationLogFile} already exists! Use --overwrite to overwrite this file.");
+        }
 
-        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), result => string.IsNullOrEmpty(result.Value.MigrationLogUrl),
+        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), r => r?.MigrationLogUrl.IsNullOrWhiteSpace() ?? false,
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Successful && result.Result is null)
@@ -82,29 +87,19 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
 
         args.MigrationLogFile ??= $"migration-log-{args.GithubOrg}-{args.GithubRepo}-{migrationId}.log";
 
-        // We already checked if the file exists above for the case where the user explicitly picked their own
-        // filename. This handles the case where the filename has been set to the default based on the inputs
-        // and migration ID.
-        CheckIfOutputFileAlreadyExists(args.MigrationLogFile, args.Overwrite);
+        if (FileExists(args.MigrationLogFile))
+        {
+            if (!args.Overwrite)
+            {
+                throw new OctoshiftCliException($"File {args.MigrationLogFile} already exists!  Use --overwrite to overwrite this file.");
+            }
+
+            _log.LogWarning($"Overwriting {args.MigrationLogFile} due to --overwrite option.");
+        }
 
         _log.LogInformation($"Downloading log for repository {args.GithubRepo} to {args.MigrationLogFile}...");
         await _httpDownloadService.DownloadToFile(logUrl, args.MigrationLogFile);
 
         _log.LogSuccess($"Downloaded {args.GithubRepo} log to {args.MigrationLogFile}.");
-    }
-
-    private void CheckIfOutputFileAlreadyExists(string outputPath, bool shouldOverwrite)
-    {
-        if (FileExists(outputPath))
-        {
-            if (shouldOverwrite)
-            {
-                throw new OctoshiftCliException($"File {outputPath} already exists!  Use --overwrite to overwrite this file.");
-            }
-            else
-            {
-                _log.LogWarning($"Overwriting {outputPath} due to --overwrite option.");
-            }
-        }
     }
 }
