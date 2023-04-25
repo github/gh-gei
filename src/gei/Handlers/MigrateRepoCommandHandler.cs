@@ -119,10 +119,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             ? await _targetGithubApi.CreateGhecMigrationSource(githubOrgId)
             : await _targetGithubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
         }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        catch (OctoshiftCliException ex) when (ex.Message.IsEnhanceable())
         {
-            var exception = MigrateRepoErrorHandler.DecorateInsufficientPermissionsException(ex, args.GithubTargetOrg);
-            throw exception;
+            var message = ex.Message.Enhance((original, improved) => $"{original}. {string.Format(improved, args.GithubTargetOrg)}");
+            throw new OctoshiftCliException(message, ex);
         }
 
 

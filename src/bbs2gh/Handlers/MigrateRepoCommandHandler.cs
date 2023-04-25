@@ -222,10 +222,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
         }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        catch (OctoshiftCliException ex) when (ex.Message.IsEnhanceable())
         {
-            var exception = MigrateRepoErrorHandler.DecorateInsufficientPermissionsException(ex, args.GithubOrg);
-            throw exception;
+            var message = ex.Message.Enhance((original, improved) => $"{original}. {string.Format(improved, args.GithubOrg)}");
+            throw new OctoshiftCliException(message, ex);
         }
 
         string migrationId;
