@@ -70,7 +70,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             throw new OctoshiftCliException($"File {args.MigrationLogFile} already exists! Use --overwrite to overwrite this file.");
         }
 
-        var result = await _retryPolicy.RetryOnResult<(string MigrationLogUrl, string MigrationId)?>(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), r => r?.MigrationLogUrl.IsNullOrWhiteSpace() ?? false,
+        var result = await _retryPolicy.RetryOnResult(async () => await _githubApi.GetMigrationLogUrl(args.GithubOrg, args.GithubRepo), r => r?.MigrationLogUrl.IsNullOrWhiteSpace() ?? false,
             "Waiting for migration log to populate...");
 
         if (result.Outcome == OutcomeType.Successful && result.Result is null)
