@@ -1,1 +1,2 @@
+- Include the date with the timestamp when writing to the log
 - When blob storage credentials are provided to the CLI but will not be used for a GHES migration, log a clear warning, not an info message
