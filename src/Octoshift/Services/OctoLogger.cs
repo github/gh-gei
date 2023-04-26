@@ -12,6 +12,7 @@ internal static class LogLevel
     public const string WARNING = "WARNING";
     public const string ERROR = "ERROR";
     public const string VERBOSE = "DEBUG";
+    public const string SUCCESS = "INFO";
 }
 
 public class OctoLogger
@@ -149,7 +150,7 @@ public class OctoLogger
     public virtual void LogSuccess(string msg)
     {
         Console.ForegroundColor = ConsoleColor.Green;
-        Log(msg, LogLevel.INFO);
+        Log(msg, LogLevel.SUCCESS);
         Console.ResetColor();
     }
 
