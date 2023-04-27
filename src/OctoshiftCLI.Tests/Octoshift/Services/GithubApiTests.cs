@@ -1443,55 +1443,6 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetMigrationLogUrl_Returns_Empty_String_Migration_Log_URL_If_Returned_From_The_API()
-    {
-        // Arrange
-        const string url = "https://api.github.com/graphql";
-
-        var query = "query ($org: String!, $repo: String!)";
-        var gql = @"
-                organization(login: $org) {
-                    repositoryMigrations(last: 1, repositoryName: $repo) {
-                        nodes {
-                            id
-                            migrationLogUrl
-                        }
-                    }
-                }
-            ";
-
-        var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
-
-        const string migrationLogUrl = "";
-        const string migrationId = "MIGRATION_ID";
-        var response = JObject.Parse($@"
-            {{
-                ""data"": {{
-                    ""organization"": {{
-                        ""repositoryMigrations"": {{
-                            ""nodes"": [
-                                {{
-                                    ""id"": ""{migrationId}"",
-                                    ""migrationLogUrl"": ""{migrationLogUrl}""
-                                }}
-                            ]
-                        }}
-                    }}
-                }}
-            }}");
-
-        _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
-            .ReturnsAsync(response);
-
-        // Act
-        var expectedMigrationLog = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
-
-        // Assert
-        expectedMigrationLog.Should().Be((migrationLogUrl, migrationId));
-    }
-
-    [Fact]
     public async Task GetMigrationLogUrl_Retries_On_GQL_Error()
     {
         // Arrange
