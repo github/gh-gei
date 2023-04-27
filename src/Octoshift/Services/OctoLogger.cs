@@ -73,7 +73,8 @@ public class OctoLogger
 
     private string FormatMessage(string msg, string level)
     {
-        return _debugMode ? $"[{DateTime.Now:o}] [{level}] {msg}\n" : $"[{DateTime.Now.ToShortTimeString()}] [{level}] {msg}\n";
+        var timeFormat = _debugMode ? DateTime.Now.ToString("o") : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        return $"[{timeFormat}] [{level}] {msg}\n";
     }
 
     private string MaskSecrets(string msg)
