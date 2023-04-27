@@ -115,7 +115,7 @@ public class ReclaimService
         }
     }
 
-    public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force)
+    public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force, bool skipInvitation)
     {
         if (lines == null)
         {
@@ -173,7 +173,8 @@ public class ReclaimService
                 continue;
             }
 
-            var result = await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
+            var result = skipInvitation ? await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, userid, claimantId) : await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
+
 
             HandleResult(login, claimantLogin, mannequin, claimantId, result);
         }

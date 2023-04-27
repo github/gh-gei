@@ -53,10 +53,15 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
             }
 
-            await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force);
+            await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force, args.SkipInvitation);
         }
         else
         {
+            if (!args.SkipInvitation)
+            {
+                throw new OctoshiftCliException($"--csv must be specified to skip reclaimation email");
+            }
+
             _log.LogInformation("Reclaiming Mannequin...");
 
             _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");

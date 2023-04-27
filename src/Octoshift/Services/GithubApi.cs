@@ -747,6 +747,25 @@ public class GithubApi
         return data.ToObject<MannequinReclaimResult>();
     }
 
+    public virtual async Task<MannequinReclaimResult> ReclaimMannequinSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    {
+        //TO DO: make API call to Brianna's new method
+        var url = $"{_apiUrl}/graphql";
+        var mutation = "";
+        var gql = "";
+
+        var payload = new
+        {
+            query = $"{mutation} {{ {gql} }}",
+            variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
+        };
+
+        var response = await _client.PostAsync(url, payload);
+        var data = JObject.Parse(response);
+
+        return data.ToObject<MannequinReclaimResult>();
+    }
+
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
