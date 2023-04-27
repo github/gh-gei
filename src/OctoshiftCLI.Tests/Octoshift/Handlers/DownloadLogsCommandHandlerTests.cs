@@ -133,7 +133,7 @@ public class DownloadLogsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Calls_Download_When_File_Exists_And_Overwrite_Requested()
+    public async Task Calls_Download_When_File_Exists_At_Default_Path_And_Overwrite_Requested()
     {
         // Arrange
         const string githubOrg = "FooOrg";
@@ -144,6 +144,12 @@ public class DownloadLogsCommandHandlerTests
 
         _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        _handler.FileExists = filePath =>
+        {
+            return filePath == "migration-log-FooOrg-foo-repo-RM123.log";
+        };
 
         // Act
         var args = new DownloadLogsCommandArgs
@@ -159,14 +165,55 @@ public class DownloadLogsCommandHandlerTests
     }
 
     [Fact]
-    public async Task File_Already_Exists_No_Overwrite_Flag_Should_Throw_OctoshiftCliException()
+    public async Task Calls_Download_When_File_Exists_At_Custom_Path_And_Overwrite_Requested()
     {
         // Arrange
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
+        const string logUrl = "some-url";
+        const string migrationId = "RM123";
+        const bool overwrite = true;
+
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
         // Act
-        _handler.FileExists = _ => true;
+        _handler.FileExists = filePath =>
+        {
+            return filePath == "happy_log_file.log";
+        };
+
+        // Act
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            Overwrite = overwrite,
+            MigrationLogFile = "happy_log_file.log",
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+    }
+
+    [Fact]
+    public async Task File_Already_Exists_At_Default_Path_No_Overwrite_Flag_Should_Throw_OctoshiftCliException()
+    {
+        // Arrange
+        const string githubOrg = "FooOrg";
+        const string repo = "foo-repo";
+        const string logUrl = "some-url";
+        const string migrationId = "RM123";
+
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        _handler.FileExists = filePath =>
+        {
+            return filePath == "migration-log-FooOrg-foo-repo-RM123.log";
+        };
 
         // Assert
         var args = new DownloadLogsCommandArgs
@@ -174,6 +221,38 @@ public class DownloadLogsCommandHandlerTests
             GithubOrg = githubOrg,
             GithubRepo = repo,
         };
+
+        await FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>();
+    }
+
+    [Fact]
+    public async Task File_Already_Exists_At_Custom_Path_No_Overwrite_Flag_Should_Throw_OctoshiftCliException()
+    {
+        // Arrange
+        const string githubOrg = "FooOrg";
+        const string repo = "foo-repo";
+        const string logUrl = "some-url";
+        const string migrationId = "RM123";
+
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((logUrl, migrationId));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        _handler.FileExists = filePath =>
+        {
+            return filePath == "my_log_file.log";
+        };
+
+        // Assert
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = repo,
+            MigrationLogFile = "my_log_file.log",
+        };
+
         await FluentActions
             .Invoking(async () => await _handler.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
