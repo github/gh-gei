@@ -265,8 +265,6 @@ public class DownloadLogsCommandHandlerTests
         const string githubOrg = "FooOrg";
         const string repo = "foo-repo";
 
-        //_mockGithubApi.Setup(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(null);
-
         // Assert
         var args = new DownloadLogsCommandArgs
         {
