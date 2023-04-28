@@ -693,9 +693,11 @@ steps:
         {
             _output.WriteLine("Checking that the migration log was downloaded...");
 
-            var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
+            var logFiles = new DirectoryInfo(GetOsDistPath()).GetFiles("*.log");
 
-            File.Exists(migrationLogFile).Should().BeTrue();
+            var matchingLogFiles = logFiles.Where(fi => fi.Name.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.Name.EndsWith(".log"));
+
+            matchingLogFiles.Any().Should().BeTrue();
         }
 
         public void AssertNoErrorInLogs(DateTime after)

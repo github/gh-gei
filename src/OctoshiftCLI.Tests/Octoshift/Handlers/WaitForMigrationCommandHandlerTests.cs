@@ -38,7 +38,7 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL));
-        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
+        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((MIGRATION_URL, REPO_MIGRATION_ID));
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -83,7 +83,7 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, FailureReason: failureReason, MigrationLogUrl: MIGRATION_URL));
-        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
+        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((MIGRATION_URL, REPO_MIGRATION_ID));
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
@@ -132,7 +132,7 @@ public class WaitForMigrationCommandHandlerTests
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.FailedValidation, RepositoryName: TARGET_REPO, FailureReason: failureReason, MigrationLogUrl: MIGRATION_URL));
-        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(MIGRATION_URL);
+        _mockGithubApi.Setup(x => x.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((MIGRATION_URL, REPO_MIGRATION_ID));
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
