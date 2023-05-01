@@ -11,7 +11,7 @@ public class ReclaimMannequinCommandTests
         var command = new ReclaimMannequinCommand();
         Assert.NotNull(command);
         Assert.Equal("reclaim-mannequin", command.Name);
-        Assert.Equal(8, command.Options.Count);
+        Assert.Equal(9, command.Options.Count);
 
         TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(command.Options, "csv", false);
