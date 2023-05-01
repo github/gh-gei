@@ -57,7 +57,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
         }
         else
         {
-            if (!args.SkipInvitation)
+            if (args.SkipInvitation)
             {
                 throw new OctoshiftCliException($"--csv must be specified to skip reclaimation email");
             }
