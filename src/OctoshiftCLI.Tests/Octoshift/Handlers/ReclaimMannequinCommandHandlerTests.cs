@@ -100,7 +100,7 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, false), Times.Once);
     }
 
     [Fact]
@@ -115,6 +115,22 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args); // All parameters passed. CSV has precedence
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task Skip_Invitation_Without_CSV_Throws_Error()
+    {
+        _handler.FileExists = _ => false;
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Csv = "I_DO_NOT_EXIST_CSV_PATH",
+            SkipInvitation = true,
+        };
+        await FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>();
     }
 }

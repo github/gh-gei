@@ -173,7 +173,7 @@ public class ReclaimService
                 continue;
             }
 
-            var result = skipInvitation ? await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, userid, claimantId) : await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
+            var result = skipInvitation ? await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId) : await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
 
 
             HandleResult(login, claimantLogin, mannequin, claimantId, result);

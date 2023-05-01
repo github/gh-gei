@@ -64,7 +64,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, true);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, true, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -82,7 +82,7 @@ public class ReclaimServiceTests
         var csvContent = Array.Empty<string>();
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.VerifyNoOtherCalls();
@@ -100,7 +100,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -120,7 +120,7 @@ public class ReclaimServiceTests
 
         // Act
         await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequins(csvContent, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
 
@@ -135,7 +135,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -157,7 +157,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -179,7 +179,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -229,7 +229,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -293,7 +293,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -355,7 +355,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -392,7 +392,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -417,7 +417,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -445,7 +445,7 @@ public class ReclaimServiceTests
         };
 
         // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false);
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
@@ -453,6 +453,60 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(x => x.ReclaimMannequin(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
         _mockOctoLogger.Verify(x => x.LogError($"Claimant \"{TARGET_USER_LOGIN}\" not found. Will ignore it."), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task ReclaimMannequins_Happy_Path()
+    {
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.ReclaimMannequin(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task ReclaimMannequins_And_Skipping_Invitation_Happy_Path()
+    {
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, true);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.ReclaimMannequin(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 

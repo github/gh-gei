@@ -21,5 +21,6 @@ public class ReclaimMannequinCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "force", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+        TestHelpers.VerifyCommandOption(command.Options, "skip-invitation", false);
     }
 }
