@@ -11,14 +11,16 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 {
     private readonly OctoLogger _log;
     private readonly ReclaimService _reclaimService;
+    private readonly ConfirmationService _confirmationService;
 
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService)
+    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService, ConfirmationService confirmationService)
     {
         _log = log;
         _reclaimService = reclaimService;
+        _confirmationService = confirmationService;
     }
 
     public async Task Handle(ReclaimMannequinCommandArgs args)
@@ -31,6 +33,12 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
         _log.Verbose = args.Verbose;
 
         _log.RegisterSecret(args.GithubPat);
+
+        //TODO: Get verbiage approved
+        if (args.SkipInvitation)
+        {
+            _confirmationService.AskForConfirmation("Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\n");
+        }
 
         if (string.IsNullOrEmpty(args.Csv) && (string.IsNullOrEmpty(args.MannequinUser) || string.IsNullOrEmpty(args.TargetUser)))
         {
