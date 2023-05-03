@@ -504,11 +504,11 @@ public class ReclaimServiceTests
             new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
         };
 
-        var reclaimMannequinResponse = new CreateAttributionInvitationResult()
+        var reclaimMannequinResponse = new MannequinReclaimResult()
         {
-            Data = new CreateAttributionInvitationData()
+            Data = new MannequinReclaimResult()
             {
-                CreateAttributionInvitation = new CreateAttributionInvitation()
+                ReattributeMannequinToUserInput = new ReattributeMannequinToUserInput()
                 {
                     Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
                     Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
