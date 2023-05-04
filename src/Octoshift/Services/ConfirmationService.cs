@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Services
         #endregion
 
         #region Functions
-        public void AskForConfirmation(string confirmationPrompt)
+        public void AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
             _readConsoleKey.DynamicInvoke();
@@ -46,7 +46,8 @@ namespace OctoshiftCLI.Services
             }
             else
             {
-                _writeToConsoleOut("Canceling Migration.");
+                _writeToConsoleOut("Canceling Command...");
+                throw new OctoshiftCliException($"Command Cancelled. {cancellationErrorMessage}");
             }
         }
 

@@ -30,7 +30,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         {
             _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress);
             confirmationPrompt = "Are you sure you wish to continue? Y/N?";
-            cancelationOutput = "Canceling Migration.";
+            cancelationOutput = "Canceling Command...";
             confirmationOutput = "Confirmation Recorded. Proceeding...";
         }
         #endregion
@@ -60,10 +60,27 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var expectedResult = confirmationPrompt + cancelationOutput;
 
             // Act
-            _confirmationService.AskForConfirmation(confirmationPrompt);
+            Assert.Throws<OctoshiftCliException>(() => _confirmationService.AskForConfirmation(confirmationPrompt));
 
             // Assert
             _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
+        }
+
+        [Fact]
+        public void AskForConfirmation_Should_Exit_With_Provided_ErrorMessage()
+        {
+            // Arrange
+            passedKey = ConsoleKey.N;
+            numOfCalls = 3;
+            var failureReason = "You made me fail.";
+            var expectedResult = confirmationPrompt + cancelationOutput;
+
+            // Act
+            var exception = Assert.Throws<OctoshiftCliException>(() => _confirmationService.AskForConfirmation(confirmationPrompt, failureReason));
+
+            // Assert
+            _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
+            Assert.Equal($"Command Cancelled. {failureReason}", exception.Message);
         }
 
         [Fact]
@@ -76,7 +93,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
 
             // Act
-            _confirmationService.AskForConfirmation(confirmationPrompt);
+            Assert.Throws<OctoshiftCliException>(() => _confirmationService.AskForConfirmation(confirmationPrompt));
 
             // Assert
             _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
