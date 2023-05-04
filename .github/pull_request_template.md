@@ -11,7 +11,7 @@ For the checkboxes below you must check each one to indicate that you either did
 
 <!--
 For docs we should review the docs at:
-https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer
+https://docs.github.com/en/migrations/using-github-enterprise-importer
 and the README.md in this repo
 
 If a doc update is required based on the changes in this PR, it is sufficient to create an issue and link to it here. The doc update can be made later/separately.
