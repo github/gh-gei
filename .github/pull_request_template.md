@@ -15,10 +15,4 @@ https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-
 and the README.md in this repo
 
 If a doc update is required based on the changes in this PR, it is sufficient to create an issue and link to it here. The doc update can be made later/separately.
-
-The process to update the docs can be found here:
-https://github.com/github/docs-early-access#opening-prs
-
-The markdown files are here: 
-https://github.com/github/docs-early-access/tree/main/content/github/migrating-with-github-enterprise-importer
 -->
