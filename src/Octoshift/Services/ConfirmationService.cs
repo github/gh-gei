@@ -3,34 +3,58 @@ namespace OctoshiftCLI.Services
 {
     public class ConfirmationService
     {
+        # region Variables
 
         private readonly Action<string> _writeToConsoleOut;
+        private readonly Func<ConsoleKey> _readConsoleKey;
 
+        #endregion
+
+        #region Constructors
         public ConfirmationService()
         {
-            _writeToConsoleOut = msg => Console.Write(msg);
+            _writeToConsoleOut = msg => Console.WriteLine(msg);
+            _readConsoleKey = ReadKey;
         }
 
+        // Constructor designed to allow for testing console methods
+        public ConfirmationService(Action<string> writeToConsoleOut, Func<ConsoleKey> readConsoleKey)
+        {
+            _writeToConsoleOut = writeToConsoleOut;
+            _readConsoleKey = readConsoleKey;
+        }
+
+        #endregion
+
+        #region Functions
         public void AskForConfirmation(string confirmationPrompt)
         {
-            bool confirmed = false;
+            ConsoleKey response;
+            _readConsoleKey.DynamicInvoke();
             do
             {
-                ConsoleKey response;
-                do
-                {
-                    _writeToConsoleOut(confirmationPrompt);
-                    response = Console.ReadKey(false).Key;
-                    if (response != ConsoleKey.Enter)
-                        Console.WriteLine();
+                _writeToConsoleOut(confirmationPrompt);
+                response = _readConsoleKey();
+                if (response != ConsoleKey.Enter)
+                    _writeToConsoleOut("");
 
-                } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+            } while (response != ConsoleKey.Y && response != ConsoleKey.N);
 
-                confirmed = response == ConsoleKey.Y;
-            } while (!confirmed);
-            // TODO: Get verbiage approved
-            Console.WriteLine("Confirmation Recorded. Proceeding...");
+            if (response == ConsoleKey.Y)
+            {
+                _writeToConsoleOut("Confirmation Recorded. Proceeding...");
+            }
+            else
+            {
+                _writeToConsoleOut("Canceling Migration.");
+            }
         }
+
+        private ConsoleKey ReadKey()
+        {
+            return Console.ReadKey(false).Key;
+        }
+        #endregion
     }
 }
 

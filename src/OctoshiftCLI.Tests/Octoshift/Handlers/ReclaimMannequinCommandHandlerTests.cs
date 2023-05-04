@@ -13,6 +13,7 @@ public class ReclaimMannequinCommandHandlerTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
+    private readonly Mock<ConfirmationService> _mockConfirmationService = TestHelpers.CreateMock<ConfirmationService>();
     private readonly ReclaimMannequinCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
@@ -21,7 +22,7 @@ public class ReclaimMannequinCommandHandlerTests
 
     public ReclaimMannequinCommandHandlerTests()
     {
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object)
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _mockConfirmationService.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()

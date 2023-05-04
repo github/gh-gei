@@ -81,8 +81,9 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
         var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var reclaimService = new ReclaimService(githubApi, log);
+        var confirmationService = sp.GetRequiredService<ConfirmationService>();
 
-        return new ReclaimMannequinCommandHandler(log, reclaimService);
+        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService);
     }
 
     protected void AddOptions()
