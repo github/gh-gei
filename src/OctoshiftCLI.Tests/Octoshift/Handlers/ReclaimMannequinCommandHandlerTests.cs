@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Moq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Handlers;
@@ -13,16 +14,19 @@ public class ReclaimMannequinCommandHandlerTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
-    private readonly Mock<ConfirmationService> _mockConfirmationService = TestHelpers.CreateMock<ConfirmationService>();
+    private readonly ConfirmationService _confirmationService;
     private readonly ReclaimMannequinCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string MANNEQUIN_USER = "mona";
     private const string TARGET_USER = "mona_emu";
 
+    private string _consoleOutput;
+
     public ReclaimMannequinCommandHandlerTests()
     {
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _mockConfirmationService.Object)
+        _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress);
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _confirmationService)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()
@@ -120,10 +124,30 @@ public class ReclaimMannequinCommandHandlerTests
     }
 
     [Fact]
+    public async Task Skip_Invitation_Happy_Path()
+    {
+        // Arrange
+        var expectedResult = "Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\\nConfirmation Recorded. Proceeding...";
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            SkipInvitation = true,
+            Csv = "file.csv",
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
+        _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
+    }
+
+    [Fact]
     public async Task Skip_Invitation_Without_CSV_Throws_Error()
     {
-        _handler.FileExists = _ => false;
-
+        // Arrange
         var args = new ReclaimMannequinCommandArgs
         {
             GithubOrg = GITHUB_ORG,
@@ -131,8 +155,14 @@ public class ReclaimMannequinCommandHandlerTests
             MannequinUser = MANNEQUIN_USER,
             TargetUser = TARGET_USER,
         };
+
+        // Act/ Assert
         await FluentActions
             .Invoking(async () => await _handler.Handle(args))
             .Should().ThrowAsync<OctoshiftCliException>();
     }
+
+    private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
+
+    private ConsoleKey MockConsoleKeyPress() => ConsoleKey.Y;
 }

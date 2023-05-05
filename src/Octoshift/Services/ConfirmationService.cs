@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Services
         #endregion
 
         #region Functions
-        public void AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
+        public bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
             _readConsoleKey.DynamicInvoke();
@@ -43,6 +43,7 @@ namespace OctoshiftCLI.Services
             if (response == ConsoleKey.Y)
             {
                 _writeToConsoleOut("Confirmation Recorded. Proceeding...");
+                return true;
             }
             else
             {

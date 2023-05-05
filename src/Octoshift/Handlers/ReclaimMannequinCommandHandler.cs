@@ -58,7 +58,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             //TODO: Get verbiage approved
             if (args.SkipInvitation)
             {
-                _confirmationService.AskForConfirmation("Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\n");
+                _ = _confirmationService.AskForConfirmation("Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\\n");
             }
 
             await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force, args.SkipInvitation);
