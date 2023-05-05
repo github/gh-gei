@@ -34,12 +34,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 
         _log.RegisterSecret(args.GithubPat);
 
-        //TODO: Get verbiage approved
-        if (args.SkipInvitation)
-        {
-            _confirmationService.AskForConfirmation("Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\n");
-        }
-
         if (string.IsNullOrEmpty(args.Csv) && (string.IsNullOrEmpty(args.MannequinUser) || string.IsNullOrEmpty(args.TargetUser)))
         {
             throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
@@ -59,6 +53,12 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             if (!FileExists(args.Csv))
             {
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
+            }
+
+            //TODO: Get verbiage approved
+            if (args.SkipInvitation)
+            {
+                _confirmationService.AskForConfirmation("Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\n");
             }
 
             await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force, args.SkipInvitation);

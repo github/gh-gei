@@ -127,8 +127,9 @@ public class ReclaimMannequinCommandHandlerTests
         var args = new ReclaimMannequinCommandArgs
         {
             GithubOrg = GITHUB_ORG,
-            Csv = "I_DO_NOT_EXIST_CSV_PATH",
             SkipInvitation = true,
+            MannequinUser = MANNEQUIN_USER,
+            TargetUser = TARGET_USER,
         };
         await FluentActions
             .Invoking(async () => await _handler.Handle(args))
