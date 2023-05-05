@@ -136,6 +136,8 @@ public class ReclaimService
 
         var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
 
+        // org.enterprise_managed_user_enabled?
+
         var mannequins = await GetMannequins(githubOrgId);
 
         foreach (var line in lines.Skip(1).Where(l => l != null && l.Trim().Length > 0))
@@ -173,10 +175,17 @@ public class ReclaimService
                 continue;
             }
 
-            dynamic result = skipInvitation ? await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId) : await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
-
-
-            HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
+            if (skipInvitation)
+            {
+                //TODO: Check if org is emu before continuing, throw error if not
+                dynamic result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
+                HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result);
+            }
+            else
+            {
+                dynamic result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
+                HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
+            }
         }
     }
 

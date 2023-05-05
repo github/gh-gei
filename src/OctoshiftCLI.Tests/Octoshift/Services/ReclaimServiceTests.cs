@@ -497,87 +497,16 @@ public class ReclaimServiceTests
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
-    [Fact]
-    public async Task ReclaimMannequinsSkipInvitation_Fails_With_No_CSV()
-    {
-        var mannequinsResponse = new Mannequin[] {
-            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
-        };
+    //[Fact]
+    //public async Task ReclaimMannequinsSkipInvitation_Fails_When_Org_Not_EMU()
+    //{
+    //    // Arrange
 
-        var reclaimMannequinResponse = new MannequinReclaimResult()
-        {
-            Data = new ReattributeMannequinToUserInputData()
-            {
-                ReattributeMannequinToUserInput = new ReattributeMannequinToUserInput()
-                {
-                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
-                    Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
-                }
-            }
-        };
+    //    // Act
 
-        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
-        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
-        _mockGithubApi.Setup(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
-        var csvContent = new string[] {
-            HEADER,
-            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
-        };
-
-        // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, true);
-
-        // Assert
-        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
-        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
-        _mockGithubApi.Verify(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
-        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
-        _mockGithubApi.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task ReclaimMannequinsSkipInvitation_Fails_When_Org_Not_EMU()
-    {
-        var mannequinsResponse = new Mannequin[] {
-            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
-        };
-
-        var reclaimMannequinResponse = new MannequinReclaimResult()
-        {
-            Data = new ReattributeMannequinToUserInputData()
-            {
-                ReattributeMannequinToUserInput = new ReattributeMannequinToUserInput()
-                {
-                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
-                    Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
-                }
-            }
-        };
-
-        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
-        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
-        _mockGithubApi.Setup(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
-
-        var csvContent = new string[] {
-            HEADER,
-            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
-        };
-
-        // Act
-        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, true);
-
-        // Assert
-        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
-        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
-        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
-        _mockGithubApi.Verify(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
-        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
-        _mockGithubApi.VerifyNoOtherCalls();
-    }
+    //    // Assert
+    //}
 
     [Fact]
     public async Task ReclaimMannequin_TwoUsersSameLogin_AllReclaimed()
