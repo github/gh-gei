@@ -36,9 +36,11 @@ namespace OctoshiftCLI.Services
                 _writeToConsoleOut(confirmationPrompt);
                 response = _readConsoleKey();
                 if (response != ConsoleKey.Enter)
+                {
                     _writeToConsoleOut("");
+                }
 
-            } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+            } while (response is not ConsoleKey.Y and not ConsoleKey.N);
 
             if (response == ConsoleKey.Y)
             {

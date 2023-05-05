@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Moq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Handlers;

@@ -1,14 +1,7 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Text;
 using FluentAssertions;
-using Microsoft.VisualBasic;
-using Moq;
 using OctoshiftCLI.Services;
-using SMBLibrary.RPC;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services
@@ -17,12 +10,12 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
     {
         #region Variables
         private readonly ConfirmationService _confirmationService;
+        private readonly string confirmationPrompt;
+        private readonly string cancelationOutput;
+        private readonly string confirmationOutput;
         private string _consoleOutput;
-        string confirmationPrompt;
-        string cancelationOutput;
-        string confirmationOutput;
-        int numOfCalls;
-        ConsoleKey passedKey;
+        private int numOfCalls;
+        private ConsoleKey passedKey;
         #endregion
 
         #region Constructor
