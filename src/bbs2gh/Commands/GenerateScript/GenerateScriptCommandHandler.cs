@@ -41,8 +41,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
-        ValidateOptions(args);
-
         var script = await GenerateScript(args);
 
         if (script.HasValue() && args.Output.HasValue())
@@ -144,14 +142,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private string Exec(string script) => Wrap(script, "Exec");
 
     private string Wrap(string script, string outerCommand = "") => script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
-
-    private void ValidateOptions(GenerateScriptCommandArgs args)
-    {
-        if (args.NoSslVerify && args.BbsServerUrl.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
-        }
-    }
 
     private string GetGithubRepoName(string bbsProjectKey, string bbsRepoSlug) => $"{bbsProjectKey}-{bbsRepoSlug}".ReplaceInvalidCharactersWithDash();
 
