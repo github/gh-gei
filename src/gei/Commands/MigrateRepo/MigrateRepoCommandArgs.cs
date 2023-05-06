@@ -1,6 +1,8 @@
-﻿namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
+﻿using OctoshiftCLI.Commands;
+
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 {
-    public class MigrateRepoCommandArgs
+    public class MigrateRepoCommandArgs : CommandArgs
     {
         public string GithubSourceOrg { get; set; }
         public string AdoServerUrl { get; set; }
@@ -25,7 +27,6 @@
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }
-        public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }

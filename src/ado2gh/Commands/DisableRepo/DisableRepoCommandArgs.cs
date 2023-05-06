@@ -1,11 +1,12 @@
-﻿namespace OctoshiftCLI.AdoToGithub.Commands.DisableRepo
+﻿using OctoshiftCLI.Commands;
+
+namespace OctoshiftCLI.AdoToGithub.Commands.DisableRepo
 {
-    public class DisableRepoCommandArgs
+    public class DisableRepoCommandArgs : CommandArgs
     {
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
         public string AdoRepo { get; set; }
         public string AdoPat { get; set; }
-        public bool Verbose { get; set; }
     }
 }

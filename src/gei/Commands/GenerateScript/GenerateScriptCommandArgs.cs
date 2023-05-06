@@ -1,8 +1,9 @@
 ﻿using System.IO;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 {
-    public class GenerateScriptCommandArgs
+    public class GenerateScriptCommandArgs : CommandArgs
     {
         public string GithubSourceOrg { get; set; }
         public string AdoServerUrl { get; set; }
@@ -20,7 +21,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public bool Sequential { get; set; }
         public string GithubSourcePat { get; set; }
         public string AdoPat { get; set; }
-        public bool Verbose { get; set; }
         public bool KeepArchive { get; set; }
     }
 }

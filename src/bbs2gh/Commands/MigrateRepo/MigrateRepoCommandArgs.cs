@@ -1,6 +1,8 @@
-﻿namespace OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
+﻿using OctoshiftCLI.Commands;
 
-public class MigrateRepoCommandArgs
+namespace OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
+
+public class MigrateRepoCommandArgs : CommandArgs
 {
     public string ArchiveUrl { get; set; }
     public string ArchivePath { get; set; }
@@ -20,7 +22,6 @@ public class MigrateRepoCommandArgs
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
     public bool Kerberos { get; set; }
-    public bool Verbose { get; set; }
 
     public string BbsServerUrl { get; set; }
     public string BbsProject { get; set; }

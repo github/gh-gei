@@ -1,6 +1,8 @@
-﻿namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
+﻿using OctoshiftCLI.Commands;
+
+namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
 {
-    public class RewirePipelineCommandArgs
+    public class RewirePipelineCommandArgs : CommandArgs
     {
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
@@ -9,6 +11,5 @@
         public string GithubRepo { get; set; }
         public string ServiceConnectionId { get; set; }
         public string AdoPat { get; set; }
-        public bool Verbose { get; set; }
     }
 }
