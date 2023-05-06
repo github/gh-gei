@@ -6,7 +6,7 @@ using OctoshiftCLI.Commands.ReclaimMannequin;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.ReclaimMannequin;
 
 public class ReclaimMannequinCommandHandlerTests
 {

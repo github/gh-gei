@@ -7,7 +7,7 @@ using OctoshiftCLI.AdoToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo;
 
 public class MigrateRepoCommandHandlerTests
 {

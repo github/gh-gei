@@ -7,7 +7,7 @@ using OctoshiftCLI.AdoToGithub.Commands.DisableRepo;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.DisableRepo;
 
 public class DisableRepoCommandHandlerTests
 {

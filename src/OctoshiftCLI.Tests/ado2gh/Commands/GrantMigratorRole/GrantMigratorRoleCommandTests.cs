@@ -1,7 +1,7 @@
 using OctoshiftCLI.AdoToGithub.Commands.GrantMigratorRole;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GrantMigratorRole;
 
 public class GrantMigratorRoleCommandTests
 {

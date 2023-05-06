@@ -1,7 +1,7 @@
 using OctoshiftCLI.BbsToGithub.Commands.DownloadLogs;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands.DownloadLogs;
 
 public class DownloadLogsCommandTests
 {

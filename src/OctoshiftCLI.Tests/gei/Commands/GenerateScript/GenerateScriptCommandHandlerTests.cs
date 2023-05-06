@@ -13,7 +13,7 @@ using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 {
     public class GenerateScriptCommandHandlerTests
     {

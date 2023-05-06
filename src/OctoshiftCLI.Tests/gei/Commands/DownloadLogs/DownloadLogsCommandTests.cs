@@ -1,7 +1,7 @@
 using OctoshiftCLI.GithubEnterpriseImporter.Commands.DownloadLogs;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.DownloadLogs;
 
 public class DownloadLogsCommandTests
 {

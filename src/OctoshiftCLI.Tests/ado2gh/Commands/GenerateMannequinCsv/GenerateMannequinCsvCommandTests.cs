@@ -1,7 +1,7 @@
 using OctoshiftCLI.AdoToGithub.Commands.GenerateMannequinCsv;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateMannequinCsv;
 
 public class GenerateMannequinCsvCommandTests
 {

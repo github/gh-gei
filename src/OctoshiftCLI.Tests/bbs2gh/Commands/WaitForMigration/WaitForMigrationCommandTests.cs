@@ -2,7 +2,7 @@ using FluentAssertions;
 using OctoshiftCLI.BbsToGithub.Commands.WaitForMigration;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands.WaitForMigration;
 
 public class WaitForMigrationCommandTests
 {

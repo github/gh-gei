@@ -5,7 +5,7 @@ using OctoshiftCLI.Commands.GrantMigratorRole;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.GrantMigratorRole;
 
 public class GrantMigratorRoleCommandHandlerTests
 {

@@ -5,7 +5,7 @@ using OctoshiftCLI.Commands.RevokeMigratorRole;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.RevokeMigratorRole;
 
 public class RevokeMigratorRoleCommandHandlerTests
 {

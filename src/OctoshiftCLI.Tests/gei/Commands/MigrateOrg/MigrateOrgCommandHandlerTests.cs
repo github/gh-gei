@@ -7,7 +7,7 @@ using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
 {
     public class MigrateOrgCommandHandlerTests
     {

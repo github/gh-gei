@@ -8,7 +8,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
 {
     public class GenerateScriptCommandTests
     {

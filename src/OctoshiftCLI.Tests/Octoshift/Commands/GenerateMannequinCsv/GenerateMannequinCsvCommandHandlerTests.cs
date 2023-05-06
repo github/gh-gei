@@ -8,7 +8,7 @@ using OctoshiftCLI.Models;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.GeneerateMannequinCsv;
 
 public class GenerateMannequinCsvCommandHandlerTests
 {

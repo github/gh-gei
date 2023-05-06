@@ -7,7 +7,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands.GenerateScript;
 
 public class GenerateScriptCommandTests
 {

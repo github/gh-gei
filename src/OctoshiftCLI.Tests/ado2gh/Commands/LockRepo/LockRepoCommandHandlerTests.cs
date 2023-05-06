@@ -5,7 +5,7 @@ using OctoshiftCLI.AdoToGithub.Commands.LockRepo;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.LockRepo;
 
 public class LockRepoCommandHandlerTests
 {

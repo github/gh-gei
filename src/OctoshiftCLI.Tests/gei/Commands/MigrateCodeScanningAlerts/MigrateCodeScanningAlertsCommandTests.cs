@@ -6,7 +6,7 @@ using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateCodeScanningAlerts;
 
 public class MigrateCodeScanningAlertsCommandTests
 {

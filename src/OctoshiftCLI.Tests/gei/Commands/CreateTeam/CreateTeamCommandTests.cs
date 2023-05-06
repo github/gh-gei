@@ -1,7 +1,7 @@
 using OctoshiftCLI.GithubEnterpriseImporter.Commands.CreateTeam;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.CreateTeam;
 
 public class CreateTeamCommandTests
 {

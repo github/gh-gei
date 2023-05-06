@@ -1,7 +1,7 @@
 using OctoshiftCLI.BbsToGithub.Commands.GenerateMannequinCsv;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Commands;
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands.GenerateMannequinCsv;
 
 public class GenerateMannequinCsvCommandTests
 {

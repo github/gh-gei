@@ -6,7 +6,7 @@ using OctoshiftCLI.Commands.WaitForMigration;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.WaitForMigration;
 
 public class WaitForMigrationCommandHandlerTests
 {

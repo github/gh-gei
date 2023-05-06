@@ -5,7 +5,7 @@ using OctoshiftCLI.AdoToGithub.Commands.ShareServiceConnection;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.ShareServiceConnection;
 
 public class ShareServiceConnectionCommandHandlerTests
 {

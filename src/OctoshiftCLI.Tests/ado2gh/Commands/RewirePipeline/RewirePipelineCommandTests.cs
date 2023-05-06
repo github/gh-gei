@@ -6,7 +6,7 @@ using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
 {
     public class RewirePipelineCommandTests
     {

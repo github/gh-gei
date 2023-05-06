@@ -2,7 +2,7 @@ using FluentAssertions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 {
     public class MigrateRepoCommandTests
     {

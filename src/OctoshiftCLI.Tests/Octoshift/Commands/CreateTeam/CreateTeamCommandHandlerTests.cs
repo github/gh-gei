@@ -6,7 +6,7 @@ using OctoshiftCLI.Commands.CreateTeam;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.CreateTeam;
 
 public class CreateTeamCommandHandlerTests
 {

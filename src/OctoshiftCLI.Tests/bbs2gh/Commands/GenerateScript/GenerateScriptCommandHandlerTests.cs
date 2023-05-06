@@ -10,7 +10,7 @@ using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.BbsToGithub.Handlers;
+namespace OctoshiftCLI.Tests.BbsToGithub.Commands.GenerateScript;
 
 public class GenerateScriptCommandHandlerTests
 {

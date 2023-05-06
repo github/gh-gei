@@ -4,7 +4,8 @@ using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateSecretAlerts;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateSecretAlerts;
+
 public class MigrateSecretAlertsCommandHandlerTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();

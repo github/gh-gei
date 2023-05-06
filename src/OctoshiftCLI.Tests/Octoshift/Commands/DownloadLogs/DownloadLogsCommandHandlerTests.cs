@@ -5,7 +5,7 @@ using OctoshiftCLI.Commands.DownloadLogs;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.Octoshift.Commands;
+namespace OctoshiftCLI.Tests.Octoshift.Commands.DownloadLogs;
 
 public class DownloadLogsCommandHandlerTests
 {

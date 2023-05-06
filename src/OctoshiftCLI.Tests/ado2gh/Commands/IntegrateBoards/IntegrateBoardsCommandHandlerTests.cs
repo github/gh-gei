@@ -7,7 +7,7 @@ using OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards;
 
 public class IntegrateBoardsCommandHandlerTests
 {

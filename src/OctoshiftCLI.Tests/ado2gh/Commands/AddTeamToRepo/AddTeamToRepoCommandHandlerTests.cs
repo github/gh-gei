@@ -4,7 +4,7 @@ using OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.AdoToGithub.Commands;
+namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo;
 
 public class AddTeamToRepoCommandHandlerTests
 {
