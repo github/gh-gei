@@ -116,8 +116,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> ArchiveDownloadHost { get; } = new(
         name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
-    { IsHidden = true };
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
