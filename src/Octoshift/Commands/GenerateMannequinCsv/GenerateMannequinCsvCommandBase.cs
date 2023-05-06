@@ -66,12 +66,3 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
         AddOption(Verbose);
     }
 }
-
-public class GenerateMannequinCsvCommandArgs
-{
-    public string GithubOrg { get; set; }
-    public FileInfo Output { get; set; }
-    public bool IncludeReclaimed { get; set; }
-    public string GithubPat { get; set; }
-    public bool Verbose { get; set; }
-}
