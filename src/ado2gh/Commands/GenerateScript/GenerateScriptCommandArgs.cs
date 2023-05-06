@@ -10,6 +10,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public string AdoTeamProject { get; set; }
         public FileInfo Output { get; set; }
         public bool Sequential { get; set; }
+        [Secret]
         public string AdoPat { get; set; }
         public bool DownloadMigrationLogs { get; set; }
         public bool CreateTeams { get; set; }

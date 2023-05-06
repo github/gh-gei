@@ -9,7 +9,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
         public string GithubTargetEnterprise { get; set; }
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
+        [Secret]
         public string GithubSourcePat { get; set; }
+        [Secret]
         public string GithubTargetPat { get; set; }
     }
 }

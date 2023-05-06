@@ -13,10 +13,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string TargetRepo { get; set; }
         public string TargetApiUrl { get; set; }
         public string GhesApiUrl { get; set; }
+        [Secret]
         public string AzureStorageConnectionString { get; set; }
         public string AwsBucketName { get; set; }
+        [Secret]
         public string AwsAccessKey { get; set; }
+        [Secret]
         public string AwsSecretKey { get; set; }
+        [Secret]
         public string AwsSessionToken { get; set; }
         public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
@@ -27,8 +31,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }
+        [Secret]
         public string GithubSourcePat { get; set; }
+        [Secret]
         public string GithubTargetPat { get; set; }
+        [Secret]
         public string AdoPat { get; set; }
         public bool KeepArchive { get; set; }
     }

@@ -8,6 +8,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     public string BbsServerUrl { get; set; }
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
+    [Secret]
     public string BbsPassword { get; set; }
     public string BbsProject { get; set; }
     public string BbsSharedHome { get; set; }

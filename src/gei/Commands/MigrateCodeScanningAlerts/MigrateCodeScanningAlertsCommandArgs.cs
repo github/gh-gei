@@ -12,6 +12,8 @@ public class MigrateCodeScanningAlertsCommandArgs : CommandArgs
     public string GhesApiUrl { get; set; }
     public bool NoSslVerify { get; set; }
     public bool DryRun { get; set; }
+    [Secret]
     public string GithubSourcePat { get; set; }
+    [Secret]
     public string GithubTargetPat { get; set; }
 }

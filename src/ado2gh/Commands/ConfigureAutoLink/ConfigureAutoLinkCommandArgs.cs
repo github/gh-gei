@@ -8,6 +8,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.ConfigureAutoLink
         public string GithubRepo { get; set; }
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
+        [Secret]
         public string GithubPat { get; set; }
     }
 }

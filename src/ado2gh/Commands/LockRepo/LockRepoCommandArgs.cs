@@ -7,6 +7,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.LockRepo
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
         public string AdoRepo { get; set; }
+        [Secret]
         public string AdoPat { get; set; }
     }
 }
