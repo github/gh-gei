@@ -1,4 +1,4 @@
-using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Commands.GrantMigratorRole;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.BbsToGithub.Commands;

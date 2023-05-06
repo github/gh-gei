@@ -1,11 +1,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands.CreateTeam;
 
 public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
 {

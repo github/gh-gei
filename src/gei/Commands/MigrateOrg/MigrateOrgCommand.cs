@@ -3,10 +3,9 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
 {
     public class MigrateOrgCommand : CommandBase<MigrateOrgCommandArgs, MigrateOrgCommandHandler>
     {

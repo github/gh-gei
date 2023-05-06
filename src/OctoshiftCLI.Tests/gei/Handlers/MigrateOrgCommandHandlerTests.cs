@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg;
 using OctoshiftCLI.Services;
 using Xunit;
 

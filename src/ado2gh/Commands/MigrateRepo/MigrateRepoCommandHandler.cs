@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Handlers;
+namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo;
 
 public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 {

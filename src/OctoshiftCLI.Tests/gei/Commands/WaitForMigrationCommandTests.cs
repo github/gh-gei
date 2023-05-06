@@ -1,5 +1,5 @@
 using FluentAssertions;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands.WaitForMigration;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands;

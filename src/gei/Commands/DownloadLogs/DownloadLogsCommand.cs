@@ -1,10 +1,10 @@
 using System.CommandLine;
 using System.Runtime.CompilerServices;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.DownloadLogs;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.DownloadLogs;
 
 public class DownloadLogsCommand : DownloadLogsCommandBase
 {

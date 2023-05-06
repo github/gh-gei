@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateSecretAlerts;
 using OctoshiftCLI.Services;
 using Xunit;
 

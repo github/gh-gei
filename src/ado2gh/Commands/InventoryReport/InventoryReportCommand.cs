@@ -2,11 +2,10 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Factories;
-using OctoshiftCLI.AdoToGithub.Handlers;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Commands
+namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport
 {
     public class InventoryReportCommand : CommandBase<InventoryReportCommandArgs, InventoryReportCommandHandler>
     {

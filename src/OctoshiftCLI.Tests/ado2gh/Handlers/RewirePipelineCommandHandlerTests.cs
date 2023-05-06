@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.AdoToGithub.Commands.RewirePipeline;
 using OctoshiftCLI.Services;
 using Xunit;
 

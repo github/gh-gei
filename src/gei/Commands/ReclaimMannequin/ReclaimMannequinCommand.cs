@@ -1,7 +1,7 @@
 ﻿using System.CommandLine;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.ReclaimMannequin;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.ReclaimMannequin;
 
 public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
 {

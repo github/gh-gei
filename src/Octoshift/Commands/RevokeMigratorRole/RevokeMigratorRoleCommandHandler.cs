@@ -1,9 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands.RevokeMigratorRole;
 
 public class RevokeMigratorRoleCommandHandler : ICommandHandler<RevokeMigratorRoleCommandArgs>
 {

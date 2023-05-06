@@ -2,10 +2,9 @@ using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Commands.GrantMigratorRole;
 
 public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommandArgs, GrantMigratorRoleCommandHandler>
 {

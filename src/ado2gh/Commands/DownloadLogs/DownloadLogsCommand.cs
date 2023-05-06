@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.DownloadLogs;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.AdoToGithub.Commands;
+namespace OctoshiftCLI.AdoToGithub.Commands.DownloadLogs;
 
 public class DownloadLogsCommand : DownloadLogsCommandBase
 {

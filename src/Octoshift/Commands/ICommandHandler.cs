@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands;
 
 public interface ICommandHandler<in TArgs> where TArgs : class
 {

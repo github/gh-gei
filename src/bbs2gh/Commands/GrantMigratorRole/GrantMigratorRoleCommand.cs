@@ -1,6 +1,6 @@
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.GrantMigratorRole;
 
-namespace OctoshiftCLI.BbsToGithub.Commands;
+namespace OctoshiftCLI.BbsToGithub.Commands.GrantMigratorRole;
 
 public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
 {

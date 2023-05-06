@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.BbsToGithub.Handlers;
+namespace OctoshiftCLI.BbsToGithub.Commands.GenerateScript;
 
 public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptCommandArgs>
 {

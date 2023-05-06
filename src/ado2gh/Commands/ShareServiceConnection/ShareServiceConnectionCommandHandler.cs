@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Handlers;
+namespace OctoshiftCLI.AdoToGithub.Commands.ShareServiceConnection;
 
 public class ShareServiceConnectionCommandHandler : ICommandHandler<ShareServiceConnectionCommandArgs>
 {

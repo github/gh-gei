@@ -7,11 +7,10 @@ using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using OctoshiftCLI.Services;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 {
     public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, GenerateScriptCommandHandler>
     {

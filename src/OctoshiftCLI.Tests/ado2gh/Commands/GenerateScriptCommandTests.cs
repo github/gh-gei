@@ -2,7 +2,7 @@ using System.IO;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Commands.GenerateScript;
 using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;

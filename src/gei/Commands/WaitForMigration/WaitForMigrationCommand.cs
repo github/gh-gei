@@ -1,8 +1,8 @@
 using System;
 using System.CommandLine;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.WaitForMigration;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.WaitForMigration;
 
 public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
 {

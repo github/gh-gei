@@ -3,13 +3,12 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo;
 
 public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 {

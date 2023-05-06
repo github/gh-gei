@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.GrantMigratorRole;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;

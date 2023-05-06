@@ -1,7 +1,7 @@
 using System;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Commands.GenerateScript;
 using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;

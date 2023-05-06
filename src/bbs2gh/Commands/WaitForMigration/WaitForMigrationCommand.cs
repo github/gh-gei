@@ -1,6 +1,5 @@
-using OctoshiftCLI.Commands;
-
-namespace OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.Commands.WaitForMigration;
+namespace OctoshiftCLI.BbsToGithub.Commands.WaitForMigration;
 
 public sealed class WaitForMigrationCommand : WaitForMigrationCommandBase
 {

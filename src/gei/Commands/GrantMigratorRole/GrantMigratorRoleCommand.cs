@@ -1,7 +1,7 @@
 using System.CommandLine;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.GrantMigratorRole;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GrantMigratorRole;
 
 public sealed class GrantMigratorRoleCommand : GrantMigratorRoleCommandBase
 {

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Handlers;
+namespace OctoshiftCLI.AdoToGithub.Commands.ConfigureAutoLink;
 
 public class ConfigureAutoLinkCommandHandler : ICommandHandler<ConfigureAutoLinkCommandArgs>
 {

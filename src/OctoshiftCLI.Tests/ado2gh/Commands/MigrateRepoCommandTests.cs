@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;

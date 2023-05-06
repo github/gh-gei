@@ -1,4 +1,4 @@
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Commands.ReclaimMannequin;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands;

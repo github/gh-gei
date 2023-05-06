@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands.RevokeMigratorRole;
 using OctoshiftCLI.Services;
 using Xunit;
 

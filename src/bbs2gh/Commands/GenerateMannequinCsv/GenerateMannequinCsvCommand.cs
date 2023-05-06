@@ -1,6 +1,6 @@
-﻿using OctoshiftCLI.Commands;
+﻿using OctoshiftCLI.Commands.GenerateMannequinCsv;
 
-namespace OctoshiftCLI.BbsToGithub.Commands;
+namespace OctoshiftCLI.BbsToGithub.Commands.GenerateMannequinCsv;
 
 public sealed class GenerateMannequinCsvCommand : GenerateMannequinCsvCommandBase
 {

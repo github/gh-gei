@@ -4,10 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateCodeScanningAlerts;
 
 public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningAlertsCommandArgs, MigrateCodeScanningAlertsCommandHandler>
 {

@@ -3,12 +3,11 @@ using System.CommandLine;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Commands.WaitForMigration;
 
 public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandArgs, WaitForMigrationCommandHandler>
 {

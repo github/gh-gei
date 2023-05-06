@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo;
 using OctoshiftCLI.Services;
 using Xunit;
 

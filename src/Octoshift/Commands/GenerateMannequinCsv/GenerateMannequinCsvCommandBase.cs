@@ -3,10 +3,9 @@ using System.CommandLine;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Commands.GenerateMannequinCsv;
 
 public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvCommandArgs, GenerateMannequinCsvCommandHandler>
 {

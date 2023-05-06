@@ -6,10 +6,9 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
-using OctoshiftCLI.GithubEnterpriseImporter.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 {
     public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRepoCommandHandler>
     {

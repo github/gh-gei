@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards;
 using OctoshiftCLI.Services;
 using Xunit;
 

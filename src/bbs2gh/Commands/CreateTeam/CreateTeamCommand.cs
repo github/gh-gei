@@ -1,6 +1,6 @@
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.CreateTeam;
 
-namespace OctoshiftCLI.BbsToGithub.Commands;
+namespace OctoshiftCLI.BbsToGithub.Commands.CreateTeam;
 
 public sealed class CreateTeamCommand : CreateTeamCommandBase
 {

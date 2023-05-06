@@ -2,10 +2,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.Handlers;
+namespace OctoshiftCLI.Commands.ReclaimMannequin;
 
 public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCommandArgs>
 {

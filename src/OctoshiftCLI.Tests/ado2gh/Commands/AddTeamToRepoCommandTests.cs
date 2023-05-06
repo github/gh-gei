@@ -2,7 +2,7 @@ using System.CommandLine;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;

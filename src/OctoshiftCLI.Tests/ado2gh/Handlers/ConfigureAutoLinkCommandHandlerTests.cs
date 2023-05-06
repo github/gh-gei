@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.AdoToGithub.Handlers;
+using OctoshiftCLI.AdoToGithub.Commands.ConfigureAutoLink;
 using OctoshiftCLI.Services;
 using Xunit;
 

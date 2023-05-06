@@ -1,7 +1,7 @@
 using System.CommandLine;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.RevokeMigratorRole;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.RevokeMigratorRole;
 
 public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
 {

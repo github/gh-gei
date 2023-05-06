@@ -1,6 +1,6 @@
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.RevokeMigratorRole;
 
-namespace OctoshiftCLI.AdoToGithub.Commands;
+namespace OctoshiftCLI.AdoToGithub.Commands.RevokeMigratorRole;
 
 public sealed class RevokeMigratorRoleCommand : RevokeMigratorRoleCommandBase
 {

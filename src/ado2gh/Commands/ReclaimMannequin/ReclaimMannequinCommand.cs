@@ -1,6 +1,6 @@
-﻿using OctoshiftCLI.Commands;
+﻿using OctoshiftCLI.Commands.ReclaimMannequin;
 
-namespace OctoshiftCLI.AdoToGithub.Commands;
+namespace OctoshiftCLI.AdoToGithub.Commands.ReclaimMannequin;
 
 public sealed class ReclaimMannequinCommand : ReclaimMannequinCommandBase
 {

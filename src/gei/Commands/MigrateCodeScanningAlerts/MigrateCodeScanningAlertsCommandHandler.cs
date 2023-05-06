@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.Commands;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Handlers;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateCodeScanningAlerts;
 
 public class MigrateCodeScanningAlertsCommandHandler : ICommandHandler<MigrateCodeScanningAlertsCommandArgs>
 {

@@ -2,8 +2,7 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands.ReclaimMannequin;
 using OctoshiftCLI.Services;
 using Xunit;
 

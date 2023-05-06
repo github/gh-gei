@@ -4,12 +4,11 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Factories;
-using OctoshiftCLI.Handlers;
 using OctoshiftCLI.Services;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
-namespace OctoshiftCLI.Commands;
+namespace OctoshiftCLI.Commands.DownloadLogs;
 
 public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, DownloadLogsCommandHandler>
 {

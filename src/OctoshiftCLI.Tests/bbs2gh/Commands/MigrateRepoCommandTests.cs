@@ -1,7 +1,7 @@
 using System;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.BbsToGithub.Commands;
+using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;

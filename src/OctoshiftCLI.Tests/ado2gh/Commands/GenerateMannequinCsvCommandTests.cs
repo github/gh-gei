@@ -1,4 +1,4 @@
-using OctoshiftCLI.AdoToGithub.Commands;
+using OctoshiftCLI.AdoToGithub.Commands.GenerateMannequinCsv;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands;

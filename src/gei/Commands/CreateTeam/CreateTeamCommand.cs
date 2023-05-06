@@ -1,7 +1,7 @@
 using System.CommandLine;
-using OctoshiftCLI.Commands;
+using OctoshiftCLI.Commands.CreateTeam;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Commands;
+namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.CreateTeam;
 
 public sealed class CreateTeamCommand : CreateTeamCommandBase
 {

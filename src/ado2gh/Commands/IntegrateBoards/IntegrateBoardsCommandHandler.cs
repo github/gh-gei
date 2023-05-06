@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using OctoshiftCLI.AdoToGithub.Commands;
-using OctoshiftCLI.Handlers;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Handlers;
+namespace OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards;
 
 public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsCommandArgs>
 {
