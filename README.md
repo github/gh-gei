@@ -3,7 +3,7 @@
 [![Actions Status: CI](https://github.com/github/gh-gei/workflows/CI/badge.svg)](https://github.com/github/gh-gei/actions?query=workflow%3ACI)
 
 
-The [GitHub Enterprise Importer](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform console application to simplify customizing your migration experience.
+The [GitHub Enterprise Importer](https://docs.github.com/en/migrations/using-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform console application to simplify customizing your migration experience.
 
 > GEI is in a public beta for GitHub Enterprise Cloud.
 
@@ -28,7 +28,7 @@ To see the available commands and options run:
 >`gh ado2gh --help`
 
 ### GitHub to GitHub Usage (GitHub.com -> GitHub.com)
-1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer)).
+1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 
 2. Set the GH_SOURCE_PAT and GH_PAT environment variables.
 
@@ -39,10 +39,10 @@ To see the available commands and options run:
 
 5. The migrate.ps1 script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
-Refer to the [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) for more details, including differences when migrating from GitHub Enterprise Server.
+Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer) for more details, including differences when migrating from GitHub Enterprise Server.
 
 ### Azure DevOps to GitHub Usage
-1. Create Personal Access Tokens with access to the Azure DevOps org, and the GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer)).
+1. Create Personal Access Tokens with access to the Azure DevOps org, and the GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 
 2. Set the `ADO_PAT` and `GH_PAT` environment variables.
 
@@ -53,7 +53,7 @@ Refer to the [official documentation](https://docs.github.com/en/early-access/gi
 
 5. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
-Refer to the [official documentation](https://docs.github.com/en/early-access/github/migrating-with-github-enterprise-importer) for more details.
+Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-azure-devops-to-github-enterprise-cloud) for more details.
 
 ## Quick Start Videos
 You'll find videos below to help you quickly get started with the GEI CLI. Be sure to pick the videos relevant to your migration scenario. 
