@@ -328,7 +328,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
         [Fact]
@@ -730,7 +729,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation($"GHES API URL: {ghesApiUrl}"));
         }
 
         [Fact]
@@ -1174,7 +1172,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
@@ -1253,7 +1250,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected.ToString());
-            _mockOctoLogger.Verify(m => m.LogInformation("KEEP ARCHIVE: true"));
         }
 
         [Fact]
@@ -1501,8 +1497,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation($"AWS BUCKET NAME: {AWS_BUCKET_NAME}"));
-            _mockOctoLogger.Verify(m => m.LogInformation($"AWS REGION: {AWS_REGION}"));
         }
 
         [Fact]
@@ -1536,7 +1530,6 @@ if ($Failed -ne 0) {
 
             // Assert
             _script.Should().Be(expected);
-            _mockOctoLogger.Verify(m => m.LogInformation("KEEP ARCHIVE: true"));
         }
 
         [Fact]

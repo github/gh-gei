@@ -38,29 +38,9 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.GithubPat);
-
         _log.LogWarning("Migration logs are only available for 24 hours after a migration finishes!");
 
         _log.LogInformation("Downloading migration logs...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-
-        if (args.GithubApiUrl.HasValue())
-        {
-            _log.LogInformation($"GITHUB API URL: {args.GithubApiUrl}");
-        }
-
-        if (args.GithubPat.HasValue())
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
-        if (args.MigrationLogFile.HasValue())
-        {
-            _log.LogInformation($"MIGRATION LOG FILE: {args.MigrationLogFile}");
-        }
 
         // We check again below whether the file exists - but this is an extra check so we can fail early
         // where the user has defined a custom filename, rather than using the auto-generated one

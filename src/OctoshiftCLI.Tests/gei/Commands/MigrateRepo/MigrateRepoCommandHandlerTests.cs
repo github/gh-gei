@@ -108,12 +108,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             var expectedLogOutput = new List<string>()
             {
                 "Migrating Repo...",
-                $"GITHUB SOURCE ORG: {SOURCE_ORG}",
-                $"SOURCE REPO: {SOURCE_REPO}",
-                $"GITHUB TARGET ORG: {TARGET_ORG}",
-                $"TARGET REPO: {TARGET_REPO}",
-                $"TARGET API URL: {TARGET_API_URL}",
-                "QUEUE ONLY: true",
                 $"A repository migration (ID: {migrationId}) was successfully queued."
             };
 
@@ -134,7 +128,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockTargetGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
             _mockTargetGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, null, false));
 
-            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+            _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
             actualLogOutput.Should().Equal(expectedLogOutput);
 
             _mockTargetGithubApi.VerifyNoOtherCalls();
@@ -395,8 +389,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockOctoLogger.Verify(x => x.LogInformation($"GHES API URL: {GHES_API_URL}"), Times.Once);
-            _mockOctoLogger.Verify(x => x.LogInformation("AZURE STORAGE CONNECTION STRING: ***"), Times.Once);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
         }
@@ -707,7 +699,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockOctoLogger.Verify(x => x.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
@@ -770,7 +761,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockOctoLogger.Verify(x => x.LogInformation("SSL verification disabled"));
         }
 
         [Fact]
@@ -914,9 +904,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().Contain("ADO PAT: ***");
-            actualLogOutput.Should().NotContain("GITHUB SOURCE PAT: ***");
-            actualLogOutput.Should().NotContain("GITHUB TARGET PAT: ***");
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()), Times.Never);
@@ -956,9 +943,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().NotContain("ADO PAT: ***");
-            actualLogOutput.Should().Contain("GITHUB SOURCE PAT: ***");
-            actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             _mockEnvironmentVariableProvider.Verify(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
@@ -1007,9 +991,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().NotContain("ADO PAT: ***");
-            actualLogOutput.Should().Contain("GITHUB SOURCE PAT: ***");
-            actualLogOutput.Should().NotContain("GITHUB TARGET PAT: ***");
             actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             _mockEnvironmentVariableProvider.Verify(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
@@ -1049,9 +1030,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().NotContain("ADO PAT: ***");
-            actualLogOutput.Should().NotContain("GITHUB SOURCE PAT: ***");
-            actualLogOutput.Should().Contain("GITHUB TARGET PAT: ***");
             actualLogOutput.Should().Contain("Since github-target-pat is provided, github-source-pat will also use its value.");
 
             _mockEnvironmentVariableProvider.Verify(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
@@ -1091,8 +1069,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().Contain("SKIP RELEASES: true");
-
             _mockTargetGithubApi.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -1129,8 +1105,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().Contain("LOCK SOURCE REPO: true");
-
             _mockTargetGithubApi.Verify(m => m.StartMigration(
                 It.IsAny<string>(),
                 It.IsAny<string>(),

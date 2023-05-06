@@ -27,11 +27,7 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.GithubSourcePat);
-        _log.RegisterSecret(args.GithubTargetPat);
-
-        LogAndValidateOptions(args);
+        ValidateOptions(args);
 
         var githubEnterpriseId = await _githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
         var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
@@ -80,37 +76,17 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
 
     private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}";
 
-    private void LogAndValidateOptions(MigrateOrgCommandArgs args)
+    private void ValidateOptions(MigrateOrgCommandArgs args)
     {
         _log.LogInformation("Migrating Org...");
-        _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"GITHUB TARGET ENTERPRISE: {args.GithubTargetEnterprise}");
-
-        if (args.GithubSourcePat.HasValue())
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
 
         if (args.GithubTargetPat.HasValue())
         {
-            _log.LogInformation("GITHUB TARGET PAT: ***");
-
             if (args.GithubSourcePat.IsNullOrWhiteSpace())
             {
                 args.GithubSourcePat = args.GithubTargetPat;
                 _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
             }
-        }
-
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
-
-        if (args.QueueOnly)
-        {
-            _log.LogInformation("QUEUE ONLY: true");
         }
 
         if (args.Wait)

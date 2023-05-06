@@ -59,16 +59,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.AdoPat);
-        _log.RegisterSecret(args.GithubSourcePat);
-        _log.RegisterSecret(args.GithubTargetPat);
-        _log.RegisterSecret(args.AzureStorageConnectionString);
-        _log.RegisterSecret(args.AwsAccessKey);
-        _log.RegisterSecret(args.AwsSecretKey);
-        _log.RegisterSecret(args.AwsSessionToken);
-
-        LogOptions(args);
+        _log.LogInformation("Migrating Repo...");
 
         var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
 
@@ -328,144 +319,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
     }
 
-    private void LogOptions(MigrateRepoCommandArgs args)
+    private void ValidateOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
-        _log.LogInformation("Migrating Repo...");
-
         var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
         if (hasAdoSpecificArg)
         {
             _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
         }
 
-        if (args.GithubSourceOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        }
-        _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
-
-        if (args.TargetApiUrl.HasValue())
-        {
-            _log.LogInformation($"TARGET API URL: {args.TargetApiUrl}");
-        }
-
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
-
-        if (args.QueueOnly)
-        {
-            _log.LogInformation("QUEUE ONLY: true");
-        }
-
-        if (args.TargetRepoVisibility.HasValue())
-        {
-            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
-        }
-
-        if (args.GithubSourcePat.HasValue())
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-
-        if (args.GithubTargetPat.HasValue())
-        {
-            _log.LogInformation("GITHUB TARGET PAT: ***");
-        }
-
-        if (args.AdoPat.HasValue())
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        if (args.GhesApiUrl.HasValue())
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-        }
-
-        if (args.AzureStorageConnectionString.HasValue())
-        {
-            _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
-        }
-
-        if (args.NoSslVerify)
-        {
-            _log.LogInformation("SSL verification disabled");
-        }
-
-        if (args.SkipReleases)
-        {
-            _log.LogInformation("SKIP RELEASES: true");
-        }
-
-        if (args.GitArchiveUrl.HasValue())
-        {
-            _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
-        }
-
-        if (args.MetadataArchiveUrl.HasValue())
-        {
-            _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
-        }
-
-        if (args.LockSourceRepo)
-        {
-            _log.LogInformation("LOCK SOURCE REPO: true");
-        }
-
-        if (args.KeepArchive)
-        {
-            _log.LogInformation("KEEP ARCHIVE: true");
-        }
-
-        LogAwsOptions(args);
-    }
-
-    private void LogAwsOptions(MigrateRepoCommandArgs args)
-    {
-        if (args.AwsBucketName.HasValue())
-        {
-            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-        }
-
-        if (args.AwsAccessKey.HasValue())
-        {
-            _log.LogInformation("AWS ACCESS KEY: ***");
-        }
-
-        if (args.AwsSecretKey.HasValue())
-        {
-            _log.LogInformation("AWS SECRET KEY: ***");
-        }
-
-        if (args.AwsSessionToken.HasValue())
-        {
-            _log.LogInformation("AWS SESSION TOKEN: ***");
-        }
-
-        if (args.AwsRegion.HasValue())
-        {
-            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
-        }
-    }
-
-    private void ValidateOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
-    {
         if (args.GithubTargetPat.HasValue() && args.GithubSourcePat.IsNullOrWhiteSpace())
         {
             args.GithubSourcePat = args.GithubTargetPat;

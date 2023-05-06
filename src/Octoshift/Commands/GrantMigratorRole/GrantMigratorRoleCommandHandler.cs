@@ -22,14 +22,9 @@ public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRole
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Granting migrator role ...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"ACTOR: {args.Actor}");
 
         args.ActorType = args.ActorType?.ToUpper();
-        _log.LogInformation($"ACTOR TYPE: {args.ActorType}");
 
         if (args.ActorType is "TEAM" or "USER")
         {
@@ -40,18 +35,6 @@ public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRole
             _log.LogError("Actor type must be either TEAM or USER.");
             return;
         }
-
-        if (args.GhesApiUrl is not null)
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-        }
-
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.GithubPat);
 
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var success = await _githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);

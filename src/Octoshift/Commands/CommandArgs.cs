@@ -36,6 +36,7 @@ namespace OctoshiftCLI.Commands
                 }
                 else
                 {
+                    // TODO: Only log if it HasValue()
                     sb.AppendLine($"{logName}: {property.GetValue(this)}");
                 }
             }

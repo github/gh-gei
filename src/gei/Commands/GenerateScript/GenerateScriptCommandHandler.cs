@@ -45,11 +45,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
-        _log.RegisterSecret(args.GithubSourcePat);
-        _log.RegisterSecret(args.AdoPat);
-
         _log.LogInformation("Generating Script...");
 
         var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
@@ -58,7 +53,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
         }
 
-        LogArgs(args);
         ValidateArgs(args);
 
         var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
@@ -91,94 +85,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         if (args.NoSslVerify && args.GhesApiUrl.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
-        }
-    }
-
-    private void LogArgs(GenerateScriptCommandArgs args)
-    {
-        if (args.GithubSourceOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
-
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        }
-
-        if (args.SkipReleases)
-        {
-            _log.LogInformation("SKIP RELEASES: true");
-        }
-
-        if (args.LockSourceRepo)
-        {
-            _log.LogInformation("LOCK SOURCE REPO: true");
-        }
-
-        if (args.DownloadMigrationLogs)
-        {
-            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
-        }
-
-        if (args.GithubTargetOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        }
-
-        if (args.Output.HasValue())
-        {
-            _log.LogInformation($"OUTPUT: {args.Output}");
-        }
-
-        if (args.Sequential)
-        {
-            _log.LogInformation("SEQUENTIAL: true");
-        }
-
-        if (args.GithubSourcePat.HasValue())
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-
-        if (args.AdoPat.HasValue())
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        if (args.GhesApiUrl.HasValue())
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-        }
-
-        if (args.NoSslVerify)
-        {
-            _log.LogInformation("SSL verification disabled");
-        }
-
-        if (args.AwsBucketName.HasValue())
-        {
-            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-        }
-
-        if (args.AwsRegion.HasValue())
-        {
-            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
-        }
-
-        if (args.KeepArchive)
-        {
-            _log.LogInformation("KEEP ARCHIVE: true");
         }
     }
 
