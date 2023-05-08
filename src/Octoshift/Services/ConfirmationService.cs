@@ -30,7 +30,6 @@ namespace OctoshiftCLI.Services
         public bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
-            _readConsoleKey.DynamicInvoke();
             do
             {
                 _writeToConsoleOut(confirmationPrompt);
