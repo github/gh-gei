@@ -82,7 +82,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Arrange
             passedKey = ConsoleKey.Enter;
             numOfCalls = 3;
-            var expectedResult = new StringBuilder().Insert(0, confirmationPrompt, numOfCalls).ToString() + cancelationOutput;
+            var expectedResult = new StringBuilder().Insert(0, confirmationPrompt, numOfCalls) + cancelationOutput;
 
 
             // Act
