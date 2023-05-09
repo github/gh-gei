@@ -1,5 +1,1 @@
-- Include the migration ID in the default output filename when running `download-logs`
-- Include the date with the timestamp when writing to the log
-- When blob storage credentials are provided to the CLI but will not be used for a GHES migration, log a clear warning, not an info message
-- Unhide the `--archive-download-host` argument in the documentation for `gh bbs2gh migrate-repo` and `gh bbs2gh generate-script`
 - Add new '--skip-invitation' flag for `reclaim-mannequin` to allow EMU organizations to reclaim mannequins without an email invitation
