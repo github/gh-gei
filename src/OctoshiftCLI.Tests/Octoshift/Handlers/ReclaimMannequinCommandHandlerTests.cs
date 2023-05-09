@@ -126,7 +126,7 @@ public class ReclaimMannequinCommandHandlerTests
     public async Task Skip_Invitation_Happy_Path()
     {
         // Arrange
-        var expectedResult = "Skipping the reclaimation email invitation is irreversible. Are you sure you wish to continue? y\\nConfirmation Recorded. Proceeding...";
+        var expectedResult = "Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)Confirmation Recorded. Proceeding...";
 
         var args = new ReclaimMannequinCommandArgs
         {
