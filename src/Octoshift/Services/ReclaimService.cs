@@ -212,7 +212,7 @@ public class ReclaimService
             return false;
         }
 
-        _log.LogInformation($"Reclaimation email successfully sent to: {mannequinUser} ({mannequin.Id}) for {targetUser} ({targetUserId})");
+        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to: {mannequinUser} ({mannequin.Id}) for {targetUser} ({targetUserId})");
 
         return true;
     }
@@ -221,7 +221,7 @@ public class ReclaimService
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
             return false;
         }
 
