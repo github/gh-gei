@@ -463,12 +463,26 @@ public class GithubApi
         );
     }
 
-    public virtual async Task<(string State, string RepositoryName, string FailureReason, string MigrationLogUrl)> GetMigration(string migrationId)
+    public virtual async Task<(string State, string RepositoryName, int WarningsCount, string FailureReason, string MigrationLogUrl)> GetMigration(string migrationId)
     {
         var url = $"{_apiUrl}/graphql";
 
         var query = "query($id: ID!)";
-        var gql = "node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } }";
+        var gql = @"
+                node(id: $id) {
+                    ... on Migration {
+                        id,
+                        sourceUrl,
+                        migrationLogUrl,
+                        migrationSource {
+                            name
+                        },
+                        state,
+                        warningsCount,
+                        failureReason,
+                        repositoryName
+                    }
+                }";
 
         var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
@@ -481,6 +495,7 @@ public class GithubApi
                 return (
                     State: (string)data["data"]["node"]["state"],
                     RepositoryName: (string)data["data"]["node"]["repositoryName"],
+                    WarningsCount: (int)data["data"]["node"]["warningsCount"],
                     FailureReason: (string)data["data"]["node"]["failureReason"],
                     MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
             });

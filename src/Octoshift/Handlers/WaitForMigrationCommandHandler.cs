@@ -95,7 +95,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private async Task WaitForRepositoryMigration(string migrationId, string githubPat, GithubApi githubApi)
     {
-        var (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
+        var (state, repositoryName, warningsCount, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
 
         _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
 
@@ -124,7 +124,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
+            (state, repositoryName, warningsCount, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
         }
     }
 }

@@ -1091,6 +1091,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
+                        ""warningsCount"": 0,
                         ""failureReason"": """",
                         ""repositoryName"": ""{GITHUB_REPO}"",
                         ""migrationLogUrl"": ""{LOG_URL}""
@@ -1103,11 +1104,12 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, expectedRepositoryName, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, expectedRepositoryName, expectedWarningsCount, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
         expectedRepositoryName.Should().Be(GITHUB_REPO);
+        expectedWarningsCount.Should().Be(0);
         expectedFailureReason.Should().BeEmpty();
         migrationLogUrl.Should().Be(LOG_URL);
     }
@@ -1146,7 +1148,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, _, _, _, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
@@ -1187,7 +1189,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, _, _, _, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
@@ -1226,7 +1228,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var (_, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
+        var (_, _, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedFailureReason.Should().Be(actualFailureReason);
