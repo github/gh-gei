@@ -109,6 +109,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                LogWarningsCount(warningsCount);
                 _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 return;
             }
@@ -116,6 +117,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                LogWarningsCount(warningsCount);
                 _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 throw new OctoshiftCliException(failureReason);
             }
@@ -125,6 +127,22 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
             (state, repositoryName, warningsCount, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
+        }
+    }
+
+    private void LogWarningsCount(int warningsCount)
+    {
+        switch (warningsCount)
+        {
+            case 0:
+                _log.LogInformation("No warnings encountered during this migration");
+                break;
+            case 1:
+                _log.LogWarning("1 warning encountered during this migration");
+                break;
+            default:
+                _log.LogWarning($"{warningsCount} warnings encountered during this migration");
+                break;
         }
     }
 }
