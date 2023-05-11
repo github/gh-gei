@@ -1,1 +1,1 @@
-
+- Write migration warnings count to console after a migration completes.
