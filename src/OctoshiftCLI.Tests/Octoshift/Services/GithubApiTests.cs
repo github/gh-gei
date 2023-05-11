@@ -1071,7 +1071,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetMigration_Returns_The_Migration_State_And_Repository_Name()
+    public async Task GetMigration_Returns_The_Migration_State_Repository_Name_And_Warnings_Count()
     {
         // Arrange
         const string migrationId = "MIGRATION_ID";
@@ -1097,6 +1097,8 @@ public class GithubApiTests
         var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
 
         const string actualMigrationState = "SUCCEEDED";
+        const int actualWarningsCount = 3;
+
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
@@ -1107,7 +1109,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
-                        ""warningsCount"": 0,
+                        ""warningsCount"": {actualWarningsCount},
                         ""failureReason"": """",
                         ""repositoryName"": ""{GITHUB_REPO}"",
                         ""migrationLogUrl"": ""{LOG_URL}""
@@ -1125,7 +1127,7 @@ public class GithubApiTests
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
         expectedRepositoryName.Should().Be(GITHUB_REPO);
-        expectedWarningsCount.Should().Be(0);
+        expectedWarningsCount.Should().Be(actualWarningsCount);
         expectedFailureReason.Should().BeEmpty();
         migrationLogUrl.Should().Be(LOG_URL);
     }
