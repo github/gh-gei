@@ -13,8 +13,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
-    private const string REPO_MIGRATION_ID_PREFIX = "RM_";
-    private const string ORG_MIGRATION_ID_PREFIX = "OM_";
+
 
     public WaitForMigrationCommandHandler(OctoLogger log, GithubApi githubApi)
     {
@@ -29,17 +28,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             throw new ArgumentNullException(nameof(args));
         }
 
-        if (args.MigrationId is null)
-        {
-            throw new ArgumentNullException(nameof(args), "MigrationId cannot be null");
-        }
-
-        if (!args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX) && !args.MigrationId.StartsWith(ORG_MIGRATION_ID_PREFIX))
-        {
-            throw new OctoshiftCliException($"Invalid migration id: {args.MigrationId}");
-        }
-
-        if (args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
+        if (args.MigrationId.StartsWith(WaitForMigrationCommandArgs.REPO_MIGRATION_ID_PREFIX))
         {
             await WaitForRepositoryMigration(args.MigrationId, _githubApi);
         }
