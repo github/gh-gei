@@ -24,18 +24,6 @@ public class GrantMigratorRoleCommandHandler : ICommandHandler<GrantMigratorRole
 
         _log.LogInformation("Granting migrator role ...");
 
-        args.ActorType = args.ActorType?.ToUpper();
-
-        if (args.ActorType is "TEAM" or "USER")
-        {
-            _log.LogInformation("Actor type is valid...");
-        }
-        else
-        {
-            _log.LogError("Actor type must be either TEAM or USER.");
-            return;
-        }
-
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var success = await _githubApi.GrantMigratorRole(githubOrgId, args.Actor, args.ActorType);
 
