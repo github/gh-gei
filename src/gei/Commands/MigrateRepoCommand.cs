@@ -43,6 +43,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             AddOption(Wait);
             AddOption(QueueOnly);
+            AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
             AddOption(AdoPat);
@@ -150,6 +151,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         {
             Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
         };
+        public Option<string> TargetRepoVisibility { get; } = new("--target-repo-visibility")
+        {
+            Description = "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal."
+        };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
         public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
         public Option<string> AdoPat { get; } = new("--ado-pat")
@@ -239,6 +244,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public bool LockSourceRepo { get; set; }
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
+        public string TargetRepoVisibility { get; set; }
         public bool Verbose { get; set; }
         public string GithubSourcePat { get; set; }
         public string GithubTargetPat { get; set; }

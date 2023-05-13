@@ -244,7 +244,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetRepos_Returns_Names_Of_All_Repositories()
+    public async Task GetRepos_Returns_Names_And_Visibility_Of_All_Repositories()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/repos?per_page=100";
@@ -255,11 +255,13 @@ public class GithubApiTests
             [
                 {{
                     ""id"": 1,
-                    ""name"": ""{repoName1}""
+                    ""name"": ""{repoName1}"",
+                    ""visibility"": ""private"",
                 }},
                 {{
                     ""id"": 2,
-                    ""name"": ""{repoName2}""
+                    ""name"": ""{repoName2}"",
+                    ""visibility"": ""private"",
                 }}
             ]";
 
@@ -269,11 +271,13 @@ public class GithubApiTests
             [
                 {{
                     ""id"": 3,
-                    ""name"": ""{repoName3}""
+                    ""name"": ""{repoName3}"",
+                    ""visibility"": ""internal"",
                 }},
                 {{
                     ""id"": 4,
-                    ""name"": ""{repoName4}""
+                    ""name"": ""{repoName4}"",
+                    ""visibility"": ""public"",
                 }}
             ]";
 
@@ -299,7 +303,7 @@ public class GithubApiTests
 
         // Assert
         result.Should().HaveCount(4);
-        result.Should().Equal(repoName1, repoName2, repoName3, repoName4);
+        result.Should().Equal((repoName1, "private"), (repoName2, "private"), (repoName3, "internal"), (repoName4, "public"));
     }
 
     [Fact]
@@ -844,6 +848,7 @@ public class GithubApiTests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
@@ -858,6 +863,7 @@ public class GithubApiTests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -888,6 +894,7 @@ public class GithubApiTests
                 accessToken = sourceToken,
                 githubPat = targetToken,
                 skipReleases = false,
+                targetRepoVisibility = (string)null,
                 lockSource = false
             },
             operationName = "startRepositoryMigration"
@@ -949,6 +956,7 @@ public class GithubApiTests
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
@@ -963,6 +971,7 @@ public class GithubApiTests
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -993,6 +1002,7 @@ public class GithubApiTests
                 accessToken = unusedSourceToken,
                 githubPat = targetToken,
                 skipReleases = false,
+                targetRepoVisibility = (string)null,
                 lockSource = false
             },
             operationName = "startRepositoryMigration"
@@ -1384,7 +1394,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetMigrationLogUrl_Returns_The_Migration_Log_URL()
+    public async Task GetMigrationLogUrl_Returns_The_Migration_Log_URL_And_Migration_ID()
     {
         // Arrange
         const string url = "https://api.github.com/graphql";
@@ -1394,6 +1404,7 @@ public class GithubApiTests
                 organization(login: $org) {
                     repositoryMigrations(last: 1, repositoryName: $repo) {
                         nodes {
+                            id
                             migrationLogUrl
                         }
                     }
@@ -1403,6 +1414,7 @@ public class GithubApiTests
         var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
 
         const string migrationLogUrl = "MIGRATION_LOG_URL";
+        const string migrationId = "MIGRATION_ID";
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
@@ -1410,6 +1422,7 @@ public class GithubApiTests
                         ""repositoryMigrations"": {{
                             ""nodes"": [
                                 {{
+                                    ""id"": ""{migrationId}"",
                                     ""migrationLogUrl"": ""{migrationLogUrl}""
                                 }}
                             ]
@@ -1426,7 +1439,7 @@ public class GithubApiTests
         var expectedMigrationLog = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
 
         // Assert
-        expectedMigrationLog.Should().Be(migrationLogUrl);
+        expectedMigrationLog.Should().Be((migrationLogUrl, migrationId));
     }
 
     [Fact]
@@ -1440,6 +1453,7 @@ public class GithubApiTests
                 organization(login: $org) {
                     repositoryMigrations(last: 1, repositoryName: $repo) {
                         nodes {
+                            id
                             migrationLogUrl
                         }
                     }
@@ -1449,6 +1463,7 @@ public class GithubApiTests
         var payload = new { query = $"{query} {{ {gql} }}", variables = new { org = GITHUB_ORG, repo = GITHUB_REPO } };
 
         const string migrationLogUrl = "MIGRATION_LOG_URL";
+        const string migrationId = "MIGRATION_ID";
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
@@ -1456,6 +1471,7 @@ public class GithubApiTests
                         ""repositoryMigrations"": {{
                             ""nodes"": [
                                 {{
+                                    ""id"": ""{migrationId}"",
                                     ""migrationLogUrl"": ""{migrationLogUrl}""
                                 }}
                             ]
@@ -1474,7 +1490,7 @@ public class GithubApiTests
         var expectedMigrationLog = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
 
         // Assert
-        expectedMigrationLog.Should().Be(migrationLogUrl);
+        expectedMigrationLog.Should().Be((migrationLogUrl, migrationId));
     }
 
     [Fact]
@@ -1488,6 +1504,7 @@ public class GithubApiTests
                 organization(login: $org) {
                     repositoryMigrations(last: 1, repositoryName: $repo) {
                         nodes {
+                            id
                             migrationLogUrl
                         }
                     }
@@ -1511,11 +1528,9 @@ public class GithubApiTests
             .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(response);
 
-        // Act
-        var expectedMigrationLog = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
+        var result = await _githubApi.GetMigrationLogUrl(GITHUB_ORG, GITHUB_REPO);
 
-        // Assert
-        expectedMigrationLog.Should().Be(null);
+        result.Should().BeNull();
     }
 
     [Fact]

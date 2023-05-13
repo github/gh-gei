@@ -44,6 +44,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsRegion);
         AddOption(Wait);
         AddOption(QueueOnly);
+        AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
@@ -116,8 +117,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> ArchiveDownloadHost { get; } = new(
         name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).")
-    { IsHidden = true };
+        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
 
     public Option<string> SshUser { get; } = new(
         name: "--ssh-user",
@@ -166,6 +166,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<bool> QueueOnly { get; } = new(
         name: "--queue-only",
         description: "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status.");
+
+    public Option<string> TargetRepoVisibility { get; } = new(
+        name: "--target-repo-visibility",
+        description: "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal.");
 
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",
@@ -264,6 +268,7 @@ public class MigrateRepoCommandArgs
     public string GithubPat { get; set; }
     public bool Wait { get; set; }
     public bool QueueOnly { get; set; }
+    public string TargetRepoVisibility { get; set; }
     public bool Kerberos { get; set; }
     public bool Verbose { get; set; }
 

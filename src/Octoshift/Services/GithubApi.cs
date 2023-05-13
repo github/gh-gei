@@ -92,11 +92,11 @@ public class GithubApi
                                         ex => ex.StatusCode == HttpStatusCode.NotFound);
     }
 
-    public virtual async Task<IEnumerable<string>> GetRepos(string org)
+    public virtual async Task<IEnumerable<(string Name, string Visibility)>> GetRepos(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/repos?per_page=100";
 
-        return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
+        return await _client.GetAllAsync(url).Select(x => ((string)x["name"], (string)x["visibility"])).ToListAsync();
     }
 
     public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
@@ -301,7 +301,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, bool lockSource = false)
+    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -317,6 +317,7 @@ public class GithubApi
                     $accessToken: String!,
                     $githubPat: String,
                     $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
                     $lockSource: Boolean)";
         var gql = @"
                 startRepositoryMigration(
@@ -331,6 +332,7 @@ public class GithubApi
                         accessToken: $accessToken,
                         githubPat: $githubPat,
                         skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
                         lockSource: $lockSource
                     }
                 ) {
@@ -362,6 +364,7 @@ public class GithubApi
                 accessToken = sourceToken,
                 githubPat = targetToken,
                 skipReleases,
+                targetRepoVisibility,
                 lockSource
             },
             operationName = "startRepositoryMigration"
@@ -443,7 +446,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl)
+    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
     {
         return await StartMigration(
             migrationSourceId,
@@ -453,7 +456,10 @@ public class GithubApi
             "not-used",  // source access token
             targetToken,
             archiveUrl,
-            "https://not-used"  // metadata archive URL
+            "https://not-used",  // metadata archive URL
+            false,  // skip releases
+            targetRepoVisibility,
+            false  // lock source
         );
     }
 
@@ -485,7 +491,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> GetMigrationLogUrl(string org, string repo)
+    public virtual async Task<(string MigrationLogUrl, string MigrationId)?> GetMigrationLogUrl(string org, string repo)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -494,6 +500,7 @@ public class GithubApi
                 organization(login: $org) {
                     repositoryMigrations(last: 1, repositoryName: $repo) {
                         nodes {
+                            id
                             migrationLogUrl
                         }
                     }
@@ -510,7 +517,11 @@ public class GithubApi
 
                 var nodes = (JArray)data["data"]["organization"]["repositoryMigrations"]["nodes"];
 
-                return nodes.Count == 0 ? null : (string)nodes[0]["migrationLogUrl"];
+                return nodes.Count == 0
+                    // No matching migration was found
+                    ? ((string MigrationLogUrl, string MigrationId)?)null
+                    // A matching migration was found, which may or may not have a migration log URL. If there is no migration log, it's an empty string.
+                    : (MigrationLogUrl: (string)nodes[0]["migrationLogUrl"], MigrationId: (string)nodes[0]["id"]);
             });
         }
         catch (Exception ex)

@@ -54,7 +54,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(30);
+        command.Options.Count.Should().Be(31);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
@@ -72,7 +72,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
-        TestHelpers.VerifyCommandOption(command.Options, "archive-download-host", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "archive-download-host", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-private-key", false);
         TestHelpers.VerifyCommandOption(command.Options, "ssh-port", false);
@@ -80,7 +80,8 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "smb-password", false);
         TestHelpers.VerifyCommandOption(command.Options, "smb-domain", false);
         TestHelpers.VerifyCommandOption(command.Options, "wait", false, true);
-        TestHelpers.VerifyCommandOption(_command.Options, "queue-only", false);
+        TestHelpers.VerifyCommandOption(command.Options, "queue-only", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-repo-visibility", false);
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);

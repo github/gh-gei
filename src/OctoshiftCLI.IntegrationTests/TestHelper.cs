@@ -141,10 +141,10 @@ namespace OctoshiftCLI.IntegrationTests
             foreach (var repo in githubRepos)
             {
                 _output.WriteLine($"Deleting migration log for repo: {githubOrg}\\{repo}");
-                DeleteMigrationLog(githubOrg, repo);
+                DeleteMigrationLog(githubOrg, repo.Name);
 
                 _output.WriteLine($"Deleting GitHub repo: {githubOrg}\\{repo}...");
-                await _githubApi.DeleteRepo(githubOrg, repo);
+                await _githubApi.DeleteRepo(githubOrg, repo.Name);
             }
 
             var githubTeams = await GetTeamSlugs(githubOrg);
@@ -592,7 +592,7 @@ steps:
         {
             _output.WriteLine("Checking that the repos in GitHub exist...");
             var repos = await _githubApi.GetRepos(githubOrg);
-            repos.Should().Contain(repo);
+            repos.Select(x => x.Name).Should().Contain(repo);
         }
 
         public async Task AssertGithubRepoInitialized(string githubOrg, string repo)
@@ -693,9 +693,11 @@ steps:
         {
             _output.WriteLine("Checking that the migration log was downloaded...");
 
-            var migrationLogFile = Path.Join(GetOsDistPath(), $"migration-log-{githubOrg}-{repo}.log");
+            var logFiles = new DirectoryInfo(GetOsDistPath()).GetFiles("*.log");
 
-            File.Exists(migrationLogFile).Should().BeTrue();
+            var matchingLogFiles = logFiles.Where(fi => fi.Name.StartsWith($"migration-log-{githubOrg}-{repo}-") && fi.Name.EndsWith(".log"));
+
+            matchingLogFiles.Any().Should().BeTrue();
         }
 
         public void AssertNoErrorInLogs(DateTime after)

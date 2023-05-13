@@ -128,6 +128,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 args.GitArchiveUrl,
                 args.MetadataArchiveUrl,
                 args.SkipReleases,
+                args.TargetRepoVisibility,
                 args.GhesApiUrl.IsNullOrWhiteSpace() && args.LockSourceRepo);
         }
         catch (OctoshiftCliException ex)
@@ -373,6 +374,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation("QUEUE ONLY: true");
         }
 
+        if (args.TargetRepoVisibility.HasValue())
+        {
+            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
+        }
+
         if (args.GithubSourcePat.HasValue())
         {
             _log.LogInformation("GITHUB SOURCE PAT: ***");
@@ -521,9 +527,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (!cloudCredentialsRequired)
             {
-                if (shouldUseAzureStorage || shouldUseAwsS3)
+                if (shouldUseAzureStorage)
                 {
-                    _log.LogInformation("GHES version is 3.8.0 or later, no need to set cloud storage options here, please set in GHES admin UI.");
+                    _log.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                }
+
+                if (shouldUseAwsS3)
+                {
+                    _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
                 }
 
                 if (args.KeepArchive)

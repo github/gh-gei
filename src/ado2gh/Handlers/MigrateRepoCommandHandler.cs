@@ -43,6 +43,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation("QUEUE ONLY: true");
         }
+        if (args.TargetRepoVisibility.HasValue())
+        {
+            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
+        }
         if (args.AdoPat is not null)
         {
             _log.LogInformation("ADO PAT: ***");
@@ -82,7 +86,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat);
+            migrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat, targetRepoVisibility: args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex)
         {

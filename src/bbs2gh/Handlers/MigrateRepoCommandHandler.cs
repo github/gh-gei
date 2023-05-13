@@ -188,11 +188,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Uploading Archive to Azure...");
 
-        var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
-        var archiveName = GenerateArchiveName();
-        var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
-
-        return archiveBlobUrl.ToString();
+#pragma warning disable IDE0063
+        await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
+#pragma warning restore IDE0063
+        {
+            var archiveName = GenerateArchiveName();
+            var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
+            return archiveBlobUrl.ToString();
+        }
     }
 
     private string GenerateArchiveName() => $"{Guid.NewGuid()}.tar";
@@ -221,7 +224,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl);
+            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -358,6 +361,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.QueueOnly)
         {
             _log.LogInformation("QUEUE ONLY: true");
+        }
+
+        if (args.TargetRepoVisibility.HasValue())
+        {
+            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
         }
 
         if (args.BbsSharedHome.HasValue())
