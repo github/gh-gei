@@ -18,13 +18,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
 
         public override void Validate(OctoLogger log)
         {
-            if (GithubTargetPat.HasValue())
+            if (GithubTargetPat.HasValue() && GithubSourcePat.IsNullOrWhiteSpace())
             {
-                if (GithubSourcePat.IsNullOrWhiteSpace())
-                {
-                    GithubSourcePat = GithubTargetPat;
-                    log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-                }
+                GithubSourcePat = GithubTargetPat;
+                log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
             }
 
             if (Wait)
