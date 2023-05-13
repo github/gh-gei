@@ -41,7 +41,7 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
 
     public virtual Option<string> MigrationLogFile { get; } = new("--migration-log-file")
     {
-        Description = "Local file to write migration log to (default: migration-log-ORG-REPO.log)."
+        Description = "Local file to write migration log to (default: migration-log-ORG-REPO-MIGRATION_ID.log)."
     };
 
     public virtual Option<bool> Overwrite { get; } = new("--overwrite")
