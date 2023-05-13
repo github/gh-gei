@@ -77,7 +77,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
             _command.BuildHandler(args, _serviceProvider);
 
             // Assert
-            _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+            _mockAdoApiFactory.Verify(m => m.Create(null, adoPat));
         }
     }
 }

@@ -30,4 +30,9 @@ public class AdoApiFactory
         var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, _retryPolicy, personalAccessToken);
         return new AdoApi(adoClient, adoServerUrl, _octoLogger);
     }
+
+    public virtual AdoApi Create(string personalAccessToken)
+    {
+        return Create(null, personalAccessToken);
+    }
 }
