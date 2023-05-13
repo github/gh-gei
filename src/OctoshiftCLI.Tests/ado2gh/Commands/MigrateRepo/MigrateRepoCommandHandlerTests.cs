@@ -219,61 +219,6 @@ public class MigrateRepoCommandHandlerTests
     }
 
     [Fact]
-    public async Task Validates_Wait_And_QueueOnly_Not_Passed_Together()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            Wait = true,
-            QueueOnly = true,
-        };
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowExactlyAsync<OctoshiftCliException>()
-                           .WithMessage("*wait*");
-    }
-
-    [Fact]
-    public async Task Wait_Flag_Shows_Warning()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            Wait = true,
-        };
-
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowAsync<Exception>();
-
-        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
-    }
-
-    [Fact]
-    public async Task No_Wait_And_No_Queue_Only_Flags_Shows_Warning()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-        };
-
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowAsync<Exception>();
-
-        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
-    }
-
-    [Fact]
     public async Task Sets_Target_Repo_Visibility_When_Specified()
     {
         // Arrange
