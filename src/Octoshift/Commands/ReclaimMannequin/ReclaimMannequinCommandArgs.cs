@@ -1,4 +1,6 @@
-﻿namespace OctoshiftCLI.Commands.ReclaimMannequin;
+﻿using OctoshiftCLI.Services;
+
+namespace OctoshiftCLI.Commands.ReclaimMannequin;
 
 public class ReclaimMannequinCommandArgs : CommandArgs
 {
@@ -10,4 +12,12 @@ public class ReclaimMannequinCommandArgs : CommandArgs
     public bool Force { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        if (string.IsNullOrEmpty(Csv) && (string.IsNullOrEmpty(MannequinUser) || string.IsNullOrEmpty(TargetUser)))
+        {
+            throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
+        }
+    }
 }
