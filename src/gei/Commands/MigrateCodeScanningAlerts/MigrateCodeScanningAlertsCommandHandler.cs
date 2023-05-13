@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateCodeScanningAlerts;
@@ -24,7 +23,7 @@ public class MigrateCodeScanningAlertsCommandHandler : ICommandHandler<MigrateCo
             throw new ArgumentNullException(nameof(args));
         }
 
-        ValidateOptions(args);
+        _log.LogInformation("Migrating Repo Code Scanning Alerts...");
 
         await _codeScanningAlertService.MigrateCodeScanningAlerts(
             args.SourceOrg,
@@ -36,18 +35,6 @@ public class MigrateCodeScanningAlertsCommandHandler : ICommandHandler<MigrateCo
         if (!args.DryRun)
         {
             _log.LogSuccess($"Code scanning alerts successfully migrated.");
-        }
-    }
-
-
-    private void ValidateOptions(MigrateCodeScanningAlertsCommandArgs args)
-    {
-        _log.LogInformation("Migrating Repo Code Scanning Alerts...");
-
-        if (args.SourceRepo.HasValue() && args.TargetRepo.IsNullOrWhiteSpace())
-        {
-            args.TargetRepo = args.SourceRepo;
-            _log.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo.");
         }
     }
 }
