@@ -29,6 +29,7 @@ public class MigrateRepoCommandHandlerTests
     private readonly string MIGRATION_SOURCE_ID = Guid.NewGuid().ToString();
     private readonly string MIGRATION_ID = Guid.NewGuid().ToString();
     private readonly string GITHUB_TOKEN = Guid.NewGuid().ToString();
+    private readonly string ADO_SERVER_URL = "https://ado.contoso.com";
 
     public MigrateRepoCommandHandlerTests()
     {
@@ -100,6 +101,54 @@ public class MigrateRepoCommandHandlerTests
         actualLogOutput.Should().Equal(expectedLogOutput);
 
         _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Ado_Server_Migration()
+    {
+        var repoUrl = $"{ADO_SERVER_URL}/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}";
+
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, ADO_SERVER_URL).Result).Returns(MIGRATION_SOURCE_ID);
+        _mockGithubApi
+            .Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                ADO_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                ADO_TOKEN,
+                GITHUB_TOKEN,
+                null,
+                null,
+                false,
+                null,
+                false).Result)
+            .Returns(MIGRATION_ID);
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
+
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+            AdoServerUrl = ADO_SERVER_URL,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, repoUrl, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
     }
 
     [Fact]
