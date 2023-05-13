@@ -1,5 +1,8 @@
 ﻿using System.IO;
+using System.Linq;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 {
@@ -24,5 +27,35 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         [Secret]
         public string AdoPat { get; set; }
         public bool KeepArchive { get; set; }
+
+        public override void Validate(OctoLogger log)
+        {
+            var hasAdoSpecificArg = new[] { AdoPat, AdoServerUrl, AdoSourceOrg, AdoTeamProject }.Any(arg => arg.HasValue());
+
+            if (hasAdoSpecificArg)
+            {
+                log?.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
+            }
+
+            if (GithubSourceOrg.IsNullOrWhiteSpace() && AdoSourceOrg.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
+            }
+
+            if (AdoServerUrl.HasValue() && !AdoSourceOrg.HasValue())
+            {
+                throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
+            }
+
+            if (AwsBucketName.HasValue() && GhesApiUrl.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+            }
+
+            if (NoSslVerify && GhesApiUrl.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
+        }
     }
 }
