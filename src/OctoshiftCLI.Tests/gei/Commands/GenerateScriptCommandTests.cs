@@ -15,7 +15,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new();
-        private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<GhesVersionCheckerFactory> _mockGhesVersionCheckerFactory = TestHelpers.CreateMock<GhesVersionCheckerFactory>();
 
         private readonly ServiceProvider _serviceProvider;
@@ -29,7 +28,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 .AddSingleton(_mockEnvironmentVariableProvider.Object)
                 .AddSingleton(_mockGithubApiFactory.Object)
                 .AddSingleton(_mockVersionProvider.Object)
-                .AddSingleton(_mockAdoApiFactory.Object)
                 .AddSingleton(_mockGhesVersionCheckerFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
@@ -41,12 +39,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(18);
+            command.Options.Count.Should().Be(14);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
@@ -56,7 +51,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             TestHelpers.VerifyCommandOption(command.Options, "output", false);
             TestHelpers.VerifyCommandOption(command.Options, "sequential", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
@@ -79,19 +73,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         }
 
         [Fact]
-        public void Creates_AdoApi_With_Server_Url()
-        {
-            var args = new GenerateScriptCommandArgs
-            {
-                AdoServerUrl = "https://ado.contoso.com",
-            };
-
-            _ = _command.BuildHandler(args, _serviceProvider);
-
-            _mockAdoApiFactory.Verify(m => m.Create(args.AdoServerUrl, It.IsAny<string>()), Times.Once);
-        }
-
-        [Fact]
         public void It_Uses_Github_Source_Pat_When_Provided()
         {
             var args = new GenerateScriptCommandArgs
@@ -103,20 +84,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _ = _command.BuildHandler(args, _serviceProvider);
 
             _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.GithubSourcePat), Times.Once);
-        }
-
-        [Fact]
-        public void It_Uses_Ado_Pat_When_Provided()
-        {
-            var args = new GenerateScriptCommandArgs
-            {
-                AdoSourceOrg = "foo",
-                AdoPat = "1234",
-            };
-
-            _ = _command.BuildHandler(args, _serviceProvider);
-
-            _mockAdoApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.AdoPat), Times.Once);
         }
     }
 }

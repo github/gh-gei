@@ -61,7 +61,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.AdoPat);
         _log.RegisterSecret(args.GithubSourcePat);
         _log.RegisterSecret(args.GithubTargetPat);
         _log.RegisterSecret(args.AzureStorageConnectionString);
@@ -110,9 +109,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var sourceRepoUrl = GetSourceRepoUrl(args);
         var sourceToken = GetSourceToken(args);
         var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
-        var migrationSourceId = args.GithubSourceOrg.HasValue()
-            ? await _targetGithubApi.CreateGhecMigrationSource(githubOrgId)
-            : await _targetGithubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
+        var migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
 
         string migrationId;
 
@@ -168,15 +165,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
     }
 
-    private string GetSourceToken(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken()
-            : args.AdoPat ?? _environmentVariableProvider.AdoPersonalAccessToken();
+    private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null)
-            : GetAdoRepoUrl(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
+    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null);
 
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {
@@ -323,37 +314,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
-    private string GetAdoRepoUrl(string serverUrl, string org, string project, string repo)
-    {
-        serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
-        return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
-    }
-
     private void LogOptions(MigrateRepoCommandArgs args)
     {
         _log.LogInformation("Migrating Repo...");
 
-        var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
-        if (hasAdoSpecificArg)
-        {
-            _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
-        }
-
         if (args.GithubSourceOrg.HasValue())
         {
             _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
         }
         _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
         _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
@@ -387,11 +354,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         if (args.GithubTargetPat.HasValue())
         {
             _log.LogInformation("GITHUB TARGET PAT: ***");
-        }
-
-        if (args.AdoPat.HasValue())
-        {
-            _log.LogInformation("ADO PAT: ***");
         }
 
         if (args.GhesApiUrl.HasValue())
@@ -471,21 +433,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             args.GithubSourcePat = args.GithubTargetPat;
             _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-        }
-
-        if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
-        }
-
-        if (args.AdoServerUrl.HasValue() && args.AdoSourceOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
-        }
-
-        if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.HasValue() && args.AdoTeamProject.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
         }
 
         if (args.TargetRepo.IsNullOrWhiteSpace())
