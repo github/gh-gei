@@ -9,5 +9,6 @@ public class ReclaimMannequinCommandArgs
     public string TargetUser { get; set; }
     public bool Force { get; set; }
     public string GithubPat { get; set; }
+    public bool SkipInvitation { get; set; }
     public bool Verbose { get; set; }
 }
