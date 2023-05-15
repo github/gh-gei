@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine;
-using OctoshiftCLI.Handlers;
 
 namespace OctoshiftCLI.Commands;
 
