@@ -176,11 +176,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Uploading Archive to Azure...");
 
-        var archiveData = await _fileSystemProvider.ReadAllBytesAsync(archivePath);
-        var archiveName = GenerateArchiveName();
-        var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
-
-        return archiveBlobUrl.ToString();
+#pragma warning disable IDE0063
+        await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
+#pragma warning restore IDE0063
+        {
+            var archiveName = GenerateArchiveName();
+            var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
+            return archiveBlobUrl.ToString();
+        }
     }
 
     private string GenerateArchiveName() => $"{Guid.NewGuid()}.tar";
