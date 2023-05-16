@@ -13,8 +13,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
-    private const string REPO_MIGRATION_ID_PREFIX = "RM_";
-    private const string ORG_MIGRATION_ID_PREFIX = "OM_";
+
 
     public WaitForMigrationCommandHandler(OctoLogger log, GithubApi githubApi)
     {
@@ -29,39 +28,21 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.GithubPat);
-
-        if (args.MigrationId is null)
+        if (args.MigrationId.StartsWith(WaitForMigrationCommandArgs.REPO_MIGRATION_ID_PREFIX))
         {
-            throw new ArgumentNullException(nameof(args), "MigrationId cannot be null");
-        }
-
-        if (!args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX) && !args.MigrationId.StartsWith(ORG_MIGRATION_ID_PREFIX))
-        {
-            throw new OctoshiftCliException($"Invalid migration id: {args.MigrationId}");
-        }
-
-        if (args.MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
-        {
-            await WaitForRepositoryMigration(args.MigrationId, args.GithubPat, _githubApi);
+            await WaitForRepositoryMigration(args.MigrationId, _githubApi);
         }
         else
         {
-            await WaitForOrgMigration(args.MigrationId, args.GithubPat, _githubApi);
+            await WaitForOrgMigration(args.MigrationId, _githubApi);
         }
     }
 
-    private async Task WaitForOrgMigration(string migrationId, string githubPat, GithubApi githubApi)
+    private async Task WaitForOrgMigration(string migrationId, GithubApi githubApi)
     {
         var (state, sourceOrgUrl, targetOrgName, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await githubApi.GetOrganizationMigration(migrationId);
 
         _log.LogInformation($"Waiting for {sourceOrgUrl} -> {targetOrgName} migration (ID: {migrationId}) to finish...");
-
-        if (githubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
 
         while (true)
         {
@@ -92,16 +73,11 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
         }
     }
 
-    private async Task WaitForRepositoryMigration(string migrationId, string githubPat, GithubApi githubApi)
+    private async Task WaitForRepositoryMigration(string migrationId, GithubApi githubApi)
     {
         var (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
 
         _log.LogInformation($"Waiting for {repositoryName} migration (ID: {migrationId}) to finish...");
-
-        if (githubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
 
         while (true)
         {

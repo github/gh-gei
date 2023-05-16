@@ -25,19 +25,7 @@ public class ConfigureAutoLinkCommandHandler : ICommandHandler<ConfigureAutoLink
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Configuring Autolink Reference...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.GithubPat);
 
         var keyPrefix = "AB#";
         var urlTemplate = $"https://dev.azure.com/{args.AdoOrg.EscapeDataString()}/{args.AdoTeamProject.EscapeDataString()}/_workitems/edit/<num>/";

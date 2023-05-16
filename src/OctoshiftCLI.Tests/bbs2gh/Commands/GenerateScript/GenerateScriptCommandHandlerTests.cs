@@ -666,22 +666,6 @@ function Exec {
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
     }
 
-    [Fact]
-    public async Task It_Throws_If_BbsServer_Url_Is_Not_Provided_But_No_Ssl_Verify_Is_Provided()
-    {
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            NoSslVerify = true
-        };
-
-        // Assert
-        await _handler.Invoking(x => x.Handle(args))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage("*--no-ssl-verify*--bbs-server-url*");
-    }
-
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
     {
         var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();

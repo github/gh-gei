@@ -259,29 +259,5 @@ public class WaitForMigrationCommandHandlerTests
 
         _mockGithubApi.VerifyNoOtherCalls();
     }
-
-    [Fact]
-    public async Task With_Invalid_Migration_ID_Prefix_Throws_Exception()
-    {
-        // Arrange
-        var actualLogOutput = new List<string>();
-        _mockOctoLogger.Setup(m => m.LogError(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-        var invalidId = "SomeId";
-
-        // Act
-        var args = new WaitForMigrationCommandArgs
-        {
-            MigrationId = invalidId,
-        };
-        await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should()
-            .ThrowAsync<OctoshiftCliException>()
-            .WithMessage($"Invalid migration id: {invalidId}");
-
-        // Assert
-        _mockGithubApi.VerifyNoOtherCalls();
-    }
 }
 

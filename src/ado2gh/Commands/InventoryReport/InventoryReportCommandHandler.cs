@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport;
@@ -42,26 +41,7 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Creating inventory report...");
-
-        if (args.AdoOrg.HasValue())
-        {
-            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        }
-
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        if (args.Minimal)
-        {
-            _log.LogInformation("MINIMAL: true");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
 
         _adoInspectorService.OrgFilter = args.AdoOrg;
 

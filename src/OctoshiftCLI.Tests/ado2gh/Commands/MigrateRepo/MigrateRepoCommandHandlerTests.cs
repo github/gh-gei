@@ -70,12 +70,6 @@ public class MigrateRepoCommandHandlerTests
         var expectedLogOutput = new List<string>
         {
             "Migrating Repo...",
-            $"ADO ORG: {ADO_ORG}",
-            $"ADO TEAM PROJECT: {ADO_TEAM_PROJECT}",
-            $"ADO REPO: {ADO_REPO}",
-            $"GITHUB ORG: {GITHUB_ORG}",
-            $"GITHUB REPO: {GITHUB_REPO}",
-            "QUEUE ONLY: true",
             $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
         };
 
@@ -96,7 +90,7 @@ public class MigrateRepoCommandHandlerTests
         _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
         _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
 
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
         actualLogOutput.Should().Equal(expectedLogOutput);
 
         _mockGithubApi.VerifyNoOtherCalls();
@@ -251,61 +245,6 @@ public class MigrateRepoCommandHandlerTests
         _mockGithubApi.Verify(x => x.StartMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ADO_TOKEN, GITHUB_TOKEN, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>()));
         _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()));
         _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()));
-    }
-
-    [Fact]
-    public async Task Validates_Wait_And_QueueOnly_Not_Passed_Together()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            Wait = true,
-            QueueOnly = true,
-        };
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowExactlyAsync<OctoshiftCliException>()
-                           .WithMessage("*wait*");
-    }
-
-    [Fact]
-    public async Task Wait_Flag_Shows_Warning()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-            Wait = true,
-        };
-
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowAsync<Exception>();
-
-        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
-    }
-
-    [Fact]
-    public async Task No_Wait_And_No_Queue_Only_Flags_Shows_Warning()
-    {
-        var args = new MigrateRepoCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoRepo = ADO_REPO,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-        };
-
-        await FluentActions.Invoking(async () => await _handler.Handle(args))
-                           .Should()
-                           .ThrowAsync<Exception>();
-
-        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
     }
 
     [Fact]

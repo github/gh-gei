@@ -23,18 +23,7 @@ public class ShareServiceConnectionCommandHandler : ICommandHandler<ShareService
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Sharing Service Connection...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"SERVICE CONNECTION ID: {args.ServiceConnectionId}");
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
 
         var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
 
