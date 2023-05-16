@@ -752,12 +752,12 @@ public class GithubApi
         return data.ToObject<CreateAttributionInvitationResult>();
     }
 
-    public virtual async Task<MannequinReclaimResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
-        var mutation = "";
+        var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
         var gql = @"
-	            ReattributeMannequinToUser(
+	            reattributeMannequinToUser(
 		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
 	            ) {
 		            source {
@@ -784,7 +784,7 @@ public class GithubApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
-        return data.ToObject<MannequinReclaimResult>();
+        return data.ToObject<ReattributeMannequinToUserResult>();
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)

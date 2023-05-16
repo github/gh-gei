@@ -1,15 +1,15 @@
 ﻿namespace Octoshift.Models
 {
-    public class MannequinReclaimResult : GraphqlResult<ReattributeMannequinToUserInputData>
+    public class ReattributeMannequinToUserResult : GraphqlResult<ReattributeMannequinToUserData>
     {
     }
 
-    public class ReattributeMannequinToUserInputData
+    public class ReattributeMannequinToUserData
     {
-        public ReattributeMannequinToUserInput ReattributeMannequinToUserInput { get; set; }
+        public ReattributeMannequinToUser ReattributeMannequinToUser { get; set; }
     }
 
-    public class ReattributeMannequinToUserInput
+    public class ReattributeMannequinToUser
     {
         public UserInfo Source { get; set; }
         public UserInfo Target { get; set; }

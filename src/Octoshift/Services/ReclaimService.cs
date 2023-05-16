@@ -111,7 +111,7 @@ public class ReclaimService
 
         if (!success)
         {
-            throw new OctoshiftCliException("Failed to reclaim mannequin(s).");
+            throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
         }
     }
 
@@ -200,7 +200,7 @@ public class ReclaimService
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
             return false;
         }
 
@@ -208,7 +208,7 @@ public class ReclaimService
             result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
             result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             return false;
         }
 
@@ -217,7 +217,7 @@ public class ReclaimService
         return true;
     }
 
-    private bool HandleReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, MannequinReclaimResult result)
+    private bool HandleReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, ReattributeMannequinToUserResult result)
     {
         if (result.Errors != null)
         {
@@ -225,10 +225,11 @@ public class ReclaimService
             return false;
         }
 
-        if (result.Data.ReattributeMannequinToUserInput is null ||
-            result.Data.ReattributeMannequinToUserInput.Source.Id != mannequin.Id ||
-            result.Data.ReattributeMannequinToUserInput.Target.Id != targetUserId)
+        if (result.Data.ReattributeMannequinToUser is null ||
+            result.Data.ReattributeMannequinToUser.Source.Id != mannequin.Id ||
+            result.Data.ReattributeMannequinToUser.Target.Id != targetUserId)
         {
+
             _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             return false;
         }

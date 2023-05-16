@@ -463,11 +463,11 @@ public class ReclaimServiceTests
             new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
         };
 
-        var reclaimMannequinResponse = new MannequinReclaimResult()
+        var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
         {
-            Data = new ReattributeMannequinToUserInputData()
+            Data = new ReattributeMannequinToUserData()
             {
-                ReattributeMannequinToUserInput = new ReattributeMannequinToUserInput()
+                ReattributeMannequinToUser = new ReattributeMannequinToUser()
                 {
                     Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
                     Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
