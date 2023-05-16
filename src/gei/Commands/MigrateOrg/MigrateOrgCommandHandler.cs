@@ -27,7 +27,7 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        ValidateOptions(args);
+        _log.LogInformation("Migrating Org...");
 
         var githubEnterpriseId = await _githubApi.GetEnterpriseId(args.GithubTargetEnterprise);
         var sourceOrgUrl = GetGithubOrgUrl(args.GithubSourceOrg, null);
@@ -75,33 +75,4 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
         args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
     private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}";
-
-    private void ValidateOptions(MigrateOrgCommandArgs args)
-    {
-        _log.LogInformation("Migrating Org...");
-
-        if (args.GithubTargetPat.HasValue())
-        {
-            if (args.GithubSourcePat.IsNullOrWhiteSpace())
-            {
-                args.GithubSourcePat = args.GithubTargetPat;
-                _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-            }
-        }
-
-        if (args.Wait)
-        {
-            _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-        }
-
-        if (args.Wait && args.QueueOnly)
-        {
-            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-        }
-
-        if (!args.Wait && !args.QueueOnly)
-        {
-            _log.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
-        }
-    }
 }

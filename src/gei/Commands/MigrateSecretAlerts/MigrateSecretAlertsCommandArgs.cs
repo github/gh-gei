@@ -1,4 +1,6 @@
 ﻿using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateSecretAlerts;
 
@@ -16,4 +18,13 @@ public class MigrateSecretAlertsCommandArgs : CommandArgs
     public string GithubSourcePat { get; set; }
     [Secret]
     public string GithubTargetPat { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        if (SourceRepo.HasValue() && TargetRepo.IsNullOrWhiteSpace())
+        {
+            TargetRepo = SourceRepo;
+            log?.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo.");
+        }
+    }
 }

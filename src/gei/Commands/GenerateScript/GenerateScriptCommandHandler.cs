@@ -47,14 +47,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
-        var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
-        if (hasAdoSpecificArg)
-        {
-            _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
-        }
-
-        ValidateArgs(args);
-
         var script = args.GithubSourceOrg.IsNullOrWhiteSpace() ?
             await InvokeAdo(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.GithubTargetOrg, args.Sequential, args.DownloadMigrationLogs) :
             await InvokeGithub(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive);
@@ -62,29 +54,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         if (script.HasValue() && args.Output.HasValue())
         {
             await WriteToFile(args.Output.FullName, script);
-        }
-    }
-
-    private void ValidateArgs(GenerateScriptCommandArgs args)
-    {
-        if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
-        }
-
-        if (args.AdoServerUrl.HasValue() && !args.AdoSourceOrg.HasValue())
-        {
-            throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
-        }
-
-        if (args.AwsBucketName.HasValue() && args.GhesApiUrl.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
-        }
-
-        if (args.NoSslVerify && args.GhesApiUrl.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
         }
     }
 
