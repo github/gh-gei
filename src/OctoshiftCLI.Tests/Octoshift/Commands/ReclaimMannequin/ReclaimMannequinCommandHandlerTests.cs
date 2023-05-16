@@ -28,15 +28,6 @@ public class ReclaimMannequinCommandHandlerTests
     }
 
     [Fact]
-    public async Task No_Parameters_Provided_Throws_OctoshiftCliException()
-    {
-        var args = new ReclaimMannequinCommandArgs { GithubOrg = GITHUB_ORG };
-        await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should().ThrowAsync<OctoshiftCliException>();
-    }
-
-    [Fact]
     public async Task CSV_CSVFileDoesNotExist_OctoshiftCliException()
     {
         _handler.FileExists = _ => false;

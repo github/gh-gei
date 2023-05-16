@@ -27,11 +27,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             throw new ArgumentNullException(nameof(args));
         }
 
-        if (string.IsNullOrEmpty(args.Csv) && (string.IsNullOrEmpty(args.MannequinUser) || string.IsNullOrEmpty(args.TargetUser)))
-        {
-            throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
-        }
-
         if (!string.IsNullOrEmpty(args.Csv))
         {
             _log.LogInformation("Reclaiming Mannequins with CSV...");

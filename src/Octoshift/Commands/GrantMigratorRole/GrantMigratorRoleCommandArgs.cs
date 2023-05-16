@@ -1,4 +1,6 @@
-﻿namespace OctoshiftCLI.Commands.GrantMigratorRole;
+﻿using OctoshiftCLI.Services;
+
+namespace OctoshiftCLI.Commands.GrantMigratorRole;
 
 public class GrantMigratorRoleCommandArgs : CommandArgs
 {
@@ -8,4 +10,18 @@ public class GrantMigratorRoleCommandArgs : CommandArgs
     [Secret]
     public string GithubPat { get; set; }
     public string GhesApiUrl { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        ActorType = ActorType?.ToUpper();
+
+        if (ActorType is "TEAM" or "USER")
+        {
+            log?.LogInformation("Actor type is valid...");
+        }
+        else
+        {
+            throw new OctoshiftCliException("Actor type must be either TEAM or USER.");
+        }
+    }
 }
