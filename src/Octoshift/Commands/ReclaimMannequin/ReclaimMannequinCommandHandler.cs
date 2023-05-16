@@ -29,25 +29,9 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
-        _log.RegisterSecret(args.GithubPat);
-
-        if (string.IsNullOrEmpty(args.Csv) && (string.IsNullOrEmpty(args.MannequinUser) || string.IsNullOrEmpty(args.TargetUser)))
-        {
-            throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
-        }
-
         if (!string.IsNullOrEmpty(args.Csv))
         {
             _log.LogInformation("Reclaiming Mannequins with CSV...");
-
-            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-            _log.LogInformation($"FILE: {args.Csv}");
-            if (args.Force)
-            {
-                _log.LogInformation("MAPPING RECLAIMED");
-            }
 
             if (!FileExists(args.Csv))
             {
@@ -70,18 +54,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             }
 
             _log.LogInformation("Reclaiming Mannequin...");
-
-            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-            _log.LogInformation($"MANNEQUIN: {args.MannequinUser}");
-            if (args.MannequinId != null)
-            {
-                _log.LogInformation($"MANNEQUIN ID: {args.MannequinId}");
-            }
-            _log.LogInformation($"RECLAIMING USER: {args.TargetUser}");
-            if (args.GithubPat is not null)
-            {
-                _log.LogInformation($"GITHUB PAT: ***");
-            }
 
             await _reclaimService.ReclaimMannequin(args.MannequinUser, args.MannequinId, args.TargetUser, args.GithubOrg, args.Force);
         }

@@ -23,21 +23,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"ADO PIPELINE: {args.AdoPipeline}");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        _log.LogInformation($"SERVICE CONNECTION ID: {args.ServiceConnectionId}");
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
 
         var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
         var (defaultBranch, clean, checkoutSubmodules) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);

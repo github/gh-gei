@@ -36,13 +36,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Generating Script...");
-
-        LogOptions(args);
-
-        _log.RegisterSecret(args.AdoPat);
 
         _generateScriptOptions = new GenerateScriptOptions
         {
@@ -414,66 +408,6 @@ if ($Failed -ne 0) {
     private string Wrap(string script, string outerCommand = "") =>
         script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
 
-    private void LogOptions(GenerateScriptCommandArgs args)
-    {
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        if (args.AdoOrg.HasValue())
-        {
-            _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        }
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        }
-        if (args.DownloadMigrationLogs)
-        {
-            _log.LogInformation("DOWNLOAD MIGRATION LOGS: true");
-        }
-        if (args.Output.HasValue())
-        {
-            _log.LogInformation($"OUTPUT: {args.Output}");
-        }
-        if (args.Sequential)
-        {
-            _log.LogInformation("SEQUENTIAL: true");
-        }
-        if (args.AdoPat.HasValue())
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-        if (args.CreateTeams)
-        {
-            _log.LogInformation("CREATE TEAMS: true");
-        }
-        if (args.LinkIdpGroups)
-        {
-            _log.LogInformation("LINK IDP GROUPS: true");
-        }
-        if (args.LockAdoRepos)
-        {
-            _log.LogInformation("LOCK ADO REPOS: true");
-        }
-        if (args.DisableAdoRepos)
-        {
-            _log.LogInformation("DISABLE ADO REPOS: true");
-        }
-        if (args.IntegrateBoards)
-        {
-            _log.LogInformation("INTEGRATE BOARDS: true");
-        }
-        if (args.RewirePipelines)
-        {
-            _log.LogInformation("REWRITE PIPELINES: true");
-        }
-        if (args.All)
-        {
-            _log.LogInformation("ALL: true");
-        }
-        if (args.RepoList.HasValue())
-        {
-            _log.LogInformation($"REPO LIST: {args.RepoList}");
-        }
-    }
 
     private class GenerateScriptOptions
     {

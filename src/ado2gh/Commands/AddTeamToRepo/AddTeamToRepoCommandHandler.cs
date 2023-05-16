@@ -23,19 +23,7 @@ public class AddTeamToRepoCommandHandler : ICommandHandler<AddTeamToRepoCommandA
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Adding team to repo...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        _log.LogInformation($"TEAM: {args.Team}");
-        _log.LogInformation($"ROLE: {args.Role}");
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.GithubPat);
 
         var teamSlug = await _githubApi.GetTeamSlug(args.GithubOrg, args.Team);
         await _githubApi.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);

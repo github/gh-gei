@@ -27,24 +27,7 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Integrating Azure Boards...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
-        _log.RegisterSecret(args.GithubPat);
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
 

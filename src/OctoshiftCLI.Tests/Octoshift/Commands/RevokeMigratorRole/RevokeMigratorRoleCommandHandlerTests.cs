@@ -40,21 +40,4 @@ public class RevokeMigratorRoleCommandHandlerTests
 
         _mockGithubApi.Verify(x => x.RevokeMigratorRole(githubOrgId, ACTOR, ACTOR_TYPE));
     }
-
-    [Fact]
-    public async Task Invalid_Actor_Type()
-    {
-        var args = new RevokeMigratorRoleCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            Actor = ACTOR,
-            ActorType = "INVALID",
-        };
-        await _handler.Handle(args);
-
-        _mockOctoLogger.Verify(x => x.LogError(It.IsAny<string>()));
-    }
-
-
-
 }

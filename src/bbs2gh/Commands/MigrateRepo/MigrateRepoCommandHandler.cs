@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -48,32 +47,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.RegisterSecret(args.AzureStorageConnectionString);
-        _log.RegisterSecret(args.BbsPassword);
-        _log.RegisterSecret(args.GithubPat);
-        _log.RegisterSecret(args.SmbPassword);
-        _log.RegisterSecret(args.AwsAccessKey);
-        _log.RegisterSecret(args.AwsSecretKey);
-        _log.RegisterSecret(args.AwsSessionToken);
-
-        LogOptions(args);
         ValidateOptions(args);
-
-        _log.Verbose = args.Verbose;
 
         var exportId = 0L;
 
-        if (ShouldGenerateArchive(args))
+        if (args.ShouldGenerateArchive())
         {
             exportId = await GenerateArchive(args);
 
-            if (ShouldDownloadArchive(args))
+            if (args.ShouldDownloadArchive())
             {
                 args.ArchivePath = await DownloadArchive(exportId);
             }
         }
 
-        if (ShouldUploadArchive(args))
+        if (args.ShouldUploadArchive())
         {
             // This is for the case where the CLI is being run on the BBS server itself
             if (args.ArchivePath.IsNullOrWhiteSpace())
@@ -89,14 +77,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             finally
             {
-                if (!args.KeepArchive && ShouldDownloadArchive(args))
+                if (!args.KeepArchive && args.ShouldDownloadArchive())
                 {
                     DeleteArchive(args.ArchivePath);
                 }
             }
         }
 
-        if (ShouldImportArchive(args))
+        if (args.ShouldImportArchive())
         {
             await ImportArchive(args, args.ArchiveUrl);
         }
@@ -127,26 +115,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogWarning($"Couldn't delete the downloaded archive. Error message: \"{ex.Message}\"");
             _log.LogVerbose(ex.ToString());
         }
-    }
-
-    private bool ShouldGenerateArchive(MigrateRepoCommandArgs args)
-    {
-        return args.BbsServerUrl.HasValue();
-    }
-
-    private bool ShouldDownloadArchive(MigrateRepoCommandArgs args)
-    {
-        return args.SshUser.HasValue() || args.SmbUser.HasValue();
-    }
-
-    private bool ShouldUploadArchive(MigrateRepoCommandArgs args)
-    {
-        return args.ArchiveUrl.IsNullOrWhiteSpace() && args.GithubOrg.HasValue();
-    }
-
-    private bool ShouldImportArchive(MigrateRepoCommandArgs args)
-    {
-        return args.ArchiveUrl.HasValue() || args.GithubOrg.HasValue();
     }
 
     private async Task<string> DownloadArchive(long exportId)
@@ -256,290 +224,51 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 
-    private void LogOptions(MigrateRepoCommandArgs args)
-    {
-        _log.LogInformation("Migrating repo...");
+    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
 
-        if (args.BbsServerUrl.HasValue())
-        {
-            _log.LogInformation($"BBS SERVER URL: {args.BbsServerUrl}");
-        }
+    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretAccessKey(false);
 
-        if (args.BbsProject.HasValue())
-        {
-            _log.LogInformation($"BBS PROJECT: {args.BbsProject}");
-        }
+    private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
 
-        if (args.BbsRepo.HasValue())
-        {
-            _log.LogInformation($"BBS REPO: {args.BbsRepo}");
-        }
+    private string GetAwsSessionToken(MigrateRepoCommandArgs args) =>
+        args.AwsSessionToken.HasValue() ? args.AwsSessionToken : _environmentVariableProvider.AwsSessionToken(false);
 
-        if (args.BbsUsername.HasValue())
-        {
-            _log.LogInformation($"BBS USERNAME: {args.BbsUsername}");
-        }
+    private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
+        ? args.AzureStorageConnectionString
+        : _environmentVariableProvider.AzureStorageConnectionString(false);
 
-        if (args.BbsPassword.HasValue())
-        {
-            _log.LogInformation("BBS PASSWORD: ********");
-        }
+    private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
 
-        if (args.ArchiveUrl.HasValue())
-        {
-            _log.LogInformation($"ARCHIVE URL: {args.ArchiveUrl}");
-        }
+    private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 
-        if (args.ArchivePath.HasValue())
-        {
-            _log.LogInformation($"ARCHIVE PATH: {args.ArchivePath}");
-        }
-
-        if (args.AzureStorageConnectionString.HasValue())
-        {
-            _log.LogInformation($"AZURE STORAGE CONNECTION STRING: ********");
-        }
-
-        LogAwsOptions(args);
-
-        if (args.GithubOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        }
-
-        if (args.GithubRepo.HasValue())
-        {
-            _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        }
-
-        if (args.SshUser.HasValue())
-        {
-            _log.LogInformation($"ARCHIVE DOWNLOAD HOST: {args.ArchiveDownloadHost}");
-        }
-
-        if (args.SshUser.HasValue())
-        {
-            _log.LogInformation($"SSH USER: {args.SshUser}");
-        }
-
-        if (args.SshPrivateKey.HasValue())
-        {
-            _log.LogInformation($"SSH PRIVATE KEY: {args.SshPrivateKey}");
-        }
-
-        if (args.SshPort.HasValue())
-        {
-            _log.LogInformation($"SSH PORT: {args.SshPort}");
-        }
-
-        if (args.SmbUser.HasValue())
-        {
-            _log.LogInformation($"SMB USER: {args.SmbUser}");
-        }
-
-        if (args.SmbPassword.HasValue())
-        {
-            _log.LogInformation($"SMB PASSWORD: ********");
-        }
-
-        if (args.SmbDomain.HasValue())
-        {
-            _log.LogInformation($"SMB DOMAIN: {args.SmbDomain}");
-        }
-
-        if (args.GithubPat.HasValue())
-        {
-            _log.LogInformation($"GITHUB PAT: ********");
-        }
-
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
-
-        if (args.QueueOnly)
-        {
-            _log.LogInformation("QUEUE ONLY: true");
-        }
-
-        if (args.TargetRepoVisibility.HasValue())
-        {
-            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
-        }
-
-        if (args.BbsSharedHome.HasValue())
-        {
-            _log.LogInformation($"SHARED HOME: {args.BbsSharedHome}");
-        }
-
-        if (args.KeepArchive)
-        {
-            _log.LogInformation("KEEP ARCHIVE: true");
-        }
-
-        if (args.NoSslVerify)
-        {
-            _log.LogInformation("NO SSL VERIFY: true");
-        }
-    }
-
-    private void LogAwsOptions(MigrateRepoCommandArgs args)
-    {
-        if (args.AwsBucketName.HasValue())
-        {
-            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-        }
-
-        if (args.AwsAccessKey.HasValue())
-        {
-            _log.LogInformation("AWS ACCESS KEY: ********");
-        }
-
-        if (args.AwsSecretKey.HasValue())
-        {
-            _log.LogInformation("AWS SECRET KEY: ********");
-        }
-
-        if (args.AwsSessionToken.HasValue())
-        {
-            _log.LogInformation("AWS SESSION TOKEN: ********");
-        }
-
-        if (args.AwsRegion.HasValue())
-        {
-            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
-        }
-    }
+    private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
-        if (!args.BbsServerUrl.HasValue() && !args.ArchiveUrl.HasValue() && !args.ArchivePath.HasValue())
+        if (args.ShouldGenerateArchive())
         {
-            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
-        }
-
-        if (args.BbsServerUrl.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
-        }
-
-        if (args.BbsServerUrl.HasValue() && args.ArchivePath.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-path can be specified.");
-        }
-
-        if (args.ArchivePath.HasValue() && args.ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
-        }
-
-        if (ShouldGenerateArchive(args))
-        {
-            ValidateGenerateOptions(args);
-            ValidateDownloadOptions(args);
-        }
-        else
-        {
-            if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
+            if (!args.Kerberos)
             {
-                throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
+                if (GetBbsUsername(args).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
+                }
+
+                if (GetBbsPassword(args).IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
+                }
             }
 
-            if (args.NoSslVerify)
+            if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
             {
-                throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
-            }
-
-            if (args.BbsProject.HasValue() || args.BbsRepo.HasValue())
-            {
-                throw new OctoshiftCliException("--bbs-project and --bbs-repo can only be provided with --bbs-server-url.");
-            }
-
-            if (new[] { args.SshUser, args.SshPrivateKey, args.ArchiveDownloadHost, args.SmbUser, args.SmbPassword, args.SmbDomain }.Any(obj => obj.HasValue()))
-            {
-                throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
+                throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
             }
         }
 
-        if (ShouldUploadArchive(args))
+        if (args.ShouldUploadArchive())
         {
             ValidateUploadOptions(args);
-        }
-
-        if (ShouldImportArchive(args))
-        {
-            ValidateImportOptions(args);
-        }
-
-        if (args.Wait)
-        {
-            _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-        }
-
-        if (args.Wait && args.QueueOnly)
-        {
-            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-        }
-
-        if (!args.Wait && !args.QueueOnly)
-        {
-            _log.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
-        }
-    }
-
-    private void ValidateGenerateOptions(MigrateRepoCommandArgs args)
-    {
-        if (args.Kerberos)
-        {
-            if (args.BbsUsername.HasValue() || args.BbsPassword.HasValue())
-            {
-                throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
-            }
-        }
-        else
-        {
-            if (GetBbsUsername(args).IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
-            }
-
-            if (GetBbsPassword(args).IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");
-            }
-        }
-
-        if (args.BbsProject.IsNullOrWhiteSpace() || args.BbsRepo.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Both --bbs-project and --bbs-repo must be provided.");
-        }
-    }
-
-    private void ValidateDownloadOptions(MigrateRepoCommandArgs args)
-    {
-        var sshArgs = new[] { args.SshUser, args.SshPrivateKey };
-        var smbArgs = new[] { args.SmbUser, args.SmbPassword };
-        var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
-        var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());
-
-        if (shouldUseSsh && shouldUseSmb)
-        {
-            throw new OctoshiftCliException("You can't provide both SSH and SMB credentials together.");
-        }
-
-        if (args.SshUser.HasValue() ^ args.SshPrivateKey.HasValue())
-        {
-            throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
-        }
-
-        if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
-        {
-            throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
-        }
-
-        if (args.ArchiveDownloadHost.HasValue() && !shouldUseSsh && !shouldUseSmb)
-        {
-            throw new OctoshiftCliException("--archive-download-host can only be provided if SSH or SMB download options are provided.");
         }
     }
 
@@ -605,41 +334,5 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                                 "but will be required in a future release. Defaulting to us-east-1.");
             }
         }
-        else if (new[] { args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion }.Any(x => x.HasValue()))
-        {
-            throw new OctoshiftCliException("The AWS S3 bucket name must be provided with --aws-bucket-name if other AWS S3 upload options are set.");
-        }
     }
-
-    private void ValidateImportOptions(MigrateRepoCommandArgs args)
-    {
-        if (args.GithubOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--github-org must be provided in order to import the Bitbucket archive.");
-        }
-
-        if (args.GithubRepo.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("--github-repo must be provided in order to import the Bitbucket archive.");
-        }
-    }
-
-    private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
-
-    private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretAccessKey(false);
-
-    private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
-
-    private string GetAwsSessionToken(MigrateRepoCommandArgs args) =>
-        args.AwsSessionToken.HasValue() ? args.AwsSessionToken : _environmentVariableProvider.AwsSessionToken(false);
-
-    private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
-        ? args.AzureStorageConnectionString
-        : _environmentVariableProvider.AzureStorageConnectionString(false);
-
-    private string GetBbsUsername(MigrateRepoCommandArgs args) => args.BbsUsername.HasValue() ? args.BbsUsername : _environmentVariableProvider.BbsUsername(false);
-
-    private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
-
-    private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 }

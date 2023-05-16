@@ -23,18 +23,7 @@ public class LockRepoCommandHandler : ICommandHandler<LockRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Locking repo...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"ADO REPO: {args.AdoRepo}");
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
 
         var teamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
         var repoId = await _adoApi.GetRepoId(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);

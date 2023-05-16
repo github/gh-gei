@@ -27,23 +27,7 @@ public class GenerateMannequinCsvCommandHandler : ICommandHandler<GenerateManneq
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Generating CSV...");
-
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
-        _log.LogInformation($"OUTPUT: {args.Output}");
-        if (args.IncludeReclaimed)
-        {
-            _log.LogInformation($"INCLUDE RECLAIMED: true");
-        }
-
-        _log.RegisterSecret(args.GithubPat);
 
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var mannequins = await _githubApi.GetMannequins(githubOrgId);

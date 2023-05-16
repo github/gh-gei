@@ -1,6 +1,8 @@
-﻿namespace OctoshiftCLI.Commands.ReclaimMannequin;
+﻿using OctoshiftCLI.Services;
 
-public class ReclaimMannequinCommandArgs
+namespace OctoshiftCLI.Commands.ReclaimMannequin;
+
+public class ReclaimMannequinCommandArgs : CommandArgs
 {
     public string GithubOrg { get; set; }
     public string Csv { get; set; }
@@ -8,7 +10,15 @@ public class ReclaimMannequinCommandArgs
     public string MannequinId { get; set; }
     public string TargetUser { get; set; }
     public bool Force { get; set; }
+    [Secret]
     public string GithubPat { get; set; }
     public bool SkipInvitation { get; set; }
-    public bool Verbose { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        if (string.IsNullOrEmpty(Csv) && (string.IsNullOrEmpty(MannequinUser) || string.IsNullOrEmpty(TargetUser)))
+        {
+            throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
+        }
+    }
 }

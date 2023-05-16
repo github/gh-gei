@@ -59,20 +59,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-        _log.RegisterSecret(args.AdoPat);
-        _log.RegisterSecret(args.GithubSourcePat);
-        _log.RegisterSecret(args.GithubTargetPat);
-        _log.RegisterSecret(args.AzureStorageConnectionString);
-        _log.RegisterSecret(args.AwsAccessKey);
-        _log.RegisterSecret(args.AwsSecretKey);
-        _log.RegisterSecret(args.AwsSessionToken);
-
-        LogOptions(args);
+        _log.LogInformation("Migrating Repo...");
 
         var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
 
-        ValidateOptions(args, blobCredentialsRequired);
+        if (args.GhesApiUrl.HasValue())
+        {
+            ValidateGHESOptions(args, blobCredentialsRequired);
+        }
 
         if (args.GhesApiUrl.HasValue())
         {
@@ -328,301 +322,92 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
     }
 
-    private void LogOptions(MigrateRepoCommandArgs args)
-    {
-        _log.LogInformation("Migrating Repo...");
-
-        var hasAdoSpecificArg = new[] { args.AdoPat, args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject }.Any(arg => arg.HasValue());
-        if (hasAdoSpecificArg)
-        {
-            _log.LogWarning("ADO migration feature will be removed from `gh gei` in near future, please consider switching to `gh ado2gh` for ADO migrations instead.");
-        }
-
-        if (args.GithubSourceOrg.HasValue())
-        {
-            _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
-        }
-        if (args.AdoServerUrl.HasValue())
-        {
-            _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
-        }
-        if (args.AdoSourceOrg.HasValue())
-        {
-            _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
-        }
-        if (args.AdoTeamProject.HasValue())
-        {
-            _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        }
-        _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
-        _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
-        _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
-
-        if (args.TargetApiUrl.HasValue())
-        {
-            _log.LogInformation($"TARGET API URL: {args.TargetApiUrl}");
-        }
-
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
-
-        if (args.QueueOnly)
-        {
-            _log.LogInformation("QUEUE ONLY: true");
-        }
-
-        if (args.TargetRepoVisibility.HasValue())
-        {
-            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
-        }
-
-        if (args.GithubSourcePat.HasValue())
-        {
-            _log.LogInformation("GITHUB SOURCE PAT: ***");
-        }
-
-        if (args.GithubTargetPat.HasValue())
-        {
-            _log.LogInformation("GITHUB TARGET PAT: ***");
-        }
-
-        if (args.AdoPat.HasValue())
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        if (args.GhesApiUrl.HasValue())
-        {
-            _log.LogInformation($"GHES API URL: {args.GhesApiUrl}");
-        }
-
-        if (args.AzureStorageConnectionString.HasValue())
-        {
-            _log.LogInformation("AZURE STORAGE CONNECTION STRING: ***");
-        }
-
-        if (args.NoSslVerify)
-        {
-            _log.LogInformation("SSL verification disabled");
-        }
-
-        if (args.SkipReleases)
-        {
-            _log.LogInformation("SKIP RELEASES: true");
-        }
-
-        if (args.GitArchiveUrl.HasValue())
-        {
-            _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
-        }
-
-        if (args.MetadataArchiveUrl.HasValue())
-        {
-            _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
-        }
-
-        if (args.LockSourceRepo)
-        {
-            _log.LogInformation("LOCK SOURCE REPO: true");
-        }
-
-        if (args.KeepArchive)
-        {
-            _log.LogInformation("KEEP ARCHIVE: true");
-        }
-
-        LogAwsOptions(args);
-    }
-
-    private void LogAwsOptions(MigrateRepoCommandArgs args)
-    {
-        if (args.AwsBucketName.HasValue())
-        {
-            _log.LogInformation($"AWS BUCKET NAME: {args.AwsBucketName}");
-        }
-
-        if (args.AwsAccessKey.HasValue())
-        {
-            _log.LogInformation("AWS ACCESS KEY: ***");
-        }
-
-        if (args.AwsSecretKey.HasValue())
-        {
-            _log.LogInformation("AWS SECRET KEY: ***");
-        }
-
-        if (args.AwsSessionToken.HasValue())
-        {
-            _log.LogInformation("AWS SESSION TOKEN: ***");
-        }
-
-        if (args.AwsRegion.HasValue())
-        {
-            _log.LogInformation($"AWS REGION: {args.AwsRegion}");
-        }
-    }
-
-    private void ValidateOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
-    {
-        if (args.GithubTargetPat.HasValue() && args.GithubSourcePat.IsNullOrWhiteSpace())
-        {
-            args.GithubSourcePat = args.GithubTargetPat;
-            _log.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
-        }
-
-        if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Must specify either --github-source-org or --ado-source-org");
-        }
-
-        if (args.AdoServerUrl.HasValue() && args.AdoSourceOrg.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("Must specify --ado-source-org with the collection name when using --ado-server-url");
-        }
-
-        if (args.GithubSourceOrg.IsNullOrWhiteSpace() && args.AdoSourceOrg.HasValue() && args.AdoTeamProject.IsNullOrWhiteSpace())
-        {
-            throw new OctoshiftCliException("When using --ado-source-org you must also provide --ado-team-project");
-        }
-
-        if (args.TargetRepo.IsNullOrWhiteSpace())
-        {
-            _log.LogInformation($"Target repo name not provided, defaulting to same as source repo ({args.SourceRepo})");
-            args.TargetRepo = args.SourceRepo;
-        }
-
-        if (string.IsNullOrWhiteSpace(args.GitArchiveUrl) != string.IsNullOrWhiteSpace(args.MetadataArchiveUrl))
-        {
-            throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
-        }
-
-        if (args.Wait)
-        {
-            _log.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-        }
-
-        if (args.Wait && args.QueueOnly)
-        {
-            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-        }
-
-        if (!args.Wait && !args.QueueOnly)
-        {
-            _log.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
-        }
-
-        ValidateGHESOptions(args, cloudCredentialsRequired);
-    }
-
     private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
-        // GHES migration path
-        if (args.GhesApiUrl.HasValue())
+        var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
+        var shouldUseAwsS3 = args.AwsBucketName.HasValue();
+
+        if (!cloudCredentialsRequired)
         {
-            var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
-            var shouldUseAwsS3 = args.AwsBucketName.HasValue();
-
-            if (!cloudCredentialsRequired)
+            if (shouldUseAzureStorage)
             {
-                if (shouldUseAzureStorage)
-                {
-                    _log.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
-                }
-
-                if (shouldUseAwsS3)
-                {
-                    _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
-                }
-
-                if (args.KeepArchive)
-                {
-                    _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
-                }
-
-                return;
-            }
-
-            if (!shouldUseAzureStorage && !shouldUseAwsS3)
-            {
-                throw new OctoshiftCliException(
-                    "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
-                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
-                    "must be provided.");
-            }
-
-            if (shouldUseAzureStorage && shouldUseAwsS3)
-            {
-                throw new OctoshiftCliException(
-                    "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
-                    "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) cannot be " +
-                    "specified together.");
+                _log.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
             if (shouldUseAwsS3)
             {
-                if (!GetAwsAccessKey(args).HasValue())
-                {
-#pragma warning disable CS0618
-                    if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
-#pragma warning restore CS0618
-                    {
-                        _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
-                    }
-                    else
-                    {
-                        throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
-                    }
-                }
-
-                if (!GetAwsSecretKey(args).HasValue())
-                {
-#pragma warning disable CS0618
-                    if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
-#pragma warning restore CS0618
-                    {
-                        _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
-                    }
-                    else
-                    {
-                        throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
-                    }
-                }
-
-                if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException(
-                        "--aws-region or AWS_REGION environment variable must be provided with --aws-session-token or AWS_SESSION_TOKEN environment variable.");
-                }
-
-                if (!GetAwsRegion(args).HasValue())
-                {
-                    _log.LogWarning("Specifying an AWS region with the --aws-region argument or AWS_REGION environment variable is currently not required, " +
-                                    "but will be required in a future release. Defaulting to us-east-1.");
-                }
-            }
-            else if (new[] { args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion }.Any(x => x.HasValue()))
-            {
-                throw new OctoshiftCliException("The AWS S3 bucket name must be provided with --aws-bucket-name if other AWS S3 upload options are set.");
-            }
-        }
-        else
-        {
-            if (args.AwsBucketName.HasValue())
-            {
-                throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
-            }
-
-            if (args.NoSslVerify)
-            {
-                throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+                _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
             if (args.KeepArchive)
             {
-                throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
+                _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
             }
+
+            return;
+        }
+
+        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
+                "must be provided.");
+        }
+
+        if (shouldUseAzureStorage && shouldUseAwsS3)
+        {
+            throw new OctoshiftCliException(
+                "Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) and " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) cannot be " +
+                "specified together.");
+        }
+
+        if (shouldUseAwsS3)
+        {
+            if (!GetAwsAccessKey(args).HasValue())
+            {
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
+                }
+            }
+
+            if (!GetAwsSecretKey(args).HasValue())
+            {
+#pragma warning disable CS0618
+                if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
+#pragma warning restore CS0618
+                {
+                    _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
+                }
+                else
+                {
+                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
+                }
+            }
+
+            if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException(
+                    "--aws-region or AWS_REGION environment variable must be provided with --aws-session-token or AWS_SESSION_TOKEN environment variable.");
+            }
+
+            if (!GetAwsRegion(args).HasValue())
+            {
+                _log.LogWarning("Specifying an AWS region with the --aws-region argument or AWS_REGION environment variable is currently not required, " +
+                                "but will be required in a future release. Defaulting to us-east-1.");
+            }
+        }
+        else if (new[] { args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion }.Any(x => x.HasValue()))
+        {
+            throw new OctoshiftCliException("The AWS S3 bucket name must be provided with --aws-bucket-name if other AWS S3 upload options are set.");
         }
     }
 

@@ -24,18 +24,7 @@ public class DisableRepoCommandHandler : ICommandHandler<DisableRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Disabling repo...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"ADO REPO: {args.AdoRepo}");
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
 
         var allRepos = await _adoApi.GetRepos(args.AdoOrg, args.AdoTeamProject);
         if (allRepos.Any(r => r.Name == args.AdoRepo && r.IsDisabled))
