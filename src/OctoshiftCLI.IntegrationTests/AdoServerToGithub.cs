@@ -41,7 +41,7 @@ namespace OctoshiftCLI.IntegrationTests
                 await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId, ADO_SERVER_URL);
             });
 
-            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all --ado-server-url {ADO_SERVER_URL}", Tokens);
+            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ado-server-url {ADO_SERVER_URL}", Tokens);
 
             Helper.AssertNoErrorInLogs(StartTime);
 
