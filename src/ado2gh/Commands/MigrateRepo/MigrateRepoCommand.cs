@@ -81,8 +81,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
             var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+            var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-            return new MigrateRepoCommandHandler(log, githubApi, environmentVariableProvider);
+            return new MigrateRepoCommandHandler(log, githubApi, environmentVariableProvider, warningsCountLogger);
         }
     }
 }

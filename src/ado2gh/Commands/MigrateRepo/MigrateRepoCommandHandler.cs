@@ -11,12 +11,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly WarningsCountLogger _warningsCountLogger;
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi githubApi, EnvironmentVariableProvider environmentVariableProvider)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi githubApi, EnvironmentVariableProvider environmentVariableProvider, WarningsCountLogger warningsCountLogger)
     {
         _log = log;
         _githubApi = githubApi;
         _environmentVariableProvider = environmentVariableProvider;
+        _warningsCountLogger = warningsCountLogger;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -59,23 +61,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        var (migrationState, _, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+        var (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
-            (migrationState, _, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+            (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+            _warningsCountLogger.LogWarningsCount(warningsCount);
             _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
             throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+        _warningsCountLogger.LogWarningsCount(warningsCount);
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 

@@ -15,6 +15,7 @@ public class MigrateRepoCommandHandlerTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
+    private readonly WarningsCountLogger _warningsCountLogger;
     private readonly MigrateRepoCommandHandler _handler;
 
     private const string ADO_ORG = "FooOrg";
@@ -31,7 +32,8 @@ public class MigrateRepoCommandHandlerTests
 
     public MigrateRepoCommandHandlerTests()
     {
-        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockEnvironmentVariableProvider.Object);
+        _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
+        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockEnvironmentVariableProvider.Object, _warningsCountLogger);
     }
 
     [Fact]
