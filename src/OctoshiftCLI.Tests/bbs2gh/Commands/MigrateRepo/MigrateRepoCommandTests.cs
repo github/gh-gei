@@ -34,6 +34,7 @@ public class MigrateRepoCommandTests
     private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
     private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
     private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
+    private readonly Mock<WarningsCountLogger> _warningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
 
     private readonly MigrateRepoCommand _command = new();
 
@@ -46,6 +47,7 @@ public class MigrateRepoCommandTests
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsApiFactory))).Returns(_mockBbsApiFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsArchiveDownloaderFactory))).Returns(_mockBbsArchiveDownloaderFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(IAzureApiFactory))).Returns(_mockAzureApiFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(WarningsCountLogger))).Returns(_warningsCountLogger.Object);
     }
 
     [Fact]
