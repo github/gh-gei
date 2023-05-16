@@ -41,6 +41,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
                 .AddSingleton<DateTimeProvider>()
+                .AddSingleton<WarningsCountLogger>()
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
