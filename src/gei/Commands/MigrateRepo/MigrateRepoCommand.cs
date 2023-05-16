@@ -214,8 +214,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             }
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(ghesApi);
+            var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-            return new MigrateRepoCommandHandler(log, ghesApi, targetGithubApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider, ghesVersionChecker, retryPolicy);
+            return new MigrateRepoCommandHandler(
+                log,
+                ghesApi,
+                targetGithubApi,
+                environmentVariableProvider,
+                azureApi,
+                awsApi,
+                httpDownloadService,
+                fileSystemProvider,
+                ghesVersionChecker,
+                retryPolicy,
+                warningsCountLogger
+            );
         }
     }
 }

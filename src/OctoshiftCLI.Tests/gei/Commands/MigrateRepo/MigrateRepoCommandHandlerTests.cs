@@ -26,6 +26,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
         private readonly RetryPolicy _retryPolicy;
         private readonly MigrateRepoCommandHandler _handler;
+        private readonly WarningsCountLogger _warningsCountLogger;
 
         private const string TARGET_API_URL = "https://api.github.com";
         private const string GHES_API_URL = "https://myghes/api/v3";
@@ -48,6 +49,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         public MigrateRepoCommandHandlerTests()
         {
             _retryPolicy = new RetryPolicy(_mockOctoLogger.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
+            _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
+
             _handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
                 _mockSourceGithubApi.Object,
@@ -58,7 +61,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
         }
 
         [Fact]
@@ -1276,7 +1280,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -1406,7 +1411,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
@@ -1514,7 +1520,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
 
             // Act, Assert
             var args = new MigrateRepoCommandArgs
