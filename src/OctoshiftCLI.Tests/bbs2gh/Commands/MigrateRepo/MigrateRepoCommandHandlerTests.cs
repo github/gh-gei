@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -154,7 +155,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
 
@@ -238,8 +239,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(archivePath)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
 
@@ -294,7 +294,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
 
@@ -333,7 +333,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -365,7 +365,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ThrowsAsync(new InvalidOperationException());
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ThrowsAsync(new InvalidOperationException());
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -396,7 +396,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), ARCHIVE_DATA)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
             _mockFileSystemProvider.Setup(x => x.DeleteIfExists(It.IsAny<string>())).Throws(new UnauthorizedAccessException("Access Denied"));
 
             // Act
@@ -512,7 +512,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             var archiveBytes = Encoding.ASCII.GetBytes("here are some bytes");
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
 
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), archiveBytes)).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -585,7 +585,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         public async Task It_Does_Not_Set_The_Archive_Path_When_Archive_Path_Is_Provided()
         {
             // Arrange
-            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<byte[]>())).ReturnsAsync(new Uri(ARCHIVE_URL));
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -600,7 +600,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             // Assert
             args.ArchivePath.Should().Be(ARCHIVE_PATH);
-            _mockFileSystemProvider.Verify(m => m.ReadAllBytesAsync(ARCHIVE_PATH));
+            _mockFileSystemProvider.Verify(m => m.OpenRead(ARCHIVE_PATH));
         }
 
         [Fact]
