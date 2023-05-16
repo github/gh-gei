@@ -41,7 +41,7 @@ namespace OctoshiftCLI.IntegrationTests
                 await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId, ADO_SERVER_URL);
             });
 
-            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ado-server-url {ADO_SERVER_URL}", Tokens);
+            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ado-server-url {ADO_SERVER_URL} --download-migration-logs --create-teams --link-idp-groups", Tokens);
 
             Helper.AssertNoErrorInLogs(StartTime);
 
@@ -49,6 +49,18 @@ namespace OctoshiftCLI.IntegrationTests
             await Helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
             await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject1}-{teamProject1}");
             await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject2}-{teamProject2}");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Maintainers");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject1}-Admins");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Maintainers");
+            await Helper.AssertGithubTeamCreated(githubOrg, $"{teamProject2}-Admins");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-Maintainers");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-Admins");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-Maintainers");
+            await Helper.AssertGithubTeamIdpLinked(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-Admins");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Maintainers", $"{teamProject1}-{teamProject1}", "maintain");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject1}-Admins", $"{teamProject1}-{teamProject1}", "admin");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Maintainers", $"{teamProject2}-{teamProject2}", "maintain");
+            await Helper.AssertGithubTeamHasRepoRole(githubOrg, $"{teamProject2}-Admins", $"{teamProject2}-{teamProject2}", "admin");
             Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
             Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
         }
