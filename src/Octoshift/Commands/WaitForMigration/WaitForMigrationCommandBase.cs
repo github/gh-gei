@@ -51,7 +51,8 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(targetPersonalAccessToken: args.GithubPat);
+        var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-        return new WaitForMigrationCommandHandler(log, githubApi);
+        return new WaitForMigrationCommandHandler(log, githubApi, warningsCountLogger);
     }
 }

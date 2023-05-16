@@ -13,6 +13,7 @@ public class WaitForMigrationCommandHandlerTests
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
+    private readonly WarningsCountLogger _warningsCountLogger;
     private readonly WaitForMigrationCommandHandler _handler;
 
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
@@ -23,7 +24,8 @@ public class WaitForMigrationCommandHandlerTests
 
     public WaitForMigrationCommandHandlerTests()
     {
-        _handler = new WaitForMigrationCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object)
+        _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
+        _handler = new WaitForMigrationCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _warningsCountLogger)
         {
             WaitIntervalInSeconds = WAIT_INTERVAL
         };
