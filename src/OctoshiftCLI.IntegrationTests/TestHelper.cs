@@ -67,7 +67,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         public string GithubApiBaseUrl { get; init; } = "https://api.github.com";
 
-        public async Task ResetAdoTestEnvironment(string adoOrg)
+        public async Task ResetAdoTestEnvironment(string adoOrg, string adoServerUrl = "https://dev.azure.com")
         {
             var teamProjects = await _adoApi.GetTeamProjects(adoOrg);
 
@@ -77,9 +77,9 @@ namespace OctoshiftCLI.IntegrationTests
             {
                 _output.WriteLine($"Deleting Team Project: {adoOrg}\\{teamProject}...");
                 var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
-                var operationId = await DeleteTeamProject(adoOrg, teamProjectId);
+                var operationId = await DeleteTeamProject(adoOrg, teamProjectId, adoServerUrl);
 
-                while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
+                while (await GetOperationStatus(adoOrg, operationId, adoServerUrl) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
                 {
                     await Task.Delay(1000);
                 }
@@ -202,22 +202,22 @@ namespace OctoshiftCLI.IntegrationTests
             await _bbsClient.PostAsync(url, payload);
         }
 
-        public async Task CreateTeamProject(string adoOrg, string teamProject)
+        public async Task CreateTeamProject(string adoOrg, string teamProject, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine($"Creating Team Project: {adoOrg}\\{teamProject}...");
-            var operationId = await QueueCreateTeamProject(adoOrg, teamProject);
+            var operationId = await QueueCreateTeamProject(adoOrg, teamProject, adoServerUrl);
 
-            while (await GetOperationStatus(adoOrg, operationId) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
+            while (await GetOperationStatus(adoOrg, operationId, adoServerUrl) is OperationStatus.NotSet or OperationStatus.Queued or OperationStatus.InProgress)
             {
                 await Task.Delay(1000);
             }
 
-            while (await GetTeamProjectStatus(adoOrg, teamProject) is TeamProjectStatus.NotSet or TeamProjectStatus.CreatePending or TeamProjectStatus.New)
+            while (await GetTeamProjectStatus(adoOrg, teamProject, adoServerUrl) is TeamProjectStatus.NotSet or TeamProjectStatus.CreatePending or TeamProjectStatus.New)
             {
                 await Task.Delay(1000);
             }
 
-            var teamProjectStatus = await GetTeamProjectStatus(adoOrg, teamProject);
+            var teamProjectStatus = await GetTeamProjectStatus(adoOrg, teamProject, adoServerUrl);
 
             if (teamProjectStatus != TeamProjectStatus.WellFormed)
             {
@@ -225,24 +225,24 @@ namespace OctoshiftCLI.IntegrationTests
             }
         }
 
-        public async Task<string> InitializeAdoRepo(string adoOrg, string teamProject, string repo)
+        public async Task<string> InitializeAdoRepo(string adoOrg, string teamProject, string repo, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine($"Initializing Repo: {adoOrg}\\{teamProject}\\{repo}...");
             var repoId = await _adoApi.GetRepoId(adoOrg, teamProject, repo);
-            return await InitializeRepo(adoOrg, repoId);
+            return await InitializeRepo(adoOrg, repoId, adoServerUrl);
         }
 
-        public async Task CreatePipeline(string adoOrg, string teamProject, string repo, string pipelineName, string parentCommitId)
+        public async Task CreatePipeline(string adoOrg, string teamProject, string repo, string pipelineName, string parentCommitId, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine($"Creating Pipeline: {adoOrg}\\{teamProject}\\{pipelineName}...");
             var repoId = await _adoApi.GetRepoId(adoOrg, teamProject, repo);
-            await PushDummyPipelineYaml(adoOrg, repoId, parentCommitId);
-            await CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject);
+            await PushDummyPipelineYaml(adoOrg, repoId, parentCommitId, adoServerUrl);
+            await CreatePipeline(adoOrg, teamProject, pipelineName, "/azure-pipelines.yml", repoId, teamProject, adoServerUrl);
         }
 
-        private async Task<string> CreatePipeline(string org, string teamProject, string name, string ymlFile, string repoId, string repoName)
+        private async Task<string> CreatePipeline(string org, string teamProject, string name, string ymlFile, string repoId, string repoName, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/pipelines?api-version=6.1-preview.1";
+            var url = $"{adoServerUrl}/{org}/{teamProject}/_apis/pipelines?api-version=6.1-preview.1";
 
             var payload = new
             {
@@ -266,9 +266,9 @@ namespace OctoshiftCLI.IntegrationTests
             return (string)JObject.Parse(response)["id"];
         }
 
-        private async Task<string> InitializeRepo(string org, string repoId)
+        private async Task<string> InitializeRepo(string org, string repoId, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
 
             var payload = new
             {
@@ -309,9 +309,9 @@ namespace OctoshiftCLI.IntegrationTests
             return (string)JObject.Parse(response)["refUpdates"].Children().First()["newObjectId"];
         }
 
-        private async Task<string> PushDummyPipelineYaml(string org, string repoId, string parentCommit)
+        private async Task<string> PushDummyPipelineYaml(string org, string repoId, string parentCommit, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/git/repositories/{repoId}/pushes?api-version=6.0";
 
             var payload = new
             {
@@ -358,19 +358,19 @@ steps:
             return (string)JObject.Parse(response)["refUpdates"].Children().First()["newObjectId"];
         }
 
-        private async Task<IEnumerable<(string repo, bool disabled)>> GetReposDisabledState(string org, string teamProject)
+        private async Task<IEnumerable<(string repo, bool disabled)>> GetReposDisabledState(string org, string teamProject, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
+            var url = $"{adoServerUrl}/{org}/{teamProject}/_apis/git/repositories?api-version=4.1";
             var response = await _adoClient.GetWithPagingAsync(url);
             return response.Select(x => ((string)x["name"], (bool)x["isDisabled"]));
         }
 
-        private async Task<(int allow, int deny)> GetRepoPermissions(string org, string teamProjectId, string repoId, string identityDescriptor)
+        private async Task<(int allow, int deny)> GetRepoPermissions(string org, string teamProjectId, string repoId, string identityDescriptor, string adoServerUrl)
         {
             var gitReposNamespace = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87";
             var token = $"repoV2/{teamProjectId}/{repoId}";
 
-            var url = $"https://dev.azure.com/{org}/_apis/accesscontrollists/{gitReposNamespace}?token={token}&descriptors={identityDescriptor}&api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/accesscontrollists/{gitReposNamespace}?token={token}&descriptors={identityDescriptor}&api-version=6.0";
 
             var response = await _adoClient.GetAsync(url);
 
@@ -380,24 +380,24 @@ steps:
             return (allow, deny);
         }
 
-        private async Task<IEnumerable<(string Id, string Name, string Type)>> GetServiceConnections(string org, string teamProject)
+        private async Task<IEnumerable<(string Id, string Name, string Type)>> GetServiceConnections(string org, string teamProject, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+            var url = $"{adoServerUrl}/{org}/{teamProject}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
             var response = await _adoClient.GetWithPagingAsync(url);
             return response.Select(x => ((string)x["id"], (string)x["name"], (string)x["type"]));
         }
 
-        private async Task<(string Id, string Type, string ConnectedServiceId)> GetPipelineRepo(string org, string teamProject, int pipelineId)
+        private async Task<(string Id, string Type, string ConnectedServiceId)> GetPipelineRepo(string org, string teamProject, int pipelineId, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/{teamProject}/_apis/build/definitions/{pipelineId}?api-version=6.0";
             var response = await _adoClient.GetAsync(url);
             var result = JObject.Parse(response)["repository"];
             return ((string)result["id"], (string)result["type"], (string)result["properties"]["connectedServiceId"]);
         }
 
-        private async Task<string> DeleteTeamProject(string org, string teamProjectId)
+        private async Task<string> DeleteTeamProject(string org, string teamProjectId, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
 
             var response = await _adoClient.DeleteAsync(url);
             var result = JObject.Parse(response);
@@ -405,9 +405,9 @@ steps:
             return (string)result["id"];
         }
 
-        private async Task<string> QueueCreateTeamProject(string org, string teamProject)
+        private async Task<string> QueueCreateTeamProject(string org, string teamProject, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/projects?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/projects?api-version=6.0";
 
             var payload = new
             {
@@ -431,16 +431,16 @@ steps:
             return (string)result["id"];
         }
 
-        private async Task<string> GetTeamProjectStatus(string org, string teamProjectId)
+        private async Task<string> GetTeamProjectStatus(string org, string teamProjectId, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/projects/{teamProjectId}?api-version=6.0";
             var response = await _adoClient.GetAsync(url);
             return (string)JObject.Parse(response)["state"];
         }
 
-        private async Task<string> GetOperationStatus(string org, string operationId)
+        private async Task<string> GetOperationStatus(string org, string operationId, string adoServerUrl)
         {
-            var url = $"https://dev.azure.com/{org}/_apis/operations/{operationId}?api-version=6.0";
+            var url = $"{adoServerUrl}/{org}/_apis/operations/{operationId}?api-version=6.0";
             var response = await _adoClient.GetAsync(url);
             return (string)JObject.Parse(response)["status"];
         }
@@ -613,21 +613,21 @@ steps:
                      .Should().Be(1);
         }
 
-        public async Task AssertAdoRepoDisabled(string adoOrg, string teamProject, string repo)
+        public async Task AssertAdoRepoDisabled(string adoOrg, string teamProject, string repo, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine("Checking that the ADO repos have been disabled...");
 
-            var reposDisabled = await GetReposDisabledState(adoOrg, teamProject);
+            var reposDisabled = await GetReposDisabledState(adoOrg, teamProject, adoServerUrl);
             reposDisabled.Should().Contain(x => x.repo == repo && x.disabled);
         }
-        public async Task AssertAdoRepoLocked(string adoOrg, string teamProject, string repo)
+        public async Task AssertAdoRepoLocked(string adoOrg, string teamProject, string repo, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine("Checking that the ADO repos were locked...");
 
             var teamProjectId = await _adoApi.GetTeamProjectId(adoOrg, teamProject);
             var repoId = await _adoApi.GetRepoId(adoOrg, teamProject, repo);
             var identityDescriptor = await _adoApi.GetIdentityDescriptor(adoOrg, teamProjectId, "Project Valid Users");
-            var (_, deny) = await GetRepoPermissions(adoOrg, teamProjectId, repoId, identityDescriptor);
+            var (_, deny) = await GetRepoPermissions(adoOrg, teamProjectId, repoId, identityDescriptor, adoServerUrl);
 
             deny.Should().Be(56828);
         }
@@ -658,22 +658,22 @@ steps:
             actualRole.Should().Be(role);
         }
 
-        public async Task AssertServiceConnectionWasShared(string adoOrg, string teamProject)
+        public async Task AssertServiceConnectionWasShared(string adoOrg, string teamProject, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine("Checking that the service connection was shared...");
 
-            var serviceConnections = await GetServiceConnections(adoOrg, teamProject);
+            var serviceConnections = await GetServiceConnections(adoOrg, teamProject, adoServerUrl);
             serviceConnections.Should().Contain(x => x.Type == "GitHub");
         }
 
-        public async Task AssertPipelineRewired(string adoOrg, string teamProject, string pipeline, string githubOrg, string githubRepo)
+        public async Task AssertPipelineRewired(string adoOrg, string teamProject, string pipeline, string githubOrg, string githubRepo, string adoServerUrl = "https://dev.azure.com")
         {
             _output.WriteLine("Checking that the pipelines are rewired...");
 
             var pipelineId = await _adoApi.GetPipelineId(adoOrg, teamProject, pipeline);
-            var pipelineRepo = await GetPipelineRepo(adoOrg, teamProject, pipelineId);
+            var pipelineRepo = await GetPipelineRepo(adoOrg, teamProject, pipelineId, adoServerUrl);
 
-            var serviceConnectionId = (await GetServiceConnections(adoOrg, teamProject)).First(x => x.Type == "GitHub");
+            var serviceConnectionId = (await GetServiceConnections(adoOrg, teamProject, adoServerUrl)).First(x => x.Type == "GitHub");
             pipelineRepo.Type.Should().Be("GitHub");
             pipelineRepo.Id.Should().Be($"{githubOrg}/{githubRepo}");
             pipelineRepo.ConnectedServiceId.Should().Be(serviceConnectionId.Id);
