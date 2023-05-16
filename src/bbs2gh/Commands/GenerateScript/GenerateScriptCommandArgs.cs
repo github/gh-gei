@@ -1,12 +1,14 @@
 ﻿using System.IO;
+using OctoshiftCLI.Commands;
 
 namespace OctoshiftCLI.BbsToGithub.Commands.GenerateScript;
 
-public class GenerateScriptCommandArgs
+public class GenerateScriptCommandArgs : CommandArgs
 {
     public string BbsServerUrl { get; set; }
     public string GithubOrg { get; set; }
     public string BbsUsername { get; set; }
+    [Secret]
     public string BbsPassword { get; set; }
     public string BbsProject { get; set; }
     public string BbsSharedHome { get; set; }
@@ -18,7 +20,6 @@ public class GenerateScriptCommandArgs
     public string SmbDomain { get; set; }
     public FileInfo Output { get; set; }
     public bool Kerberos { get; set; }
-    public bool Verbose { get; set; }
     public string AwsBucketName { get; set; }
     public string AwsRegion { get; set; }
     public bool KeepArchive { get; set; }

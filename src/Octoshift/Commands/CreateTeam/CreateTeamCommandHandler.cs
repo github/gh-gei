@@ -24,19 +24,7 @@ public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Creating GitHub team...");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"TEAM NAME: {args.TeamName}");
-        _log.LogInformation($"IDP GROUP: {args.IdpGroup}");
-
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation($"GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.GithubPat);
 
         var teams = await _githubApi.GetTeams(args.GithubOrg);
         var teamSlug = teams.FirstOrDefault(t => t.Name == args.TeamName).Slug;

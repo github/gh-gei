@@ -26,37 +26,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.Verbose = args.Verbose;
-
         _log.LogInformation("Migrating Repo...");
-        _log.LogInformation($"ADO ORG: {args.AdoOrg}");
-        _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
-        _log.LogInformation($"ADO REPO: {args.AdoRepo}");
-        _log.LogInformation($"GITHUB ORG: {args.GithubOrg}");
-        _log.LogInformation($"GITHUB REPO: {args.GithubRepo}");
-        if (args.Wait)
-        {
-            _log.LogInformation("WAIT: true");
-        }
-        if (args.QueueOnly)
-        {
-            _log.LogInformation("QUEUE ONLY: true");
-        }
-        if (args.TargetRepoVisibility.HasValue())
-        {
-            _log.LogInformation($"TARGET REPO VISIBILITY: {args.TargetRepoVisibility}");
-        }
-        if (args.AdoPat is not null)
-        {
-            _log.LogInformation("ADO PAT: ***");
-        }
-        if (args.GithubPat is not null)
-        {
-            _log.LogInformation("GITHUB PAT: ***");
-        }
-
-        _log.RegisterSecret(args.AdoPat);
-        _log.RegisterSecret(args.GithubPat);
 
         if (args.Wait)
         {

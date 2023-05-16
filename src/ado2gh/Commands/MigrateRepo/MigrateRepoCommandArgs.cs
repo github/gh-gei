@@ -1,6 +1,8 @@
-﻿namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
+﻿using OctoshiftCLI.Commands;
+
+namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
 {
-    public class MigrateRepoCommandArgs
+    public class MigrateRepoCommandArgs : CommandArgs
     {
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
@@ -10,8 +12,9 @@
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }
+        [Secret]
         public string AdoPat { get; set; }
+        [Secret]
         public string GithubPat { get; set; }
-        public bool Verbose { get; set; }
     }
 }
