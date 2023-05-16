@@ -527,7 +527,16 @@ steps:
         public async Task RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
         {
             await RunCliCommand(generateScriptCommand, cliName, tokens);
+            LogMigrationScript("migrate.ps1");
             await RunPowershellScript("migrate.ps1", tokens);
+        }
+
+        private void LogMigrationScript(string filename)
+        {
+            var filePath = Path.Join(GetOsDistPath(), filename);
+            var scriptContents = File.ReadAllText(filePath);
+            _output.WriteLine($"Contents of {filename}:");
+            _output.WriteLine(scriptContents);
         }
 
         public async Task RunPowershellScript(string script, IDictionary<string, string> tokens) =>
