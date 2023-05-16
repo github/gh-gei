@@ -143,12 +143,9 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     private void ValidateGenerateOptions()
     {
-        if (Kerberos)
+        if (Kerberos && (BbsUsername.HasValue() || BbsPassword.HasValue()))
         {
-            if (BbsUsername.HasValue() || BbsPassword.HasValue())
-            {
-                throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
-            }
+            throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
         }
 
         if (BbsProject.IsNullOrWhiteSpace() || BbsRepo.IsNullOrWhiteSpace())
