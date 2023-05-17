@@ -829,9 +829,9 @@ public class ReclaimServiceTests
         var exception = await FluentActions
             .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
             .Should().ThrowAsync<OctoshiftCliException>();
-        exception.WithMessage("Failed to reclaim mannequin(s).");
+        exception.WithMessage("Failed to send reclaim mannequin invitation(s).");
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to reclaim {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
     }
 
     [Fact]
@@ -883,12 +883,12 @@ public class ReclaimServiceTests
         var exception = await FluentActions
             .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
             .Should().ThrowAsync<OctoshiftCliException>();
-        exception.WithMessage("Failed to reclaim mannequin(s).");
+        exception.WithMessage("Failed to send reclaim mannequin invitation(s).");
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID), Times.Once);
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to reclaim {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
     }
 
 
