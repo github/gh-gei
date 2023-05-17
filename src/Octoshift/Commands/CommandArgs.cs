@@ -21,7 +21,6 @@ namespace OctoshiftCLI.Commands
             }
 
             log.Verbose = Verbose;
-            var sb = new StringBuilder();
 
             foreach (var property in GetType().GetProperties())
             {
@@ -31,7 +30,7 @@ namespace OctoshiftCLI.Commands
                 {
                     if ((bool)property.GetValue(this))
                     {
-                        sb.AppendLine($"{logName}: true");
+                        log.LogInformation($"{logName}: true");
                     }
                 }
                 else
@@ -40,12 +39,10 @@ namespace OctoshiftCLI.Commands
 
                     if (propValue.HasValue() && propValue.ToString().HasValue())
                     {
-                        sb.AppendLine($"{logName}: {propValue}");
+                        log.LogInformation($"{logName}: {propValue}");
                     }
                 }
             }
-
-            log.LogInformation(sb.ToString());
         }
 
         private string GetLogName(string propertyName)
