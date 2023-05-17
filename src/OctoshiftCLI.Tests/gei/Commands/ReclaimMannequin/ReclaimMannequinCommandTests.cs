@@ -11,7 +11,7 @@ public class ReclaimMannequinCommandTests
         var command = new ReclaimMannequinCommand();
         Assert.NotNull(command);
         Assert.Equal("reclaim-mannequin", command.Name);
-        Assert.Equal(8, command.Options.Count);
+        Assert.Equal(9, command.Options.Count);
 
         TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
         TestHelpers.VerifyCommandOption(command.Options, "csv", false);
@@ -20,6 +20,7 @@ public class ReclaimMannequinCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "target-user", false);
         TestHelpers.VerifyCommandOption(command.Options, "force", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
+        TestHelpers.VerifyCommandOption(command.Options, "skip-invitation", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
     }
 }

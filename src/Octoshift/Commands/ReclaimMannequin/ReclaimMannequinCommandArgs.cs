@@ -12,6 +12,7 @@ public class ReclaimMannequinCommandArgs : CommandArgs
     public bool Force { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+    public bool SkipInvitation { get; set; }
 
     public override void Validate(OctoLogger log)
     {

@@ -1810,7 +1810,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task ReclaimMannequin_Returns_Error()
+    public async Task CreateAttributionInvitation_Returns_Error()
     {
         // Arrange
         const string orgId = "dummyorgid";
@@ -1853,7 +1853,7 @@ public class GithubApiTests
                 }}]
             }}";
 
-        var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+        var expecteCreateAttributionInvitationResponse = new CreateAttributionInvitationResult()
         {
             Data = new CreateAttributionInvitationData()
             {
@@ -1881,10 +1881,10 @@ public class GithubApiTests
                 .ReturnsAsync(response);
 
         // Act
-        var result = await _githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+        var result = await _githubApi.CreateAttributionInvitation(orgId, mannequinId, targetUserId);
 
         // Assert
-        result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        result.Should().BeEquivalentTo(expecteCreateAttributionInvitationResponse);
     }
 
     [Fact]
@@ -2105,7 +2105,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
     }
 
     [Fact]
-    public async Task ReclaimMannequin_Returns_Success()
+    public async Task CreateAttributionInvitation_Returns_Success()
     {
         // Arrange
         const string orgId = "dummyorgid";
@@ -2150,7 +2150,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                 }}
             }}";
 
-        var expectedReclaimMannequinResponse = new MannequinReclaimResult()
+        var expectedCreateAttributionInvitationResponse = new CreateAttributionInvitationResult()
         {
             Data = new CreateAttributionInvitationData()
             {
@@ -2176,10 +2176,10 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                 .ReturnsAsync(response);
 
         // Act
-        var result = await _githubApi.ReclaimMannequin(orgId, mannequinId, targetUserId);
+        var result = await _githubApi.CreateAttributionInvitation(orgId, mannequinId, targetUserId);
 
         // Assert
-        result.Should().BeEquivalentTo(expectedReclaimMannequinResponse);
+        result.Should().BeEquivalentTo(expectedCreateAttributionInvitationResponse);
     }
 
     [Fact]
