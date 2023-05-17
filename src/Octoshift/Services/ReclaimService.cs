@@ -183,7 +183,7 @@ public class ReclaimService
             }
             else
             {
-                dynamic result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
                 HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
             }
         }
