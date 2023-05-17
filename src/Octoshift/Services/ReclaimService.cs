@@ -178,7 +178,7 @@ public class ReclaimService
             if (skipInvitation)
             {
                 //TODO: Check if org is emu before continuing, throw error if not
-                dynamic result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
+                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
                 HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result);
             }
             else
