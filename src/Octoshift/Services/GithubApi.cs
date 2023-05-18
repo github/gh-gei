@@ -717,7 +717,7 @@ public class GithubApi
         return (string)data["data"]["user"]["id"];
     }
 
-    public virtual async Task<MannequinReclaimResult> ReclaimMannequin(string orgId, string mannequinId, string targetUserId)
+    public virtual async Task<CreateAttributionInvitationResult> CreateAttributionInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
         var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
@@ -749,7 +749,42 @@ public class GithubApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
-        return data.ToObject<MannequinReclaimResult>();
+        return data.ToObject<CreateAttributionInvitationResult>();
+    }
+
+    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    {
+        var url = $"{_apiUrl}/graphql";
+        var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
+        var gql = @"
+	            reattributeMannequinToUser(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on User {
+				            id
+				            login
+			            }
+		            }
+	            }";
+
+        var payload = new
+        {
+            query = $"{mutation} {{ {gql} }}",
+            variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
+        };
+
+        var response = await _client.PostAsync(url, payload);
+        var data = JObject.Parse(response);
+
+        return data.ToObject<ReattributeMannequinToUserResult>();
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)

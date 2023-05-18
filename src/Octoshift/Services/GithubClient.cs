@@ -33,7 +33,7 @@ public class GithubClient
         if (_httpClient != null)
         {
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api,mannequin_claiming,org_import_api");
+            _httpClient.DefaultRequestHeaders.Add("GraphQL-Features", "import_api,mannequin_claiming_emu,org_import_api");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OctoshiftCLI", versionProvider?.GetCurrentVersion()));
             if (versionProvider?.GetVersionComments() is { } comments)

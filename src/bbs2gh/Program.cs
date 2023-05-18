@@ -42,6 +42,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<BbsArchiveDownloaderFactory>()
+                .AddSingleton<ConfirmationService>()
                 .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
                 .AddHttpClient("NoSSL", kerberos: false, noSsl: true)
