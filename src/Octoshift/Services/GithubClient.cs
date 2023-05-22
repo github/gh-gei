@@ -45,7 +45,12 @@ public class GithubClient
 
     public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await GetWithRetry(url, expectedStatus: status)).Content;
 
-    public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) => (await GetWithRetry(url, customHeaders)).Content;
+    public virtual async Task<(string, System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.IEnumerable<string>>[])> GetAsync(string url, Dictionary<string, string> customHeaders = null)
+    {
+        var response = await GetWithRetry(url, customHeaders);
+
+        return (response.Content, response.ResponseHeaders);
+    }
 
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
     {
@@ -130,6 +135,9 @@ public class GithubClient
         (await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders)).Content;
 
     public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
+
+    public string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
+    headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> GetWithRetry(
         string url,
@@ -234,9 +242,6 @@ public class GithubClient
 
     private long GetRateLimitReset(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
         long.Parse(ExtractHeaderValue("X-RateLimit-Reset", headers) ?? _dateTimeProvider.CurrentUnixTimeSeconds().ToString());
-
-    private string ExtractHeaderValue(string key, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>
-        headers.SingleOrDefault(kvp => kvp.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
 
     private void SetRetryDelay(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {

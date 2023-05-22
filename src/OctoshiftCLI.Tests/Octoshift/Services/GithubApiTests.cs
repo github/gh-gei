@@ -357,7 +357,8 @@ public class GithubApiTests
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}";
 
-        _githubClientMock.Setup(m => m.GetAsync(url, null)).ReturnsAsync("OK");
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ReturnsAsync(("OK", headers));
 
         // Act
         var result = await _githubApi.DoesOrgExist(GITHUB_ORG);
@@ -1556,10 +1557,11 @@ public class GithubApiTests
                     }},
                 ]
             }}";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
 
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var actualGroupId = await _githubApi.GetIdpGroupId(GITHUB_ORG, groupName);
@@ -2612,9 +2614,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                 ""default_branch"": ""main"" 
             }}";
 
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
+
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         var result = await _githubApi.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO);
 
@@ -2960,10 +2964,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
 
         var response = "SARIF_DATA";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
 
         _githubClientMock
             .Setup(m => m.GetAsync(url, new Dictionary<string, string>() { { "accept", "application/sarif+json" } }))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var result = await _githubApi.GetSarifReport(GITHUB_ORG, GITHUB_REPO, analysisId);
@@ -3052,9 +3057,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                     ""processing_status"": ""pending""
                 }}  
             ";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
+
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
@@ -3079,9 +3086,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                     ]
                 }}  
             ";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
+
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var actualStatus = await _githubApi.GetSarifProcessingStatus(GITHUB_ORG, GITHUB_REPO, "sarif-id");
@@ -3090,6 +3099,27 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         actualStatus.Errors.ElementAt(0).Should().Be("error1");
         actualStatus.Errors.ElementAt(1).Should().Be("error2");
         actualStatus.Errors.Count().Should().Be(2);
+    }
+
+    [Fact]
+    public async Task GetCurrentOauthScopes_Returns_Array_Of_Current_OAuth_Scopes_From_Headers()
+    {
+        // Arrange
+        const string url = $"https://api.github.com/rate_limit";
+        var response = "NOT_USED";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org, workflow" }) };
+
+        _githubClientMock
+            .Setup(m => m.GetAsync(url, null))
+            .ReturnsAsync((response, headers));
+
+        // Act
+        var oauthScopes = await _githubApi.GetCurrentOauthScopes();
+
+        // Assert
+        oauthScopes.Length.Should().Be(2);
+        oauthScopes.ElementAt(0).Should().Be("admin:org");
+        oauthScopes.ElementAt(1).Should().Be("workflow");
     }
 
     [Fact]
@@ -3105,10 +3135,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                 ""dependabot"": [
                 ]
             }}";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
 
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var version = await _githubApi.GetEnterpriseServerVersion();
@@ -3131,10 +3162,11 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
                 ],
                 ""installed_version"": ""3.7.0""
             }}";
+        var headers = new KeyValuePair<string, IEnumerable<string>>[] { new KeyValuePair<string, IEnumerable<string>>("X-OAuth-Scopes", new string[] { "admin:org" }) };
 
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .ReturnsAsync((response, headers));
 
         // Act
         var version = await _githubApi.GetEnterpriseServerVersion();

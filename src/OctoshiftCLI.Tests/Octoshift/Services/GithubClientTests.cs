@@ -42,17 +42,18 @@ public sealed class GithubClientTests
     }
 
     [Fact]
-    public async Task GetAsync_Returns_String_Response()
+    public async Task GetAsync_Returns_String_Response_And_Headers()
     {
         // Arrange
         using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, null);
 
         // Act
-        var actualContent = await githubClient.GetAsync("http://example.com");
+        var (responseBody, responseHeaders) = await githubClient.GetAsync("http://example.com");
 
         // Assert
-        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        responseBody.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        responseHeaders.Should().HaveCount(0);
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public sealed class GithubClientTests
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
         // Act
-        var returnedContent = await githubClient.GetAsync(URL);
+        var (returnedContent, _headers) = await githubClient.GetAsync(URL);
 
         // Assert
         returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -121,7 +122,7 @@ public sealed class GithubClientTests
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
         // Act
-        var returnedContent = await githubClient.GetAsync(URL);
+        var (returnedContent, _headers) = await githubClient.GetAsync(URL);
 
         // Assert
         returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);

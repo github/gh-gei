@@ -535,8 +535,8 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
         // TODO: Need to implement paging
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
+        var (responseBody, _headers) = await _client.GetAsync(url);
+        var data = JObject.Parse(responseBody);
 
         return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
     }
@@ -662,10 +662,20 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/migrations/{archiveId}";
 
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
+        var (responseBody, _headers) = await _client.GetAsync(url);
+        var data = JObject.Parse(responseBody);
 
         return (string)data["state"];
+    }
+
+    public virtual async Task<string[]> GetCurrentOauthScopes()
+    {
+        // Calling the rate limit API is a free call which doesn't use any rate limit quota
+        var url = $"{_apiUrl}/rate_limit";
+
+        var (responseBody, headers) = await _client.GetAsync(url);
+        var headerValue = _client.ExtractHeaderValue("X-OAuth-Scopes", headers);
+        return headerValue.Split(", ");
     }
 
     public virtual async Task<string> GetArchiveMigrationUrl(string org, int archiveId)
@@ -873,7 +883,8 @@ public class GithubApi
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/analyses/{analysisId}";
         // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
         var headers = new Dictionary<string, string>() { { "accept", "application/sarif+json" } };
-        return await _client.GetAsync(url, headers);
+        var (responseBody, _headers) = await _client.GetAsync(url, headers);
+        return responseBody;
     }
 
     public virtual async Task<string> UploadSarifReport(string org, string repo, string sarifReport, string commitSha, string sarifRef)
@@ -896,7 +907,7 @@ public class GithubApi
     public virtual async Task<SarifProcessingStatus> GetSarifProcessingStatus(string org, string repo, string sarifId)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/sarifs/{sarifId.EscapeDataString()}";
-        var response = await _client.GetAsync(url);
+        var (response, _headers) = await _client.GetAsync(url);
         var data = JObject.Parse(response);
 
         var errors = data["errors"]?.ToObject<string[]>() ?? Array.Empty<string>();
@@ -907,7 +918,7 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
-        var response = await _client.GetAsync(url);
+        var (response, _headers) = await _client.GetAsync(url);
         var data = JObject.Parse(response);
 
         return (string)data["default_branch"];
@@ -938,7 +949,7 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/meta";
 
-        var response = await _client.GetAsync(url);
+        var (response, _headers) = await _client.GetAsync(url);
         var data = JObject.Parse(response);
 
         return (string)data["installed_version"];
