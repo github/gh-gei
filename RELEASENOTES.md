@@ -1,1 +1,2 @@
 - Write migration warnings count to console after a migration completes.
+- Add new '--skip-invitation' flag for `reclaim-mannequin` to allow EMU organizations to reclaim mannequins without an email invitation

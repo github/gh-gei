@@ -10,14 +10,16 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 {
     private readonly OctoLogger _log;
     private readonly ReclaimService _reclaimService;
+    private readonly ConfirmationService _confirmationService;
 
     internal Func<string, bool> FileExists = path => File.Exists(path);
     internal Func<string, string[]> GetFileContent = path => File.ReadLines(path).ToArray();
 
-    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService)
+    public ReclaimMannequinCommandHandler(OctoLogger log, ReclaimService reclaimService, ConfirmationService confirmationService)
     {
         _log = log;
         _reclaimService = reclaimService;
+        _confirmationService = confirmationService;
     }
 
     public async Task Handle(ReclaimMannequinCommandArgs args)
@@ -36,10 +38,21 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
             }
 
-            await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force);
+            //TODO: Get verbiage approved
+            if (args.SkipInvitation)
+            {
+                _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)");
+            }
+
+            await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force, args.SkipInvitation);
         }
         else
         {
+            if (args.SkipInvitation)
+            {
+                throw new OctoshiftCliException($"--csv must be specified to skip reclaimation email");
+            }
+
             _log.LogInformation("Reclaiming Mannequin...");
 
             await _reclaimService.ReclaimMannequin(args.MannequinUser, args.MannequinId, args.TargetUser, args.GithubOrg, args.Force);

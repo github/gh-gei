@@ -104,18 +104,18 @@ public class ReclaimService
         // get all unique mannequins by login and id and map them all to the same target
         foreach (var mannequin in mannequins.GetUniqueUsers())
         {
-            var result = await _githubApi.ReclaimMannequin(githubOrgId, mannequin.Id, targetUserId);
+            var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, targetUserId);
 
-            success &= HandleResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+            success &= HandleInvitationResult(mannequinUser, targetUser, mannequin, targetUserId, result);
         }
 
         if (!success)
         {
-            throw new OctoshiftCliException("Failed to reclaim mannequin(s).");
+            throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
         }
     }
 
-    public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force)
+    public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force, bool skipInvitation)
     {
         if (lines == null)
         {
@@ -135,6 +135,8 @@ public class ReclaimService
         }
 
         var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
+
+        // org.enterprise_managed_user_enabled?
 
         var mannequins = await GetMannequins(githubOrgId);
 
@@ -173,9 +175,17 @@ public class ReclaimService
                 continue;
             }
 
-            var result = await _githubApi.ReclaimMannequin(githubOrgId, userid, claimantId);
-
-            HandleResult(login, claimantLogin, mannequin, claimantId, result);
+            if (skipInvitation)
+            {
+                //TODO: Check if org is emu before continuing, throw error if not
+                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
+                HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result);
+            }
+            else
+            {
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
+                HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
+            }
         }
     }
 
@@ -186,11 +196,11 @@ public class ReclaimService
         return new Mannequins(returnedMannequins);
     }
 
-    private bool HandleResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, MannequinReclaimResult result)
+    private bool HandleInvitationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, CreateAttributionInvitationResult result)
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
             return false;
         }
 
@@ -198,6 +208,28 @@ public class ReclaimService
             result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
             result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
         {
+            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            return false;
+        }
+
+        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to: {mannequinUser} ({mannequin.Id}) for {targetUser} ({targetUserId})");
+
+        return true;
+    }
+
+    private bool HandleReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, ReattributeMannequinToUserResult result)
+    {
+        if (result.Errors != null)
+        {
+            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
+            return false;
+        }
+
+        if (result.Data.ReattributeMannequinToUser is null ||
+            result.Data.ReattributeMannequinToUser.Source.Id != mannequin.Id ||
+            result.Data.ReattributeMannequinToUser.Target.Id != targetUserId)
+        {
+
             _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             return false;
         }
