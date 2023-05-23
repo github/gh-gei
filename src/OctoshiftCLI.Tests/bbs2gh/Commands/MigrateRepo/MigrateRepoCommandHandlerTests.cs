@@ -44,7 +44,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
-        private const string BBS_REPO_URL = $"{BBS_HOST}/projects/{BBS_PROJECT}/repos/{BBS_REPO}/browse";
+        private const string BBS_REPO_URL = $"{BBS_SERVER_URL}/projects/{BBS_PROJECT}/repos/{BBS_REPO}/browse";
         private const string SSH_USER = "ssh-user";
         private const string PRIVATE_KEY = "private-key";
         private const string SMB_USER = "smb-user";
