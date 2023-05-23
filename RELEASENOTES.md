@@ -1,1 +1,2 @@
 - Add new '--skip-invitation' flag for `reclaim-mannequin` to allow EMU organizations to reclaim mannequins without an email invitation
+- Write warnings to log and console if GitHub is experiencing an availability incident.
