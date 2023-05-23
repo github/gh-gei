@@ -935,12 +935,12 @@ public class GithubApiTests
     {
         // Arrange
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string sourceRepoUrl = "https://our-bbs-server.com/projects/BBS-PROJECT/repos/bbs-repo/browse";
         const string orgId = "ORG_ID";
         const string url = "https://api.github.com/graphql";
         const string gitArchiveUrl = "GIT_ARCHIVE_URL";
         const string targetToken = "TARGET_TOKEN";
 
-        const string unusedSourceRepoUrl = "https://not-used";
         const string unusedSourceToken = "not-used";
         const string unusedMetadataArchiveUrl = "https://not-used";
 
@@ -994,7 +994,7 @@ public class GithubApiTests
             {
                 sourceId = migrationSourceId,
                 ownerId = orgId,
-                sourceRepositoryUrl = unusedSourceRepoUrl,
+                sourceRepositoryUrl = sourceRepoUrl,
                 repositoryName = GITHUB_REPO,
                 continueOnError = true,
                 gitArchiveUrl,
@@ -1032,7 +1032,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
+        var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
 
         // Assert
         expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);

@@ -183,6 +183,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
+        var bbsRepoUrl = GetBbsRepoUrl(args.BbsServerUrl, args.BbsProject, args.BbsRepo);
+
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
@@ -191,7 +193,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
+            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -242,6 +244,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
+
+    private string GetBbsRepoUrl(string url, string project, string repo) => $"{url.TrimEnd('/')}/projects/{project}/repos/{repo}/browse";
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
