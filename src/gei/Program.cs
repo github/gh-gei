@@ -33,6 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
+                .AddSingleton<GithubStatusApiFactory>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
@@ -65,6 +66,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
             try
             {
+                await GithubStatusCheck(serviceProvider);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("Could not check GitHub availability from githubstatus.com.  See https://www.githubstatus.com for details.");
+                Logger.LogVerbose(ex.ToString());
+            }
+
+            try
+            {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
@@ -80,6 +91,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
         {
             CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
             CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
+        }
+
+        private static async Task GithubStatusCheck(ServiceProvider sp)
+        {
+            var githubStatusApiFactory = sp.GetRequiredService<GithubStatusApiFactory>();
+            var githubStatusApi = githubStatusApiFactory.Create();
+
+            if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
+            {
+                Logger.LogWarning("GitHub is currently experiencing availability issues.  See https://www.githubstatus.com for details.");
+            }
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
