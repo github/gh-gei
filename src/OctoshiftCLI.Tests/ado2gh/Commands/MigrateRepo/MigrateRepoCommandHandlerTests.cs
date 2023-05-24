@@ -218,6 +218,37 @@ public class MigrateRepoCommandHandlerTests
     }
 
     [Fact]
+    public async Task Throws_Decorated_Error_When_Create_Migration_Source_Fails_With_Permissions_Error()
+    {
+        // Arrange
+        _mockEnvironmentVariableProvider
+           .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+           .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi
+            .Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result)
+            .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+        // Act
+        await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            Wait = true,
+        }))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{GITHUB_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+    }
+
+    [Fact]
     public async Task It_Falls_Back_To_Ado_And_Github_Pats_From_Environment_When_Not_Provided()
     {
         _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<(string Name, string Visibility)>());
