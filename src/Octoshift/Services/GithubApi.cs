@@ -17,8 +17,6 @@ public class GithubApi
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
 
-    private const string INSUFFICIENT_PERMISSIONS_HELP_MESSAGE = ". Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.";
-
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
     {
         _client = client;
@@ -228,15 +226,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> CreateBbsMigrationSource(string orgId)
@@ -259,15 +250,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> CreateGhecMigrationSource(string orgId)
@@ -290,15 +274,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
