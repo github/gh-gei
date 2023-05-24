@@ -33,7 +33,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
-                .AddSingleton<GithubStatusApiFactory>()
+                .AddSingleton<GithubStatusClient>()
+                .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
@@ -95,8 +96,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
         {
-            var githubStatusApiFactory = sp.GetRequiredService<GithubStatusApiFactory>();
-            var githubStatusApi = githubStatusApiFactory.Create();
+            var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
 
             if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
             {

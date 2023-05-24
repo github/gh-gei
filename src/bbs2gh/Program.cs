@@ -36,7 +36,8 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
-                .AddSingleton<GithubStatusApiFactory>()
+                .AddSingleton<GithubStatusClient>()
+                .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
@@ -97,8 +98,7 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
         {
-            var githubStatusApiFactory = sp.GetRequiredService<GithubStatusApiFactory>();
-            var githubStatusApi = githubStatusApiFactory.Create();
+            var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
 
             if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
             {
