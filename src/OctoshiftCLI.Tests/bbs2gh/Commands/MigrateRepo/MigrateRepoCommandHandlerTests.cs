@@ -482,6 +482,30 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task Throws_Decorated_Error_When_Create_Migration_Source_Fails_With_Permissions_Error()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi
+                .Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result)
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            // Act
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{GITHUB_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+        }
+
+        [Fact]
         public async Task Throws_An_Error_If_Export_Fails()
         {
             // Arrange
