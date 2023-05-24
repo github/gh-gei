@@ -33,7 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
-                .AddSingleton<GithubStatusClient>()
+                .AddSingleton<BasicHttpClient>()
                 .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()

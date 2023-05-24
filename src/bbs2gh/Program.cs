@@ -36,7 +36,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
-                .AddSingleton<GithubStatusClient>()
+                .AddSingleton<BasicHttpClient>()
                 .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()

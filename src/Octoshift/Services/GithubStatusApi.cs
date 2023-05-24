@@ -6,10 +6,10 @@ namespace OctoshiftCLI.Services;
 
 public class GithubStatusApi
 {
-    private readonly GithubStatusClient _client;
+    private readonly BasicHttpClient _client;
     private const string GITHUB_STATUS_API_URL = "https://www.githubstatus.com/api/v2";
 
-    public GithubStatusApi(GithubStatusClient client)
+    public GithubStatusApi(BasicHttpClient client)
     {
         _client = client;
     }

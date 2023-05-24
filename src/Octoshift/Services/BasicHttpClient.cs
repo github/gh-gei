@@ -5,12 +5,12 @@ using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Services;
 
-public class GithubStatusClient
+public class BasicHttpClient
 {
     private readonly HttpClient _httpClient;
     private readonly OctoLogger _log;
 
-    public GithubStatusClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider)
+    public BasicHttpClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider)
     {
         _log = log;
         _httpClient = httpClient;
