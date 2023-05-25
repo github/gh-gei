@@ -10,6 +10,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
         public string AdoRepo { get; set; }
         public string GithubOrg { get; set; }
         public string GithubRepo { get; set; }
+        public string AdoServerUrl { get; set; }
         public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }

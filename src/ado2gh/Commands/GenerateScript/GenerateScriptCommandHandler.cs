@@ -67,8 +67,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var appIds = _generateScriptOptions.RewirePipelines ? await GetAppIds(_adoApi, args.GithubOrg) : new Dictionary<string, string>();
 
         var script = args.Sequential
-            ? await GenerateSequentialScript(appIds, args.GithubOrg)
-            : await GenerateParallelScript(appIds, args.GithubOrg);
+            ? await GenerateSequentialScript(appIds, args.GithubOrg, args.AdoServerUrl)
+            : await GenerateParallelScript(appIds, args.GithubOrg, args.AdoServerUrl);
 
         _adoInspectorService.OutputRepoListToLog();
 
@@ -125,7 +125,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
     private string GetRepoMigrationKey(string adoOrg, string githubRepoName) => $"{adoOrg}/{githubRepoName}";
 
-    private async Task<string> GenerateSequentialScript(IDictionary<string, string> appIds, string githubOrg)
+    private async Task<string> GenerateSequentialScript(IDictionary<string, string> appIds, string githubOrg, string adoServerUrl)
     {
         var content = new StringBuilder();
 
@@ -167,7 +167,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
                     AppendLine(content);
                     AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                    AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, true)));
+                    AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, true, adoServerUrl)));
                     AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
                     AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                     AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
@@ -189,7 +189,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return content.ToString();
     }
 
-    private async Task<string> GenerateParallelScript(IDictionary<string, string> appIds, string githubOrg)
+    private async Task<string> GenerateParallelScript(IDictionary<string, string> appIds, string githubOrg, string adoServerUrl)
     {
         var content = new StringBuilder();
         AppendLine(content, PWSH_SHEBANG);
@@ -242,7 +242,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
                     AppendLine(content);
                     AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                    AppendLine(content, QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo));
+                    AppendLine(content, QueueMigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, adoServerUrl));
                     AppendLine(content, $"$RepoMigrations[\"{GetRepoMigrationKey(adoOrg, githubRepo)}\"] = $MigrationID");
                 }
             }
@@ -357,11 +357,11 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait) =>
-        $"gh ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")} --target-repo-visibility private";
+    private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait, string adoServerUrl) =>
+        $"gh ado2gh migrate-repo --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")} --target-repo-visibility private{(adoServerUrl.IsNullOrWhiteSpace() ? string.Empty : $" --ado-server-url \"{adoServerUrl}\"")}";
 
-    private string QueueMigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo) =>
-        $"$MigrationID = {ExecAndGetMigrationId(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, false))}";
+    private string QueueMigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, string adoServerUrl) =>
+        $"$MigrationID = {ExecAndGetMigrationId(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo, githubOrg, githubRepo, false, adoServerUrl))}";
 
     private string CreateGithubMaintainersTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups) =>
         _generateScriptOptions.CreateTeams

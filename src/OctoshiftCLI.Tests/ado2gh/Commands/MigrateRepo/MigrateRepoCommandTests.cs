@@ -33,13 +33,14 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(11);
+            _command.Options.Count.Should().Be(12);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "wait", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "queue-only", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-repo-visibility", false);

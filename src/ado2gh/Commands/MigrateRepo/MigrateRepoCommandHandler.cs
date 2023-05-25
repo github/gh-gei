@@ -30,7 +30,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
-        var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
+        var adoRepoUrl = GetAdoRepoUrl(args.AdoOrg, args.AdoTeamProject, args.AdoRepo, args.AdoServerUrl);
 
         args.AdoPat ??= _environmentVariableProvider.AdoPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
@@ -39,7 +39,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, null);
+            migrationSourceId = await _githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
         }
         catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
         {
@@ -91,5 +91,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 
-    private string GetAdoRepoUrl(string org, string project, string repo) => $"https://dev.azure.com/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
+    private string GetAdoRepoUrl(string org, string project, string repo, string serverUrl)
+    {
+        serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
+        return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
+    }
 }
