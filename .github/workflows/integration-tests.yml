@@ -66,7 +66,7 @@ jobs:
     strategy:
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
-        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
+        source-vcs: [AdoBasic, AdoCsv, AdoServer, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
@@ -158,6 +158,7 @@ jobs:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GHEC_PAT: ${{ secrets.GHEC_PAT }}
         GHES_PAT: ${{ secrets.GHES_PAT }}
+        ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
         SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}

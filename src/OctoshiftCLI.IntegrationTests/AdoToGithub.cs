@@ -18,7 +18,7 @@ namespace OctoshiftCLI.IntegrationTests
         protected Dictionary<string, string> Tokens { get; }
         protected DateTime StartTime { get; }
 
-        protected AdoToGithub(ITestOutputHelper output)
+        protected AdoToGithub(ITestOutputHelper output, string adoServerUrl = "https://dev.azure.com", string adoPatEnvVar = "ADO_PAT")
         {
             StartTime = DateTime.Now;
             _output = output;
@@ -26,11 +26,11 @@ namespace OctoshiftCLI.IntegrationTests
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
             _versionClient = new HttpClient();
-            var adoToken = Environment.GetEnvironmentVariable("ADO_PAT");
+            var adoToken = Environment.GetEnvironmentVariable(adoPatEnvVar);
             _adoHttpClient = new HttpClient();
             var retryPolicy = new RetryPolicy(logger);
             var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), retryPolicy, adoToken);
-            var adoApi = new AdoApi(adoClient, "https://dev.azure.com", logger);
+            var adoApi = new AdoApi(adoClient, adoServerUrl, logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _githubHttpClient = new HttpClient();
