@@ -45,6 +45,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
         private const string BBS_REPO_URL = $"{BBS_SERVER_URL}/projects/{BBS_PROJECT}/repos/{BBS_REPO}/browse";
+        private const string UNUSED_REPO_URL = "https://not-used";
         private const string SSH_USER = "ssh-user";
         private const string PRIVATE_KEY = "private-key";
         private const string SMB_USER = "smb-user";
@@ -140,7 +141,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
-                BBS_REPO_URL,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -436,7 +437,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, BBS_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -453,7 +454,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
-                BBS_REPO_URL,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 githubPat,
@@ -471,7 +472,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, BBS_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
             // Act
@@ -565,7 +566,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
-                BBS_REPO_URL,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -685,7 +686,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
-                BBS_REPO_URL,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,

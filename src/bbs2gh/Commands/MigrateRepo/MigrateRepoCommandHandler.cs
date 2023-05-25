@@ -183,7 +183,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
-        var bbsRepoUrl = GetBbsRepoUrl(args.BbsServerUrl, args.BbsProject, args.BbsRepo);
+        var bbsRepoUrl = GetBbsRepoUrl(args);
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
@@ -200,7 +200,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             var message = $"{ex.Message}{insufficientPermissionsMessage}";
             throw new OctoshiftCliException(message, ex);
         }
-
 
         string migrationId;
 
@@ -258,7 +257,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 
-    private string GetBbsRepoUrl(string url, string project, string repo) => $"{url.TrimEnd('/')}/projects/{project}/repos/{repo}/browse";
+    private string GetBbsRepoUrl(MigrateRepoCommandArgs args)
+    {
+        return args.BbsServerUrl.HasValue() && args.BbsProject.HasValue() && args.BbsRepo.HasValue() ? $"{args.BbsServerUrl.TrimEnd('/')}/projects/{args.BbsProject}/repos/{args.BbsRepo}/browse" : "https://not-used";
+    }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
