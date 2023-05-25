@@ -57,6 +57,11 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
+    public virtual Option<bool> SkipInvitation { get; } = new("--skip-invitation")
+    {
+        Description = "Reclaim mannequins immediately without sending an invitation to the user. This is only supported for Enterprise Managed Users (EMU) organizations. Warning: this is irreversible."
+    };
+
     public virtual Option<bool> Verbose { get; } = new("--verbose");
 
     public override ReclaimMannequinCommandHandler BuildHandler(ReclaimMannequinCommandArgs args, IServiceProvider sp)
@@ -75,8 +80,9 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
         var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
         var reclaimService = new ReclaimService(githubApi, log);
+        var confirmationService = sp.GetRequiredService<ConfirmationService>();
 
-        return new ReclaimMannequinCommandHandler(log, reclaimService);
+        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService);
     }
 
     protected void AddOptions()
@@ -88,6 +94,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         AddOption(TargetUser);
         AddOption(Force);
         AddOption(GithubPat);
+        AddOption(SkipInvitation);
         AddOption(Verbose);
     }
 }

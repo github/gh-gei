@@ -21,6 +21,7 @@ public class CommandArgsTests
     private readonly TestCommandArgs _args = new();
 
     private string _logOutput = string.Empty;
+    private int _logCallCount;
     private const string _secretValue = "password";
     private const string _multiWordArgValue = "foo";
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -32,7 +33,19 @@ public class CommandArgsTests
         _args.BooleanTrue = true;
         _args.BooleanFalse = false;
 
-        _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => _logOutput = s);
+        _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s =>
+        {
+            _logOutput += $"{s}\n";
+            _logCallCount++;
+        });
+    }
+
+    [Fact]
+    public void Logs_Each_Property_Separately()
+    {
+        _args.Log(_mockOctoLogger.Object);
+
+        _logCallCount.Should().Be(3);
     }
 
     [Fact]
