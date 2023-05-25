@@ -20,7 +20,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public bool Sequential { get; set; }
         [Secret]
         public string GithubSourcePat { get; set; }
-        [Secret]
         public bool KeepArchive { get; set; }
 
         public override void Validate(OctoLogger log)

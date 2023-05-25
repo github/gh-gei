@@ -34,7 +34,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string GithubSourcePat { get; set; }
         [Secret]
         public string GithubTargetPat { get; set; }
-        [Secret]
         public bool KeepArchive { get; set; }
 
         public override void Validate(OctoLogger log)
