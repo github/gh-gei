@@ -1,1 +1,2 @@
 - Add new '--skip-invitation' flag for `reclaim-mannequin` to allow EMU organizations to reclaim mannequins without an email invitation
+- Add additional error handling to mannequin reclaimation process

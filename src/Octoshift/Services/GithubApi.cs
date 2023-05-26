@@ -108,13 +108,20 @@ public class GithubApi
 
     public virtual async Task<string> GetOrgMembershipForUser(string org, string member)
     {
-        var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/memberships/{member.EscapeDataString()}";
+        var url = $"{_apiUrl}/orgs/{org}/memberships/{member}";
 
-        var response = await _client.GetAsync(url);
+        try
+        {
+            var response = await _client.GetAsync(url);
 
-        var data = JObject.Parse(response);
+            var data = JObject.Parse(response);
 
-        return (string)data["role"];
+            return (string)data["role"];
+        }
+        catch // Not a member
+        {
+            return "";
+        }
     }
 
     public virtual async Task<bool> DoesRepoExist(string org, string repo)
