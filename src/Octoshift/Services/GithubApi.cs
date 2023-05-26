@@ -116,7 +116,7 @@ public class GithubApi
 
             return (string)data["role"];
         }
-        catch // Not a member
+        catch (HttpRequestException) // Not a member
         {
             return "";
         }
