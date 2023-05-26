@@ -1,4 +1,4 @@
 - Add new '--skip-invitation' flag for `reclaim-mannequin` to allow EMU organizations to reclaim mannequins without an email invitation
 - Write warnings to log and console if GitHub is experiencing an availability incident.
 - Improve the error thrown when you have insufficient permissions for the target GitHub organization to explicitly mention the relevant organization
-- Updated log order during migration for better readability
+- Write log output prior to making API calls in wait-for-migration commands
