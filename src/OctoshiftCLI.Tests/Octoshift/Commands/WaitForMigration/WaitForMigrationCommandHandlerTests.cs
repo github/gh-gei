@@ -46,7 +46,7 @@ public class WaitForMigrationCommandHandlerTests
         var expectedLogOutput = new List<string>
             {
                 $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
-                $"Waiting for migration of repository (name: {TARGET_REPO}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
@@ -92,7 +92,7 @@ public class WaitForMigrationCommandHandlerTests
         var expectedLogOutput = new List<string>
             {
                 $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
-                $"Waiting for migration of repository (name: {TARGET_REPO}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
@@ -142,7 +142,7 @@ public class WaitForMigrationCommandHandlerTests
         var expectedLogOutput = new List<string>
             {
                 $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
-                $"Waiting for migration of repository (name: {TARGET_REPO}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
