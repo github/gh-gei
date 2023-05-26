@@ -28,6 +28,7 @@ public class MigrateRepoCommandHandlerTests
     private readonly string MIGRATION_SOURCE_ID = Guid.NewGuid().ToString();
     private readonly string MIGRATION_ID = Guid.NewGuid().ToString();
     private readonly string GITHUB_TOKEN = Guid.NewGuid().ToString();
+    private readonly string ADO_SERVER_URL = "https://ado.contoso.com";
 
     public MigrateRepoCommandHandlerTests()
     {
@@ -93,6 +94,34 @@ public class MigrateRepoCommandHandlerTests
         actualLogOutput.Should().Equal(expectedLogOutput);
 
         _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Ado_Server_Migration()
+    {
+        var repoUrl = $"{ADO_SERVER_URL}/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}";
+
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, ADO_SERVER_URL).Result).Returns(MIGRATION_SOURCE_ID);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+            AdoServerUrl = ADO_SERVER_URL,
+            GithubPat = GITHUB_TOKEN,
+            AdoPat = ADO_TOKEN,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, repoUrl, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
     }
 
     [Fact]
