@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Azure;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;

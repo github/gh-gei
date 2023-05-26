@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Commands.ReclaimMannequin;
@@ -37,7 +36,7 @@ public class ReclaimMannequinCommandArgsTests
             TargetUser = TARGET_USER,
         };
 
-        // Act/ Assert
+        // Act & Assert
         FluentActions
             .Invoking(() => args.Validate(_mockOctoLogger.Object))
             .Should().Throw<OctoshiftCliException>();
