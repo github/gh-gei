@@ -79,7 +79,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
         var (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
 
-        _log.LogInformation($"Waiting for migration of repository (name: {repositoryName}) to finish...");
+        _log.LogInformation($"Waiting for migration of repository {repositoryName} to finish...");
 
         while (true)
         {
