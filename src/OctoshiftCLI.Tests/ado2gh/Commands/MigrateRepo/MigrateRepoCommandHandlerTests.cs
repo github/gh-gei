@@ -28,6 +28,7 @@ public class MigrateRepoCommandHandlerTests
     private readonly string MIGRATION_SOURCE_ID = Guid.NewGuid().ToString();
     private readonly string MIGRATION_ID = Guid.NewGuid().ToString();
     private readonly string GITHUB_TOKEN = Guid.NewGuid().ToString();
+    private readonly string ADO_SERVER_URL = "https://ado.contoso.com";
 
     public MigrateRepoCommandHandlerTests()
     {
@@ -93,6 +94,34 @@ public class MigrateRepoCommandHandlerTests
         actualLogOutput.Should().Equal(expectedLogOutput);
 
         _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Ado_Server_Migration()
+    {
+        var repoUrl = $"{ADO_SERVER_URL}/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}";
+
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, ADO_SERVER_URL).Result).Returns(MIGRATION_SOURCE_ID);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+            AdoServerUrl = ADO_SERVER_URL,
+            GithubPat = GITHUB_TOKEN,
+            AdoPat = ADO_TOKEN,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, repoUrl, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
     }
 
     [Fact]
@@ -186,6 +215,37 @@ public class MigrateRepoCommandHandlerTests
         await _handler.Handle(args);
 
         _mockGithubApi.Verify(x => x.GetMigration(MIGRATION_ID));
+    }
+
+    [Fact]
+    public async Task Throws_Decorated_Error_When_Create_Migration_Source_Fails_With_Permissions_Error()
+    {
+        // Arrange
+        _mockEnvironmentVariableProvider
+           .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+           .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi
+            .Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result)
+            .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+        // Act
+        await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            Wait = true,
+        }))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{GITHUB_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
     }
 
     [Fact]
