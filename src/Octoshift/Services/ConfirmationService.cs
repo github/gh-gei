@@ -3,15 +3,10 @@ namespace OctoshiftCLI.Services
 {
     public class ConfirmationService
     {
-        # region Variables
-
         private readonly Action<string> _writeToConsoleOut;
         private readonly Func<ConsoleKey> _readConsoleKey;
         private readonly Action<int> _cancelCommand;
 
-        #endregion
-
-        #region Constructors
         public ConfirmationService()
         {
             _writeToConsoleOut = msg => Console.WriteLine(msg);
@@ -27,9 +22,6 @@ namespace OctoshiftCLI.Services
             _cancelCommand = cancelCommand;
         }
 
-        #endregion
-
-        #region Functions
         public virtual bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
@@ -63,7 +55,6 @@ namespace OctoshiftCLI.Services
         {
             return Console.ReadKey(false).Key;
         }
-        #endregion
     }
 }
 

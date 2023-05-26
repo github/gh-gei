@@ -234,17 +234,6 @@ public class ReclaimService
         return true;
     }
 
-    /// <summary>
-    /// Processes the reclatimationr results returned by the api, handles any returned errors,
-    /// logs missing data, and logs reclaimation result.
-    /// </summary>
-    /// <param name="mannequinUser"></param>
-    /// <param name="targetUser"></param>
-    /// <param name="mannequin"></param>
-    /// <param name="targetUserId"></param>
-    /// <param name="result"></param>
-    /// <returns>returns true when CSV should continue onto the next user.
-    /// Returns false when iteration through the CSV  should stop and fail fast.</returns>
     private bool HandleReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, ReattributeMannequinToUserResult result)
     {
         if (result.Errors != null)
@@ -254,7 +243,7 @@ public class ReclaimService
             {
                 case string a when a.Contains("is not an Enterprise Managed Users (EMU) organization"):
                     _log.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations.");
-                    return false;
+                    return false; // Indicates we should stop parsing through the CSV
                 default:
                     _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
                     return true;
@@ -272,7 +261,7 @@ public class ReclaimService
 
         _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
 
-        return true;
+        return true; // Indiciates we should continue onto the next mannequin
     }
 
     private (string MannequinUser, string MannequinId, string TargetUser) ParseLine(string line)

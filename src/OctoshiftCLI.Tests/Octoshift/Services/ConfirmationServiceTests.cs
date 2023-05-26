@@ -8,7 +8,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 {
     public class ConfirmationServiceTests
     {
-        #region Variables
         private readonly ConfirmationService _confirmationService;
         private readonly string confirmationPrompt;
         private readonly string cancelationOutput;
@@ -17,9 +16,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         private int _exitOutput;
         private int numOfCalls;
         private ConsoleKey passedKey;
-        #endregion
 
-        #region Constructor
         public ConfirmationServiceTests()
         {
             _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress, CancelCommand);
@@ -27,9 +24,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             cancelationOutput = "Command Cancelled.";
             confirmationOutput = "Confirmation Recorded. Proceeding...";
         }
-        #endregion
 
-        #region Tests
         [Fact]
         public void AskForConfirmation_Happy_Path()
         {
@@ -94,9 +89,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
             _exitOutput.Should().Be(0);
         }
-        #endregion
 
-        #region Private functions
         private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
 
         private ConsoleKey MockConsoleKeyPress()
@@ -111,8 +104,6 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         }
 
         private void CancelCommand(int exitCode) => _exitOutput = exitCode;
-        #endregion
-
     }
 }
 
