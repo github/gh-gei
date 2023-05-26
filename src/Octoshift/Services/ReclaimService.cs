@@ -136,8 +136,6 @@ public class ReclaimService
 
         var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
 
-        // org.enterprise_managed_user_enabled?
-
         var mannequins = await GetMannequins(githubOrgId);
 
         foreach (var line in lines.Skip(1).Where(l => l != null && l.Trim().Length > 0))
@@ -163,6 +161,12 @@ public class ReclaimService
                 continue;
             }
 
+            if (lines.Where(x => x.Contains(login)).Count() > 1 && lines.Where(x => x.Contains(userid)).Count() > 1)
+            {
+                _log.LogError($"Mannequin {login} is a duplicate. Skipping.");
+                continue;
+            }
+
             string claimantId;
 
             try
@@ -177,9 +181,22 @@ public class ReclaimService
 
             if (skipInvitation)
             {
-                //TODO: Check if org is emu before continuing, throw error if not
+                // Check if user is admin to EMU org
+                var membership = await _githubApi.GetOrgMembershipForUser(githubTargetOrg, login);
+
+                if (membership != "admin")
+                {
+                    _log.LogError($"Mannequin {login} is not an org admin. Skipping.");
+                    continue;
+                }
+
                 var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
-                HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result);
+
+                // If results return a fail-fast error, we should break out of the for-loop
+                if (!HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result))
+                {
+                    return;
+                }
             }
             else
             {
@@ -217,12 +234,31 @@ public class ReclaimService
         return true;
     }
 
+    /// <summary>
+    /// Processes the reclatimationr results returned by the api, handles any returned errors,
+    /// logs missing data, and logs reclaimation result.
+    /// </summary>
+    /// <param name="mannequinUser"></param>
+    /// <param name="targetUser"></param>
+    /// <param name="mannequin"></param>
+    /// <param name="targetUserId"></param>
+    /// <param name="result"></param>
+    /// <returns>returns true when CSV should continue onto the next user.
+    /// Returns false when iteration through the CSV  should stop and fail fast.</returns>
     private bool HandleReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, ReattributeMannequinToUserResult result)
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
-            return false;
+            // Writing as switch statement in anticipation of other errors that will need specific logic
+            switch (result.Errors[0].Message)
+            {
+                case string a when a.Contains("is not an Enterprise Managed Users (EMU) organization"):
+                    _log.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations.");
+                    return false;
+                default:
+                    _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
+                    return true;
+            }
         }
 
         if (result.Data.ReattributeMannequinToUser is null ||
@@ -231,7 +267,7 @@ public class ReclaimService
         {
 
             _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-            return false;
+            return true;
         }
 
         _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");

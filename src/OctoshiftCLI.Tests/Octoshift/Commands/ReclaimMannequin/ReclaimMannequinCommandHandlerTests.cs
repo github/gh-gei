@@ -12,19 +12,16 @@ public class ReclaimMannequinCommandHandlerTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
-    private readonly ConfirmationService _confirmationService;
+    private readonly Mock<ConfirmationService> _confirmationService = TestHelpers.CreateMock<ConfirmationService>();
     private readonly ReclaimMannequinCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string MANNEQUIN_USER = "mona";
     private const string TARGET_USER = "mona_emu";
 
-    private string _consoleOutput;
-
     public ReclaimMannequinCommandHandlerTests()
     {
-        _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress);
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _confirmationService)
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _confirmationService.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()
@@ -116,7 +113,7 @@ public class ReclaimMannequinCommandHandlerTests
     public async Task Skip_Invitation_Happy_Path()
     {
         // Arrange
-        var expectedResult = "Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)Confirmation Recorded. Proceeding...";
+        _confirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -130,28 +127,5 @@ public class ReclaimMannequinCommandHandlerTests
 
         // Assert
         _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
-        _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
     }
-
-    [Fact]
-    public async Task Skip_Invitation_Without_CSV_Throws_Error()
-    {
-        // Arrange
-        var args = new ReclaimMannequinCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            SkipInvitation = true,
-            MannequinUser = MANNEQUIN_USER,
-            TargetUser = TARGET_USER,
-        };
-
-        // Act/ Assert
-        await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should().ThrowAsync<OctoshiftCliException>();
-    }
-
-    private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
-
-    private ConsoleKey MockConsoleKeyPress() => ConsoleKey.Y;
 }

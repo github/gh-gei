@@ -7,6 +7,7 @@ namespace OctoshiftCLI.Services
 
         private readonly Action<string> _writeToConsoleOut;
         private readonly Func<ConsoleKey> _readConsoleKey;
+        private readonly Action<int> _cancelCommand;
 
         #endregion
 
@@ -15,24 +16,28 @@ namespace OctoshiftCLI.Services
         {
             _writeToConsoleOut = msg => Console.WriteLine(msg);
             _readConsoleKey = ReadKey;
+            _cancelCommand = code => Environment.Exit(code);
         }
 
         // Constructor designed to allow for testing console methods
-        public ConfirmationService(Action<string> writeToConsoleOut, Func<ConsoleKey> readConsoleKey)
+        public ConfirmationService(Action<string> writeToConsoleOut, Func<ConsoleKey> readConsoleKey, Action<int> cancelCommand)
         {
             _writeToConsoleOut = writeToConsoleOut;
             _readConsoleKey = readConsoleKey;
+            _cancelCommand = cancelCommand;
         }
 
         #endregion
 
         #region Functions
-        public bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
+        public virtual bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
             do
             {
+                Console.ForegroundColor = ConsoleColor.Yellow; //Used to distinguish confirmation warning
                 _writeToConsoleOut(confirmationPrompt);
+                Console.ForegroundColor = ConsoleColor.White;
                 response = _readConsoleKey();
                 if (response != ConsoleKey.Enter)
                 {
@@ -48,9 +53,10 @@ namespace OctoshiftCLI.Services
             }
             else
             {
-                _writeToConsoleOut("Canceling Command...");
-                throw new OctoshiftCliException($"Command Cancelled. {cancellationErrorMessage}");
+                _writeToConsoleOut($"Command Cancelled. {cancellationErrorMessage}");
+                _cancelCommand(0);
             }
+            return false;
         }
 
         private ConsoleKey ReadKey()

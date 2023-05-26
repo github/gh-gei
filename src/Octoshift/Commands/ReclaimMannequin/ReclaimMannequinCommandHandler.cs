@@ -38,7 +38,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
             }
 
-            //TODO: Get verbiage approved
             if (args.SkipInvitation)
             {
                 _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)");
@@ -48,10 +47,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
         }
         else
         {
-            if (args.SkipInvitation)
-            {
-                throw new OctoshiftCliException($"--csv must be specified to skip reclaimation email");
-            }
 
             _log.LogInformation("Reclaiming Mannequin...");
 

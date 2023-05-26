@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -104,6 +105,17 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/memberships/{member.EscapeDataString()}";
 
         await _retryPolicy.Retry(() => _client.DeleteAsync(url));
+    }
+
+    public virtual async Task<string> GetOrgMembershipForUser(string org, string member)
+    {
+        var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/memberships/{member.EscapeDataString()}";
+
+        var response = await _client.GetAsync(url);
+
+        var data = JObject.Parse(response);
+
+        return (string)data["role"];
     }
 
     public virtual async Task<bool> DoesRepoExist(string org, string repo)

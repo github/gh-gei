@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -434,6 +435,29 @@ public class GithubApiTests
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task GetOrgMembershipForUser_Returns_User_Role()
+    {
+        // Arrange
+        var member = "USER";
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/memberships/{member}";
+        var role = "admin";
+        var response = $@"
+            {{
+                ""role"": ""{role}"" 
+            }}";
+
+        _githubClientMock
+            .Setup(m => m.GetAsync(url, null))
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
+
+        // Assert
+        result.Should().Match(role);
     }
 
     [Fact]
