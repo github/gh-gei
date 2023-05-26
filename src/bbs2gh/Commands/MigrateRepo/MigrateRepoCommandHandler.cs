@@ -259,9 +259,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetBbsRepoUrl(MigrateRepoCommandArgs args)
     {
-        return !args.BbsServerUrl.HasValue() || !args.BbsProject.HasValue() || !args.BbsRepo.HasValue()
-            ? "https://not-used"
-            : $"{args.BbsServerUrl.TrimEnd('/')}/projects/{args.BbsProject}/repos/{args.BbsRepo}/browse";
+        return args.BbsServerUrl.HasValue() && args.BbsProject.HasValue() && args.BbsRepo.HasValue()
+            ? $"{args.BbsServerUrl.TrimEnd('/')}/projects/{args.BbsProject}/repos/{args.BbsRepo}/browse"
+            : "https://not-used";
     }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
