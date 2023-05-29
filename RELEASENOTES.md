@@ -2,3 +2,4 @@
 - Write warnings to log and console if GitHub is experiencing an availability incident.
 - Improve the error thrown when you have insufficient permissions for the target GitHub organization to explicitly mention the relevant organization
 - Removed ability to use `gh gei` to migrate from ADO -> GH. You must use `gh ado2gh` to do this now. This was long since obsolete, but was still available via hidden args - which have now been removed.
+- Write log output prior to making API calls in wait-for-migration commands
