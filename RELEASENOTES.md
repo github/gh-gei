@@ -2,3 +2,4 @@
 - Write warnings to log and console if GitHub is experiencing an availability incident.
 - Improve the error thrown when you have insufficient permissions for the target GitHub organization to explicitly mention the relevant organization
 - Write log output prior to making API calls in wait-for-migration commands
+- Support forked repositories in Bitbucket Server migrations
