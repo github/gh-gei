@@ -441,11 +441,11 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
+    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string bbsRepoUrl, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
     {
         return await StartMigration(
             migrationSourceId,
-            "https://not-used",  // source repository URL
+            bbsRepoUrl,  // source repository URL
             orgId,
             repo,
             "not-used",  // source access token

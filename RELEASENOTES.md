@@ -3,3 +3,5 @@
 - Improve the error thrown when you have insufficient permissions for the target GitHub organization to explicitly mention the relevant organization
 - Write log output prior to making API calls in wait-for-migration commands
 - Add additional error handling to mannequin reclaimation process
+- Support forked repositories in Bitbucket Server migrations
+
