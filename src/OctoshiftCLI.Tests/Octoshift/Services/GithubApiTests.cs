@@ -778,7 +778,7 @@ public class GithubApiTests
                     $continueOnError: Boolean!,
                     $gitArchiveUrl: String,
                     $metadataArchiveUrl: String,
-                    $accessToken: String!,
+                    $accessToken: String,
                     $githubPat: String,
                     $skipReleases: Boolean,
                     $targetRepoVisibility: String,
@@ -824,8 +824,8 @@ public class GithubApiTests
                 continueOnError = true,
                 gitArchiveUrl,
                 metadataArchiveUrl,
-                accessToken = sourceToken,
                 githubPat = targetToken,
+                accessToken = sourceToken,
                 skipReleases = false,
                 targetRepoVisibility = (string)null,
                 lockSource = false
@@ -857,7 +857,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var expectedRepositoryMigrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, GITHUB_REPO, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
+        var expectedRepositoryMigrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, GITHUB_REPO, targetToken, sourceToken, gitArchiveUrl, metadataArchiveUrl);
 
         // Assert
         expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
@@ -873,9 +873,6 @@ public class GithubApiTests
         const string url = "https://api.github.com/graphql";
         const string gitArchiveUrl = "GIT_ARCHIVE_URL";
         const string targetToken = "TARGET_TOKEN";
-
-        const string unusedSourceToken = "not-used";
-        const string unusedMetadataArchiveUrl = "https://not-used";
 
         const string query = @"
                 mutation startRepositoryMigration(
@@ -931,9 +928,9 @@ public class GithubApiTests
                 repositoryName = GITHUB_REPO,
                 continueOnError = true,
                 gitArchiveUrl,
-                metadataArchiveUrl = unusedMetadataArchiveUrl,
-                accessToken = unusedSourceToken,
+                metadataArchiveUrl = (string)null,
                 githubPat = targetToken,
+                accessToken = (string)null,
                 skipReleases = false,
                 targetRepoVisibility = (string)null,
                 lockSource = false
