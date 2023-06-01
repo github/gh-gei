@@ -97,7 +97,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
-            _mockTargetGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, null, false).Result).Returns(migrationId);
+            _mockTargetGithubApi.Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, targetGithubPat, sourceGithubPat, null, null, false, null, false).Result).Returns(migrationId);
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -126,7 +126,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Assert
             _mockTargetGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG));
             _mockTargetGithubApi.Verify(m => m.CreateGhecMigrationSource(githubOrgId));
-            _mockTargetGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, null, false));
+            _mockTargetGithubApi.Verify(m => m.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, targetGithubPat, sourceGithubPat, null, null, false, null, false));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
             actualLogOutput.Should().Equal(expectedLogOutput);
@@ -147,7 +147,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
             _mockTargetGithubApi
-                .Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, sourceGithubPat, targetGithubPat, null, null, false, null, false).Result)
+                .Setup(x => x.StartMigration(migrationSourceId, githubRepoUrl, githubOrgId, TARGET_REPO, targetGithubPat, sourceGithubPat, null, null, false, null, false).Result)
                 .Throws(new OctoshiftCliException($"A repository called {TARGET_ORG}/{TARGET_REPO} already exists"));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
@@ -194,8 +194,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     null,
                     null,
                     false,
@@ -272,8 +272,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     adoRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceAdoPat,
                     targetGithubPat,
+                    sourceAdoPat,
                     null,
                     null,
                     false,
@@ -321,8 +321,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     adoRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceAdoPat,
                     targetGithubPat,
+                    sourceAdoPat,
                     null,
                     null,
                     false,
@@ -376,8 +376,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     authenticatedGitArchiveUrl.ToString(),
                     authenticatedMetadataArchiveUrl.ToString(),
                     false,
@@ -445,8 +445,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     gitArchiveUrl,
                     metadataArchiveUrl,
                     false,
@@ -536,8 +536,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     authenticatedGitArchiveUrl.ToString(),
                     authenticatedMetadataArchiveUrl.ToString(),
                     false,
@@ -602,8 +602,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     authenticatedGitArchiveUrl.ToString(),
                     authenticatedMetadataArchiveUrl.ToString(),
                     false,
@@ -667,8 +667,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     gitArchiveUrl,
                     metadataArchiveUrl,
                     false,
@@ -760,8 +760,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     authenticatedGitArchiveUrl.ToString(),
                     authenticatedMetadataArchiveUrl.ToString(),
                     false,
@@ -856,8 +856,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                ADO_PAT,
                 It.IsAny<string>(),
+                ADO_PAT,
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<bool>(),
@@ -896,8 +896,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                GITHUB_SOURCE_PAT,
                 GITHUB_TARGET_PAT,
+                GITHUB_SOURCE_PAT,
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<bool>(),
@@ -944,8 +944,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                GITHUB_SOURCE_PAT,
                 It.IsAny<string>(),
+                GITHUB_SOURCE_PAT,
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<bool>(),
@@ -1269,8 +1269,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     archiveUrl,
                     archiveUrl,
                     false,
@@ -1396,8 +1396,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     archiveUrl,
                     archiveUrl,
                     false,
@@ -1504,8 +1504,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     archiveUrl,
                     archiveUrl,
                     false,
@@ -1694,8 +1694,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     githubRepoUrl,
                     githubOrgId,
                     TARGET_REPO,
-                    sourceGithubPat,
                     targetGithubPat,
+                    sourceGithubPat,
                     authenticatedGitArchiveUrl.ToString(),
                     authenticatedMetadataArchiveUrl.ToString(),
                     false,
