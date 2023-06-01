@@ -47,8 +47,8 @@ public class MigrateRepoCommandHandlerTests
                 ADO_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
-                ADO_TOKEN,
                 GITHUB_TOKEN,
+                ADO_TOKEN,
                 null,
                 null,
                 false,
@@ -88,7 +88,7 @@ public class MigrateRepoCommandHandlerTests
         // Assert
         _mockGithubApi.Verify(m => m.GetOrganizationId(GITHUB_ORG));
         _mockGithubApi.Verify(m => m.CreateAdoMigrationSource(GITHUB_ORG_ID, null));
-        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
+        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, ADO_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_TOKEN, ADO_TOKEN, null, null, false, null, false));
 
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
         actualLogOutput.Should().Equal(expectedLogOutput);
@@ -121,7 +121,7 @@ public class MigrateRepoCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, repoUrl, GITHUB_ORG_ID, GITHUB_REPO, ADO_TOKEN, GITHUB_TOKEN, null, null, false, null, false));
+        _mockGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, repoUrl, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_TOKEN, ADO_TOKEN, null, null, false, null, false));
     }
 
     [Fact]
@@ -136,8 +136,8 @@ public class MigrateRepoCommandHandlerTests
                 ADO_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
-                ADO_TOKEN,
                 GITHUB_TOKEN,
+                ADO_TOKEN,
                 null,
                 null,
                 false,
@@ -186,8 +186,8 @@ public class MigrateRepoCommandHandlerTests
                     ADO_REPO_URL,
                     GITHUB_ORG_ID,
                     GITHUB_REPO,
-                    ADO_TOKEN,
                     GITHUB_TOKEN,
+                    ADO_TOKEN,
                     null,
                     null,
                     false,
@@ -273,7 +273,7 @@ public class MigrateRepoCommandHandlerTests
 
         await _handler.Handle(args);
 
-        _mockGithubApi.Verify(x => x.StartMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ADO_TOKEN, GITHUB_TOKEN, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>()));
+        _mockGithubApi.Verify(x => x.StartMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), GITHUB_TOKEN, ADO_TOKEN, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>()));
         _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()));
         _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()));
     }
