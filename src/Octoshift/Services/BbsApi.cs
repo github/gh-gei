@@ -80,4 +80,5 @@ public class BbsApi
             .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"]))
             .ToListAsync();
     }
+
 }
