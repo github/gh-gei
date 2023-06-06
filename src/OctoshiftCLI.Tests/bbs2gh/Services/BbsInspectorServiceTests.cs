@@ -20,8 +20,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string BBS_PROJECT = "BBS_PROJECT";
         private const string FOO_REPO = "FOO_REPO";
         private const string BBS_FOO_PROJECT_KEY = "FP";
-         private const string BBS_FOO_REPO_1_SLUG = "foorepo1";
-          private const string BBS_FOO_REPO_2_SLUG = "foorepo2";
+        // private const string BBS_FOO_REPO_1_SLUG = "foorepo1";
+        // private const string BBS_FOO_REPO_2_SLUG = "foorepo2";
 
         public BbsInspectorServiceTests() => _service = new(_logger, _mockBbsApi.Object);
 
