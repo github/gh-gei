@@ -61,7 +61,7 @@ public class GenerateScriptCommandHandlerTests
         _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername(It.IsAny<bool>())).Returns(BBS_USERNAME);
         _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword(It.IsAny<bool>())).Returns(BBS_PASSWORD);
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (1, BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT_NAME) });
-        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[] { (1, BBS_FOO_REPO_1_SLUG, BBS_FOO_REPO_1_NAME) });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[] { (1, BBS_FOO_REPO_1_SLUG, BBS_FOO_REPO_1_NAME, false) });
     }
 
     [Fact]
@@ -293,7 +293,7 @@ if (-not $env:SMB_PASSWORD) {
     public async Task No_Repos()
     {
         // Arrange
-        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(Enumerable.Empty<(int Id, string Slug, string Name)>());
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(Enumerable.Empty<(int Id, string Slug, string Name, bool IsArchived)>());
 
         var args = new GenerateScriptCommandArgs()
         {

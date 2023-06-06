@@ -6,7 +6,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Factories;
 
 public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApiFactory
 {
-    private const string DEFAULT_API_URL = "https://api.github.com";
+    private const string DEFAULT_API_URL = "http://api.github.localhost";
 
     private readonly OctoLogger _octoLogger;
     private readonly IHttpClientFactory _clientFactory;

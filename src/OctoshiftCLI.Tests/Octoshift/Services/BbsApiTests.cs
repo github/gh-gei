@@ -167,4 +167,36 @@ public class BbsApiTests
         // Assert
         result.Should().BeEquivalentTo(new[] { fooRepo, barRepo });
     }
+
+    [Fact]
+    public async Task GetRepositoryPullRequests_Returns_Pull_Requests_For_Repository()
+    {
+        // Arrange
+        const string fooProjectKey = "FP";
+        const string fooRepo = "foorepo";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/pull-requests";
+        var fooPullRequest = (Id: 1, Name: "FooPullRequest");
+        var barPullRequest = (Id: 2, Name: "BarPullRequest");
+        var response = new[]
+        {
+            new
+            {
+                id = fooPullRequest.Id,
+                name = fooPullRequest.Name
+            },
+            new
+            {
+                id = barPullRequest.Id,
+                name = barPullRequest.Name
+            }
+        }.ToAsyncJTokenEnumerable();
+
+        _mockBbsClient.Setup(m => m.GetAllAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryPullRequests(fooProjectKey, fooRepo);
+
+        // Assert
+        result.Should().BeEquivalentTo(new[] { fooPullRequest, barPullRequest });
+    }
 }

@@ -41,6 +41,20 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
+        // _bbsInspectorService.ProjectFilter = args.BbsProject;
+
+        //  if (args.RepoList.HasValue())
+        // {
+        //     _log.LogInformation($"Loading Repo CSV File...");
+        //     _bbsInspectorService.LoadReposCsv(args.RepoList.FullName);
+        // }
+
+        // if (await _bbsInspectorService.GetRepoCount() == 0)
+        // {
+        //     _log.LogError("A migration script could not be generated because no migratable repos were found. Please note that the GEI does not migrate disabled or TFVC repos.");
+        //     return;
+        // }
+
         var script = await GenerateScript(args);
 
         if (script.HasValue() && args.Output.HasValue())
@@ -101,7 +115,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
             content.AppendLine();
 
-            foreach (var (_, repoSlug, repoName) in repos)
+            foreach (var (_, repoSlug, repoName, _) in repos)
             {
                 _log.LogInformation($"  Repo: {repoName}");
 

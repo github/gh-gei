@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
@@ -73,12 +76,28 @@ public class BbsApi
             .ToListAsync();
     }
 
-    public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
+    public virtual async Task<IEnumerable<(int Id, string Slug, string Name, bool Archived)>> GetRepos(string projectKey)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos";
         return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"]))
+            .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"], (bool)x["archived"]))
             .ToListAsync();
     }
 
+    public virtual async Task<JObject> GetRepositoryLatestCommit(string projectKey, string repo)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/commits?limit=1";
+        var response = await _client.GetAsync(url);
+
+        var data = JObject.Parse(response);
+        return data;
+    }
+
+    public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/pull-requests";
+        return await _client.GetAllAsync(url)
+            .Select(x => ((int)x["id"], (string)x["name"]))
+            .ToListAsync();
+    }
 }
