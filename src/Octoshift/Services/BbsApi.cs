@@ -84,6 +84,14 @@ public class BbsApi
             .ToListAsync();
     }
 
+    public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/pull-requests";
+        return await _client.GetAllAsync(url)
+            .Select(x => ((int)x["id"], (string)x["name"]))
+            .ToListAsync();
+    }
+
     public virtual async Task<JObject> GetRepositoryLatestCommit(string projectKey, string repo)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/commits?limit=1";
@@ -91,13 +99,5 @@ public class BbsApi
 
         var data = JObject.Parse(response);
         return data;
-    }
-
-    public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
-    {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/pull-requests";
-        return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["name"]))
-            .ToListAsync();
     }
 }

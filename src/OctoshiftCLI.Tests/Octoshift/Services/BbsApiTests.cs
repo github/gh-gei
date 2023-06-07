@@ -4,6 +4,7 @@ using Moq;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
+using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
 
@@ -141,21 +142,23 @@ public class BbsApiTests
         // Arrange
         const string fooProjectKey = "FP";
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos";
-        var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo");
-        var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo");
+        var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo", Archived: true);
+        var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo", Archived: false);
         var response = new[]
         {
             new
             {
                 slug = fooRepo.Slug,
                 id = fooRepo.Id,
-                name = fooRepo.Name
+                name = fooRepo.Name,
+                archived = fooRepo.Archived
             },
             new
             {
                 slug = barRepo.Slug,
                 id = barRepo.Id,
-                name = barRepo.Name
+                name = barRepo.Name,
+                archived = barRepo.Archived
             }
         }.ToAsyncJTokenEnumerable();
 
@@ -198,5 +201,59 @@ public class BbsApiTests
 
         // Assert
         result.Should().BeEquivalentTo(new[] { fooPullRequest, barPullRequest });
+    }
+
+    [Fact]
+    public async Task GetRepositoryLatestCommit_Returns_Latest_Commit_For_Repository()
+    {
+        // Arrange
+        const string fooProjectKey = "FP";
+        const string fooRepo = "foorepo";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/commits?limit=1";
+
+        var fooCommit = new {
+            size = 1,
+            limit = 25,
+            isLastPage = true,
+            values = new[]
+            {
+                new
+                {
+                    id = "1",
+                    displayId = "user1",
+                    author = new
+                    {
+                        name = "user1 name",
+                        emailAddress = "user1@example.com"
+                    },
+                    authorTimestamp = 1548719707064,
+                    committer = new
+                    {
+                        name = "user1",
+                        emailAddress = "user1@example.com"
+                    },
+                    committerTimestamp = 1548719707064,
+                    message = "Commit message",
+                    parents = new
+                    {
+                        id = "3",
+                        displayId = "abc"
+                    }
+                },
+            },
+            start = 0,
+            authorCount = 1,
+            totalCount = 1
+        };
+
+        var response = new[] { JObject.FromObject(fooCommit) }.ToAsyncJTokenEnumerable();
+
+        _mockBbsClient.Setup(m => m.GetAllAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryLatestCommit(fooProjectKey, fooRepo);
+
+        // Assert
+        result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
     }
 }
