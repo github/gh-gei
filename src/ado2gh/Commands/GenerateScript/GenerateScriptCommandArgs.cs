@@ -8,6 +8,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public string GithubOrg { get; set; }
         public string AdoOrg { get; set; }
         public string AdoTeamProject { get; set; }
+        public string AdoServerUrl { get; set; }
         public FileInfo Output { get; set; }
         public bool Sequential { get; set; }
         [Secret]

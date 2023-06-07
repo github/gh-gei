@@ -32,6 +32,8 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
+                .AddSingleton<BasicHttpClient>()
+                .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<OrgsCsvGeneratorService>()
@@ -53,6 +55,16 @@ namespace OctoshiftCLI.AdoToGithub
             SetContext(parser.Parse(args));
 
             WarnIfNotUsingExtension();
+
+            try
+            {
+                await GithubStatusCheck(serviceProvider);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("Could not check GitHub availability from githubstatus.com.  See https://www.githubstatus.com for details.");
+                Logger.LogVerbose(ex.ToString());
+            }
 
             try
             {
@@ -79,6 +91,16 @@ namespace OctoshiftCLI.AdoToGithub
         {
             CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
             CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
+        }
+
+        private static async Task GithubStatusCheck(ServiceProvider sp)
+        {
+            var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
+
+            if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
+            {
+                Logger.LogWarning("GitHub is currently experiencing availability issues.  See https://www.githubstatus.com for details.");
+            }
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)

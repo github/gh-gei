@@ -26,6 +26,7 @@ public class GenerateScriptCommandHandlerTests
     private const string BAR_PIPELINE = "BAR_PIPELINE";
     private const string APP_ID = "d9edf292-c6fd-4440-af2b-d08fcc9c9dd1";
     private const string GITHUB_ORG = "GITHUB_ORG";
+    private const string ADO_SERVER_URL = "http://ado.contoso.com";
 
     private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
     private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
@@ -96,6 +97,33 @@ public class GenerateScriptCommandHandlerTests
 
         _scriptOutput = TrimNonExecutableLines(_scriptOutput);
         var expected = $"Exec {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --target-repo-visibility private }}";
+
+        // Assert
+        _scriptOutput.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task SequentialScript_Single_Repo_AdoServer()
+    {
+        // Arrange
+        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+        _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+        _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            AdoOrg = ADO_ORG,
+            Sequential = true,
+            Output = new FileInfo("unit-test-output"),
+            AdoServerUrl = ADO_SERVER_URL,
+        };
+        await _handler.Handle(args);
+
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput);
+        var expected = $"Exec {{ gh ado2gh migrate-repo --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --target-repo-visibility private --ado-server-url \"{ADO_SERVER_URL}\" }}";
 
         // Assert
         _scriptOutput.Should().Be(expected);

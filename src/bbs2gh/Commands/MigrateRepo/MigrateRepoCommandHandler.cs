@@ -183,15 +183,29 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
+        var bbsRepoUrl = GetBbsRepoUrl(args);
+
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
-        var migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
+
+        string migrationSourceId;
+
+        try
+        {
+            migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubOrg);
+            var message = $"{ex.Message}{insufficientPermissionsMessage}";
+            throw new OctoshiftCliException(message, ex);
+        }
 
         string migrationId;
 
         try
         {
-            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
+            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -242,6 +256,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
+
+    private string GetBbsRepoUrl(MigrateRepoCommandArgs args)
+    {
+        return args.BbsServerUrl.HasValue() && args.BbsProject.HasValue() && args.BbsRepo.HasValue()
+            ? $"{args.BbsServerUrl.TrimEnd('/')}/projects/{args.BbsProject}/repos/{args.BbsRepo}/browse"
+            : "https://not-used";
+    }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
