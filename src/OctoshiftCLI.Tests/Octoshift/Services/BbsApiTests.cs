@@ -246,9 +246,9 @@ public class BbsApiTests
             totalCount = 1
         };
 
-        var response = new[] { JObject.FromObject(fooCommit) }.ToAsyncJTokenEnumerable();
+        Task<string> response = Task.FromResult(fooCommit.ToJson());
 
-        _mockBbsClient.Setup(m => m.GetAllAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
         var result = await _sut.GetRepositoryLatestCommit(fooProjectKey, fooRepo);
