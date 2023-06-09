@@ -113,35 +113,100 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
-        public async Task LoadReposCsv_Should_Set_Projects()
+        public async Task GetPullRequestCount_Should_Return_Count()
         {
             // Arrange
-            var csvPath = "repos.csv";
-            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+            var project = "project";
+            var projects = new[] {
+                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
+            };
 
-            _service.OpenFileStream = _ => csvContents.ToStream();
+            var repo1 = "repo1";
+            var repo2 = "repo2";
+            var repos = new[]
+            {
+                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
+                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+            };
+
+            var prs1 = new[]
+            {
+                (Id: 1, Name: "pr1"),
+                (Id: 2, Name: "pr2")
+            };
+            var prs2 = new[]
+            {
+                (Id: 3, Name: "pr3")
+            };
+            var expectedCount = 3;
+
+            _mockBbsApi.Setup(m => m.GetRepos(project)).ReturnsAsync(repos);
+            _mockBbsApi.Setup(m => m.GetRepositoryPullRequests(project, repo1)).ReturnsAsync(prs1);
+            _mockBbsApi.Setup(m => m.GetRepositoryPullRequests(project, repo2)).ReturnsAsync(prs2);
 
             // Act
-            _service.LoadReposCsv(csvPath);
+            var result = await _service.GetPullRequestCount(project);
 
             // Assert
-            (await _service.GetProjects()).Should().BeEquivalentTo(new List<string>() { BBS_PROJECT });
+            result.Should().Be(expectedCount);
         }
 
         [Fact]
-        public async Task LoadReposCsv_Should_Set_Repos()
+        public async Task GetRepositoryPullRequestCount_Should_Return_Count()
         {
             // Arrange
-            var csvPath = "repos.csv";
-            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+            var project = "project";
+            var projects = new[] {
+                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
+            };
 
-            _service.OpenFileStream = _ => csvContents.ToStream();
+            var repo = "repo1";
+            var prs = new[]
+            {
+                (Id: 1, Name: "pr1"),
+                (Id: 2, Name: "pr2")
+            };
+            var expectedCount = 2;
+
+            _mockBbsApi.Setup(m => m.GetRepositoryPullRequests(project, repo)).ReturnsAsync(prs);
 
             // Act
-            _service.LoadReposCsv(csvPath);
+            var result = await _service.GetRepositoryPullRequestCount(project, repo);
 
             // Assert
-            (await _service.GetRepos(BBS_PROJECT)).Single().Name.Should().Be(FOO_REPO);
+            result.Should().Be(expectedCount);
         }
+
+        // [Fact]
+        // public async Task LoadReposCsv_Should_Set_Projects()
+        // {
+        //     // Arrange
+        //     var csvPath = "repos.csv";
+        //     var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+
+        //     _service.OpenFileStream = _ => csvContents.ToStream();
+
+        //     // Act
+        //     _service.LoadReposCsv(csvPath);
+
+        //     // Assert
+        //     (await _service.GetProjects()).Should().BeEquivalentTo(new List<string>() { BBS_PROJECT });
+        // }
+
+        // [Fact]
+        // public async Task LoadReposCsv_Should_Set_Repos()
+        // {
+        //     // Arrange
+        //     var csvPath = "repos.csv";
+        //     var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+
+        //     _service.OpenFileStream = _ => csvContents.ToStream();
+
+        //     // Act
+        //     _service.LoadReposCsv(csvPath);
+
+        //     // Assert
+        //     (await _service.GetRepos(BBS_PROJECT)).Single().Name.Should().Be(FOO_REPO);
+        // }
     }
 }

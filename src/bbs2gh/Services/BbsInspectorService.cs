@@ -80,6 +80,19 @@ namespace OctoshiftCLI.BbsToGithub
             return _projects;
         }
 
+        public virtual async Task<IEnumerable<BbsRepository>> GetRepos(string project)
+        {
+            if (!_repos.TryGetValue(project, out var repos))
+            {
+                repos = (await _bbsApi.GetRepos(project))
+                    .Select(repo => (new BbsRepository() { Name = repo.Name, IsArchived = repo.Archived }))
+                    .ToList();
+                _repos.Add(project, repos);
+            }
+
+            return repos;
+        }
+
         public virtual async Task<int> GetRepoCount()
         {
             var projects = await GetProjects();
@@ -95,19 +108,6 @@ namespace OctoshiftCLI.BbsToGithub
         {
             var repos = await GetRepos(project);
             return await repos.Sum(async repo => await GetRepositoryPullRequestCount(project, repo.Name));
-        }
-
-        public virtual async Task<IEnumerable<BbsRepository>> GetRepos(string project)
-        {
-            if (!_repos.TryGetValue(project, out var repos))
-            {
-                repos = (await _bbsApi.GetRepos(project))
-                    .Select(repo => (new BbsRepository() { Name = repo.Name, IsArchived = repo.Archived }))
-                    .ToList();
-                _repos.Add(project, repos);
-            }
-
-            return repos;
         }
 
         public virtual async Task<int> GetRepositoryPullRequestCount(string project, string repo)
