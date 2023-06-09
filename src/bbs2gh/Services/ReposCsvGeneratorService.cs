@@ -23,7 +23,7 @@ namespace OctoshiftCLI.BbsToGithub
             var inspector = _bbsInspectorServiceFactory.Create(_bbsApi);
             var result = new StringBuilder();
 
-            result.Append("project,repo,url,last-push-date,compressed-repo-size-in-bytes");
+            result.Append("project,repo,url,last-commit-date,compressed-repo-size-in-bytes");
             result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
             var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject }.ToList();

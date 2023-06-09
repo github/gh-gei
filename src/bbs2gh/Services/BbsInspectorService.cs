@@ -80,24 +80,6 @@ namespace OctoshiftCLI.BbsToGithub
             return _projects;
         }
 
-        // public virtual async Task<IEnumerable<string>> GetProjects()
-        // {
-        //     if (_projects is null)
-        //     {
-        //         if (ProjectFilter.HasValue())
-        //         {
-        //             _projects = new List<string>() { ProjectFilter };
-        //         }
-        //         else
-        //         {
-        //             _log.LogInformation($"Retrieving list of all Projects that the user has access to...");
-        //             _projects = (await _bbsApi.GetProjects());
-        //         }
-        //     }
-
-        //     return _projects;
-        // }
-
         public virtual async Task<int> GetRepoCount()
         {
             var projects = await _bbsApi.GetProjects();
@@ -112,20 +94,15 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<int> GetPullRequestCount(string project)
         {
             var repos = await GetRepos(project);
-            return await repos.Sum(async repo => await GetPullRequestCount(project, repo.Name));
+            return await repos.Sum(async repo => await GetRepositoryPullRequestCount(project, repo.Name));
         }
 
         public virtual async Task<IEnumerable<BbsRepository>> GetRepos(string project)
         {
-            if (!_repos.ContainsKey(project))
-            {
-                _repos.Add(project, new List<BbsRepository>());
-            }
-
             if (!_repos.TryGetValue(project, out var repos))
             {
                 repos = (await _bbsApi.GetRepos(project))
-                    .Select(repo => (new BbsRepository() { Name = repo.Name }))
+                    .Select(repo => (new BbsRepository() { Name = repo.Name, IsArchived = repo.Archived }))
                     .ToList();
                 _repos.Add(project, repos);
             }
@@ -133,7 +110,7 @@ namespace OctoshiftCLI.BbsToGithub
             return repos;
         }
 
-        public virtual async Task<int> GetPullRequestCount(string project, string repo)
+        public virtual async Task<int> GetRepositoryPullRequestCount(string project, string repo)
         {
             if (!_prCounts.ContainsKey(project))
             {
@@ -142,8 +119,8 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (!_prCounts[project].TryGetValue(repo, out var prCount))
             {
-                // prCount = await _bbsApi.GetPullRequestCount(project, repo);
-                // _prCounts[project][repo] = prCount;
+                prCount = (await _bbsApi.GetRepositoryPullRequests(project, repo)).Count();
+                _prCounts[project][repo] = prCount;
             }
 
             return prCount;

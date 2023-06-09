@@ -35,7 +35,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                 (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project1),
                 (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project2)
             };
-            var userId = Guid.NewGuid().ToString();
 
             _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
 
@@ -43,7 +42,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetProjects();
 
             // Assert
-            result.Should().BeEquivalentTo(projects);
+            result.Should().BeEquivalentTo(new List<string>() { project1, project2 });
         }
 
         [Fact]
@@ -66,15 +65,24 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task GetRepos_Should_Return_All_Repos()
         {
             // Arrange
-            var repos = new List<BbsRepository> { new() { Name = "repo1" }, new() { Name = "repo2" } };
+            var repo1 = "repo1";
+            var repo2 = "repo2";
+            var repos = new[]
+            {
+                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
+                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+            };
 
-            _mockBbsApi.Setup(m => m.GetRepos(BBS_PROJECT));
+            _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
 
             // Act
-            var result = await _service.GetRepos(BBS_PROJECT);
+            var result = await _service.GetRepos(BBS_FOO_PROJECT_KEY);
 
             // Assert
-            result.Should().BeEquivalentTo(repos);
+            result.Should().BeEquivalentTo(new List<BbsRepository>() { 
+                new() { Name = repo1, IsArchived = false },
+                new() { Name = repo2, IsArchived = false }
+            });
         }
 
         [Fact]
