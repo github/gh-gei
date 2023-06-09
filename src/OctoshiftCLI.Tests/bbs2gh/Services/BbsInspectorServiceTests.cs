@@ -86,6 +86,33 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
+        public async Task GetRepoCount_Should_Return_Count()
+        {
+            // Arrange
+            var project = "project";
+            var projects = new[] {
+                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
+            };
+            var repo1 = "repo1";
+            var repo2 = "repo2";
+            var repos = new[]
+            {
+                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
+                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+            };
+            var expectedCount = 2;
+
+            _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
+            _mockBbsApi.Setup(m => m.GetRepos(project)).ReturnsAsync(repos);
+
+            // Act
+            var result = await _service.GetRepoCount();
+
+            // Assert
+            result.Should().Be(expectedCount);
+        }
+
+        [Fact]
         public async Task LoadReposCsv_Should_Set_Projects()
         {
             // Arrange

@@ -82,8 +82,8 @@ namespace OctoshiftCLI.BbsToGithub
 
         public virtual async Task<int> GetRepoCount()
         {
-            var projects = await _bbsApi.GetProjects();
-            return await projects.Sum(async project => await GetRepoCount(project.Name));
+            var projects = await GetProjects();
+            return await projects.Sum(async project => await GetRepoCount(project));
         }
 
         public virtual async Task<int> GetRepoCount(string project)
