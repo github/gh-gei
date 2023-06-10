@@ -51,7 +51,7 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         _log.LogInformation($"Found {repoCount} Repos");
 
         _log.LogInformation("Generating projects.csv...");
-        var projectsCsvText = await _projectsCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.BbsUsername, args.Minimal);
+        var projectsCsvText = await _projectsCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.Minimal);
         await WriteToFile("projects.csv", projectsCsvText);
         _log.LogSuccess("projects.csv generated");
 

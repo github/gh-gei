@@ -18,7 +18,7 @@ namespace OctoshiftCLI.BbsToGithub
             _bbsInspectorServiceFactory = bbsInspectorServiceFactory;
         }
 
-        public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, string bbsUsername, bool minimal = false)
+        public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, bool minimal = false)
         {
             var inspector = _bbsInspectorServiceFactory.Create(_bbsApi);
             var result = new StringBuilder();
@@ -26,7 +26,7 @@ namespace OctoshiftCLI.BbsToGithub
             result.Append("name,url,repo-count");
             result.AppendLine(!minimal ? ",pr-count" : null);
 
-            var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject }.ToList();
+            var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
 
             foreach (var project in projects)
             {

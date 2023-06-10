@@ -12,8 +12,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 {
     public class ProjectsCsvGeneratorServiceTests
     {
-        private const string FULL_CSV_HEADER = "name,url,owner,repo-count,is-pat-projects-admin,pr-count";
-        private const string MINIMAL_CSV_HEADER = "name,url,owner,repo-count,is-pat-projects-admin";
+        private const string FULL_CSV_HEADER = "name,url,repo-count,pr-count";
+        private const string MINIMAL_CSV_HEADER = "name,url,repo-count";
 
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly Mock<BbsInspectorService> _mockBbsInspectorService = TestHelpers.CreateMock<BbsInspectorService>();
@@ -42,18 +42,16 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var prCount = 822;
             var owner = "Suzy (suzy@gmail.com)";
 
-            _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepoCount(BBS_PROJECT)).ReturnsAsync(repoCount);
             _mockBbsInspectorService.Setup(m => m.GetPullRequestCount(BBS_PROJECT)).ReturnsAsync(prCount);
 
-            // _mockBbsApi.Setup(m => m.GetProjectOwner(BBS_PROJECT)).ReturnsAsync(owner);
-
             // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME);
+            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT);
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}\",\"{owner}\",{projectCount},{repoCount},{true},{prCount}{Environment.NewLine}";
+
+            expected += $"\"{BBS_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}\",{repoCount},{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -69,14 +67,12 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepoCount(BBS_PROJECT)).ReturnsAsync(repoCount);
 
-            // _mockBbsApi.Setup(m => m.GetProjectOwner(BBS_PROJECT)).ReturnsAsync(owner);
-
             // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, true);
+            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, true);
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}\",\"{owner}\",{projectCount},{repoCount},{true}{Environment.NewLine}";
+            expected += $"\"{BBS_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}\",{repoCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
