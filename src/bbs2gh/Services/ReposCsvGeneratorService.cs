@@ -26,19 +26,18 @@ namespace OctoshiftCLI.BbsToGithub
             result.Append("project,repo,url,last-commit-date,compressed-repo-size-in-bytes");
             result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
-            var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject }.ToList();
+            var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
 
             foreach (var project in projects)
             {
                 foreach (var repo in await inspector.GetRepos(project))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}";
-                    // var prCount = !minimal ? await inspector.GetPullRequestCount(project, repo.Name) : 0;
-                    // var lastCommitDate = await _bbsApi.GetLastCommitDate(project, repo.Name);
+                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Name}";
+                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Name) : 0;
+                    var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Name);
 
-                    // result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repo.Size:N0}\"");
-                    // result.AppendLine(!minimal ? $",\"{repo.Archived}\",{prCount}" : null);
-                    // result.AppendLine(!minimal ? $",{prCount}" : null);
+                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repo.Size:N0}\"");
+                    result.AppendLine(!minimal ? $",\"{repo.Archived}\",{prCount}" : null);
                 }
             }
 

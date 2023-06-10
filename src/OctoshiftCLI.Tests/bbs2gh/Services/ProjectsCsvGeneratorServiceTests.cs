@@ -51,6 +51,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             expected += $"\"{BBS_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}\",{repoCount},{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
+            _mockBbsInspectorService.Verify(m => m.GetProjects(), Times.Never);
         }
 
         [Fact]
