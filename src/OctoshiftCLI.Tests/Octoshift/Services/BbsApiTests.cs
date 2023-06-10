@@ -240,10 +240,7 @@ public class BbsApiTests
                         displayId = "abc"
                     }
                 },
-            },
-            start = 0,
-            authorCount = 1,
-            totalCount = 1
+            }
         };
 
         Task<string> response = Task.FromResult(fooCommit.ToJson());

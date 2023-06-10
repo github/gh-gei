@@ -126,6 +126,17 @@ namespace OctoshiftCLI.BbsToGithub
             return prCount;
         }
 
+        public virtual async Task<DateTime> GetLastCommitDate(string project, string repo)
+        {
+            var commit = await _bbsApi.GetRepositoryLatestCommit(project, repo);
+
+            var authorTimestamp = commit["values"].Any() ? (long)commit["values"][0]["authorTimestamp"] : 0;
+
+            var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
+
+            return dateTime.Date;
+        }
+
         public virtual void OutputRepoListToLog()
         {
             foreach (var project in _repos.Keys)
