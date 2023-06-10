@@ -21,7 +21,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
         private const string BBS_SERVER_URL = "http://bbs-server-url";
         private const string BBS_PROJECT = "foo-projects";
-        private const string BBS_USERNAME = "bbs-username";
         private readonly IEnumerable<string> _bbsProjects = new List<string>() { BBS_PROJECT };
 
         private readonly ProjectsCsvGeneratorService _service;
@@ -37,10 +36,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task Generate_Should_Return_Correct_Csv_For_One_Project()
         {
             // Arrange
-            var projectCount = 11;
             var repoCount = 82;
             var prCount = 822;
-            var owner = "Suzy (suzy@gmail.com)";
 
             _mockBbsInspectorService.Setup(m => m.GetRepoCount(BBS_PROJECT)).ReturnsAsync(repoCount);
             _mockBbsInspectorService.Setup(m => m.GetPullRequestCount(BBS_PROJECT)).ReturnsAsync(prCount);
@@ -60,8 +57,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
         {
             // Arrange
-            const string owner = "Suzy (suzy@gmail.com)";
-            const int projectCount = 11;
             const int repoCount = 82;
 
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);

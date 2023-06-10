@@ -69,8 +69,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var repo2 = "repo2";
             var repos = new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
-                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+                (Id: 1, Slug: repo1, Name: repo1, Archived: false),
+                (Id: 2, Slug: repo2, Name: repo2, Archived: false)
             };
 
             _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
@@ -80,8 +80,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             result.Should().BeEquivalentTo(new List<BbsRepository>() { 
-                new() { Name = repo1, IsArchived = false },
-                new() { Name = repo2, IsArchived = false }
+                new() { Name = repo1, Archived = false },
+                new() { Name = repo2, Archived = false }
             });
         }
 
@@ -97,8 +97,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var repo2 = "repo2";
             var repos = new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
-                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+                (Id: 1, Slug: repo1, Name: repo1, Archived: false),
+                (Id: 2, Slug: repo2, Name: repo2, Archived: false)
             };
             var expectedCount = 2;
 
@@ -125,8 +125,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var repo2 = "repo2";
             var repos = new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1, IsArchived: false),
-                (Id: 2, Slug: repo2, Name: repo2, IsArchived: false)
+                (Id: 1, Slug: repo1, Name: repo1, Archived: false),
+                (Id: 2, Slug: repo2, Name: repo2, Archived: false)
             };
 
             var prs1 = new[]
@@ -207,7 +207,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task GetLastCommitDate_Should_Return_MinDate_When_No_Commits()
         {
             var commit = new {
-                values = new object[] { }
+                values = Array.Empty<object>()
             };
 
             var jObject = JObject.Parse(commit.ToJson());

@@ -85,7 +85,7 @@ namespace OctoshiftCLI.BbsToGithub
             if (!_repos.TryGetValue(project, out var repos))
             {
                 repos = (await _bbsApi.GetRepos(project))
-                    .Select(repo => (new BbsRepository() { Name = repo.Name, IsArchived = repo.Archived }))
+                    .Select(repo => (new BbsRepository() { Name = repo.Name, Archived = repo.Archived }))
                     .ToList();
                 _repos.Add(project, repos);
             }
