@@ -1,2 +1,1 @@
 
-- Hide the `reclaim-mannequin --skip-invitation` option from documentation, since it's still under development and not yet available
