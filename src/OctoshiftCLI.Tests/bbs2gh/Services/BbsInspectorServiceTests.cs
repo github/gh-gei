@@ -221,36 +221,36 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             result.Should().Be(DateTime.MinValue);
         }
 
-        // [Fact]
-        // public async Task LoadReposCsv_Should_Set_Projects()
-        // {
-        //     // Arrange
-        //     var csvPath = "repos.csv";
-        //     var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+        [Fact]
+        public async Task LoadReposCsv_Should_Set_Projects()
+        {
+            // Arrange
+            var csvPath = "repos.csv";
+            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
 
-        //     _service.OpenFileStream = _ => csvContents.ToStream();
+            _service.OpenFileStream = _ => csvContents.ToStream();
 
-        //     // Act
-        //     _service.LoadReposCsv(csvPath);
+            // Act
+            _service.LoadReposCsv(csvPath);
 
-        //     // Assert
-        //     (await _service.GetProjects()).Should().BeEquivalentTo(new List<string>() { BBS_PROJECT });
-        // }
+            // Assert
+            (await _service.GetProjects()).Should().BeEquivalentTo(new List<string>() { BBS_PROJECT });
+        }
 
-        // [Fact]
-        // public async Task LoadReposCsv_Should_Set_Repos()
-        // {
-        //     // Arrange
-        //     var csvPath = "repos.csv";
-        //     var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
+        [Fact]
+        public async Task LoadReposCsv_Should_Set_Repos()
+        {
+            // Arrange
+            var csvPath = "repos.csv";
+            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
 
-        //     _service.OpenFileStream = _ => csvContents.ToStream();
+            _service.OpenFileStream = _ => csvContents.ToStream();
 
-        //     // Act
-        //     _service.LoadReposCsv(csvPath);
+            // Act
+            _service.LoadReposCsv(csvPath);
 
-        //     // Assert
-        //     (await _service.GetRepos(BBS_PROJECT)).Single().Name.Should().Be(FOO_REPO);
-        // }
+            // Assert
+            (await _service.GetRepos(BBS_PROJECT)).Single().Name.Should().Be(FOO_REPO);
+        }
     }
 }
