@@ -11,7 +11,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.InventoryReport;
 
 public class InventoryReportCommandHandlerTests
 {
-    private const string BBS_SERVER_URL = "http://bbs-server-url";
     private const string BBS_PROJECT = "foo-project";
     private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
     private readonly Mock<BbsInspectorService> _mockBbsInspectorService = TestHelpers.CreateMock<BbsInspectorService>();

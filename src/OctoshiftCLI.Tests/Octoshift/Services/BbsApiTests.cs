@@ -243,7 +243,7 @@ public class BbsApiTests
             }
         };
 
-        Task<string> response = Task.FromResult(fooCommit.ToJson());
+        var response = Task.FromResult(fooCommit.ToJson());
 
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 

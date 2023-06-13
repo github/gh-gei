@@ -191,10 +191,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
                     }
                 }
             };
-
             var jObject = JObject.Parse(commit.ToJson());
-
-            Task<JObject> response = Task.FromResult(jObject);
+            var response = Task.FromResult(jObject);
 
             _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
 
@@ -209,10 +207,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var commit = new {
                 values = Array.Empty<object>()
             };
-
             var jObject = JObject.Parse(commit.ToJson());
-
-            Task<JObject> response = Task.FromResult(jObject);
+            var response = Task.FromResult(jObject);
 
             _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
 
