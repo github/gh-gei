@@ -26,7 +26,8 @@ namespace OctoshiftCLI.BbsToGithub.Commands.InventoryReport
 
         public Option<string> BbsServerUrl { get; } = new(
             name: "--bbs-server-url",
-            description: "The full URL of the Bitbucket Server/Data Center. E.g. http://bitbucket.contoso.com:7990");
+            description: "The full URL of the Bitbucket Server/Data Center. E.g. http://bitbucket.contoso.com:7990")
+        { IsRequired = true };
 
         public Option<string> BbsProject { get; } = new(
             name: "--bbs-project",
@@ -34,11 +35,13 @@ namespace OctoshiftCLI.BbsToGithub.Commands.InventoryReport
 
         public Option<string> BbsUsername { get; } = new(
             name: "--bbs-username",
-            description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.");
+            description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.")
+        { IsRequired = true };
 
         public Option<string> BbsPassword { get; } = new(
             name: "--bbs-password",
-            description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.");
+            description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.")
+        { IsRequired = true };
 
         public Option<bool> NoSslVerify { get; } = new(
             name: "--no-ssl-verify",

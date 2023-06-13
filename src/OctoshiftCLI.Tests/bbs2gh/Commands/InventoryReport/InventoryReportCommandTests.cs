@@ -39,10 +39,10 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.InventoryReport
             Assert.Equal("inventory-report", _command.Name);
             Assert.Equal(7, _command.Options.Count);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", true);
             TestHelpers.VerifyCommandOption(_command.Options, "minimal", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
