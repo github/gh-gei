@@ -13,7 +13,6 @@ public class InventoryReportCommandHandlerTests
 {
     private const string BBS_SERVER_URL = "http://bbs-server-url";
     private const string BBS_PROJECT = "foo-project";
-    private const string BBS_USERNAME = "bbs-username";
     private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
     private readonly Mock<BbsInspectorService> _mockBbsInspectorService = TestHelpers.CreateMock<BbsInspectorService>();
     private readonly Mock<ProjectsCsvGeneratorService> _mockProjectsCsvGenerator = TestHelpers.CreateMock<ProjectsCsvGeneratorService>();
@@ -56,8 +55,8 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, false)).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, false)).ReturnsAsync(expectedReposCsv);
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, null, false)).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(null, null, false)).ReturnsAsync(expectedReposCsv);
 
         var args = new InventoryReportCommandArgs();
         await _handler.Handle(args);
@@ -72,8 +71,8 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, false)).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, false)).ReturnsAsync(expectedReposCsv);
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, BBS_PROJECT, false)).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(null, BBS_PROJECT, false)).ReturnsAsync(expectedReposCsv);
 
         var args = new InventoryReportCommandArgs
         {
@@ -94,8 +93,8 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, It.IsAny<bool>())).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, It.IsAny<bool>())).ReturnsAsync(expectedReposCsv);
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, null, It.IsAny<bool>())).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(null, null, It.IsAny<bool>())).ReturnsAsync(expectedReposCsv);
 
         // Act
         var args = new InventoryReportCommandArgs
@@ -108,7 +107,7 @@ public class InventoryReportCommandHandlerTests
         _projectsCsvOutput.Should().Be(expectedProjectsCsv);
         _reposCsvOutput.Should().Be(expectedReposCsv);
 
-        _mockProjectsCsvGenerator.Verify(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, true));
-        _mockReposCsvGenerator.Verify(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, true));
+        _mockProjectsCsvGenerator.Verify(m => m.Generate(null, null, true));
+        _mockReposCsvGenerator.Verify(m => m.Generate(null, null, true));
     }
 }

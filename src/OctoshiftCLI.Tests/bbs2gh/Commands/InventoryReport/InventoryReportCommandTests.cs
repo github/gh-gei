@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.InventoryReport
         {
             Assert.NotNull(_command);
             Assert.Equal("inventory-report", _command.Name);
-            Assert.Equal(4, _command.Options.Count);
+            Assert.Equal(7, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", false);
             TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);

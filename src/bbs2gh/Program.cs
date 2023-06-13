@@ -40,6 +40,8 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
+                .AddSingleton<ProjectsCsvGeneratorService>()
+                .AddSingleton<ReposCsvGeneratorService>()
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())

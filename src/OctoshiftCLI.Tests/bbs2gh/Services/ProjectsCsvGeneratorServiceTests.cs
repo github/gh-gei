@@ -27,7 +27,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
         public ProjectsCsvGeneratorServiceTests()
         {
-            //_mockBbsApi.Setup();
             _mockBbsInspectorServiceFactory.Setup(m => m.Create(_mockBbsApi.Object)).Returns(_mockBbsInspectorService.Object);
             _service = new ProjectsCsvGeneratorService(_mockBbsApi.Object, _mockBbsInspectorServiceFactory.Object);
         }
