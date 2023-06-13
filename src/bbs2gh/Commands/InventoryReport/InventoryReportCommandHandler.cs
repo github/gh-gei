@@ -40,8 +40,6 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 
         _log.LogInformation("Creating inventory report...");
 
-        _bbsInspectorService.ProjectFilter = args.BbsProject;
-
         _log.LogInformation("Finding Projects...");
         var projects = await _bbsApi.GetProjects();
         _log.LogInformation($"Found {projects.Count()} Projects");

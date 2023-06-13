@@ -80,8 +80,6 @@ public class InventoryReportCommandHandlerTests
 
         _projectsCsvOutput.Should().Be(expectedProjectsCsv);
         _reposCsvOutput.Should().Be(expectedReposCsv);
-
-        _mockBbsInspectorService.Object.ProjectFilter.Should().Be(BBS_PROJECT);
     }
 
     [Fact]

@@ -46,22 +46,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
-        public async Task GetProjects_Should_Return_Single_Project_Collection_When_Project_Passed()
-        {
-            // Arrange
-            _service.ProjectFilter = BBS_PROJECT;
-
-            // Act
-            var result = await _service.GetProjects();
-
-            // Assert
-            result.Count().Should().Be(1);
-            result.First().Should().Be(BBS_PROJECT);
-
-            _mockBbsApi.VerifyNoOtherCalls();
-        }
-
-        [Fact]
         public async Task GetRepos_Should_Return_All_Repos()
         {
             // Arrange
@@ -215,38 +199,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetLastCommitDate(BBS_FOO_PROJECT_KEY, FOO_REPO);
 
             result.Should().Be(DateTime.MinValue);
-        }
-
-        [Fact]
-        public async Task LoadReposCsv_Should_Set_Projects()
-        {
-            // Arrange
-            var csvPath = "repos.csv";
-            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
-
-            _service.OpenFileStream = _ => csvContents.ToStream();
-
-            // Act
-            _service.LoadReposCsv(csvPath);
-
-            // Assert
-            (await _service.GetProjects()).Should().BeEquivalentTo(new List<string>() { BBS_PROJECT });
-        }
-
-        [Fact]
-        public async Task LoadReposCsv_Should_Set_Repos()
-        {
-            // Arrange
-            var csvPath = "repos.csv";
-            var csvContents = $"project,repo{Environment.NewLine}\"{BBS_PROJECT}\",\"{FOO_REPO}\"";
-
-            _service.OpenFileStream = _ => csvContents.ToStream();
-
-            // Act
-            _service.LoadReposCsv(csvPath);
-
-            // Assert
-            (await _service.GetRepos(BBS_PROJECT)).Single().Name.Should().Be(FOO_REPO);
         }
     }
 }

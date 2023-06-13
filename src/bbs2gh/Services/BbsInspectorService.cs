@@ -27,57 +27,14 @@ namespace OctoshiftCLI.BbsToGithub
             _bbsApi = bbsApi;
         }
 
-        public string ProjectFilter { get; set; }
-        public string RepoFilter { get; set; }
-
-        public virtual void LoadReposCsv(string csvPath)
-        {
-            _projects = new List<string>();
-
-            using var csvStream = OpenFileStream(csvPath);
-            using var csvParser = new TextFieldParser(csvStream);
-            csvParser.SetDelimiters(",");
-            csvParser.ReadFields(); // skip the header row
-
-            while (!csvParser.EndOfData)
-            {
-                var fields = csvParser.ReadFields();
-
-                var project = fields[0];
-                var repo = fields[1];
-
-                if (!_projects.Any(x => x == project))
-                {
-                    _projects.Add(project);
-                }
-
-                if (!_repos.ContainsKey(project))
-                {
-                    _repos.Add(project, new List<BbsRepository>());
-                }
-
-                if (!_repos[project].Any(x => x.Name == repo))
-                {
-                    _repos[project].Add(new BbsRepository() { Name = repo });
-                }
-            }
-        }
-
         public virtual async Task<IEnumerable<string>> GetProjects()
         {
             if (_projects is null)
             {
-                if (ProjectFilter.HasValue())
-                {
-                    _projects = new List<string>() { ProjectFilter };
-                }
-                else
-                {
-                    _log.LogInformation($"Retrieving list of all Projects the user has access to...");
-                    _projects = (await _bbsApi.GetProjects())
-                        .Select(project => project.Name)
-                        .ToList();
-                }
+                _log.LogInformation($"Retrieving list of all Projects the user has access to...");
+                _projects = (await _bbsApi.GetProjects())
+                    .Select(project => project.Name)
+                    .ToList();
             }
 
             return _projects;
@@ -138,19 +95,6 @@ namespace OctoshiftCLI.BbsToGithub
             var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
 
             return dateTime.Date;
-        }
-
-        public virtual void OutputRepoListToLog()
-        {
-            foreach (var project in _repos.Keys)
-            {
-                _log.LogInformation($"BBS Project: {project}");
-
-                foreach (var repo in _repos[project])
-                {
-                    _log.LogInformation($"    Repo: {repo.Name}");
-                }
-            }
         }
     }
 }
