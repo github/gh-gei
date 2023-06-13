@@ -19,7 +19,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly BbsInspectorService _service;
 
-        private const string BBS_PROJECT = "BBS_PROJECT";
         private const string FOO_REPO = "FOO_REPO";
         private const string BBS_FOO_PROJECT_KEY = "FP";
 

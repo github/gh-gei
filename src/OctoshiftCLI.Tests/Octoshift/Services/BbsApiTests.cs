@@ -207,9 +207,7 @@ public class BbsApiTests
     public async Task GetRepositoryLatestCommit_Returns_Latest_Commit_For_Repository()
     {
         // Arrange
-        const string fooProjectKey = "FP";
-        const string fooRepo = "foorepo";
-        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/commits?limit=1";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
 
         var fooCommit = new {
             size = 1,
@@ -248,9 +246,29 @@ public class BbsApiTests
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
-        var result = await _sut.GetRepositoryLatestCommit(fooProjectKey, fooRepo);
+        var result = await _sut.GetRepositoryLatestCommit(PROJECT_KEY, SLUG);
 
         // Assert
         result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
+    }
+
+    [Fact]
+    public async Task GetRepositorySize_Returns_Size()
+    {
+        // Arrange
+        const int repoSize = 10000;
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/sizes";
+        var sizeJson = new
+        {
+            size = repoSize
+        }.ToJson();
+
+        _mockBbsClient.Setup(x => x.GetAsync(url).Result).Returns(sizeJson);
+
+        // Act
+        var result = await _sut.GetRepositorySize(PROJECT_KEY, SLUG);
+
+        //Assert
+        result.Should().Be(repoSize);
     }
 }

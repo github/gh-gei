@@ -3,3 +3,4 @@
 - Improve the error thrown when you have insufficient permissions for the target GitHub organization to explicitly mention the relevant organization
 - Write log output prior to making API calls in wait-for-migration commands
 - Support forked repositories in Bitbucket Server migrations
+- Add `bbs2gh inventory-report` command which generates CSV reports of all the projects and repos it can access, along with extra information that can be useful when planning a large migration (repo count, PR count per repo, last commit date, if repo is archived, and repo size)

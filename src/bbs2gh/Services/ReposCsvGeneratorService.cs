@@ -35,8 +35,9 @@ namespace OctoshiftCLI.BbsToGithub
                     var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Name}";
                     var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Name) : 0;
                     var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Name);
+                    var repoSize = await _bbsApi.GetRepositorySize(project, repo.Name);
 
-                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repo.Size:N0}\"");
+                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\"");
                     result.AppendLine(!minimal ? $",\"{repo.Archived}\",{prCount}" : null);
                 }
             }
