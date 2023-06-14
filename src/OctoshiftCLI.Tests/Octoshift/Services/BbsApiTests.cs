@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
-using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
 
@@ -209,7 +209,8 @@ public class BbsApiTests
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
 
-        var fooCommit = new {
+        var fooCommit = new
+        {
             size = 1,
             limit = 25,
             isLastPage = true,

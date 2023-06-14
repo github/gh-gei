@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.BbsToGithub;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
-using Newtonsoft.Json.Linq;
 
 namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 {
@@ -61,10 +61,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetRepos(BBS_FOO_PROJECT_KEY);
 
             // Assert
-            result.Should().BeEquivalentTo(new List<BbsRepository>() { 
-                new() { Name = repo1, Archived = false },
-                new() { Name = repo2, Archived = false }
-            });
+            result.Should().BeEquivalentTo(new List<BbsRepository>() { new() { Name = repo1, Archived = false }, new() { Name = repo2, Archived = false } });
         }
 
         [Fact]
@@ -164,13 +161,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             var expectedDate = new DateTime(2022, 2, 14);
 
-            var commit = new {
+            var commit = new
+            {
                 values = new[]
                 {
-                    new
-                    {
-                        authorTimestamp = 1644816000000,
-                    }
+                    new { authorTimestamp = 1644816000000 }
                 }
             };
             var jObject = JObject.Parse(commit.ToJson());
@@ -186,7 +181,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         [Fact]
         public async Task GetLastCommitDate_Should_Return_MinDate_When_No_Commits()
         {
-            var commit = new {
+            var commit = new
+            {
                 values = Array.Empty<object>()
             };
             var jObject = JObject.Parse(commit.ToJson());
