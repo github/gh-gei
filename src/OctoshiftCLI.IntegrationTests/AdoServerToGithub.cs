@@ -13,7 +13,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
         }
 
-        [Fact]
+        [Fact (Skip = "ADO Server is not a supported feature in GEI")]
         public async Task Basic()
         {
             var adoOrg = $"gei-e2e-testing-basic-{TestHelper.GetOsName()}";
