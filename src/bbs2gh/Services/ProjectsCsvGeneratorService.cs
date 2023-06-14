@@ -19,6 +19,8 @@ namespace OctoshiftCLI.BbsToGithub
 
         public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, bool minimal = false)
         {
+            bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
+
             var inspector = _bbsInspectorServiceFactory.Create(_bbsApi);
             var result = new StringBuilder();
 

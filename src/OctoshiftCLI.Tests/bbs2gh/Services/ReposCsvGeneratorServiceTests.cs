@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Arrange
             var prCount = 822;
             var lastCommitDate = DateTime.Now;
-            ulong repoSize = 10000UL;
+            var repoSize = 10000UL;
 
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
@@ -63,7 +63,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             // Arrange
             var lastCommitDate = DateTime.Now;
-            ulong repoSize = 10000UL;
+            var repoSize = 10000UL;
 
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
