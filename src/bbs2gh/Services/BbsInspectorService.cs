@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
@@ -13,8 +12,6 @@ namespace OctoshiftCLI.BbsToGithub
     {
         private readonly OctoLogger _log;
         private readonly BbsApi _bbsApi;
-
-        internal Func<string, Stream> OpenFileStream = path => File.OpenRead(path);
 
         private IList<string> _projects;
         private readonly IDictionary<string, IList<BbsRepository>> _repos = new Dictionary<string, IList<BbsRepository>>();

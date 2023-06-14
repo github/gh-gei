@@ -96,10 +96,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             // Arrange
             var project = "project";
-            var projects = new[] {
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
-            };
-
             var repo1 = "repo1";
             var repo2 = "repo2";
             var repos = new[]
@@ -135,10 +131,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             // Arrange
             var project = "project";
-            var projects = new[] {
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
-            };
-
             var repo = "repo1";
             var prs = new[]
             {
