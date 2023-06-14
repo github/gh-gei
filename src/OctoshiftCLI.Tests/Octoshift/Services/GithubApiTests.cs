@@ -757,7 +757,7 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task StartMigration_Returns_New_Repository_Migration_Id()
+    public async Task StartMigration_Returns_New_Repository_Migration_Id_And_Guid()
     {
         // Arrange
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
@@ -802,6 +802,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -833,12 +834,14 @@ public class GithubApiTests
             operationName = "startRepositoryMigration"
         };
         const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+        const string actualRepositoryMigrationGuid = "18e1a871-2213-4ebd-b974-bd663c872e93";
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""{actualRepositoryMigrationGuid}"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
@@ -857,14 +860,15 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var expectedRepositoryMigrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, GITHUB_REPO, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
+        var (expectedRepositoryMigrationId, expectedRepositoryMigrationGuid) = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, orgId, GITHUB_REPO, sourceToken, targetToken, gitArchiveUrl, metadataArchiveUrl);
 
         // Assert
         expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+        expectedRepositoryMigrationGuid.Should().Be(actualRepositoryMigrationGuid);
     }
 
     [Fact]
-    public async Task StartBbsMigration_Returns_New_Repository_Migration_Id()
+    public async Task StartBbsMigration_Returns_New_Repository_Migration_Id_And_Guid()
     {
         // Arrange
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
@@ -910,6 +914,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -941,12 +946,15 @@ public class GithubApiTests
             operationName = "startRepositoryMigration"
         };
         const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+        const string actualRepositoryMigrationGuid = "18e1a871-2213-4ebd-b974-bd663c872e93";
+
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""{actualRepositoryMigrationGuid}"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
@@ -965,10 +973,11 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
+        var (expectedRepositoryMigrationId, expectedRepositoryMigrationGuid) = await _githubApi.StartBbsMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
 
         // Assert
         expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+        expectedRepositoryMigrationGuid.Should().Be(actualRepositoryMigrationGuid);
     }
 
     [Fact]

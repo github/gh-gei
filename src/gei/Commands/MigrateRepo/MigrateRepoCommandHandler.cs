@@ -120,10 +120,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         string migrationId;
+        string migrationGuid;
 
         try
         {
-            migrationId = await _targetGithubApi.StartMigration(
+            (migrationId, migrationGuid) = await _targetGithubApi.StartMigration(
                 migrationSourceId,
                 sourceRepoUrl,
                 githubOrgId,
@@ -149,7 +150,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.QueueOnly)
         {
-            _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+            _log.LogInformation($"A repository migration (ID: {migrationId}/{migrationGuid}) was successfully queued.");
             return;
         }
 
@@ -157,7 +158,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+            _log.LogInformation($"Migration in progress (ID: {migrationId}/{migrationGuid}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
             (migrationState, _, failureReason, migrationLogUrl) = await _targetGithubApi.GetMigration(migrationId);
         }

@@ -1,2 +1,3 @@
 - Improve log sanitization to also remove secret values that have been URL encoded
 - Warn when the `--ssh-port` argument for `bbs2gh migrate-repo` and `bbs2gh generate-script` is set to the default port for Git operations
+- When starting a repository migration, output the migration's GUID to the logs, as well as its GraphQL ID (`RM_`)

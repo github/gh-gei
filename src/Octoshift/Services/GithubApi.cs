@@ -278,7 +278,7 @@ public class GithubApi
         return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
-    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
+    public virtual async Task<(string migrationId, string migrationGuid)> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -315,6 +315,7 @@ public class GithubApi
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -349,7 +350,10 @@ public class GithubApi
 
         var data = await _client.PostGraphQLAsync(url, payload);
 
-        return (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"];
+        return (
+            (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["id"],
+            (string)data["data"]["startRepositoryMigration"]["repositoryMigration"]["databaseId"]
+        );
     }
 
     public virtual async Task<string> StartOrganizationMigration(string sourceOrgUrl, string targetOrgName, string targetEnterpriseId, string sourceAccessToken)
@@ -423,7 +427,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string bbsRepoUrl, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
+    public virtual async Task<(string migrationId, string migrationGuid)> StartBbsMigration(string migrationSourceId, string bbsRepoUrl, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
     {
         return await StartMigration(
             migrationSourceId,

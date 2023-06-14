@@ -55,6 +55,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string GITHUB_ORG_ID = "github-org-id";
         private const string MIGRATION_SOURCE_ID = "migration-source-id";
         private const string MIGRATION_ID = "migration-id";
+        private const string MIGRATION_GUID = "migration-guid";
 
         public MigrateRepoCommandHandlerTests()
         {
@@ -438,7 +439,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
                 .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
-                .Returns(MIGRATION_ID);
+                .Returns((MIGRATION_ID, MIGRATION_GUID));
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -550,7 +551,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
                 .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
-                .Returns(MIGRATION_ID);
+                .Returns((MIGRATION_ID, MIGRATION_GUID));
 
             // Act
             var args = new MigrateRepoCommandArgs

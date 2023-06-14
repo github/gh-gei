@@ -202,10 +202,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         string migrationId;
+        string migrationGuid;
 
         try
         {
-            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
+            (migrationId, migrationGuid) = await _githubApi.StartBbsMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -215,7 +216,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.QueueOnly)
         {
-            _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+            _log.LogInformation($"A repository migration (ID: {migrationId}/{migrationGuid}) was successfully queued.");
             return;
         }
 
@@ -223,7 +224,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+            _log.LogInformation($"Migration in progress (ID: {migrationId}/{migrationGuid}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
             (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }

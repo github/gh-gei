@@ -49,10 +49,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         string migrationId;
+        string migrationGuid;
 
         try
         {
-            migrationId = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat, targetRepoVisibility: args.TargetRepoVisibility);
+            (migrationId, migrationGuid) = await _githubApi.StartMigration(migrationSourceId, adoRepoUrl, githubOrgId, args.GithubRepo, args.AdoPat, args.GithubPat, targetRepoVisibility: args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex)
         {
@@ -67,7 +68,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.QueueOnly)
         {
-            _log.LogInformation($"A repository migration (ID: {migrationId}) was successfully queued.");
+            _log.LogInformation($"A repository migration (ID: {migrationId}/{migrationGuid}) was successfully queued.");
             return;
         }
 
@@ -75,7 +76,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+            _log.LogInformation($"Migration in progress (ID: {migrationId}/{migrationGuid}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(10000);
             (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }

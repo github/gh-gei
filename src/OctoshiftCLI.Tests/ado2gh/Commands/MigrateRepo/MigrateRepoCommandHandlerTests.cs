@@ -27,6 +27,7 @@ public class MigrateRepoCommandHandlerTests
     private readonly string GITHUB_ORG_ID = Guid.NewGuid().ToString();
     private readonly string MIGRATION_SOURCE_ID = Guid.NewGuid().ToString();
     private readonly string MIGRATION_ID = Guid.NewGuid().ToString();
+    private readonly string MIGRATION_GUID = Guid.NewGuid().ToString();
     private readonly string GITHUB_TOKEN = Guid.NewGuid().ToString();
     private readonly string ADO_SERVER_URL = "https://ado.contoso.com";
 
@@ -54,7 +55,7 @@ public class MigrateRepoCommandHandlerTests
                 false,
                 null,
                 false).Result)
-            .Returns(MIGRATION_ID);
+            .Returns((MIGRATION_ID, MIGRATION_GUID));
         _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
 
         _mockEnvironmentVariableProvider
@@ -70,7 +71,7 @@ public class MigrateRepoCommandHandlerTests
         var expectedLogOutput = new List<string>
         {
             "Migrating Repo...",
-            $"A repository migration (ID: {MIGRATION_ID}) was successfully queued."
+            $"A repository migration (ID: {MIGRATION_ID}/{MIGRATION_GUID}) was successfully queued."
         };
 
         // Act
@@ -193,7 +194,7 @@ public class MigrateRepoCommandHandlerTests
                     false,
                     null,
                     false).Result)
-            .Returns(MIGRATION_ID);
+            .Returns((MIGRATION_ID, MIGRATION_GUID));
         _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, null, null));
 
         _mockEnvironmentVariableProvider
