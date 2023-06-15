@@ -142,8 +142,8 @@ public class BbsApiTests
         // Arrange
         const string fooProjectKey = "FP";
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos";
-        var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo", Archived: true);
-        var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo", Archived: false);
+        var fooRepo = (Id: 1, Slug: "foorepo", Name: "FooRepo");
+        var barRepo = (Id: 2, Slug: "barrepo", Name: "BarRepo");
         var response = new[]
         {
             new
@@ -151,14 +151,12 @@ public class BbsApiTests
                 slug = fooRepo.Slug,
                 id = fooRepo.Id,
                 name = fooRepo.Name,
-                archived = fooRepo.Archived
             },
             new
             {
                 slug = barRepo.Slug,
                 id = barRepo.Id,
                 name = barRepo.Name,
-                archived = barRepo.Archived
             }
         }.ToAsyncJTokenEnumerable();
 
@@ -251,6 +249,28 @@ public class BbsApiTests
 
         // Assert
         result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
+    }
+
+    [Fact]
+    public async Task GetIsRepositoryArchived_Returns_Repository_Archived_Field()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}?fields=archived";
+
+        var repo = new
+        {
+            archived = false,
+        };
+
+        var response = Task.FromResult(repo.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetIsRepositoryArchived(PROJECT_KEY, SLUG);
+
+        // Assert
+        result.Should().Be(repo.archived);
     }
 
     [Fact]

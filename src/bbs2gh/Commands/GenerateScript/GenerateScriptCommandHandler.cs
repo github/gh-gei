@@ -101,7 +101,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
             content.AppendLine();
 
-            foreach (var (_, repoSlug, repoName, _) in repos)
+            foreach (var (_, repoSlug, repoName) in repos)
             {
                 _log.LogInformation($"  Repo: {repoName}");
 

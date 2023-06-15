@@ -24,7 +24,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string BBS_PROJECT = "foo-project";
         private readonly IEnumerable<string> _bbsProjects = new List<string>() { BBS_PROJECT };
         private const string BBS_REPO = "foo-repo";
-        private readonly IEnumerable<BbsRepository> _bbsRepos = new List<BbsRepository> { new() { Name = BBS_REPO, Archived = false } };
+        private readonly IEnumerable<BbsRepository> _bbsRepos = new List<BbsRepository> { new() { Name = BBS_REPO } };
 
         private readonly ReposCsvGeneratorService _service;
 
@@ -40,12 +40,14 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Arrange
             var prCount = 822;
             var lastCommitDate = DateTime.Now;
+            var archived = false;
             var repoSize = 10000UL;
 
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_PROJECT, BBS_REPO)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_PROJECT, BBS_REPO)).ReturnsAsync(lastCommitDate);
+            _mockBbsApi.Setup(m => m.GetIsRepositoryArchived(BBS_PROJECT, BBS_REPO)).ReturnsAsync(archived);
             _mockBbsApi.Setup(m => m.GetRepositorySize(BBS_PROJECT, BBS_REPO)).ReturnsAsync(repoSize);
 
             // Act

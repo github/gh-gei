@@ -73,12 +73,21 @@ public class BbsApi
             .ToListAsync();
     }
 
-    public virtual async Task<IEnumerable<(int Id, string Slug, string Name, bool Archived)>> GetRepos(string projectKey)
+    public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos";
         return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"], (bool)x["archived"]))
+            .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"]))
             .ToListAsync();
+    }
+
+    public virtual async Task<bool> GetIsRepositoryArchived(string projectKey, string repo)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}?fields=archived";
+        var response = await _client.GetAsync(url);
+
+        var data = JObject.Parse(response);
+        return (bool)data["archived"];
     }
 
     public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
