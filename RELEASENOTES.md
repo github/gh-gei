@@ -1,1 +1,1 @@
-
+- Improve log sanitization to also remove secret values that have been URL encoded
