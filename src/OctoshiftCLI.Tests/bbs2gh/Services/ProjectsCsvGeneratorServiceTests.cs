@@ -16,11 +16,15 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string MINIMAL_CSV_HEADER = "name,url,repo-count";
 
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
+        private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
         private readonly Mock<BbsInspectorService> _mockBbsInspectorService = TestHelpers.CreateMock<BbsInspectorService>();
         private readonly Mock<BbsInspectorServiceFactory> _mockBbsInspectorServiceFactory = TestHelpers.CreateMock<BbsInspectorServiceFactory>();
 
         private const string BBS_SERVER_URL = "http://bbs-server-url";
         private const string BBS_PROJECT = "foo-projects";
+        private const string BBS_USERNAME = "bbs-username";
+        private const string BBS_PASSWORD = "bbs-password";
+        private const bool NO_SSL_VERIFY = true;
         private readonly IEnumerable<string> _bbsProjects = new List<string>() { BBS_PROJECT };
 
         private readonly ProjectsCsvGeneratorService _service;
@@ -28,7 +32,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public ProjectsCsvGeneratorServiceTests()
         {
             _mockBbsInspectorServiceFactory.Setup(m => m.Create(_mockBbsApi.Object)).Returns(_mockBbsInspectorService.Object);
-            _service = new ProjectsCsvGeneratorService(_mockBbsApi.Object, _mockBbsInspectorServiceFactory.Object);
+            _service = new ProjectsCsvGeneratorService(_mockBbsInspectorServiceFactory.Object, _mockBbsApiFactory.Object);
         }
 
         [Fact]
@@ -38,11 +42,13 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var repoCount = 82;
             var prCount = 822;
 
+            _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
+
             _mockBbsInspectorService.Setup(m => m.GetRepoCount(BBS_PROJECT)).ReturnsAsync(repoCount);
             _mockBbsInspectorService.Setup(m => m.GetPullRequestCount(BBS_PROJECT)).ReturnsAsync(prCount);
 
             // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT);
+            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY);
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
@@ -58,12 +64,15 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         {
             // Arrange
             const int repoCount = 82;
+            const bool minimal = true;
+
+            _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepoCount(BBS_PROJECT)).ReturnsAsync(repoCount);
 
             // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, true);
+            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, minimal);
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";

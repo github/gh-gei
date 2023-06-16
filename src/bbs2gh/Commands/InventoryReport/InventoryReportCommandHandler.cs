@@ -40,21 +40,24 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 
         _log.LogInformation("Creating inventory report...");
 
-        _log.LogInformation("Finding Projects...");
-        var projects = await _bbsApi.GetProjects();
-        _log.LogInformation($"Found {projects.Count()} Projects");
+        if (string.IsNullOrWhiteSpace(args.BbsProject))
+        {
+            _log.LogInformation("Finding Projects...");
+            var projects = await _bbsApi.GetProjects();
+            _log.LogInformation($"Found {projects.Count()} Projects");
+        }
 
         _log.LogInformation("Finding Repos...");
-        var repoCount = await _bbsInspectorService.GetRepoCount();
+        var repoCount = string.IsNullOrWhiteSpace(args.BbsProject) ? await _bbsInspectorService.GetRepoCount() : await _bbsInspectorService.GetRepoCount(args.BbsProject);
         _log.LogInformation($"Found {repoCount} Repos");
 
-        _log.LogInformation("Generating projects.csv...");
-        var projectsCsvText = await _projectsCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.Minimal);
+        _log.LogInformation("Generating data for projects.csv...");
+        var projectsCsvText = await _projectsCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.BbsUsername, args.BbsPassword, args.NoSslVerify, args.Minimal);
         await WriteToFile("projects.csv", projectsCsvText);
         _log.LogSuccess("projects.csv generated");
 
         _log.LogInformation("Generating repos.csv...");
-        var reposCsvText = await _reposCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.Minimal);
+        var reposCsvText = await _reposCsvGenerator.Generate(args.BbsServerUrl, args.BbsProject, args.BbsUsername, args.BbsPassword, args.NoSslVerify, args.Minimal);
         await WriteToFile("repos.csv", reposCsvText);
         _log.LogSuccess("repos.csv generated");
     }

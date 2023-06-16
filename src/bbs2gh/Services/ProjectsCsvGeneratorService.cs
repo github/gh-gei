@@ -2,26 +2,28 @@
 using System.Text;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Factories;
-using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.BbsToGithub
 {
     public class ProjectsCsvGeneratorService
     {
-        private readonly BbsApi _bbsApi;
         private readonly BbsInspectorServiceFactory _bbsInspectorServiceFactory;
+        private readonly BbsApiFactory _bbsApiFactory;
 
-        public ProjectsCsvGeneratorService(BbsApi bbsApi, BbsInspectorServiceFactory bbsInspectorServiceFactory)
+        public ProjectsCsvGeneratorService(BbsInspectorServiceFactory bbsInspectorServiceFactory, BbsApiFactory bbsApiFactory)
         {
-            _bbsApi = bbsApi;
             _bbsInspectorServiceFactory = bbsInspectorServiceFactory;
+            _bbsApiFactory = bbsApiFactory;
         }
 
-        public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, bool minimal = false)
+        public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, string bbsUsername, string bbsPassword, bool noSslVerify, bool minimal = false)
         {
             bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
+            bbsUsername = bbsUsername ?? throw new ArgumentNullException(nameof(bbsUsername));
+            bbsPassword = bbsPassword ?? throw new ArgumentNullException(nameof(bbsPassword));
 
-            var inspector = _bbsInspectorServiceFactory.Create(_bbsApi);
+            var bbsApi = _bbsApiFactory.Create(bbsServerUrl, bbsUsername, bbsPassword, noSslVerify);
+            var inspector = _bbsInspectorServiceFactory.Create(bbsApi);
             var result = new StringBuilder();
 
             result.Append("name,url,repo-count");

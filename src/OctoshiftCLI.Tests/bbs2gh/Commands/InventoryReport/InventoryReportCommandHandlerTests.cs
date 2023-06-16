@@ -10,7 +10,12 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.InventoryReport;
 
 public class InventoryReportCommandHandlerTests
 {
+    private const string BBS_SERVER_URL = "http://bbs-server-url";
+    private const string BBS_PROJECT_KEY = "FP";
     private const string BBS_PROJECT = "foo-project";
+    private const string BBS_USERNAME = "bbs-username";
+    private const string BBS_PASSWORD = "bbs-password";
+    private const bool NO_SSL_VERIFY = true;
     private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
     private readonly Mock<BbsInspectorService> _mockBbsInspectorService = TestHelpers.CreateMock<BbsInspectorService>();
     private readonly Mock<ProjectsCsvGeneratorService> _mockProjectsCsvGenerator = TestHelpers.CreateMock<ProjectsCsvGeneratorService>();
@@ -53,10 +58,20 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, null, false)).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(null, null, false)).ReturnsAsync(expectedReposCsv);
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (Id: 1, Key: BBS_PROJECT_KEY, Name: BBS_PROJECT) });
+        _mockBbsInspectorService.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
 
-        var args = new InventoryReportCommandArgs();
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, false)).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, false)).ReturnsAsync(expectedReposCsv);
+
+        // var args = new InventoryReportCommandArgs();
+        var args = new InventoryReportCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            NoSslVerify = NO_SSL_VERIFY
+        };
         await _handler.Handle(args);
 
         _projectsCsvOutput.Should().Be(expectedProjectsCsv);
@@ -69,12 +84,16 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, BBS_PROJECT, false)).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(null, BBS_PROJECT, false)).ReturnsAsync(expectedReposCsv);
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, false)).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, false)).ReturnsAsync(expectedReposCsv);
 
         var args = new InventoryReportCommandArgs
         {
+            BbsServerUrl = BBS_SERVER_URL,
             BbsProject = BBS_PROJECT,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            NoSslVerify = NO_SSL_VERIFY
         };
         await _handler.Handle(args);
 
@@ -89,13 +108,17 @@ public class InventoryReportCommandHandlerTests
         var expectedProjectsCsv = "csv stuff";
         var expectedReposCsv = "repo csv stuff";
 
-        _mockProjectsCsvGenerator.Setup(m => m.Generate(null, null, It.IsAny<bool>())).ReturnsAsync(expectedProjectsCsv);
-        _mockReposCsvGenerator.Setup(m => m.Generate(null, null, It.IsAny<bool>())).ReturnsAsync(expectedReposCsv);
+        _mockProjectsCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, It.IsAny<bool>())).ReturnsAsync(expectedProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, It.IsAny<bool>())).ReturnsAsync(expectedReposCsv);
 
         // Act
         var args = new InventoryReportCommandArgs
         {
-            Minimal = true,
+            BbsServerUrl = BBS_SERVER_URL,
+            BbsUsername = BBS_USERNAME,
+            BbsPassword = BBS_PASSWORD,
+            NoSslVerify = NO_SSL_VERIFY,
+            Minimal = true
         };
         await _handler.Handle(args);
 
@@ -103,7 +126,7 @@ public class InventoryReportCommandHandlerTests
         _projectsCsvOutput.Should().Be(expectedProjectsCsv);
         _reposCsvOutput.Should().Be(expectedReposCsv);
 
-        _mockProjectsCsvGenerator.Verify(m => m.Generate(null, null, true));
-        _mockReposCsvGenerator.Verify(m => m.Generate(null, null, true));
+        _mockProjectsCsvGenerator.Verify(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, true));
+        _mockReposCsvGenerator.Verify(m => m.Generate(BBS_SERVER_URL, null, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, true));
     }
 }

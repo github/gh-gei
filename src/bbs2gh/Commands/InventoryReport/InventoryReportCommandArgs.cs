@@ -9,7 +9,6 @@ namespace OctoshiftCLI.BbsToGithub.Commands.InventoryReport
         public string BbsUsername { get; set; }
         [Secret]
         public string BbsPassword { get; set; }
-        [Secret]
         public bool NoSslVerify { get; set; }
         public bool Minimal { get; set; }
     }
