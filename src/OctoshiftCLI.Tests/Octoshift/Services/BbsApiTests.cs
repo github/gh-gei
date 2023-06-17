@@ -274,22 +274,25 @@ public class BbsApiTests
     }
 
     [Fact]
-    public async Task GetRepositorySize_Returns_Size()
+    public async Task GetRepositorySize_Returns_Sizes()
     {
         // Arrange
-        const int repoSize = 10000;
-        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/sizes";
-        var sizeJson = new
-        {
-            size = repoSize
-        }.ToJson();
+        const string url = $"{BBS_SERVICE_URL}/projects/{PROJECT_KEY}/repos/{SLUG}/sizes";
 
-        _mockBbsClient.Setup(x => x.GetAsync(url).Result).Returns(sizeJson);
+        var sizes = new
+        {
+            repository = 10000,
+            attachments = 10000
+        };
+
+        var response = Task.FromResult(sizes.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
-        var result = await _sut.GetRepositorySize(PROJECT_KEY, SLUG);
+        var result = await _sut.GetRepositorySize(PROJECT_KEY, SLUG, "bbs-username", "bbs-password");
 
-        //Assert
-        result.Should().Be(repoSize);
+        // Assert
+        result.Should().BeEquivalentTo(JObject.FromObject(sizes));
     }
 }

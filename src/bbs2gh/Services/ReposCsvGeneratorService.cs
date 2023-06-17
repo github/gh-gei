@@ -26,8 +26,19 @@ namespace OctoshiftCLI.BbsToGithub
             var inspector = _bbsInspectorServiceFactory.Create(bbsApi);
             var result = new StringBuilder();
 
-            result.Append("project,repo,url,last-commit-date,compressed-repo-size-in-bytes");
-            result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
+            result.Append("project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
+
+            var bbsVersion = await bbsApi.GetServerVersion();
+            var majorVersion = int.Parse(bbsVersion.Split('.')[0]);
+
+            if (majorVersion >= 6)
+            {
+                result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
+            }
+            else
+            {
+                result.AppendLine(!minimal ? ",pr-count" : null);
+            }
 
             var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
 
@@ -37,13 +48,20 @@ namespace OctoshiftCLI.BbsToGithub
                 {
                     var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Name}";
                     var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Name);
-                    var repoSize = await bbsApi.GetRepositorySize(project, repo.Name);
-
-                    var archived = !minimal && await bbsApi.GetIsRepositoryArchived(project, repo.Name);
+                    var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(project, repo.Name, bbsUsername, bbsPassword);
                     var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Name) : 0;
 
-                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\"");
-                    result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
+                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"");
+
+                    if (majorVersion >= 6)
+                    {
+                        var archived = !minimal && await bbsApi.GetIsRepositoryArchived(project, repo.Name);
+                        result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
+                    }
+                    else
+                    {
+                        result.AppendLine(!minimal ? $",{prCount}" : null);
+                    }
                 }
             }
 

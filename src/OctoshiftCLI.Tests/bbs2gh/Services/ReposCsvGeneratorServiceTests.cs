@@ -13,8 +13,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 {
     public class ReposCsvGeneratorServiceTests
     {
-        private const string FULL_CSV_HEADER = "project,repo,url,last-commit-date,compressed-repo-size-in-bytes,is-archived,pr-count";
-        private const string MINIMAL_CSV_HEADER = "project,repo,url,last-commit-date,compressed-repo-size-in-bytes";
+        private const string FULL_CSV_HEADER = "project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes,is-archived,pr-count";
+        private const string MINIMAL_CSV_HEADER = "project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes";
 
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
@@ -46,24 +46,55 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var lastCommitDate = DateTime.Now;
             var archived = false;
             var repoSize = 10000UL;
+            var attachmentsSize = 10000UL;
 
             _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
+            _mockBbsApi.Setup(m => m.GetServerVersion()).ReturnsAsync("6.0.0");
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_PROJECT, BBS_REPO)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_PROJECT, BBS_REPO)).ReturnsAsync(lastCommitDate);
             _mockBbsApi.Setup(m => m.GetIsRepositoryArchived(BBS_PROJECT, BBS_REPO)).ReturnsAsync(archived);
-            _mockBbsApi.Setup(m => m.GetRepositorySize(BBS_PROJECT, BBS_REPO)).ReturnsAsync(repoSize);
+            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_PROJECT, BBS_REPO, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((repoSize, attachmentsSize));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY);
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}/repos/{BBS_REPO}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"False\",{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}/repos/{BBS_REPO}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\",\"False\",{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Generate_Should_Return_Correct_Csv_For_One_Repo_Without_Archived_Field_For_Outdated_BBS_Version()
+        {
+            // Arrange
+            var prCount = 822;
+            var lastCommitDate = DateTime.Now;
+            var repoSize = 10000UL;
+            var attachmentsSize = 10000UL;
+
+            _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
+
+            _mockBbsApi.Setup(m => m.GetServerVersion()).ReturnsAsync("5.0.0");
+            _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
+            _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
+            _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_PROJECT, BBS_REPO)).ReturnsAsync(prCount);
+            _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_PROJECT, BBS_REPO)).ReturnsAsync(lastCommitDate);
+            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_PROJECT, BBS_REPO, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((repoSize, attachmentsSize));
+
+            // Act
+            var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY);
+
+            // Assert
+            var expected = $"{FULL_CSV_HEADER.Replace(",is-archived", "")}{Environment.NewLine}";
+            expected += $"\"{BBS_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}/repos/{BBS_REPO}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\",{prCount}{Environment.NewLine}";
+
+            result.Should().Be(expected);
+            _mockBbsApi.Verify(m => m.GetIsRepositoryArchived(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -72,21 +103,23 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Arrange
             var lastCommitDate = DateTime.Now;
             var repoSize = 10000UL;
+            var attachmentsSize = 10000UL;
             const bool minimal = true;
 
             _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
+            _mockBbsApi.Setup(m => m.GetServerVersion()).ReturnsAsync("6.0.0");
             _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_PROJECT)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_PROJECT, BBS_REPO)).ReturnsAsync(lastCommitDate);
-            _mockBbsApi.Setup(m => m.GetRepositorySize(BBS_PROJECT, BBS_REPO)).ReturnsAsync(repoSize);
+            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_PROJECT, BBS_REPO, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((repoSize, attachmentsSize));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_PROJECT, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, minimal);
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}/repos/{BBS_REPO}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\"{Environment.NewLine}";
+            expected += $"\"{BBS_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_PROJECT}/repos/{BBS_REPO}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);

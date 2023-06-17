@@ -186,5 +186,23 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             result.Should().Be(DateTime.MinValue);
         }
+
+        [Fact]
+        public async Task GetRepositoryAndAttachmentsSize_Should_Return_Repository_And_Attachments_Size()
+        {
+            var sizes = new
+            {
+                repository = 10000UL,
+                attachments = 10000UL
+            };
+            var jObject = JObject.Parse(sizes.ToJson());
+            var response = Task.FromResult(jObject);
+
+            _mockBbsApi.Setup(m => m.GetRepositorySize(BBS_FOO_PROJECT_KEY, FOO_REPO, "bbs-username", "bbs-password")).Returns(response);
+
+            var result = await _service.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, FOO_REPO, "bbs-username", "bbs-password");
+
+            result.Should().Be((sizes.repository, sizes.attachments));
+        }
     }
 }
