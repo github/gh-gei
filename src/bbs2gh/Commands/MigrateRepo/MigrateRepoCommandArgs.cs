@@ -108,6 +108,11 @@ public class MigrateRepoCommandArgs : CommandArgs
         {
             log?.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
         }
+
+        if (SshPort == 7999)
+        {
+            log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
+        }
     }
 
     private void ValidateNoGenerateOptions()

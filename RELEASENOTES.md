@@ -1,1 +1,1 @@
-
+- Warn when the `--ssh-port` argument for `bbs2gh migrate-repo` and `bbs2gh generate-script` is set to the default port for Git operations
