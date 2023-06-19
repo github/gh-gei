@@ -83,7 +83,8 @@ public class OctoLogger
 
         foreach (var secret in _secrets.Where(x => x is not null))
         {
-            result = result.Replace(secret, "***");
+            result = result.Replace(secret, "***")
+                .Replace(Uri.EscapeDataString(secret), "***");
         }
 
         return result;
