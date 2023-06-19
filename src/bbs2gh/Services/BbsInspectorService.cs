@@ -39,7 +39,7 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<(string Key, string Name)> GetProject(string project)
         {
             _log.LogInformation($"Retrieving Project...");
-            var (Id, Key, Name) = await _bbsApi.GetProject(project);
+            var (_, Key, Name) = await _bbsApi.GetProject(project);
 
             return (Key, Name);
         }
