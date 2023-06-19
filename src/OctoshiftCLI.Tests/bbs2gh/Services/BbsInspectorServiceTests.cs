@@ -96,9 +96,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task GetRepoCount_With_Project_Keys_Should_Return_Count()
         {
             // Arrange
-            var projects = new[] {
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: "project")
-            };
             var repo1 = "repo1";
             var repo2 = "repo2";
             var repos = new[]
