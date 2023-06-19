@@ -24,4 +24,14 @@ public class GenerateScriptCommandArgsTests
             .ThrowExactly<OctoshiftCliException>()
             .WithMessage("*--no-ssl-verify*--bbs-server-url*");
     }
+
+    [Fact]
+    public void Invoke_With_Ssh_Port_Set_To_7999_Logs_Warning()
+    {
+        _args.SshPort = 7999;
+
+        _args.Validate(_mockOctoLogger.Object);
+
+        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("--ssh-port is set to 7999"))));
+    }
 }

@@ -1,1 +1,2 @@
+- Warn when the `--ssh-port` argument for `bbs2gh migrate-repo` and `bbs2gh generate-script` is set to the default port for Git operations
 - Add `bbs2gh inventory-report` command which generates CSV reports of all the projects and repos it can access, along with extra information that can be useful when planning a large migration (repo count, PR count per repo, last commit date, if repo is archived, and repo size)
