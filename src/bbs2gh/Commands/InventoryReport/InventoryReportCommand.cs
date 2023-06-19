@@ -31,7 +31,7 @@ namespace OctoshiftCLI.BbsToGithub.Commands.InventoryReport
 
         public Option<string> BbsProject { get; } = new(
             name: "--bbs-project",
-            description: "If not provided will iterate over all projects that the user has access to.");
+            description: "The Bitbucket project key. If not provided will iterate over all projects that the user has access to.");
 
         public Option<string> BbsUsername { get; } = new(
             name: "--bbs-username",

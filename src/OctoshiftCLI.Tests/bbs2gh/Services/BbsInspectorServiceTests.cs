@@ -20,6 +20,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
         private const string FOO_REPO = "FOO_REPO";
         private const string BBS_FOO_PROJECT_KEY = "FP";
+        private const string BBS_BAR_PROJECT_KEY = "BP";
 
         public BbsInspectorServiceTests() => _service = new(_logger, _mockBbsApi.Object);
 
@@ -27,11 +28,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         public async Task GetProjects_Should_Return_All_Projects()
         {
             // Arrange
-            var project1 = "my-project";
-            var project2 = "other-project";
+            var project1 = "project1";
+            var project2 = "project2";
             var projects = new[] {
                 (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project1),
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project2)
+                (Id: 1, Key: BBS_BAR_PROJECT_KEY, Name: project2)
             };
 
             _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
@@ -40,7 +41,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetProjects();
 
             // Assert
-            result.Should().BeEquivalentTo(new List<string>() { project1, project2 });
+            result.Should().BeEquivalentTo(new List<string>() { BBS_FOO_PROJECT_KEY, BBS_BAR_PROJECT_KEY });
         }
 
         [Fact]
@@ -61,7 +62,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetRepos(BBS_FOO_PROJECT_KEY);
 
             // Assert
-            result.Should().BeEquivalentTo(new List<BbsRepository>() { new() { Name = repo1 }, new() { Name = repo2 } });
+            result.Should().BeEquivalentTo(new List<BbsRepository>() { new() { Name = repo1, Slug = repo1 }, new() { Name = repo2, Slug = repo2 } });
         }
 
         [Fact]
@@ -82,13 +83,39 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var expectedCount = 2;
 
             _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
-            _mockBbsApi.Setup(m => m.GetRepos(project)).ReturnsAsync(repos);
+            _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
 
             // Act
             var result = await _service.GetRepoCount();
 
             // Assert
             result.Should().Be(expectedCount);
+        }
+
+        [Fact]
+        public async Task GetRepoCount_With_Project_Keys_Should_Return_Count()
+        {
+            // Arrange
+            var projects = new[] {
+                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: "project")
+            };
+            var repo1 = "repo1";
+            var repo2 = "repo2";
+            var repos = new[]
+            {
+                (Id: 1, Slug: repo1, Name: repo1),
+                (Id: 2, Slug: repo2, Name: repo2)
+            };
+            var expectedCount = 2;
+
+            _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
+
+            // Act
+            var result = await _service.GetRepoCount(new[] { BBS_FOO_PROJECT_KEY });
+
+            // Assert
+            result.Should().Be(expectedCount);
+            _mockBbsApi.Verify(m => m.GetProjects(), Times.Never);
         }
 
         [Fact]

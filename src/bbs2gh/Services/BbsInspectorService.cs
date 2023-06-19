@@ -29,7 +29,7 @@ namespace OctoshiftCLI.BbsToGithub
             {
                 _log.LogInformation($"Retrieving list of all Projects the user has access to...");
                 _projects = (await _bbsApi.GetProjects())
-                    .Select(project => project.Name)
+                    .Select(project => project.Key)
                     .ToList();
             }
 
@@ -41,7 +41,7 @@ namespace OctoshiftCLI.BbsToGithub
             if (!_repos.TryGetValue(project, out var repos))
             {
                 repos = (await _bbsApi.GetRepos(project))
-                    .Select(repo => new BbsRepository() { Name = repo.Name })
+                    .Select(repo => new BbsRepository() { Name = repo.Name, Slug = repo.Slug })
                     .ToList();
                 _repos.Add(project, repos);
             }
@@ -49,10 +49,15 @@ namespace OctoshiftCLI.BbsToGithub
             return repos;
         }
 
+        public virtual async Task<int> GetRepoCount(string[] projects)
+        {
+            return await projects.Sum(async key => await GetRepoCount(key));
+        }
+
         public virtual async Task<int> GetRepoCount()
         {
             var projects = await GetProjects();
-            return await projects.Sum(async project => await GetRepoCount(project));
+            return await projects.Sum(async key => await GetRepoCount(key));
         }
 
         public virtual async Task<int> GetRepoCount(string project)
@@ -85,8 +90,12 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<DateTime> GetLastCommitDate(string project, string repo)
         {
             var commit = await _bbsApi.GetRepositoryLatestCommit(project, repo);
+            var authorTimestamp = 0L;
 
-            var authorTimestamp = commit["values"].Any() ? (long)commit["values"][0]["authorTimestamp"] : 0;
+            if (commit?["values"] != null && commit["values"].Any())
+            {
+                authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
+            }
 
             var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
 

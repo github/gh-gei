@@ -16,7 +16,7 @@ namespace OctoshiftCLI.BbsToGithub
             _bbsApiFactory = bbsApiFactory;
         }
 
-        public virtual async Task<string> Generate(string bbsServerUrl, string bbsProject, string bbsUsername, string bbsPassword, bool noSslVerify, bool minimal = false)
+        public virtual async Task<string> Generate(string bbsServerUrl, string bbsUsername, string bbsPassword, bool noSslVerify, string bbsProject = "", bool minimal = false)
         {
             bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
             bbsUsername = bbsUsername ?? throw new ArgumentNullException(nameof(bbsUsername));
@@ -27,39 +27,30 @@ namespace OctoshiftCLI.BbsToGithub
             var result = new StringBuilder();
 
             result.Append("project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
+            result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
-            var bbsVersion = await bbsApi.GetServerVersion();
-            var majorVersion = int.Parse(bbsVersion.Split('.')[0]);
-
-            if (majorVersion >= 6)
-            {
-                result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
-            }
-            else
-            {
-                result.AppendLine(!minimal ? ",pr-count" : null);
-            }
-
-            var projects = string.IsNullOrEmpty(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
+            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
 
             foreach (var project in projects)
             {
                 foreach (var repo in await inspector.GetRepos(project))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Name}";
-                    var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Name);
-                    var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(project, repo.Name, bbsUsername, bbsPassword);
-                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Name) : 0;
+                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Slug}";
+                    var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Slug);
+                    var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(project, repo.Slug, bbsUsername, bbsPassword);
+                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Slug) : 0;
 
                     result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"");
 
-                    if (majorVersion >= 6)
+                    try
                     {
-                        var archived = !minimal && await bbsApi.GetIsRepositoryArchived(project, repo.Name);
+                        var archived = !minimal && await bbsApi.GetIsRepositoryArchived(project, repo.Slug);
                         result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
                     }
-                    else
+                    catch (ArgumentNullException)
                     {
+                        // The archived field was introduced in BBS 6.0.0
+                        result.Replace(",is-archived", null);
                         result.AppendLine(!minimal ? $",{prCount}" : null);
                     }
                 }

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -83,7 +85,7 @@ public class BbsApi
 
     public virtual async Task<bool> GetIsRepositoryArchived(string projectKey, string repo)
     {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}?fields=archived";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}?fields=archived";
         var response = await _client.GetAsync(url);
 
         var data = JObject.Parse(response);
@@ -92,7 +94,7 @@ public class BbsApi
 
     public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
     {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/pull-requests";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/pull-requests";
         return await _client.GetAllAsync(url)
             .Select(x => ((int)x["id"], (string)x["name"]))
             .ToListAsync();
@@ -100,16 +102,24 @@ public class BbsApi
 
     public virtual async Task<JObject> GetRepositoryLatestCommit(string projectKey, string repo)
     {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo}/commits?limit=1";
-        var response = await _client.GetAsync(url);
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/commits?limit=1";
 
-        var data = JObject.Parse(response);
-        return data;
+        try
+        {
+            var response = await _client.GetAsync(url);
+
+            var data = JObject.Parse(response);
+            return data;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new JObject();
+        }
     }
 
     public virtual async Task<JObject> GetRepositorySize(string projectKey, string repo, string bbsUsername, string bbsPassword)
     {
-        var url = $"{_bbsBaseUrl}/projects/{projectKey.EscapeDataString()}/repos/{repo}/sizes";
+        var url = $"{_bbsBaseUrl}/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/sizes";
         var response = await _client.GetAsync(url);
 
         var data = JObject.Parse(response);
