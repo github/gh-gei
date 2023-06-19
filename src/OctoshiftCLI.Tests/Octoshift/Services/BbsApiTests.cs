@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using System.Net;
+using System.Net.Http;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -243,6 +245,25 @@ public class BbsApiTests
         var response = Task.FromResult(fooCommit.ToJson());
 
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryLatestCommit(PROJECT_KEY, SLUG);
+
+        // Assert
+        result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
+    }
+
+    [Fact]
+    public async Task GetRepositoryLatestCommit_Returns_Empty_On_Non_Success_Response()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
+
+        var fooCommit = new JObject();
+
+        var response = Task.FromResult(fooCommit.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // Act
         var result = await _sut.GetRepositoryLatestCommit(PROJECT_KEY, SLUG);

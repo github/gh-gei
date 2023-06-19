@@ -212,6 +212,20 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         }
 
         [Fact]
+        public async Task GetLastCommitDate_Should_Return_MinDate_When_Empty_JObject_Response()
+        {
+            var commit = new JObject();
+            var jObject = JObject.Parse(commit.ToJson());
+            var response = Task.FromResult(jObject);
+
+            _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
+
+            var result = await _service.GetLastCommitDate(BBS_FOO_PROJECT_KEY, FOO_REPO);
+
+            result.Should().Be(DateTime.MinValue);
+        }
+
+        [Fact]
         public async Task GetRepositoryAndAttachmentsSize_Should_Return_Repository_And_Attachments_Size()
         {
             var sizes = new
