@@ -626,5 +626,26 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--bbs-server-url*--archive-path*--archive-url*");
         }
+
+        [Fact]
+        public void Invoke_With_Ssh_Port_Set_To_7999_Logs_Warning()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                SshPort = 7999
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("--ssh-port is set to 7999"))));
+        }
     }
 }

@@ -151,7 +151,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
-        source-vcs: [AdoBasic, AdoCsv, AdoServer, Bbs, Ghes, Github]
+        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:

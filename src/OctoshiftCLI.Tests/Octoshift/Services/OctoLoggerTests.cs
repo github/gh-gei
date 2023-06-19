@@ -25,25 +25,39 @@ public class OctoLoggerTests
     public void Secrets_Should_Be_Masked_From_Logs_And_Console()
     {
         var secret = "purplemonkeydishwasher";
+        var urlEncodedSecret = Uri.EscapeDataString(secret);
 
         _octoLogger.RegisterSecret(secret);
 
         _octoLogger.Verbose = false;
         _octoLogger.LogInformation($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogInformation($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
         _octoLogger.LogVerbose($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogVerbose($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
         _octoLogger.LogWarning($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogWarning($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
         _octoLogger.LogSuccess($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogSuccess($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
         _octoLogger.LogError($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogError($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
         _octoLogger.LogError(new OctoshiftCliException($"Don't tell anybody that {secret} is my password"));
+        _octoLogger.LogError(new OctoshiftCliException($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password"));
         _octoLogger.LogError(new InvalidOperationException($"Don't tell anybody that {secret} is my password"));
+        _octoLogger.LogError(new InvalidOperationException($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password"));
 
         _octoLogger.Verbose = true;
         _octoLogger.LogVerbose($"Don't tell anybody that {secret} is my password");
+        _octoLogger.LogVerbose($"Don't tell anyone that {urlEncodedSecret} is my URL encoded password");
 
         _consoleOutput.Should().NotContain(secret);
         _logOutput.Should().NotContain(secret);
         _verboseLogOutput.Should().NotContain(secret);
         _consoleError.Should().NotContain(secret);
+
+        _consoleOutput.Should().NotContain(urlEncodedSecret);
+        _logOutput.Should().NotContain(urlEncodedSecret);
+        _verboseLogOutput.Should().NotContain(urlEncodedSecret);
+        _consoleError.Should().NotContain(urlEncodedSecret);
     }
 
     [Fact]
