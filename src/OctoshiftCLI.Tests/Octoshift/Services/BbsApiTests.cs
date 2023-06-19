@@ -1,11 +1,11 @@
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
+using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using OctoshiftCLI.Extensions;
-using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
