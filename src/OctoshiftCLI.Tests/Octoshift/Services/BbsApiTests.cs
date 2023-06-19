@@ -1,11 +1,11 @@
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
@@ -136,6 +136,29 @@ public class BbsApiTests
 
         //Assert
         result.Should().BeEquivalentTo(new[] { projectFoo, projectBar });
+    }
+
+    [Fact]
+    public async Task GetProject_Returns_Project()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}";
+        var projectFoo = (Id: 1, Key: "PF", Name: "Foo");
+        var response = new
+        {
+            key = projectFoo.Key,
+            id = projectFoo.Id,
+            name = projectFoo.Name
+        };
+        var task = Task.FromResult(response.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(url)).Returns(task);
+
+        // Act
+        var result = await _sut.GetProject(PROJECT_KEY);
+
+        //Assert
+        result.Should().BeEquivalentTo(projectFoo);
     }
 
     [Fact]

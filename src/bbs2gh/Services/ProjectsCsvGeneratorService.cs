@@ -26,18 +26,18 @@ namespace OctoshiftCLI.BbsToGithub
             var inspector = _bbsInspectorServiceFactory.Create(bbsApi);
             var result = new StringBuilder();
 
-            result.Append("key,url,repo-count");
+            result.Append("name,url,repo-count");
             result.AppendLine(!minimal ? ",pr-count" : null);
 
-            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
+            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { await inspector.GetProject(bbsProject) };
 
-            foreach (var project in projects)
+            foreach (var (Key, Name) in projects)
             {
-                var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}";
-                var repoCount = await inspector.GetRepoCount(project);
-                var prCount = !minimal ? await inspector.GetPullRequestCount(project) : 0;
+                var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Key}";
+                var repoCount = await inspector.GetRepoCount(Key);
+                var prCount = !minimal ? await inspector.GetPullRequestCount(Key) : 0;
 
-                result.Append($"\"{project}\",\"{url}\",{repoCount}");
+                result.Append($"\"{Name}\",\"{url}\",{repoCount}");
                 result.AppendLine(!minimal ? $",{prCount}" : null);
             }
 

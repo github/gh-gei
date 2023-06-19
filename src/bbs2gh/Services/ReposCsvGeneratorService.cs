@@ -29,22 +29,22 @@ namespace OctoshiftCLI.BbsToGithub
             result.Append("project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
             result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
-            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { bbsProject };
+            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { await inspector.GetProject(bbsProject) };
 
-            foreach (var project in projects)
+            foreach (var (projectKey, projectName) in projects)
             {
-                foreach (var repo in await inspector.GetRepos(project))
+                foreach (var repo in await inspector.GetRepos(projectKey))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{project}/repos/{repo.Slug}";
-                    var lastCommitDate = await inspector.GetLastCommitDate(project, repo.Slug);
-                    var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(project, repo.Slug, bbsUsername, bbsPassword);
-                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(project, repo.Slug) : 0;
+                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{projectKey}/repos/{repo.Slug}";
+                    var lastCommitDate = await inspector.GetLastCommitDate(projectKey, repo.Slug);
+                    var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug, bbsUsername, bbsPassword);
+                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(projectKey, repo.Slug) : 0;
 
-                    result.Append($"\"{project}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"");
+                    result.Append($"\"{projectName}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"");
 
                     try
                     {
-                        var archived = !minimal && await bbsApi.GetIsRepositoryArchived(project, repo.Slug);
+                        var archived = !minimal && await bbsApi.GetIsRepositoryArchived(projectKey, repo.Slug);
                         result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
                     }
                     catch (ArgumentNullException)

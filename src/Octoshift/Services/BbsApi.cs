@@ -75,6 +75,15 @@ public class BbsApi
             .ToListAsync();
     }
 
+    public virtual async Task<(int Id, string Key, string Name)> GetProject(string projectKey)
+    {
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}";
+        var response = await _client.GetAsync(url);
+
+        var project = JObject.Parse(response);
+        return ((int)project["id"], (string)project["key"], (string)project["name"]);
+    }
+
     public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos";

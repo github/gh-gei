@@ -13,7 +13,7 @@ namespace OctoshiftCLI.BbsToGithub
         private readonly OctoLogger _log;
         private readonly BbsApi _bbsApi;
 
-        private IList<string> _projects;
+        private IList<(string, string)> _projects;
         private readonly IDictionary<string, IList<BbsRepository>> _repos = new Dictionary<string, IList<BbsRepository>>();
         private readonly IDictionary<string, IDictionary<string, int>> _prCounts = new Dictionary<string, IDictionary<string, int>>();
 
@@ -23,17 +23,25 @@ namespace OctoshiftCLI.BbsToGithub
             _bbsApi = bbsApi;
         }
 
-        public virtual async Task<IEnumerable<string>> GetProjects()
+        public virtual async Task<IEnumerable<(string Key, string Name)>> GetProjects()
         {
             if (_projects is null)
             {
                 _log.LogInformation($"Retrieving list of all Projects the user has access to...");
                 _projects = (await _bbsApi.GetProjects())
-                    .Select(project => project.Key)
+                    .Select(project => (project.Key, project.Name))
                     .ToList();
             }
 
             return _projects;
+        }
+
+        public virtual async Task<(string Key, string Name)> GetProject(string project)
+        {
+            _log.LogInformation($"Retrieving Project...");
+            var (Id, Key, Name) = await _bbsApi.GetProject(project);
+
+            return (Key, Name);
         }
 
         public virtual async Task<IEnumerable<BbsRepository>> GetRepos(string project)
@@ -57,7 +65,7 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<int> GetRepoCount()
         {
             var projects = await GetProjects();
-            return await projects.Sum(async key => await GetRepoCount(key));
+            return await projects.Sum(async project => await GetRepoCount(project.Key));
         }
 
         public virtual async Task<int> GetRepoCount(string project)

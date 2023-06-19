@@ -22,11 +22,12 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsInspectorServiceFactory> _mockBbsInspectorServiceFactory = TestHelpers.CreateMock<BbsInspectorServiceFactory>();
 
         private const string BBS_SERVER_URL = "http://bbs-server-url";
+        private const string BBS_FOO_PROJECT = "project";
         private const string BBS_FOO_PROJECT_KEY = "FP";
         private const string BBS_USERNAME = "bbs-username";
         private const string BBS_PASSWORD = "bbs-password";
         private const bool NO_SSL_VERIFY = true;
-        private readonly IEnumerable<string> _bbsProjects = new List<string>() { BBS_FOO_PROJECT_KEY };
+        private readonly (string, string) _bbsProject = (BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT);
         private const string BBS_REPO = "foo-repo";
         private const string BBS_REPO_SLUG = "foo-repo-slug";
         private const bool ARCHIVED = false;
@@ -51,7 +52,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
-            _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
+            _mockBbsInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsProject);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
@@ -63,7 +64,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\",\"False\",{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\",\"False\",{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -77,7 +78,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
-            _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
+            _mockBbsInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsProject);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
@@ -89,7 +90,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\",\"False\",{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\",\"False\",{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -103,7 +104,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             _mockBbsApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockBbsApi.Object);
 
-            _mockBbsInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
+            _mockBbsInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsProject);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
             _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
@@ -113,7 +114,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\"{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{REPO_SIZE:N0}\",\"{ATTACHMENTS_SIZE:N0}\"{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
