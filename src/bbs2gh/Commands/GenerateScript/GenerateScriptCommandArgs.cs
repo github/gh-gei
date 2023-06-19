@@ -33,5 +33,10 @@ public class GenerateScriptCommandArgs : CommandArgs
         {
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
+
+        if (SshPort == 7999)
+        {
+            log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
+        }
     }
 }
