@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
