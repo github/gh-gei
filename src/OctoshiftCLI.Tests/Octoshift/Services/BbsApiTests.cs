@@ -284,8 +284,6 @@ public class BbsApiTests
 
         var fooCommit = new JObject();
 
-        var response = Task.FromResult(fooCommit.ToJson());
-
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // Act
