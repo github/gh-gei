@@ -128,4 +128,24 @@ public class ReclaimMannequinCommandHandlerTests
         // Assert
         _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
     }
+
+    [Fact]
+    public async Task Skip_Invitation_No_Confirmation_With_NoPrompt_Arg()
+    {
+        // Arrange
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            SkipInvitation = true,
+            Csv = "file.csv",
+            NoPrompt = true
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
+        _confirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
 }

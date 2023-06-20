@@ -10,6 +10,7 @@ public class ReclaimMannequinCommandArgs : CommandArgs
     public string MannequinId { get; set; }
     public string TargetUser { get; set; }
     public bool Force { get; set; }
+    public bool NoPrompt { get; set; }
     [Secret]
     public string GithubPat { get; set; }
     public bool SkipInvitation { get; set; }

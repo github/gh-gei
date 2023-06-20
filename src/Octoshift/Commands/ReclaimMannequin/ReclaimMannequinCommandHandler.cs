@@ -38,7 +38,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
             }
 
-            if (args.SkipInvitation)
+            if (args.SkipInvitation && !args.NoPrompt)
             {
                 _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)");
             }
