@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.BbsToGithub;
-using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Xunit;
 
@@ -18,7 +15,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly BbsInspectorService _service;
 
-        private const string FOO_REPO = "FOO_REPO";
         private const string BBS_FOO_PROJECT_KEY = "FP";
         private const string BBS_BAR_PROJECT_KEY = "BP";
 
@@ -170,59 +166,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             result.Should().Be(expectedCount);
-        }
-
-        [Fact]
-        public async Task GetLastCommitDate_Should_Return_LastCommitDate()
-        {
-            var expectedDate = new DateTime(2022, 2, 14);
-
-            var commit = new
-            {
-                values = new[]
-                {
-                    new { authorTimestamp = 1644816000000 }
-                }
-            };
-            var jObject = JObject.Parse(commit.ToJson());
-            var response = Task.FromResult(jObject);
-
-            _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
-
-            var result = await _service.GetLastCommitDate(BBS_FOO_PROJECT_KEY, FOO_REPO);
-
-            result.Should().Be(expectedDate);
-        }
-
-        [Fact]
-        public async Task GetLastCommitDate_Should_Return_MinDate_When_No_Commits()
-        {
-            var commit = new
-            {
-                values = Array.Empty<object>()
-            };
-            var jObject = JObject.Parse(commit.ToJson());
-            var response = Task.FromResult(jObject);
-
-            _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
-
-            var result = await _service.GetLastCommitDate(BBS_FOO_PROJECT_KEY, FOO_REPO);
-
-            result.Should().Be(DateTime.MinValue);
-        }
-
-        [Fact]
-        public async Task GetLastCommitDate_Should_Return_MinDate_When_Empty_JObject_Response()
-        {
-            var commit = new JObject();
-            var jObject = JObject.Parse(commit.ToJson());
-            var response = Task.FromResult(jObject);
-
-            _mockBbsApi.Setup(m => m.GetRepositoryLatestCommit(BBS_FOO_PROJECT_KEY, FOO_REPO)).Returns(response);
-
-            var result = await _service.GetLastCommitDate(BBS_FOO_PROJECT_KEY, FOO_REPO);
-
-            result.Should().Be(DateTime.MinValue);
         }
     }
 }

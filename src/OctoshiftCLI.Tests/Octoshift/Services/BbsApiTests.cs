@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -227,57 +228,33 @@ public class BbsApiTests
     }
 
     [Fact]
-    public async Task GetRepositoryLatestCommit_Returns_Latest_Commit_For_Repository()
+    public async Task GetRepositoryLatestCommitDate_Returns_Latest_Commit_For_Repository()
     {
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
 
-        var fooCommit = new
+        var expectedDate = new DateTime(2022, 2, 14);
+        var commit = new
         {
-            size = 1,
-            limit = 25,
-            isLastPage = true,
             values = new[]
             {
-                new
-                {
-                    id = "1",
-                    displayId = "user1",
-                    author = new
-                    {
-                        name = "user1 name",
-                        emailAddress = "user1@example.com"
-                    },
-                    authorTimestamp = 1548719707064,
-                    committer = new
-                    {
-                        name = "user1",
-                        emailAddress = "user1@example.com"
-                    },
-                    committerTimestamp = 1548719707064,
-                    message = "Commit message",
-                    parents = new
-                    {
-                        id = "3",
-                        displayId = "abc"
-                    }
-                },
+                new { authorTimestamp = 1644816000000 }
             }
         };
 
-        var response = Task.FromResult(fooCommit.ToJson());
+        var response = Task.FromResult(commit.ToJson());
 
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
-        var result = await _sut.GetRepositoryLatestCommit(PROJECT_KEY, SLUG);
+        var result = await _sut.GetRepositoryLatestCommitDate(PROJECT_KEY, SLUG);
 
         // Assert
-        result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
+        result.Should().Be(expectedDate);
     }
 
     [Fact]
-    public async Task GetRepositoryLatestCommit_Returns_Empty_On_Non_Success_Response()
+    public async Task GetRepositoryLatestCommitDate_Should_Return_MinDate_On_Non_Success_Response()
     {
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
@@ -287,10 +264,10 @@ public class BbsApiTests
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // Act
-        var result = await _sut.GetRepositoryLatestCommit(PROJECT_KEY, SLUG);
+        var result = await _sut.GetRepositoryLatestCommitDate(PROJECT_KEY, SLUG);
 
         // Assert
-        result.Should().BeEquivalentTo(JObject.FromObject(fooCommit));
+        result.Should().Be(DateTime.MinValue);
     }
 
     [Fact]

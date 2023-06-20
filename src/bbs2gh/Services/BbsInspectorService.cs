@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
@@ -93,21 +92,6 @@ namespace OctoshiftCLI.BbsToGithub
             }
 
             return prCount;
-        }
-
-        public virtual async Task<DateTime> GetLastCommitDate(string project, string repo)
-        {
-            var commit = await _bbsApi.GetRepositoryLatestCommit(project, repo);
-            var authorTimestamp = 0L;
-
-            if (commit?["values"] != null && commit["values"].Any())
-            {
-                authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
-            }
-
-            var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
-
-            return dateTime.Date;
         }
     }
 }

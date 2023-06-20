@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -109,7 +110,7 @@ public class BbsApi
             .ToListAsync();
     }
 
-    public virtual async Task<JObject> GetRepositoryLatestCommit(string projectKey, string repo)
+    public virtual async Task<DateTime> GetRepositoryLatestCommitDate(string projectKey, string repo)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/commits?limit=1";
 
@@ -117,12 +118,21 @@ public class BbsApi
         {
             var response = await _client.GetAsync(url);
 
-            var data = JObject.Parse(response);
-            return data;
+            var commit = JObject.Parse(response);
+
+            var authorTimestamp = 0L;
+            if (commit?["values"] != null && commit["values"].Any())
+            {
+                authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
+            }
+
+            var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
+
+            return dateTime.Date;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            return new JObject();
+            return DateTime.MinValue;
         }
     }
 
