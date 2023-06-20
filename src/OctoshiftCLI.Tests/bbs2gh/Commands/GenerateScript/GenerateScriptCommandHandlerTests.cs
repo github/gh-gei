@@ -321,11 +321,11 @@ if (-not $env:SMB_PASSWORD) {
         _mockBbsApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
         {
             (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-            (Id: 2, Slug: BBS_FOO_REPO_2_SLUG, Name: BBS_BAR_REPO_2_NAME)
+            (Id: 2, Slug: BBS_FOO_REPO_2_SLUG, Name: BBS_FOO_REPO_2_NAME)
         });
         _mockBbsApi.Setup(m => m.GetRepos(BBS_BAR_PROJECT_KEY)).ReturnsAsync(new[]
         {
-            (Id: 3, Slug: BBS_BAR_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
+            (Id: 3, Slug: BBS_BAR_REPO_1_SLUG, Name: BBS_BAR_REPO_1_NAME),
             (Id: 4, Slug: BBS_BAR_REPO_2_SLUG, Name: BBS_BAR_REPO_2_NAME)
         });
 

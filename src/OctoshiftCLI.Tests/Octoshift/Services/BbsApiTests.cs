@@ -175,13 +175,13 @@ public class BbsApiTests
             {
                 slug = fooRepo.Slug,
                 id = fooRepo.Id,
-                name = fooRepo.Name,
+                name = fooRepo.Name
             },
             new
             {
                 slug = barRepo.Slug,
                 id = barRepo.Id,
-                name = barRepo.Name,
+                name = barRepo.Name
             }
         }.ToAsyncJTokenEnumerable();
 
@@ -200,7 +200,7 @@ public class BbsApiTests
         // Arrange
         const string fooProjectKey = "FP";
         const string fooRepo = "foorepo";
-        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/pull-requests";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/pull-requests?state=all";
         var fooPullRequest = (Id: 1, Name: "FooPullRequest");
         var barPullRequest = (Id: 2, Name: "BarPullRequest");
         var response = new[]

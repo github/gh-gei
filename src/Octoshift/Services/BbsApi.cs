@@ -103,7 +103,7 @@ public class BbsApi
 
     public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
     {
-        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/pull-requests";
+        var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/pull-requests?state=all";
         return await _client.GetAllAsync(url)
             .Select(x => ((int)x["id"], (string)x["name"]))
             .ToListAsync();

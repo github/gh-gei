@@ -12,8 +12,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 {
     public class ProjectsCsvGeneratorServiceTests
     {
-        private const string FULL_CSV_HEADER = "name,url,repo-count,pr-count";
-        private const string MINIMAL_CSV_HEADER = "name,url,repo-count";
+        private const string FULL_CSV_HEADER = "project-key,project-name,url,repo-count,pr-count";
+        private const string MINIMAL_CSV_HEADER = "project-key,project-name,url,repo-count";
 
         private readonly Mock<BbsApi> _mockBbsApi = TestHelpers.CreateMock<BbsApi>();
         private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
@@ -58,7 +58,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
 
-            expected += $"\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount},{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount},{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -82,8 +82,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount1}{Environment.NewLine}";
-            expected += $"\"{BBS_BAR_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_BAR_PROJECT_KEY}\",{repoCount2}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount1}{Environment.NewLine}";
+            expected += $"\"{BBS_BAR_PROJECT_KEY}\",\"{BBS_BAR_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_BAR_PROJECT_KEY}\",{repoCount2}{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);

@@ -19,14 +19,12 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<string> Generate(string bbsServerUrl, string bbsUsername, string bbsPassword, bool noSslVerify, string bbsProject = "", bool minimal = false)
         {
             bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
-            bbsUsername = bbsUsername ?? throw new ArgumentNullException(nameof(bbsUsername));
-            bbsPassword = bbsPassword ?? throw new ArgumentNullException(nameof(bbsPassword));
 
             var bbsApi = _bbsApiFactory.Create(bbsServerUrl, bbsUsername, bbsPassword, noSslVerify);
             var inspector = _bbsInspectorServiceFactory.Create(bbsApi);
             var result = new StringBuilder();
 
-            result.Append("project,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
+            result.Append("project-key,project-name,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
             result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
             var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { await inspector.GetProject(bbsProject) };
@@ -35,12 +33,15 @@ namespace OctoshiftCLI.BbsToGithub
             {
                 foreach (var repo in await inspector.GetRepos(projectKey))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{projectKey}/repos/{repo.Slug}";
+                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{projectKey}/repos/{Uri.EscapeDataString(repo.Slug)}";
                     var lastCommitDate = await inspector.GetLastCommitDate(projectKey, repo.Slug);
                     var (repoSize, attachmentsSize) = await inspector.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug, bbsUsername, bbsPassword);
                     var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(projectKey, repo.Slug) : 0;
 
-                    result.Append($"\"{projectName}\",\"{repo.Name}\",\"{url}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",\"{attachmentsSize:N0}\"");
+                    var project = projectName.Replace(",", Uri.EscapeDataString(","));
+                    var repoName = repo.Name.Replace(",", Uri.EscapeDataString(","));
+
+                    result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd HH:mm:ss}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
 
                     try
                     {

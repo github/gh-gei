@@ -19,14 +19,12 @@ namespace OctoshiftCLI.BbsToGithub
         public virtual async Task<string> Generate(string bbsServerUrl, string bbsUsername, string bbsPassword, bool noSslVerify, string bbsProject = "", bool minimal = false)
         {
             bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
-            bbsUsername = bbsUsername ?? throw new ArgumentNullException(nameof(bbsUsername));
-            bbsPassword = bbsPassword ?? throw new ArgumentNullException(nameof(bbsPassword));
 
             var bbsApi = _bbsApiFactory.Create(bbsServerUrl, bbsUsername, bbsPassword, noSslVerify);
             var inspector = _bbsInspectorServiceFactory.Create(bbsApi);
             var result = new StringBuilder();
 
-            result.Append("name,url,repo-count");
+            result.Append("project-key,project-name,url,repo-count");
             result.AppendLine(!minimal ? ",pr-count" : null);
 
             var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { await inspector.GetProject(bbsProject) };
@@ -37,7 +35,9 @@ namespace OctoshiftCLI.BbsToGithub
                 var repoCount = await inspector.GetRepoCount(Key);
                 var prCount = !minimal ? await inspector.GetPullRequestCount(Key) : 0;
 
-                result.Append($"\"{Name}\",\"{url}\",{repoCount}");
+                var projectName = Name.Replace(",", Uri.EscapeDataString(","));
+
+                result.Append($"\"{Key}\",\"{projectName}\",\"{url}\",{repoCount}");
                 result.AppendLine(!minimal ? $",{prCount}" : null);
             }
 
