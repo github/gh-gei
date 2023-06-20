@@ -64,7 +64,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd HH:mm:ss}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\",\"False\",{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\",\"False\",{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -90,7 +90,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd HH:mm:ss}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\",\"False\",{prCount}{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\",\"False\",{prCount}{Environment.NewLine}";
 
             result.Should().Be(expected);
         }
@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd HH:mm:ss}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\"{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_REPO}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\"{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
@@ -146,7 +146,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
 
             // Assert
             var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{expected_project_name}\",\"{expected_repo_name}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd HH:mm:ss}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\"{Environment.NewLine}";
+            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{expected_project_name}\",\"{expected_repo_name}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}/repos/{BBS_REPO_SLUG}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{REPO_SIZE:D}\",\"{ATTACHMENTS_SIZE:D}\"{Environment.NewLine}";
 
             result.Should().Be(expected);
             _mockBbsInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
