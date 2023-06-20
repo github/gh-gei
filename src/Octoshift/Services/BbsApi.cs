@@ -126,12 +126,16 @@ public class BbsApi
         }
     }
 
-    public virtual async Task<JObject> GetRepositorySize(string projectKey, string repo, string bbsUsername, string bbsPassword)
+    public virtual async Task<(ulong repoSize, ulong attachmentsSize)> GetRepositoryAndAttachmentsSize(string projectKey, string repo, string bbsUsername, string bbsPassword)
     {
         var url = $"{_bbsBaseUrl}/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/sizes";
         var response = await _client.GetAsync(url);
 
         var data = JObject.Parse(response);
-        return data;
+
+        var repoSize = (ulong)data["repository"];
+        var attachmentsSize = (ulong)data["attachments"];
+
+        return (repoSize, attachmentsSize);
     }
 }

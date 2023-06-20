@@ -323,8 +323,8 @@ public class BbsApiTests
 
         var sizes = new
         {
-            repository = 10000,
-            attachments = 10000
+            repository = 10000UL,
+            attachments = 10000UL
         };
 
         var response = Task.FromResult(sizes.ToJson());
@@ -332,9 +332,9 @@ public class BbsApiTests
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
 
         // Act
-        var result = await _sut.GetRepositorySize(PROJECT_KEY, SLUG, "bbs-username", "bbs-password");
+        var result = await _sut.GetRepositoryAndAttachmentsSize(PROJECT_KEY, SLUG, "bbs-username", "bbs-password");
 
         // Assert
-        result.Should().BeEquivalentTo(JObject.FromObject(sizes));
+        result.Should().Be((sizes.repository, sizes.attachments));
     }
 }

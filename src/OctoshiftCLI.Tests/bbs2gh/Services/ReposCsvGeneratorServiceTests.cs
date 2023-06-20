@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
             _mockBbsApi.Setup(m => m.GetIsRepositoryArchived(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(ARCHIVED);
-            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
+            _mockBbsApi.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, BBS_FOO_PROJECT_KEY);
@@ -83,7 +83,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsInspectorService.Setup(m => m.GetRepositoryPullRequestCount(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(prCount);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
             _mockBbsApi.Setup(m => m.GetIsRepositoryArchived(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(ARCHIVED);
-            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
+            _mockBbsApi.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, BBS_FOO_PROJECT_KEY);
@@ -107,7 +107,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsProject);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
-            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
+            _mockBbsApi.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, BBS_FOO_PROJECT_KEY, minimal);
@@ -139,7 +139,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             _mockBbsInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(bbsProject);
             _mockBbsInspectorService.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(bbsRepos);
             _mockBbsInspectorService.Setup(m => m.GetLastCommitDate(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG)).ReturnsAsync(lastCommitDate);
-            _mockBbsInspectorService.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
+            _mockBbsApi.Setup(m => m.GetRepositoryAndAttachmentsSize(BBS_FOO_PROJECT_KEY, BBS_REPO_SLUG, BBS_USERNAME, BBS_PASSWORD)).ReturnsAsync((REPO_SIZE, ATTACHMENTS_SIZE));
 
             // Act
             var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, BBS_FOO_PROJECT_KEY, minimal);

@@ -109,15 +109,5 @@ namespace OctoshiftCLI.BbsToGithub
 
             return dateTime.Date;
         }
-
-        public virtual async Task<(ulong repoSize, ulong attachmentsSize)> GetRepositoryAndAttachmentsSize(string project, string repo, string bbsUsername, string bbsPassword)
-        {
-            var sizes = await _bbsApi.GetRepositorySize(project, repo, bbsUsername, bbsPassword);
-
-            var repoSize = (ulong)sizes["repository"];
-            var attachmentsSize = (ulong)sizes["attachments"];
-
-            return (repoSize, attachmentsSize);
-        }
     }
 }
