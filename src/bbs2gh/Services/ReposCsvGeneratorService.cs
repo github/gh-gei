@@ -33,7 +33,7 @@ namespace OctoshiftCLI.BbsToGithub
             {
                 foreach (var repo in await inspector.GetRepos(projectKey))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{projectKey}/repos/{Uri.EscapeDataString(repo.Slug)}";
+                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(projectKey)}/repos/{Uri.EscapeDataString(repo.Slug)}";
                     var lastCommitDate = await bbsApi.GetRepositoryLatestCommitDate(projectKey, repo.Slug);
                     var (repoSize, attachmentsSize) = await bbsApi.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug, bbsUsername, bbsPassword);
                     var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(projectKey, repo.Slug) : 0;

@@ -31,7 +31,7 @@ namespace OctoshiftCLI.BbsToGithub
 
             foreach (var (Key, Name) in projects)
             {
-                var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Key}";
+                var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(Key)}";
                 var repoCount = await inspector.GetRepoCount(Key);
                 var prCount = !minimal ? await inspector.GetPullRequestCount(Key) : 0;
 
