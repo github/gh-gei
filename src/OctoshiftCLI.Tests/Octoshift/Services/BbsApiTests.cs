@@ -259,8 +259,6 @@ public class BbsApiTests
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
 
-        var fooCommit = new JObject();
-
         _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // Act
