@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace OctoshiftCLI
 {
@@ -10,7 +11,7 @@ namespace OctoshiftCLI
         public static string RootCommand
         {
             set => _rootCommand = _rootCommand is null
-                ? value
+                ? Regex.Replace(value, @"^gh-", string.Empty)
                 : throw new InvalidOperationException("Value can only be set once.");
             get => _rootCommand;
         }
