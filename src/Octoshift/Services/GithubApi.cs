@@ -278,7 +278,18 @@ public class GithubApi
         return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
-    public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
+    public virtual async Task<string> StartMigration(
+        string migrationSourceId,
+        string sourceRepoUrl,
+        string orgId,
+        string repo,
+        string targetToken,
+        string sourceToken = null,
+        string gitArchiveUrl = null,
+        string metadataArchiveUrl = null,
+        bool skipReleases = false,
+        string targetRepoVisibility = null,
+        bool lockSource = false)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -291,7 +302,7 @@ public class GithubApi
                     $continueOnError: Boolean!,
                     $gitArchiveUrl: String,
                     $metadataArchiveUrl: String,
-                    $accessToken: String!,
+                    $accessToken: String,
                     $githubPat: String,
                     $skipReleases: Boolean,
                     $targetRepoVisibility: String,
@@ -430,10 +441,10 @@ public class GithubApi
             bbsRepoUrl,  // source repository URL
             orgId,
             repo,
-            "not-used",  // source access token
             targetToken,
+            null,  // source token
             archiveUrl,
-            "https://not-used",  // metadata archive URL
+            null,  // metadata archive URL
             false,  // skip releases
             targetRepoVisibility,
             false  // lock source
