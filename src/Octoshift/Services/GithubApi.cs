@@ -315,6 +315,7 @@ public class GithubApi
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -371,7 +372,8 @@ public class GithubApi
                         sourceAccessToken: $sourceAccessToken
                     }) {
                         orgMigration {
-                            id
+                            id,
+                            databaseId
                         }
                     }";
 
