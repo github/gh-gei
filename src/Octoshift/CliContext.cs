@@ -23,5 +23,11 @@ namespace OctoshiftCLI
                 : throw new InvalidOperationException("Value can only be set once.");
             get => _executingCommand;
         }
+
+        public static void Clear()
+        {
+            _rootCommand = null;
+            _executingCommand = null;
+        }
     }
 }

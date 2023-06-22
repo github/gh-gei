@@ -13,6 +13,7 @@ public class VersionCheckerTests
         const string rootCommand = "ROOT_COMMAND";
         const string executingCommand = "EXECUTING_COMMAND";
 
+        CliContext.Clear();
         CliContext.RootCommand = rootCommand;
         CliContext.ExecutingCommand = executingCommand;
 
@@ -23,5 +24,7 @@ public class VersionCheckerTests
 
         // Assert
         comments.Should().Be($"({rootCommand}/{executingCommand})");
+
+        CliContext.Clear();
     }
 }
