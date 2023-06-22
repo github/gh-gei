@@ -149,7 +149,7 @@ public class ReclaimService
 
             if (!force && mannequins.IsClaimed(login, userid))
             {
-                _log.LogError($"{login} is already claimed. Skipping (use force if you want to reclaim)");
+                _log.LogWarning($"{login} is already claimed. Skipping (use force if you want to reclaim)");
                 continue;
             }
 
@@ -157,13 +157,13 @@ public class ReclaimService
 
             if (mannequin == null)
             {
-                _log.LogError($"Mannequin {login} not found. Skipping.");
+                _log.LogWarning($"Mannequin {login} not found. Skipping.");
                 continue;
             }
 
             if (lines.Where(x => x.Contains(login)).Count() > 1 && lines.Where(x => x.Contains(userid)).Count() > 1)
             {
-                _log.LogError($"Mannequin {login} is a duplicate. Skipping.");
+                _log.LogWarning($"Mannequin {login} is a duplicate. Skipping.");
                 continue;
             }
 
@@ -175,7 +175,7 @@ public class ReclaimService
             }
             catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login"))
             {
-                _log.LogError($"Claimant \"{claimantLogin}\" not found. Will ignore it.");
+                _log.LogWarning($"Claimant \"{claimantLogin}\" not found. Will ignore it.");
                 continue;
             }
 
@@ -236,7 +236,7 @@ public class ReclaimService
                     _log.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations.");
                     return false; // Indicates we should stop parsing through the CSV
                 default:
-                    _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
+                    _log.LogWarning($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
                     return true;
             }
         }
@@ -246,7 +246,7 @@ public class ReclaimService
             result.Data.ReattributeMannequinToUser.Target.Id != targetUserId)
         {
 
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            _log.LogWarning($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
             return true;
         }
 
@@ -261,7 +261,7 @@ public class ReclaimService
 
         if (components.Length != 3)
         {
-            _log.LogError($"Invalid line: \"{line}\". Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Will ignore it.");
             return (null, null, null);
         }
 
@@ -271,19 +271,19 @@ public class ReclaimService
 
         if (string.IsNullOrEmpty(login))
         {
-            _log.LogError($"Invalid line: \"{line}\". Mannequin login is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Mannequin login is not defined. Will ignore it.");
             return (null, null, null);
         }
 
         if (string.IsNullOrEmpty(userId))
         {
-            _log.LogError($"Invalid line: \"{line}\". Mannequin Id is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Mannequin Id is not defined. Will ignore it.");
             return (null, null, null);
         }
 
         if (string.IsNullOrEmpty(claimantLogin))
         {
-            _log.LogError($"Invalid line: \"{line}\". Target User is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Target User is not defined. Will ignore it.");
             return (null, null, null);
         }
 
