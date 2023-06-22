@@ -117,7 +117,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
         _mockGithubApi.VerifyNoOtherCalls();
-        _mockOctoLogger.Verify(x => x.LogError($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
         _mockGithubApi.VerifyNoOtherCalls();
-        _mockOctoLogger.Verify(x => x.LogError($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \"login\". Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \"login\". Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -241,7 +241,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \",,mona_gh\". Mannequin login is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \",,mona_gh\". Mannequin login is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -263,7 +263,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -285,7 +285,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \"mona,,\". Mannequin Id is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \"mona,,\". Mannequin Id is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -498,7 +498,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
-        _mockOctoLogger.Verify(x => x.LogError($"{MANNEQUIN_LOGIN} is already claimed. Skipping (use force if you want to reclaim)"), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"{MANNEQUIN_LOGIN} is already claimed. Skipping (use force if you want to reclaim)"), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -523,7 +523,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
-        _mockOctoLogger.Verify(x => x.LogError($"Mannequin {MANNEQUIN_LOGIN} not found. Skipping."), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} not found. Skipping."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -551,7 +551,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
-        _mockOctoLogger.Verify(x => x.LogError($"Claimant \"{TARGET_USER_LOGIN}\" not found. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"Claimant \"{TARGET_USER_LOGIN}\" not found. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
