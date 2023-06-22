@@ -6,7 +6,7 @@ namespace OctoshiftCLI.Tests.Octoshift;
 public class CliContextTests
 {
     [Fact]
-    public void SetRootCommandShouldRemoveGhPrefix()
+    public void Set_RootCommand_Should_Remove_Gh_Prefix()
     {
         CliContext.Clear();
 
@@ -17,7 +17,7 @@ public class CliContextTests
     }
 
     [Fact]
-    public void SetRootCommandShouldNotChangeValueWithoutGhPrefix()
+    public void Set_RootCommand_Should_Not_Change_Value_Without_Gh_Prefix()
     {
         CliContext.Clear();
 
