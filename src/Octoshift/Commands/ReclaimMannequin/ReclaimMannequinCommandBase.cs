@@ -88,7 +88,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         var reclaimService = new ReclaimService(githubApi, log);
         var confirmationService = sp.GetRequiredService<ConfirmationService>();
 
-        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService);
+        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService, githubApi);
     }
 
     protected void AddOptions()

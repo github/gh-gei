@@ -104,6 +104,30 @@ public class GithubApi
         await _retryPolicy.Retry(() => _client.DeleteAsync(url));
     }
 
+    public virtual async Task<string> GetLoginName()
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query{viewer{login}}"
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["viewer"]["login"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the login for current user", ex);
+        }
+    }
+
     public virtual async Task<string> GetOrgMembershipForUser(string org, string member)
     {
         var url = $"{_apiUrl}/orgs/{org}/memberships/{member}";
@@ -116,9 +140,9 @@ public class GithubApi
 
             return (string)data["role"];
         }
-        catch (HttpRequestException) // Not a member
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) // Not a member
         {
-            return "";
+            return null;
         }
     }
 

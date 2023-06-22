@@ -181,15 +181,6 @@ public class ReclaimService
 
             if (skipInvitation)
             {
-                // Check if user is admin to EMU org
-                var membership = await _githubApi.GetOrgMembershipForUser(githubTargetOrg, claimantLogin);
-
-                if (membership != "admin")
-                {
-                    _log.LogError($"User {claimantLogin} is not an org admin and is not eligible to reclaim the {login} mannequin. Skipping.");
-                    continue;
-                }
-
                 var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
 
                 // If results return a fail-fast error, we should break out of the for-loop

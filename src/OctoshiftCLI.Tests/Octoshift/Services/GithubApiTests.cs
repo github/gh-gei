@@ -475,7 +475,7 @@ public class GithubApiTests
         var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Fact]

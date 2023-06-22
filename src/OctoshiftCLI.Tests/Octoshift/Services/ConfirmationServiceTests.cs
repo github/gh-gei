@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         public ConfirmationServiceTests()
         {
             _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress, CancelCommand);
-            confirmationPrompt = "Are you sure you wish to continue? Y/N?";
+            confirmationPrompt = "Are you sure you wish to continue? [y/N]?";
             cancelationOutput = "Command Cancelled.";
             confirmationOutput = "Confirmation Recorded. Proceeding...";
         }
@@ -90,7 +90,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _exitOutput.Should().Be(0);
         }
 
-        private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
+        private void CaptureConsoleOutput(string msg, ConsoleColor outputColor) => _consoleOutput += msg;
 
         private ConsoleKey MockConsoleKeyPress()
         {
