@@ -303,7 +303,7 @@ public class GithubApiTests
 
         // Assert
         result.Should().HaveCount(4);
-        result.Should().Equal((repoName1, "private"), (repoName2, "private"), (repoName3, "internal"), (repoName4, "public"));
+        result.Should().Equal((repoName1, "private", 0), (repoName2, "private", 0), (repoName3, "internal", 0), (repoName4, "public", 0));
     }
 
     [Fact]

@@ -85,7 +85,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             : GenerateParallelAdoScript(repos, adoServerUrl, adoSourceOrg, githubTargetOrg, downloadMigrationLogs);
     }
 
-    private async Task<IEnumerable<(string Name, string Visibility)>> GetGithubRepos(GithubApi github, string githubOrg)
+    private async Task<IEnumerable<(string Name, string Visibility, long Size)>> GetGithubRepos(GithubApi github, string githubOrg)
     {
         if (githubOrg.IsNullOrWhiteSpace() || github is null)
         {
@@ -94,7 +94,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation($"GITHUB ORG: {githubOrg}");
         var repos = await github.GetRepos(githubOrg);
-        foreach (var (name, _) in repos)
+        foreach (var (name, _, _) in repos)
         {
             _log.LogInformation($"    Repo: {name}");
         }
@@ -128,7 +128,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
+    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility, long Size)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
     {
         var content = new StringBuilder();
 
@@ -153,7 +153,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine($"# =========== Organization: {githubSourceOrg} ===========");
 
-        foreach (var (name, visibility) in repos)
+        foreach (var (name, visibility, _) in repos)
         {
             content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility)));
 
@@ -166,7 +166,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return content.ToString();
     }
 
-    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
+    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility, long Size)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
     {
         var content = new StringBuilder();
 
@@ -201,7 +201,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine("# === Queuing repo migrations ===");
 
         // Queuing migrations
-        foreach (var (name, visibility) in repos)
+        foreach (var (name, visibility, _) in repos)
         {
             content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility))}");
             content.AppendLine($"$RepoMigrations[\"{name}\"] = $MigrationID");
@@ -214,7 +214,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine();
 
         // Query each migration's status
-        foreach (var (name, _) in repos)
+        foreach (var (name, _, _) in repos)
         {
             content.AppendLine(Wrap(WaitForMigrationScript(name), $"if ($RepoMigrations[\"{name}\"])"));
             content.AppendLine($"if ($RepoMigrations[\"{name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");

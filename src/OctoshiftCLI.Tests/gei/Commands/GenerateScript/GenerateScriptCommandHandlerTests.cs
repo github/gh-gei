@@ -92,7 +92,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -114,7 +114,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -136,7 +136,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --target-repo-visibility private }}";
 
@@ -166,7 +166,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "internal"), (repo3, "public") });
+                .ReturnsAsync(new[] { (repo1, "private", 0L), (repo2, "internal", 0L), (repo3, "public", 0L) });
 
             var expected = new StringBuilder();
             expected.AppendLine($"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{repo1}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\" --target-repo-visibility private }}");
@@ -287,7 +287,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --target-repo-visibility private }}";
@@ -554,7 +554,7 @@ if ($Failed -ne 0) {
             const string repo1 = "FOO-REPO-1";
             const string repo2 = "FOO-REPO-2";
 
-            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private"), (repo2, "public") });
+            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private", 0L), (repo2, "public", 0L) });
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             var expected = new StringBuilder();
@@ -634,7 +634,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -906,7 +906,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (repo1, "private"), (repo2, "private") });
+                .ReturnsAsync(new[] { (repo1, "private", 0L), (repo2, "private", 0) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -990,7 +990,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -1076,7 +1076,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
@@ -1161,7 +1161,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
@@ -1237,7 +1237,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --skip-releases --target-repo-visibility private }}";
 
@@ -1264,7 +1264,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --skip-releases --target-repo-visibility private }}");
@@ -1293,7 +1293,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --lock-source-repo --target-repo-visibility private }}";
 
@@ -1320,7 +1320,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             var expected = new StringBuilder();
             expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --lock-source-repo --target-repo-visibility private }}");
@@ -1349,7 +1349,7 @@ if ($Failed -ne 0) {
             // Arrange
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
 
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
@@ -1373,7 +1373,7 @@ if ($Failed -ne 0) {
         public async Task Parallel_Github_Contains_Cli_Version()
         {
             // Arrange
-            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (REPO, "private") });
+            _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
 
             const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
@@ -1454,7 +1454,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --target-repo-visibility private }}";
@@ -1486,7 +1486,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{ghesApiUrl}\" --aws-bucket-name \"{AWS_BUCKET_NAME}\" --aws-region \"{AWS_REGION}\" --keep-archive --target-repo-visibility private }}";
@@ -1519,7 +1519,7 @@ if ($Failed -ne 0) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1564,7 +1564,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1617,7 +1617,7 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = @"
@@ -1656,7 +1656,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
-                .ReturnsAsync(new[] { (REPO, "private") });
+                .ReturnsAsync(new[] { (REPO, "private", 0L) });
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
 
             var expected = @"

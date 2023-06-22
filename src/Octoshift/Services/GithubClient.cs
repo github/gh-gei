@@ -47,6 +47,8 @@ public class GithubClient
 
     public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) => (await GetWithRetry(url, customHeaders)).Content;
 
+    public virtual async Task<string> GetWithoutRetriesAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: HttpStatusCode.OK)).Content;
+
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
     {
         var nextUrl = url;
@@ -60,6 +62,43 @@ public class GithubClient
 
             nextUrl = GetNextUrl(headers);
         } while (nextUrl != null);
+    }
+
+    public virtual async Task<int> GetResultsCount(string url)
+    {
+        if (url == null)
+        {
+            throw new ArgumentNullException(nameof(url));
+        }
+
+        if (url.Contains('?'))
+        {
+            url += "&";
+        }
+        else
+        {
+            url += "?";
+        }
+
+        url += $"per_page=1";
+
+        var (content, headers) = await GetWithRetry(url);
+
+        if (JArray.Parse(content).Count == 0)
+        {
+            return 0;
+        }
+
+        var lastUrl = GetLastUrl(headers);
+
+        if (lastUrl == null)
+        {
+            return 1;
+        }
+
+        var result = int.Parse(lastUrl.Split('=').Last());
+
+        return result;
     }
 
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
@@ -202,7 +241,7 @@ public class GithubClient
         if (_retryDelay > 0)
         {
             _log.LogWarning($"GitHub rate limit exceeded. Waiting {_retryDelay} seconds before continuing");
-            await Task.Delay(_retryDelay * MILLISECONDS_PER_SECOND);
+            await Task.Delay((_retryDelay + 10) * MILLISECONDS_PER_SECOND);
             _retryDelay = 0;
         }
     }
@@ -224,6 +263,25 @@ public class GithubClient
             .FirstOrDefault(x => x.Rel == "next").Url;
 
         return nextUrl;
+    }
+
+    private string GetLastUrl(KeyValuePair<string, IEnumerable<string>>[] headers)
+    {
+        var linkHeaderValue = ExtractLinkHeader(headers);
+
+        var lastUrl = linkHeaderValue?
+            .Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(link =>
+            {
+                var rx = new Regex(@"<(?<url>.+)>;\s*rel=""(?<rel>.+)""");
+                var url = rx.Match(link).Groups["url"].Value;
+                var rel = rx.Match(link).Groups["rel"].Value; // first, next, last, prev
+
+                return (Url: url, Rel: rel);
+            })
+            .FirstOrDefault(x => x.Rel == "last").Url;
+
+        return lastUrl;
     }
 
     private string ExtractLinkHeader(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers) =>

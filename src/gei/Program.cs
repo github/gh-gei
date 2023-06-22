@@ -10,6 +10,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
@@ -46,6 +47,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<CodeScanningAlertServiceFactory>()
                 .AddSingleton<GhesVersionCheckerFactory>()
                 .AddSingleton<ConfirmationService>()
+                .AddSingleton<GithubInspectorServiceFactory>()
+                .AddSingleton<ReposCsvGeneratorService>()
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
                 {

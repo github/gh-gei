@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -90,11 +91,11 @@ public class GithubApi
                                         ex => ex.StatusCode == HttpStatusCode.NotFound);
     }
 
-    public virtual async Task<IEnumerable<(string Name, string Visibility)>> GetRepos(string org)
+    public virtual async Task<IEnumerable<(string Name, string Visibility, long Size)>> GetRepos(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/repos?per_page=100";
 
-        return await _client.GetAllAsync(url).Select(x => ((string)x["name"], (string)x["visibility"])).ToListAsync();
+        return await _client.GetAllAsync(url).Select(x => ((string)x["name"], (string)x["visibility"], ((long)x["size"]) * 1000)).ToListAsync();
     }
 
     public virtual async Task RemoveTeamMember(string org, string teamSlug, string member)
@@ -919,6 +920,54 @@ public class GithubApi
         var data = JObject.Parse(response);
 
         return (string)data["installed_version"];
+    }
+
+    public virtual async Task<int> GetPullRequestCount(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/pulls?state=all";
+        var count = await _client.GetResultsCount(url);
+        return count;
+    }
+
+    public virtual async Task<DateTime> GetLastCommitDateOnDefaultBranch(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?per_page=1";
+        var response = await _client.GetAsync(url);
+
+        var data = JArray.Parse(response);
+
+        return data.Count < 1 ? DateTime.MinValue : (DateTime)data[0]["commit"]["committer"]["date"];
+    }
+
+    public virtual async Task<bool> IsRepoEmpty(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits";
+
+        try
+        {
+            var response = await _client.GetWithoutRetriesAsync(url);
+            return false;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict && ex.Message.Contains("Git Repository is empty"))
+        {
+            return true;
+        }
+    }
+
+    public virtual async Task<int> GetCommitCount(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits";
+        return await _client.GetResultsCount(url);
+    }
+
+    public virtual async Task<IEnumerable<string>> GetAuthorsSince(string org, string repo, DateTime fromDate)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?since={fromDate.ToString("o", CultureInfo.InvariantCulture)}&per_page=100";
+        var response = await _client.GetAllAsync(url)
+            .Select(x => $"{x["commit"]["author"]["name"]} ({x["commit"]["author"]["email"]})")
+            .ToListAsync();
+
+        return response;
     }
 
     private static object GetMannequinsPayload(string orgId)
