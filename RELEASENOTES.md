@@ -1,1 +1,1 @@
-- Add additional error handling to mannequin reclaimation process
+- Add additional error handling to `reclaim-mannequin` process

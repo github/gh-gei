@@ -24,7 +24,7 @@ public class ReclaimMannequinCommandArgs : CommandArgs
 
         if (string.IsNullOrEmpty(Csv) && SkipInvitation)
         {
-            throw new OctoshiftCliException($"--csv must be specified to skip reclaimation email");
+            throw new OctoshiftCliException($"--csv must be specified when using the `--skip-invitation` option");
         }
     }
 }
