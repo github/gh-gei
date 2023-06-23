@@ -54,7 +54,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<bool> NoPrompt { get; } = new("--no-prompt")
     {
-        Description = "Overrides all prompts by using the default responses"
+        Description = "Overrides all prompts and warnings with 'Y' value."
     };
 
     public virtual Option<string> GithubPat { get; } = new("--github-pat")
