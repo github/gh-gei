@@ -41,7 +41,14 @@ namespace OctoshiftCLI.BbsToGithub
                     var project = projectName.Replace(",", Uri.EscapeDataString(","));
                     var repoName = repo.Name.Replace(",", Uri.EscapeDataString(","));
 
-                    result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                    if (lastCommitDate == null)
+                    {
+                        result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",,\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                    }
+                    else
+                    {
+                        result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                    }
 
                     try
                     {

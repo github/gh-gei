@@ -253,7 +253,7 @@ public class BbsApiTests
     }
 
     [Fact]
-    public async Task GetRepositoryLatestCommitDate_Should_Return_MinDate_On_Non_Success_Response()
+    public async Task GetRepositoryLatestCommitDate_Should_Return_Null_On_Non_Success_Response()
     {
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
@@ -264,7 +264,7 @@ public class BbsApiTests
         var result = await _sut.GetRepositoryLatestCommitDate(PROJECT_KEY, SLUG);
 
         // Assert
-        result.Should().Be(DateTime.MinValue);
+        result.Should().Be(null);
     }
 
     [Fact]

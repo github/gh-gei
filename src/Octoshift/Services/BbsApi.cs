@@ -110,7 +110,7 @@ public class BbsApi
             .ToListAsync();
     }
 
-    public virtual async Task<DateTime> GetRepositoryLatestCommitDate(string projectKey, string repo)
+    public virtual async Task<DateTime?> GetRepositoryLatestCommitDate(string projectKey, string repo)
     {
         var url = $"{_bbsBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/commits?limit=1";
 
@@ -125,14 +125,17 @@ public class BbsApi
             {
                 authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
             }
+            else
+            {
+                return null;
+            }
 
-            var dateTime = authorTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime : DateTime.MinValue;
-
+            var dateTime = DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime;
             return dateTime.Date;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            return DateTime.MinValue;
+            return null;
         }
     }
 
