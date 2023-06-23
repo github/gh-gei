@@ -803,7 +803,10 @@ public class GithubApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
-        return data.ToObject<ReattributeMannequinToUserResult>();
+        return data["errors"].Any(x => ((string)x["message"]).Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
+            ? throw new OctoshiftCliException("Feature Flag not enabled, ensure Feature Flag is enabled before re-attempting " +
+            "mannequin reattribution with --skip-invitation option")
+            : data.ToObject<ReattributeMannequinToUserResult>();
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
