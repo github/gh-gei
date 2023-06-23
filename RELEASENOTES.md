@@ -1,1 +1,1 @@
-- Add `bbs2gh inventory-report` command which generates CSV reports of all the projects and repos it can access, along with extra information that can be useful when planning a large migration (repo count, PR count per repo, last commit date, if repo is archived, and repo size)
+- Add `bbs2gh inventory-report` command to write data available for migrations in CSV form
