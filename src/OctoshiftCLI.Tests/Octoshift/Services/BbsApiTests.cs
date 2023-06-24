@@ -1,3 +1,6 @@
+using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -136,6 +139,29 @@ public class BbsApiTests
     }
 
     [Fact]
+    public async Task GetProject_Returns_Project()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}";
+        var projectFoo = (Id: 1, Key: "PF", Name: "Foo");
+        var response = new
+        {
+            key = projectFoo.Key,
+            id = projectFoo.Id,
+            name = projectFoo.Name
+        };
+        var task = Task.FromResult(response.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(url)).Returns(task);
+
+        // Act
+        var result = await _sut.GetProject(PROJECT_KEY);
+
+        //Assert
+        result.Should().BeEquivalentTo(projectFoo);
+    }
+
+    [Fact]
     public async Task GetRepos_Returns_Repositories_For_Project()
     {
         // Arrange
@@ -166,5 +192,123 @@ public class BbsApiTests
 
         // Assert
         result.Should().BeEquivalentTo(new[] { fooRepo, barRepo });
+    }
+
+    [Fact]
+    public async Task GetRepositoryPullRequests_Returns_Pull_Requests_For_Repository()
+    {
+        // Arrange
+        const string fooProjectKey = "FP";
+        const string fooRepo = "foorepo";
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{fooProjectKey}/repos/{fooRepo}/pull-requests?state=all";
+        var fooPullRequest = (Id: 1, Name: "FooPullRequest");
+        var barPullRequest = (Id: 2, Name: "BarPullRequest");
+        var response = new[]
+        {
+            new
+            {
+                id = fooPullRequest.Id,
+                name = fooPullRequest.Name
+            },
+            new
+            {
+                id = barPullRequest.Id,
+                name = barPullRequest.Name
+            }
+        }.ToAsyncJTokenEnumerable();
+
+        _mockBbsClient.Setup(m => m.GetAllAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryPullRequests(fooProjectKey, fooRepo);
+
+        // Assert
+        result.Should().BeEquivalentTo(new[] { fooPullRequest, barPullRequest });
+    }
+
+    [Fact]
+    public async Task GetRepositoryLatestCommitDate_Returns_Latest_Commit_For_Repository()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
+
+        var expectedDate = new DateTime(2022, 2, 14, 5, 20, 0, DateTimeKind.Utc);
+        var commit = new
+        {
+            values = new[]
+            {
+                new { authorTimestamp = 1644816000000 }
+            }
+        };
+
+        var response = Task.FromResult(commit.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryLatestCommitDate(PROJECT_KEY, SLUG);
+
+        // Assert
+        result.Should().Be(expectedDate);
+    }
+
+    [Fact]
+    public async Task GetRepositoryLatestCommitDate_Should_Return_Null_On_Non_Success_Response()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+
+        // Act
+        var result = await _sut.GetRepositoryLatestCommitDate(PROJECT_KEY, SLUG);
+
+        // Assert
+        result.Should().Be(null);
+    }
+
+    [Fact]
+    public async Task GetIsRepositoryArchived_Returns_Repository_Archived_Field()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}?fields=archived";
+
+        var repo = new
+        {
+            archived = false,
+        };
+
+        var response = Task.FromResult(repo.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetIsRepositoryArchived(PROJECT_KEY, SLUG);
+
+        // Assert
+        result.Should().Be(repo.archived);
+    }
+
+    [Fact]
+    public async Task GetRepositorySize_Returns_Sizes()
+    {
+        // Arrange
+        const string url = $"{BBS_SERVICE_URL}/projects/{PROJECT_KEY}/repos/{SLUG}/sizes";
+
+        var sizes = new
+        {
+            repository = 10000UL,
+            attachments = 10000UL
+        };
+
+        var response = Task.FromResult(sizes.ToJson());
+
+        _mockBbsClient.Setup(m => m.GetAsync(It.Is<string>(x => x.StartsWith(url)))).Returns(response);
+
+        // Act
+        var result = await _sut.GetRepositoryAndAttachmentsSize(PROJECT_KEY, SLUG, "bbs-username", "bbs-password");
+
+        // Assert
+        result.Should().Be((sizes.repository, sizes.attachments));
     }
 }
