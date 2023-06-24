@@ -117,21 +117,15 @@ public class BbsApi
         try
         {
             var response = await _client.GetAsync(url);
-
             var commit = JObject.Parse(response);
 
-            var authorTimestamp = 0L;
-            if (commit?["values"] != null && commit["values"].Any())
-            {
-                authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
-            }
-            else
+            if (commit?["values"] == null || !commit["values"].Any())
             {
                 return null;
             }
 
-            var dateTime = DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime;
-            return dateTime.Date;
+            var authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
+            return DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {

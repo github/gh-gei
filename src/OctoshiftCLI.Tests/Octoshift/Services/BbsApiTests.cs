@@ -232,7 +232,7 @@ public class BbsApiTests
         // Arrange
         const string url = $"{BBS_SERVICE_URL}/rest/api/1.0/projects/{PROJECT_KEY}/repos/{SLUG}/commits?limit=1";
 
-        var expectedDate = new DateTime(2022, 2, 14);
+        var expectedDate = new DateTime(2022, 2, 14, 5, 20, 0, DateTimeKind.Utc);
         var commit = new
         {
             values = new[]
