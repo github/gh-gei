@@ -1,1 +1,1 @@
-
+- Add `bbs2gh inventory-report` command to write data available for migrations in CSV form
