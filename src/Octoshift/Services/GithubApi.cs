@@ -800,13 +800,19 @@ public class GithubApi
             variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
         };
 
-        var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
-
-        return data["errors"].Any(x => ((string)x["message"]).Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
-            ? throw new OctoshiftCliException("Feature Flag not enabled, ensure Feature Flag is enabled before re-attempting " +
-            "mannequin reattribution with --skip-invitation option")
-            : data.ToObject<ReattributeMannequinToUserResult>();
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return data.ToObject<ReattributeMannequinToUserResult>();
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Feature Flag not enabled, ensure Feature Flag is enabled before re-attempting " +
+            "mannequin reattribution with --skip-invitation option", ex);
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)

@@ -138,32 +138,47 @@ public class ReclaimService
 
         var mannequins = await GetMannequins(githubOrgId);
 
+        // Parse CSV
+        var parsedMannequins = new List<Mannequin>();
+
         foreach (var line in lines.Skip(1).Where(l => l != null && l.Trim().Length > 0))
         {
             var (login, userid, claimantLogin) = ParseLine(line);
 
-            if (login == null)
+            parsedMannequins.Add(new Mannequin()
+            {
+                Login = login,
+                Id = userid,
+                MappedUser = new Claimant()
+                {
+                    Login = claimantLogin
+                }
+            });
+        }
+
+        // Validate CSV and claim mannequins
+        foreach (var mannequin in parsedMannequins)
+        {
+            if (mannequin.Login == null)
             {
                 continue;
             }
 
-            if (!force && mannequins.IsClaimed(login, userid))
+            if (!force && mannequins.IsClaimed(mannequin.Login, mannequin.Id))
             {
-                _log.LogWarning($"{login} is already claimed. Skipping (use force if you want to reclaim)");
+                _log.LogWarning($"{mannequin.Login} is already claimed. Skipping (use force if you want to reclaim)");
                 continue;
             }
 
-            var mannequin = mannequins.FindFirst(login, userid);
-
-            if (mannequin == null)
+            if (mannequins.FindFirst(mannequin.Login, mannequin.Id) == null)
             {
-                _log.LogWarning($"Mannequin {login} not found. Skipping.");
+                _log.LogWarning($"Mannequin {mannequin.Login} not found. Skipping.");
                 continue;
             }
 
-            if (lines.Where(x => x.Contains(login)).Count() > 1 && lines.Where(x => x.Contains(userid)).Count() > 1)
+            if (parsedMannequins.Where(x => x.Login == mannequin.Login && x.Id == mannequin.Id).Count() > 1)
             {
-                _log.LogWarning($"Mannequin {login} is a duplicate. Skipping.");
+                _log.LogWarning($"Mannequin {mannequin.Login} is a duplicate. Skipping.");
                 continue;
             }
 
@@ -171,28 +186,28 @@ public class ReclaimService
 
             try
             {
-                claimantId = await _githubApi.GetUserId(claimantLogin);
+                claimantId = await _githubApi.GetUserId(mannequin.MappedUser.Login);
             }
             catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login"))
             {
-                _log.LogWarning($"Claimant \"{claimantLogin}\" not found. Will ignore it.");
+                _log.LogWarning($"Claimant \"{mannequin.MappedUser.Login}\" not found. Will ignore it.");
                 continue;
             }
 
             if (skipInvitation)
             {
-                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
+                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, mannequin.Id, claimantId);
 
                 // If results return a fail-fast error, we should break out of the for-loop
-                if (!HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result))
+                if (!HandleReclaimationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result))
                 {
                     return;
                 }
             }
             else
             {
-                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
-                HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, claimantId);
+                HandleInvitationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result);
             }
         }
     }
