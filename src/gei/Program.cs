@@ -47,7 +47,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<CodeScanningAlertServiceFactory>()
                 .AddSingleton<GhesVersionCheckerFactory>()
                 .AddSingleton<ConfirmationService>()
-                .AddSingleton<GithubInspectorServiceFactory>()
+                .AddSingleton<ReposCsvGeneratorServiceFactory>()
                 .AddSingleton<ReposCsvGeneratorService>()
                 .AddHttpClient("NoSSL")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()

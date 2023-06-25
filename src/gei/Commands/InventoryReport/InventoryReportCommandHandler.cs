@@ -10,18 +10,15 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 {
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
-    private readonly GithubInspectorService _githubInspectorService;
     private readonly ReposCsvGeneratorService _reposCsvGenerator;
 
     public InventoryReportCommandHandler(
         OctoLogger log,
         FileSystemProvider fileSystemProvider,
-        GithubInspectorService githubInspectorService,
         ReposCsvGeneratorService reposCsvGeneratorService)
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
-        _githubInspectorService = githubInspectorService;
         _reposCsvGenerator = reposCsvGeneratorService;
     }
 
@@ -33,10 +30,6 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         }
 
         _log.LogInformation("Creating inventory report...");
-
-        _log.LogInformation("Finding Repos...");
-        var repoCount = await _githubInspectorService.GetRepoCount(args.GithubOrg);
-        _log.LogInformation($"Found {repoCount} Repos");
 
         _log.LogInformation("Generating repos.csv...");
         var reposCsvText = await _reposCsvGenerator.Generate(args.GhesApiUrl, args.GithubPat, args.GithubOrg, args.Minimal);

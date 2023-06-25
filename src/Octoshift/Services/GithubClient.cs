@@ -64,7 +64,9 @@ public class GithubClient
         } while (nextUrl != null);
     }
 
-    public virtual async Task<int> GetResultsCount(string url)
+    public virtual async Task<int> GetResultsCount(string url) => (await GetResultsCountAndContent(url)).Count;
+
+    public virtual async Task<(string Content, int Count)> GetResultsCountAndContent(string url, bool retries = true)
     {
         if (url == null)
         {
@@ -82,23 +84,23 @@ public class GithubClient
 
         url += $"per_page=1";
 
-        var (content, headers) = await GetWithRetry(url);
+        var (content, headers) = retries ? await GetWithRetry(url) : await SendAsync(HttpMethod.Get, url);
 
         if (JArray.Parse(content).Count == 0)
         {
-            return 0;
+            return (content, 0);
         }
 
         var lastUrl = GetLastUrl(headers);
 
         if (lastUrl == null)
         {
-            return 1;
+            return (content, 1);
         }
 
-        var result = int.Parse(lastUrl.Split('=').Last());
+        var count = int.Parse(lastUrl.Split('=').Last());
 
-        return result;
+        return (content, count);
     }
 
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>

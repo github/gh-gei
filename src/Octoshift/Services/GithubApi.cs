@@ -941,7 +941,7 @@ public class GithubApi
 
     public virtual async Task<bool> IsRepoEmpty(string org, string repo)
     {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits";
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?per_page=1";
 
         try
         {
@@ -968,6 +968,28 @@ public class GithubApi
             .ToListAsync();
 
         return response;
+    }
+
+    public virtual async Task<(bool IsRepoEmpty, int CommitCount, DateTime LastCommitDate)> GetCommitInfo(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits";
+        var isEmpty = false;
+        var commitCount = 0;
+        var lastCommitDate = DateTime.MinValue;
+
+        try
+        {
+            var (content, count) = await _client.GetResultsCountAndContent(url, retries: false);
+            commitCount = count;
+            var data = JArray.Parse(content);
+            lastCommitDate = data.Count < 1 ? DateTime.MinValue : (DateTime)data[0]["commit"]["committer"]["date"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict && ex.Message.Contains("Git Repository is empty"))
+        {
+            isEmpty = true;
+        }
+
+        return (isEmpty, commitCount, lastCommitDate);
     }
 
     private static object GetMannequinsPayload(string orgId)

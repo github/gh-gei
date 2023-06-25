@@ -63,14 +63,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.InventoryReport
             var githubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
                     githubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubPat) :
                     githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
-            var githubInspectorServiceFactory = sp.GetRequiredService<GithubInspectorServiceFactory>();
-            var githubInspectorService = githubInspectorServiceFactory.Create(githubApi);
-            var reposCsvGeneratorService = sp.GetRequiredService<ReposCsvGeneratorService>();
+            var reposCsvGeneratorServiceFactory = sp.GetRequiredService<ReposCsvGeneratorServiceFactory>();
+            var reposCsvGeneratorService = reposCsvGeneratorServiceFactory.Create(githubApi);
 
             return new InventoryReportCommandHandler(
                 log,
                 fileSystemProvider,
-                githubInspectorService,
                 reposCsvGeneratorService);
         }
     }

@@ -3,60 +3,57 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
-using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Services
 {
     public class ReposCsvGeneratorService
     {
-        private readonly GithubInspectorServiceFactory _githubInspectorServiceFactory;
-        private readonly ISourceGithubApiFactory _githubApiFactory;
+        private readonly GithubApi _githubApi;
         private readonly OctoLogger _log;
 
-        public ReposCsvGeneratorService(OctoLogger log, GithubInspectorServiceFactory githubInspectorServiceFactory, ISourceGithubApiFactory githubApiFactory)
+        public ReposCsvGeneratorService(OctoLogger log, GithubApi githubApi)
         {
             _log = log;
-            _githubInspectorServiceFactory = githubInspectorServiceFactory;
-            _githubApiFactory = githubApiFactory;
+            _githubApi = githubApi;
         }
 
         public virtual async Task<string> Generate(string apiUrl, string githubPat, string org, bool minimal = false)
         {
-            var githubApi = _githubApiFactory.Create(apiUrl, githubPat);
-            var inspector = _githubInspectorServiceFactory.Create(githubApi);
             var result = new StringBuilder();
 
-            result.Append("org,repo,url,visibility,last-push-date,compressed-repo-size-in-bytes");
-            result.AppendLine(!minimal ? ",most-active-contributor,pr-count,commits-on-default-branch" : null);
+            _log.LogInformation("Finding Repos...");
+            var repos = await _githubApi.GetRepos(org);
+            _log.LogInformation($"Found {repos.Count()} Repos");
 
-            foreach (var (repoName, repoVisibility, repoSize) in await inspector.GetRepos(org))
+            result.Append("org,repo,url,visibility,last-push-date,compressed-repo-size-in-bytes,pr-count,commits-on-default-branch");
+            result.AppendLine(!minimal ? ",most-active-contributor" : null);
+
+            foreach (var (repoName, repoVisibility, repoSize) in repos)
             {
-                _log.LogInformation($"Repo: {repoName}");
+                var (isRepoEmpty, commitCount, lastCommitDate) = await _githubApi.GetCommitInfo(org, repoName);
 
-                if (await githubApi.IsRepoEmpty(org, repoName))
+                if (isRepoEmpty)
                 {
-                    _log.LogWarning($"Skipping empty repo {repoName}");
+                    _log.LogWarning($"Skipping {repoName} because it is empty");
                 }
                 else
                 {
                     var baseUrl = apiUrl.HasValue() ? ExtractGhesBaseUrl(apiUrl) : "https://github.com";
-                    var url = $"{baseUrl}/{Uri.EscapeDataString(org)}/_git/{Uri.EscapeDataString(repoName)}";
-                    var lastPushDate = await githubApi.GetLastCommitDateOnDefaultBranch(org, repoName);
-                    var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, repoName, githubApi) : null;
-                    var prCount = !minimal ? await inspector.GetPullRequestCount(org, repoName) : 0;
-                    var commitsPastYear = !minimal ? await githubApi.GetCommitCount(org, repoName) : 0;
+                    var url = $"{baseUrl}/{org.EscapeDataString()}/_git/{repoName.EscapeDataString()}";
+                    var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, repoName) : null;
+                    var prCount = await _githubApi.GetPullRequestCount(org, repoName);
 
-                    result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastPushDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\"");
-                    result.AppendLine(!minimal ? $",\"{mostActiveContributor}\",{prCount},{commitsPastYear}" : null);
+                    result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",{prCount},{commitCount}");
+                    result.AppendLine(!minimal ? $",\"{mostActiveContributor}\"" : null);
                 }
             }
 
             return result.ToString();
         }
 
+        // TODO: reduce duplication where I copied this code from
         private string ExtractGhesBaseUrl(string ghesApiUrl)
         {
             // We expect the GHES url template to be either http(s)://hostname/api/v3 or http(s)://api.hostname.com.
@@ -75,11 +72,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
             return match.Success ? $"{match.Groups["scheme"]}://{match.Groups["host"]}" : ghesApiUrl;
         }
 
-        private async Task<string> GetMostActiveContributor(string org, string repo, GithubApi githubApi)
+        private async Task<string> GetMostActiveContributor(string org, string repo)
         {
-            var pushers = await githubApi.GetAuthorsSince(org, repo, DateTime.Today.AddMonths(-1));
-            pushers = pushers.Where(x => !x.Contains("Service"));
-            var mostActiveContributor = pushers.Any() ? pushers.GroupBy(x => x)
+            var authors = await _githubApi.GetAuthorsSince(org, repo, DateTime.Today.AddYears(-1));
+            authors = authors.Where(x => !x.Contains("[bot]"));
+            var mostActiveContributor = authors.Any() ? authors.GroupBy(x => x)
                                                                .OrderByDescending(x => x.Count())
                                                                .First()
                                                                .First()
