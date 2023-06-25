@@ -929,37 +929,6 @@ public class GithubApi
         return count;
     }
 
-    public virtual async Task<DateTime> GetLastCommitDateOnDefaultBranch(string org, string repo)
-    {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?per_page=1";
-        var response = await _client.GetAsync(url);
-
-        var data = JArray.Parse(response);
-
-        return data.Count < 1 ? DateTime.MinValue : (DateTime)data[0]["commit"]["committer"]["date"];
-    }
-
-    public virtual async Task<bool> IsRepoEmpty(string org, string repo)
-    {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?per_page=1";
-
-        try
-        {
-            var response = await _client.GetWithoutRetriesAsync(url);
-            return false;
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict && ex.Message.Contains("Git Repository is empty"))
-        {
-            return true;
-        }
-    }
-
-    public virtual async Task<int> GetCommitCount(string org, string repo)
-    {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits";
-        return await _client.GetResultsCount(url);
-    }
-
     public virtual async Task<IEnumerable<string>> GetAuthorsSince(string org, string repo, DateTime fromDate)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/commits?since={fromDate.ToString("o", CultureInfo.InvariantCulture)}&per_page=100";
