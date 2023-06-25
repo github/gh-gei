@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -257,11 +258,13 @@ public class GithubApiTests
                     ""id"": 1,
                     ""name"": ""{repoName1}"",
                     ""visibility"": ""private"",
+                    ""size"": 0,
                 }},
                 {{
                     ""id"": 2,
                     ""name"": ""{repoName2}"",
                     ""visibility"": ""private"",
+                    ""size"": 0,
                 }}
             ]";
 
@@ -273,11 +276,13 @@ public class GithubApiTests
                     ""id"": 3,
                     ""name"": ""{repoName3}"",
                     ""visibility"": ""internal"",
+                    ""size"": 0,
                 }},
                 {{
                     ""id"": 4,
                     ""name"": ""{repoName4}"",
                     ""visibility"": ""public"",
+                    ""size"": 0,
                 }}
             ]";
 
@@ -3074,6 +3079,106 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
 
         // Assert
         version.Should().Be("3.7.0");
+    }
+
+    [Fact]
+    public async Task GetPullRequestCount_Returns_Count()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/pulls?state=all";
+        var expectedCount = 12;
+
+        _githubClientMock.Setup(m => m.GetResultsCount(url)).ReturnsAsync(expectedCount);
+
+        // Act
+        var count = await _githubApi.GetPullRequestCount(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        count.Should().Be(expectedCount);
+    }
+
+    [Fact]
+    public async Task GetAuthorsSince_Returns_Authors()
+    {
+        // Arrange
+        var sinceDate = DateTime.Now.AddYears(-1);
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/commits?since={sinceDate.ToString("o", CultureInfo.InvariantCulture)}&per_page=100";
+
+        var expectedAuthors = new[]
+        {
+            new { commit = new { author = new { name = "Homer Simpson", email = "homer@hotmail.com" } } },
+            new { commit = new { author = new { name = "Mona Lisa", email = "lagioconda@davinci.net" } } },
+        }.ToAsyncJTokenEnumerable();
+
+        _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(expectedAuthors);
+
+        // Act
+        var authors = await _githubApi.GetAuthorsSince(GITHUB_ORG, GITHUB_REPO, sinceDate);
+
+        // Assert
+        authors.Count().Should().Be(2);
+        authors.Should().Contain("Homer Simpson (homer@hotmail.com)");
+        authors.Should().Contain("Mona Lisa (lagioconda@davinci.net)");
+    }
+
+    [Fact]
+    public async Task GetAuthorsSince_No_Commits_Found()
+    {
+        // Arrange
+        var sinceDate = DateTime.Now.AddYears(-1);
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/commits?since={sinceDate.ToString("o", CultureInfo.InvariantCulture)}&per_page=100";
+
+        _githubClientMock.Setup(m => m.GetAllAsync(url, null)).Returns(AsyncEnumerable.Empty<JToken>());
+
+        // Act
+        var authors = await _githubApi.GetAuthorsSince(GITHUB_ORG, GITHUB_REPO, sinceDate);
+
+        // Assert
+        authors.Count().Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetCommitInfo_Returns_CommitInfo()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/commits";
+        var expectedCount = 72;
+        var expectedLastCommitDate = DateTime.Now.AddDays(-1);
+        var response = $@"
+            [{{
+                ""commit"": {{ 
+                    ""committer"": {{ 
+                        ""date"": ""{expectedLastCommitDate.ToString("o", CultureInfo.InvariantCulture)}"" 
+                    }} 
+                }},
+            }}]";
+
+        _githubClientMock.Setup(m => m.GetResultsCountAndContent(url, false)).ReturnsAsync((response, expectedCount));
+
+        // Act
+        var (IsRepoEmpty, CommitCount, LastCommitDate) = await _githubApi.GetCommitInfo(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        IsRepoEmpty.Should().BeFalse();
+        CommitCount.Should().Be(expectedCount);
+        LastCommitDate.Should().Be(expectedLastCommitDate);
+    }
+
+    [Fact]
+    public async Task GetCommitInfo_Empty_Repo()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/commits";
+
+        _githubClientMock.Setup(m => m.GetResultsCountAndContent(url, false)).ThrowsAsync(new HttpRequestException("Git Repository is empty", null, HttpStatusCode.Conflict));
+
+        // Act
+        var (IsRepoEmpty, CommitCount, LastCommitDate) = await _githubApi.GetCommitInfo(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        IsRepoEmpty.Should().BeTrue();
+        CommitCount.Should().Be(0);
+        LastCommitDate.Should().Be(DateTime.MinValue);
     }
 
     private string Compact(string source) =>
