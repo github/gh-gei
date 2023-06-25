@@ -32,7 +32,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
 
             foreach (var (repoName, repoVisibility, repoSize) in repos)
             {
-
                 try
                 {
                     var (isRepoEmpty, commitCount, lastCommitDate) = await _githubApi.GetCommitInfo(org, repoName);
