@@ -30,6 +30,7 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         }
 
         _log.LogInformation("Creating inventory report...");
+        _log.LogInformation("This may take a long time, from several minutes to many hours depending on the number and size of repos");
 
         _log.LogInformation("Generating repos.csv...");
         var reposCsvText = await _reposCsvGenerator.Generate(args.GhesApiUrl, args.GithubPat, args.GithubOrg, args.Minimal);
