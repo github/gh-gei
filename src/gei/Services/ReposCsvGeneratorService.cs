@@ -32,22 +32,33 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
 
             foreach (var (repoName, repoVisibility, repoSize) in repos)
             {
-                var (isRepoEmpty, commitCount, lastCommitDate) = await _githubApi.GetCommitInfo(org, repoName);
 
-                if (isRepoEmpty)
+                try
                 {
-                    _log.LogWarning($"Skipping {repoName} because it is empty");
-                }
-                else
-                {
-                    var baseUrl = apiUrl.HasValue() ? ExtractGhesBaseUrl(apiUrl) : "https://github.com";
-                    var url = $"{baseUrl}/{org.EscapeDataString()}/_git/{repoName.EscapeDataString()}";
-                    var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, repoName) : null;
-                    var prCount = await _githubApi.GetPullRequestCount(org, repoName);
+                    var (isRepoEmpty, commitCount, lastCommitDate) = await _githubApi.GetCommitInfo(org, repoName);
 
-                    result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",{prCount},{commitCount}");
-                    result.AppendLine(!minimal ? $",\"{mostActiveContributor}\"" : null);
+                    if (isRepoEmpty)
+                    {
+                        _log.LogWarning($"Skipping {repoName} because it is empty");
+                    }
+                    else
+                    {
+                        var baseUrl = apiUrl.HasValue() ? ExtractGhesBaseUrl(apiUrl) : "https://github.com";
+                        var url = $"{baseUrl}/{org.EscapeDataString()}/_git/{repoName.EscapeDataString()}";
+                        var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, repoName) : null;
+                        var prCount = await _githubApi.GetPullRequestCount(org, repoName);
+
+                        result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",{prCount},{commitCount}");
+                        result.AppendLine(!minimal ? $",\"{mostActiveContributor}\"" : null);
+                    }
                 }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch (Exception ex)
+                {
+                    _log.LogError(ex);
+                    _log.LogWarning($"Error occurred while processing repo {repoName}, will skip this repo and continue");
+                }
+#pragma warning restore CA1031 // Do not catch general exception types
             }
 
             return result.ToString();
