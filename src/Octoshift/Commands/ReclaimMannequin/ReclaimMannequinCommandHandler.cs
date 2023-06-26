@@ -45,7 +45,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 
             if (!args.NoPrompt)
             {
-                _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? [y/N]");
+                _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? [y/N]");
             }
         }
 
