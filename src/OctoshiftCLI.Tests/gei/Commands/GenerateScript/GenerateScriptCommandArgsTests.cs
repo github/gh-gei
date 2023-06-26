@@ -16,30 +16,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         private const string AWS_BUCKET_NAME = "AWS_BUCKET_NAME";
 
         [Fact]
-        public void AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
-        {
-            var args = new GenerateScriptCommandArgs
-            {
-                AdoServerUrl = "https://ado.contoso.com",
-                GithubTargetOrg = TARGET_ORG
-            };
-
-            FluentActions
-                .Invoking(() => args.Validate(_mockOctoLogger.Object))
-                .Should().Throw<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public void No_Github_Source_Org_Or_Ado_Source_Org_Throws()
-        {
-            var args = new GenerateScriptCommandArgs { GithubTargetOrg = TARGET_ORG };
-
-            FluentActions
-                .Invoking(() => args.Validate(_mockOctoLogger.Object))
-                .Should().Throw<OctoshiftCliException>();
-        }
-
-        [Fact]
         public void It_Throws_When_Aws_Bucket_Name_Is_Provided_But_Ghes_Api_Url_Is_Not()
         {
             // Arrange

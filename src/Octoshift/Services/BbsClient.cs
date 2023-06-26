@@ -100,7 +100,6 @@ public class BbsClient
         response.EnsureSuccessStatusCode();
 
         return content;
-
     }
 
     private string AddPaginationParams(string url, int start, int limit)

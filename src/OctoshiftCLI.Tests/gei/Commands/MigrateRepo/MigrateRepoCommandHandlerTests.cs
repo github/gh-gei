@@ -34,7 +34,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         private const string SOURCE_REPO = "foo-repo-source";
         private const string TARGET_ORG = "foo-target-org";
         private const string TARGET_REPO = "foo-target-repo";
-        private const string ADO_PAT = "ado-pat";
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string GITHUB_SOURCE_PAT = "github-source-pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
@@ -250,104 +249,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{TARGET_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
-        }
-
-        [Fact]
-        public async Task Happy_Path_AdoSource()
-        {
-            var adoTeamProject = "foo-team-project";
-
-            var githubOrgId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
-            var sourceAdoPat = Guid.NewGuid().ToString();
-            var targetGithubPat = Guid.NewGuid().ToString();
-            var adoRepoUrl = $"https://dev.azure.com/{SOURCE_ORG}/{adoTeamProject}/_git/{SOURCE_REPO}";
-            var migrationId = Guid.NewGuid().ToString();
-
-            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            _mockTargetGithubApi.Setup(x => x.CreateAdoMigrationSource(githubOrgId, null).Result).Returns(migrationSourceId);
-            _mockTargetGithubApi
-                .Setup(x => x.StartMigration(
-                    migrationSourceId,
-                    adoRepoUrl,
-                    githubOrgId,
-                    TARGET_REPO,
-                    sourceAdoPat,
-                    targetGithubPat,
-                    null,
-                    null,
-                    false,
-                    null,
-                    false).Result)
-                .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
-
-            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(sourceAdoPat);
-            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
-
-            var args = new MigrateRepoCommandArgs
-            {
-                AdoSourceOrg = SOURCE_ORG,
-                AdoTeamProject = adoTeamProject,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = TARGET_API_URL,
-                Wait = true
-            };
-            await _handler.Handle(args);
-
-            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-        }
-
-        [Fact]
-        public async Task Happy_Path_AdoServerSource()
-        {
-            var adoTeamProject = "foo-team-project";
-            var adoServerUrl = "https://ado.contoso.com";
-
-            var githubOrgId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
-            var sourceAdoPat = Guid.NewGuid().ToString();
-            var targetGithubPat = Guid.NewGuid().ToString();
-            var adoRepoUrl = $"{adoServerUrl}/{SOURCE_ORG}/{adoTeamProject}/_git/{SOURCE_REPO}";
-            var migrationId = Guid.NewGuid().ToString();
-
-            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            _mockTargetGithubApi.Setup(x => x.CreateAdoMigrationSource(githubOrgId, adoServerUrl).Result).Returns(migrationSourceId);
-            _mockTargetGithubApi
-                .Setup(x => x.StartMigration(
-                    migrationSourceId,
-                    adoRepoUrl,
-                    githubOrgId,
-                    TARGET_REPO,
-                    sourceAdoPat,
-                    targetGithubPat,
-                    null,
-                    null,
-                    false,
-                    null,
-                    false).Result)
-                .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
-
-            _mockEnvironmentVariableProvider.Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>())).Returns(sourceAdoPat);
-            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
-
-            var args = new MigrateRepoCommandArgs
-            {
-                AdoServerUrl = adoServerUrl,
-                AdoSourceOrg = SOURCE_ORG,
-                AdoTeamProject = adoTeamProject,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = TARGET_API_URL,
-                Wait = true
-            };
-            await _handler.Handle(args);
-
-            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
         }
 
         [Fact]
@@ -824,45 +725,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-        }
-
-        [Fact]
-        public async Task It_Uses_Ado_Pat_When_Provided()
-        {
-            // Arrange
-            var actualLogOutput = new List<string>();
-            _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));
-
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                AdoSourceOrg = SOURCE_ORG,
-                AdoTeamProject = "adoTeamProject",
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                AdoPat = ADO_PAT,
-                QueueOnly = true,
-            };
-            await _handler.Handle(args);
-
-            // Assert
-            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
-
-            _mockEnvironmentVariableProvider.Verify(m => m.AdoPersonalAccessToken(It.IsAny<bool>()), Times.Never);
-            _mockTargetGithubApi.Verify(m => m.CreateAdoMigrationSource(It.IsAny<string>(), null));
-            _mockTargetGithubApi.Verify(m => m.StartMigration(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                ADO_PAT,
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<bool>(),
-                It.IsAny<string>(),
-                It.IsAny<bool>()));
         }
 
         [Fact]
