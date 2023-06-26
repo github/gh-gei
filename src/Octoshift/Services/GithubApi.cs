@@ -808,10 +808,9 @@ public class GithubApi
                 return data.ToObject<ReattributeMannequinToUserResult>();
             });
         }
-        catch (Exception ex)
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
         {
-            throw new OctoshiftCliException($"Feature Flag not enabled, ensure Feature Flag is enabled before re-attempting " +
-            "mannequin reattribution with --skip-invitation option", ex);
+            throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
         }
     }
 
