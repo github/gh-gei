@@ -131,7 +131,7 @@ public class ReclaimService
             }
         }
 
-        
+
     }
 
     public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force, bool skipInvitation)

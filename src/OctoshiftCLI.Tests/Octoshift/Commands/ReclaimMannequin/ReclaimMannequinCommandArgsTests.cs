@@ -11,8 +11,6 @@ public class ReclaimMannequinCommandArgsTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private const string GITHUB_ORG = "FooOrg";
-    private const string MANNEQUIN_USER = "mona";
-    private const string TARGET_USER = "mona_emu";
 
     [Fact]
     public void No_Parameters_Provided_Throws_OctoshiftCliException()
