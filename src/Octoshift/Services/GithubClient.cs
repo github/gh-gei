@@ -269,6 +269,7 @@ public class GithubClient
         return nextUrl;
     }
 
+    // TODO: Reduce duplication
     private string GetLastUrl(KeyValuePair<string, IEnumerable<string>>[] headers)
     {
         var linkHeaderValue = ExtractLinkHeader(headers);
