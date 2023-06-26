@@ -1,1 +1,1 @@
-
+- Fix recommended `gh gei`, `gh bbs2gh` and `gh ado2gh` commands in log output

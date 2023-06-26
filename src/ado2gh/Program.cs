@@ -89,7 +89,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static void SetContext(ParseResult parseResult)
         {
-            CliContext.RootCommand = parseResult.RootCommandResult.Command.Name;
+            CliContext.RootCommand = "gh ado2gh";
             CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
         }
 
