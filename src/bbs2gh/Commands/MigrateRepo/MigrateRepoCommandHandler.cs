@@ -230,12 +230,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
-            _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
+            _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh bbs2gh download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
             throw new OctoshiftCliException($"Migration #{migrationId} failed: {failureReason}");
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
-        _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
+        _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh bbs2gh download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
