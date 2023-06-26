@@ -19,7 +19,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
             _githubApi = githubApi;
         }
 
-        public virtual async Task<string> Generate(string apiUrl, string githubPat, string org, bool minimal = false)
+        public virtual async Task<string> Generate(string apiUrl, string org, bool minimal = false)
         {
             var result = new StringBuilder();
 
@@ -47,7 +47,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Services
                         var mostActiveContributor = !minimal ? await GetMostActiveContributor(org, repoName) : null;
                         var prCount = await _githubApi.GetPullRequestCount(org, repoName);
 
-                        result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",\"{repoSize:N0}\",{prCount},{commitCount}");
+                        result.Append($"\"{org}\",\"{repoName}\",\"{url}\",\"{repoVisibility}\",\"{lastCommitDate:dd-MMM-yyyy hh:mm tt}\",{repoSize},{prCount},{commitCount}");
                         result.AppendLine(!minimal ? $",\"{mostActiveContributor}\"" : null);
                     }
                 }

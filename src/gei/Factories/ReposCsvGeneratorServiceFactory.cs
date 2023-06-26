@@ -9,8 +9,5 @@ public class ReposCsvGeneratorServiceFactory
 
     public ReposCsvGeneratorServiceFactory(OctoLogger log) => _log = log;
 
-    public virtual ReposCsvGeneratorService Create(GithubApi githubApi)
-    {
-        return new ReposCsvGeneratorService(_log, githubApi);
-    }
+    public virtual ReposCsvGeneratorService Create(GithubApi githubApi) => new(_log, githubApi);
 }
