@@ -2083,7 +2083,7 @@ query($id: ID!, $first: Int, $after: String) {
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{urlWithQueryParams}&per_page=1"),
-                ItExpr.IsAny<CancellationToken>()) 
+                ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
 
         using var httpClient = new HttpClient(handlerMock.Object);
