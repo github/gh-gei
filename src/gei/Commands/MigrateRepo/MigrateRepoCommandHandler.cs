@@ -108,9 +108,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationSourceId = args.GithubSourceOrg.HasValue()
-            ? await _targetGithubApi.CreateGhecMigrationSource(githubOrgId)
-            : await _targetGithubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
+            migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
         }
         catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
         {
@@ -173,15 +171,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
     }
 
-    private string GetSourceToken(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken()
-            : args.AdoPat ?? _environmentVariableProvider.AdoPersonalAccessToken();
+    private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null)
-            : GetAdoRepoUrl(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
+    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null);
 
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {
@@ -327,12 +319,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     }
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
-
-    private string GetAdoRepoUrl(string serverUrl, string org, string project, string repo)
-    {
-        serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
-        return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
-    }
 
     private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
