@@ -1086,11 +1086,6 @@ public class ReclaimServiceTests
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
-        var csvContent = new string[] {
-            HEADER,
-            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
-        };
-
         // Act
         await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, true);
 
