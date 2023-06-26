@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         public ConfirmationServiceTests()
         {
             _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress, CancelCommand);
-            confirmationPrompt = "Are you sure you wish to continue? [y/N]?";
+            confirmationPrompt = "Are you sure you wish to continue? [y/N]";
             cancelationOutput = "Command Cancelled.";
             confirmationOutput = "Confirmation Recorded. Proceeding...";
         }
