@@ -11,8 +11,12 @@ namespace OctoshiftCLI.Services
         {
             _writeToConsoleOut = (msg, outputColor) =>
             {
+                var currentColor = Console.ForegroundColor;
+
                 Console.ForegroundColor = outputColor;
                 Console.WriteLine(msg);
+
+                Console.ForegroundColor = currentColor;
             };
             _readConsoleKey = ReadKey;
             _cancelCommand = code => Environment.Exit(code);
@@ -32,7 +36,6 @@ namespace OctoshiftCLI.Services
             do
             {
                 _writeToConsoleOut(confirmationPrompt, ConsoleColor.Yellow);
-                Console.ForegroundColor = ConsoleColor.White;
                 response = _readConsoleKey();
                 if (response != ConsoleKey.Enter)
                 {
