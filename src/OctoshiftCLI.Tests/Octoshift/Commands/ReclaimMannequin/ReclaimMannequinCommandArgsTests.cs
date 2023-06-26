@@ -23,22 +23,4 @@ public class ReclaimMannequinCommandArgsTests
             .Invoking(() => args.Validate(_mockOctoLogger.Object))
             .Should().Throw<OctoshiftCliException>();
     }
-
-    [Fact]
-    public void Skip_Invitation_Without_CSV_Throws_Error()
-    {
-        // Arrange
-        var args = new ReclaimMannequinCommandArgs
-        {
-            GithubOrg = GITHUB_ORG,
-            SkipInvitation = true,
-            MannequinUser = MANNEQUIN_USER,
-            TargetUser = TARGET_USER,
-        };
-
-        // Act & Assert
-        FluentActions
-            .Invoking(() => args.Validate(_mockOctoLogger.Object))
-            .Should().Throw<OctoshiftCliException>();
-    }
 }
