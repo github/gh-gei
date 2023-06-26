@@ -50,7 +50,7 @@ public class ReclaimMannequinCommandHandlerTests
     {
         string mannequinUserId = null;
 
-        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
+        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -61,7 +61,7 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false), Times.Once);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class ReclaimMannequinCommandHandlerTests
     {
         var mannequinUserId = "monaid";
 
-        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
+        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -80,7 +80,7 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false), Times.Once);
     }
 
     [Fact]

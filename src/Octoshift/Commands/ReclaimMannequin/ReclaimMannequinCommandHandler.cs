@@ -31,6 +31,24 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             throw new ArgumentNullException(nameof(args));
         }
 
+        if (args.SkipInvitation)
+        {
+            // Check if user is admin to EMU org
+            var login = await _githubApi.GetLoginName();
+
+            var membership = await _githubApi.GetOrgMembershipForUser(args.GithubOrg, login);
+
+            if (membership != "admin")
+            {
+                throw new OctoshiftCliException($"User {login} is not an org admin and is not eligible to reclaim mannequins with the --skip-invitation feature.");
+            }
+
+            if (!args.NoPrompt)
+            {
+                _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? [y/N]");
+            }
+        }
+
         if (!string.IsNullOrEmpty(args.Csv))
         {
             _log.LogInformation("Reclaiming Mannequins with CSV...");
@@ -40,24 +58,6 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
                 throw new OctoshiftCliException($"File {args.Csv} does not exist.");
             }
 
-            if (args.SkipInvitation)
-            {
-                // Check if user is admin to EMU org
-                var login = await _githubApi.GetLoginName();
-
-                var membership = await _githubApi.GetOrgMembershipForUser(args.GithubOrg, login);
-
-                if (membership != "admin")
-                {
-                    throw new OctoshiftCliException($"User {login} is not an org admin and is not eligible to reclaim mannequins with the --skip-invitation feature.");
-                }
-
-                if (!args.NoPrompt)
-                {
-                    _ = _confirmationService.AskForConfirmation("Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? [y/N]");
-                }
-            }
-
             await _reclaimService.ReclaimMannequins(GetFileContent(args.Csv), args.GithubOrg, args.Force, args.SkipInvitation);
         }
         else
@@ -65,7 +65,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 
             _log.LogInformation("Reclaiming Mannequin...");
 
-            await _reclaimService.ReclaimMannequin(args.MannequinUser, args.MannequinId, args.TargetUser, args.GithubOrg, args.Force);
+            await _reclaimService.ReclaimMannequin(args.MannequinUser, args.MannequinId, args.TargetUser, args.GithubOrg, args.Force, args.SkipInvitation);
         }
     }
 }

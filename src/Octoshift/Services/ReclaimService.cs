@@ -80,7 +80,7 @@ public class ReclaimService
         _log = logger;
     }
 
-    public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force)
+    public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force, bool skipInvitation)
     {
         var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
@@ -101,18 +101,37 @@ public class ReclaimService
 
         var success = true;
 
-        // get all unique mannequins by login and id and map them all to the same target
-        foreach (var mannequin in mannequins.GetUniqueUsers())
+        if (skipInvitation)
         {
-            var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, targetUserId);
+            foreach (var mannequin in mannequins.GetUniqueUsers())
+            {
+                var result = await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, mannequin.Id, targetUserId);
 
-            success &= HandleInvitationResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+                // If results return a fail-fast error, we should break out of the for-loop
+                if (!HandleReclaimationResult(mannequin.Login, targetUser, mannequin, targetUserId, result))
+                {
+                    throw new OctoshiftCliException("Failed to reclaim mannequin.");
+                }
+            }
+
+        }
+        else
+        {
+            // get all unique mannequins by login and id and map them all to the same target
+            foreach (var mannequin in mannequins.GetUniqueUsers())
+            {
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, targetUserId);
+
+                success &= HandleInvitationResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+            }
+
+            if (!success)
+            {
+                throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
+            }
         }
 
-        if (!success)
-        {
-            throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
-        }
+        
     }
 
     public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force, bool skipInvitation)
@@ -196,7 +215,7 @@ public class ReclaimService
 
             if (skipInvitation)
             {
-                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, mannequin.Id, claimantId);
+                var result = await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, mannequin.Id, claimantId);
 
                 // If results return a fail-fast error, we should break out of the for-loop
                 if (!HandleReclaimationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result))

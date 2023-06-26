@@ -771,7 +771,7 @@ public class GithubApi
         return data.ToObject<CreateAttributionInvitationResult>();
     }
 
-    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinSkipInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
         var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";

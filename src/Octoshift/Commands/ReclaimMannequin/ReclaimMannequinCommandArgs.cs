@@ -21,10 +21,5 @@ public class ReclaimMannequinCommandArgs : CommandArgs
         {
             throw new OctoshiftCliException($"Either --csv or --mannequin-user and --target-user must be specified");
         }
-
-        if (string.IsNullOrEmpty(Csv) && SkipInvitation)
-        {
-            throw new OctoshiftCliException($"--csv must be specified when using the `--skip-invitation` option");
-        }
     }
 }
