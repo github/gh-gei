@@ -219,7 +219,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.GetAsync("http://example.com"); // normal call
@@ -254,7 +254,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.GetAsync("http://example.com"); // normal call
@@ -350,7 +350,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.PostAsync("http://example.com", "hello"); // normal call
@@ -385,7 +385,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(content: "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.PostAsync("http://example.com", "hello"); // normal call
@@ -627,7 +627,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.PutAsync("http://example.com", "hello"); // normal call
@@ -763,7 +763,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.PatchAsync("http://example.com", "hello"); // normal call
@@ -885,7 +885,7 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(HttpStatusCode.OK, "THIRD_RESPONSE"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN) { _retryDelayBuffer = 0 };
 
         // Act
         await githubClient.DeleteAsync("http://example.com"); // normal call
@@ -1973,6 +1973,234 @@ query($id: ID!, $first: Int, $after: String) {
         // Assert
         httpClient.DefaultRequestHeaders.UserAgent.Should().HaveCount(1);
         httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be("OctoshiftCLI");
+    }
+
+    [Fact]
+    public async Task GetWithoutRetriesAsync_Does_Not_Retry()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TimeoutException())
+            .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        await FluentActions
+            .Invoking(() => githubClient.GetWithoutRetriesAsync(URL))
+            .Should()
+            .ThrowExactlyAsync<TimeoutException>();
+    }
+
+    [Fact]
+    public async Task GetWithoutRetriesAsync_Returns_String_Response()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, null);
+
+        // Act
+        var actualContent = await githubClient.GetWithoutRetriesAsync(URL);
+
+        // Assert
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_Returns_Content_And_Count()
+    {
+        // Arrange
+        var expectedCount = 515;
+        var responseHeaders = new List<(string Name, string Value)>() { ("Link", $"<https://api.github.com/repositories/1300192/issues?page=2>; rel=\"prev\", <https://api.github.com/repositories/1300192/issues?page=4>; rel=\"next\", <https://api.github.com/repositories/1300192/issues?page={expectedCount}>; rel=\"last\", <https://api.github.com/repositories/1300192/issues?page=1>; rel=\"first\"") };
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{URL}?per_page=1"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var (content, count) = await githubClient.GetResultsCountAndContent(URL);
+
+        // Assert
+        content.Should().Be(responseContent);
+        count.Should().Be(expectedCount);
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_Retries_By_Default()
+    {
+        // Arrange
+        var expectedCount = 515;
+        var responseHeaders = new List<(string Name, string Value)>() { ("Link", $"<https://api.github.com/repositories/1300192/issues?page=2>; rel=\"prev\", <https://api.github.com/repositories/1300192/issues?page=4>; rel=\"next\", <https://api.github.com/repositories/1300192/issues?page={expectedCount}>; rel=\"last\", <https://api.github.com/repositories/1300192/issues?page=1>; rel=\"first\"") };
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var (content, count) = await githubClient.GetResultsCountAndContent(URL);
+
+        // Assert
+        content.Should().Be(responseContent);
+        count.Should().Be(expectedCount);
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_Preserves_Query_Params()
+    {
+        // Arrange
+        var expectedCount = 515;
+        var responseHeaders = new List<(string Name, string Value)>() { ("Link", $"<https://api.github.com/repositories/1300192/issues?page=2>; rel=\"prev\", <https://api.github.com/repositories/1300192/issues?page=4>; rel=\"next\", <https://api.github.com/repositories/1300192/issues?page={expectedCount}>; rel=\"last\", <https://api.github.com/repositories/1300192/issues?page=1>; rel=\"first\"") };
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+        var urlWithQueryParams = "https://contoso.github.com/blah/pulls?state=all";
+
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{urlWithQueryParams}&per_page=1"),
+                ItExpr.IsAny<CancellationToken>()) 
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var (content, count) = await githubClient.GetResultsCountAndContent(urlWithQueryParams);
+
+        // Assert
+        content.Should().Be(responseContent);
+        count.Should().Be(expectedCount);
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_No_Retries_When_Specified()
+    {
+        // Arrange
+        var expectedCount = 515;
+        var responseHeaders = new List<(string Name, string Value)>() { ("Link", $"<https://api.github.com/repositories/1300192/issues?page=2>; rel=\"prev\", <https://api.github.com/repositories/1300192/issues?page=4>; rel=\"next\", <https://api.github.com/repositories/1300192/issues?page={expectedCount}>; rel=\"last\", <https://api.github.com/repositories/1300192/issues?page=1>; rel=\"first\"") };
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{URL}?per_page=1"),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        await FluentActions
+            .Invoking(() => githubClient.GetResultsCountAndContent(URL, retries: false))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_Zero_Items()
+    {
+        // Arrange
+        var responseContent = "[]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{URL}?per_page=1"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var (content, count) = await githubClient.GetResultsCountAndContent(URL);
+
+        // Assert
+        content.Should().Be(responseContent);
+        count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetResultsCountAndContent_One_Item_No_Link_Header()
+    {
+        // Arrange
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{URL}?per_page=1"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var (content, count) = await githubClient.GetResultsCountAndContent(URL);
+
+        // Assert
+        content.Should().Be(responseContent);
+        count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetResultsCount_Returns_Count()
+    {
+        // Arrange
+        var expectedCount = 515;
+        var responseHeaders = new List<(string Name, string Value)>() { ("Link", $"<https://api.github.com/repositories/1300192/issues?page=2>; rel=\"prev\", <https://api.github.com/repositories/1300192/issues?page=4>; rel=\"next\", <https://api.github.com/repositories/1300192/issues?page={expectedCount}>; rel=\"last\", <https://api.github.com/repositories/1300192/issues?page=1>; rel=\"first\"") };
+        var responseContent = "[{ \"foo\": \"bar\" }]";
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{URL}?per_page=1"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(content: responseContent, headers: responseHeaders));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var count = await githubClient.GetResultsCount(URL);
+
+        // Assert
+        count.Should().Be(expectedCount);
     }
 
     private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new

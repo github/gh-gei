@@ -23,6 +23,8 @@ public class GithubClient
     private const string DEFAULT_RATE_LIMIT_REMAINING = "5000";
     private const int MILLISECONDS_PER_SECOND = 1000;
 
+    internal int _retryDelayBuffer = 10;
+
     public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
     {
         _log = log;
@@ -243,7 +245,7 @@ public class GithubClient
         if (_retryDelay > 0)
         {
             _log.LogWarning($"GitHub rate limit exceeded. Waiting {_retryDelay} seconds before continuing");
-            await Task.Delay((_retryDelay + 10) * MILLISECONDS_PER_SECOND);
+            await Task.Delay((_retryDelay + _retryDelayBuffer) * MILLISECONDS_PER_SECOND);
             _retryDelay = 0;
         }
     }
