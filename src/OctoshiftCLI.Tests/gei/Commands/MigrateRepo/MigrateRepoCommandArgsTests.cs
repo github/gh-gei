@@ -20,59 +20,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
 
         [Fact]
-        public void AdoServer_Source_Without_SourceOrg_Provided_Throws_Error()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                AdoServerUrl = "https://ado.contoso.com",
-                AdoTeamProject = "FooProj",
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO
-            };
-
-            FluentActions
-                .Invoking(() => args.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public void No_Source_Provided_Throws_Error()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = ""
-            };
-
-            FluentActions
-                .Invoking(() => args.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>();
-        }
-
-        [Fact]
-        public void Ado_Source_Without_Team_Project_Throws_Error()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                AdoSourceOrg = SOURCE_ORG,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = ""
-            };
-
-            FluentActions
-                .Invoking(() => args.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>();
-        }
-
-        [Fact]
         public void Defaults_TargetRepo_To_SourceRepo()
         {
             var args = new MigrateRepoCommandArgs

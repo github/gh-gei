@@ -17,9 +17,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
             AddOption(GithubSourceOrg);
-            AddOption(AdoServerUrl);
-            AddOption(AdoSourceOrg);
-            AddOption(AdoTeamProject);
             AddOption(SourceRepo);
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
@@ -45,28 +42,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
-            AddOption(AdoPat);
             AddOption(Verbose);
             AddOption(KeepArchive);
         }
 
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
         {
-            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
-        };
-        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
-        {
-            IsHidden = true,
-            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
-        };
-        public Option<string> AdoSourceOrg { get; } = new("--ado-source-org")
-        {
-            IsHidden = true,
-            Description = "Uses ADO_PAT env variable or --ado-pat option."
-        };
-        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
-        {
-            IsHidden = true
+            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set.",
+            IsRequired = true,
         };
         public Option<string> SourceRepo { get; } = new("--source-repo")
         {
@@ -156,10 +139,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
         public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
-        public Option<string> AdoPat { get; } = new("--ado-pat")
-        {
-            IsHidden = true
-        };
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public Option<bool> KeepArchive { get; } = new("--keep-archive")
