@@ -437,6 +437,48 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task GetOrgMembershipForUser_Returns_User_Role()
+    {
+        // Arrange
+        var member = "USER";
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/memberships/{member}";
+        var role = "admin";
+        var response = $@"
+            {{
+                ""role"": ""{role}"" 
+            }}";
+
+        _githubClientMock
+            .Setup(m => m.GetAsync(url, null))
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
+
+        // Assert
+        result.Should().Match(role);
+    }
+
+    [Fact]
+    public async Task GetOrgMembershipForUser_Returns_Empty_On_HTTP_Exception()
+    {
+        // Arrange
+        var member = "USER";
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/memberships/{member}";
+
+        _githubClientMock
+            .SetupSequence(m => m.GetAsync(url, null))
+            .ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound))
+            .ReturnsAsync(string.Empty);
+
+        // Act
+        var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task AddTeamSync_Calls_The_Right_Endpoint_With_Payload()
     {
         // Arrange
