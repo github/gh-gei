@@ -73,4 +73,28 @@ public class AwsApiTests
         // Assert
         awsApi.Should().Throw<OctoshiftCliException>().WithMessage($"*{awsRegion}*");
     }
+
+    [Fact]
+    public async Task UploadFileToBucket_Throws_If_TaskCanceledException_From_Timeout()
+    {
+        // Arrange
+        var bucketName = "bucket";
+        var fileName = "file.zip";
+        var keyName = "key";
+
+        var transferUtility = new Mock<ITransferUtility>();
+        var s3Client = new Mock<IAmazonS3>();
+
+        transferUtility.Setup(m => m.S3Client).Returns(s3Client.Object);
+
+        transferUtility.Setup(m => m.UploadAsync(fileName, bucketName, keyName, It.IsAny<CancellationToken>())).Throws(new TaskCanceledException("error"));
+
+        using var awsApi = new AwsApi(transferUtility.Object);
+
+        // Assert
+        s3Client.Verify(m => m.GetPreSignedURL(It.IsAny<GetPreSignedUrlRequest>()), Times.Never);
+
+        var exception = await Assert.ThrowsAsync<OctoshiftCliException>(() => awsApi.UploadToBucket(bucketName, fileName, keyName));
+        exception.Message.Should().Be($"Upload of archive \"{fileName}\" to AWS timed out with message: \"error\".");
+    }
 }
