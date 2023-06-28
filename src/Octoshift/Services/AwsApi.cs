@@ -43,7 +43,7 @@ public class AwsApi : IDisposable
         var config = new AmazonS3Config
         {
             RegionEndpoint = regionEndpoint,
-            Timeout = TimeSpan.FromMinutes(5),
+            Timeout = TimeSpan.FromMinutes(5)
         };
 
         return new AmazonS3Client(creds, config);
@@ -63,12 +63,13 @@ public class AwsApi : IDisposable
         }
         catch (TaskCanceledException ex)
         {
-            if (ex.CancellationToken.IsCancellationRequested)
-            {
-                throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS cancelled.", ex);
-            }
+            var message = ex.CancellationToken.IsCancellationRequested ? "cancelled" : "timed out";
 
-            throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS timed out with message: \"{ex.Message}\".", ex);
+            throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS {message}", ex);
+        }
+        catch (TimeoutException ex)
+        {
+            throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS timed out", ex);
         }
 
         return GetPreSignedUrlForFile(bucketName, keyName);
