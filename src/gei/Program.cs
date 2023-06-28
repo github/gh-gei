@@ -89,7 +89,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static void SetContext(ParseResult parseResult)
         {
-            CliContext.RootCommand = "gh gei";
+            CliContext.RootCommand = "gei";
             CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
         }
 

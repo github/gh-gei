@@ -96,7 +96,7 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static void SetContext(InvocationContext context)
         {
-            CliContext.RootCommand = "gh bbs2gh";
+            CliContext.RootCommand = "bbs2gh";
             CliContext.ExecutingCommand = context.ParseResult.CommandResult.Command.Name;
         }
 
