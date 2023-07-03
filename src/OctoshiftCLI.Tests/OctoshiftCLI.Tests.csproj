@@ -13,7 +13,7 @@
     <ProjectReference Include="..\bbs2gh\bbs2gh.csproj" />
     <ProjectReference Include="..\gei\gei.csproj" />
     <PackageReference Include="FluentAssertions" Version="6.11.0" />
-    <PackageReference Include="JunitXml.TestLogger" Version="3.0.124" />
+    <PackageReference Include="JunitXml.TestLogger" Version="3.0.125" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0" />
 
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.2" />
