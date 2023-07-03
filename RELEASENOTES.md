@@ -1,2 +1,1 @@
-- Include the `databaseId` (GUID) in the verbose logs when starting a migration
-- Fix recommended `gh gei`, `gh bbs2gh` and `gh ado2gh` commands in log output
+
