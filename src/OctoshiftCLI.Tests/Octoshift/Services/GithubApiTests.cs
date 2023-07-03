@@ -844,6 +844,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -881,6 +882,7 @@ public class GithubApiTests
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
@@ -952,6 +954,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -989,6 +992,7 @@ public class GithubApiTests
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
