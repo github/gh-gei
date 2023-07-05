@@ -10,8 +10,6 @@ public class EnvironmentVariableProvider
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
     private const string AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
     private const string AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
-    private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
-    private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
     private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
     private const string AWS_REGION = "AWS_REGION";
     private const string BBS_USERNAME = "BBS_USERNAME";
