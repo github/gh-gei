@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
@@ -57,17 +56,9 @@ public class AwsApi : IDisposable
     {
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-
-            await _transferUtility.UploadAsync(fileName, bucketName, keyName, cts.Token);
+            await _transferUtility.UploadAsync(fileName, bucketName, keyName);
         }
-        catch (TaskCanceledException ex)
-        {
-            var message = ex.CancellationToken.IsCancellationRequested ? "cancelled" : "timed out";
-
-            throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS {message}", ex);
-        }
-        catch (TimeoutException ex)
+        catch (Exception ex) when (ex is TaskCanceledException or TimeoutException)
         {
             throw new OctoshiftCliException($"Upload of archive \"{fileName}\" to AWS timed out", ex);
         }
