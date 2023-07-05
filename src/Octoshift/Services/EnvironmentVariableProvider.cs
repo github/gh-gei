@@ -43,14 +43,6 @@ public class EnvironmentVariableProvider
     public virtual string AwsAccessKeyId(bool throwIfNotFound = true) =>
         GetSecret(AWS_ACCESS_KEY_ID, throwIfNotFound);
 
-    [Obsolete("AwsSecretKey is deprecated, please use AwsSecretAccessKey instead.")]
-    public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_SECRET_KEY, throwIfNotFound);
-
-    [Obsolete("AwsAccessKey is deprecated, please use AwsAccessKeyId instead.")]
-    public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_ACCESS_KEY, throwIfNotFound);
-
     public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
         GetSecret(AWS_SESSION_TOKEN, throwIfNotFound);
 
