@@ -104,6 +104,48 @@ public class GithubApi
         await _retryPolicy.Retry(() => _client.DeleteAsync(url));
     }
 
+    public virtual async Task<string> GetLoginName()
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query{viewer{login}}"
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["viewer"]["login"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the login for current user", ex);
+        }
+    }
+
+    public virtual async Task<string> GetOrgMembershipForUser(string org, string member)
+    {
+        var url = $"{_apiUrl}/orgs/{org}/memberships/{member}";
+
+        try
+        {
+            var response = await _client.GetAsync(url);
+
+            var data = JObject.Parse(response);
+
+            return (string)data["role"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) // Not a member
+        {
+            return null;
+        }
+    }
+
     public virtual async Task<bool> DoesRepoExist(string org, string repo)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
@@ -315,6 +357,7 @@ public class GithubApi
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -371,7 +414,8 @@ public class GithubApi
                         sourceAccessToken: $sourceAccessToken
                     }) {
                         orgMigration {
-                            id
+                            id,
+                            databaseId
                         }
                     }";
 
@@ -729,7 +773,7 @@ public class GithubApi
         return data.ToObject<CreateAttributionInvitationResult>();
     }
 
-    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinSkipInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
         var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
@@ -758,10 +802,18 @@ public class GithubApi
             variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
         };
 
-        var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
-
-        return data.ToObject<ReattributeMannequinToUserResult>();
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return data.ToObject<ReattributeMannequinToUserResult>();
+            });
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
+        {
+            throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)

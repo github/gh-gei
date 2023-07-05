@@ -3,61 +3,64 @@ namespace OctoshiftCLI.Services
 {
     public class ConfirmationService
     {
-        # region Variables
-
-        private readonly Action<string> _writeToConsoleOut;
+        private readonly Action<string, ConsoleColor> _writeToConsoleOut;
         private readonly Func<ConsoleKey> _readConsoleKey;
+        private readonly Action<int> _cancelCommand;
 
-        #endregion
-
-        #region Constructors
         public ConfirmationService()
         {
-            _writeToConsoleOut = msg => Console.WriteLine(msg);
+            _writeToConsoleOut = (msg, outputColor) =>
+            {
+                var currentColor = Console.ForegroundColor;
+
+                Console.ForegroundColor = outputColor;
+                Console.WriteLine(msg);
+
+                Console.ForegroundColor = currentColor;
+            };
             _readConsoleKey = ReadKey;
+            _cancelCommand = code => Environment.Exit(code);
         }
 
         // Constructor designed to allow for testing console methods
-        public ConfirmationService(Action<string> writeToConsoleOut, Func<ConsoleKey> readConsoleKey)
+        public ConfirmationService(Action<string, ConsoleColor> writeToConsoleOut, Func<ConsoleKey> readConsoleKey, Action<int> cancelCommand)
         {
             _writeToConsoleOut = writeToConsoleOut;
             _readConsoleKey = readConsoleKey;
+            _cancelCommand = cancelCommand;
         }
 
-        #endregion
-
-        #region Functions
-        public bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
+        public virtual bool AskForConfirmation(string confirmationPrompt, string cancellationErrorMessage = "")
         {
             ConsoleKey response;
             do
             {
-                _writeToConsoleOut(confirmationPrompt);
+                _writeToConsoleOut(confirmationPrompt, ConsoleColor.Yellow);
                 response = _readConsoleKey();
                 if (response != ConsoleKey.Enter)
                 {
-                    _writeToConsoleOut("");
+                    _writeToConsoleOut("", ConsoleColor.White);
                 }
 
             } while (response is not ConsoleKey.Y and not ConsoleKey.N);
 
             if (response == ConsoleKey.Y)
             {
-                _writeToConsoleOut("Confirmation Recorded. Proceeding...");
+                _writeToConsoleOut("Confirmation Recorded. Proceeding...", ConsoleColor.White);
                 return true;
             }
             else
             {
-                _writeToConsoleOut("Canceling Command...");
-                throw new OctoshiftCliException($"Command Cancelled. {cancellationErrorMessage}");
+                _writeToConsoleOut($"Command Cancelled. {cancellationErrorMessage}", ConsoleColor.White);
+                _cancelCommand(0);
             }
+            return false;
         }
 
         private ConsoleKey ReadKey()
         {
             return Console.ReadKey(false).Key;
         }
-        #endregion
     }
 }
 

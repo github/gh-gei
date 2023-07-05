@@ -1,2 +1,1 @@
-- Removed ability to use `gh gei` to migrate from ADO -> GH. You must use `gh ado2gh` to do this now. This was long since obsolete, but was still available via hidden args - which have now been removed.
-- Add `bbs2gh inventory-report` command to write data available for migrations in CSV form
+
