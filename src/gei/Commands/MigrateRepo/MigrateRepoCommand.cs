@@ -97,8 +97,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
             Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
-                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
-                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
+                          "Required if using AWS."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
