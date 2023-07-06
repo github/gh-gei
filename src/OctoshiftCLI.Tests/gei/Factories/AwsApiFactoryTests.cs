@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Moq;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
 using OctoshiftCLI.Services;
@@ -16,40 +17,20 @@ public class AwsApiFactoryTests
     }
 
     [Fact]
-    public void It_Falls_Back_To_Aws_Access_Key_Environment_Variable_If_Aws_Access_Key_Id_Is_Not_Set()
+    public void It_Errors_If_Aws_Access_Key_Id_Is_Not_Provided_Or_Set_In_Environment_Variable()
     {
-        // Arrange
-        const string awsAccessKey = "AWS_ACCESS_KEY";
-        const string awsRegion = "us-east-2";
-#pragma warning disable CS0618
-        _mockEnvironmentVariableProvider.Setup(m => m.AwsAccessKey(false)).Returns(awsAccessKey);
-#pragma warning restore CS0618
-
-        // Act
-        _awsApiFactory.Create(awsRegion, null, "aws-secret-access-key", "aws-session-token");
-
-        // Assert
-#pragma warning disable CS0618
-        _mockEnvironmentVariableProvider.Verify(m => m.AwsAccessKey(false), Times.Once);
-#pragma warning restore CS0618
+        // Act, Assert
+        _awsApiFactory.Invoking(x => x.Create("us-east-2", null, "aws-secret-access-key", "aws-session-token"))
+                .Should()
+                .ThrowExactly<System.ArgumentNullException>();
     }
 
     [Fact]
-    public void It_Falls_Back_To_Aws_Secret_Key_Environment_Variable_If_Aws_Secret_Access_Key_Is_Not_Set()
+    public void It_Errors_If_Aws_Secret_Access_Key_Is_Not_Set_Or_Set_In_Environment_Variable()
     {
-        // Arrange
-        const string awsSecretKey = "AWS_SECRET_KEY";
-        const string awsRegion = "us-east-2";
-#pragma warning disable CS0618
-        _mockEnvironmentVariableProvider.Setup(m => m.AwsSecretKey(false)).Returns(awsSecretKey);
-#pragma warning restore CS0618
-
-        // Act
-        _awsApiFactory.Create(awsRegion, "aws-access-key-id", null, "aws-session-token");
-
-        // Assert
-#pragma warning disable CS0618
-        _mockEnvironmentVariableProvider.Verify(m => m.AwsSecretKey(false), Times.Once);
-#pragma warning restore CS0618
+        // Act, Assert
+        _awsApiFactory.Invoking(x => x.Create("us-east-2", "aws-access-key-id", null, "aws-session-token"))
+                .Should()
+                .ThrowExactly<System.ArgumentNullException>();
     }
 }
