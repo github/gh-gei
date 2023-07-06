@@ -33,8 +33,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
         private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
-        private const string AWS_ACCESS_KEY = "aws-access-key";
-        private const string AWS_SECRET_KEY = "aws-secret-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
@@ -741,42 +739,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Access_Key_Environment_Variable()
-        {
-            // Arrange
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
-            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-#pragma warning disable CS0618
-            _mockEnvironmentVariableProvider.Setup(x => x.AwsAccessKey(false)).Returns(AWS_ACCESS_KEY);
-#pragma warning restore CS0618
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                QueueOnly = true,
-            };
-            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
-
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_ACCESS_KEY"))));
-        }
-
-        [Fact]
         public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Access_Key()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
@@ -790,42 +752,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
                 .WithMessage("*--aws-secret-key*AWS_SECRET_ACCESS_KEY*");
-        }
-
-        [Fact]
-        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Secret_Key_Environment_Variable()
-        {
-            // Arrange
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
-            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-#pragma warning disable CS0618
-            _mockEnvironmentVariableProvider.Setup(x => x.AwsSecretKey(false)).Returns(AWS_SECRET_KEY);
-#pragma warning restore CS0618
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                QueueOnly = true,
-            };
-            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
-
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_SECRET_KEY"))));
         }
 
         [Fact]
