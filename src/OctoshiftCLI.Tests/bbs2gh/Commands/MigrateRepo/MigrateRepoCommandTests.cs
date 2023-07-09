@@ -56,9 +56,9 @@ public class MigrateRepoCommandTests
         command.Name.Should().Be("migrate-repo");
         command.Options.Count.Should().Be(31);
 
-        TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", false);
-        TestHelpers.VerifyCommandOption(command.Options, "bbs-project", false);
-        TestHelpers.VerifyCommandOption(command.Options, "bbs-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);
+        TestHelpers.VerifyCommandOption(command.Options, "bbs-repo", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-username", false);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-password", false);
         TestHelpers.VerifyCommandOption(command.Options, "archive-url", false);

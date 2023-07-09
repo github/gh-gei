@@ -284,44 +284,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Project_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsProject = BBS_PROJECT
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-project*--bbs-server-url*");
-        }
-
-        [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Repo_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsRepo = BBS_REPO
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-repo*--bbs-server-url*");
-        }
-
-        [Fact]
         public void It_Throws_If_Github_Org_Is_Provided_But_Github_Repo_Is_Not()
         {
             // Act
@@ -573,7 +535,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_And_Archive_Url_Are_Passed()
+        public void Allows_BbsServer_Url_And_Archive_Url_To_Be_Passed_Together()
         {
             // Act
             var args = new MigrateRepoCommandArgs
@@ -587,12 +549,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-server-url*--archive-url*");
+                .NotThrow();
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_And_Archive_Path_Are_Passed()
+        public void Allows_BbsServer_Url_And_Archive_Path_To_Be_Passed_Together()
         {
             // Act
             var args = new MigrateRepoCommandArgs
@@ -606,8 +567,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-server-url*--archive-path*");
+                .NotThrow();
         }
 
         [Fact]
