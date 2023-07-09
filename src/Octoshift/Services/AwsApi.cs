@@ -16,14 +16,14 @@ public class AwsApi : IDisposable
 
     private readonly ITransferUtility _transferUtility;
 
+    public AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
+
 #pragma warning disable CA2000
     public AwsApi(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion = null, string awsSessionToken = null)
         : this(new TransferUtility(BuildAmazonS3Client(awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken)))
 #pragma warning restore CA2000
     {
     }
-
-    internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
 
     private static AmazonS3Client BuildAmazonS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion, string awsSessionToken)
     {
