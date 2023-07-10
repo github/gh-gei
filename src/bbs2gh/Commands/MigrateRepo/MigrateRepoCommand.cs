@@ -52,15 +52,24 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> BbsServerUrl { get; } = new(
         name: "--bbs-server-url",
-        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990");
+        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsProject { get; } = new(
         name: "--bbs-project",
-        description: "The Bitbucket project to migrate.");
+        description: "The Bitbucket project to migrate.")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsRepo { get; } = new(
         name: "--bbs-repo",
-        description: "The Bitbucket repository to migrate.");
+        description: "The Bitbucket repository to migrate.")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsUsername { get; } = new(
         name: "--bbs-username",
