@@ -244,9 +244,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
 
-    private string GetAwsSessionToken(MigrateRepoCommandArgs args) =>
-        args.AwsSessionToken.HasValue() ? args.AwsSessionToken : _environmentVariableProvider.AwsSessionToken(false);
-
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString
         : _environmentVariableProvider.AzureStorageConnectionString(false);
@@ -325,16 +322,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
             }
 
-            if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
+            if (GetAwsRegion(args).IsNullOrWhiteSpace())
             {
-                throw new OctoshiftCliException(
-                    "--aws-region or AWS_REGION environment variable must be provided with --aws-session-token or AWS_SESSION_TOKEN environment variable.");
-            }
-
-            if (!GetAwsRegion(args).HasValue())
-            {
-                _log.LogWarning("Specifying an AWS region with the --aws-region argument or AWS_REGION environment variable is currently not required, " +
-                                "but will be required in a future release. Defaulting to us-east-1.");
+                throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
             }
         }
     }

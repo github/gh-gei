@@ -1119,6 +1119,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             var awsAccessKeyId = "awsAccessKeyId";
             var awsSecretAccessKey = "awsSecretAccessKey";
             var awsBucketName = "awsBucketName";
+            var awsRegion = "eu-west-1";
             var archiveUrl = $"https://s3.amazonaws.com/{awsBucketName}/archive.tar";
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
@@ -1181,6 +1182,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 AwsBucketName = awsBucketName,
                 AwsAccessKey = awsAccessKeyId,
                 AwsSecretKey = awsSecretAccessKey,
+                AwsRegion = awsRegion,
                 Wait = true
             };
 
@@ -1250,7 +1252,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task Ghes_When_Aws_Session_Token_Is_Provided_But_No_Aws_Region_Throws()
+        public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region_Throws()
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
@@ -1268,7 +1270,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
+                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
         }
 
         [Fact]

@@ -34,6 +34,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
         private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
+        private const string AWS_REGION = "eu-west-1";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
         private const string BBS_HOST = "our-bbs-server.com";
@@ -214,6 +215,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AwsBucketName = AWS_BUCKET_NAME,
                 AwsAccessKey = AWS_ACCESS_KEY_ID,
                 AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                AwsRegion = AWS_REGION,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
@@ -672,6 +674,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AwsAccessKey = AWS_ACCESS_KEY_ID,
                 AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 QueueOnly = true,
             };
 
@@ -755,7 +758,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task It_Throws_When_Aws_Session_Token_Is_Provided_But_Aws_Region_Is_Not()
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -769,7 +772,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
+                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
         }
 
         [Fact]

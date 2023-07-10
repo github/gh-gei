@@ -16,7 +16,7 @@ public class AwsApiFactory
         awsAccessKeyId ??= _environmentVariableProvider.AwsAccessKeyId();
         awsSecretAccessKey ??= _environmentVariableProvider.AwsSecretAccessKey();
         awsSessionToken ??= _environmentVariableProvider.AwsSessionToken(false);
-        awsRegion ??= _environmentVariableProvider.AwsRegion(false);
+        awsRegion ??= _environmentVariableProvider.AwsRegion();
 
         return new AwsApi(awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken);
     }

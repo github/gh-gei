@@ -13,9 +13,10 @@ namespace OctoshiftCLI.Services;
 public class AwsApi : IDisposable
 {
     private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
-    private static readonly RegionEndpoint DefaultRegionEndpoint = RegionEndpoint.USEast1;
 
     private readonly ITransferUtility _transferUtility;
+
+    public AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
 
 #pragma warning disable CA2000
     public AwsApi(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion = null, string awsSessionToken = null)
@@ -24,16 +25,10 @@ public class AwsApi : IDisposable
     {
     }
 
-    internal AwsApi(ITransferUtility transferUtility) => _transferUtility = transferUtility;
-
     private static AmazonS3Client BuildAmazonS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsRegion, string awsSessionToken)
     {
-        var regionEndpoint = DefaultRegionEndpoint;
-        if (awsRegion.HasValue())
-        {
-            regionEndpoint = GetRegionEndpoint(awsRegion);
-            AWSConfigsS3.UseSignatureVersion4 = true;
-        }
+        var regionEndpoint = awsRegion.IsNullOrWhiteSpace() ? null : GetRegionEndpoint(awsRegion);
+        AWSConfigsS3.UseSignatureVersion4 = true;
 
         var creds = awsSessionToken.HasValue()
             ? (AWSCredentials)new SessionAWSCredentials(awsAccessKeyId, awsSecretAccessKey, awsSessionToken)
