@@ -59,16 +59,6 @@ public class MigrateRepoCommandArgs : CommandArgs
             throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
         }
 
-        if (BbsServerUrl.HasValue() && ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
-        }
-
-        if (BbsServerUrl.HasValue() && ArchivePath.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-path can be specified.");
-        }
-
         if (ArchivePath.HasValue() && ArchiveUrl.HasValue())
         {
             throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
@@ -127,23 +117,19 @@ public class MigrateRepoCommandArgs : CommandArgs
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
 
-        if (BbsProject.HasValue() || BbsRepo.HasValue())
-        {
-            throw new OctoshiftCliException("--bbs-project and --bbs-repo can only be provided with --bbs-server-url.");
-        }
-
         if (new[] { SshUser, SshPrivateKey, ArchiveDownloadHost, SmbUser, SmbPassword, SmbDomain }.Any(obj => obj.HasValue()))
         {
             throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
         }
     }
 
-    public bool ShouldGenerateArchive() => BbsServerUrl.HasValue();
+    public bool ShouldGenerateArchive() => BbsServerUrl.HasValue() && !ArchivePath.HasValue() && !ArchiveUrl.HasValue();
 
     public bool ShouldDownloadArchive() => SshUser.HasValue() || SmbUser.HasValue();
 
     public bool ShouldUploadArchive() => ArchiveUrl.IsNullOrWhiteSpace() && GithubOrg.HasValue();
 
+    // NOTE: ArchiveUrl doesn't necessarily refer to the value passed in by the user to the CLI - it is set during CLI runtime when an archive is uploaded to blob storage
     public bool ShouldImportArchive() => ArchiveUrl.HasValue() || GithubOrg.HasValue();
 
     private void ValidateGenerateOptions()
