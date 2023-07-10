@@ -1,3 +1,3 @@
 - Drop support for deprecated `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables in `gh gei` and `gh bbs2gh`. The AWS S3 credentials can now be configured using the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables or command line arguments.
-- Require the AWS region to be specified with the `--aws-region` argument or `AWS_REGION` environment variable if using AWS S3 for blob storage. Previously, this was optional (with a warning) if you weren't specifying an AWS session token.
+- __BREAKING CHANGE:__ Require the AWS region to always be specified with the `--aws-region` argument or `AWS_REGION` environment variable if using AWS S3 for blob storage. Previously, this was optional (with a warning) if you weren't specifying an AWS session token.
 - Increase timeouts in archive uploads to AWS to prevent timeouts during large uploads
