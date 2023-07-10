@@ -1,2 +1,2 @@
-- __BREAKING CHANGE:__ Drop support for deprecated `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables in `gh gei` and `gh bbs2gh`. The AWS S3 credentials can now be configured using the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables or command line arguments.
+- __BREAKING CHANGE:__ Drop support for deprecated `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` environment variables in `gh gei` and `gh bbs2gh`. The AWS S3 credentials can now only be configured using the industry-standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables or command line arguments.
 - Increase timeouts in archive uploads to AWS to prevent timeouts during large uploads
