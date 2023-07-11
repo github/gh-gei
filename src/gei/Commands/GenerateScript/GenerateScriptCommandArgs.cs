@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
@@ -32,6 +33,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             if (NoSslVerify && GhesApiUrl.IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
+
+            if (!GhesApiUrl.IsNullOrWhiteSpace())
+            {
+                Uri uriResult;
+                bool result = Uri.TryCreate(GhesApiUrl, UriKind.Absolute, out uriResult)
+                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+                if (!result)
+                {
+                    throw new OctoshiftCliException("--ghes-api-url is invalid. Please check URL before trying again.");
+                }
             }
         }
     }

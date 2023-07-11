@@ -52,5 +52,25 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
                 .Should()
                 .Throw<OctoshiftCliException>();
         }
+
+        [Fact]
+        public void It_Throws_When_Invalid_URL_Provided()
+        {
+            // Arrange
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                NoSslVerify = true,
+                Sequential = true,
+                GhesApiUrl = "ww.invalidUr/l.c"
+            };
+
+            // Act, Assert
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .Throw<OctoshiftCliException>();
+        }
     }
 }
