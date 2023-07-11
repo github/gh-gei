@@ -37,8 +37,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
             if (!GhesApiUrl.IsNullOrWhiteSpace())
             {
-                Uri uriResult;
-                bool result = Uri.TryCreate(GhesApiUrl, UriKind.Absolute, out uriResult)
+                var result = Uri.TryCreate(GhesApiUrl, UriKind.Absolute, out var uriResult)
                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
                 if (!result)
