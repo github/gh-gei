@@ -61,7 +61,6 @@ namespace OctoshiftCLI
                     {
                         _log?.LogVerbose(ex.ToString());
                     }
-                
                     _log?.LogVerbose("Retrying...");
                 });
     }
