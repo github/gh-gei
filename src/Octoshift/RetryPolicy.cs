@@ -54,7 +54,7 @@ namespace OctoshiftCLI
                         if (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                         {
                             // We should not retry on an unathorized error; instead, log and bubble up the error
-                            throw new OctoshiftCliException($"Unauthorized. Please check your token as try again", ex);
+                            throw new OctoshiftCliException($"Unauthorized. Please check your token and try again", ex);
                         };
                     }
                     else

@@ -173,10 +173,12 @@ public sealed class BbsClientTests : IDisposable
         var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
 
         // Act
-        var returnedContent = await bbsClient.GetAsync(URL);
-
         // Assert
-        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
+        await bbsClient
+            .Invoking(async x => await x.GetAsync(URL))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage("Unauthorized. Please check your token and try again");
     }
 
     [Fact]

@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
@@ -12,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
+using Renci.SshNet;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
@@ -120,10 +122,12 @@ public sealed class GithubClientTests
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
         // Act
-        var returnedContent = await githubClient.GetAsync(URL);
-
         // Assert
-        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
+        await githubClient
+            .Invoking(async x => await x.GetAsync(URL))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage("Unauthorized. Please check your token and try again");
     }
 
     [Fact]

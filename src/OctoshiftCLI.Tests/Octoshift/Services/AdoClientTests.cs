@@ -12,6 +12,7 @@ using Moq.Protected;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
+using Renci.SshNet;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
@@ -119,10 +120,12 @@ public sealed class AdoClientTests : IDisposable
         var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
 
         // Act
-        var returnedContent = await adoClient.GetAsync(URL);
-
         // Assert
-        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
+        await adoClient
+            .Invoking(async x => await x.GetAsync(URL))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage("Unauthorized. Please check your token and try again");
     }
 
     [Fact]
