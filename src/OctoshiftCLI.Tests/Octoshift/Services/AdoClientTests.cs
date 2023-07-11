@@ -93,6 +93,7 @@ public sealed class AdoClientTests : IDisposable
         returnedContent.Should().Be("SECOND_RESPONSE");
     }
 
+    [Fact]
     public async Task GetAsync_Bubbles_UnAuthorized_Error()
     {
         // Arrange

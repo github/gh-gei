@@ -103,6 +103,7 @@ public sealed class GithubClientTests
         returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
     }
 
+    [Fact]
     public async Task GetAsync_Bubbles_UnAuthorized_Error()
     {
         // Arrange
