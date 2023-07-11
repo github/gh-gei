@@ -60,7 +60,7 @@ public sealed class AdoClientTests : IDisposable
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
     {
@@ -93,6 +93,36 @@ public sealed class AdoClientTests : IDisposable
         returnedContent.Should().Be("SECOND_RESPONSE");
     }
 
+    public async Task GetAsync_Bubbles_UnAuthorized_Error()
+    {
+        // Arrange
+        using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+        {
+            Content = new StringContent("FIRST_RESPONSE")
+        };
+        using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("SECOND_RESPONSE")
+        };
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstHttpResponse)
+            .ReturnsAsync(secondHttpResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var adoClient = new AdoClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var returnedContent = await adoClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
+    }
 
     [Fact]
     public async Task GetAsync_Applies_Retry_Delay()

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -114,7 +115,7 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
     {
@@ -145,6 +146,37 @@ public sealed class BbsClientTests : IDisposable
 
         // Assert
         returnedContent.Should().Be("SECOND_RESPONSE");
+    }
+
+    public async Task GetAsync_Bubbles_UnAuthorized_Error()
+    {
+        // Arrange
+        using var firstHttpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+        {
+            Content = new StringContent("FIRST_RESPONSE")
+        };
+        using var secondHttpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("SECOND_RESPONSE")
+        };
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(firstHttpResponse)
+            .ReturnsAsync(secondHttpResponse);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Act
+        var returnedContent = await bbsClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
     }
 
     [Fact]

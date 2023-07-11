@@ -78,7 +78,7 @@ public sealed class GithubClientTests
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     public async Task GetAsync_Retries_On_Non_Success(HttpStatusCode httpStatusCode)
     {
@@ -101,6 +101,28 @@ public sealed class GithubClientTests
 
         // Assert
         returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    public async Task GetAsync_Bubbles_UnAuthorized_Error()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.Unauthorized, content: "FIRST_RESPONSE"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var returnedContent = await githubClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be("Unauthorized. Please check your token as try again");
     }
 
     [Fact]
