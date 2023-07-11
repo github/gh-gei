@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
@@ -13,7 +12,6 @@ using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
-using Renci.SshNet;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
