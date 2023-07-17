@@ -2084,6 +2084,121 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
     }
 
     [Fact]
+    public async Task GetMannequinsByLogin_Returns_NoMannequins()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string login = "monalisa";
+
+        var url = $"https://api.github.com/graphql";
+
+        var payload =
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+$",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLWithPaginationAsync(
+                url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                It.IsAny<Func<JObject, JArray>>(),
+                It.IsAny<Func<JObject, JObject>>(),
+                It.IsAny<int>(),
+                null,
+                null))
+                .Returns(Array.Empty<JToken>().ToAsyncEnumerable());
+
+        // Act
+        var result = await _githubApi.GetMannequinsByLogin(orgId, login);
+
+        // Assert
+        result.Count().Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetMannequinsByLogin_Returns_Mannequins()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string login = "monalisa";
+
+        var url = $"https://api.github.com/graphql";
+
+        var payload =
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+$",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
+
+        var mannequin = new
+        {
+            login = login,
+            id = "DUMMYID1",
+            claimant = new { }
+        };
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLWithPaginationAsync(
+                url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                It.IsAny<Func<JObject, JArray>>(),
+                It.IsAny<Func<JObject, JObject>>(),
+                It.IsAny<int>(),
+                null,
+                null))
+                .Returns(new[]
+                    {
+                        JToken.FromObject(mannequin),
+                    }.ToAsyncEnumerable());
+
+        // Act
+        var result = await _githubApi.GetMannequinsByLogin(orgId, login);
+
+        // Assert
+        result.Count().Should().Be(1);
+
+        var mannequinsResult = result.ToArray();
+        mannequinsResult[0].Id.Should().Be("DUMMYID1");
+        mannequinsResult[0].Login.Should().Be(login);
+        mannequinsResult[0].MappedUser.Should().BeNull();
+    }
+
+    [Fact]
     public async Task CreateAttributionInvitation_Returns_Success()
     {
         // Arrange

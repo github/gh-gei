@@ -84,7 +84,17 @@ public class ReclaimService
     {
         var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-        var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
+        Mannequins mannequins;
+
+        if (String.IsNullOrEmpty(mannequinUser))
+        {
+            mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
+        }
+        else
+        {
+            mannequins = new Mannequins((await GetMannequinsByLogin(githubOrgId, mannequinUser)).GetByLogin(mannequinUser, mannequinId));
+        }
+
         if (mannequins.IsEmpty())
         {
             throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
@@ -234,6 +244,13 @@ public class ReclaimService
     private async Task<Mannequins> GetMannequins(string githubOrgId)
     {
         var returnedMannequins = await _githubApi.GetMannequins(githubOrgId);
+
+        return new Mannequins(returnedMannequins);
+    }
+
+    private async Task<Mannequins> GetMannequinsByLogin(string githubOrgId, string login)
+    {
+        var returnedMannequins = await _githubApi.GetMannequinsByLogin(githubOrgId, login);
 
         return new Mannequins(returnedMannequins);
     }

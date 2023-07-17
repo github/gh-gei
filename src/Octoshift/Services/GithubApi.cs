@@ -722,6 +722,25 @@ public class GithubApi
         }
     }
 
+    public virtual async Task<IEnumerable<Mannequin>> GetMannequinsByLogin(string orgId, string login)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = GetMannequinsByLoginPayload(orgId, login);
+
+        return await _retryPolicy.Retry(async () =>
+        {
+            return await _client.PostGraphQLWithPaginationAsync(
+                url,
+                payload,
+                data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+            .Select(mannequin => BuildMannequin(mannequin))
+            .ToListAsync();
+        });
+    }
+
+
     public virtual async Task<string> GetUserId(string login)
     {
         var url = $"{_apiUrl}/graphql";
@@ -1000,6 +1019,36 @@ public class GithubApi
         {
             query = $"{query} {{ {gql} }}",
             variables = new { id = orgId }
+        };
+    }
+
+    private static object GetMannequinsByLoginPayload(string orgId, string login)
+    {
+        var query = "query($id: ID!, $first: Int, $after: String, $login: String)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }";
+
+        return new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new { id = orgId, login = login }
         };
     }
 
