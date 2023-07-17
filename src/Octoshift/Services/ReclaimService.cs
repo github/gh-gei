@@ -84,16 +84,7 @@ public class ReclaimService
     {
         var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-        Mannequins mannequins;
-
-        if (String.IsNullOrEmpty(mannequinUser))
-        {
-            mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
-        }
-        else
-        {
-            mannequins = new Mannequins((await GetMannequinsByLogin(githubOrgId, mannequinUser)).GetByLogin(mannequinUser, mannequinId));
-        }
+        var mannequins = new Mannequins((await GetMannequinsByLogin(githubOrgId, mannequinUser)).GetByLogin(mannequinUser, mannequinId));
 
         if (mannequins.IsEmpty())
         {
