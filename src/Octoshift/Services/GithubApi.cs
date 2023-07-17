@@ -1048,7 +1048,7 @@ public class GithubApi
         return new
         {
             query = $"{query} {{ {gql} }}",
-            variables = new { id = orgId, login = login }
+            variables = new { id = orgId, login }
         };
     }
 

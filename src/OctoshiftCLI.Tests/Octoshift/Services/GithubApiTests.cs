@@ -2167,7 +2167,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         var mannequin = new
         {
-            login = login,
+            login,
             id = "DUMMYID1",
             claimant = new { }
         };
