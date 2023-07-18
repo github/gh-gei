@@ -61,12 +61,14 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-azure-devops-to-github-enterprise-cloud) for more details.
 
-### BitBucket Server and Data Center to GitHub Usage
+### Bitbucket Server and Data Center to GitHub Usage
 1. Create Personal Access Token for the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 
-2. Set the `GH_PAT`, `BBS_USERNAME`, and `BBS_PASSWORD` environment variables. (If your BitBucket Server instance runs on windows, set `SMB_PASSWORD`.)
+2. Set the `GH_PAT`, `BBS_USERNAME`, and `BBS_PASSWORD` environment variables.
 
-3. Run the `generate-script` command to generate a migration script.
+3. If your Bitbucket Server or Data Center instance runs on Windows, set the `SMB_PASSWORD` environment variable.
+
+4. Run the `generate-script` command to generate a migration script.
 ```
 > gh bbs2gh generate-script --bbs-server-url BBS-SERVER-URL \
   --github-org DESTINATION \
@@ -79,9 +81,9 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
   --archive-download-host ARCHIVE-DOWNLOAD-HOST
 ```
 
-4. The previous command will have created a `migrate.ps1` PowerShell script. Review the steps in the generated script and tweak if necessary.
+5. The previous command will have created a `migrate.ps1` PowerShell script. Review the steps in the generated script and tweak if necessary.
 
-5. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
+6. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
