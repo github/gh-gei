@@ -84,7 +84,8 @@ public class ReclaimService
     {
         var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-        var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
+        var mannequins = new Mannequins((await GetMannequinsByLogin(githubOrgId, mannequinUser)).GetByLogin(mannequinUser, mannequinId));
+
         if (mannequins.IsEmpty())
         {
             throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
@@ -238,11 +239,18 @@ public class ReclaimService
         return new Mannequins(returnedMannequins);
     }
 
+    private async Task<Mannequins> GetMannequinsByLogin(string githubOrgId, string login)
+    {
+        var returnedMannequins = await _githubApi.GetMannequinsByLogin(githubOrgId, login);
+
+        return new Mannequins(returnedMannequins);
+    }
+
     private bool HandleInvitationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, CreateAttributionInvitationResult result)
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            _log.LogError($"Failed to send reclaim invitation email to {targetUser} for mannequin {mannequinUser} ({mannequin.Id}): {result.Errors[0].Message}");
             return false;
         }
 
@@ -250,11 +258,11 @@ public class ReclaimService
             result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
             result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
         {
-            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            _log.LogError($"Failed to send reclaim invitation email to {targetUser} for mannequin {mannequinUser} ({mannequin.Id})");
             return false;
         }
 
-        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to: {mannequinUser} ({mannequin.Id}) for {targetUser} ({targetUserId})");
+        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to {targetUser} for {mannequinUser} ({mannequin.Id})");
 
         return true;
     }
@@ -270,7 +278,7 @@ public class ReclaimService
                     _log.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations.");
                     return false; // Indicates we should stop parsing through the CSV
                 default:
-                    _log.LogWarning($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
+                    _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}: {result.Errors[0].Message}");
                     return true;
             }
         }
@@ -280,11 +288,11 @@ public class ReclaimService
             result.Data.ReattributeMannequinToUser.Target.Id != targetUserId)
         {
 
-            _log.LogWarning($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
             return true;
         }
 
-        _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+        _log.LogInformation($"Successfully reclaimed content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
 
         return true; // Indiciates we should continue onto the next mannequin
     }
