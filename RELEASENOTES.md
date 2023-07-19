@@ -1,3 +1,4 @@
 - Adds GHES API URL validation
 - Allow CLI to fail fast when an unauthorized token is provided by preventing retry logic on 401 errors
 - Improve performance when reclaiming a single mannequin with `reclaim-mannequin`
+- Improve logging for `reclaim-mannequin` command

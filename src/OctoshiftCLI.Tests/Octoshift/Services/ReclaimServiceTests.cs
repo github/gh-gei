@@ -962,7 +962,7 @@ public class ReclaimServiceTests
             .Should().ThrowAsync<OctoshiftCliException>();
         exception.WithMessage("Failed to send reclaim mannequin invitation(s).");
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to send reclaim invitation email to {TARGET_USER_LOGIN} for mannequin {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}): {failureMessage}"), Times.Once);
     }
 
     [Fact]
@@ -1019,7 +1019,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID), Times.Once);
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to send reclaim invitation email to {TARGET_USER_LOGIN} for mannequin {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}): {failureMessage}"), Times.Once);
     }
 
 
