@@ -33,8 +33,9 @@ public class OctoLogger
     public OctoLogger()
     {
         var logStartTime = DateTime.Now;
-        _logFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.log";
-        _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}.octoshift.verbose.log";
+        var processId = Environment.ProcessId;
+        _logFilePath = $"{logStartTime:yyyyMMddHHmmss}-{processId}.octoshift.log";
+        _verboseFilePath = $"{logStartTime:yyyyMMddHHmmss}-{processId}.octoshift.verbose.log";
 
         if (Environment.GetEnvironmentVariable("GEI_DEBUG_MODE")?.ToUpperInvariant() == "TRUE")
         {
