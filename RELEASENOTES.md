@@ -2,4 +2,4 @@
 - Allow CLI to fail fast when an unauthorized token is provided by preventing retry logic on 401 errors
 - Improve performance when reclaiming a single mannequin with `reclaim-mannequin`
 - Improve logging for `reclaim-mannequin` command
-- Log filename now contains the process id to make sure it is unique
+- Ensure that CLI runs have separate log files, even if they start at the same time, by adding the process ID to the filenames
