@@ -716,7 +716,7 @@ steps:
             var directoryInfo = new DirectoryInfo(GetOsDistPath());
 
             var firstLogFileWithError = directoryInfo.GetFiles("*.octoshift.log")
-                .Select(fi => (Timestamp: DateTime.ParseExact(fi.Name.Split('.').First(), "yyyyMMddHHmmss", null), FileInfo: fi))
+                .Select(fi => (Timestamp: DateTime.ParseExact(fi.Name.Split('.').First().Split('-').First(), "yyyyMMddHHmmss", null), FileInfo: fi))
                 .Where(x => x.Timestamp >= after)
                 .OrderBy(x => x.Timestamp)
                 .Select(x => x.FileInfo)
