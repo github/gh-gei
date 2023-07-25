@@ -64,7 +64,6 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<bool> SkipInvitation { get; } = new("--skip-invitation")
     {
-        IsHidden = true,
         Description = "Reclaim mannequins immediately without sending an invitation to the user. Warning: this is irreversible! This feature is currently in development, and is not ready for sure. When it launches, it will only be supported for selected Enterprise Managed Users (EMU) organizations."
     };
 
