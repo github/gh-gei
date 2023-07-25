@@ -337,6 +337,21 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task DoesRepoExist_Returns_False_When_301()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.MovedPermanently)).ReturnsAsync("Moved Permanently");
+
+        // Act
+        var result = await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task DoesRepoExist_Throws_On_Unexpected_Response()
     {
         // Arrange
