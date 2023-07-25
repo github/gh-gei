@@ -209,7 +209,7 @@ public class MigrateRepoCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO
+            GithubRepo = GITHUB_REPO,
         };
         await _handler.Handle(args);
 
@@ -239,7 +239,7 @@ public class MigrateRepoCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO
+            GithubRepo = GITHUB_REPO,
         }))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
@@ -265,7 +265,7 @@ public class MigrateRepoCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO
+            GithubRepo = GITHUB_REPO,
         };
 
         await _handler.Handle(args);

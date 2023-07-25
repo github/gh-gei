@@ -23,7 +23,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 GithubTargetEnterprise = TARGET_ENTERPRISE,
-                GithubTargetPat = TARGET_PAT
+                GithubTargetPat = TARGET_PAT,
             };
 
             args.Validate(_mockOctoLogger.Object);
