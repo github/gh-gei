@@ -527,8 +527,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 BbsUsername = BBS_USERNAME,
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                Wait = true
+                BbsRepo = BBS_REPO
             };
 
             // Assert

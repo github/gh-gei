@@ -1,1 +1,1 @@
-
+- __BREAKING CHANGE__: Drop support for the deprecated `--wait` option in `migrate-repo` and `migrate-org`. Three months ago, we made waiting for the migration to finish the default behavior and added a new `--queue-only` option. For backwards compatibility reasons, we continued to allow the `--wait` argument and printed warnings if it was specified. From this release onwards, specifying the `--wait` argument will cause the CLI to error.

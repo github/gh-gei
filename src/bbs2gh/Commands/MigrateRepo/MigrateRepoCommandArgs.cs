@@ -26,7 +26,6 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string GithubRepo { get; set; }
     [Secret]
     public string GithubPat { get; set; }
-    public bool Wait { get; set; }
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
     public bool Kerberos { get; set; }
@@ -82,21 +81,6 @@ public class MigrateRepoCommandArgs : CommandArgs
         if (ShouldImportArchive())
         {
             ValidateImportOptions();
-        }
-
-        if (Wait)
-        {
-            log?.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-        }
-
-        if (Wait && QueueOnly)
-        {
-            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-        }
-
-        if (!Wait && !QueueOnly)
-        {
-            log?.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
         }
 
         if (SshPort == 7999)

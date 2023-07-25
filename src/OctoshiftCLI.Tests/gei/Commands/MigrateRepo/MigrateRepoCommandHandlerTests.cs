@@ -210,8 +210,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 SourceRepo = SOURCE_REPO,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                TargetApiUrl = TARGET_API_URL,
-                Wait = true,
+                TargetApiUrl = TARGET_API_URL
             };
             await _handler.Handle(args);
 
@@ -313,8 +312,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -365,8 +363,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GitArchiveUrl = gitArchiveUrl,
-                MetadataArchiveUrl = metadataArchiveUrl,
-                Wait = true
+                MetadataArchiveUrl = metadataArchiveUrl
             };
             await _handler.Handle(args);
 
@@ -386,8 +383,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     GithubTargetOrg = TARGET_ORG,
                     TargetRepo = TARGET_REPO,
                     TargetApiUrl = TARGET_API_URL,
-                    GitArchiveUrl = gitArchiveUrl,
-                    Wait = true
+                    GitArchiveUrl = gitArchiveUrl
                 }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
@@ -468,8 +464,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                GhesApiUrl = GHES_API_URL,
-                Wait = true
+                GhesApiUrl = GHES_API_URL
             };
             await _handler.Handle(args);
 
@@ -535,8 +530,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                NoSslVerify = true,
-                Wait = true
+                NoSslVerify = true
             };
             await _handler.Handle(args);
 
@@ -597,8 +591,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                NoSslVerify = true,
-                Wait = true
+                NoSslVerify = true
             };
             await _handler.Handle(args);
 
@@ -717,8 +710,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -1182,8 +1174,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 AwsBucketName = awsBucketName,
                 AwsAccessKey = awsAccessKeyId,
                 AwsSecretKey = awsSecretAccessKey,
-                AwsRegion = awsRegion,
-                Wait = true
+                AwsRegion = awsRegion
             };
 
             await handler.Handle(args);
@@ -1418,7 +1409,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true,
                 KeepArchive = true
             };
             await _handler.Handle(args);

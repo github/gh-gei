@@ -67,8 +67,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
                 GithubSourcePat = SOURCE_PAT,
                 GithubTargetOrg = TARGET_ORG,
                 GithubTargetEnterprise = TARGET_ENTERPRISE,
-                GithubTargetPat = TARGET_PAT,
-                Wait = true,
+                GithubTargetPat = TARGET_PAT
             };
             await _handler.Handle(args);
 
@@ -119,8 +118,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
             {
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
-                GithubTargetEnterprise = TARGET_ENTERPRISE,
-                Wait = true,
+                GithubTargetEnterprise = TARGET_ENTERPRISE
             };
             await _handler.Handle(args);
 
