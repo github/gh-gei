@@ -87,16 +87,6 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
-## Quick Start Videos
-You'll find videos below to help you quickly get started with the GEI CLI. Be sure to pick the videos relevant to your migration scenario. 
-
->NOTE: We don't update these videos as often as we update the CLI, so they may not exactly match the functionality in the latest release of this CLI.
-
-### Migrating from Azure DevOps to GitHub
-Video guides below will help you get started with your first migration. Then help you build up to orchestrating a complete end-to-end production migration. 
-* Running your first few migrations: https://www.youtube.com/watch?v=yfnXbwtXY80
-* Orchestrating an end-to-end production migration: https://www.youtube.com/watch?v=AtFB-U1Og4c
-
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.
