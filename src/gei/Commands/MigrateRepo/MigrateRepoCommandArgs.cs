@@ -27,7 +27,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string MetadataArchiveUrl { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
-        public bool Wait { get; set; }
         public bool QueueOnly { get; set; }
         public string TargetRepoVisibility { get; set; }
         [Secret]
@@ -44,21 +43,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             if (string.IsNullOrWhiteSpace(GitArchiveUrl) != string.IsNullOrWhiteSpace(MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
-            }
-
-            if (Wait)
-            {
-                log?.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-            }
-
-            if (Wait && QueueOnly)
-            {
-                throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-            }
-
-            if (!Wait && !QueueOnly)
-            {
-                log?.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
             }
 
             if (GhesApiUrl.IsNullOrWhiteSpace())

@@ -211,7 +211,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = true,
             };
             await _handler.Handle(args);
 
@@ -314,7 +313,79 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
+            };
+            await _handler.Handle(args);
+
+            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
+        }
+
+        [Fact]
+        public async Task Happy_Path_GithubSource_Ghes_Repo_Renamed()
+        {
+            var githubOrgId = Guid.NewGuid().ToString();
+            var migrationSourceId = Guid.NewGuid().ToString();
+            var sourceGithubPat = Guid.NewGuid().ToString();
+            var targetGithubPat = Guid.NewGuid().ToString();
+            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
+            var migrationId = Guid.NewGuid().ToString();
+            var gitArchiveId = 1;
+            var metadataArchiveId = 2;
+            var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
+            var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
+            var authenticatedGitArchiveUrl = new Uri($"https://example.com/{gitArchiveId}/authenticated");
+            var authenticatedMetadataArchiveUrl = new Uri($"https://example.com/{metadataArchiveId}/authenticated");
+            var gitArchiveFilePath = "path/to/git_archive";
+            var metadataArchiveFilePath = "path/to/metadata_archive";
+
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
+            _mockTargetGithubApi
+                .Setup(x => x.StartMigration(
+                    migrationSourceId,
+                    githubRepoUrl,
+                    githubOrgId,
+                    TARGET_REPO,
+                    sourceGithubPat,
+                    targetGithubPat,
+                    authenticatedGitArchiveUrl.ToString(),
+                    authenticatedMetadataArchiveUrl.ToString(),
+                    false,
+                    null,
+                    false).Result)
+                .Returns(migrationId);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
+
+            _mockAzureApi.SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(authenticatedGitArchiveUrl).Returns(authenticatedMetadataArchiveUrl);
+
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(gitArchiveFilePath)
+                .Returns(metadataArchiveFilePath);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
+
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
@@ -366,7 +437,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GitArchiveUrl = gitArchiveUrl,
                 MetadataArchiveUrl = metadataArchiveUrl,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -387,7 +457,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     TargetRepo = TARGET_REPO,
                     TargetApiUrl = TARGET_API_URL,
                     GitArchiveUrl = gitArchiveUrl,
-                    Wait = true
                 }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
@@ -469,7 +538,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -536,7 +604,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 NoSslVerify = true,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -598,7 +665,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 NoSslVerify = true,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -718,7 +784,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -1183,7 +1248,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 AwsAccessKey = awsAccessKeyId,
                 AwsSecretKey = awsSecretAccessKey,
                 AwsRegion = awsRegion,
-                Wait = true
             };
 
             await handler.Handle(args);
@@ -1418,7 +1482,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true,
                 KeepArchive = true
             };
             await _handler.Handle(args);

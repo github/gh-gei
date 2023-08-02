@@ -19,7 +19,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
 
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
-            AddOption(Wait);
             AddOption(QueueOnly);
             AddOption(Verbose);
         }
@@ -41,11 +40,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
         };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
         public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
-        public Option<bool> Wait { get; } = new("--wait")
-        {
-            IsHidden = true,
-            Description = "Synchronously waits for the org migration to finish."
-        };
         public Option<bool> QueueOnly { get; } = new("--queue-only")
         {
             Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."

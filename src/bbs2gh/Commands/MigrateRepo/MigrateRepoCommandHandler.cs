@@ -51,6 +51,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var exportId = 0L;
 
+        if (args.ShouldImportArchive())
+        {
+            var targetRepoExists = await _githubApi.DoesRepoExist(args.GithubOrg, args.GithubRepo);
+
+            if (targetRepoExists)
+            {
+                throw new OctoshiftCliException($"A repository called {args.GithubOrg}/{args.GithubRepo} already exists");
+            }
+        }
+
         if (args.ShouldGenerateArchive())
         {
             exportId = await GenerateArchive(args);
