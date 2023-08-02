@@ -1,2 +1,3 @@
-
-- Show `reclaim-mannequin`'s new `--skip-invitation` option in the CLI's built-in help
+- __BREAKING CHANGE__: Drop deprecated `--wait` option for `migrate-repo` and `migrate-org` commands
+- Allow Enterprise Managed Users (EMU) organizations to skip the invitation process in the `reclaim-mannequin` command with the `--skip-invitation` option
+- Fix target repo existence check in GitHub Enterprise Server migrations so it doesn't error if the target repo used to exist, but has been renamed

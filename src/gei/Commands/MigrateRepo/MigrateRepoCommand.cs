@@ -37,7 +37,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(SkipReleases);
             AddOption(LockSourceRepo);
 
-            AddOption(Wait);
             AddOption(QueueOnly);
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
@@ -122,11 +121,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<bool> LockSourceRepo { get; } = new("--lock-source-repo")
         {
             Description = "Lock source repo when migrating."
-        };
-        public Option<bool> Wait { get; } = new("--wait")
-        {
-            IsHidden = true,
-            Description = "Synchronously waits for the repo migration to finish."
         };
         public Option<bool> QueueOnly { get; } = new("--queue-only")
         {

@@ -158,6 +158,10 @@ public class GithubApi
         {
             return true;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.MovedPermanently)
+        {
+            return false;
+        }
     }
 
     public virtual async Task<bool> DoesOrgExist(string org)

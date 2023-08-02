@@ -210,7 +210,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            Wait = true,
         };
         await _handler.Handle(args);
 
@@ -241,7 +240,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            Wait = true,
         }))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
@@ -268,7 +266,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            Wait = true,
         };
 
         await _handler.Handle(args);
