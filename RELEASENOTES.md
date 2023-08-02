@@ -1,1 +1,2 @@
+- __BREAKING CHANGE__: Drop deprecated `--wait` option for `migrate-repo` and `migrate-org` commands
 - Fix target repo existence check in GitHub Enterprise Server migrations so it doesn't error if the target repo used to exist, but has been renamed

@@ -41,7 +41,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsSecretKey);
         AddOption(AwsSessionToken);
         AddOption(AwsRegion);
-        AddOption(Wait);
         AddOption(QueueOnly);
         AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
         AddOption(Kerberos);
@@ -164,11 +163,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
         description: "The GitHub personal access token to be used for the migration. If not set will be read from GH_PAT environment variable.");
-
-    public Option<bool> Wait { get; } = new(
-        name: "--wait",
-        description: "Synchronously waits for the repo migration to finish.")
-    { IsHidden = true };
 
     public Option<bool> QueueOnly { get; } = new(
         name: "--queue-only",

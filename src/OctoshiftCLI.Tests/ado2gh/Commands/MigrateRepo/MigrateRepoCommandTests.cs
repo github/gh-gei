@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(12);
+            _command.Options.Count.Should().Be(11);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
@@ -41,7 +41,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(_command.Options, "wait", false, true);
             TestHelpers.VerifyCommandOption(_command.Options, "queue-only", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
@@ -62,7 +61,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
                 AdoRepo = "some-repo",
                 GithubOrg = "gh-org",
                 GithubRepo = "gh-repo",
-                Wait = true,
                 AdoPat = adoPat,
                 GithubPat = githubPat,
             };

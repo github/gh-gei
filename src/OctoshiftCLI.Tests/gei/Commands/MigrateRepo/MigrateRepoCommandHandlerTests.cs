@@ -211,7 +211,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
-                Wait = true,
             };
             await _handler.Handle(args);
 
@@ -314,7 +313,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -366,7 +364,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GitArchiveUrl = gitArchiveUrl,
                 MetadataArchiveUrl = metadataArchiveUrl,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -387,7 +384,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     TargetRepo = TARGET_REPO,
                     TargetApiUrl = TARGET_API_URL,
                     GitArchiveUrl = gitArchiveUrl,
-                    Wait = true
                 }))
                 .Should().ThrowAsync<OctoshiftCliException>();
         }
@@ -469,7 +465,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -536,7 +531,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 NoSslVerify = true,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -598,7 +592,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 NoSslVerify = true,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -718,7 +711,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
             };
             await _handler.Handle(args);
 
@@ -1183,7 +1175,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 AwsAccessKey = awsAccessKeyId,
                 AwsSecretKey = awsSecretAccessKey,
                 AwsRegion = awsRegion,
-                Wait = true
             };
 
             await handler.Handle(args);
@@ -1418,7 +1409,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true,
                 KeepArchive = true
             };
             await _handler.Handle(args);
