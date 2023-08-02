@@ -385,8 +385,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                Wait = true
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING
             };
             await _handler.Handle(args);
 
