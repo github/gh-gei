@@ -1,8 +1,4 @@
-using System;
-using System.Net;
-using System.Net.Http;
 using FluentAssertions;
-using Moq;
 using OctoshiftCLI.Services;
 using Xunit;
 
@@ -10,49 +6,49 @@ namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public class WarningsCountLoggerTests
 {
-  private string _logOutput;
-  private string _verboseLogOutput;
-  private string _consoleOutput;
-  private string _consoleError;
+    private string _logOutput;
+    private string _verboseLogOutput;
+    private string _consoleOutput;
+    private string _consoleError;
 
-  private readonly OctoLogger _octoLogger;
-  private readonly WarningsCountLogger _warningsCountLogger;
+    private readonly OctoLogger _octoLogger;
+    private readonly WarningsCountLogger _warningsCountLogger;
 
-  public WarningsCountLoggerTests()
-  {
-    _octoLogger = new OctoLogger(CaptureLogOutput, CaptureVerboseLogOutput, CaptureConsoleOutput, CaptureConsoleError);
-    _warningsCountLogger = new WarningsCountLogger(_octoLogger);
-  }
+    public WarningsCountLoggerTests()
+    {
+        _octoLogger = new OctoLogger(CaptureLogOutput, CaptureVerboseLogOutput, CaptureConsoleOutput, CaptureConsoleError);
+        _warningsCountLogger = new WarningsCountLogger(_octoLogger);
+    }
 
-  [Fact]
-  public void LogWarningsCount_Should_Write_No_Warnings_To_Console_Out()
-  {
-    _warningsCountLogger.LogWarningsCount(0);
+    [Fact]
+    public void LogWarningsCount_Should_Write_No_Warnings_To_Console_Out()
+    {
+        _warningsCountLogger.LogWarningsCount(0);
 
-    _consoleOutput.Should().Contain("No warnings encountered during this migration");
-  }
+        _consoleOutput.Should().Contain("No warnings encountered during this migration");
+    }
 
-  [Fact]
-  public void LogWarningsCount_Should_Write_1_Warning_To_Console_Out()
-  {
-    _warningsCountLogger.LogWarningsCount(1);
+    [Fact]
+    public void LogWarningsCount_Should_Write_1_Warning_To_Console_Out()
+    {
+        _warningsCountLogger.LogWarningsCount(1);
 
-    _consoleOutput.Should().Contain("1 warning encountered during this migration");
-  }
+        _consoleOutput.Should().Contain("1 warning encountered during this migration");
+    }
 
-  [Fact]
-  public void LogWarningsCount_Should_Write_Warnings_Count_To_Console_Out()
-  {
-    _warningsCountLogger.LogWarningsCount(3);
+    [Fact]
+    public void LogWarningsCount_Should_Write_Warnings_Count_To_Console_Out()
+    {
+        _warningsCountLogger.LogWarningsCount(3);
 
-    _consoleOutput.Should().Contain($"3 warnings encountered during this migration");
-  }
+        _consoleOutput.Should().Contain($"3 warnings encountered during this migration");
+    }
 
-  private void CaptureLogOutput(string msg) => _logOutput += msg;
+    private void CaptureLogOutput(string msg) => _logOutput += msg;
 
-  private void CaptureVerboseLogOutput(string msg) => _verboseLogOutput += msg;
+    private void CaptureVerboseLogOutput(string msg) => _verboseLogOutput += msg;
 
-  private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
+    private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
 
-  private void CaptureConsoleError(string msg) => _consoleError += msg;
+    private void CaptureConsoleError(string msg) => _consoleError += msg;
 }
