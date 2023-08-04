@@ -12,19 +12,18 @@ public class ReclaimMannequinCommandHandlerTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ReclaimService> _mockReclaimService = TestHelpers.CreateMock<ReclaimService>();
-    private readonly ConfirmationService _confirmationService;
+    private readonly Mock<ConfirmationService> _mockConfirmationService = TestHelpers.CreateMock<ConfirmationService>();
+    private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly ReclaimMannequinCommandHandler _handler;
 
     private const string GITHUB_ORG = "FooOrg";
     private const string MANNEQUIN_USER = "mona";
     private const string TARGET_USER = "mona_emu";
-
-    private string _consoleOutput;
+    private readonly string TARGET_USER_LOGIN = "mona_gh";
 
     public ReclaimMannequinCommandHandlerTests()
     {
-        _confirmationService = new ConfirmationService(CaptureConsoleOutput, MockConsoleKeyPress);
-        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _confirmationService)
+        _handler = new ReclaimMannequinCommandHandler(_mockOctoLogger.Object, _mockReclaimService.Object, _mockConfirmationService.Object, _mockGithubApi.Object)
         {
             FileExists = _ => true,
             GetFileContent = _ => Array.Empty<string>()
@@ -51,7 +50,7 @@ public class ReclaimMannequinCommandHandlerTests
     {
         string mannequinUserId = null;
 
-        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
+        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -62,7 +61,7 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false), Times.Once);
     }
 
     [Fact]
@@ -70,7 +69,7 @@ public class ReclaimMannequinCommandHandlerTests
     {
         var mannequinUserId = "monaid";
 
-        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false)).Returns(Task.FromResult(default(object)));
+        _mockReclaimService.Setup(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false)).Returns(Task.FromResult(default(object)));
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -81,7 +80,7 @@ public class ReclaimMannequinCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(MANNEQUIN_USER, mannequinUserId, TARGET_USER, GITHUB_ORG, false, false), Times.Once);
     }
 
     [Fact]
@@ -116,7 +115,7 @@ public class ReclaimMannequinCommandHandlerTests
     public async Task Skip_Invitation_Happy_Path()
     {
         // Arrange
-        var expectedResult = "Reclaiming mannequins with the --skip-invitation option is immediate and irreversible. Are you sure you wish to continue? (y/n)Confirmation Recorded. Proceeding...";
+        var role = "admin";
 
         var args = new ReclaimMannequinCommandArgs
         {
@@ -125,33 +124,68 @@ public class ReclaimMannequinCommandHandlerTests
             Csv = "file.csv",
         };
 
+        _mockConfirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _mockGithubApi.Setup(x => x.GetLoginName().Result).Returns(TARGET_USER_LOGIN);
+        _mockGithubApi.Setup(x => x.GetOrgMembershipForUser(GITHUB_ORG, TARGET_USER_LOGIN).Result).Returns(role);
+
         // Act
         await _handler.Handle(args);
 
         // Assert
         _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
-        _consoleOutput.Trim().Should().BeEquivalentTo(expectedResult);
     }
 
     [Fact]
-    public async Task Skip_Invitation_Without_CSV_Throws_Error()
+    public async Task Skip_Invitation_No_Confirmation_With_NoPrompt_Arg()
     {
         // Arrange
+        var role = "admin";
+
         var args = new ReclaimMannequinCommandArgs
         {
             GithubOrg = GITHUB_ORG,
             SkipInvitation = true,
-            MannequinUser = MANNEQUIN_USER,
-            TargetUser = TARGET_USER,
+            Csv = "file.csv",
+            NoPrompt = true
         };
 
-        // Act/ Assert
-        await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should().ThrowAsync<OctoshiftCliException>();
+        _mockGithubApi.Setup(x => x.GetLoginName().Result).Returns(TARGET_USER_LOGIN);
+        _mockGithubApi.Setup(x => x.GetOrgMembershipForUser(GITHUB_ORG, TARGET_USER_LOGIN).Result).Returns(role);
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(Array.Empty<string>(), GITHUB_ORG, false, true), Times.Once);
+        _mockConfirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
-    private void CaptureConsoleOutput(string msg) => _consoleOutput += msg;
+    [Fact]
+    public async Task ReclaimMannequinsSkipInvitation_No_Admin_Throws_Error()
+    {
+        // Arrange
+        var role = "member";
 
-    private ConsoleKey MockConsoleKeyPress() => ConsoleKey.Y;
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            SkipInvitation = true,
+            Csv = "file.csv",
+        };
+
+        _mockConfirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _mockGithubApi.Setup(x => x.GetLoginName().Result).Returns(TARGET_USER_LOGIN);
+        _mockGithubApi.Setup(x => x.GetOrgMembershipForUser(GITHUB_ORG, TARGET_USER_LOGIN).Result).Returns(role);
+
+        // Act
+        var exception = await FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>();
+        exception.WithMessage($"User {TARGET_USER_LOGIN} is not an org admin and is not eligible to reclaim mannequins with the --skip-invitation feature.");
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetLoginName(), Times.Once);
+        _mockGithubApi.Verify(x => x.GetOrgMembershipForUser(GITHUB_ORG, TARGET_USER_LOGIN), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
+    }
 }

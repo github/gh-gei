@@ -13,12 +13,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(28);
+            command.Options.Count.Should().Be(23);
 
-            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-server-url", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-source-org", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-team-project", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo", false);
@@ -34,12 +31,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(command.Options, "git-archive-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-url", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "wait", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "queue-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
-            TestHelpers.VerifyCommandOption(command.Options, "ado-pat", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         }

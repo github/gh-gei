@@ -47,7 +47,8 @@ public class WaitForMigrationCommandHandlerTests
 
         var expectedLogOutput = new List<string>
             {
-                $"Waiting for {TARGET_REPO} migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
@@ -156,7 +157,7 @@ public class WaitForMigrationCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(6));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
@@ -185,7 +186,8 @@ public class WaitForMigrationCommandHandlerTests
 
         var expectedLogOutput = new List<string>
             {
-                $"Waiting for {TARGET_REPO} migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
@@ -235,7 +237,8 @@ public class WaitForMigrationCommandHandlerTests
 
         var expectedLogOutput = new List<string>
             {
-                $"Waiting for {TARGET_REPO} migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration (ID: {REPO_MIGRATION_ID}) to finish...",
+                $"Waiting for migration of repository {TARGET_REPO} to finish...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",

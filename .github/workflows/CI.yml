@@ -31,7 +31,7 @@ jobs:
         config-file: ./.github/codeql/codeql-config.yml
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
@@ -101,7 +101,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
@@ -158,7 +158,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
@@ -233,6 +233,7 @@ jobs:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GHEC_PAT: ${{ secrets.GHEC_PAT }}
         GHES_PAT: ${{ secrets.GHES_PAT }}
+        ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
         SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
@@ -304,7 +305,7 @@ jobs:
         }
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 

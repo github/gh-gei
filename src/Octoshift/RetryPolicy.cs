@@ -46,9 +46,21 @@ namespace OctoshiftCLI
 
         private AsyncRetryPolicy CreateRetryPolicyForException<TException>() where TException : Exception => Policy
                 .Handle<TException>()
-                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (ex, _) =>
+                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (Exception ex, TimeSpan ts, Context ctx) =>
                 {
-                    _log?.LogVerbose(ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString());
+                    if (ex is HttpRequestException httpEx)
+                    {
+                        _log?.LogVerbose($"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}");
+                        if (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        {
+                            // We should not retry on an unathorized error; instead, log and bubble up the error
+                            throw new OctoshiftCliException($"Unauthorized. Please check your token and try again", ex);
+                        };
+                    }
+                    else
+                    {
+                        _log?.LogVerbose(ex.ToString());
+                    }
                     _log?.LogVerbose("Retrying...");
                 });
     }

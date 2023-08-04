@@ -284,44 +284,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Project_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsProject = BBS_PROJECT
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-project*--bbs-server-url*");
-        }
-
-        [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Repo_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsRepo = BBS_REPO
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-repo*--bbs-server-url*");
-        }
-
-        [Fact]
         public void It_Throws_If_Github_Org_Is_Provided_But_Github_Repo_Is_Not()
         {
             // Act
@@ -380,70 +342,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--github-repo*");
-        }
-
-        [Fact]
-        public void Validates_Wait_And_QueueOnly_Not_Passed_Together()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                Wait = true,
-                QueueOnly = true,
-            };
-
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                               .Should()
-                               .ThrowExactly<OctoshiftCliException>()
-                               .WithMessage("*wait*");
-        }
-
-        [Fact]
-        public void Wait_Flag_Shows_Warning()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                Wait = true,
-            };
-
-            args.Validate(_mockOctoLogger.Object);
-
-            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
-        }
-
-        [Fact]
-        public void No_Wait_And_No_Queue_Only_Flags_Shows_Warning()
-        {
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-            };
-
-            args.Validate(_mockOctoLogger.Object);
-
-            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("wait"))));
         }
 
         [Fact]
@@ -573,7 +471,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_And_Archive_Url_Are_Passed()
+        public void Allows_BbsServer_Url_And_Archive_Url_To_Be_Passed_Together()
         {
             // Act
             var args = new MigrateRepoCommandArgs
@@ -587,12 +485,11 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-server-url*--archive-url*");
+                .NotThrow();
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_And_Archive_Path_Are_Passed()
+        public void Allows_BbsServer_Url_And_Archive_Path_To_Be_Passed_Together()
         {
             // Act
             var args = new MigrateRepoCommandArgs
@@ -606,8 +503,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-server-url*--archive-path*");
+                .NotThrow();
         }
 
         [Fact]
@@ -625,6 +521,27 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--bbs-server-url*--archive-path*--archive-url*");
+        }
+
+        [Fact]
+        public void Invoke_With_Ssh_Port_Set_To_7999_Logs_Warning()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                SshPort = 7999
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("--ssh-port is set to 7999"))));
         }
     }
 }

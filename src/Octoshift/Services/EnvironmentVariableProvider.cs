@@ -10,8 +10,6 @@ public class EnvironmentVariableProvider
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
     private const string AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
     private const string AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
-    private const string AWS_ACCESS_KEY = "AWS_ACCESS_KEY";
-    private const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
     private const string AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
     private const string AWS_REGION = "AWS_REGION";
     private const string BBS_USERNAME = "BBS_USERNAME";
@@ -42,14 +40,6 @@ public class EnvironmentVariableProvider
 
     public virtual string AwsAccessKeyId(bool throwIfNotFound = true) =>
         GetSecret(AWS_ACCESS_KEY_ID, throwIfNotFound);
-
-    [Obsolete("AwsSecretKey is deprecated, please use AwsSecretAccessKey instead.")]
-    public virtual string AwsSecretKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_SECRET_KEY, throwIfNotFound);
-
-    [Obsolete("AwsAccessKey is deprecated, please use AwsAccessKeyId instead.")]
-    public virtual string AwsAccessKey(bool throwIfNotFound = true) =>
-        GetSecret(AWS_ACCESS_KEY, throwIfNotFound);
 
     public virtual string AwsSessionToken(bool throwIfNotFound = true) =>
         GetSecret(AWS_SESSION_TOKEN, throwIfNotFound);

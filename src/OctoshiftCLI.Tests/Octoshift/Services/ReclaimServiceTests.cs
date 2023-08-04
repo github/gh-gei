@@ -75,6 +75,105 @@ public class ReclaimServiceTests
     }
 
     [Fact]
+    public async Task ReclaimMannequins_Duplicates_Same_Claimant_Throws_Error()
+    {
+        var mannequinsResponse = new[]
+        {
+            new Mannequin
+            {
+                Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN, MappedUser = new Claimant { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
+            }
+        };
+
+        var reclaimMannequinResponse = new CreateAttributionInvitationResult()
+        {
+            Data = new CreateAttributionInvitationData()
+            {
+                CreateAttributionInvitation = new CreateAttributionInvitation()
+                {
+                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
+                    Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
+        _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
+
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}",
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, true, false);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
+        _mockGithubApi.VerifyNoOtherCalls();
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ReclaimMannequins_Duplicates_Different_Claimants_Throws_Error()
+    {
+        var TARGET_USER_ID_2 = Guid.NewGuid().ToString();
+        var TARGET_USER_LOGIN_2 = "mona_gh_2";
+
+        var mannequinsResponse = new[]
+        {
+            new Mannequin
+            {
+                Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN, MappedUser = new Claimant { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
+            },
+            new Mannequin
+            {
+                Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN, MappedUser = new Claimant { Id = TARGET_USER_ID_2, Login = TARGET_USER_LOGIN_2 }
+            }
+        };
+
+        var reclaimMannequinResponse = new CreateAttributionInvitationResult()
+        {
+            Data = new CreateAttributionInvitationData()
+            {
+                CreateAttributionInvitation = new CreateAttributionInvitation()
+                {
+                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
+                    Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
+        _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
+
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}",
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},ADiffClaimant"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, true, false);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
+        _mockGithubApi.VerifyNoOtherCalls();
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} is a duplicate. Skipping."), Times.Exactly(2));
+    }
+
+    [Fact]
     public async Task ReclaimMannequins_EmptyCSV_NoReclaims_IssuesWarning()
     {
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
@@ -107,7 +206,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \"login\". Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \"login\". Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -142,7 +241,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \",,mona_gh\". Mannequin login is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \",,mona_gh\". Mannequin login is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -164,7 +263,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Invalid line: \"xx,id,\". Target User is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -186,7 +285,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
-        _mockOctoLogger.Verify(m => m.LogError($"Invalid line: \"mona,,\". Mannequin Id is not defined. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning($"Invalid line: \"mona,,\". Mannequin Id is not defined. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -399,7 +498,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
-        _mockOctoLogger.Verify(x => x.LogError($"{MANNEQUIN_LOGIN} is already claimed. Skipping (use force if you want to reclaim)"), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"{MANNEQUIN_LOGIN} is already claimed. Skipping (use force if you want to reclaim)"), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -424,7 +523,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never);
-        _mockOctoLogger.Verify(x => x.LogError($"Mannequin {MANNEQUIN_LOGIN} not found. Skipping."), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"Mannequin {MANNEQUIN_LOGIN} not found. Skipping."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -452,7 +551,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
-        _mockOctoLogger.Verify(x => x.LogError($"Claimant \"{TARGET_USER_LOGIN}\" not found. Will ignore it."), Times.Once);
+        _mockOctoLogger.Verify(x => x.LogWarning($"Claimant \"{TARGET_USER_LOGIN}\" not found. Will ignore it."), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -478,7 +577,7 @@ public class ReclaimServiceTests
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
         _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
-        _mockGithubApi.Setup(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
+        _mockGithubApi.Setup(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         var csvContent = new string[] {
             HEADER,
@@ -492,21 +591,53 @@ public class ReclaimServiceTests
         _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
         _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
-        _mockGithubApi.Verify(x => x.ReclaimMannequinsSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
-    //[Fact]
-    //public async Task ReclaimMannequinsSkipInvitation_Fails_When_Org_Not_EMU()
-    //{
-    //    // Arrange
+    [Fact]
+    public async Task ReclaimMannequinsSkipInvitation_No_EMU_Throws_Error_Fails_Fast()
+    {
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
+        };
 
-    //    // Act
+        var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
+        {
+            Errors = new Collection<ErrorData>()
+            {
+                new ErrorData()
+                {
+                    Message = "is not an Enterprise Managed Users (EMU) organization"
+                }
+            }
+        };
 
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
+        _mockGithubApi.Setup(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
-    //    // Assert
-    //}
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{TARGET_USER_LOGIN}",
+            "SecondLogin,SecondMannId,SecondTargetUserLogin",
+            "ThirdLogin,ThirdMannId,ThirdTargetUserLogin"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, true);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequins(ORG_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
+        _mockOctoLogger.Verify(x => x.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations."), Times.Once);
+    }
 
     [Fact]
     public async Task ReclaimMannequin_TwoUsersSameLogin_AllReclaimed()
@@ -543,13 +674,13 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse2);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false);
 
         // Assert
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
@@ -577,12 +708,12 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false);
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
     }
@@ -608,12 +739,12 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false);
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
     }
@@ -652,13 +783,13 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse2);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, MANNEQUIN_ID, TARGET_USER_LOGIN, TARGET_ORG, false);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, MANNEQUIN_ID, TARGET_USER_LOGIN, TARGET_ORG, false, false);
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID), Times.Never);
@@ -687,12 +818,12 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, MANNEQUIN_ID, TARGET_USER_LOGIN, TARGET_ORG, true);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, MANNEQUIN_ID, TARGET_USER_LOGIN, TARGET_ORG, true, false);
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
     }
@@ -721,12 +852,12 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, null, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         var exception = await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
         exception.WithMessage("User mona is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
 
@@ -743,13 +874,13 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
 
         var reclaimService = new ReclaimService(_mockGithubApi.Object, TestHelpers.CreateMock<OctoLogger>().Object);
 
         // Act
         var exception = await FluentActions
-            .Invoking(async () => await reclaimService.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await reclaimService.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
 
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Never());
@@ -786,12 +917,12 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         // Act
-        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, true);
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, true, false);
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID));
     }
@@ -821,17 +952,17 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
 
         // Act
         var exception = await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
         exception.WithMessage("Failed to send reclaim mannequin invitation(s).");
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to send reclaim invitation email to {TARGET_USER_LOGIN} for mannequin {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}): {failureMessage}"), Times.Once);
     }
 
     [Fact]
@@ -874,21 +1005,21 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
         _mockGithubApi.Setup(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse2);
 
         // Act
         var exception = await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
         exception.WithMessage("Failed to send reclaim mannequin invitation(s).");
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, mannequinUserId2, TARGET_USER_ID), Times.Once);
 
-        _mockOctoLogger.Verify(m => m.LogError($"Failed to invite {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}) to {TARGET_USER_LOGIN} ({TARGET_USER_ID}) Reason: {failureMessage}"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogError($"Failed to send reclaim invitation email to {TARGET_USER_LOGIN} for mannequin {MANNEQUIN_LOGIN} ({MANNEQUIN_ID}): {failureMessage}"), Times.Once);
     }
 
 
@@ -898,12 +1029,12 @@ public class ReclaimServiceTests
         var mannequinsResponse = Array.Empty<Mannequin>();
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
 
         // Act
         await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
 
         _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never());
@@ -918,16 +1049,90 @@ public class ReclaimServiceTests
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
-        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
         _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN)).Throws(new OctoshiftCliException("Could not resolve to a User with the login of 'idonotexist'."));
 
         // Act
         var exception = await FluentActions
-            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false))
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, false))
             .Should().ThrowAsync<OctoshiftCliException>();
 
         exception.WithMessage($"Could not resolve to a User with the login of 'idonotexist'.");
 
         _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once());
+    }
+
+    [Fact]
+    public async Task ReclaimMannequinSkipInvitation_Happy_Path()
+    {
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
+        };
+
+        var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
+        {
+            Data = new ReattributeMannequinToUserData()
+            {
+                ReattributeMannequinToUser = new ReattributeMannequinToUser()
+                {
+                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
+                    Target = new UserInfo() { Id = TARGET_USER_ID, Login = TARGET_USER_LOGIN }
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
+        _mockGithubApi.Setup(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
+
+        // Act
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, true);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN), Times.Once);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task ReclaimMannequinSkipInvitation_No_EMU_Throws_Error_Fails_Fast()
+    {
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN}
+        };
+
+        var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
+        {
+            Errors = new Collection<ErrorData>()
+            {
+                new ErrorData()
+                {
+                    Message = "is not an Enterprise Managed Users (EMU) organization"
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetUserId(TARGET_USER_LOGIN).Result).Returns(TARGET_USER_ID);
+        _mockGithubApi.Setup(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID).Result).Returns(reclaimMannequinResponse);
+
+        // Act
+        var exception = await FluentActions
+            .Invoking(async () => await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, TARGET_USER_LOGIN, TARGET_ORG, false, true))
+            .Should().ThrowAsync<OctoshiftCliException>();
+        exception.WithMessage("Failed to reclaim mannequin.");
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetOrganizationId(TARGET_ORG), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN), Times.Once);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinSkipInvitation(ORG_ID, MANNEQUIN_ID, TARGET_USER_ID), Times.Once);
+        _mockGithubApi.Verify(x => x.GetUserId(TARGET_USER_LOGIN), Times.Once);
+        _mockGithubApi.VerifyNoOtherCalls();
     }
 }

@@ -337,6 +337,21 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task DoesRepoExist_Returns_False_When_301()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
+
+        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.MovedPermanently)).ReturnsAsync("Moved Permanently");
+
+        // Act
+        var result = await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task DoesRepoExist_Throws_On_Unexpected_Response()
     {
         // Arrange
@@ -434,6 +449,48 @@ public class GithubApiTests
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task GetOrgMembershipForUser_Returns_User_Role()
+    {
+        // Arrange
+        var member = "USER";
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/memberships/{member}";
+        var role = "admin";
+        var response = $@"
+            {{
+                ""role"": ""{role}"" 
+            }}";
+
+        _githubClientMock
+            .Setup(m => m.GetAsync(url, null))
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
+
+        // Assert
+        result.Should().Match(role);
+    }
+
+    [Fact]
+    public async Task GetOrgMembershipForUser_Returns_Empty_On_HTTP_Exception()
+    {
+        // Arrange
+        var member = "USER";
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/memberships/{member}";
+
+        _githubClientMock
+            .SetupSequence(m => m.GetAsync(url, null))
+            .ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.NotFound))
+            .ReturnsAsync(string.Empty);
+
+        // Act
+        var result = await _githubApi.GetOrgMembershipForUser(GITHUB_ORG, member);
+
+        // Assert
+        result.Should().BeNull();
     }
 
     [Fact]
@@ -685,29 +742,6 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task CreateAdoMigrationSource_Decorates_Missing_Permissions_Error()
-    {
-        // Arrange
-        const string url = "https://api.github.com/graphql";
-        const string orgId = "ORG_ID";
-        const string adoServerUrl = "https://ado.contoso.com";
-        var payload =
-            "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
-            "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
-            $",\"variables\":{{\"name\":\"Azure DevOps Source\",\"url\":\"{adoServerUrl}\",\"ownerId\":\"{orgId}\",\"type\":\"AZURE_DEVOPS\"}},\"operationName\":\"createMigrationSource\"}}";
-
-        _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
-            .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
-
-        // Act
-        await _githubApi.Invoking(api => api.CreateAdoMigrationSource(orgId, adoServerUrl))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
-    }
-
-    [Fact]
     public async Task CreateBbsMigrationSource_Returns_New_Migration_Source_Id()
     {
         // Arrange
@@ -744,28 +778,6 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task CreateBbsMigrationSource_Decorates_Missing_Permissions_Error()
-    {
-        // Arrange
-        const string url = "https://api.github.com/graphql";
-        const string orgId = "ORG_ID";
-        var payload =
-            "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
-            "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
-            $",\"variables\":{{\"name\":\"Bitbucket Server Source\",\"url\":\"https://not-used\",\"ownerId\":\"{orgId}\",\"type\":\"BITBUCKET_SERVER\"}},\"operationName\":\"createMigrationSource\"}}";
-
-        _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
-            .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
-
-        // Act
-        await _githubApi.Invoking(api => api.CreateBbsMigrationSource(orgId))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
-    }
-
-    [Fact]
     public async Task CreateGhecMigrationSource_Returns_New_Migration_Source_Id()
     {
         // Arrange
@@ -799,28 +811,6 @@ public class GithubApiTests
 
         // Assert
         expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
-    }
-
-    [Fact]
-    public async Task CreateGhecMigrationSource_Decorates_Missing_Permissions_Error()
-    {
-        // Arrange
-        const string url = "https://api.github.com/graphql";
-        const string orgId = "ORG_ID";
-        var payload =
-            "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
-            "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
-            $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"https://github.com\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\"}},\"operationName\":\"createMigrationSource\"}}";
-
-        _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
-            .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
-
-        // Act
-        await _githubApi.Invoking(api => api.CreateGhecMigrationSource(orgId))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage("monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
     }
 
     [Fact]
@@ -869,6 +859,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -906,6 +897,7 @@ public class GithubApiTests
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
@@ -935,12 +927,12 @@ public class GithubApiTests
     {
         // Arrange
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string sourceRepoUrl = "https://our-bbs-server.com/projects/BBS-PROJECT/repos/bbs-repo/browse";
         const string orgId = "ORG_ID";
         const string url = "https://api.github.com/graphql";
         const string gitArchiveUrl = "GIT_ARCHIVE_URL";
         const string targetToken = "TARGET_TOKEN";
 
-        const string unusedSourceRepoUrl = "https://not-used";
         const string unusedSourceToken = "not-used";
         const string unusedMetadataArchiveUrl = "https://not-used";
 
@@ -977,6 +969,7 @@ public class GithubApiTests
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -994,7 +987,7 @@ public class GithubApiTests
             {
                 sourceId = migrationSourceId,
                 ownerId = orgId,
-                sourceRepositoryUrl = unusedSourceRepoUrl,
+                sourceRepositoryUrl = sourceRepoUrl,
                 repositoryName = GITHUB_REPO,
                 continueOnError = true,
                 gitArchiveUrl,
@@ -1014,6 +1007,7 @@ public class GithubApiTests
                     ""startRepositoryMigration"": {{
                         ""repositoryMigration"": {{
                             ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
                             ""migrationSource"": {{
                                 ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
                                 ""name"": ""Azure Devops Source"",
@@ -1032,7 +1026,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
+        var expectedRepositoryMigrationId = await _githubApi.StartBbsMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
 
         // Assert
         expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
@@ -2173,6 +2167,121 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         mannequinsResult[1].MappedUser.Should().NotBeNull();
         mannequinsResult[1].MappedUser.Login.Should().Be("monareclaimed");
         mannequinsResult[1].MappedUser.Id.Should().Be("TARGETDUMMYID");
+    }
+
+    [Fact]
+    public async Task GetMannequinsByLogin_Returns_NoMannequins()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string login = "monalisa";
+
+        var url = $"https://api.github.com/graphql";
+
+        var payload =
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+$",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLWithPaginationAsync(
+                url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                It.IsAny<Func<JObject, JArray>>(),
+                It.IsAny<Func<JObject, JObject>>(),
+                It.IsAny<int>(),
+                null,
+                null))
+                .Returns(Array.Empty<JToken>().ToAsyncEnumerable());
+
+        // Act
+        var result = await _githubApi.GetMannequinsByLogin(orgId, login);
+
+        // Assert
+        result.Count().Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetMannequinsByLogin_Returns_Mannequins()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string login = "monalisa";
+
+        var url = $"https://api.github.com/graphql";
+
+        var payload =
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }""" +
+$",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
+
+        var mannequin = new
+        {
+            login,
+            id = "DUMMYID1",
+            claimant = new { }
+        };
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLWithPaginationAsync(
+                url,
+                It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)),
+                It.IsAny<Func<JObject, JArray>>(),
+                It.IsAny<Func<JObject, JObject>>(),
+                It.IsAny<int>(),
+                null,
+                null))
+                .Returns(new[]
+                    {
+                        JToken.FromObject(mannequin),
+                    }.ToAsyncEnumerable());
+
+        // Act
+        var result = await _githubApi.GetMannequinsByLogin(orgId, login);
+
+        // Assert
+        result.Count().Should().Be(1);
+
+        var mannequinsResult = result.ToArray();
+        mannequinsResult[0].Id.Should().Be("DUMMYID1");
+        mannequinsResult[0].Login.Should().Be(login);
+        mannequinsResult[0].MappedUser.Should().BeNull();
     }
 
     [Fact]

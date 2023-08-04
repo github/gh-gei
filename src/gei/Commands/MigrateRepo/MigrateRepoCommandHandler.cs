@@ -106,9 +106,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var sourceRepoUrl = GetSourceRepoUrl(args);
         var sourceToken = GetSourceToken(args);
         var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
-        var migrationSourceId = args.GithubSourceOrg.HasValue()
-            ? await _targetGithubApi.CreateGhecMigrationSource(githubOrgId)
-            : await _targetGithubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
+
+        string migrationSourceId;
+
+        try
+        {
+            migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubTargetOrg);
+            var message = $"{ex.Message}{insufficientPermissionsMessage}";
+            throw new OctoshiftCliException(message, ex);
+        }
 
         string migrationId;
 
@@ -166,15 +176,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
     }
 
-    private string GetSourceToken(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken()
-            : args.AdoPat ?? _environmentVariableProvider.AdoPersonalAccessToken();
+    private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) =>
-        args.GithubSourceOrg.HasValue()
-            ? GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null)
-            : GetAdoRepoUrl(args.AdoServerUrl, args.AdoSourceOrg, args.AdoTeamProject, args.SourceRepo);
+    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null);
 
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {
@@ -321,12 +325,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
-    private string GetAdoRepoUrl(string serverUrl, string org, string project, string repo)
-    {
-        serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
-        return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
-    }
-
     private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
         var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
@@ -372,42 +370,17 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             if (!GetAwsAccessKey(args).HasValue())
             {
-#pragma warning disable CS0618
-                if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
-#pragma warning restore CS0618
-                {
-                    _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
-                }
-                else
-                {
-                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
-                }
+                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
             }
 
             if (!GetAwsSecretKey(args).HasValue())
             {
-#pragma warning disable CS0618
-                if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
-#pragma warning restore CS0618
-                {
-                    _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
-                }
-                else
-                {
-                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
-                }
+                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
             }
 
-            if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
+            if (GetAwsRegion(args).IsNullOrWhiteSpace())
             {
-                throw new OctoshiftCliException(
-                    "--aws-region or AWS_REGION environment variable must be provided with --aws-session-token or AWS_SESSION_TOKEN environment variable.");
-            }
-
-            if (!GetAwsRegion(args).HasValue())
-            {
-                _log.LogWarning("Specifying an AWS region with the --aws-region argument or AWS_REGION environment variable is currently not required, " +
-                                "but will be required in a future release. Defaulting to us-east-1.");
+                throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
             }
         }
         else if (new[] { args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken, args.AwsRegion }.Any(x => x.HasValue()))
@@ -421,9 +394,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetAwsSecretKey(MigrateRepoCommandArgs args) => args.AwsSecretKey.HasValue() ? args.AwsSecretKey : _environmentVariableProvider.AwsSecretAccessKey(false);
 
     private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
-
-    private string GetAwsSessionToken(MigrateRepoCommandArgs args) =>
-        args.AwsSessionToken.HasValue() ? args.AwsSessionToken : _environmentVariableProvider.AwsSessionToken(false);
 
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString

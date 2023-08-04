@@ -34,9 +34,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
         private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
-        private const string AWS_ACCESS_KEY = "aws-access-key";
-        private const string AWS_SECRET_KEY = "aws-secret-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
+        private const string AWS_REGION = "eu-west-1";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
         private const string BBS_HOST = "our-bbs-server.com";
@@ -45,6 +44,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string BBS_PASSWORD = "bbs-password";
         private const string BBS_PROJECT = "bbs-project";
         private const string BBS_REPO = "bbs-repo";
+        private const string BBS_REPO_URL = $"{BBS_SERVER_URL}/projects/{BBS_PROJECT}/repos/{BBS_REPO}/browse";
+        private const string UNUSED_REPO_URL = "https://not-used";
         private const string SSH_USER = "ssh-user";
         private const string PRIVATE_KEY = "private-key";
         private const string SMB_USER = "smb-user";
@@ -94,6 +95,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 BBS_PROJECT,
                 BBS_REPO
             ));
+
+            _mockGithubApi.Verify(m => m.DoesRepoExist(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -118,6 +121,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             // Assert
             _mockBbsArchiveDownloader.Verify(m => m.Download(BBS_EXPORT_ID, It.IsAny<string>()));
+            _mockGithubApi.Verify(m => m.DoesRepoExist(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -125,7 +129,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         {
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
-
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
 
@@ -142,6 +146,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -154,6 +159,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         public async Task Happy_Path_Generate_Archive_Ssh_Download_Azure_Upload_And_Ingest()
         {
             // Arrange
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
@@ -183,6 +189,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -195,6 +202,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         public async Task Happy_Path_Generate_Archive_Ssh_Download_Aws_Upload_And_Ingest()
         {
             // Arrange
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
@@ -215,6 +223,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AwsBucketName = AWS_BUCKET_NAME,
                 AwsAccessKey = AWS_ACCESS_KEY_ID,
                 AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                AwsRegion = AWS_REGION,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
@@ -225,6 +234,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -240,6 +250,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             const string bbsSharedHome = "bbs-shared-home";
             var archivePath = $"{bbsSharedHome}/data/migration/export/Bitbucket_export_{BBS_EXPORT_ID}.tar";
 
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
@@ -280,6 +291,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -294,6 +306,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.BbsUsername(It.IsAny<bool>())).Returns(BBS_USERNAME);
             _mockEnvironmentVariableProvider.Setup(m => m.BbsPassword(It.IsAny<bool>())).Returns(BBS_PASSWORD);
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
@@ -321,6 +334,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -426,6 +440,36 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task Dont_Generate_Archive_If_Target_Repo_Exists()
+        {
+            // Arrange
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(true);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
+            };
+
+            await FluentActions
+                .Invoking(async () => await _handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+
+            // Assert
+            _mockBbsApi.Verify(x => x.StartExport(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
         public async Task Uses_GitHub_Pat_When_Provided_As_Option()
         {
             // Arrange
@@ -434,7 +478,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -451,6 +495,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 githubPat,
@@ -468,7 +513,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Throws(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
 
             // Act
@@ -486,6 +531,30 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task Throws_Decorated_Error_When_Create_Migration_Source_Fails_With_Permissions_Error()
+        {
+            // Arrange
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi
+                .Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result)
+                .Throws(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+            // Act
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{GITHUB_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+        }
+
+        [Fact]
         public async Task Throws_An_Error_If_Export_Fails()
         {
             // Arrange
@@ -500,7 +569,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 BbsPassword = BBS_PASSWORD,
                 BbsProject = BBS_PROJECT,
                 BbsRepo = BBS_REPO,
-                Wait = true
             };
 
             // Assert
@@ -521,7 +589,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
+                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
                 .Returns(MIGRATION_ID);
 
             // Act
@@ -538,6 +606,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -634,10 +703,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-            _mockGithubApi
-                .Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null).Result)
-                .Returns(MIGRATION_ID);
-
             _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
 
             // Act
@@ -649,6 +714,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AwsAccessKey = AWS_ACCESS_KEY_ID,
                 AwsSecretKey = AWS_SECRET_ACCESS_KEY,
                 AwsBucketName = AWS_BUCKET_NAME,
+                AwsRegion = AWS_REGION,
                 QueueOnly = true,
             };
 
@@ -657,6 +723,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
                 MIGRATION_SOURCE_ID,
+                UNUSED_REPO_URL,
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
@@ -715,42 +782,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Access_Key_Environment_Variable()
-        {
-            // Arrange
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
-            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-#pragma warning disable CS0618
-            _mockEnvironmentVariableProvider.Setup(x => x.AwsAccessKey(false)).Returns(AWS_ACCESS_KEY);
-#pragma warning restore CS0618
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                QueueOnly = true,
-            };
-            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
-
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_ACCESS_KEY"))));
-        }
-
-        [Fact]
         public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Access_Key()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
@@ -767,43 +798,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task It_Does_Not_Throw_When_Aws_Bucket_Name_Is_Provided_And_Can_Fallback_To_Aws_Secret_Key_Environment_Variable()
-        {
-            // Arrange
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
-            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-#pragma warning disable CS0618
-            _mockEnvironmentVariableProvider.Setup(x => x.AwsSecretKey(false)).Returns(AWS_SECRET_KEY);
-#pragma warning restore CS0618
-
-            // Act, Assert
-            var args = new MigrateRepoCommandArgs
-            {
-                BbsServerUrl = BBS_SERVER_URL,
-                BbsUsername = BBS_USERNAME,
-                BbsPassword = BBS_PASSWORD,
-                BbsProject = BBS_PROJECT,
-                BbsRepo = BBS_REPO,
-                SshUser = SSH_USER,
-                SshPrivateKey = PRIVATE_KEY,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT,
-                QueueOnly = true,
-            };
-            await _handler.Invoking(async x => await x.Handle(args)).Should().NotThrowAsync();
-
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(msg => msg.Contains("AWS_SECRET_KEY"))));
-        }
-
-        [Fact]
-        public async Task It_Throws_When_Aws_Session_Token_Is_Provided_But_Aws_Region_Is_Not()
+        public async Task It_Throws_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region()
         {
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -817,7 +812,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             }))
                 .Should()
                 .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-region*AWS_REGION*--aws-session-token*AWS_SESSION_TOKEN*");
+                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
         }
 
         [Fact]
@@ -901,6 +896,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(
+                It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),

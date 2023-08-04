@@ -17,9 +17,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             description: "Invokes the GitHub APIs to migrate the repo and all repo data.")
         {
             AddOption(GithubSourceOrg);
-            AddOption(AdoServerUrl);
-            AddOption(AdoSourceOrg);
-            AddOption(AdoTeamProject);
             AddOption(SourceRepo);
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
@@ -40,33 +37,18 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(SkipReleases);
             AddOption(LockSourceRepo);
 
-            AddOption(Wait);
             AddOption(QueueOnly);
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
-            AddOption(AdoPat);
             AddOption(Verbose);
             AddOption(KeepArchive);
         }
 
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
         {
-            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set."
-        };
-        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
-        {
-            IsHidden = true,
-            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
-        };
-        public Option<string> AdoSourceOrg { get; } = new("--ado-source-org")
-        {
-            IsHidden = true,
-            Description = "Uses ADO_PAT env variable or --ado-pat option."
-        };
-        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
-        {
-            IsHidden = true
+            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT or --github-target-pat if not set.",
+            IsRequired = true,
         };
         public Option<string> SourceRepo { get; } = new("--source-repo")
         {
@@ -114,8 +96,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
             Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
-                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
-                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
+                          "Required if using AWS."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -141,11 +122,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             Description = "Lock source repo when migrating."
         };
-        public Option<bool> Wait { get; } = new("--wait")
-        {
-            IsHidden = true,
-            Description = "Synchronously waits for the repo migration to finish."
-        };
         public Option<bool> QueueOnly { get; } = new("--queue-only")
         {
             Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
@@ -156,10 +132,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
         public Option<string> GithubTargetPat { get; } = new("--github-target-pat");
-        public Option<string> AdoPat { get; } = new("--ado-pat")
-        {
-            IsHidden = true
-        };
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public Option<bool> KeepArchive { get; } = new("--keep-archive")

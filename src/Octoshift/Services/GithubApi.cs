@@ -17,8 +17,6 @@ public class GithubApi
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
 
-    private const string INSUFFICIENT_PERMISSIONS_HELP_MESSAGE = ". Please check that (a) you are an organization owner or you have been granted the migrator role and (b) your personal access token has the correct scopes. For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.";
-
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
     {
         _client = client;
@@ -106,6 +104,48 @@ public class GithubApi
         await _retryPolicy.Retry(() => _client.DeleteAsync(url));
     }
 
+    public virtual async Task<string> GetLoginName()
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query{viewer{login}}"
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["viewer"]["login"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the login for current user", ex);
+        }
+    }
+
+    public virtual async Task<string> GetOrgMembershipForUser(string org, string member)
+    {
+        var url = $"{_apiUrl}/orgs/{org}/memberships/{member}";
+
+        try
+        {
+            var response = await _client.GetAsync(url);
+
+            var data = JObject.Parse(response);
+
+            return (string)data["role"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) // Not a member
+        {
+            return null;
+        }
+    }
+
     public virtual async Task<bool> DoesRepoExist(string org, string repo)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
@@ -117,6 +157,10 @@ public class GithubApi
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.OK)
         {
             return true;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.MovedPermanently)
+        {
+            return false;
         }
     }
 
@@ -228,15 +272,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> CreateBbsMigrationSource(string orgId)
@@ -259,15 +296,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> CreateGhecMigrationSource(string orgId)
@@ -290,15 +320,8 @@ public class GithubApi
             operationName = "createMigrationSource"
         };
 
-        try
-        {
-            var data = await _client.PostGraphQLAsync(url, payload);
-            return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            throw new OctoshiftCliException(ex.Message + INSUFFICIENT_PERMISSIONS_HELP_MESSAGE, ex);
-        }
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
     public virtual async Task<string> StartMigration(string migrationSourceId, string sourceRepoUrl, string orgId, string repo, string sourceToken, string targetToken, string gitArchiveUrl = null, string metadataArchiveUrl = null, bool skipReleases = false, string targetRepoVisibility = null, bool lockSource = false)
@@ -338,6 +361,7 @@ public class GithubApi
                 ) {
                     repositoryMigration {
                         id,
+                        databaseId,
                         migrationSource {
                             id,
                             name,
@@ -394,7 +418,8 @@ public class GithubApi
                         sourceAccessToken: $sourceAccessToken
                     }) {
                         orgMigration {
-                            id
+                            id,
+                            databaseId
                         }
                     }";
 
@@ -446,11 +471,11 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
+    public virtual async Task<string> StartBbsMigration(string migrationSourceId, string bbsRepoUrl, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
     {
         return await StartMigration(
             migrationSourceId,
-            "https://not-used",  // source repository URL
+            bbsRepoUrl,  // source repository URL
             orgId,
             repo,
             "not-used",  // source access token
@@ -716,6 +741,25 @@ public class GithubApi
         }
     }
 
+    public virtual async Task<IEnumerable<Mannequin>> GetMannequinsByLogin(string orgId, string login)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = GetMannequinsByLoginPayload(orgId, login);
+
+        return await _retryPolicy.Retry(async () =>
+        {
+            return await _client.PostGraphQLWithPaginationAsync(
+                url,
+                payload,
+                data => (JArray)data["data"]["node"]["mannequins"]["nodes"],
+                data => (JObject)data["data"]["node"]["mannequins"]["pageInfo"])
+            .Select(mannequin => BuildMannequin(mannequin))
+            .ToListAsync();
+        });
+    }
+
+
     public virtual async Task<string> GetUserId(string login)
     {
         var url = $"{_apiUrl}/graphql";
@@ -767,7 +811,7 @@ public class GithubApi
         return data.ToObject<CreateAttributionInvitationResult>();
     }
 
-    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinsSkipInvitation(string orgId, string mannequinId, string targetUserId)
+    public virtual async Task<ReattributeMannequinToUserResult> ReclaimMannequinSkipInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
         var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
@@ -796,10 +840,18 @@ public class GithubApi
             variables = new { orgId, sourceId = mannequinId, targetId = targetUserId }
         };
 
-        var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
-
-        return data.ToObject<ReattributeMannequinToUserResult>();
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return data.ToObject<ReattributeMannequinToUserResult>();
+            });
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
+        {
+            throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
@@ -986,6 +1038,36 @@ public class GithubApi
         {
             query = $"{query} {{ {gql} }}",
             variables = new { id = orgId }
+        };
+    }
+
+    private static object GetMannequinsByLoginPayload(string orgId, string login)
+    {
+        var query = "query($id: ID!, $first: Int, $after: String, $login: String)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Organization {
+                        mannequins(first: $first, after: $after, login: $login) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                login
+                                id
+                                claimant {
+                                    login
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }";
+
+        return new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new { id = orgId, login }
         };
     }
 

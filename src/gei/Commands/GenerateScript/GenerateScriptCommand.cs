@@ -19,9 +19,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 description: "Generates a migration script. This provides you the ability to review the steps that this tool will take, and optionally modify the script if desired before running it.")
         {
             AddOption(GithubSourceOrg);
-            AddOption(AdoServerUrl);
-            AddOption(AdoSourceOrg);
-            AddOption(AdoTeamProject);
             AddOption(GithubTargetOrg);
 
             AddOption(GhesApiUrl);
@@ -36,27 +33,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             AddOption(Output);
             AddOption(Sequential);
             AddOption(GithubSourcePat);
-            AddOption(AdoPat);
             AddOption(Verbose);
             AddOption(KeepArchive);
         }
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
         {
-            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT if not set."
-        };
-        public Option<string> AdoServerUrl { get; } = new("--ado-server-url")
-        {
-            IsHidden = true,
-            Description = "Required if migrating from ADO Server. E.g. https://myadoserver.contoso.com. When migrating from ADO Server, --ado-source-org represents the collection name."
-        };
-        public Option<string> AdoSourceOrg { get; } = new("--ado-source-org")
-        {
-            IsHidden = true,
-            Description = "Uses ADO_PAT env variable or --ado-pat option."
-        };
-        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
-        {
-            IsHidden = true
+            Description = "Uses GH_SOURCE_PAT env variable or --github-source-pat option. Will fall back to GH_PAT if not set.",
+            IsRequired = true,
         };
         public Option<string> GithubTargetOrg { get; } = new("--github-target-org")
         {
@@ -94,11 +77,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         };
         public Option<string> GithubSourcePat { get; } = new("--github-source-pat");
 
-        public Option<string> AdoPat { get; } = new("--ado-pat")
-        {
-            IsHidden = true
-        };
-
         public Option<string> AwsBucketName { get; } = new("--aws-bucket-name")
         {
             Description = "If using AWS, the name of the S3 bucket to upload the BBS archive to."
@@ -107,8 +85,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public Option<string> AwsRegion { get; } = new("--aws-region")
         {
             Description = "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
-                          "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
-                          "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider."
+                          "Required if using AWS."
         };
 
         public Option<bool> Verbose { get; } = new("--verbose");
@@ -135,24 +112,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             var ghesVersionCheckerFactory = sp.GetRequiredService<GhesVersionCheckerFactory>();
 
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
-            GithubApi sourceGithubApi = null;
-            AdoApi sourceAdoApi = null;
 
-            if (args.GithubSourceOrg.HasValue())
-            {
-                sourceGithubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
-                    sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) :
-                    sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
-            }
-            else
-            {
-                var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
-                sourceAdoApi = adoApiFactory.Create(args.AdoServerUrl, args.AdoPat);
-            }
+            var sourceGithubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
+                sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) :
+                sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(sourceGithubApi);
 
-            return new GenerateScriptCommandHandler(log, sourceGithubApi, sourceAdoApi, versionProvider, ghesVersionChecker);
+            return new GenerateScriptCommandHandler(log, sourceGithubApi, versionProvider, ghesVersionChecker);
         }
     }
 }

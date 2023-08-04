@@ -54,6 +54,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var exportId = 0L;
 
+        if (args.ShouldImportArchive())
+        {
+            var targetRepoExists = await _githubApi.DoesRepoExist(args.GithubOrg, args.GithubRepo);
+
+            if (targetRepoExists)
+            {
+                throw new OctoshiftCliException($"A repository called {args.GithubOrg}/{args.GithubRepo} already exists");
+            }
+        }
+
         if (args.ShouldGenerateArchive())
         {
             exportId = await GenerateArchive(args);
@@ -186,15 +196,29 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
+        var bbsRepoUrl = GetBbsRepoUrl(args);
+
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
-        var migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
+
+        string migrationSourceId;
+
+        try
+        {
+            migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubOrg);
+            var message = $"{ex.Message}{insufficientPermissionsMessage}";
+            throw new OctoshiftCliException(message, ex);
+        }
 
         string migrationId;
 
         try
         {
-            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
+            migrationId = await _githubApi.StartBbsMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -236,9 +260,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetAwsRegion(MigrateRepoCommandArgs args) => args.AwsRegion.HasValue() ? args.AwsRegion : _environmentVariableProvider.AwsRegion(false);
 
-    private string GetAwsSessionToken(MigrateRepoCommandArgs args) =>
-        args.AwsSessionToken.HasValue() ? args.AwsSessionToken : _environmentVariableProvider.AwsSessionToken(false);
-
     private string GetAzureStorageConnectionString(MigrateRepoCommandArgs args) => args.AzureStorageConnectionString.HasValue()
         ? args.AzureStorageConnectionString
         : _environmentVariableProvider.AzureStorageConnectionString(false);
@@ -248,6 +269,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetBbsPassword(MigrateRepoCommandArgs args) => args.BbsPassword.HasValue() ? args.BbsPassword : _environmentVariableProvider.BbsPassword(false);
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
+
+    private string GetBbsRepoUrl(MigrateRepoCommandArgs args)
+    {
+        return args.BbsServerUrl.HasValue() && args.BbsProject.HasValue() && args.BbsRepo.HasValue()
+            ? $"{args.BbsServerUrl.TrimEnd('/')}/projects/{args.BbsProject}/repos/{args.BbsRepo}/browse"
+            : "https://not-used";
+    }
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
@@ -302,42 +330,17 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             if (!GetAwsAccessKey(args).HasValue())
             {
-#pragma warning disable CS0618
-                if (_environmentVariableProvider.AwsAccessKey(false).HasValue())
-#pragma warning restore CS0618
-                {
-                    _log.LogWarning("AWS_ACCESS_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_ACCESS_KEY_ID environment variable instead.");
-                }
-                else
-                {
-                    throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
-                }
+                throw new OctoshiftCliException("Either --aws-access-key or AWS_ACCESS_KEY_ID environment variable must be set.");
             }
 
             if (!GetAwsSecretKey(args).HasValue())
             {
-#pragma warning disable CS0618
-                if (_environmentVariableProvider.AwsSecretKey(false).HasValue())
-#pragma warning restore CS0618
-                {
-                    _log.LogWarning("AWS_SECRET_KEY environment variable is deprecated and will be removed in future releases. Please consider using AWS_SECRET_ACCESS_KEY environment variable instead.");
-                }
-                else
-                {
-                    throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
-                }
+                throw new OctoshiftCliException("Either --aws-secret-key or AWS_SECRET_ACCESS_KEY environment variable must be set.");
             }
 
-            if (GetAwsSessionToken(args).HasValue() && GetAwsRegion(args).IsNullOrWhiteSpace())
+            if (GetAwsRegion(args).IsNullOrWhiteSpace())
             {
-                throw new OctoshiftCliException(
-                    "--aws-region or AWS_REGION environment variable must be provided with --aws-session-token or AWS_SESSION_TOKEN environment variable.");
-            }
-
-            if (!GetAwsRegion(args).HasValue())
-            {
-                _log.LogWarning("Specifying an AWS region with the --aws-region argument or AWS_REGION environment variable is currently not required, " +
-                                "but will be required in a future release. Defaulting to us-east-1.");
+                throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
             }
         }
     }

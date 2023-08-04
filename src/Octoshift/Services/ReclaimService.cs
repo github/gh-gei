@@ -80,11 +80,12 @@ public class ReclaimService
         _log = logger;
     }
 
-    public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force)
+    public virtual async Task ReclaimMannequin(string mannequinUser, string mannequinId, string targetUser, string githubOrg, bool force, bool skipInvitation)
     {
         var githubOrgId = await _githubApi.GetOrganizationId(githubOrg);
 
-        var mannequins = new Mannequins((await GetMannequins(githubOrgId)).GetByLogin(mannequinUser, mannequinId));
+        var mannequins = new Mannequins((await GetMannequinsByLogin(githubOrgId, mannequinUser)).GetByLogin(mannequinUser, mannequinId));
+
         if (mannequins.IsEmpty())
         {
             throw new OctoshiftCliException($"User {mannequinUser} is not a mannequin.");
@@ -101,18 +102,37 @@ public class ReclaimService
 
         var success = true;
 
-        // get all unique mannequins by login and id and map them all to the same target
-        foreach (var mannequin in mannequins.GetUniqueUsers())
+        if (skipInvitation)
         {
-            var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, targetUserId);
+            foreach (var mannequin in mannequins.GetUniqueUsers())
+            {
+                var result = await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, mannequin.Id, targetUserId);
 
-            success &= HandleInvitationResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+                // If results return a fail-fast error, we should break out of the for-loop
+                if (!HandleReclaimationResult(mannequin.Login, targetUser, mannequin, targetUserId, result))
+                {
+                    throw new OctoshiftCliException("Failed to reclaim mannequin.");
+                }
+            }
+
+        }
+        else
+        {
+            // get all unique mannequins by login and id and map them all to the same target
+            foreach (var mannequin in mannequins.GetUniqueUsers())
+            {
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, targetUserId);
+
+                success &= HandleInvitationResult(mannequinUser, targetUser, mannequin, targetUserId, result);
+            }
+
+            if (!success)
+            {
+                throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
+            }
         }
 
-        if (!success)
-        {
-            throw new OctoshiftCliException("Failed to send reclaim mannequin invitation(s).");
-        }
+
     }
 
     public virtual async Task ReclaimMannequins(string[] lines, string githubTargetOrg, bool force, bool skipInvitation)
@@ -136,30 +156,49 @@ public class ReclaimService
 
         var githubOrgId = await _githubApi.GetOrganizationId(githubTargetOrg);
 
-        // org.enterprise_managed_user_enabled?
-
         var mannequins = await GetMannequins(githubOrgId);
+
+        // Parse CSV
+        var parsedMannequins = new List<Mannequin>();
 
         foreach (var line in lines.Skip(1).Where(l => l != null && l.Trim().Length > 0))
         {
             var (login, userid, claimantLogin) = ParseLine(line);
 
-            if (login == null)
+            parsedMannequins.Add(new Mannequin()
+            {
+                Login = login,
+                Id = userid,
+                MappedUser = new Claimant()
+                {
+                    Login = claimantLogin
+                }
+            });
+        }
+
+        // Validate CSV and claim mannequins
+        foreach (var mannequin in parsedMannequins)
+        {
+            if (mannequin.Login == null)
             {
                 continue;
             }
 
-            if (!force && mannequins.IsClaimed(login, userid))
+            if (!force && mannequins.IsClaimed(mannequin.Login, mannequin.Id))
             {
-                _log.LogError($"{login} is already claimed. Skipping (use force if you want to reclaim)");
+                _log.LogWarning($"{mannequin.Login} is already claimed. Skipping (use force if you want to reclaim)");
                 continue;
             }
 
-            var mannequin = mannequins.FindFirst(login, userid);
-
-            if (mannequin == null)
+            if (mannequins.FindFirst(mannequin.Login, mannequin.Id) == null)
             {
-                _log.LogError($"Mannequin {login} not found. Skipping.");
+                _log.LogWarning($"Mannequin {mannequin.Login} not found. Skipping.");
+                continue;
+            }
+
+            if (parsedMannequins.Where(x => x.Login == mannequin.Login && x.Id == mannequin.Id).Count() > 1)
+            {
+                _log.LogWarning($"Mannequin {mannequin.Login} is a duplicate. Skipping.");
                 continue;
             }
 
@@ -167,24 +206,28 @@ public class ReclaimService
 
             try
             {
-                claimantId = await _githubApi.GetUserId(claimantLogin);
+                claimantId = await _githubApi.GetUserId(mannequin.MappedUser.Login);
             }
             catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login"))
             {
-                _log.LogError($"Claimant \"{claimantLogin}\" not found. Will ignore it.");
+                _log.LogWarning($"Claimant \"{mannequin.MappedUser.Login}\" not found. Will ignore it.");
                 continue;
             }
 
             if (skipInvitation)
             {
-                //TODO: Check if org is emu before continuing, throw error if not
-                var result = await _githubApi.ReclaimMannequinsSkipInvitation(githubOrgId, userid, claimantId);
-                HandleReclaimationResult(login, claimantLogin, mannequin, claimantId, result);
+                var result = await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, mannequin.Id, claimantId);
+
+                // If results return a fail-fast error, we should break out of the for-loop
+                if (!HandleReclaimationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result))
+                {
+                    return;
+                }
             }
             else
             {
-                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, userid, claimantId);
-                HandleInvitationResult(login, claimantLogin, mannequin, claimantId, result);
+                var result = await _githubApi.CreateAttributionInvitation(githubOrgId, mannequin.Id, claimantId);
+                HandleInvitationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result);
             }
         }
     }
@@ -196,11 +239,18 @@ public class ReclaimService
         return new Mannequins(returnedMannequins);
     }
 
+    private async Task<Mannequins> GetMannequinsByLogin(string githubOrgId, string login)
+    {
+        var returnedMannequins = await _githubApi.GetMannequinsByLogin(githubOrgId, login);
+
+        return new Mannequins(returnedMannequins);
+    }
+
     private bool HandleInvitationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetUserId, CreateAttributionInvitationResult result)
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}) Reason: {result.Errors[0].Message}");
+            _log.LogError($"Failed to send reclaim invitation email to {targetUser} for mannequin {mannequinUser} ({mannequin.Id}): {result.Errors[0].Message}");
             return false;
         }
 
@@ -208,11 +258,11 @@ public class ReclaimService
             result.Data.CreateAttributionInvitation.Source.Id != mannequin.Id ||
             result.Data.CreateAttributionInvitation.Target.Id != targetUserId)
         {
-            _log.LogError($"Failed to invite {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+            _log.LogError($"Failed to send reclaim invitation email to {targetUser} for mannequin {mannequinUser} ({mannequin.Id})");
             return false;
         }
 
-        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to: {mannequinUser} ({mannequin.Id}) for {targetUser} ({targetUserId})");
+        _log.LogInformation($"Mannequin reclaim invitation email successfully sent to {targetUser} for {mannequinUser} ({mannequin.Id})");
 
         return true;
     }
@@ -221,8 +271,16 @@ public class ReclaimService
     {
         if (result.Errors != null)
         {
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId}): {result.Errors[0].Message}");
-            return false;
+            // Writing as switch statement in anticipation of other errors that will need specific logic
+            switch (result.Errors[0].Message)
+            {
+                case string a when a.Contains("is not an Enterprise Managed Users (EMU) organization"):
+                    _log.LogError("Failed to reclaim mannequins. The --skip-invitation flag is only available to EMU organizations.");
+                    return false; // Indicates we should stop parsing through the CSV
+                default:
+                    _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}: {result.Errors[0].Message}");
+                    return true;
+            }
         }
 
         if (result.Data.ReattributeMannequinToUser is null ||
@@ -230,13 +288,13 @@ public class ReclaimService
             result.Data.ReattributeMannequinToUser.Target.Id != targetUserId)
         {
 
-            _log.LogError($"Failed to reclaim {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
-            return false;
+            _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
+            return true;
         }
 
-        _log.LogInformation($"Successfully reclaimed {mannequinUser} ({mannequin.Id}) to {targetUser} ({targetUserId})");
+        _log.LogInformation($"Successfully reclaimed content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
 
-        return true;
+        return true; // Indiciates we should continue onto the next mannequin
     }
 
     private (string MannequinUser, string MannequinId, string TargetUser) ParseLine(string line)
@@ -245,7 +303,7 @@ public class ReclaimService
 
         if (components.Length != 3)
         {
-            _log.LogError($"Invalid line: \"{line}\". Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Will ignore it.");
             return (null, null, null);
         }
 
@@ -255,19 +313,19 @@ public class ReclaimService
 
         if (string.IsNullOrEmpty(login))
         {
-            _log.LogError($"Invalid line: \"{line}\". Mannequin login is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Mannequin login is not defined. Will ignore it.");
             return (null, null, null);
         }
 
         if (string.IsNullOrEmpty(userId))
         {
-            _log.LogError($"Invalid line: \"{line}\". Mannequin Id is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Mannequin Id is not defined. Will ignore it.");
             return (null, null, null);
         }
 
         if (string.IsNullOrEmpty(claimantLogin))
         {
-            _log.LogError($"Invalid line: \"{line}\". Target User is not defined. Will ignore it.");
+            _log.LogWarning($"Invalid line: \"{line}\". Target User is not defined. Will ignore it.");
             return (null, null, null);
         }
 

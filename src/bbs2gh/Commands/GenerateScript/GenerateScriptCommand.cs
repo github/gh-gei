@@ -106,8 +106,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
     public Option<string> AwsRegion { get; } = new(
         name: "--aws-region",
         description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
-                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
-                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
+                     "Required if using AWS.");
 
     public Option<bool> Verbose { get; } = new("--verbose");
 

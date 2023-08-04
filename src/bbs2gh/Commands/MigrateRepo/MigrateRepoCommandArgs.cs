@@ -26,7 +26,6 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string GithubRepo { get; set; }
     [Secret]
     public string GithubPat { get; set; }
-    public bool Wait { get; set; }
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
     public bool Kerberos { get; set; }
@@ -59,16 +58,6 @@ public class MigrateRepoCommandArgs : CommandArgs
             throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
         }
 
-        if (BbsServerUrl.HasValue() && ArchiveUrl.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-url can be specified.");
-        }
-
-        if (BbsServerUrl.HasValue() && ArchivePath.HasValue())
-        {
-            throw new OctoshiftCliException("Only one of --bbs-server-url or --archive-path can be specified.");
-        }
-
         if (ArchivePath.HasValue() && ArchiveUrl.HasValue())
         {
             throw new OctoshiftCliException("Only one of --archive-path or --archive-url can be specified.");
@@ -94,19 +83,9 @@ public class MigrateRepoCommandArgs : CommandArgs
             ValidateImportOptions();
         }
 
-        if (Wait)
+        if (SshPort == 7999)
         {
-            log?.LogWarning("--wait flag is obsolete and will be removed in a future version. The default behavior is now to wait.");
-        }
-
-        if (Wait && QueueOnly)
-        {
-            throw new OctoshiftCliException("You can't specify both --wait and --queue-only at the same time.");
-        }
-
-        if (!Wait && !QueueOnly)
-        {
-            log?.LogWarning("The default behavior has changed from only queueing the migration, to waiting for the migration to finish. If you ran this as part of a script to run multiple migrations in parallel, consider using the new --queue-only option to preserve the previous default behavior. This warning will be removed in a future version.");
+            log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
         }
     }
 
@@ -122,23 +101,19 @@ public class MigrateRepoCommandArgs : CommandArgs
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
 
-        if (BbsProject.HasValue() || BbsRepo.HasValue())
-        {
-            throw new OctoshiftCliException("--bbs-project and --bbs-repo can only be provided with --bbs-server-url.");
-        }
-
         if (new[] { SshUser, SshPrivateKey, ArchiveDownloadHost, SmbUser, SmbPassword, SmbDomain }.Any(obj => obj.HasValue()))
         {
             throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
         }
     }
 
-    public bool ShouldGenerateArchive() => BbsServerUrl.HasValue();
+    public bool ShouldGenerateArchive() => BbsServerUrl.HasValue() && !ArchivePath.HasValue() && !ArchiveUrl.HasValue();
 
     public bool ShouldDownloadArchive() => SshUser.HasValue() || SmbUser.HasValue();
 
     public bool ShouldUploadArchive() => ArchiveUrl.IsNullOrWhiteSpace() && GithubOrg.HasValue();
 
+    // NOTE: ArchiveUrl doesn't necessarily refer to the value passed in by the user to the CLI - it is set during CLI runtime when an archive is uploaded to blob storage
     public bool ShouldImportArchive() => ArchiveUrl.HasValue() || GithubOrg.HasValue();
 
     private void ValidateGenerateOptions()

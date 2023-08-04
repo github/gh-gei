@@ -52,6 +52,11 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         Description = "Map the user even if it was previously mapped"
     };
 
+    public virtual Option<bool> NoPrompt { get; } = new("--no-prompt")
+    {
+        Description = "Overrides all prompts and warnings with 'Y' value."
+    };
+
     public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
@@ -59,7 +64,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<bool> SkipInvitation { get; } = new("--skip-invitation")
     {
-        Description = "Reclaim mannequins immediately without sending an invitation to the user. This is only supported for Enterprise Managed Users (EMU) organizations. Warning: this is irreversible."
+        Description = "Reclaim mannequins immediately without sending an invitation to the user. Only available for Enterprise Managed Users (EMU) organizations. Warning: this is irreversible!"
     };
 
     public virtual Option<bool> Verbose { get; } = new("--verbose");
@@ -82,7 +87,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         var reclaimService = new ReclaimService(githubApi, log);
         var confirmationService = sp.GetRequiredService<ConfirmationService>();
 
-        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService);
+        return new ReclaimMannequinCommandHandler(log, reclaimService, confirmationService, githubApi);
     }
 
     protected void AddOptions()
@@ -93,6 +98,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         AddOption(MannequinId);
         AddOption(TargetUser);
         AddOption(Force);
+        AddOption(NoPrompt);
         AddOption(GithubPat);
         AddOption(SkipInvitation);
         AddOption(Verbose);

@@ -36,8 +36,14 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
+                .AddSingleton<BasicHttpClient>()
+                .AddSingleton<GithubStatusApi>()
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
+                .AddSingleton<ProjectsCsvGeneratorService>()
+                .AddSingleton<ReposCsvGeneratorService>()
+                .AddSingleton<BbsInspectorService>()
+                .AddSingleton<BbsInspectorServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<WarningsCountLogger>()
@@ -68,6 +74,16 @@ namespace OctoshiftCLI.BbsToGithub
 
             try
             {
+                await GithubStatusCheck(serviceProvider);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("Could not check GitHub availability from githubstatus.com.  See https://www.githubstatus.com for details.");
+                Logger.LogVerbose(ex.ToString());
+            }
+
+            try
+            {
                 await LatestVersionCheck(serviceProvider);
             }
             catch (Exception ex)
@@ -81,8 +97,18 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static void SetContext(InvocationContext context)
         {
-            CliContext.RootCommand = context.ParseResult.RootCommandResult.Command.Name;
+            CliContext.RootCommand = "bbs2gh";
             CliContext.ExecutingCommand = context.ParseResult.CommandResult.Command.Name;
+        }
+
+        private static async Task GithubStatusCheck(ServiceProvider sp)
+        {
+            var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
+
+            if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
+            {
+                Logger.LogWarning("GitHub is currently experiencing availability issues.  See https://www.githubstatus.com for details.");
+            }
         }
 
         private static async Task LatestVersionCheck(ServiceProvider sp)

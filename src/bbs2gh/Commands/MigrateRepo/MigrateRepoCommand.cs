@@ -41,7 +41,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsSecretKey);
         AddOption(AwsSessionToken);
         AddOption(AwsRegion);
-        AddOption(Wait);
         AddOption(QueueOnly);
         AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
         AddOption(Kerberos);
@@ -52,15 +51,24 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> BbsServerUrl { get; } = new(
         name: "--bbs-server-url",
-        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990");
+        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsProject { get; } = new(
         name: "--bbs-project",
-        description: "The Bitbucket project to migrate.");
+        description: "The Bitbucket project to migrate.")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsRepo { get; } = new(
         name: "--bbs-repo",
-        description: "The Bitbucket repository to migrate.");
+        description: "The Bitbucket repository to migrate.")
+    {
+        IsRequired = true
+    };
 
     public Option<string> BbsUsername { get; } = new(
         name: "--bbs-username",
@@ -107,8 +115,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> AwsRegion { get; } = new(
         name: "--aws-region",
         description: "If using AWS, the AWS region. If not provided, it will be read from AWS_REGION environment variable. " +
-                     "Defaults to us-east-1 if neither the argument nor the environment variable is set. " +
-                     "In a future release, you will be required to set an AWS region if using AWS S3 as your blob storage provider.");
+                     "Required if using AWS.");
 
     public Option<string> GithubOrg { get; } = new("--github-org");
 
@@ -156,11 +163,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
         description: "The GitHub personal access token to be used for the migration. If not set will be read from GH_PAT environment variable.");
-
-    public Option<bool> Wait { get; } = new(
-        name: "--wait",
-        description: "Synchronously waits for the repo migration to finish.")
-    { IsHidden = true };
 
     public Option<bool> QueueOnly { get; } = new(
         name: "--queue-only",
