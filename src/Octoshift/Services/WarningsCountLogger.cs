@@ -14,7 +14,6 @@ public class WarningsCountLogger
         switch (warningsCount)
         {
             case 0:
-                _log.LogInformation("No warnings encountered during this migration");
                 break;
             case 1:
                 _log.LogWarning("1 warning encountered during this migration");

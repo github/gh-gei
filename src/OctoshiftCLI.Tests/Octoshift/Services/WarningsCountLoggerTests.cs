@@ -21,14 +21,6 @@ public class WarningsCountLoggerTests
     }
 
     [Fact]
-    public void LogWarningsCount_Should_Write_No_Warnings_To_Console_Out()
-    {
-        _warningsCountLogger.LogWarningsCount(0);
-
-        _consoleOutput.Should().Contain("No warnings encountered during this migration");
-    }
-
-    [Fact]
     public void LogWarningsCount_Should_Write_1_Warning_To_Console_Out()
     {
         _warningsCountLogger.LogWarningsCount(1);

@@ -54,7 +54,6 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} succeeded for {TARGET_REPO}",
-                "No warnings encountered during this migration",
                 $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
     };
 
@@ -66,7 +65,7 @@ public class WaitForMigrationCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
         _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
@@ -195,7 +194,6 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                "No warnings encountered during this migration",
                 $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
             };
 
@@ -211,7 +209,7 @@ public class WaitForMigrationCommandHandlerTests
             .WithMessage(failureReason);
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
         _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
@@ -246,7 +244,6 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                "No warnings encountered during this migration",
                 $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
             };
 
@@ -263,7 +260,7 @@ public class WaitForMigrationCommandHandlerTests
 
         // Assert
 
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(8));
+        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
         _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
