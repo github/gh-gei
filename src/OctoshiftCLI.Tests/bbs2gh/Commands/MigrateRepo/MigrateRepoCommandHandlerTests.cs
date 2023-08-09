@@ -22,6 +22,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private readonly Mock<IBbsArchiveDownloader> _mockBbsArchiveDownloader = new();
         private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
+        private readonly WarningsCountLogger _warningsCountLogger;
         private readonly MigrateRepoCommandHandler _handler;
 
         private const string ARCHIVE_PATH = "path/to/archive.tar";
@@ -57,6 +58,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
         public MigrateRepoCommandHandlerTests()
         {
+            _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
             _handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
                 _mockGithubApi.Object,
@@ -65,7 +67,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 _mockBbsArchiveDownloader.Object,
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockFileSystemProvider.Object
+                _mockFileSystemProvider.Object,
+                _warningsCountLogger
             );
         }
 
@@ -278,7 +281,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 null, // in case of running on Bitbucket server, the downloader will be null
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
-                _mockFileSystemProvider.Object
+                _mockFileSystemProvider.Object,
+                _warningsCountLogger
             );
             await handler.Handle(args);
 

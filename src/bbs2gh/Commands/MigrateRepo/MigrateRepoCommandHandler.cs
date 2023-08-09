@@ -18,6 +18,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly IBbsArchiveDownloader _bbsArchiveDownloader;
     private readonly FileSystemProvider _fileSystemProvider;
+    private readonly WarningsCountLogger _warningsCountLogger;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
 
     public MigrateRepoCommandHandler(
@@ -28,7 +29,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         IBbsArchiveDownloader bbsArchiveDownloader,
         AzureApi azureApi,
         AwsApi awsApi,
-        FileSystemProvider fileSystemProvider)
+        FileSystemProvider fileSystemProvider,
+        WarningsCountLogger warningsCountLogger)
     {
         _log = log;
         _githubApi = githubApi;
@@ -38,6 +40,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _environmentVariableProvider = environmentVariableProvider;
         _bbsArchiveDownloader = bbsArchiveDownloader;
         _fileSystemProvider = fileSystemProvider;
+        _warningsCountLogger = warningsCountLogger;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)
@@ -229,22 +232,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        var (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+        var (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
             _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
             await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
-            (migrationState, _, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+            (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
+            _log.LogError($"Migration Failed. Migration ID: {migrationId}");
+            _warningsCountLogger.LogWarningsCount(warningsCount);
             _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
-            throw new OctoshiftCliException($"Migration #{migrationId} failed: {failureReason}");
+            throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
+        _warningsCountLogger.LogWarningsCount(warningsCount);
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
     }
 

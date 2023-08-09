@@ -26,6 +26,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
         private readonly RetryPolicy _retryPolicy;
         private readonly MigrateRepoCommandHandler _handler;
+        private readonly WarningsCountLogger _warningsCountLogger;
 
         private const string TARGET_API_URL = "https://api.github.com";
         private const string GHES_API_URL = "https://myghes/api/v3";
@@ -45,6 +46,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         public MigrateRepoCommandHandlerTests()
         {
             _retryPolicy = new RetryPolicy(_mockOctoLogger.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
+            _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
+
             _handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
                 _mockSourceGithubApi.Object,
@@ -55,7 +58,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
         }
 
         [Fact]
@@ -199,7 +203,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -282,7 +286,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -355,7 +359,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -423,7 +427,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
 
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
@@ -512,7 +516,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -577,7 +581,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -641,7 +645,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -733,7 +737,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi
@@ -1203,7 +1207,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, null, null));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
@@ -1233,7 +1237,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 _mockHttpDownloadService.Object,
                 _mockFileSystemProvider.Object,
                 _mockGhesVersionChecker.Object,
-                _retryPolicy);
+                _retryPolicy,
+                _warningsCountLogger);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -1452,7 +1457,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     null,
                     false).Result)
                 .Returns(migrationId);
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, "", ""));
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, "", ""));
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);

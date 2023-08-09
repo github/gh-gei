@@ -13,12 +13,13 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
 
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
+    private readonly WarningsCountLogger _warningsCountLogger;
 
-
-    public WaitForMigrationCommandHandler(OctoLogger log, GithubApi githubApi)
+    public WaitForMigrationCommandHandler(OctoLogger log, GithubApi githubApi, WarningsCountLogger warningsCountLogger)
     {
         _log = log;
         _githubApi = githubApi;
+        _warningsCountLogger = warningsCountLogger;
     }
 
     public async Task Handle(WaitForMigrationCommandArgs args)
@@ -77,7 +78,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
     {
         _log.LogInformation($"Waiting for migration (ID: {migrationId}) to finish...");
 
-        var (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
+        var (state, repositoryName, warningsCount, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
 
         _log.LogInformation($"Waiting for migration of repository {repositoryName} to finish...");
 
@@ -86,6 +87,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsSucceeded(state))
             {
                 _log.LogSuccess($"Migration {migrationId} succeeded for {repositoryName}");
+                _warningsCountLogger.LogWarningsCount(warningsCount);
                 _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 return;
             }
@@ -93,6 +95,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             if (RepositoryMigrationStatus.IsFailed(state))
             {
                 _log.LogError($"Migration {migrationId} failed for {repositoryName}");
+                _warningsCountLogger.LogWarningsCount(warningsCount);
                 _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs`");
                 throw new OctoshiftCliException(failureReason);
             }
@@ -101,7 +104,7 @@ public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCo
             _log.LogInformation($"Waiting {WaitIntervalInSeconds} seconds...");
             await Task.Delay(WaitIntervalInSeconds * 1000);
 
-            (state, repositoryName, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
+            (state, repositoryName, warningsCount, failureReason, migrationLogUrl) = await githubApi.GetMigration(migrationId);
         }
     }
 }

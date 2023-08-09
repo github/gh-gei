@@ -13,6 +13,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        private readonly Mock<WarningsCountLogger> _warningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
 
         private readonly ServiceProvider _serviceProvider;
         private readonly MigrateRepoCommand _command = new();
@@ -23,7 +24,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
                 .AddSingleton(_mockGithubApiFactory.Object)
-                .AddSingleton(_mockEnvironmentVariableProvider.Object);
+                .AddSingleton(_mockEnvironmentVariableProvider.Object)
+                .AddSingleton(_warningsCountLogger.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }

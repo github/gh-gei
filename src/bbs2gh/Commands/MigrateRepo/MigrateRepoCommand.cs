@@ -247,6 +247,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
             awsApi = awsApiFactory.Create(args.AwsRegion, args.AwsAccessKey, args.AwsSecretKey, args.AwsSessionToken);
         }
 
-        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider);
+        var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
+
+        return new MigrateRepoCommandHandler(log, githubApi, bbsApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider, warningsCountLogger);
     }
 }

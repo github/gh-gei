@@ -1065,16 +1065,34 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetMigration_Returns_The_Migration_State_And_Repository_Name()
+    public async Task GetMigration_Returns_The_Migration_State_Repository_Name_And_Warnings_Count()
     {
         // Arrange
         const string migrationId = "MIGRATION_ID";
         const string url = "https://api.github.com/graphql";
 
-        var payload =
-            "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
-            $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+        var query = "query($id: ID!)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Migration {
+                        id,
+                        sourceUrl,
+                        migrationLogUrl,
+                        migrationSource {
+                            name
+                        },
+                        state,
+                        warningsCount,
+                        failureReason,
+                        repositoryName
+                    }
+                }";
+
+        var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
         const string actualMigrationState = "SUCCEEDED";
+        const int actualWarningsCount = 3;
+
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
@@ -1085,6 +1103,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
+                        ""warningsCount"": {actualWarningsCount},
                         ""failureReason"": """",
                         ""repositoryName"": ""{GITHUB_REPO}"",
                         ""migrationLogUrl"": ""{LOG_URL}""
@@ -1093,15 +1112,16 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, expectedRepositoryName, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, expectedRepositoryName, expectedWarningsCount, expectedFailureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
         expectedRepositoryName.Should().Be(GITHUB_REPO);
+        expectedWarningsCount.Should().Be(actualWarningsCount);
         expectedFailureReason.Should().BeEmpty();
         migrationLogUrl.Should().Be(LOG_URL);
     }
@@ -1113,9 +1133,25 @@ public class GithubApiTests
         const string migrationId = "MIGRATION_ID";
         const string url = "https://api.github.com/graphql";
 
-        var payload =
-            "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
-            $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+        var query = "query($id: ID!)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Migration {
+                        id,
+                        sourceUrl,
+                        migrationLogUrl,
+                        migrationSource {
+                            name
+                        },
+                        state,
+                        warningsCount,
+                        failureReason,
+                        repositoryName
+                    }
+                }";
+
+        var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
         const string actualMigrationState = "SUCCEEDED";
         var response = JObject.Parse($@"
             {{
@@ -1127,6 +1163,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
+                        ""warningsCount"": 0,
                         ""failureReason"": """",
                         ""migrationLogUrl"": ""{LOG_URL}""
                     }}
@@ -1134,13 +1171,13 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, _, _, _, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
@@ -1153,9 +1190,25 @@ public class GithubApiTests
         const string migrationId = "MIGRATION_ID";
         const string url = "https://api.github.com/graphql";
 
-        var payload =
-            "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
-            $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+        var query = "query($id: ID!)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Migration {
+                        id,
+                        sourceUrl,
+                        migrationLogUrl,
+                        migrationSource {
+                            name
+                        },
+                        state,
+                        warningsCount,
+                        failureReason,
+                        repositoryName
+                    }
+                }";
+
+        var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
         const string actualMigrationState = "SUCCEEDED";
 
         var response = JObject.Parse($@"
@@ -1168,6 +1221,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""{actualMigrationState}"",
+                        ""warningsCount"": 0,
                         ""failureReason"": """",
                         ""migrationLogUrl"": ""{LOG_URL}""
                     }}
@@ -1175,13 +1229,13 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(response);
 
         // Act
-        var (expectedMigrationState, _, _, _) = await _githubApi.GetMigration(migrationId);
+        var (expectedMigrationState, _, _, _, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedMigrationState.Should().Be(actualMigrationState);
@@ -1194,9 +1248,25 @@ public class GithubApiTests
         const string migrationId = "MIGRATION_ID";
         const string url = "https://api.github.com/graphql";
 
-        var payload =
-            "{\"query\":\"query($id: ID!) { node(id: $id) { ... on Migration { id, sourceUrl, migrationLogUrl, migrationSource { name }, state, failureReason, repositoryName } } }\"" +
-            $",\"variables\":{{\"id\":\"{migrationId}\"}}}}";
+        var query = "query($id: ID!)";
+        var gql = @"
+                node(id: $id) {
+                    ... on Migration {
+                        id,
+                        sourceUrl,
+                        migrationLogUrl,
+                        migrationSource {
+                            name
+                        },
+                        state,
+                        warningsCount,
+                        failureReason,
+                        repositoryName
+                    }
+                }";
+
+        var payload = new { query = $"{query} {{ {gql} }}", variables = new { id = migrationId } };
+
         const string actualFailureReason = "FAILURE_REASON";
         var response = JObject.Parse($@"
             {{
@@ -1208,6 +1278,7 @@ public class GithubApiTests
                             ""name"": ""GHEC Archive Source""
                         }},
                         ""state"": ""FAILED"",
+                        ""warningsCount"": 0,
                         ""failureReason"": ""{actualFailureReason}"",
                         ""repositoryName"": ""{GITHUB_REPO}"",
                         ""migrationLogUrl"": ""{LOG_URL}""
@@ -1216,11 +1287,11 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(response);
 
         // Act
-        var (_, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
+        var (_, _, _, expectedFailureReason, _) = await _githubApi.GetMigration(migrationId);
 
         // Assert
         expectedFailureReason.Should().Be(actualFailureReason);
