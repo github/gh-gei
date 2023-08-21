@@ -239,7 +239,7 @@ public sealed class AdoClientTests : IDisposable
     public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
     {
         // Arrange
-        var httpResponse = () => new HttpResponseMessage(HttpStatusCode.InternalServerError);
+        using var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
         var handlerMock = new Mock<HttpMessageHandler>();
         handlerMock
             .Protected()
