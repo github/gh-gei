@@ -35,6 +35,11 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true
+
     - name: dotnet format
       run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
 
