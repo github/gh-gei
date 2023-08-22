@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        global-json-file: global.json
 
     - name: Build Artifacts (Linux)
       if: matrix.target-os == 'ubuntu-latest'

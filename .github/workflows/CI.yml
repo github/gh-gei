@@ -33,7 +33,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        global-json-file: global.json
 
     - name: dotnet format
       run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
