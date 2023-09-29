@@ -16,7 +16,7 @@ public sealed class BbsToGithub : IDisposable
 {
 
     private const string SSH_KEY_FILE = "ssh_key.pem";
-    private const string AWS_BUCKET_NAME = "github-dev";
+    private const string AWS_BUCKET_NAME = "octoshift-migration-archives";
     private const string AWS_REGION = "us-east-1";
 
     private readonly ITestOutputHelper _output;
