@@ -53,6 +53,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         ValidateOptions(args);
 
         var exportId = 0L;
+        var migrationSourceId = "";
 
         if (args.ShouldImportArchive())
         {
@@ -62,6 +63,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 throw new OctoshiftCliException($"A repository called {args.GithubOrg}/{args.GithubRepo} already exists");
             }
+
+            migrationSourceId = await CreateMigrationSource(args);
         }
 
         if (args.ShouldGenerateArchive())
@@ -99,7 +102,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ShouldImportArchive())
         {
-            await ImportArchive(args, args.ArchiveUrl);
+            await ImportArchive(args, migrationSourceId, args.ArchiveUrl);
         }
     }
 
@@ -190,7 +193,26 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return archiveBlobUrl;
     }
 
-    private async Task ImportArchive(MigrateRepoCommandArgs args, string archiveUrl = null)
+    private async Task<string> CreateMigrationSource(MigrateRepoCommandArgs args)
+    {
+        _log.LogInformation("Creating Migration Source...");
+
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
+
+        try
+        {
+            return await _githubApi.CreateBbsMigrationSource(githubOrgId);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubOrg);
+            var message = $"{ex.Message}{insufficientPermissionsMessage}";
+            throw new OctoshiftCliException(message, ex);
+        }
+    }
+
+    private async Task ImportArchive(MigrateRepoCommandArgs args, string migrationSourceId, string archiveUrl = null)
     {
         _log.LogInformation("Importing Archive...");
 
@@ -200,19 +222,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
-
-        string migrationSourceId;
-
-        try
-        {
-            migrationSourceId = await _githubApi.CreateBbsMigrationSource(githubOrgId);
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubOrg);
-            var message = $"{ex.Message}{insufficientPermissionsMessage}";
-            throw new OctoshiftCliException(message, ex);
-        }
 
         string migrationId;
 

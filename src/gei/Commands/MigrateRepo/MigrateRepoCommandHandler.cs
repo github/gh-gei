@@ -85,7 +85,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 throw new OctoshiftCliException($"The target org \"{args.GithubTargetOrg}\" does not exist.");
             }
+        }
 
+        string migrationSourceId;
+
+        var githubOrgId = await _targetGithubApi.GetOrganizationId(args.GithubTargetOrg);
+
+        try
+        {
+            migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
+        {
+            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubTargetOrg);
+            var message = $"{ex.Message}{insufficientPermissionsMessage}";
+            throw new OctoshiftCliException(message, ex);
+        }
+
+        if (args.GhesApiUrl.HasValue())
+        {
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
               args.SourceRepo,
@@ -102,23 +120,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
 
-        var githubOrgId = await _targetGithubApi.GetOrganizationId(args.GithubTargetOrg);
         var sourceRepoUrl = GetSourceRepoUrl(args);
         var sourceToken = GetSourceToken(args);
         var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
-
-        string migrationSourceId;
-
-        try
-        {
-            migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
-        }
-        catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
-        {
-            var insufficientPermissionsMessage = InsufficientPermissionsMessageGenerator.Generate(args.GithubTargetOrg);
-            var message = $"{ex.Message}{insufficientPermissionsMessage}";
-            throw new OctoshiftCliException(message, ex);
-        }
 
         string migrationId;
 
