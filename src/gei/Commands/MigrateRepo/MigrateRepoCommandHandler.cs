@@ -23,7 +23,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly GhesVersionChecker _ghesVersionChecker;
     private readonly RetryPolicy _retryPolicy;
     private readonly WarningsCountLogger _warningsCountLogger;
-    private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
+    private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 20;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
