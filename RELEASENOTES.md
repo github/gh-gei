@@ -1,1 +1,2 @@
 - Fix version check so that a version later than the latest version published on GitHub isn't considered old
+- Fix `download-logs` commands suggested by `bbs2gh migrate-repo` and `ado2gh migrate-repo` to use correct arguments
