@@ -1,1 +1,2 @@
 - Extend timeout from 10 hours to 20 hours when generating GitHub Enterprise Server migration archives in `gh gei migrate-repo`
+- Fix version check so that a version later than the latest version published on GitHub isn't considered old
