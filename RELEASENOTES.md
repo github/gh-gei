@@ -1,1 +1,1 @@
-
+- Fix version check so that a version later than the latest version published on GitHub isn't considered old
