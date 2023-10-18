@@ -1,1 +1,2 @@
 - Fix version check so that a version later than the latest version published on GitHub isn't considered old
+- Fix `gei generate-script --download-migration-logs` so the generated script successfully downloads the migration logs

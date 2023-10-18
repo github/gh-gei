@@ -433,11 +433,11 @@ if (-not $env:GH_PAT) {
             expected.AppendLine();
             expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo1}\"] }}");
             expected.AppendLine($"if ($RepoMigrations[\"{repo1}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
-            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo1}\"");
+            expected.AppendLine($"gh gei download-logs --github-org \"{TARGET_ORG}\" --github-repo \"{repo1}\"");
             expected.AppendLine();
             expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{repo2}\"] }}");
             expected.AppendLine($"if ($RepoMigrations[\"{repo2}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
-            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{repo2}\"");
+            expected.AppendLine($"gh gei download-logs --github-org \"{TARGET_ORG}\" --github-repo \"{repo2}\"");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
@@ -522,7 +522,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             expected.AppendLine();
             expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
             expected.AppendLine($"if ($RepoMigrations[\"{REPO}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
-            expected.AppendLine($"gh gei download-logs --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\"");
+            expected.AppendLine($"gh gei download-logs --github-org \"{TARGET_ORG}\" --github-repo \"{REPO}\"");
             expected.AppendLine();
             expected.AppendLine();
             expected.AppendLine("Write-Host =============== Summary ===============");
