@@ -75,6 +75,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 args.ArchivePath = await DownloadArchive(exportId);
             }
+
+            if (!args.ShouldDownloadArchive() && args.ShouldUploadArchive())
+            {
+                _log.LogWarning($"You haven't specified --ssh-user or --smb-user, so we assume that you're running the CLI on the Bitbucket instance itself. If you are not running this command on the Bitbucket instance, run this command again with the --ssh-user or --smb-user argument to allow the CLI to download the migration archive from the server.");
+            }
         }
 
         if (args.ShouldUploadArchive())
@@ -162,7 +167,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException($"Bitbucket export failed --> State: {exportState}; Message: {exportMessage}");
         }
 
-        _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
+        _log.LogInformation($"Export completed. Your migration archive should be ready **on your Bitbucket instance** at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
 
         return exportId;
     }
