@@ -250,17 +250,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
+        var migrationLogAvailableMessage = $"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}`";
+
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
             _warningsCountLogger.LogWarningsCount(warningsCount);
-            _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}`");
+            _log.LogInformation(migrationLogAvailableMessage);
             throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _warningsCountLogger.LogWarningsCount(warningsCount);
-        _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}`");
+        _log.LogInformation(migrationLogAvailableMessage);
     }
 
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
