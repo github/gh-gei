@@ -26,7 +26,7 @@ public class VersionChecker : IVersionProvider
 
         curVersion = curVersion[..latestVersion.Length];
 
-        return curVersion == latestVersion;
+        return latestVersion.CompareTo(curVersion) <= 0;
     }
 
     public string GetCurrentVersion()
