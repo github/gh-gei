@@ -20,6 +20,28 @@ Use the [Discussions](https://github.com/github/gh-gei/discussions) tab in this 
 
 All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/gh-gei/issues/101).
 
+
+## Debugging code 
+
+There are two ways to debug code within VS code. 
+
+### Run GH-GHEI command locally
+Run the following command in your terminal:
+`dotnet run --project src/ado2gh/ado2gh.csproj -- <<INSERT COMMAND HERE>>`
+
+### Use debugger
+
+If you use the built in debugger you are able to set breakpoints and inspect the code within VS Code. 
+
+1. Navigate to `.vs_code/launch.json`.
+2. Find the command you are looking to run, for example: `Launch ado2gh`.
+3. Update the args property to have the arguments you're looking to test.
+    - "args": ["migrate-repo", "--ado-org", "test org", "--ado-team-project", "build-playground" ...]
+4. Set a breakpoint within your code as needed.
+5. Navigate to the `Run and debug` side panel option.
+6. Navigate to the drop down menu and select the command you would like to run, for example: `Launch ado2gh`.
+7. Press the play button
+
 ## Submitting a Pull Request
 
 Before submitting a Pull Request please first open an issue to get feedback on the change you intend to submit.
