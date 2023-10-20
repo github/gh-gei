@@ -75,6 +75,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 args.ArchivePath = await DownloadArchive(exportId);
             }
+
+            if (!args.ShouldDownloadArchive() && args.ShouldUploadArchive())
+            {
+                _log.LogWarning($"You haven't specified --ssh-user or --smb-user, so we assume that you're running the CLI on the Bitbucket instance itself. If you are not running this command on the Bitbucket instance, run this command again with the --ssh-user or --smb-user argument to allow the CLI to download the migration archive from the server.");
+            }
         }
 
         if (args.ShouldUploadArchive())
@@ -162,7 +167,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException($"Bitbucket export failed --> State: {exportState}; Message: {exportMessage}");
         }
 
-        _log.LogInformation($"Export completed. Your migration archive should be ready on your instance at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
+        _log.LogInformation($"Export completed. Your migration archive should be ready **on your Bitbucket instance** at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
 
         return exportId;
     }
@@ -250,17 +255,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
+        var migrationLogAvailableMessage = $"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}`";
+
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
             _warningsCountLogger.LogWarningsCount(warningsCount);
-            _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
+            _log.LogInformation(migrationLogAvailableMessage);
             throw new OctoshiftCliException(failureReason);
         }
 
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _warningsCountLogger.LogWarningsCount(warningsCount);
-        _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubOrg} --target-repo {args.GithubRepo}`");
+        _log.LogInformation(migrationLogAvailableMessage);
     }
 
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);
