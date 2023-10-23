@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -21,12 +22,10 @@ public class VersionChecker : IVersionProvider
 
     public async Task<bool> IsLatest()
     {
-        var curVersion = GetCurrentVersion();
-        var latestVersion = await GetLatestVersion();
+        var currentVersion = Version.Parse(GetCurrentVersion());
+        var latestVersion = Version.Parse(await GetLatestVersion());
 
-        curVersion = curVersion[..latestVersion.Length];
-
-        return latestVersion.CompareTo(curVersion) <= 0;
+        return currentVersion >= latestVersion;
     }
 
     public string GetCurrentVersion()
