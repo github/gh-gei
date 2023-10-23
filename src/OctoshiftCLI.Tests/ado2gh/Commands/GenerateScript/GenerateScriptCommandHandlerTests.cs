@@ -44,7 +44,7 @@ public class GenerateScriptCommandHandlerTests
     public GenerateScriptCommandHandlerTests()
     {
         var mockVersionProvider = new Mock<IVersionProvider>();
-        mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+        mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
 
         _handler = new GenerateScriptCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, mockVersionProvider.Object, _mockAdoInspector.Object)
         {
@@ -608,7 +608,7 @@ public class GenerateScriptCommandHandlerTests
         var expected = new StringBuilder();
         expected.AppendLine("#!/usr/bin/env pwsh");
         expected.AppendLine();
-        expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+        expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
         expected.AppendLine(@"
 function Exec {
     param (
@@ -719,7 +719,7 @@ if ($Failed -ne 0) {
         var expected = new StringBuilder();
         expected.AppendLine("#!/usr/bin/env pwsh");
         expected.AppendLine();
-        expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+        expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
         expected.AppendLine(@"
 function Exec {
     param (
@@ -861,7 +861,7 @@ if ($Failed -ne 0) {
         var expected = new StringBuilder();
         expected.AppendLine("#!/usr/bin/env pwsh");
         expected.AppendLine();
-        expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+        expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
         expected.AppendLine(@"
 function Exec {
     param (
@@ -1016,7 +1016,7 @@ if ($Failed -ne 0) {
         var expected = new StringBuilder();
         expected.AppendLine("#!/usr/bin/env pwsh");
         expected.AppendLine();
-        expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+        expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
         expected.AppendLine(@"
 function Exec {
     param (

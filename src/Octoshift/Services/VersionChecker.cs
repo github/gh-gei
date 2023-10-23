@@ -30,7 +30,7 @@ public class VersionChecker : IVersionProvider
 
     public string GetCurrentVersion()
     {
-        return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        return Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
     }
 
     public string GetVersionComments() =>
