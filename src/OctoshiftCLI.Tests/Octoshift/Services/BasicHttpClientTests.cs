@@ -92,13 +92,13 @@ public sealed class BasicHttpClientTests
     public void It_Sets_User_Agent_Header_With_Comments()
     {
         // Arrange
-        const string currentVersion = "1.1.1.1";
+        const string currentVersion = "1.1.1";
         const string versionComments = "(COMMENTS)";
 
         using var httpClient = new HttpClient();
 
         var mockVersionProvider = new Mock<IVersionProvider>();
-        mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+        mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
         mockVersionProvider.Setup(m => m.GetVersionComments()).Returns(versionComments);
 
         // Act
