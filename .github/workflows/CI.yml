@@ -103,7 +103,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        global-json-file: global.json
 
     - name: Build Artifacts (Linux)
       if: matrix.target-os == 'ubuntu-latest'
@@ -160,7 +160,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        global-json-file: global.json
 
     - name: Download Binaries
       uses: actions/download-artifact@v3
@@ -307,7 +307,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        global-json-file: global.json
 
     - name: Build Artifacts
       run: ./publish.ps1
@@ -367,7 +367,7 @@ jobs:
         $TAG_NAME | Out-File ./LATEST-VERSION.txt
         
     - name: Commit Release Notes and Version
-      uses: stefanzweifel/git-auto-commit-action@v4
+      uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: Automated commit of archived release notes and version file [skip ci]
         file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
