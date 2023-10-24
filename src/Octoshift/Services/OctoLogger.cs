@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace OctoshiftCLI.Services;
 
@@ -18,7 +18,7 @@ internal static class LogLevel
 public class OctoLogger
 {
     public virtual bool Verbose { get; set; }
-    private readonly HashSet<string> _secrets = new();
+    private readonly HashSet<Regex> _redactionPatterns = new();
     private readonly string _logFilePath;
     private readonly string _verboseFilePath;
     private readonly bool _debugMode;
@@ -59,7 +59,7 @@ public class OctoLogger
     private void Log(string msg, string level)
     {
         var output = FormatMessage(msg, level);
-        output = MaskSecrets(output);
+        output = Redact(output);
         if (level == LogLevel.ERROR)
         {
             _writeToConsoleError(output);
@@ -78,14 +78,13 @@ public class OctoLogger
         return $"[{timeFormat}] [{level}] {msg}\n";
     }
 
-    private string MaskSecrets(string msg)
+    private string Redact(string msg)
     {
         var result = msg;
 
-        foreach (var secret in _secrets.Where(x => x is not null))
+        foreach (var redactionPattern in _redactionPatterns)
         {
-            result = result.Replace(secret, "***")
-                .Replace(Uri.EscapeDataString(secret), "***");
+            result = redactionPattern.Replace(result, "***");
         }
 
         return result;
@@ -117,14 +116,14 @@ public class OctoLogger
         var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString();
         var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
 
-        var output = MaskSecrets(FormatMessage(logMessage, LogLevel.ERROR));
+        var output = Redact(FormatMessage(logMessage, LogLevel.ERROR));
 
         Console.ForegroundColor = ConsoleColor.Red;
         _writeToConsoleError(output);
         Console.ResetColor();
 
         _writeToLog(output);
-        _writeToVerboseLog(MaskSecrets(FormatMessage(verboseMessage, LogLevel.ERROR)));
+        _writeToVerboseLog(Redact(FormatMessage(verboseMessage, LogLevel.ERROR)));
     }
 
     public virtual void LogVerbose(string msg)
@@ -137,7 +136,7 @@ public class OctoLogger
         }
         else
         {
-            _writeToVerboseLog(MaskSecrets(FormatMessage(msg, LogLevel.VERBOSE)));
+            _writeToVerboseLog(Redact(FormatMessage(msg, LogLevel.VERBOSE)));
         }
     }
 
@@ -156,5 +155,17 @@ public class OctoLogger
         Console.ResetColor();
     }
 
-    public virtual void RegisterSecret(string secret) => _secrets.Add(secret);
+    public virtual void RegisterSecret(string secret)
+    {
+        if (secret is not null)
+        {
+            _redactionPatterns.Add(new Regex(secret, RegexOptions.IgnoreCase));
+            _redactionPatterns.Add(new Regex(Uri.EscapeDataString(secret), RegexOptions.IgnoreCase));
+        }
+    }
+
+    public virtual void AddRedactionPattern(Regex pattern)
+    {
+        _redactionPatterns.Add(pattern);
+    }
 }
