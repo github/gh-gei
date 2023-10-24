@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -58,6 +59,31 @@ public class OctoLoggerTests
         _logOutput.Should().NotContain(urlEncodedSecret);
         _verboseLogOutput.Should().NotContain(urlEncodedSecret);
         _consoleError.Should().NotContain(urlEncodedSecret);
+    }
+
+    [Fact]
+    public void Redaction_Patterns_Should_Be_Replaced_In_Logs_And_Console()
+    {
+        var password = "hunter2";
+
+        _octoLogger.AddRedactionPattern(new Regex("hunter\\d", RegexOptions.IgnoreCase));
+
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogVerbose($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogWarning($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogSuccess($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogError($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogError(new OctoshiftCliException($"Don't tell anyone that {password} is my password"));
+        _octoLogger.LogError(new InvalidOperationException($"Don't tell anyone that {password} is my password"));
+
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Don't tell anyone that {password} is my password");
+
+        _consoleOutput.Should().NotContain(password);
+        _logOutput.Should().NotContain(password);
+        _verboseLogOutput.Should().NotContain(password);
+        _consoleError.Should().NotContain(password);
     }
 
     [Fact]
