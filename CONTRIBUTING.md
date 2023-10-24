@@ -26,8 +26,16 @@ All work done by the maintainers of this repo is tracked in this repo using Issu
 There are two ways to debug code within VS code. 
 
 ### Run GH-GHEI command locally
-Run the following command in your terminal:
+Run the following commands in your terminal depending on the provider you are looking to run the commands for. 
+
+Azure DevOps: 
 `dotnet run --project src/ado2gh/ado2gh.csproj -- <<INSERT COMMAND HERE>>`
+
+Bitbucket Server: 
+`dotnet run --project src/bbs2gh/bbs2gh.csproj -- <<INSERT COMMAND HERE>>`
+
+GitHub:
+`dotnet run --project src/gei/gei.csproj -- <<INSERT COMMAND HERE>>`
 
 ### Use debugger
 
