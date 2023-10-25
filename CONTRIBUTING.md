@@ -32,10 +32,10 @@ Azure DevOps:
 `dotnet run --project src/ado2gh/ado2gh.csproj -- [command]`
 
 Bitbucket Server: 
-`dotnet run --project src/bbs2gh/bbs2gh.csproj -- <<INSERT COMMAND HERE>>`
+`dotnet run --project src/bbs2gh/bbs2gh.csproj -- [command]`
 
 GitHub:
-`dotnet run --project src/gei/gei.csproj -- <<INSERT COMMAND HERE>>`
+`dotnet run --project src/gei/gei.csproj -- [command]`
 
 ### Use debugger
 
@@ -49,6 +49,11 @@ If you use the built in debugger you are able to set breakpoints and inspect the
 5. Navigate to the `Run and debug` side panel option.
 6. Navigate to the drop down menu and select the command you would like to run, for example: `Launch ado2gh`.
 7. Press the play button
+
+### Useful links 
+
+1. [Run a .NET app](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-run)
+2. [Debugging using vscode](https://code.visualstudio.com/docs/editor/debugging)
 
 ## Submitting a Pull Request
 
