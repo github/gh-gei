@@ -29,7 +29,7 @@ There are two ways to debug code within VS code.
 Run the following commands in your terminal depending on the provider you are looking to run the commands for. 
 
 Azure DevOps: 
-`dotnet run --project src/ado2gh/ado2gh.csproj -- <<INSERT COMMAND HERE>>`
+`dotnet run --project src/ado2gh/ado2gh.csproj -- [command]`
 
 Bitbucket Server: 
 `dotnet run --project src/bbs2gh/bbs2gh.csproj -- <<INSERT COMMAND HERE>>`
