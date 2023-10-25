@@ -43,8 +43,8 @@ If you use the built in debugger you are able to set breakpoints and inspect the
 
 1. Navigate to `.vs_code/launch.json`.
 2. Find the command you are looking to run, for example: `Launch ado2gh`.
-3. Update the args property to have the arguments you're looking to test.
-    - "args": ["migrate-repo", "--ado-org", "<<INSERT_ORG>>", "--ado-team-project", "<<INSERT_PROJECT>>" ...]
+3. Update the args property to have the arguments you're looking to test (using real org and project names):
+    - "args": ["migrate-repo", "--ado-org", "example-org", "--ado-team-project", "example-project" ...]
 4. Set a breakpoint within your code as needed.
 5. Navigate to the `Run and debug` side panel option.
 6. Navigate to the drop down menu and select the command you would like to run, for example: `Launch ado2gh`.
