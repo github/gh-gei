@@ -87,6 +87,10 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
+### Skipping version checks
+
+When the CLIs are launched, they perform a check to ensure that the latest version is being used and will display a warning message if this is not the case. However, if you wish to skip this check, you can do so by setting the `GEI_SKIP_VERSION_CHECK`` environment variable to true. This will prevent the CLIs from checking for the latest version on startup and displaying a warning message.
+
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.

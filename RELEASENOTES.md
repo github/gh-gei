@@ -1,1 +1,1 @@
-
+- Skip version checking on startup if environment variable `GEI_SKIP_VERSION_CHECK` is set to true.

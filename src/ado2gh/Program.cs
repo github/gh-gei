@@ -106,6 +106,12 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
         {
+            if (Environment.GetEnvironmentVariable("GEI_SKIP_VERSION_CHECK")?.ToUpperInvariant() == "TRUE")
+            {
+                Logger.LogInformation("Skipped latest version check of the ado2gh CLI");
+                return;
+            }
+
             var versionChecker = sp.GetRequiredService<VersionChecker>();
 
             if (await versionChecker.IsLatest())
