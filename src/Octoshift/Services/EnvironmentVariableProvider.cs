@@ -15,6 +15,7 @@ public class EnvironmentVariableProvider
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
+    private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
 
     private readonly OctoLogger _logger;
 
@@ -56,16 +57,25 @@ public class EnvironmentVariableProvider
     public virtual string SmbPassword(bool throwIfNotFound = true) =>
         GetSecret(SMB_PASSWORD, throwIfNotFound);
 
-    private string GetSecret(string secretName, bool throwIfNotFound)
-    {
-        var secret = Environment.GetEnvironmentVariable(secretName);
+    public virtual string SkipStatusCheck(bool throwIfNotFound = false) =>
+        GetValue(GEI_SKIP_STATUS_CHECK, throwIfNotFound);
 
-        if (string.IsNullOrEmpty(secret))
+    private string GetValue(string name, bool throwIfNotFound)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+
+        if (string.IsNullOrEmpty(value))
         {
             return throwIfNotFound
-                ? throw new OctoshiftCliException($"{secretName} environment variable is not set.")
+                ? throw new OctoshiftCliException($"{name} environment variable is not set.")
                 : null;
         }
+
+        return value;
+    }
+    private string GetSecret(string secretName, bool throwIfNotFound)
+    {
+        var secret = GetValue(secretName, throwIfNotFound);
 
         _logger?.RegisterSecret(secret);
 

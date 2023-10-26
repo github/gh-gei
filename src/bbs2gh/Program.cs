@@ -103,7 +103,9 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
         {
-            if (Environment.GetEnvironmentVariable("GEI_SKIP_STATUS_CHECK")?.ToUpperInvariant() == "TRUE")
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipStatusCheck()?.ToUpperInvariant() is "TRUE" or "1")
             {
                 Logger.LogInformation("Skipped GitHub status check.");
                 return;
