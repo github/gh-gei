@@ -87,6 +87,10 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
+### Skipping GitHub status checks
+
+When the CLIs are launched, they check if GitHub has any ongoing incidents and will display a warning message if this is the case. However, if you wish to skip this check, you can do so by setting the `GEI_SKIP_STATUS_CHECK` environment variable to true. This will prevent the CLIs check for active incidents.
+
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.
