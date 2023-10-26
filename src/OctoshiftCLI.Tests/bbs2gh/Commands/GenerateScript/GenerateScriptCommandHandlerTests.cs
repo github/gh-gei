@@ -556,8 +556,8 @@ if (-not $env:SMB_PASSWORD) {
     public async Task Generated_Script_Contains_The_Cli_Version_Comment()
     {
         // Arrange
-        _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
-        const string cliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+        _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
+        const string cliVersionComment = "# =========== Created with CLI version 1.1.1 ===========";
 
         // Act
         var args = new GenerateScriptCommandArgs

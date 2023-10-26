@@ -224,12 +224,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             const string repo2 = "FOO-REPO-2";
 
             _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (repo1, "private"), (repo2, "public") });
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -305,13 +305,13 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -390,12 +390,12 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (repo1, "private"), (repo2, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -474,13 +474,13 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -560,13 +560,13 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(true);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -645,13 +645,13 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
             _mockGhesVersionCheckerService.Setup(m => m.AreBlobCredentialsRequired(ghesApiUrl)).ReturnsAsync(false);
 
             var expected = new StringBuilder();
             expected.AppendLine("#!/usr/bin/env pwsh");
             expected.AppendLine();
-            expected.AppendLine("# =========== Created with CLI version 1.1.1.1 ===========");
+            expected.AppendLine("# =========== Created with CLI version 1.1.1 ===========");
             expected.AppendLine(@"
 function ExecAndGetMigrationID {
     param (
@@ -833,9 +833,9 @@ if ($Failed -ne 0) {
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
 
-            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1 ===========";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -856,9 +856,9 @@ if ($Failed -ne 0) {
         {
             // Arrange
             _mockGithubApi.Setup(m => m.GetRepos(SOURCE_ORG)).ReturnsAsync(new[] { (REPO, "private") });
-            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1.1");
+            _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
 
-            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1.1 ===========";
+            const string expectedCliVersionComment = "# =========== Created with CLI version 1.1.1 ===========";
 
             // Act
             var args = new GenerateScriptCommandArgs
