@@ -64,12 +64,14 @@ public class EnvironmentVariableProvider
     {
         var value = Environment.GetEnvironmentVariable(name);
 
+#pragma warning disable IDE0046 // Convert to conditional expression
         if (string.IsNullOrEmpty(value))
         {
             return throwIfNotFound
                 ? throw new OctoshiftCliException($"{name} environment variable is not set.")
                 : null;
         }
+#pragma warning restore IDE0046 // Convert to conditional expression
 
         return value;
     }
