@@ -25,7 +25,7 @@ All work done by the maintainers of this repo is tracked in this repo using Issu
 
 There are two ways to debug code within VS code. 
 
-### Run GH-GHEI command locally
+### Run GH-GEI command locally
 Run the following commands in your terminal depending on the provider you are looking to run the commands for. 
 
 Azure DevOps: 
