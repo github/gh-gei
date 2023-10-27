@@ -40,6 +40,25 @@ GitHub:
 - Generic: `dotnet run --project src/gei/gei.csproj -- [command]`
 - Example: `dotnet run --project src/gei/gei.csproj -- migrate-repo --help`
 
+### Run code in a C# REPL
+In your terminal:
+`dotnet tool install --global CSharpRepl --version 0.4.0`
+(v0.4.0 is the latest version compatible with .NET 6.0)
+
+Run it:
+`csharprepl -r src/bbs2gh/bin/Debug/net6.0/Octoshift.dll`
+
+Then load up assemblies:
+```csharp
+#r "Octoshift.dll"
+
+// You might need others, for example the AWS SDK:
+#r "AWSSDK.Core.dll"
+#r "AWSSDK.S3.dll"
+
+using OctoshiftCLI.Services;
+```
+
 ### Use debugger
 
 If you use the built in debugger you are able to set breakpoints and inspect the code within VS Code. 
