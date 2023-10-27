@@ -140,5 +140,6 @@ public class EnvironmentVariableProviderTests
         Environment.SetEnvironmentVariable(AWS_SECRET_ACCESS_KEY, null);
         Environment.SetEnvironmentVariable(BBS_USERNAME, null);
         Environment.SetEnvironmentVariable(BBS_PASSWORD, null);
+        Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, null);
     }
 }
