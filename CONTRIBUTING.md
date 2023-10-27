@@ -41,8 +41,11 @@ GitHub:
 - Example: `dotnet run --project src/gei/gei.csproj -- migrate-repo --help`
 
 ### Run code in a C# REPL
+
+You can use a C# REPL to execute any C# code. There are many C# REPLs available, CSharpRepl is one of them and can be installed globally with the following:
+
 In your terminal:
-`dotnet tool install --global CSharpRepl --version 0.4.0`
+`dotnet tool install --global CSharpRepl  --version [version]`
 (v0.4.0 is the latest version compatible with .NET 6.0)
 
 Run it:
@@ -56,7 +59,11 @@ Then load up assemblies:
 #r "AWSSDK.Core.dll"
 #r "AWSSDK.S3.dll"
 
+// Add necessary usings
 using OctoshiftCLI.Services;
+
+// Instantiate your classes
+var aws = new AwsApi("access-key-id", "secret-access-key");
 ```
 
 ### Use debugger
