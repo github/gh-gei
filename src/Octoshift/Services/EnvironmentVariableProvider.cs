@@ -1,4 +1,5 @@
 using System;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
@@ -65,7 +66,7 @@ public class EnvironmentVariableProvider
         var value = Environment.GetEnvironmentVariable(name);
 
 #pragma warning disable IDE0046 // Convert to conditional expression
-        if (string.IsNullOrEmpty(value))
+        if (value.IsNullOrWhiteSpace())
         {
             return throwIfNotFound
                 ? throw new OctoshiftCliException($"{name} environment variable is not set.")
