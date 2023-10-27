@@ -75,6 +75,7 @@ public class EnvironmentVariableProvider
 
         return value;
     }
+
     private string GetSecret(string secretName, bool throwIfNotFound)
     {
         var secret = GetValue(secretName, throwIfNotFound);
