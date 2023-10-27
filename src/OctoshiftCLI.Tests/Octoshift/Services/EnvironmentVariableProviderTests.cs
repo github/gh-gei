@@ -116,6 +116,19 @@ public class EnvironmentVariableProviderTests
     }
 
     [Fact]
+    public void SkipStatusCheck_WhitespacesOnly_Should_Return_Null()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, " ");
+
+        // Act
+        var result = _environmentVariableProvider.SkipStatusCheck();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public void SkipStatusCheck_DoesNot_RegisterValue_Against_Logger()
     {
         // Arrange
