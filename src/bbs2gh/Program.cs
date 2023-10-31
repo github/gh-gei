@@ -121,7 +121,9 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
         {
-            if (Environment.GetEnvironmentVariable("GEI_SKIP_VERSION_CHECK")?.ToUpperInvariant() == "TRUE")
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipVersionCheck()?.ToUpperInvariant() is "TRUE" or "1")
             {
                 Logger.LogInformation("Skipped latest version check of the bbs2gh extension");
                 return;
