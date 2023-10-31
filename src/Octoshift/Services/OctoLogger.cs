@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
@@ -19,6 +20,7 @@ public class OctoLogger
 {
     public virtual bool Verbose { get; set; }
     private readonly HashSet<Regex> _redactionPatterns = new();
+    private readonly HashSet<string> _secrets = new();
     private readonly string _logFilePath;
     private readonly string _verboseFilePath;
     private readonly bool _debugMode;
@@ -81,6 +83,12 @@ public class OctoLogger
     private string Redact(string msg)
     {
         var result = msg;
+
+        foreach (var secret in _secrets.Where(x => x is not null))
+        {
+            result = result.Replace(secret, "***")
+                .Replace(Uri.EscapeDataString(secret), "***");
+        }
 
         foreach (var redactionPattern in _redactionPatterns)
         {
@@ -155,14 +163,7 @@ public class OctoLogger
         Console.ResetColor();
     }
 
-    public virtual void RegisterSecret(string secret)
-    {
-        if (secret is not null)
-        {
-            _redactionPatterns.Add(new Regex(secret, RegexOptions.IgnoreCase));
-            _redactionPatterns.Add(new Regex(Uri.EscapeDataString(secret), RegexOptions.IgnoreCase));
-        }
-    }
+    public virtual void RegisterSecret(string secret) => _secrets.Add(secret);
 
     public virtual void AddRedactionPattern(Regex pattern)
     {
