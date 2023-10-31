@@ -89,7 +89,7 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 ### Skipping GitHub status checks
 
-When the CLIs are launched, they check if GitHub has any ongoing incidents and will display a warning message if this is the case. However, if you wish to skip this check, you can do so by setting the `GEI_SKIP_STATUS_CHECK` environment variable to true. This will prevent the CLIs check for active incidents.
+When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`. 
 
 ## Contributions
 
