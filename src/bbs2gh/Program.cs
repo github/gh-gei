@@ -107,7 +107,7 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (envProvider.SkipStatusCheck()?.ToUpperInvariant() is "TRUE" or "1")
             {
-                Logger.LogInformation("Skipped GitHub status check.");
+                Logger.LogInformation("Skipped GitHub status check due to GEI_SKIP_STATUS_CHECK environment variable");
                 return;
             }
 
