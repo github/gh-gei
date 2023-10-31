@@ -91,6 +91,10 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 When the CLIs are launched, they perform a check to ensure that the latest version is being used and will display a warning message if this is not the case. However, if you wish to skip this check, you can do so by setting the `GEI_SKIP_VERSION_CHECK` environment variable to true. This will prevent the CLIs from checking for the latest version on startup and displaying a warning message.
 
+### Skipping GitHub status checks
+
+When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`. 
+
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.

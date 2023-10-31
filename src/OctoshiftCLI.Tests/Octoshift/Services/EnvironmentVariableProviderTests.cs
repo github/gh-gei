@@ -17,6 +17,7 @@ public class EnvironmentVariableProviderTests
     private const string AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
+    private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
 
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly Mock<OctoLogger> _mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -114,6 +115,34 @@ public class EnvironmentVariableProviderTests
             .Should().Throw<OctoshiftCliException>();
     }
 
+    [Fact]
+    public void SkipStatusCheck_WhitespacesOnly_Should_Return_Null()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, " ");
+
+        // Act
+        var result = _environmentVariableProvider.SkipStatusCheck();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void SkipStatusCheck_DoesNot_RegisterValue_Against_Logger()
+    {
+        // Arrange
+        var expectedValue = "true";
+        Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, expectedValue);
+
+        // Act
+        var value = _environmentVariableProvider.SkipStatusCheck();
+
+        // Assert
+        value.Should().Be(expectedValue);
+        _mockLogger.VerifyNoOtherCalls();
+    }
+
     private void ResetEnvs()
     {
         Environment.SetEnvironmentVariable(SOURCE_GH_PAT, null);
@@ -124,5 +153,6 @@ public class EnvironmentVariableProviderTests
         Environment.SetEnvironmentVariable(AWS_SECRET_ACCESS_KEY, null);
         Environment.SetEnvironmentVariable(BBS_USERNAME, null);
         Environment.SetEnvironmentVariable(BBS_PASSWORD, null);
+        Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, null);
     }
 }
