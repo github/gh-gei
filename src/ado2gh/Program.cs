@@ -118,7 +118,7 @@ namespace OctoshiftCLI.AdoToGithub
 
             if (envProvider.SkipVersionCheck()?.ToUpperInvariant() is "TRUE" or "1")
             {
-                Logger.LogInformation("Skipped latest version check of the ado2gh CLI due to GEI_VERSION_CHECK environment variable");
+                Logger.LogInformation("Skipped latest version check due to GEI_VERSION_CHECK environment variable");
                 return;
             }
 

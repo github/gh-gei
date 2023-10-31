@@ -125,7 +125,7 @@ namespace OctoshiftCLI.BbsToGithub
 
             if (envProvider.SkipVersionCheck()?.ToUpperInvariant() is "TRUE" or "1")
             {
-                Logger.LogInformation("Skipped latest version check of the bbs2gh extension due to GEI_VERSION_CHECK environment variable");
+                Logger.LogInformation("Skipped latest version check due to GEI_VERSION_CHECK environment variable");
                 return;
             }
 
