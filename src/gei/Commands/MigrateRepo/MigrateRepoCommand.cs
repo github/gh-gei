@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
@@ -188,8 +187,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(ghesApi);
             var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
-
-            log.AddRedactionPattern(new Regex("\\?token=[A-Z0-9]{29}"));
 
             return new MigrateRepoCommandHandler(
                 log,
