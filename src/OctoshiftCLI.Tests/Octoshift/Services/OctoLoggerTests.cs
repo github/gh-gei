@@ -82,6 +82,8 @@ public class OctoLoggerTests
         _logOutput.Should().NotContain(ghesArchiveUrl);
         _verboseLogOutput.Should().NotContain(ghesArchiveUrl);
         _consoleError.Should().NotContain(ghesArchiveUrl);
+
+        _consoleOutput.Should().Contain("Archive URL: https://files.github.acmeinc.com/foo?token=***");
     }
 
     [Fact]
