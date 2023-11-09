@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using FluentAssertions;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -62,28 +61,27 @@ public class OctoLoggerTests
     }
 
     [Fact]
-    public void Redaction_Patterns_Should_Be_Replaced_In_Logs_And_Console()
+    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console()
     {
-        var password = "hunter2";
 
-        _octoLogger.AddRedactionPattern(new Regex("hunter\\d", RegexOptions.IgnoreCase));
+        var ghesArchiveUrl = "https://files.github.acmeinc.com/foo?token=foobar";
 
         _octoLogger.Verbose = false;
-        _octoLogger.LogInformation($"Don't tell anyone that {password} is my password");
-        _octoLogger.LogVerbose($"Don't tell anyone that {password} is my password");
-        _octoLogger.LogWarning($"Don't tell anyone that {password} is my password");
-        _octoLogger.LogSuccess($"Don't tell anyone that {password} is my password");
-        _octoLogger.LogError($"Don't tell anyone that {password} is my password");
-        _octoLogger.LogError(new OctoshiftCliException($"Don't tell anyone that {password} is my password"));
-        _octoLogger.LogError(new InvalidOperationException($"Don't tell anyone that {password} is my password"));
+        _octoLogger.LogInformation($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogWarning($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogSuccess($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogError($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogError(new OctoshiftCliException("Archive URL: {ghesArchiveUrl}"));
+        _octoLogger.LogError(new InvalidOperationException("Archive URL: {ghesArchiveUrl}"));
 
         _octoLogger.Verbose = true;
-        _octoLogger.LogVerbose($"Don't tell anyone that {password} is my password");
+        _octoLogger.LogVerbose("Archive URL: {ghesArchiveUrl}");
 
-        _consoleOutput.Should().NotContain(password);
-        _logOutput.Should().NotContain(password);
-        _verboseLogOutput.Should().NotContain(password);
-        _consoleError.Should().NotContain(password);
+        _consoleOutput.Should().NotContain(ghesArchiveUrl);
+        _logOutput.Should().NotContain(ghesArchiveUrl);
+        _verboseLogOutput.Should().NotContain(ghesArchiveUrl);
+        _consoleError.Should().NotContain(ghesArchiveUrl);
     }
 
     [Fact]
