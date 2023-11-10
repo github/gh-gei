@@ -31,9 +31,9 @@ public class OctoLogger
 
     private const string GENERIC_ERROR_MESSAGE = "An unexpected error happened. Please see the logs for details.";
 
-    private readonly HashSet<Regex> _redactionPatterns = new()
+    private readonly List<string> _redactionPatterns = new()
     {
-        new Regex("\\b(?<=token=)(.+?)\\b")
+        "\\b(?<=token=)(.+?)\\b"
     };
 
     public OctoLogger()
@@ -96,7 +96,7 @@ public class OctoLogger
 
         foreach (var redactionPattern in _redactionPatterns)
         {
-            result = redactionPattern.Replace(result, "***");
+            result = Regex.Replace(result, redactionPattern, "***");
         }
 
         return result;
