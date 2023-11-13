@@ -1142,4 +1142,37 @@ public class GithubApi
             StartColumn = (int)scanningAlertInstance["location"]["start_column"],
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
         };
+
+    public virtual async Task<bool> StopMigration(string migrationSourceId)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        var gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    }
+                ) {
+                    success
+                    }
+                  }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId = migrationSourceId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+
+        var data = await _client.PostGraphQLAsync(url, payload);
+
+        return (bool)data["data"]["abortRepositoryMigration"]["repositoryMigration"]["id"];
+    }
 }

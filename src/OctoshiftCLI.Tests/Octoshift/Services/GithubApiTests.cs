@@ -3332,4 +3332,66 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
+
+    [Fact]
+    public async Task StartMigration_Returns_Boolean()
+    {
+        // Arrange
+        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+
+        const string query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        const string gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    }
+                ) {
+                    sucesss 
+                    }
+                  }";
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId = migrationSourceId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+        const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+        const bool actualBoolean = true;
+        var response = JObject.Parse($@"
+            {{
+                ""data"": {{
+                    ""abortRepositoryMigration"": {{
+                        ""repositoryMigration"": {{
+                            ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
+                            ""migrationSource"": {{
+                                ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
+                                ""name"": ""Azure Devops Source"",
+                                ""type"": ""AZURE_DEVOPS""
+                            }},
+                        ""sourceUrl"": ""https://dev.azure.com/github-inside-msft/Team-Demos/_git/Tiny"",
+                        ""state"": ""QUEUED"",
+                        ""failureReason"": """"
+                        }}
+                    }}
+                }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedBoolean = await _githubApi.StopMigration(migrationSourceId);
+
+        // Assert
+        expectedBoolean.Should().Be(actualBoolean);
+    }
+
 }
