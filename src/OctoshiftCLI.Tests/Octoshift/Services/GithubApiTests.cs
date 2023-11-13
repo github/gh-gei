@@ -3334,7 +3334,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace(" ", "");
 
     [Fact]
-    public async Task StartMigration_Returns_Boolean()
+    public async Task AbortMigration_Returns_Boolean()
     {
         // Arrange
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
@@ -3361,23 +3361,13 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             },
             operationName = "abortRepositoryMigration"
         };
-        const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
-        const bool actualBoolean = true;
+
+        const bool actualBooleanResponse = true;
         var response = JObject.Parse($@"
             {{
                 ""data"": {{
                     ""abortRepositoryMigration"": {{
-                        ""repositoryMigration"": {{
-                            ""id"": ""{actualRepositoryMigrationId}"",
-                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
-                            ""migrationSource"": {{
-                                ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
-                                ""name"": ""Azure Devops Source"",
-                                ""type"": ""AZURE_DEVOPS""
-                            }},
-                        ""sourceUrl"": ""https://dev.azure.com/github-inside-msft/Team-Demos/_git/Tiny"",
-                        ""state"": ""QUEUED"",
-                        ""failureReason"": """"
+                        ""success"": {actualBooleanResponse}
                         }}
                     }}
                 }}
@@ -3388,10 +3378,10 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .ReturnsAsync(response);
 
         // Act
-        var expectedBoolean = await _githubApi.StopMigration(migrationSourceId);
+        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationSourceId);
 
         // Assert
-        expectedBoolean.Should().Be(actualBoolean);
+        expectedBooleanResponse.Should().Be(actualBooleanResponse);
     }
 
 }

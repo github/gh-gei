@@ -1143,7 +1143,7 @@ public class GithubApi
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
         };
 
-    public virtual async Task<bool> StopMigration(string migrationSourceId)
+    public virtual async Task<bool> AbortMigration(string migrationSourceId)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -1173,6 +1173,6 @@ public class GithubApi
 
         var data = await _client.PostGraphQLAsync(url, payload);
 
-        return (bool)data["data"]["abortRepositoryMigration"]["repositoryMigration"]["id"];
+        return (bool)data["data"]["abortRepositoryMigration"]["success"];
     }
 }
