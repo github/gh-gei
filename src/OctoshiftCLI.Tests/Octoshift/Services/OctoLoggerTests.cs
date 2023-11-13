@@ -61,6 +61,32 @@ public class OctoLoggerTests
     }
 
     [Fact]
+    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console()
+    {
+
+        var ghesArchiveUrl = "https://files.github.acmeinc.com/foo?token=foobar";
+
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogWarning($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogSuccess($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogError($"Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogError(new OctoshiftCliException("Archive URL: {ghesArchiveUrl}"));
+        _octoLogger.LogError(new InvalidOperationException("Archive URL: {ghesArchiveUrl}"));
+
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose("Archive URL: {ghesArchiveUrl}");
+
+        _consoleOutput.Should().NotContain(ghesArchiveUrl);
+        _logOutput.Should().NotContain(ghesArchiveUrl);
+        _verboseLogOutput.Should().NotContain(ghesArchiveUrl);
+        _consoleError.Should().NotContain(ghesArchiveUrl);
+
+        _consoleOutput.Should().Contain("Archive URL: https://files.github.acmeinc.com/foo?token=***");
+    }
+
+    [Fact]
     public void LogError_For_OctoshiftCliException_Should_Log_Exception_Message_In_Non_Verbose_Mode()
     {
         // Arrange
