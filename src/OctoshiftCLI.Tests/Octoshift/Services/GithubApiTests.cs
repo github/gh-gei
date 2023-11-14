@@ -3334,7 +3334,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace(" ", "");
 
     [Fact]
-    public async Task AbortMigration_Returns_Boolean()
+    public async Task AbortMigration_Returns_True_On_Success()
     {
         // Arrange
         const string url = "https://api.github.com/graphql";
