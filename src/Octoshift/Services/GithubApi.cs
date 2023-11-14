@@ -1155,11 +1155,8 @@ public class GithubApi
                 abortRepositoryMigration(
                     input: { 
                         migrationId: $migrationId
-                    }
-                ) {
-                    success
-                    }
-                  }";
+                    })
+                   { success }";
 
         var payload = new
         {
