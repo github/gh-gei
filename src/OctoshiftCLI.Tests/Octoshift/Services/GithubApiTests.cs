@@ -3323,16 +3323,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         version.Should().Be("3.7.0");
     }
 
-    private string Compact(string source) =>
-        source
-            .Replace("\r", "")
-            .Replace("\n", "")
-            .Replace("\t", "")
-            .Replace("\\r", "")
-            .Replace("\\n", "")
-            .Replace("\\t", "")
-            .Replace(" ", "");
-
     [Fact]
     public async Task AbortMigration_Returns_True_On_Success()
     {
@@ -3350,7 +3340,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                         migrationId: $migrationId
                     }
                 ) {
-                    sucesss 
+                    successs 
                     }
                   }";
         var payload = new
@@ -3385,5 +3375,15 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Assert
         expectedBooleanResponse.Should().Be(actualBooleanResponse);
     }
+
+    private string Compact(string source) =>
+        source
+            .Replace("\r", "")
+            .Replace("\n", "")
+            .Replace("\t", "")
+            .Replace("\\r", "")
+            .Replace("\\n", "")
+            .Replace("\\t", "")
+            .Replace(" ", "");
 
 }
