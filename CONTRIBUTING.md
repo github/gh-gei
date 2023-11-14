@@ -31,7 +31,7 @@ Here are some examples:
  dotnet test --filter AdoApiTests
  ```
 
-2. Run a specific spec-`GetUserId_Should_Return_UserId` in `src/OctoshiftCLI.Tests/Octoshift/Services/AdoApiTests`. Navigate to `src/octoshiftcli.tests` and then execute the following command:
+2. Run a specific spec-`GetUserId_Should_Return_UserId` in `src/OctoshiftCLI.Tests/Octoshift/Services/AdoApiTests`. Navigate to `src` or `src/octoshiftcli.tests` and then execute the following command:
 ```
 dotnet test --filter AdoApiTests.GetUserId_Should_Return_UserId
 ```
