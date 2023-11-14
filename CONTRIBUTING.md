@@ -20,6 +20,34 @@ Use the [Discussions](https://github.com/github/gh-gei/discussions) tab in this 
 
 All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/gh-gei/issues/101).
 
+## Running specs 
+
+### In the terminal
+If you want to run tests selectively in the terminal, you can use dotnet test with `--filter` option.
+
+Here are some examples:
+1. Run all tests in `AdoApiTests` class. Navigate to `src/octoshiftcli.tests` and then execute the following command:
+ ```
+ dotnet test --filter AdoApiTests
+ ```
+
+2. Run a specific spec-`GetUserId_Should_Return_UserId` in `src/OctoshiftCLI.Tests/Octoshift/Services/AdoApiTests`. Navigate to `src/octoshiftcli.tests` and then execute the following command:
+```
+dotnet test --filter AdoApiTests.GetUserId_Should_Return_UserId
+```
+
+### Debugger 
+
+If you are using VS code, you can install the [C# dev kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) which will add the testing extension. 
+- Press the play to run the entire test suite, or navigate to the specific test you would like to run. 
+- If you set a breakpoint within your code and press the play button with the bug next to it you will be able to inspect your code in more detial. 
+
+### Useful links 
+1. [Dotnet test commands](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test#filter-option-details)
+2. [Run selective unit tests](https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest)
+3. [C# dev kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+ 
+
 
 ## Debugging code 
 
