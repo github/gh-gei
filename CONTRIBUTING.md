@@ -26,7 +26,7 @@ All work done by the maintainers of this repo is tracked in this repo using Issu
 If you want to run tests selectively in the terminal, you can use dotnet test with `--filter` option.
 
 Here are some examples:
-1. Run all tests in `AdoApiTests` class. Navigate to `src/octoshiftcli.tests` and then execute the following command:
+1. Run all tests in `AdoApiTests` class. Navigate to either `src` (where the `sln` file is) or `src/octoshiftcli.tests` (where the `csproj` file is) and then execute the following command:
  ```
  dotnet test --filter AdoApiTests
  ```
