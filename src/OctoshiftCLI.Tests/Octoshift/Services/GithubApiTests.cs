@@ -3376,7 +3376,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload.ToJson())), null))
             .ReturnsAsync(response);
 
         // Act
