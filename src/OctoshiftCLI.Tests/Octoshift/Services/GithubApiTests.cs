@@ -3337,6 +3337,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task AbortMigration_Returns_Boolean()
     {
         // Arrange
+        const string url = "https://api.github.com/graphql";
         const string migrationSourceId = "MIGRATION_SOURCE_ID";
 
         const string query = @"
@@ -3365,12 +3366,13 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         const bool actualBooleanResponse = true;
         var response = JObject.Parse($@"
             {{
-                ""data"": {{
-                    ""abortRepositoryMigration"": {{
-                        ""success"": {actualBooleanResponse}
-                        }}
+                ""data"": 
+                    {{
+                        ""abortRepositoryMigration"": 
+                            {{
+                                ""success"": ""{actualBooleanResponse}""
+                            }}
                     }}
-                }}
             }}");
 
         _githubClientMock
