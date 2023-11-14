@@ -3338,11 +3338,9 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                 abortRepositoryMigration(
                     input: { 
                         migrationId: $migrationId
-                    }
-                ) {
-                    successs 
-                    }
-                  }";
+                    })
+                   { success }";
+
         var payload = new
         {
             query = $"{query} {{ {gql} }}",
