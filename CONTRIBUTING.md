@@ -20,7 +20,7 @@ Use the [Discussions](https://github.com/github/gh-gei/discussions) tab in this 
 
 All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/gh-gei/issues/101).
 
-## Running specs 
+## Running tests 
 
 ### In the terminal
 If you want to run tests selectively in the terminal, you can use dotnet test with `--filter` option.
