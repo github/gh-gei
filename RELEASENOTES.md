@@ -1,1 +1,1 @@
-
+- Redact `X-Amz-Credential` querystring parameters in AWS S3 URLs included in logs

@@ -87,6 +87,32 @@ public class OctoLoggerTests
     }
 
     [Fact]
+    public void Aws_Url_X_Aws_Credential_Parameters_Should_Be_Replaced_In_Logs_And_Console()
+    {
+
+        var awsUrl = "https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip";
+
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogWarning($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogSuccess($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {awsUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {awsUrl}"));
+
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+
+        _consoleOutput.Should().NotContain(awsUrl);
+        _logOutput.Should().NotContain(awsUrl);
+        _verboseLogOutput.Should().NotContain(awsUrl);
+        _consoleError.Should().NotContain(awsUrl);
+
+        _consoleOutput.Should().Contain("https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=***&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip");
+    }
+
+    [Fact]
     public void LogError_For_OctoshiftCliException_Should_Log_Exception_Message_In_Non_Verbose_Mode()
     {
         // Arrange
