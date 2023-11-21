@@ -33,7 +33,8 @@ public class OctoLogger
 
     private readonly List<string> _redactionPatterns = new()
     {
-        "\\b(?<=token=)(.+?)\\b"
+        "\\b(?<=token=)(.+?)\\b",
+        "\\b(?<=X-Amz-Credential=)(.+?)\\b",
     };
 
     public OctoLogger()
