@@ -72,11 +72,11 @@ public class OctoLoggerTests
         _octoLogger.LogWarning($"Archive URL: {ghesArchiveUrl}");
         _octoLogger.LogSuccess($"Archive URL: {ghesArchiveUrl}");
         _octoLogger.LogError($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogError(new OctoshiftCliException("Archive URL: {ghesArchiveUrl}"));
-        _octoLogger.LogError(new InvalidOperationException("Archive URL: {ghesArchiveUrl}"));
+        _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {ghesArchiveUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive URL: {ghesArchiveUrl}"));
 
         _octoLogger.Verbose = true;
-        _octoLogger.LogVerbose("Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
 
         _consoleOutput.Should().NotContain(ghesArchiveUrl);
         _logOutput.Should().NotContain(ghesArchiveUrl);
