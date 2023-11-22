@@ -63,25 +63,33 @@ public class OctoLoggerTests
     [Fact]
     public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console()
     {
-
         var ghesArchiveUrl = "https://files.github.acmeinc.com/foo?token=foobar";
+        var variants = new[]
+        {
+            ghesArchiveUrl,
+            ghesArchiveUrl.ToUpper(),
+            ghesArchiveUrl.ToLower()
+        };
 
-        _octoLogger.Verbose = false;
-        _octoLogger.LogInformation($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogWarning($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogSuccess($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogError($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {ghesArchiveUrl}"));
-        _octoLogger.LogError(new InvalidOperationException($"Archive URL: {ghesArchiveUrl}"));
+        foreach (var variant in variants)
+        {
+            _octoLogger.Verbose = false;
+            _octoLogger.LogInformation($"Archive URL: {variant}");
+            _octoLogger.LogVerbose($"Archive URL: {variant}");
+            _octoLogger.LogWarning($"Archive URL: {variant}");
+            _octoLogger.LogSuccess($"Archive URL: {variant}");
+            _octoLogger.LogError($"Archive URL: {variant}");
+            _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {variant}"));
+            _octoLogger.LogError(new InvalidOperationException($"Archive URL: {variant}"));
 
-        _octoLogger.Verbose = true;
-        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
+            _octoLogger.Verbose = true;
+            _octoLogger.LogVerbose($"Archive URL: {variant}");
 
-        _consoleOutput.Should().NotContain(ghesArchiveUrl);
-        _logOutput.Should().NotContain(ghesArchiveUrl);
-        _verboseLogOutput.Should().NotContain(ghesArchiveUrl);
-        _consoleError.Should().NotContain(ghesArchiveUrl);
+            _consoleOutput.Should().NotContain(variant);
+            _logOutput.Should().NotContain(variant);
+            _verboseLogOutput.Should().NotContain(variant);
+            _consoleError.Should().NotContain(variant);
+        }
 
         _consoleOutput.Should().Contain("Archive URL: https://files.github.acmeinc.com/foo?token=***");
     }
@@ -89,25 +97,34 @@ public class OctoLoggerTests
     [Fact]
     public void Aws_Url_X_Aws_Credential_Parameters_Should_Be_Replaced_In_Logs_And_Console()
     {
-
         var awsUrl = "https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip";
+        var variants = new[]
+        {
+            awsUrl,
+            awsUrl.ToUpper(),
+            awsUrl.ToLower()
+        };
 
-        _octoLogger.Verbose = false;
-        _octoLogger.LogInformation($"Archive (metadata) download url: {awsUrl}");
-        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
-        _octoLogger.LogWarning($"Archive (metadata) download url: {awsUrl}");
-        _octoLogger.LogSuccess($"Archive (metadata) download url: {awsUrl}");
-        _octoLogger.LogError($"Archive (metadata) download url: {awsUrl}");
-        _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {awsUrl}"));
-        _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {awsUrl}"));
+        foreach (var variant in variants)
+        {
+            _octoLogger.Verbose = false;
+            _octoLogger.LogInformation($"Archive (metadata) download url: {variant}");
+            _octoLogger.LogVerbose($"Archive (metadata) download url: {variant}");
+            _octoLogger.LogWarning($"Archive (metadata) download url: {variant}");
+            _octoLogger.LogSuccess($"Archive (metadata) download url: {variant}");
+            _octoLogger.LogError($"Archive (metadata) download url: {variant}");
+            _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {variant}"));
+            _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {variant}"));
+            _octoLogger.LogInformation($"Archive (metadata) download url: {variant.ToLower()}");
 
-        _octoLogger.Verbose = true;
-        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+            _octoLogger.Verbose = true;
+            _octoLogger.LogVerbose($"Archive (metadata) download url: {variant}");
 
-        _consoleOutput.Should().NotContain(awsUrl);
-        _logOutput.Should().NotContain(awsUrl);
-        _verboseLogOutput.Should().NotContain(awsUrl);
-        _consoleError.Should().NotContain(awsUrl);
+            _consoleOutput.Should().NotContain(variant);
+            _logOutput.Should().NotContain(variant);
+            _verboseLogOutput.Should().NotContain(variant);
+            _consoleError.Should().NotContain(variant);
+        }
 
         _consoleOutput.Should().Contain("https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=***&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip");
     }

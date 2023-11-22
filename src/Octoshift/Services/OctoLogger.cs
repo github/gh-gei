@@ -97,7 +97,7 @@ public class OctoLogger
 
         foreach (var redactionPattern in _redactionPatterns)
         {
-            result = Regex.Replace(result, redactionPattern, "***");
+            result = Regex.Replace(result, redactionPattern, "***", RegexOptions.IgnoreCase);
         }
 
         return result;
