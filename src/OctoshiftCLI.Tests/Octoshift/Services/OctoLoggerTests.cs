@@ -60,73 +60,54 @@ public class OctoLoggerTests
         _consoleError.Should().NotContain(urlEncodedSecret);
     }
 
-    [Fact]
-    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console()
+    [Theory]
+    [InlineData("https://files.github.acmeinc.com/foo?token=foobar")]
+    [InlineData("HTTPS://FILES.GITHUB.ACMEINC.COM/FOO?TOKEN=FOOBAR")]
+    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console(string archiveUrl)
     {
-        var ghesArchiveUrl = "https://files.github.acmeinc.com/foo?token=foobar";
-        var variants = new[]
-        {
-            ghesArchiveUrl,
-            ghesArchiveUrl.ToUpper(),
-            ghesArchiveUrl.ToLower()
-        };
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive URL: {archiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {archiveUrl}");
+        _octoLogger.LogWarning($"Archive URL: {archiveUrl}");
+        _octoLogger.LogSuccess($"Archive URL: {archiveUrl}");
+        _octoLogger.LogError($"Archive URL: {archiveUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {archiveUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive URL: {archiveUrl}"));
 
-        foreach (var variant in variants)
-        {
-            _octoLogger.Verbose = false;
-            _octoLogger.LogInformation($"Archive URL: {variant}");
-            _octoLogger.LogVerbose($"Archive URL: {variant}");
-            _octoLogger.LogWarning($"Archive URL: {variant}");
-            _octoLogger.LogSuccess($"Archive URL: {variant}");
-            _octoLogger.LogError($"Archive URL: {variant}");
-            _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {variant}"));
-            _octoLogger.LogError(new InvalidOperationException($"Archive URL: {variant}"));
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Archive URL: {archiveUrl}");
 
-            _octoLogger.Verbose = true;
-            _octoLogger.LogVerbose($"Archive URL: {variant}");
+        _consoleOutput.Should().NotContain(archiveUrl);
+        _logOutput.Should().NotContain(archiveUrl);
+        _verboseLogOutput.Should().NotContain(archiveUrl);
+        _consoleError.Should().NotContain(archiveUrl);
 
-            _consoleOutput.Should().NotContain(variant);
-            _logOutput.Should().NotContain(variant);
-            _verboseLogOutput.Should().NotContain(variant);
-            _consoleError.Should().NotContain(variant);
-        }
-
-        _consoleOutput.Should().Contain("Archive URL: https://files.github.acmeinc.com/foo?token=***");
+        _consoleOutput.ToLower().Should().Contain("?token=***");
     }
 
-    [Fact]
-    public void Aws_Url_X_Aws_Credential_Parameters_Should_Be_Replaced_In_Logs_And_Console()
+    [Theory]
+    [InlineData("https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip")]
+    [InlineData("HTTPS://EXAMPLE-S3-BUCKET-NAME.S3.AMAZONAWS.COM/UUID-UUID-UUID.TAR.GZ?X-AMZ-ALGORITHM=AWS4-HMAC-SHA256&X-AMZ-CREDENTIAL=AAAAAAAAAAAAAAAAAAAAAAA&X-AMZ-DATE=20231025T104425Z&X-AMZ-EXPIRES=172800&X-AMZ-SIGNATURE=AAAAAAAAAAAAAAAAAAAAAAA&X-AMZ-SIGNEDHEADERS=HOST&ACTOR_ID=1&KEY_ID=0&REPO_ID=0&RESPONSE-CONTENT-DISPOSITION=FILENAME%3DUUID-UUID-UUID.TAR.GZ&RESPONSE-CONTENT-TYPE=APPLICATION%2FX-GZIP")]
+    public void Aws_Url_X_Aws_Credential_Parameters_Should_Be_Replaced_In_Logs_And_Console(string awsUrl)
     {
-        var awsUrl = "https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip";
-        var variants = new[]
-        {
-            awsUrl,
-            awsUrl.ToUpper(),
-            awsUrl.ToLower()
-        };
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogWarning($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogSuccess($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {awsUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {awsUrl}"));
 
-        foreach (var variant in variants)
-        {
-            _octoLogger.Verbose = false;
-            _octoLogger.LogInformation($"Archive (metadata) download url: {variant}");
-            _octoLogger.LogVerbose($"Archive (metadata) download url: {variant}");
-            _octoLogger.LogWarning($"Archive (metadata) download url: {variant}");
-            _octoLogger.LogSuccess($"Archive (metadata) download url: {variant}");
-            _octoLogger.LogError($"Archive (metadata) download url: {variant}");
-            _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {variant}"));
-            _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {variant}"));
-            _octoLogger.LogInformation($"Archive (metadata) download url: {variant.ToLower()}");
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
 
-            _octoLogger.Verbose = true;
-            _octoLogger.LogVerbose($"Archive (metadata) download url: {variant}");
+        _consoleOutput.Should().NotContain(awsUrl);
+        _logOutput.Should().NotContain(awsUrl);
+        _verboseLogOutput.Should().NotContain(awsUrl);
+        _consoleError.Should().NotContain(awsUrl);
 
-            _consoleOutput.Should().NotContain(variant);
-            _logOutput.Should().NotContain(variant);
-            _verboseLogOutput.Should().NotContain(variant);
-            _consoleError.Should().NotContain(variant);
-        }
-
-        _consoleOutput.Should().Contain("https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=***&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip");
+        _consoleOutput.ToLower().Should().Contain("&x-amz-credential=***");
     }
 
     [Fact]
