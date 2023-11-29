@@ -96,6 +96,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
         {
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipStatusCheck()?.ToUpperInvariant() is "TRUE" or "1")
+            {
+                Logger.LogInformation("Skipped GitHub status check due to GEI_SKIP_STATUS_CHECK environment variable");
+                return;
+            }
+
             var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
 
             if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)

@@ -3323,6 +3323,57 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         version.Should().Be("3.7.0");
     }
 
+    [Fact]
+    public async Task AbortMigration_Returns_True_On_Success()
+    {
+        // Arrange
+        const string url = "https://api.github.com/graphql";
+        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+
+        const string query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        const string gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    })
+                   { success }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId = migrationSourceId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+
+        const bool actualBooleanResponse = true;
+        var response = JObject.Parse($@"
+            {{
+                ""data"": 
+                    {{
+                        ""abortRepositoryMigration"": 
+                            {{
+                                ""success"": ""{actualBooleanResponse}""
+                            }}
+                    }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload.ToJson())), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationSourceId);
+
+        // Assert
+        expectedBooleanResponse.Should().Be(actualBooleanResponse);
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
@@ -3332,4 +3383,5 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
+
 }

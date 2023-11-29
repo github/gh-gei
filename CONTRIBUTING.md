@@ -20,6 +20,98 @@ Use the [Discussions](https://github.com/github/gh-gei/discussions) tab in this 
 
 All work done by the maintainers of this repo is tracked in this repo using Issues. We have a hierarchical backlog with Epics at the top, broken down into Batches then broken down to Tasks (epic/batch/task is indicated via labels on the issues). You can see an example Epic and navigate down from there [here](https://github.com/github/gh-gei/issues/101).
 
+## Running tests 
+
+### In the terminal
+If you want to run tests selectively in the terminal, you can use dotnet test with `--filter` option.
+
+Here are some examples:
+1. Run all tests in `AdoApiTests` class. Navigate to either `src` (where the `sln` file is) or `src/octoshiftcli.tests` (where the `csproj` file is) and then execute the following command:
+ ```
+ dotnet test --filter AdoApiTests
+ ```
+
+2. Run a specific test-`GetUserId_Should_Return_UserId` in `src/OctoshiftCLI.Tests/Octoshift/Services/AdoApiTests`. Navigate to `src` or `src/octoshiftcli.tests` and then execute the following command:
+```
+dotnet test --filter AdoApiTests.GetUserId_Should_Return_UserId
+```
+
+### Debugger 
+
+If you are using VS code, you can install the [C# dev kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) which will add the testing extension. 
+- Press the play to run the entire test suite, or navigate to the specific test you would like to run. 
+- If you set a breakpoint within your code and press the play button with the bug next to it you will be able to inspect your code in more detial. 
+
+### Useful links 
+1. [Dotnet test commands](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test#filter-option-details)
+2. [Run selective unit tests](https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest)
+3. [C# dev kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+ 
+
+
+## Debugging code 
+
+There are two ways to debug code within VS code. 
+
+### Run GH-GEI command locally
+Run the following commands in your terminal depending on the provider you are looking to run the commands for. 
+
+Azure DevOps: 
+- Generic: `dotnet run --project src/ado2gh/ado2gh.csproj -- [command]`
+- Example: `dotnet run --project src/ado2gh/ado2gh.csproj -- migrate-repo --help`
+
+Bitbucket Server: 
+- Generic: `dotnet run --project src/bbs2gh/bbs2gh.csproj -- [command]`
+- Example: `dotnet run --project src/bbs2gh/bbs2gh.csproj -- migrate-repo --help`
+
+GitHub:
+- Generic: `dotnet run --project src/gei/gei.csproj -- [command]`
+- Example: `dotnet run --project src/gei/gei.csproj -- migrate-repo --help`
+
+### Run code in a C# REPL
+
+You can use a C# REPL to execute any C# code. There are many C# REPLs available, CSharpRepl is one of them and can be installed globally with the following:
+
+In your terminal:
+`dotnet tool install --global CSharpRepl  --version [version]`
+(v0.4.0 is the latest version compatible with .NET 6.0)
+
+Run it:
+`csharprepl -r src/bbs2gh/bin/Debug/net6.0/Octoshift.dll`
+
+Then load up assemblies:
+```csharp
+#r "Octoshift.dll"
+
+// You might need others, for example the AWS SDK:
+#r "AWSSDK.Core.dll"
+#r "AWSSDK.S3.dll"
+
+// Add necessary usings
+using OctoshiftCLI.Services;
+
+// Instantiate your classes
+var aws = new AwsApi("access-key-id", "secret-access-key");
+```
+
+### Use debugger
+
+If you use the built in debugger you are able to set breakpoints and inspect the code within VS Code. 
+
+1. Navigate to `.vs_code/launch.json`.
+2. Find the command you are looking to run, for example: `Launch ado2gh`.
+3. Update the args property to have the arguments you're looking to test (using real org and project names):
+    - "args": ["migrate-repo", "--ado-org", "example-org", "--ado-team-project", "example-project" ...]
+4. Set a breakpoint within your code as needed.
+5. Navigate to the `Run and debug` side panel option.
+6. Navigate to the drop down menu and select the command you would like to run, for example: `Launch ado2gh`.
+7. Press the play button
+
+### Useful links 
+
+1. [Run a .NET app](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-run)
+2. [Debugging using vscode](https://code.visualstudio.com/docs/editor/debugging)
+
 ## Submitting a Pull Request
 
 Before submitting a Pull Request please first open an issue to get feedback on the change you intend to submit.
