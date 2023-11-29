@@ -1,2 +1,1 @@
-- Redact `X-Amz-Credential` querystring parameters in AWS S3 URLs included in logs
-- When redacting sensitive patterns in log output, use a non-case sensitive search
+
