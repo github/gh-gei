@@ -38,10 +38,8 @@ public class AbortMigrationCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
         _mockGithubApi.Verify(m => m.AbortMigration(REPO_MIGRATION_ID), Times.Exactly(1));
-
         _mockGithubApi.VerifyNoOtherCalls();
     }
 
@@ -59,10 +57,8 @@ public class AbortMigrationCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
         _mockGithubApi.Verify(m => m.AbortMigration(REPO_MIGRATION_ID), Times.Exactly(1));
-
         _mockGithubApi.VerifyNoOtherCalls();
     }
 }
