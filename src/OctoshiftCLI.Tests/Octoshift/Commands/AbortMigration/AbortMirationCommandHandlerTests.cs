@@ -11,7 +11,6 @@ public class AbortMigrationCommandHandlerTests
     private readonly Mock<GithubApi> _mockGithubApi = TestHelpers.CreateMock<GithubApi>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
-    private readonly WarningsCountLogger _warningsCountLogger;
     private readonly AbortMigrationCommandHandler _handler;
 
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
