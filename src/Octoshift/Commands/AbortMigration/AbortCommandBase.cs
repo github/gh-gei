@@ -20,7 +20,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
     public virtual Option<string> MigrationId { get; } = new("--migration-id")
     {
         IsRequired = true,
-        Description = "Waits for the specified migration to finish."
+        Description = "The ID of the migration to abort, starting with RM_. Organization migrations, where the ID starts with OM_, are not supported."
     };
 
     public virtual Option<string> GithubPat { get; } = new("--github-pat")
