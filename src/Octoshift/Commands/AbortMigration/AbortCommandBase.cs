@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 
-[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
 namespace OctoshiftCLI.Commands.AbortMigration;
 
