@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.Services;
 
-[assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 
 namespace OctoshiftCLI.Commands.AbortMigration;
 
