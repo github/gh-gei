@@ -26,7 +26,10 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    public virtual Option<bool> Verbose { get; } = new("--verbose");
+    public virtual Option<bool> Verbose { get; } = new("--verbose")
+    {
+        Description = "Display more information to the console."
+    }
 
     protected void AddOptions()
     {
