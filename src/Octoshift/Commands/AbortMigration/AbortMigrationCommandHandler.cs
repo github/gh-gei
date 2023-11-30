@@ -7,7 +7,6 @@ namespace OctoshiftCLI.Commands.AbortMigration;
 
 public class AbortMigrationCommandHandler : ICommandHandler<AbortMigrationCommandArgs>
 {
-    internal int WaitIntervalInSeconds = 10;
 
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;
