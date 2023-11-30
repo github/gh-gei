@@ -15,7 +15,7 @@ public class AbortMigrationCommandArgs : CommandArgs
     {
         if (MigrationId.IsNullOrWhiteSpace())
         {
-            throw new OctoshiftCliException("MigrationId must be provided");
+            throw new OctoshiftCliException("--migration-id must be provided");
         }
 
         if (!MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
