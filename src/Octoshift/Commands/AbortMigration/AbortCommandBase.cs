@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
