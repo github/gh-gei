@@ -29,9 +29,9 @@ public class AbortMigrationCommandHandler : ICommandHandler<AbortMigrationComman
 
     private async Task AbortRepositoryMigration(string migrationId)
     {
-        var abortionState = await _githubApi.AbortMigration(migrationId);
+        var success = await _githubApi.AbortMigration(migrationId);
 
-        if (!abortionState)
+        if (!success)
         {
             _log.LogError($"Failed to abort migration {migrationId}");
             return;

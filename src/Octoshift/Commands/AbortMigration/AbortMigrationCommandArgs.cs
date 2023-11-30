@@ -9,16 +9,16 @@ public class AbortMigrationCommandArgs : CommandArgs
     [Secret]
     public string GithubPat { get; set; }
 
-    public const string REPO_MIGRATION_ID_PREFIX = "RM_";
-
     public override void Validate(OctoLogger log)
     {
+        const string repoMigrationIdPrefix = "RM_";
+
         if (MigrationId.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("--migration-id must be provided");
         }
 
-        if (!MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
+        if (!MigrationId.StartsWith(repoMigrationIdPrefix))
         {
             throw new OctoshiftCliException($"Invalid migration ID: {MigrationId}. Only repository migration IDs starting with RM_ are supported.");
         }
