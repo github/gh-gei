@@ -20,7 +20,7 @@ public class AbortMigrationCommandArgs : CommandArgs
 
         if (!MigrationId.StartsWith(REPO_MIGRATION_ID_PREFIX))
         {
-            throw new OctoshiftCliException($"Invalid migration id: {MigrationId}");
+            throw new OctoshiftCliException($"Invalid migration ID: {MigrationId}. Only repository migration IDs starting with RM_ are supported.");
         }
     }
 }
