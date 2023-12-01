@@ -29,7 +29,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
     public virtual Option<bool> Verbose { get; } = new("--verbose")
     {
         Description = "Display more information to the console."
-    }
+    };
 
     protected void AddOptions()
     {
