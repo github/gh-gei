@@ -29,6 +29,8 @@ public class WaitForMigrationCommandHandlerTests
         {
             WaitIntervalInSeconds = WAIT_INTERVAL
         };
+
+        TestHelpers.SetCliContext();
     }
 
     [Fact]
@@ -54,7 +56,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} succeeded for {TARGET_REPO}",
-                $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
+                $"Migration log available at {MIGRATION_URL} or by running `gh {TestHelpers.CLI_ROOT_COMMAND} download-logs`"
     };
 
         // Act
@@ -100,7 +102,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} succeeded for {TARGET_REPO}",
                 "1 warning encountered during this migration",
-                $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
+                $"Migration log available at {MIGRATION_URL} or by running `gh {TestHelpers.CLI_ROOT_COMMAND} download-logs`"
     };
 
         // Act
@@ -147,7 +149,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} succeeded for {TARGET_REPO}",
                 "4 warnings encountered during this migration",
-                $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
+                $"Migration log available at {MIGRATION_URL} or by running `gh {TestHelpers.CLI_ROOT_COMMAND} download-logs`"
     };
 
         // Act
@@ -194,7 +196,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.InProgress}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
+                $"Migration log available at {MIGRATION_URL} or by running `gh {TestHelpers.CLI_ROOT_COMMAND} download-logs`"
             };
 
         // Act
@@ -244,7 +246,7 @@ public class WaitForMigrationCommandHandlerTests
                 $"Migration {REPO_MIGRATION_ID} for {TARGET_REPO} is {RepositoryMigrationStatus.PendingValidation}",
                 $"Waiting {WAIT_INTERVAL} seconds...",
                 $"Migration {REPO_MIGRATION_ID} failed for {TARGET_REPO}",
-                $"Migration log available at {MIGRATION_URL} or by running `gh {CliContext.RootCommand} download-logs`"
+                $"Migration log available at {MIGRATION_URL} or by running `gh {TestHelpers.CLI_ROOT_COMMAND} download-logs`"
             };
 
         // Act

@@ -8,6 +8,11 @@ namespace OctoshiftCLI.Tests
 {
     public static class TestHelpers
     {
+        private static readonly object _mutex = new();
+
+        public const string CLI_ROOT_COMMAND = "ROOT_COMMAND";
+        public const string CLI_EXECUTING_COMMAND = "EXECUTING_COMMAND";
+
         public static Mock<T> CreateMock<T>() where T : class
         {
             var ctor = typeof(T).GetConstructors().First();
@@ -23,6 +28,15 @@ namespace OctoshiftCLI.Tests
 
             Assert.Equal(required, option.IsRequired);
             Assert.Equal(isHidden, option.IsHidden);
+        }
+
+        public static void SetCliContext()
+        {
+            lock (_mutex)
+            {
+                CliContext.RootCommand ??= CLI_ROOT_COMMAND;
+                CliContext.ExecutingCommand ??= CLI_EXECUTING_COMMAND;
+            }
         }
     }
 }
