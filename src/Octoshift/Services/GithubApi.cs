@@ -1011,6 +1011,47 @@ public class GithubApi
         return (string)data["installed_version"];
     }
 
+    public virtual async Task<bool> AbortMigration(string migrationSourceId)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        var gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    })
+                   { success }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId = migrationSourceId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+        var response = await _client.PostGraphQLAsync(url, payload);
+        var data = JObject.Parse(response);
+        var abortionMigrationResult = data.ToObject<AbortMigrationResult>();
+
+        if (data["error"]["message"].Contains("Could not resolve to a node"))
+        {
+            throw new ArgumentException($"Invalid migration id: {migrationSourceId}");
+        };
+
+        if (data["error"]["message"].Contains("Migration not found"))
+        {
+            throw new ArgumentException($"Migration {migrationSourceId} was in an invalid state to be aborted.");
+        };
+
+        return (bool)response["data"]["abortRepositoryMigration"]["success"];
+    }
+
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";
@@ -1142,34 +1183,4 @@ public class GithubApi
             StartColumn = (int)scanningAlertInstance["location"]["start_column"],
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
         };
-
-    public virtual async Task<bool> AbortMigration(string migrationSourceId)
-    {
-        var url = $"{_apiUrl}/graphql";
-
-        var query = @"
-                mutation abortRepositoryMigration(
-                    $migrationId: ID!,
-                )";
-        var gql = @"
-                abortRepositoryMigration(
-                    input: { 
-                        migrationId: $migrationId
-                    })
-                   { success }";
-
-        var payload = new
-        {
-            query = $"{query} {{ {gql} }}",
-            variables = new
-            {
-                migrationId = migrationSourceId,
-            },
-            operationName = "abortRepositoryMigration"
-        };
-
-        var data = await _client.PostGraphQLAsync(url, payload);
-
-        return (bool)data["data"]["abortRepositoryMigration"]["success"];
-    }
 }
