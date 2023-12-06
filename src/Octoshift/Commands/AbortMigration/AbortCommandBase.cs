@@ -11,7 +11,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
 {
     public AbortMigrationCommandBase() : base(
         name: "abort-migration",
-        description: "Aborts a migration that is in progress.")
+        description: "Aborts a repository migration that is queued or in progress.")
     {
     }
 
