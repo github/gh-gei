@@ -121,6 +121,14 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
         {
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipVersionCheck()?.ToUpperInvariant() is "TRUE" or "1")
+            {
+                Logger.LogInformation("Skipped latest version check due to GEI_VERSION_CHECK environment variable");
+                return;
+            }
+
             var versionChecker = sp.GetRequiredService<VersionChecker>();
 
             if (await versionChecker.IsLatest())

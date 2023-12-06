@@ -18,6 +18,7 @@ public class EnvironmentVariableProviderTests
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
+    private const string GEI_SKIP_VERSION_CHECK = "GEI_SKIP_VERSION_CHECK";
 
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly Mock<OctoLogger> _mockLogger = TestHelpers.CreateMock<OctoLogger>();
@@ -154,5 +155,6 @@ public class EnvironmentVariableProviderTests
         Environment.SetEnvironmentVariable(BBS_USERNAME, null);
         Environment.SetEnvironmentVariable(BBS_PASSWORD, null);
         Environment.SetEnvironmentVariable(GEI_SKIP_STATUS_CHECK, null);
+        Environment.SetEnvironmentVariable(GEI_SKIP_VERSION_CHECK, null);
     }
 }
