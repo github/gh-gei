@@ -1,13 +1,14 @@
 namespace Octoshift.Models;
-public class AbortMigrationResult: GraphqlResult<AbortMigrationData>
+public class AbortMigrationResult : GraphqlResult<AbortMigrationData>
 {
-}
-public class AbortMigrationData
-{
-    public AbortMigration AbortMigration { get; set; }
 }
 
-public class AbortMigration
+public class AbortMigrationData
+{
+    public AbortMigrationClass AbortMigrationClass { get; set; }
+}
+
+public class AbortMigrationClass
 {
     public Data Data { get; set; }
 }
