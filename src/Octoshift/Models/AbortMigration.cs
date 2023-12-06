@@ -10,10 +10,10 @@ public class AbortMigrationData
 
 public class AbortMigrationClass
 {
-    public Data Data { get; set; }
+    public AbortMigrationData AbortMigrationData { get; set; }
 }
 
-public class Data
+public class AbortMigrationData
 {
     public AbortRepositoryMigration AbortRepositoryMigration { get; set; }
 }
