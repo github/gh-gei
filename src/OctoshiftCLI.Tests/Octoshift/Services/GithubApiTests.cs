@@ -3328,7 +3328,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     {
         // Arrange
         const string url = "https://api.github.com/graphql";
-        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string migrationId = "MIGRATION_ID";
 
         const string query = @"
                 mutation abortRepositoryMigration(
@@ -3346,7 +3346,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             query = $"{query} {{ {gql} }}",
             variables = new
             {
-                migrationId = migrationSourceId,
+                migrationId,
             },
             operationName = "abortRepositoryMigration"
         };
@@ -3368,10 +3368,51 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .ReturnsAsync(response);
 
         // Act
-        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationSourceId);
+        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationId);
 
         // Assert
         expectedBooleanResponse.Should().Be(actualBooleanResponse);
+    }
+
+    [Fact]
+    public async Task AbortMigration_Surfaces_Error_With_Incorrect_Migration_ID()
+    {
+        // Arrange
+        const string url = "https://api.github.com/graphql";
+        const string migrationId = "1234";
+
+        const string query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        const string gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    })
+                   { success }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+
+        const string actualErrorResponse = "Invalid migration id: {migrationId}";
+
+        // Act
+        await _githubApi.AbortMigration(migrationId);
+
+        // Assert
+
+        await _githubApi.Invoking(api => api.AbortMigration(migrationId))
+            .Should()
+            .ThrowExactlyAsync<ArgumentException>()
+            .WithMessage(actualErrorResponse);
     }
 
     private string Compact(string source) =>

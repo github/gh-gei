@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -1011,7 +1012,7 @@ public class GithubApi
         return (string)data["installed_version"];
     }
 
-    public virtual async Task<bool> AbortMigration(string migrationSourceId)
+    public virtual async Task<bool> AbortMigration(string migrationId)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -1031,25 +1032,19 @@ public class GithubApi
             query = $"{query} {{ {gql} }}",
             variables = new
             {
-                migrationId = migrationSourceId,
+                migrationId,
             },
             operationName = "abortRepositoryMigration"
         };
-        var response = await _client.PostGraphQLAsync(url, payload);
-        var data = JObject.Parse(response);
-        var abortionMigrationResult = data.ToObject<AbortMigrationResult>();
 
-        if (data["error"]["message"].Contains("Could not resolve to a node"))
+        var data = await _client.PostGraphQLAsync(url, payload);
+
+        if ((bool)(data["error"]?["message"].ToString().Contains("Could not resolve to a node")))
         {
-            throw new ArgumentException($"Invalid migration id: {migrationSourceId}");
+            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
         };
 
-        if (data["error"]["message"].Contains("Migration not found"))
-        {
-            throw new ArgumentException($"Migration {migrationSourceId} was in an invalid state to be aborted.");
-        };
-
-        return (bool)response["data"]["abortRepositoryMigration"]["success"];
+        return (bool)data["data"]["abortRepositoryMigration"]["success"];
     }
 
     private static object GetMannequinsPayload(string orgId)
