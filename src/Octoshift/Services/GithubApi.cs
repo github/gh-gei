@@ -1050,7 +1050,7 @@ public class GithubApi
             }
             else
             {
-                throw ex;
+                throw new OctoshiftCliException($"There was an error aborting the migration: {migrationId}", ex);
             }
         }
     }
