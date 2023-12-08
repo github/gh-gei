@@ -3378,7 +3378,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task AbortMigration_Surfaces_Error_With_Incorrect_Migration_ID()
     {
         // Arrange
-        const string url = "https://api.github.com/graphql";
         const string migrationId = "1234";
 
         const string query = @"
@@ -3402,7 +3401,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             operationName = "abortRepositoryMigration"
         };
 
-        const string actualErrorResponse = "Invalid migration id: {migrationId}";
+        const string actualErrorResponse = $"Invalid migration id: {migrationId}";
 
         // Act
         await _githubApi.AbortMigration(migrationId);
@@ -3411,7 +3410,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         await _githubApi.Invoking(api => api.AbortMigration(migrationId))
             .Should()
-            .ThrowExactlyAsync<ArgumentException>()
+            .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage(actualErrorResponse);
     }
 
