@@ -1037,14 +1037,22 @@ public class GithubApi
             operationName = "abortRepositoryMigration"
         };
 
-        var data = await _client.PostGraphQLAsync(url, payload);
-
-        if ((bool)(data["error"]?["message"].ToString().Contains("Could not resolve to a node")))
+        try
         {
-            throw new OctoshiftCliException($"Invalid migration id: {migrationId}");
-        };
-
-        return (bool)data["data"]["abortRepositoryMigration"]["success"];
+            var data = await _client.PostGraphQLAsync(url, payload);
+            return (bool)data["data"]["abortRepositoryMigration"]["success"];
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Could not resolve to a node"))
+            {
+                throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
+            }
+            else
+            {
+                throw ex;
+            }
+        }
     }
 
     private static object GetMannequinsPayload(string orgId)
