@@ -3403,13 +3403,11 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
 
-        // Act
         _githubClientMock
             .Setup(m => m.PostGraphQLAsync(It.IsAny<string>(), It.IsAny<object>(), null))
             .ThrowsAsync(new OctoshiftCliException("Could not resolve to a node"));
 
-        // Assert
-
+        // Act, Assert
         await _githubApi.Invoking(api => api.AbortMigration(migrationId))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
