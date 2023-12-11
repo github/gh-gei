@@ -3379,8 +3379,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     {
         // Arrange
         const string migrationId = "1234";
-
-
         const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
 
         _githubClientMock
