@@ -3401,7 +3401,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             operationName = "abortRepositoryMigration"
         };
 
-        const string actualErrorResponse = $"Invalid migration id: {migrationId}";
+        const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
 
         // Act
         await _githubApi.AbortMigration(migrationId);
@@ -3411,7 +3411,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         await _githubApi.Invoking(api => api.AbortMigration(migrationId))
             .Should()
             .ThrowExactlyAsync<OctoshiftCliException>()
-            .WithMessage(actualErrorResponse);
+            .WithMessage(expectedErrorMessage);
     }
 
     private string Compact(string source) =>
