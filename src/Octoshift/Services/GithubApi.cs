@@ -1041,16 +1041,9 @@ public class GithubApi
             var data = await _client.PostGraphQLAsync(url, payload);
             return (bool)data["data"]["abortRepositoryMigration"]["success"];
         }
-        catch (Exception ex)
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a node", StringComparison.OrdinalIgnoreCase))
         {
-            if (ex.Message.Contains("Could not resolve to a node"))
-            {
-                throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
-            }
-            else
-            {
-                throw new OctoshiftCliException($"There was an error aborting the migration: {migrationId}", ex);
-            }
+            throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
         }
     }
 
