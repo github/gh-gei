@@ -3380,26 +3380,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Arrange
         const string migrationId = "1234";
 
-        const string query = @"
-                mutation abortRepositoryMigration(
-                    $migrationId: ID!,
-                )";
-        const string gql = @"
-                abortRepositoryMigration(
-                    input: { 
-                        migrationId: $migrationId
-                    })
-                   { success }";
-
-        var payload = new
-        {
-            query = $"{query} {{ {gql} }}",
-            variables = new
-            {
-                migrationId,
-            },
-            operationName = "abortRepositoryMigration"
-        };
 
         const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
 
