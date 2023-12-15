@@ -1,4 +1,5 @@
 using FluentAssertions;
+using OctoshiftCLI.GithubEnterpriseImporter.Commands.AbortMigration;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.AbortMigration;
