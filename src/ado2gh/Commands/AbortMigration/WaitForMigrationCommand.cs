@@ -1,6 +1,6 @@
 using OctoshiftCLI.Commands.AbortMigration;
 
-namespace OctoshiftCLI.AdoToGithub.Commands.WaitForMigration;
+namespace OctoshiftCLI.AdoToGithub.Commands.AbortMigration;
 
 public sealed class AbortMigrationCommand : AbortMigrationCommandBase
 {
