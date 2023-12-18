@@ -1,1 +1,1 @@
-- Fix suggested command for downloading logs in gh gei migrate-repo log output
+- Fix suggested command for downloading logs in `gh gei migrate-repo` log output
