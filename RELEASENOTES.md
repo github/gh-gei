@@ -1,1 +1,1 @@
-
+- Update `bbs2gh inventory-report` help text to document that personal repositories owned by users are not supported
