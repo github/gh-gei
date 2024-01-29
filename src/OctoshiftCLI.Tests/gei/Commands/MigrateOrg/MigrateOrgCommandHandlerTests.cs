@@ -22,6 +22,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
         private const string TARGET_ORG = "foo-target-org";
         private const string SOURCE_PAT = "foo-source-pat";
         private const string TARGET_PAT = "foo-target-pat";
+        private const string TARGET_API_URL = "https://api.github.com";
 
         public MigrateOrgCommandHandlerTests()
         {
@@ -119,6 +120,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 GithubTargetEnterprise = TARGET_ENTERPRISE,
+                TargetApiUrl = TARGET_API_URL,
             };
             await _handler.Handle(args);
 
@@ -155,6 +157,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
                 GithubTargetOrg = TARGET_ORG,
                 GithubTargetEnterprise = TARGET_ENTERPRISE,
                 GithubTargetPat = TARGET_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
