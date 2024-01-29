@@ -56,7 +56,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(30);
+        command.Options.Count.Should().Be(31);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);

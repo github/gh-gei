@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(11);
+            _command.Options.Count.Should().Be(12);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
