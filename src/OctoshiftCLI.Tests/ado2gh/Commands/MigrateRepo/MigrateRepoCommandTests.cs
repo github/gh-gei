@@ -48,6 +48,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
         }
 
         [Fact]

@@ -87,6 +87,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
     }
 
     [Fact]
