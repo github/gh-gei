@@ -23,7 +23,6 @@ public class MigrateRepoCommandHandlerTests
     private const string ADO_REPO = "foo-repo";
     private const string GITHUB_ORG = "foo-gh-org";
     private const string GITHUB_REPO = "gh-repo";
-    private const string TARGET_API_URL = "https://api.github.com";
     private readonly string ADO_REPO_URL = $"https://dev.azure.com/{ADO_ORG}/{ADO_TEAM_PROJECT}/_git/{ADO_REPO}";
     private readonly string ADO_TOKEN = Guid.NewGuid().ToString();
     private readonly string GITHUB_ORG_ID = Guid.NewGuid().ToString();
@@ -84,7 +83,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
             QueueOnly = true,
         };
         await _handler.Handle(args);
@@ -117,7 +115,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
             QueueOnly = true,
             AdoServerUrl = ADO_SERVER_URL,
             GithubPat = GITHUB_TOKEN,
@@ -171,7 +168,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
             QueueOnly = true,
         };
         await _handler.Handle(args);
@@ -216,7 +212,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
         };
         await _handler.Handle(args);
 
@@ -247,7 +242,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
         }))
             .Should()
             .ThrowAsync<OctoshiftCliException>()
@@ -274,7 +268,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
         };
 
         await _handler.Handle(args);
@@ -298,7 +291,6 @@ public class MigrateRepoCommandHandlerTests
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
-            TargetApiUrl = TARGET_API_URL,
             QueueOnly = true,
             TargetRepoVisibility = targetRepoVisibility,
         };
