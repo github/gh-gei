@@ -47,6 +47,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(Verbose);
         AddOption(KeepArchive);
         AddOption(NoSslVerify);
+        AddOption(TargetApiUrl);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -182,7 +183,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<bool> KeepArchive { get; } = new(
         name: "--keep-archive",
         description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
-
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
     public Option<bool> NoSslVerify { get; } = new(
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
@@ -212,7 +216,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.GithubOrg.HasValue())
         {
             var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
-            githubApi = githubApiFactory.Create(null, args.GithubPat);
+            githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
         }
 
         if (args.BbsServerUrl.HasValue())

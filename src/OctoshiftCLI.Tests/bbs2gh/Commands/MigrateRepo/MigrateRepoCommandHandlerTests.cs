@@ -31,6 +31,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string GITHUB_ORG = "target-org";
         private const string GITHUB_REPO = "target-repo";
         private const string GITHUB_PAT = "github pat";
+        private const string TARGET_API_URL = "https://api.github.com";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AWS_ACCESS_KEY_ID = "aws-access-key-id";
         private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
@@ -182,6 +183,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -227,6 +229,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -269,6 +272,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 BbsSharedHome = bbsSharedHome,
                 QueueOnly = true,
             };
@@ -327,6 +331,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -367,6 +372,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -398,7 +404,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
-                GithubPat = GITHUB_PAT
+                GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
             };
             await _handler.Invoking(async x => await x.Handle(args)).Should().ThrowExactlyAsync<InvalidOperationException>();
 
@@ -431,6 +438,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -459,6 +467,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
 
@@ -488,6 +497,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
                 GithubPat = githubPat,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -522,6 +532,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -547,6 +558,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 ArchiveUrl = ARCHIVE_URL,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             }))
                 .Should()
@@ -598,6 +610,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                TargetApiUrl = TARGET_API_URL,
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 QueueOnly = true,
             };
@@ -667,6 +680,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
@@ -686,6 +700,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
+                TargetApiUrl = TARGET_API_URL,
                 QueueOnly = true,
             };
             await _handler.Handle(args);
