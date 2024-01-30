@@ -1,1 +1,1 @@
-- Add `--target-api-url` to `ado2gh migrate repo`, `bbs2gh migrate repo`, and `gei migrate org` to support newer GitHub migration paths.
+- Add `--target-api-url` to `gh ado2gh migrate-repo`, `gh bbs2gh migrate-repo`, and `gh gei migrate-org` to support newer GitHub migration paths.
