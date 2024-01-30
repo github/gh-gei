@@ -72,5 +72,28 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
 
             _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
         }
+        [Fact]
+        public void It_Uses_Target_Api_Url_When_Provided()
+        {
+            var adoPat = "abc123";
+            var githubPat = "def456";
+            var targetApiUrl = "https://api.github.com";
+
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoRepo = "some-repo",
+                GithubOrg = "gh-org",
+                GithubRepo = "gh-repo",
+                AdoPat = adoPat,
+                GithubPat = githubPat,
+                TargetApiUrl = targetApiUrl
+            };
+
+            _command.BuildHandler(args, _serviceProvider);
+
+            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, githubPat));
+        }
     }
 }

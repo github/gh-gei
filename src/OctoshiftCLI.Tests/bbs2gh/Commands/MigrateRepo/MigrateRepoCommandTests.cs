@@ -214,6 +214,45 @@ public class MigrateRepoCommandTests
 
         _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
     }
+    [Fact]
+    public void BuildHandler_Creates_GitHub_Api_When_Github_Org_Is_Provided()
+    {
+        // Arrange
+        var args = new MigrateRepoCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            GithubPat = GITHUB_PAT
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+    }
+
+    [Fact]
+    public void BuildHandler_Uses_Target_Api_Url_When_Provided()
+    {
+        // Arrange
+        var targetApiUrl = "https://api.github.com";
+        var args = new MigrateRepoCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            GithubPat = GITHUB_PAT,
+            TargetApiUrl = targetApiUrl
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, GITHUB_PAT));
+    }
 
     [Fact]
     public void BuildHandler_Creates_Bbs_Api_When_Bbs_Server_Url_Is_Provided()
