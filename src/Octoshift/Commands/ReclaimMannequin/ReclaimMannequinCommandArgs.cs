@@ -15,7 +15,6 @@ public class ReclaimMannequinCommandArgs : CommandArgs
     public string GithubPat { get; set; }
     public bool SkipInvitation { get; set; }
     public string TargetApiUrl { get; set; }
-    
     public override void Validate(OctoLogger log)
     {
         if (string.IsNullOrEmpty(Csv) && (string.IsNullOrEmpty(MannequinUser) || string.IsNullOrEmpty(TargetUser)))

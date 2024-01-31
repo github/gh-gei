@@ -10,6 +10,7 @@ public class GrantMigratorRoleCommandArgs : CommandArgs
     [Secret]
     public string GithubPat { get; set; }
     public string GhesApiUrl { get; set; }
+    public string TargetApiUrl { get; set; }
 
     public override void Validate(OctoLogger log)
     {

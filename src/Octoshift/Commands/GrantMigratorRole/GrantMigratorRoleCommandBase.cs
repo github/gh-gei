@@ -26,6 +26,10 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
     };
 
     public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
 
     public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
@@ -43,7 +47,8 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
+        var api_url = args.TargetApiUrl ?? args.GhesApiUrl;
+        var githubApi = githubApiFactory.Create(api_url, args.GithubPat);
 
         return new GrantMigratorRoleCommandHandler(log, githubApi);
     }
@@ -56,5 +61,6 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
         AddOption(GithubPat);
         AddOption(Verbose);
         AddOption(GhesApiUrl);
+        AddOption(TargetApiUrl);
     }
 }
