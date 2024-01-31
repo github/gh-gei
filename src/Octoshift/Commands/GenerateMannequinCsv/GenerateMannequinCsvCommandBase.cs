@@ -37,6 +37,10 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
 
     public override GenerateMannequinCsvCommandHandler BuildHandler(GenerateMannequinCsvCommandArgs args, IServiceProvider sp)
     {
@@ -52,7 +56,7 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
 
         return new GenerateMannequinCsvCommandHandler(log, githubApi);
     }
@@ -63,6 +67,7 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
         AddOption(Output);
         AddOption(IncludeReclaimed);
         AddOption(GithubPat);
+        AddOption(TargetApiUrl);
         AddOption(Verbose);
     }
 }
