@@ -62,7 +62,7 @@ public class GrantMigratorRoleCommandBaseTests
         _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
     }
 
-        [Fact]
+    [Fact]
     public void It_Uses_The_TargetApiUrl_When_Provided()
     {
         var ghesApiUrl = "GHES-API-URL";
