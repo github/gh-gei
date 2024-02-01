@@ -12,7 +12,7 @@ public class ReclaimMannequinCommandBaseTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly ServiceProvider _serviceProvider;
-    private readonly ReclaimMannequinCommandBase _command;
+    private readonly ReclaimMannequinCommandBase _command = new();
 
     private const string GITHUB_ORG = "FooOrg";
 

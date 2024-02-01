@@ -12,8 +12,7 @@ public class GenerateMannequinCsvCommandBaseTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly ServiceProvider _serviceProvider;
-    private readonly GenerateMannequinCsvCommandBase _command;
-
+    private readonly GenerateMannequinCsvCommandBase _command = new();
     private const string GITHUB_ORG = "FooOrg";
 
     public GenerateMannequinCsvCommandBaseTests()

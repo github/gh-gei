@@ -65,7 +65,6 @@ public class GrantMigratorRoleCommandBaseTests
     [Fact]
     public void It_Uses_The_TargetApiUrl_When_Provided()
     {
-        var ghesApiUrl = "GHES-API-URL";
         var targetApiUrl = "TARGET-API-URL";
 
         var args = new GrantMigratorRoleCommandArgs
