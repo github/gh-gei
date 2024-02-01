@@ -10,6 +10,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Commands.ReclaimMannequin;
 public class ReclaimMannequinCommandBaseTests
 {
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+    private readonly Mock<ConfirmationService> _mockConfirmationService = TestHelpers.CreateMock<ConfirmationService>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly ServiceProvider _serviceProvider;
     private readonly ReclaimMannequinCommandBase _command = new();
@@ -21,7 +22,8 @@ public class ReclaimMannequinCommandBaseTests
         var serviceCollection = new ServiceCollection();
         serviceCollection
             .AddSingleton(_mockOctoLogger.Object)
-            .AddSingleton(_mockGithubApiFactory.Object);
+            .AddSingleton(_mockGithubApiFactory.Object)
+            .AddSingleton(_mockConfirmationService.Object);
 
         _serviceProvider = serviceCollection.BuildServiceProvider();
     }
