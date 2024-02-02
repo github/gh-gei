@@ -1,4 +1,5 @@
-﻿using OctoshiftCLI.Services;
+﻿using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Commands.GrantMigratorRole;
 
