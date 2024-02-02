@@ -24,5 +24,10 @@ public class GrantMigratorRoleCommandArgs : CommandArgs
         {
             throw new OctoshiftCliException("Actor type must be either TEAM or USER.");
         }
+
+        if (!string.IsNullOrEmpty(GhesApiUrl) && !string.IsNullOrEmpty(TargetApiUrl))
+        {
+            throw new OctoshiftCliException("Only one of --ghes-api-url or --target-api-url can be set at a time.");
+        }
     }
 }

@@ -25,10 +25,15 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
 
-    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
+    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
+    {
+        IsRequired = false,
+        Description = "The URL of the GitHub Enterprise Server instance, if migrating from GHES. Supports granting access for exports. Can only configure one of --ghes-api-url or --target-api-url at a time."
+    };
     public Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
-        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+        IsRequired = false,
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com. Can only configure one of --ghes-api-url or --target-api-url at a time."
     };
 
     public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
