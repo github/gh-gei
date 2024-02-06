@@ -28,4 +28,21 @@ public class RevokeMigratorRoleCommandArgsTests
             .Should()
             .ThrowExactly<OctoshiftCliException>();
     }
+    [Fact]
+    public void It_Validates_GhesApiUrl_And_TargetApiUrl()
+    {
+        var args = new RevokeMigratorRoleCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Actor = ACTOR,
+            ActorType = "USER",
+            GhesApiUrl = "https://ghes.example.com",
+            TargetApiUrl = "https://api.github.com",
+        };
+
+        FluentActions
+            .Invoking(() => args.Validate(_mockOctoLogger.Object))
+            .Should()
+            .ThrowExactly<OctoshiftCliException>();
+    }
 }

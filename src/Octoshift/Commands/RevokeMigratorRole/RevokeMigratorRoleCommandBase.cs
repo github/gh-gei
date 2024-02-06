@@ -41,13 +41,22 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.GhesApiUrl, args.GithubPat);
+        var apiUrl = args.TargetApiUrl ?? args.GhesApiUrl;
+        var githubApi = githubApiFactory.Create(apiUrl, args.GithubPat);
 
         return new RevokeMigratorRoleCommandHandler(log, githubApi);
     }
 
-    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") { IsRequired = false };
-
+    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") 
+    {
+        IsRequired = false,
+        Description = "The URL of the GitHub Enterprise Server instance, if migrating from GHES. Supports revoking access for exports. Can only configure one of --ghes-api-url or --target-api-url at a time."
+    };
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        IsRequired = false,
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com. Can only configure one of --ghes-api-url or --target-api-url at a time."
+    };
     protected void AddOptions()
     {
         AddOption(GithubOrg);
@@ -56,5 +65,6 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         AddOption(GithubPat);
         AddOption(Verbose);
         AddOption(GhesApiUrl);
+        AddOption(TargetApiUrl);
     }
 }
