@@ -30,12 +30,16 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
     {
         Description = "Display more information to the console."
     };
-
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
     protected void AddOptions()
     {
         AddOption(MigrationId);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(TargetApiUrl);
     }
 
     public override AbortMigrationCommandHandler BuildHandler(AbortMigrationCommandArgs args, IServiceProvider sp)
@@ -51,7 +55,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(args.TargetApiUrl, args.GithubPat);
 
         return new AbortMigrationCommandHandler(log, githubApi);
     }
