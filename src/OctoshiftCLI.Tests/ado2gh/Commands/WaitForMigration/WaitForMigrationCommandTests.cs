@@ -17,5 +17,6 @@ public class WaitForMigrationCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "migration-id", true);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+        TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
     }
 }
