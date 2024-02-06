@@ -47,7 +47,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         return new RevokeMigratorRoleCommandHandler(log, githubApi);
     }
 
-    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url") 
+    public virtual Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
     {
         IsRequired = false,
         Description = "The URL of the GitHub Enterprise Server instance, if migrating from GHES. Supports revoking access for exports. Can only configure one of --ghes-api-url or --target-api-url at a time."
