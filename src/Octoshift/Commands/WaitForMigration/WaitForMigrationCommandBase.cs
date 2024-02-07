@@ -27,7 +27,10 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
-
+    public virtual Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
     public virtual Option<bool> Verbose { get; } = new("--verbose");
 
     protected void AddOptions()
@@ -35,6 +38,7 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
         AddOption(MigrationId);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(TargetApiUrl);
     }
 
     public override WaitForMigrationCommandHandler BuildHandler(WaitForMigrationCommandArgs args, IServiceProvider sp)
@@ -50,7 +54,7 @@ public class WaitForMigrationCommandBase : CommandBase<WaitForMigrationCommandAr
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(args.TargetApiUrl, args.GithubPat);
         var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
         return new WaitForMigrationCommandHandler(log, githubApi, warningsCountLogger);

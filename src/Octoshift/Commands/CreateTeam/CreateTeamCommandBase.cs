@@ -22,7 +22,10 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
-
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
     public virtual Option<bool> Verbose { get; } = new("--verbose") { IsRequired = false };
 
     public override CreateTeamCommandHandler BuildHandler(CreateTeamCommandArgs args, IServiceProvider sp)
@@ -40,7 +43,7 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
 
-        var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
 
         return new CreateTeamCommandHandler(log, githubApi);
     }
@@ -52,5 +55,6 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
         AddOption(IdpGroup);
         AddOption(GithubPat);
         AddOption(Verbose);
+        AddOption(TargetApiUrl);
     }
 }

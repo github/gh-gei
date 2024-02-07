@@ -8,6 +8,7 @@ public class AbortMigrationCommandArgs : CommandArgs
     public string MigrationId { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+    public string TargetApiUrl { get; set; }
 
     public override void Validate(OctoLogger log)
     {

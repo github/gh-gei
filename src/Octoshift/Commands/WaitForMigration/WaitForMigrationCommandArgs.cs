@@ -8,6 +8,7 @@ public class WaitForMigrationCommandArgs : CommandArgs
     public string MigrationId { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+    public string TargetApiUrl { get; set; }
 
     public const string REPO_MIGRATION_ID_PREFIX = "RM_";
     public const string ORG_MIGRATION_ID_PREFIX = "OM_";
