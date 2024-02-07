@@ -52,7 +52,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         IsRequired = false,
         Description = "The URL of the GitHub Enterprise Server instance, if migrating from GHES. Supports revoking access for exports. Can only configure one of --ghes-api-url or --target-api-url at a time."
     };
-    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    public virtual Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         IsRequired = false,
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com. Can only configure one of --ghes-api-url or --target-api-url at a time."
