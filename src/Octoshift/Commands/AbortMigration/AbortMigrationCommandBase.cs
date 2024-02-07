@@ -30,7 +30,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
     {
         Description = "Display more information to the console."
     };
-    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    public virtual Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };
