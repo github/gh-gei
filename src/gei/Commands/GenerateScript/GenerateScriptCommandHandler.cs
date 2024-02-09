@@ -215,7 +215,7 @@ if ($Failed -ne 0) {
 
     private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo, string targetApiUrl)
     {
-        return $"gh gei download-logs{(!string.IsNullOrEmpty(targetApiUrl) ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
+        return $"gh gei download-logs{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
