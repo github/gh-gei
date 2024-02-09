@@ -72,9 +72,9 @@ Only repo maintainers can publish a release. The process is kicked off by pushin
 
 1. Check [`RELEASENOTES.md`](http://releasenotes.md/) to see if there is anything to release.
 2. Switch to the `main` branch and `pull` the latest.
-3. *optional* List the tags —> `git tag`
-4. Tag the version —> `git tag v5.0`
-5. Push the tags up —> `git push --tags`
+3. *optional* List the tags e.g. `git tag`
+4. Tag the version e.g. `git tag v5.0`
+5. Push the tags up e.g. `git push --tags`
 6. This will trigger an Actions workflow that results in a new release being published, once the build is done it will wait for approval(from maintainers) in order to `pushlish` the binaries. The workflow does the following steps:
     - Validates that the SHA referenced by the tag is in the history of the `main` branch
     - Runs `publish.ps1` to build self-contained binaries for each platform. This script also embeds the version number (extracted from the tag) into each binary.
