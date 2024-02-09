@@ -370,7 +370,7 @@ if ($Failed -ne 0) {
 
     private string CreateGithubAdminsTeamScript(string adoTeamProject, string githubOrg, bool linkIdpGroups, string targetApiUrl) =>
         _generateScriptOptions.CreateTeams
-            ? $"gh ado2gh create-team{(!string.IsNullOrEmpty(targetApiUrl) ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --team-name \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"" : string.Empty)}"
+            ? $"gh ado2gh create-team{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --team-name \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"" : string.Empty)}"
             : null;
 
     private string AddMaintainersToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
