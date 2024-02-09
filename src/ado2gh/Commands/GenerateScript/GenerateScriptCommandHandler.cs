@@ -393,7 +393,7 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string WaitForMigrationScript(string repoMigrationKey, string targetApiUrl) => $"gh ado2gh wait-for-migration{(!string.IsNullOrEmpty(targetApiUrl) ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+    private string WaitForMigrationScript(string repoMigrationKey, string targetApiUrl) => $"gh ado2gh wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
     private string DownloadMigrationLogScript(string githubOrg, string githubRepo, string targetApiUrl) =>
         _generateScriptOptions.DownloadMigrationLogs
