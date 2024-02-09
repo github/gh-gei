@@ -22,6 +22,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         [Secret]
         public string GithubSourcePat { get; set; }
         public bool KeepArchive { get; set; }
+        public string TargetApiUrl { get; set; }
 
         public override void Validate(OctoLogger log)
         {

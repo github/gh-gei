@@ -26,6 +26,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     public string AwsRegion { get; set; }
     public bool KeepArchive { get; set; }
     public bool NoSslVerify { get; set; }
+    public string TargetApiUrl { get; set; }
 
     public override void Validate(OctoLogger log)
     {

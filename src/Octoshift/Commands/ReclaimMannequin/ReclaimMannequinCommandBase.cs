@@ -67,7 +67,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
         Description = "Reclaim mannequins immediately without sending an invitation to the user. Only available for Enterprise Managed Users (EMU) organizations. Warning: this is irreversible!"
     };
 
-    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    public virtual Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };

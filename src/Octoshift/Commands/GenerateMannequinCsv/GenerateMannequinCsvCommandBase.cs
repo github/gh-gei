@@ -37,7 +37,7 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
     };
-    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    public virtual Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };
