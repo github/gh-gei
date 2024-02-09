@@ -17,6 +17,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
     {
         AddOption(BbsServerUrl);
         AddOption(GithubOrg);
+        AddOption(TargetApiUrl);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
         AddOption(BbsProject);
@@ -118,6 +119,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
                      "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+    public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+    {
+        Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
     {
