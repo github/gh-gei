@@ -517,7 +517,7 @@ if (-not $env:SMB_PASSWORD) {
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
     }
 
-[Fact]
+    [Fact]
     public async Task One_Repo_With_Smb_And_TargetApiUrl()
     {
         // Arrange
