@@ -211,7 +211,7 @@ if ($Failed -ne 0) {
         return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}";
     }
 
-    private string WaitForMigrationScript(string targetApiUrl, string repoMigrationKey = null) => $"gh gei wait-for-migration{(!string.IsNullOrEmpty(targetApiUrl) ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+    private string WaitForMigrationScript(string targetApiUrl, string repoMigrationKey = null) => $"gh gei wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
     private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo, string targetApiUrl)
     {
