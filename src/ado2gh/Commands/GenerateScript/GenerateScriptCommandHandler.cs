@@ -397,7 +397,7 @@ if ($Failed -ne 0) {
 
     private string DownloadMigrationLogScript(string githubOrg, string githubRepo, string targetApiUrl) =>
         _generateScriptOptions.DownloadMigrationLogs
-        ? $"gh ado2gh download-logs{(!string.IsNullOrEmpty(targetApiUrl) ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\""
+        ? $"gh ado2gh download-logs{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\""
         : null;
 
     private string Exec(string script) => Wrap(script, "Exec");
