@@ -1,2 +1,2 @@
-- Add `--target-api-url` to `gh ado2gh migrate-repo`, `gh bbs2gh migrate-repo`, and `gh gei migrate-org` to support newer GitHub migration paths.
+- Add `--target-api-url` to commonly used commands to support newer GitHub migration paths.
 - Fixed `gh ado2gh rewire-pipeline` command for ADO Team Projects with more than 10,000 Build Definitions.
