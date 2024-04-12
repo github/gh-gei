@@ -103,6 +103,14 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
         {
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipStatusCheck()?.ToUpperInvariant() is "TRUE" or "1")
+            {
+                Logger.LogInformation("Skipped GitHub status check due to GEI_SKIP_STATUS_CHECK environment variable");
+                return;
+            }
+
             var githubStatusApi = sp.GetRequiredService<GithubStatusApi>();
 
             if (await githubStatusApi.GetUnresolvedIncidentsCount() > 0)
@@ -113,6 +121,14 @@ namespace OctoshiftCLI.BbsToGithub
 
         private static async Task LatestVersionCheck(ServiceProvider sp)
         {
+            var envProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
+
+            if (envProvider.SkipVersionCheck()?.ToUpperInvariant() is "TRUE" or "1")
+            {
+                Logger.LogInformation("Skipped latest version check due to GEI_SKIP_VERSION_CHECK environment variable");
+                return;
+            }
+
             var versionChecker = sp.GetRequiredService<VersionChecker>();
 
             if (await versionChecker.IsLatest())

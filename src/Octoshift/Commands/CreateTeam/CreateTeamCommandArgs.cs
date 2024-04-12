@@ -7,4 +7,5 @@ public class CreateTeamCommandArgs : CommandArgs
     public string IdpGroup { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+    public string TargetApiUrl { get; set; }
 }

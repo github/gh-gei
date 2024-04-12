@@ -9,4 +9,5 @@ public class GenerateMannequinCsvCommandArgs : CommandArgs
     public bool IncludeReclaimed { get; set; }
     [Secret]
     public string GithubPat { get; set; }
+    public string TargetApiUrl { get; set; }
 }

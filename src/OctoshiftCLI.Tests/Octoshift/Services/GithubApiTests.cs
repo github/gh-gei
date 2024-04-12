@@ -3323,6 +3323,75 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         version.Should().Be("3.7.0");
     }
 
+    [Fact]
+    public async Task AbortMigration_Returns_True_On_Success()
+    {
+        // Arrange
+        const string url = "https://api.github.com/graphql";
+        const string migrationId = "MIGRATION_ID";
+
+        const string query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        const string gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    })
+                   { success }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+
+        const bool actualBooleanResponse = true;
+        var response = JObject.Parse($@"
+            {{
+                ""data"": 
+                    {{
+                        ""abortRepositoryMigration"": 
+                            {{
+                                ""success"": ""{actualBooleanResponse}""
+                            }}
+                    }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload.ToJson())), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationId);
+
+        // Assert
+        expectedBooleanResponse.Should().Be(actualBooleanResponse);
+    }
+
+    [Fact]
+    public async Task AbortMigration_Surfaces_Error_With_Incorrect_Migration_ID()
+    {
+        // Arrange
+        const string migrationId = "1234";
+        const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+            .ThrowsAsync(new OctoshiftCliException("Could not resolve to a node"));
+
+        // Act, Assert
+        await _githubApi.Invoking(api => api.AbortMigration(migrationId))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage(expectedErrorMessage);
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
@@ -3332,4 +3401,5 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
+
 }

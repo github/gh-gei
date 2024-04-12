@@ -1011,6 +1011,42 @@ public class GithubApi
         return (string)data["installed_version"];
     }
 
+    public virtual async Task<bool> AbortMigration(string migrationId)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var query = @"
+                mutation abortRepositoryMigration(
+                    $migrationId: ID!,
+                )";
+        var gql = @"
+                abortRepositoryMigration(
+                    input: { 
+                        migrationId: $migrationId
+                    })
+                   { success }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                migrationId,
+            },
+            operationName = "abortRepositoryMigration"
+        };
+
+        try
+        {
+            var data = await _client.PostGraphQLAsync(url, payload);
+            return (bool)data["data"]["abortRepositoryMigration"]["success"];
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a node", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
+        }
+    }
+
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";

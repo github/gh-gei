@@ -11,7 +11,7 @@ namespace OctoshiftCLI.BbsToGithub.Commands.InventoryReport
     {
         public InventoryReportCommand() : base(
                 name: "inventory-report",
-                description: "Generates several CSV files containing lists of BBS projects and repos. Useful for planning large migrations." +
+                description: "Generates several CSV files containing lists of BBS projects and repos. Useful for planning large migrations. Personal repositories owned by individual users will not be included." +
                              Environment.NewLine +
                              "Note: Expects BBS_USERNAME and BBS_PASSWORD env variables or --bbs-username and --bbs-password options to be set.")
         {
