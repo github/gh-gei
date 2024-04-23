@@ -42,4 +42,21 @@ public class CreateTeamCommandTests
 
         _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.GithubPat), Times.Once);
     }
+
+    [Fact]
+    public void It_Uses_Target_Api_Url_When_Provided()
+    {
+        var targetApiUrl = "https://api.github.com";
+
+        var args = new CreateTeamCommandArgs
+        {
+            GithubOrg = "foo",
+            TeamName = "blah",
+            TargetApiUrl = targetApiUrl
+        };
+
+        _command.BuildHandler(args, _serviceProvider);
+
+        _mockGithubApiFactory.Verify(m => m.Create(args.TargetApiUrl, null), Times.Once);
+    }
 }

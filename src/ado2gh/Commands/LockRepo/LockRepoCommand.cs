@@ -34,7 +34,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.LockRepo
         {
             IsRequired = true
         };
-        public Option<string> AdoPat { get; } = new("--ado-pat");
+        public Option<string> AdoPat { get; } = new("--ado-pat")
+        {
+            Description = "An Azure DevOps personal access token with the 'Identity -> Read' and 'Security -> Manage' scopes."
+        };
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public override LockRepoCommandHandler BuildHandler(LockRepoCommandArgs args, IServiceProvider sp)
