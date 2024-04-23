@@ -423,7 +423,7 @@ public class AdoApi
             return result;
         }
 
-        var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions";
+        var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = await _client.GetWithPagingAsync(url);
 
         foreach (var item in response)

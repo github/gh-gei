@@ -103,6 +103,34 @@ public class GenerateScriptCommandHandlerTests
     }
 
     [Fact]
+    public async Task SequentialScript_Single_Repo_With_TargetApiUrl()
+    {
+        // Arrange
+        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+        _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+        _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+        var targetApiUrl = "https://foo.com/api/v3";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            AdoOrg = ADO_ORG,
+            Sequential = true,
+            Output = new FileInfo("unit-test-output"),
+            TargetApiUrl = targetApiUrl
+        };
+        await _handler.Handle(args);
+
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput);
+        var expected = $"Exec {{ gh ado2gh migrate-repo --target-api-url \"{targetApiUrl}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --target-repo-visibility private }}";
+
+        // Assert
+        _scriptOutput.Should().Be(expected);
+    }
+
+    [Fact]
     public async Task SequentialScript_Single_Repo_AdoServer()
     {
         // Arrange

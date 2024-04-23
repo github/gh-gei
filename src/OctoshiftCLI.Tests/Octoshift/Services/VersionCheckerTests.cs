@@ -10,11 +10,7 @@ public class VersionCheckerTests
     public void GetVersionComments_Returns_Root_And_Executing_Commands()
     {
         // Arrange
-        const string rootCommand = "ROOT_COMMAND";
-        const string executingCommand = "EXECUTING_COMMAND";
-
-        CliContext.RootCommand = rootCommand;
-        CliContext.ExecutingCommand = executingCommand;
+        TestHelpers.SetCliContext();
 
         var versionChecker = new VersionChecker(null, null);
 
@@ -22,6 +18,6 @@ public class VersionCheckerTests
         var comments = versionChecker.GetVersionComments();
 
         // Assert
-        comments.Should().Be($"({rootCommand}/{executingCommand})");
+        comments.Should().Be($"({TestHelpers.CLI_ROOT_COMMAND}/{TestHelpers.CLI_EXECUTING_COMMAND})");
     }
 }

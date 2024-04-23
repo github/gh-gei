@@ -26,6 +26,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
             AddOption(AdoPat);
             AddOption(GithubPat);
             AddOption(Verbose);
+            AddOption(TargetApiUrl);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -61,6 +62,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
         {
             Description = "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal."
         };
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+        };
         public Option<string> AdoPat { get; } = new("--ado-pat");
         public Option<string> GithubPat { get; } = new("--github-pat");
         public Option<bool> Verbose { get; } = new("--verbose");
@@ -79,7 +84,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
 
             var log = sp.GetRequiredService<OctoLogger>();
             var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            var githubApi = githubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+            var githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 

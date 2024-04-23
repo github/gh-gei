@@ -60,30 +60,54 @@ public class OctoLoggerTests
         _consoleError.Should().NotContain(urlEncodedSecret);
     }
 
-    [Fact]
-    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console()
+    [Theory]
+    [InlineData("https://files.github.acmeinc.com/foo?token=foobar")]
+    [InlineData("HTTPS://FILES.GITHUB.ACMEINC.COM/FOO?TOKEN=FOOBAR")]
+    public void Ghes_Archive_Url_Tokens_Should_Be_Replaced_In_Logs_And_Console(string archiveUrl)
     {
-
-        var ghesArchiveUrl = "https://files.github.acmeinc.com/foo?token=foobar";
-
         _octoLogger.Verbose = false;
-        _octoLogger.LogInformation($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogVerbose($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogWarning($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogSuccess($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogError($"Archive URL: {ghesArchiveUrl}");
-        _octoLogger.LogError(new OctoshiftCliException("Archive URL: {ghesArchiveUrl}"));
-        _octoLogger.LogError(new InvalidOperationException("Archive URL: {ghesArchiveUrl}"));
+        _octoLogger.LogInformation($"Archive URL: {archiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {archiveUrl}");
+        _octoLogger.LogWarning($"Archive URL: {archiveUrl}");
+        _octoLogger.LogSuccess($"Archive URL: {archiveUrl}");
+        _octoLogger.LogError($"Archive URL: {archiveUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive URL: {archiveUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive URL: {archiveUrl}"));
 
         _octoLogger.Verbose = true;
-        _octoLogger.LogVerbose("Archive URL: {ghesArchiveUrl}");
+        _octoLogger.LogVerbose($"Archive URL: {archiveUrl}");
 
-        _consoleOutput.Should().NotContain(ghesArchiveUrl);
-        _logOutput.Should().NotContain(ghesArchiveUrl);
-        _verboseLogOutput.Should().NotContain(ghesArchiveUrl);
-        _consoleError.Should().NotContain(ghesArchiveUrl);
+        _consoleOutput.Should().NotContain(archiveUrl);
+        _logOutput.Should().NotContain(archiveUrl);
+        _verboseLogOutput.Should().NotContain(archiveUrl);
+        _consoleError.Should().NotContain(archiveUrl);
 
-        _consoleOutput.Should().Contain("Archive URL: https://files.github.acmeinc.com/foo?token=***");
+        _consoleOutput.ToLower().Should().Contain("?token=***");
+    }
+
+    [Theory]
+    [InlineData("https://example-s3-bucket-name.s3.amazonaws.com/uuid-uuid-uuid.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-Date=20231025T104425Z&X-Amz-Expires=172800&X-Amz-Signature=AAAAAAAAAAAAAAAAAAAAAAA&X-Amz-SignedHeaders=host&actor_id=1&key_id=0&repo_id=0&response-content-disposition=filename%3Duuid-uuid-uuid.tar.gz&response-content-type=application%2Fx-gzip")]
+    [InlineData("HTTPS://EXAMPLE-S3-BUCKET-NAME.S3.AMAZONAWS.COM/UUID-UUID-UUID.TAR.GZ?X-AMZ-ALGORITHM=AWS4-HMAC-SHA256&X-AMZ-CREDENTIAL=AAAAAAAAAAAAAAAAAAAAAAA&X-AMZ-DATE=20231025T104425Z&X-AMZ-EXPIRES=172800&X-AMZ-SIGNATURE=AAAAAAAAAAAAAAAAAAAAAAA&X-AMZ-SIGNEDHEADERS=HOST&ACTOR_ID=1&KEY_ID=0&REPO_ID=0&RESPONSE-CONTENT-DISPOSITION=FILENAME%3DUUID-UUID-UUID.TAR.GZ&RESPONSE-CONTENT-TYPE=APPLICATION%2FX-GZIP")]
+    public void Aws_Url_X_Aws_Credential_Parameters_Should_Be_Replaced_In_Logs_And_Console(string awsUrl)
+    {
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogWarning($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogSuccess($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError($"Archive (metadata) download url: {awsUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {awsUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {awsUrl}"));
+
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {awsUrl}");
+
+        _consoleOutput.Should().NotContain(awsUrl);
+        _logOutput.Should().NotContain(awsUrl);
+        _verboseLogOutput.Should().NotContain(awsUrl);
+        _consoleError.Should().NotContain(awsUrl);
+
+        _consoleOutput.ToLower().Should().Contain("&x-amz-credential=***");
     }
 
     [Fact]
