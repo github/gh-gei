@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(17);
+            command.Options.Count.Should().Be(18);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -57,6 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
             TestHelpers.VerifyCommandOption(command.Options, "rewire-pipelines", false);
             TestHelpers.VerifyCommandOption(command.Options, "all", false);
             TestHelpers.VerifyCommandOption(command.Options, "repo-list", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
         }
 
         [Fact]

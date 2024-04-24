@@ -11,7 +11,7 @@ public class RevokeMigratorRoleCommandTests
         var command = new RevokeMigratorRoleCommand();
         Assert.NotNull(command);
         Assert.Equal("revoke-migrator-role", command.Name);
-        Assert.Equal(6, command.Options.Count);
+        Assert.Equal(7, command.Options.Count);
 
         TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(command.Options, "actor", true);
@@ -19,5 +19,6 @@ public class RevokeMigratorRoleCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
     }
 }

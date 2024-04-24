@@ -22,5 +22,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public bool RewirePipelines { get; set; }
         public bool All { get; set; }
         public FileInfo RepoList { get; set; }
+        public string TargetApiUrl { get; set; }
     }
 }

@@ -56,7 +56,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(30);
+        command.Options.Count.Should().Be(31);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);
@@ -87,6 +87,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
     }
 
     [Fact]
@@ -212,6 +213,27 @@ public class MigrateRepoCommandTests
         handler.Should().NotBeNull();
 
         _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+    }
+
+    [Fact]
+    public void BuildHandler_Uses_Target_Api_Url_When_Provided()
+    {
+        // Arrange
+        var targetApiUrl = "https://api.github.com";
+        var args = new MigrateRepoCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            GithubPat = GITHUB_PAT,
+            TargetApiUrl = targetApiUrl
+        };
+
+        // Act
+        var handler = _command.BuildHandler(args, _mockServiceProvider.Object);
+
+        // Assert
+        handler.Should().NotBeNull();
+
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, GITHUB_PAT));
     }
 
     [Fact]

@@ -44,7 +44,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
-        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive);
+        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive, args.TargetApiUrl);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -52,7 +52,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
     }
 
-    private async Task<string> GenerateScript(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
+    private async Task<string> GenerateScript(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
     {
         var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
@@ -62,8 +62,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         return sequential
-            ? await GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive)
-            : await GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive);
+            ? await GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl)
+            : await GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl);
     }
 
     private async Task<IEnumerable<(string Name, string Visibility)>> GetGithubRepos(GithubApi github, string githubOrg)
@@ -83,7 +83,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
+    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
     {
         var content = new StringBuilder();
 
@@ -110,18 +110,18 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         foreach (var (name, visibility) in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl)));
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, name)));
+                content.AppendLine(Exec(DownloadMigrationLogScript(githubTargetOrg, name, targetApiUrl)));
             }
         }
 
         return content.ToString();
     }
 
-    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive)
+    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
     {
         var content = new StringBuilder();
 
@@ -158,7 +158,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Queuing migrations
         foreach (var (name, visibility) in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility))}");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl))}");
             content.AppendLine($"$RepoMigrations[\"{name}\"] = $MigrationID");
             content.AppendLine();
         }
@@ -171,12 +171,12 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Query each migration's status
         foreach (var (name, _) in repos)
         {
-            content.AppendLine(Wrap(WaitForMigrationScript(name), $"if ($RepoMigrations[\"{name}\"])"));
+            content.AppendLine(Wrap(WaitForMigrationScript(targetApiUrl, name), $"if ($RepoMigrations[\"{name}\"])"));
             content.AppendLine($"if ($RepoMigrations[\"{name}\"] -and $lastexitcode -eq 0) {{ $Succeeded++ }} else {{ $Failed++ }}");
 
             if (downloadMigrationLogs)
             {
-                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, name));
+                content.AppendLine(DownloadMigrationLogScript(githubTargetOrg, name, targetApiUrl));
             }
 
             content.AppendLine();
@@ -199,11 +199,11 @@ if ($Failed -ne 0) {
         return content.ToString();
     }
 
-    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo, bool keepArchive, string repoVisibility)
+    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo, bool keepArchive, string repoVisibility, string targetApiUrl)
     {
         var ghesRepoOptions = ghesApiUrl.HasValue() ? GetGhesRepoOptions(ghesApiUrl, awsBucketName, awsRegion, noSslVerify, keepArchive) : null;
 
-        return $"gh gei migrate-repo --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility}";
+        return $"gh gei migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility}";
     }
 
     private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool keepArchive)
@@ -211,11 +211,11 @@ if ($Failed -ne 0) {
         return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}";
     }
 
-    private string WaitForMigrationScript(string repoMigrationKey = null) => $"gh gei wait-for-migration --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
+    private string WaitForMigrationScript(string targetApiUrl, string repoMigrationKey = null) => $"gh gei wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
-    private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo)
+    private string DownloadMigrationLogScript(string githubTargetOrg, string targetRepo, string targetApiUrl)
     {
-        return $"gh gei download-logs --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
+        return $"gh gei download-logs{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-target-org \"{githubTargetOrg}\" --target-repo \"{targetRepo}\"";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");

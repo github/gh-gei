@@ -18,6 +18,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             AddOption(GithubOrg);
+            AddOption(TargetApiUrl);
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
             AddOption(AdoServerUrl);
@@ -90,6 +91,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public Option<FileInfo> RepoList { get; } = new("--repo-list")
         {
             Description = "Path to a csv file that contains a list of repos to generate a script for. The CSV file should be generated using the inventory-report command."
+        };
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)

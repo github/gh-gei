@@ -3328,7 +3328,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     {
         // Arrange
         const string url = "https://api.github.com/graphql";
-        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string migrationId = "MIGRATION_ID";
 
         const string query = @"
                 mutation abortRepositoryMigration(
@@ -3346,7 +3346,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             query = $"{query} {{ {gql} }}",
             variables = new
             {
-                migrationId = migrationSourceId,
+                migrationId,
             },
             operationName = "abortRepositoryMigration"
         };
@@ -3368,10 +3368,28 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .ReturnsAsync(response);
 
         // Act
-        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationSourceId);
+        var expectedBooleanResponse = await _githubApi.AbortMigration(migrationId);
 
         // Assert
         expectedBooleanResponse.Should().Be(actualBooleanResponse);
+    }
+
+    [Fact]
+    public async Task AbortMigration_Surfaces_Error_With_Incorrect_Migration_ID()
+    {
+        // Arrange
+        const string migrationId = "1234";
+        const string expectedErrorMessage = $"Invalid migration id: {migrationId}";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+            .ThrowsAsync(new OctoshiftCliException("Could not resolve to a node"));
+
+        // Act, Assert
+        await _githubApi.Invoking(api => api.AbortMigration(migrationId))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage(expectedErrorMessage);
     }
 
     private string Compact(string source) =>

@@ -702,7 +702,7 @@ public class AdoApiTests
         var pipeline = "foo-pipe";
         var pipelineId = 36383;
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = new object[]
         {
             new
@@ -732,7 +732,7 @@ public class AdoApiTests
         var pipeline = "\\some-folder\\another\\foo-pipe";
         var pipelineId = 36383;
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = new object[]
         {
             new
@@ -762,7 +762,7 @@ public class AdoApiTests
         var pipeline = "foo-pipe";
         var pipelineId = 36383;
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = new object[]
         {
             new
@@ -792,7 +792,7 @@ public class AdoApiTests
         var pipeline = "foo-pipe";
         var pipelineId = 36383;
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = new object[]
         {
             new
@@ -823,7 +823,7 @@ public class AdoApiTests
         var pipeline = "\\some-folder\\foo-pipe";
         var pipelineId = 36383;
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions";
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions?queryOrder=definitionNameAscending";
         var response = new object[]
         {
             new

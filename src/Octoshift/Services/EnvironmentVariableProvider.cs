@@ -17,6 +17,7 @@ public class EnvironmentVariableProvider
     private const string BBS_PASSWORD = "BBS_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
     private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
+    private const string GEI_SKIP_VERSION_CHECK = "GEI_SKIP_VERSION_CHECK";
 
     private readonly OctoLogger _logger;
 
@@ -60,6 +61,9 @@ public class EnvironmentVariableProvider
 
     public virtual string SkipStatusCheck(bool throwIfNotFound = false) =>
         GetValue(GEI_SKIP_STATUS_CHECK, throwIfNotFound);
+
+    public virtual string SkipVersionCheck(bool throwIfNotFound = false) =>
+        GetValue(GEI_SKIP_VERSION_CHECK, throwIfNotFound);
 
     private string GetValue(string name, bool throwIfNotFound)
     {

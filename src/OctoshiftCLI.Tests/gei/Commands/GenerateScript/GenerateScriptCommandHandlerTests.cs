@@ -154,6 +154,33 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         }
 
         [Fact]
+        public async Task Sequential_Github_Single_Repo_With_TargetApiUrl()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { (REPO, "private") });
+            var targetApiUrl = "https://foo.com/api/v3";
+            var expected = $"Exec {{ gh gei migrate-repo --target-api-url \"{targetApiUrl}\" --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --target-repo-visibility private }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                TargetApiUrl = targetApiUrl
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
         public async Task Sequential_Github_Multiple_Repos()
         {
             // Arrange

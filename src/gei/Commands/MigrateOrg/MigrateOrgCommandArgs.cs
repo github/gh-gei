@@ -14,6 +14,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
         public string GithubSourcePat { get; set; }
         [Secret]
         public string GithubTargetPat { get; set; }
+        public string TargetApiUrl { get; set; }
 
         public override void Validate(OctoLogger log)
         {

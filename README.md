@@ -87,6 +87,10 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
+### Skipping version checks
+
+When the CLI is launched, it logs if a newer version of the CLI is available. You can skip this check by setting the `GEI_SKIP_VERSION_CHECK` environment variable to `true`. 
+
 ### Skipping GitHub status checks
 
 When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`. 

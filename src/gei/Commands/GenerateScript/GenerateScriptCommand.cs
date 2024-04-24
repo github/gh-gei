@@ -21,6 +21,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             AddOption(GithubSourceOrg);
             AddOption(GithubTargetOrg);
 
+            AddOption(TargetApiUrl);
             AddOption(GhesApiUrl);
             AddOption(AwsBucketName);
             AddOption(AwsRegion);
@@ -93,6 +94,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public Option<bool> KeepArchive { get; } = new("--keep-archive")
         {
             Description = "Keeps the archive on this machine after uploading to the blob storage account. Only applicable for migrations from GitHub Enterprise Server versions before 3.8.0."
+        };
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
