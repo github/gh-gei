@@ -323,10 +323,12 @@ jobs:
           ./dist/ado2gh.*.win-x64.zip
           ./dist/ado2gh.*.win-x86.zip
           ./dist/ado2gh.*.linux-x64.tar.gz
+          ./dist/ado2gh.*.linux-arm64.tar.gz
           ./dist/ado2gh.*.osx-x64.tar.gz
           ./dist/win-x64/gei-windows-amd64.exe
           ./dist/win-x86/gei-windows-386.exe
           ./dist/linux-x64/gei-linux-amd64
+          ./dist/linux-arm64/gei-linux-arm64
           ./dist/osx-x64/gei-darwin-amd64
     
     - name: Create gh-ado2gh Release
@@ -339,6 +341,7 @@ jobs:
           ./dist/win-x86/ado2gh-windows-386.exe
           ./dist/win-x64/ado2gh-windows-amd64.exe
           ./dist/linux-x64/ado2gh-linux-amd64
+          ./dist/linux-arm64/ado2gh-linux-arm64
           ./dist/osx-x64/ado2gh-darwin-amd64
 
     - name: Create gh-bbs2gh Release
@@ -351,6 +354,7 @@ jobs:
           ./dist/win-x86/bbs2gh-windows-386.exe
           ./dist/win-x64/bbs2gh-windows-amd64.exe
           ./dist/linux-x64/bbs2gh-linux-amd64
+          ./dist/linux-arm64/bbs2gh-linux-arm64
           ./dist/osx-x64/bbs2gh-darwin-amd64
 
     - name: Archive Release Notes
