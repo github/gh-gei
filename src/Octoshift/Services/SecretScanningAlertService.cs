@@ -83,29 +83,16 @@ public class SecretScanningAlertService
 
         foreach (var target in targets)
         {
-            if (matched != null)
-            {
-                break;
-            }
-
             if (source.Alert.SecretType == target.Alert.SecretType
                 && source.Alert.Secret == target.Alert.Secret)
             {
                 _log.LogVerbose(
                     $"Secret type and value match between source:{source.Alert.Number} and target:{target.Alert.Number}");
-                var locationMatch = true;
-                foreach (var sourceLocation in source.Locations)
-                {
-                    locationMatch = IsMatchedSecretAlertLocation(sourceLocation, target.Locations);
-                    if (!locationMatch)
-                    {
-                        break;
-                    }
-                }
 
-                if (locationMatch)
+                if (AreSecretAlertLocationsMatching(source.Locations, target.Locations))
                 {
                     matched = target;
+                    break;
                 }
             }
         }
@@ -113,21 +100,38 @@ public class SecretScanningAlertService
         return matched;
     }
 
-    private bool IsMatchedSecretAlertLocation(GithubSecretScanningAlertLocation sourceLocation,
+    /// <summary>
+    /// Determine whether or not the locations for a source and target secret scanning alerts match
+    /// </summary>
+    /// <param name="sourceLocations">List of locations from a source secret scanning alert</param>
+    /// <param name="targetLocations">List of locations from a target secret scanning alert</param>
+    /// <returns>Boolean indicating if locations match</returns>
+    private bool AreSecretAlertLocationsMatching(GithubSecretScanningAlertLocation[] sourceLocations,
         GithubSecretScanningAlertLocation[] targetLocations)
     {
-        // We cannot guarantee the ordering of things with the locations and the APIs, typically they would match, but cannot be sure
-        // so we need to iterate over all the targets to ensure a match
-        return targetLocations.Any(
-            target => sourceLocation.Path == target.Path
-                   && sourceLocation.StartLine == target.StartLine
-                   && sourceLocation.EndLine == target.EndLine
-                   && sourceLocation.StartColumn == target.StartColumn
-                   && sourceLocation.EndColumn == target.EndColumn
-                   && sourceLocation.BlobSha == target.BlobSha
-                   // Technically this wil hold, but only if there is not commit rewriting going on, so we need to make this last one optional for now
-                   // && sourceDetails.CommitSha == target.Details.CommitSha)       
+        var locationMatch = true;
+        // Right after a code migration, as not all content gets migrated, the number of locations 
+        // in the source alert will always be greater or equal to the number of locations in the 
+        // target alert, hence looping through the target alert locations.
+        foreach (var targetLocation in targetLocations)
+        {
+            locationMatch = sourceLocations.Any(
+                sourceLocation => sourceLocation.Path == targetLocation.Path
+                   && sourceLocation.StartLine == targetLocation.StartLine
+                   && sourceLocation.EndLine == targetLocation.EndLine
+                   && sourceLocation.StartColumn == targetLocation.StartColumn
+                   && sourceLocation.EndColumn == targetLocation.EndColumn
+                   && sourceLocation.BlobSha == targetLocation.BlobSha
+                   // Technically this will hold, but only if there is not commit rewriting going on, so we need to make this last one optional for now
+                   // && sourceLocation.CommitSha == targetLocation.CommitSha)       
                    );
+            if (!locationMatch)
+            {
+                break;
+            }
+        }
+
+        return locationMatch;
     }
 
     private async Task<List<AlertWithLocations>> GetAlertsWithLocations(GithubApi api, string org, string repo)
