@@ -41,6 +41,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -91,7 +92,8 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             100,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionRevoked)
+            SecretScanningAlert.ResolutionRevoked,
+            "Revokation explanation comment")
         );
     }
 
@@ -109,6 +111,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -159,6 +162,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
 
@@ -176,6 +180,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -216,6 +221,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
 
@@ -233,6 +239,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -273,6 +280,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
 
@@ -292,6 +300,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretOne,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment 1"
         };
 
         var sourceSecretTwo = new GithubSecretScanningAlert()
@@ -301,6 +310,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretTwo,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "Revokation explanation comment 2"
         };
 
         var sourceSecretThree = new GithubSecretScanningAlert()
@@ -310,6 +320,7 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretThree,
             Resolution = SecretScanningAlert.ResolutionFalsePositive,
+            ResolutionComment = "False positive explanation comment"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -358,7 +369,8 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             100,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionRevoked)
+            SecretScanningAlert.ResolutionRevoked,
+            "Revokation explanation comment 1")
         );
 
         _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
@@ -366,7 +378,77 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             300,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionFalsePositive)
+            SecretScanningAlert.ResolutionFalsePositive,
+            "False positive explanation comment")
+        );
+    }
+
+    [Fact]
+    public async Task One_Secret_Updated_With_No_Resolution_Comment()
+    {
+        var secretType = "custom";
+        var secret = "my-password";
+
+        // Arrange
+        var sourceSecret = new GithubSecretScanningAlert()
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation()
+        {
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert()
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret
+        };
+
+        var targetSecretLocation = new GithubSecretScanningAlertLocation()
+        {
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetSecretLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            null)
         );
     }
 }

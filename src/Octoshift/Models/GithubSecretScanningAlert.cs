@@ -4,6 +4,7 @@ public class GithubSecretScanningAlert
     public int Number { get; set; }
     public string State { get; set; }
     public string Resolution { get; set; }
+    public string ResolutionComment { get; set; }
     public string SecretType { get; set; }
     public string Secret { get; set; }
 }

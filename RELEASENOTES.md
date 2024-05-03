@@ -1,1 +1,1 @@
-
+- Add support for migrating secret scanning alert resolution comments

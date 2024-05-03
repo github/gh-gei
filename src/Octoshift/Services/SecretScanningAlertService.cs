@@ -70,8 +70,13 @@ public class SecretScanningAlertService
             _log.LogInformation(
                 $"  updating target alert:{target.Alert.Number} to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
 
-            await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, target.Alert.Number,
-            alert.Alert.State, alert.Alert.Resolution);
+            await _targetGithubApi.UpdateSecretScanningAlert(
+                targetOrg,
+                targetRepo,
+                target.Alert.Number,
+                alert.Alert.State,
+                alert.Alert.Resolution,
+                alert.Alert.ResolutionComment);
             _log.LogSuccess(
                 $"  target alert successfully updated to {alert.Alert.Resolution}.");
         }
