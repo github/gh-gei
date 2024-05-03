@@ -92,7 +92,7 @@ public class SecretScanningAlertService
                 && source.Alert.Secret == target.Alert.Secret)
             {
                 _log.LogVerbose(
-                    $"Secret type and value match between source:{source.Alert.Number} and target:{source.Alert.Number}");
+                    $"Secret type and value match between source:{source.Alert.Number} and target:{target.Alert.Number}");
                 var locationMatch = true;
                 foreach (var sourceLocation in source.Locations)
                 {
