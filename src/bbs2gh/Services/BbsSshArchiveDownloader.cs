@@ -1,11 +1,9 @@
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Renci.SshNet;
-using Renci.SshNet.Security;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
