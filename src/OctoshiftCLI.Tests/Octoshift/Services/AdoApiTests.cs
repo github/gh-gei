@@ -293,7 +293,6 @@ public class AdoApiTests
     {
         var githubToken = Guid.NewGuid().ToString();
 
-        var handle = "FOO-LOGIN";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
         var payload = new
         {
