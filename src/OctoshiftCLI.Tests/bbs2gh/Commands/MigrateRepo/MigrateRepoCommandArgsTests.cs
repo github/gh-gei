@@ -19,6 +19,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string AWS_SECRET_ACCESS_KEY = "aws-secret-access-key";
         private const string AWS_SESSION_TOKEN = "aws-session-token";
         private const string AWS_REGION = "aws-region";
+        private const string AWS_BUCKET_NAME = "aws-bucket-name";
         private const string AZURE_STORAGE_CONNECTION_STRING = "azure-storage-connection-string";
 
         private const string BBS_HOST = "our-bbs-server.com";
@@ -68,6 +69,25 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public void It_Throws_When_Aws_Bucket_Name_Provided_With_UseGithubStorage_Option()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsBucketName = AWS_BUCKET_NAME,
+                UseGithubStorage = true
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--use-github-storage flag was provided with an AWS S3 Bucket name*");
         }
 
         [Fact]

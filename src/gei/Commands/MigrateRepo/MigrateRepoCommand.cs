@@ -43,6 +43,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(GithubTargetPat);
             AddOption(Verbose);
             AddOption(KeepArchive);
+            AddOption(UseGithubStorage);
         }
 
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
@@ -139,6 +140,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             Description = "Keeps the archive on this machine after uploading to the blob storage account. Only applicable for migrations from GitHub Enterprise Server versions before 3.8.0."
         };
 
+        public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
+        {
+            IsHidden = true,
+            Description = "Enables multipart upload of a user-specified filepath to Github-owned storage for use during migration",
+        };
         public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
         {
             if (args is null)

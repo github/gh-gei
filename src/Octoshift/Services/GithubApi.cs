@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -759,7 +760,6 @@ public class GithubApi
         });
     }
 
-
     public virtual async Task<string> GetUserId(string login)
     {
         var url = $"{_apiUrl}/graphql";
@@ -1045,6 +1045,24 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
         }
+    }
+
+    public virtual async Task<string> UploadArchiveToGithubStorage(string org, bool isMultipart, string archiveName, Stream archiveContent)
+    {
+        var multipartRoute = isMultipart ? "/blobs/uploads" : "";
+
+        var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive{multipartRoute}";
+
+        var payload = new
+        {
+            archive_filename = archiveName,
+            archive_Content = archiveContent
+        };
+
+        var response = await _client.PostAsync(url, payload);
+        var data = JObject.Parse(response);
+
+        return "gei://archive/" + (string)data["archiveId"];
     }
 
     private static object GetMannequinsPayload(string orgId)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -92,7 +93,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             try
             {
-                args.ArchiveUrl = args.AwsBucketName.HasValue()
+                args.ArchiveUrl = args.UseGithubStorage
+                    ? await UploadArchiveToGithub(args.GithubOrg, args.ArchivePath)
+                    : args.AwsBucketName.HasValue()
                     ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
                     : await UploadArchiveToAzure(args.ArchivePath);
             }
@@ -196,6 +199,22 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var archiveBlobUrl = await _awsApi.UploadToBucket(bucketName, archivePath, keyName);
 
         return archiveBlobUrl;
+    }
+
+    private async Task<string> UploadArchiveToGithub(string org, string archivePath)
+    {
+#pragma warning disable IDE0063
+        await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
+#pragma warning restore IDE0063
+        {
+            var isMultipart = archiveData.Length > 100 * 1024 * 1024; ; // Determines if stream size is greater than 100MB
+
+            _log.LogInformation($"Uploading archive to GitHub Storage");
+            var keyName = GenerateArchiveName();
+            var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, keyName, archiveData);
+
+            return authenticatedGitArchiveUri.ToString();
+        }
     }
 
     private async Task<string> CreateMigrationSource(MigrateRepoCommandArgs args)
@@ -326,11 +345,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
         var shouldUseAwsS3 = args.AwsBucketName.HasValue();
-        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+
+        if (!shouldUseAzureStorage && !shouldUseAwsS3 && !args.UseGithubStorage)
         {
             throw new OctoshiftCliException(
                 "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
-                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) or " +
+                "GitHub Storage Option (--use-github-storage) " +
                 "must be provided.");
         }
 
