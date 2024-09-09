@@ -341,14 +341,21 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var uploadedGitArchiveUrl = "gei://archive/1";
             var uploadedMetadataArchiveUrl = "gei://archive/2";
-            var gitArchiveFilePath = "./git_archive.tar";
-            var metadataArchiveFilePath = "./metadata_archive.tar";
+            var gitArchiveFilePath = "./gitdata_archive";
+            var metadataArchiveFilePath = "./metadata_archive";
 
             File.WriteAllText(gitArchiveFilePath, "I am git archive");
             File.WriteAllText(metadataArchiveFilePath, "I am metadata archive");
 
             var gitContentStream = File.Create(gitArchiveFilePath);
             var metaContentStream = File.Create(metadataArchiveFilePath);
+
+            _mockFileSystemProvider
+                .SetupSequence(m => m.OpenRead(gitArchiveFilePath))
+                .Returns(gitContentStream);
+            _mockFileSystemProvider
+                .SetupSequence(m => m.OpenRead(metadataArchiveFilePath))
+                .Returns(metaContentStream);
 
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -410,6 +417,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
+            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), false, It.IsAny<string>(), gitContentStream));
+            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), false, It.IsAny<string>(), metaContentStream));
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
 

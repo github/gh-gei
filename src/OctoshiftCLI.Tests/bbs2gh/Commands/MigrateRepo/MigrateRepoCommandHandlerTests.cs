@@ -351,6 +351,8 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
             _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi.SetupSequence(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns("gei://archive/");
 
             var archiveFilePath = "./git_archive";
@@ -370,7 +372,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 BbsRepo = BBS_REPO,
                 SshUser = SSH_USER,
                 SshPrivateKey = PRIVATE_KEY,
-                ArchivePath = ARCHIVE_PATH,
+                ArchivePath = archiveFilePath,
                 UseGithubStorage = true,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
@@ -388,7 +390,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
-                ARCHIVE_URL,
+                "gei://archive/",
                 null
             ));
         }
