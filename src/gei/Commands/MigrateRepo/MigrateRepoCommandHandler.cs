@@ -242,11 +242,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 #pragma warning restore IDE0063
             {
                 return UseGithubStorage
-                    ? ((string GitArchiveUrl, string MetadataArchiveUrl))
-                      await UploadArchivesToGithub(githubTargetOrg, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : ((string GitArchiveUrl, string MetadataArchiveUrl))(_awsApi.HasValue()
+                    ? await UploadArchivesToGithub(githubTargetOrg, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
+                    : _awsApi.HasValue()
                     ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent));
+                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent);
             }
         }
         finally
