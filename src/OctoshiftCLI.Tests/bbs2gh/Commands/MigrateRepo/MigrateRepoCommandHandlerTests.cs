@@ -382,6 +382,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             await _handler.Handle(args);
 
             File.Delete(archiveFilePath);
+            gitContentStream.Close();
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(

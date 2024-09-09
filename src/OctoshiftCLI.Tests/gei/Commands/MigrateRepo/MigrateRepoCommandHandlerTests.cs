@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -424,6 +423,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             File.Delete(gitArchiveFilePath);
             File.Delete(metadataArchiveFilePath);
+            gitContentStream.Close();
+            metaContentStream.Close();
         }
 
         [Fact]
