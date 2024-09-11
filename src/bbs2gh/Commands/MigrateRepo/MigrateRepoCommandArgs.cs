@@ -93,11 +93,6 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     private void ValidateNoGenerateOptions()
     {
-        if (BbsUsername.HasValue() || BbsPassword.HasValue())
-        {
-            throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
-        }
-
         if (NoSslVerify)
         {
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");

@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Azure;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -1049,19 +1053,28 @@ public class GithubApi
 
     public virtual async Task<string> UploadArchiveToGithubStorage(string org, bool isMultipart, string archiveName, Stream archiveContent)
     {
-        var multipartRoute = isMultipart ? "/blobs/uploads" : "";
+        using HttpContent httpContent = new StreamContent(archiveContent);
+        string response;
 
-        var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive{multipartRoute}";
-
-        var payload = new
+        if (isMultipart)
         {
-            archive_filename = archiveName,
-            archive_Content = archiveContent
-        };
+            var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive/blobs/uploads";
 
-        var response = await _client.PostAsync(url, payload);
+            using var content = new MultipartFormDataContent
+            {
+                { httpContent, "archive", archiveName }
+            };
+
+            response = await _client.PostAsync(url, content);
+        }
+        else
+        {
+            var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive";
+
+            response = await _client.PostAsync(url, httpContent);
+        }
+
         var data = JObject.Parse(response);
-
         return "gei://archive/" + (string)data["archiveId"];
     }
 
