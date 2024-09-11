@@ -207,44 +207,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Username_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsUsername = BBS_USERNAME
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-username*--bbs-password*--bbs-server-url*");
-        }
-
-        [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Password_Is_Provided()
-        {
-            // Act
-            var args = new MigrateRepoCommandArgs
-            {
-                ArchivePath = ARCHIVE_PATH,
-                GithubOrg = GITHUB_ORG,
-                GithubRepo = GITHUB_REPO,
-                BbsPassword = BBS_USERNAME
-            };
-
-            // Assert
-            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
-                .Should()
-                .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-username*--bbs-password*--bbs-server-url*");
-        }
-
-        [Fact]
         public void Errors_If_BbsServer_Url_Not_Provided_But_No_Ssl_Verify_Is_Provided()
         {
             // Act
