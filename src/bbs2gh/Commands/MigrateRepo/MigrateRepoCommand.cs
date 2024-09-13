@@ -195,7 +195,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> UseGithubStorage { get; } = new(
         name: "--use-github-storage",
-        description: "enables multipart uploads to Github-owned storage for use during migration")
+        description: "enables multipart uploads to GitHub-owned storage for use during migration")
     { IsHidden = true };
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)

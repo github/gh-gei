@@ -1049,12 +1049,12 @@ public class GithubApi
 
     public virtual async Task<string> UploadArchiveToGithubStorage(string org, bool isMultipart, string archiveName, Stream archiveContent)
     {
-        using HttpContent httpContent = new StreamContent(archiveContent);
+        using var httpContent = new StreamContent(archiveContent);
         string response;
 
         if (isMultipart)
         {
-            var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive/blobs/uploads";
 
             using var content = new MultipartFormDataContent
             {
@@ -1065,7 +1065,7 @@ public class GithubApi
         }
         else
         {
-            var url = $"{_apiUrl}/organizations/{org.EscapeDataString()}/gei/archive";
+            var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive?name={archiveName}";
 
             response = await _client.PostAsync(url, httpContent);
         }

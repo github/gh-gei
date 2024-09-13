@@ -357,7 +357,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             var archiveFilePath = "./git_archive";
             File.WriteAllText(archiveFilePath, "I am an archive");
-            var gitContentStream = File.Create(archiveFilePath);
+            using var gitContentStream = File.Create(archiveFilePath);
             _mockFileSystemProvider
                 .SetupSequence(m => m.OpenRead(archiveFilePath))
                 .Returns(gitContentStream);
@@ -382,7 +382,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             await _handler.Handle(args);
 
             File.Delete(archiveFilePath);
-            gitContentStream.Close();
 
             // Assert
             _mockGithubApi.Verify(m => m.StartBbsMigration(

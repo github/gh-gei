@@ -143,7 +143,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
         {
             IsHidden = true,
-            Description = "Enables multipart upload of a user-specified filepath to Github-owned storage for use during migration",
+            Description = "enables multipart uploads to GitHub-owned storage for use during migration",
         };
         public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
         {

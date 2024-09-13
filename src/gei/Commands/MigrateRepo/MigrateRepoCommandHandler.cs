@@ -28,6 +28,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
+    private const int STEAM_SIZE_LIMIT = 100 * 1024 * 1024;
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
@@ -213,7 +214,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       bool lockSourceRepo,
       bool blobCredentialsRequired,
       bool keepArchive,
-      bool UseGithubStorage)
+      bool useGithubStorage)
     {
         var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
             async () => await GenerateArchive(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
@@ -241,7 +242,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
 #pragma warning restore IDE0063
             {
-                return UseGithubStorage
+                return useGithubStorage
                     ? await UploadArchivesToGithub(githubTargetOrg, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
                     : _awsApi.HasValue()
                     ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
@@ -315,12 +316,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<(string, string)> UploadArchivesToGithub(string org, string gitArchiveUploadFileName, Stream gitArchiveContent, string metadataArchiveUploadFileName, Stream metadataArchiveContent)
     {
-        var isMultipart = gitArchiveContent.Length > 100 * 1024 * 1024; ; // Determines if stream size is greater than 100MB
+        var isMultipart = gitArchiveContent.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
         _log.LogInformation($"Uploading git archive to GitHub Storage");
         var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(org, isMultipart, gitArchiveUploadFileName, gitArchiveContent);
 
-        isMultipart = metadataArchiveContent.Length > 100 * 1024 * 1024; ; // Determines if stream size is greater than 100MB
+        isMultipart = metadataArchiveContent.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
         _log.LogInformation($"Uploading metadata archive to GitHub Storage");
         var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(org, isMultipart, metadataArchiveUploadFileName, metadataArchiveContent);

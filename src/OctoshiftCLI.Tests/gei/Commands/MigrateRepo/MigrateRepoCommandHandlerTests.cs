@@ -346,8 +346,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             File.WriteAllText(gitArchiveFilePath, "I am git archive");
             File.WriteAllText(metadataArchiveFilePath, "I am metadata archive");
 
-            var gitContentStream = File.Create(gitArchiveFilePath);
-            var metaContentStream = File.Create(metadataArchiveFilePath);
+            using var gitContentStream = File.Create(gitArchiveFilePath);
+            using var metaContentStream = File.Create(metadataArchiveFilePath);
 
             _mockFileSystemProvider
                 .SetupSequence(m => m.OpenRead(gitArchiveFilePath))
@@ -424,7 +424,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             File.Delete(gitArchiveFilePath);
             File.Delete(metadataArchiveFilePath);
             gitContentStream.Close();
-            metaContentStream.Close();
         }
 
         [Fact]
