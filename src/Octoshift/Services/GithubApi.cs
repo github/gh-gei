@@ -1065,8 +1065,8 @@ public class GithubApi
         }
         else
         {
-            var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive?name={archiveName}";
-
+            var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive\\?name\\={archiveName}";
+            // DEV: var url = $"http://uploads.github.localhost/organizations/{org.EscapeDataString()}/gei/archive?name={archiveName}"
             response = await _client.PostAsync(url, httpContent);
         }
 
