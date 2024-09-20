@@ -16,7 +16,6 @@ public sealed class BbsToGithub : IDisposable
 {
 
     private const string SSH_KEY_FILE = "ssh_key.pem";
-    private const string AWS_BUCKET_NAME = "octoshift-migration-archives";
     private const string AWS_REGION = "us-east-1";
 
     private readonly ITestOutputHelper _output;
@@ -115,6 +114,7 @@ public sealed class BbsToGithub : IDisposable
         {
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
+            var aws_bucket_name = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME")
             archiveUploadOptions = $" --aws-bucket-name {AWS_BUCKET_NAME} --aws-region {AWS_REGION}";
         }
 
