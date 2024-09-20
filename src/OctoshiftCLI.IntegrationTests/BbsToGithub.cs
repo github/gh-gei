@@ -114,8 +114,8 @@ public sealed class BbsToGithub : IDisposable
         {
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
-            var aws_bucket_name = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME")
-            archiveUploadOptions = $" --aws-bucket-name {AWS_BUCKET_NAME} --aws-region {AWS_REGION}";
+            var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME")
+            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
         }
 
         await _targetHelper.RunBbsCliMigration(
