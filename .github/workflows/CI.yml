@@ -162,11 +162,14 @@ jobs:
       with:
         global-json-file: global.json
 
+    - name: Create dist directory
+      run: mkdir -p ./dist
+
     - name: Download Binaries
       uses: actions/download-artifact@v4
       with:
         name: binaries-${{ matrix.runner-os }}
-        path: dist
+        path: ./dist
 
     - name: Copy binary to root (linux)
       if: matrix.runner-os == 'ubuntu-latest'
