@@ -25,7 +25,7 @@ jobs:
 
     - name: Initialize CodeQL
       if: matrix.runner-os == 'ubuntu-latest'
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: 'csharp'
         config-file: ./.github/codeql/codeql-config.yml
@@ -77,7 +77,7 @@ jobs:
         path: code-coverage-results.md
     
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
@@ -317,7 +317,7 @@ jobs:
         CLI_VERSION: ${{ github.ref }}
 
     - name: Create gh-gei Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
         files: |
@@ -331,7 +331,7 @@ jobs:
           ./dist/osx-x64/gei-darwin-amd64
     
     - name: Create gh-ado2gh Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
         repository: github/gh-ado2gh
@@ -343,7 +343,7 @@ jobs:
           ./dist/osx-x64/ado2gh-darwin-amd64
 
     - name: Create gh-bbs2gh Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
         repository: github/gh-bbs2gh
