@@ -161,6 +161,9 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         global-json-file: global.json
+    
+    - name: Create dist directory
+      run: mkdir -p ./dist
 
     - name: Download Binaries
       uses: actions/download-artifact@v3
