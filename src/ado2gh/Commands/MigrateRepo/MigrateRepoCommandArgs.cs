@@ -17,5 +17,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
         [Secret]
         public string GithubPat { get; set; }
         public string TargetApiUrl { get; set; }
+        public bool UseGithubStorage { get; set; }
     }
 }
