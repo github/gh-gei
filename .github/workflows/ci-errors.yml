@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - main
+      - confirming-ci
   workflow_dispatch:
 
 jobs:
