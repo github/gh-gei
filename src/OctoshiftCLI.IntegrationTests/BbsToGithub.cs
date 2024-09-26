@@ -121,12 +121,14 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
-        _targetHelper.AssertNoErrorInLogs(_startTime);
+        await new RetryPolicy(_logger).Retry(() => {
+            _targetHelper.AssertNoErrorInLogs(_startTime);
 
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo1);
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo2);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+            await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo1);
+            await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo2);
+            await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
+            await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+        });
 
         // TODO: Assert migration logs are downloaded
     }
