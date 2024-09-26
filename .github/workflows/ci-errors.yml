@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-api-call:
+    name: Test API Call
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Run API Call
+        run: |
+          echo "Running test API call on ${{ matrix.os }}"
+          curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/e2e-testing-bbs-windows/E2E-WINDOWS-repo-2/commits
+        shell: bash
