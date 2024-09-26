@@ -1,4 +1,4 @@
-
+# GitHub Enterprise Importer CLI
 
 [![Actions Status: CI](https://github.com/github/gh-gei/workflows/CI/badge.svg)](https://github.com/github/gh-gei/actions?query=workflow%3ACI)
 
