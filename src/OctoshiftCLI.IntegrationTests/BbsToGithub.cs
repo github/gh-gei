@@ -87,10 +87,10 @@ public sealed class BbsToGithub : IDisposable
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
             await sourceHelper.CreateBbsProject(bbsProjectKey);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
