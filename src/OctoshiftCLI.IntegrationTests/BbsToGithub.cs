@@ -74,8 +74,8 @@ public sealed class BbsToGithub : IDisposable
         var githubTargetOrg = $"e2e-testing-bbs-{TestHelper.GetOsName()}-2";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
-        var targetRepo1 = $"{bbsProjectKey}-e2e-${TestHelper.GetOsName().ToLower()}-repo-1";
-        var targetRepo2 = $"{bbsProjectKey}-e2e-${TestHelper.GetOsName().ToLower()}-repo-2";
+        var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
+        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
