@@ -106,7 +106,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
         {
             IsHidden = true,
-            Description = "enables multipart uploads to GitHub-owned storage for use during migration",
+            Description = "Enables multipart uploads to a GitHub owned storage for use during migration",
         };
 
         // Pre-uploaded archive urls, hidden by default
