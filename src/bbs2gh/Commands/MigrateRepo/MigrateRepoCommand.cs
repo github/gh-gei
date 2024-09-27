@@ -194,7 +194,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
                      "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
     public Option<bool> UseGithubStorage { get; } = new(
         name: "--use-github-storage",
-        description: "enables multipart uploads to GitHub-owned storage for use during migration")
+        description: "Enables multipart uploads to a GitHub owned storage for use during migration")
     { IsHidden = true };
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
