@@ -121,7 +121,7 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
-        await new RetryPolicy(_logger).Retry(() =>
+        await new RetryPolicy(_logger).Retry(async () =>
         {
             _targetHelper.AssertNoErrorInLogs(_startTime);
 
