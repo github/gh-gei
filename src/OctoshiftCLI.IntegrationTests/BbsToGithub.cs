@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Threading;
 using Azure.Storage.Blobs;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -127,6 +128,7 @@ public sealed class BbsToGithub : IDisposable
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
+        Thread.Sleep(60000); // 60000 milliseconds = 60 seconds
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
