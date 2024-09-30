@@ -131,13 +131,13 @@ public class GithubClient
 
     public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
 
-    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> GetWithRetry(
+    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders, object)> GetWithRetry(
         string url,
         Dictionary<string, string> customHeaders = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
         await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus));
 
-    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
+    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders, object)> SendAsync(
         HttpMethod httpMethod,
         string url,
         object body = null,
@@ -159,8 +159,19 @@ public class GithubClient
         using var response = await _httpClient.SendAsync(request);
 
         _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
-        var content = await response.Content.ReadAsStringAsync();
-        _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+
+        object content;
+        // Process different types of response content
+        if (response.Content is MultipartFormDataContent || response.Content is StreamContent)
+        {
+            _log.LogVerbose($"Response is multipart or stream content");
+            content = response.Content;
+        }
+        else
+        {
+            content = await response.Content.ReadAsStringAsync();
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+        }
 
         var headers = response.Headers.ToArray();
 
@@ -169,16 +180,21 @@ public class GithubClient
             _log.LogDebug($"RESPONSE HEADER: {header.Key} = {string.Join(",", header.Value)}");
         }
 
-        if (GetRateLimitRemaining(headers) <= 0 && content.ToUpper().Contains("API RATE LIMIT EXCEEDED"))
+        // Check rate limits
+        if (GetRateLimitRemaining(headers) <= 0 && content is string contentStr && contentStr?.ToUpper().Contains("API RATE LIMIT EXCEEDED") == true)
         {
             SetRetryDelay(headers);
         }
 
+        // Handle forbidden status with recursive retry logic, preventing infinite recursion
         if (response.StatusCode == HttpStatusCode.Forbidden && _retryDelay > 0)
         {
-            (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders);
+            _log.LogVerbose("403 Forbidden received, retrying...");
+            return await SendAsync(httpMethod, url, body, expectedStatus, customHeaders);
         }
-        else if (expectedStatus == HttpStatusCode.OK)
+
+        // Ensure the expected status code is returned
+        if (expectedStatus == HttpStatusCode.OK)
         {
             try
             {
