@@ -72,6 +72,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
             }
+
+            if (AzureStorageConnectionString.HasValue() && UseGithubStorage)
+            {
+                throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
+            }
         }
 
         private void DefaultTargetRepo(OctoLogger log)

@@ -90,6 +90,25 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public void It_Throws_When_Aws_Bucket_Name_Provided_With_AzureStorageConnectionString_Option()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                AwsBucketName = AWS_BUCKET_NAME,
+                UseGithubStorage = true
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--use-github-storage flag was provided with a connection string for an Azure storage account*");
+        }
+
+        [Fact]
         public void It_Throws_When_Aws_Bucket_Name_Not_Provided_But_Aws_Secret_Key_Provided()
         {
             var args = new MigrateRepoCommandArgs
