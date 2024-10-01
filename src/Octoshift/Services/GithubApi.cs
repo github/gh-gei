@@ -225,6 +225,41 @@ public class GithubApi
         }
     }
 
+    public virtual async Task<string> GetOrganizationIdWithDatabaseId(string org)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = @"
+            query($login: String!) {
+                organization(login: $login) {
+                    login
+                    id
+                    name
+                    databaseId
+                }
+            }",
+            variables = new { login = org }
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                var databaseId = data["data"]["organization"]["databaseId"].ToString();
+
+                return databaseId;
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", ex);
+        }
+    }
+
     public virtual async Task<string> GetEnterpriseId(string enterpriseName)
     {
         var url = $"{_apiUrl}/graphql";
@@ -1047,6 +1082,36 @@ public class GithubApi
         }
     }
 
+<<<<<<< Updated upstream
+=======
+    public virtual async Task<string> UploadArchiveToGithubStorage(string org, bool isMultipart, string archiveName, Stream archiveContent)
+    {
+        using var httpContent = new StreamContent(archiveContent);
+        string response;
+
+        if (isMultipart)
+        {
+            var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive/blobs/uploads";
+
+            using var content = new MultipartFormDataContent
+            {
+                { httpContent, "archive", archiveName }
+            };
+
+            response = await _client.PostAsync(url, content);
+        }
+        else
+        {
+            var url = $"https://uploads.github.com/organizations/93741352/gei/archive?name={archiveName}";
+            // DEV: var url = $"http://uploads.github.localhost/organizations/{org.EscapeDataString()}/gei/archive?name={archiveName}"
+            response = await _client.PostAsync(url, httpContent);
+        }
+
+        var data = JObject.Parse(response);
+        return "gei://archive/" + (string)data["archiveId"];
+    }
+
+>>>>>>> Stashed changes
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";
