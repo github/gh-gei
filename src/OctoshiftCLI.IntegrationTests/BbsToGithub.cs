@@ -4,7 +4,6 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Threading;
 using Azure.Storage.Blobs;
 using OctoshiftCLI.Services;
 using Xunit;
