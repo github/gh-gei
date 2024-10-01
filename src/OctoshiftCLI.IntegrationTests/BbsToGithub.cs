@@ -71,7 +71,7 @@ public sealed class BbsToGithub : IDisposable
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
-        var githubTargetOrg = $"e2e-testing-bbs-{TestHelper.GetOsName()}-2";
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";

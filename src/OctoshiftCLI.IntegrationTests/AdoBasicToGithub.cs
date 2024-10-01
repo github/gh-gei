@@ -15,7 +15,7 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task Basic()
         {
             var adoOrg = $"gei-e2e-testing-basic-{TestHelper.GetOsName()}";
-            var githubOrg = $"e2e-testing-ado-basic-{TestHelper.GetOsName()}";
+            var githubOrg = $"octoshift-e2e-ado-basic-{TestHelper.GetOsName()}";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
