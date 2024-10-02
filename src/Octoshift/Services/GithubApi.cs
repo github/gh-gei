@@ -574,11 +574,10 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
-        // TODO: Need to implement paging
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
+        var response = await _client.GetAllAsync(url)
+                                    .SingleAsync(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper());
 
-        return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
+        return (int)response["group_id"];
     }
 
     public virtual async Task<string> GetTeamSlug(string org, string teamName)
