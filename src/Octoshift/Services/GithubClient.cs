@@ -62,6 +62,23 @@ public class GithubClient
         } while (nextUrl != null);
     }
 
+    public virtual async IAsyncEnumerable<JToken> GetAllAsyncGroupId(string url, Dictionary<string, string> customHeaders = null)
+    {
+        var nextUrl = url;
+        do
+        {
+            var (content, headers) = await GetWithRetry(nextUrl, customHeaders: customHeaders);
+            var jResponse = JObject.Parse(content)["groups"].Children();
+
+            foreach (var jToken in jResponse)
+            {
+                yield return jToken;
+            }
+
+            nextUrl = GetNextUrl(headers);
+        } while (nextUrl != null);
+    }
+
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
