@@ -250,7 +250,7 @@ public class GithubApi
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
-                var databaseId = data["data"]["organization"]["databaseId"].ToString();
+                var databaseId = (string)data["data"]["organization"]["databaseId"];
 
                 return databaseId;
             });

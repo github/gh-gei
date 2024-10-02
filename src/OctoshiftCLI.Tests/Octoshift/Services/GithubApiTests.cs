@@ -605,26 +605,27 @@ public class GithubApiTests
     public async Task GetOrganizationDatabaseId_Returns_The_Database_Id()
     {
         // Arrange
-        const string GITHUB_ORG = "ORG_LOGIN"; // Adjust the organization login as needed
         const string databaseId = "DATABASE_ID";
+        const string orgId = "ORG_ID";
 
         var url = $"https://api.github.com/graphql";
         var payload =
-            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
+            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
 
         var response = JObject.Parse($@"
         {{
             ""data"": {{
                 ""organization"": {{
                     ""login"": ""{GITHUB_ORG}"",
-                    ""databaseId"": ""{databaseId}"",
-                    ""name"": ""github""
+                    ""id"": ""{orgId}"",
+                    ""name"": ""github"",
+                    ""databaseId"": ""{databaseId}""
                 }}
             }}
         }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(It.Is<string>(u => u == url), It.Is<object>(p => p.ToJson() == payload), null))
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
             .ReturnsAsync(response);
 
         // Act
