@@ -575,7 +575,7 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
         var response = await _client.GetAllAsync(url)
-                                    .SingleAsync(x => GroupNames(x["group"], groupName));
+                                    .SingleAsync(x => GroupNames(x["groups"], groupName));
 
         return (int)response["group_id"];
     }
