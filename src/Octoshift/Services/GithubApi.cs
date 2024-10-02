@@ -575,7 +575,7 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
         var response = await _client.GetAllAsync(url)
-                                    .SingleAsync(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper());
+                                    .SingleAsync(x => GroupNames(x["group"], groupName));
 
         return (int)response["group_id"];
     }
@@ -1177,4 +1177,8 @@ public class GithubApi
             StartColumn = (int)scanningAlertInstance["location"]["start_column"],
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
         };
+    private static bool GroupNames(dynamic x, string groupName)
+    {
+        return ((string)x["group_name"]).ToUpper() == groupName.ToUpper();
+    }
 }
