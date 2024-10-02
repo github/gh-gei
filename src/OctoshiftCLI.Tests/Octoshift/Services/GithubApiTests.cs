@@ -602,40 +602,40 @@ public class GithubApiTests
     }
 
     [Fact]
-    public async Task GetOrganizationIdWithDatabaseId_Returns_The_Database_Id()
+    public async Task GetOrganizationDatabaseId_Returns_The_Database_Id()
     {
         // Arrange
+        const string GITHUB_ORG = "ORG_LOGIN"; // Adjust the organization login as needed
         const string databaseId = "DATABASE_ID";
 
         var url = $"https://api.github.com/graphql";
         var payload =
             $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
+
         var response = JObject.Parse($@"
-            {{
-                ""data"": 
-                    {{
-                        ""organization"": 
-                            {{
-                                ""login"": ""{GITHUB_ORG}"",
-                                ""databaseId"": ""{databaseId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
-            }}");
+        {{
+            ""data"": {{
+                ""organization"": {{
+                    ""login"": ""{GITHUB_ORG}"",
+                    ""databaseId"": ""{databaseId}"",
+                    ""name"": ""github""
+                }}
+            }}
+        }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .Setup(m => m.PostGraphQLAsync(It.Is<string>(u => u == url), It.Is<object>(p => p.ToJson() == payload), null))
             .ReturnsAsync(response);
 
         // Act
-        var result = await _githubApi.GetOrganizationIdWithDatabaseId(GITHUB_ORG);
+        var result = await _githubApi.GetOrganizationDatabaseId(GITHUB_ORG);
 
         // Assert
         result.Should().Be(databaseId);
     }
 
     [Fact]
-    public async Task GetOrganizationIdWithDatabaseId_Retries_On_GQL_Error()
+    public async Task GetOrganizationDatabaseId_Retries_On_GQL_Error()
     {
         // Arrange
         const string databaseId = "DATABASE_ID";
@@ -664,7 +664,7 @@ public class GithubApiTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _githubApi.GetEnterpriseId(GITHUB_ENTERPRISE);
+        var result = await _githubApi.GetOrganizationDatabaseId(GITHUB_ORG);
 
         // Assert
         result.Should().Be(databaseId);

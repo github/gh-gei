@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
+using System.Diagnostics;
 
 namespace OctoshiftCLI.Services;
 
@@ -225,7 +226,7 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> GetOrganizationIdWithDatabaseId(string org)
+    public virtual async Task<string> GetOrganizationDatabaseId(string org)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -249,14 +250,14 @@ public class GithubApi
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
-                var databaseId = (string)data["data"]["organization"]["databaseId"];
+                var databaseId = data["data"]["organization"]["databaseId"].ToString();
 
                 return databaseId;
             });
         }
         catch (Exception ex)
         {
-            throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", ex);
+            throw new OctoshiftCliException($"Failed to lookup the Organization database ID for organization '{org}'", ex);
         }
     }
 
