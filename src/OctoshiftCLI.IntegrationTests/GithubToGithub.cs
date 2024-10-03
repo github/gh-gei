@@ -43,7 +43,7 @@ namespace OctoshiftCLI.IntegrationTests
         [Fact]
         public async Task Basic()
         {
-            var githubSourceOrg = $"e2e-testing-source-{TestHelper.GetOsName()}";
+            var githubSourceOrg = $"octoshift-e2e-source-{TestHelper.GetOsName()}";
             var githubTargetOrg = $"octoshift-e2e-ghec-{TestHelper.GetOsName()}";
             var repo1 = "repo-1";
             var repo2 = "repo-2";
