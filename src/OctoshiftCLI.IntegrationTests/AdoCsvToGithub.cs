@@ -15,7 +15,7 @@ namespace OctoshiftCLI.IntegrationTests
         public async Task With_Inventory_Report_Csv()
         {
             var adoOrg = $"gei-e2e-testing-csv-{TestHelper.GetOsName()}";
-            var githubOrg = $"octoshift-e2e-ado-csv-{TestHelper.GetOsName()}";
+            var githubOrg = $"octoshift-e2e-ado-csv-{TestHelper.GetOsName()}-2";
             var teamProject1 = "gei-e2e-1";
             var teamProject2 = "gei-e2e-2";
             var adoRepo1 = teamProject1;
