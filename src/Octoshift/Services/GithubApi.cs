@@ -574,17 +574,10 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
-<<<<<<< HEAD
-        var response = await _client.GetAllAsyncGroupId(url)
-                                     .SingleAsync(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper());
-
-        return (int)response["group_id"];
-=======
         var group = await _client.GetAllAsync(url, data => (JArray)data["groups"])
             .SingleAsync(x => string.Equals((string)x["group_name"], groupName, StringComparison.OrdinalIgnoreCase));
 
         return (int)group["group_id"];
->>>>>>> add-pagination-support-to-get-idp-group-id
     }
 
     public virtual async Task<string> GetTeamSlug(string org, string teamName)
