@@ -73,33 +73,6 @@ public class GithubClient
             nextUrl = GetNextUrl(headers);
         } while (nextUrl != null);
     }
-
-    public virtual async IAsyncEnumerable<JToken> GetAllAsyncGroupId(string url, Dictionary<string, string> customHeaders = null)
-    {
-        var nextUrl = url;
-        do
-        {
-            var (content, headers) = await GetWithRetry(nextUrl, customHeaders: customHeaders);
-            // Parse the response and check if "groups" exists
-            var jObject = JObject.Parse(content);
-            var jResponse = jObject["groups"];
-
-            if (jResponse == null || !jResponse.HasValues)
-            {
-                yield break; // No groups found, exit the iterator
-            }
-
-            // Yield each group
-            foreach (var jToken in jResponse)
-            {
-                yield return jToken;
-            }
-
-            // Check for the next page URL
-            nextUrl = GetNextUrl(headers);
-        } while (nextUrl != null);
-    }
-
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
