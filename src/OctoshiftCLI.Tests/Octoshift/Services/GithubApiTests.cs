@@ -1677,25 +1677,27 @@ public class GithubApiTests
 
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/external-groups";
         const int expectedGroupId = 123;
-        var response = $@"
-            {{
-                ""groups"": [
-                    {{
-                       ""group_id"": ""{expectedGroupId}"",
-                       ""group_name"": ""{groupName}"",
-                       ""updated_at"": ""2021-01-24T11:31:04-06:00""
-                    }},
-                    {{
-                       ""group_id"": ""456"",
-                       ""group_name"": ""Octocat admins"",
-                       ""updated_at"": ""2021-03-24T11:31:04-06:00""
-                    }},
-                ]
-            }}";
+
+        var group1 = new
+        {
+            group_id = expectedGroupId,
+            group_name = groupName,
+            updated_at = DateTime.Parse("2021-01-24T11:31:04-06:00")
+        };
+        var group2 = new
+        {
+            group_id = "456",
+            group_name = "Octocat admins",
+            updated_at = DateTime.Parse("2021-03-24T11:31:04-06:00")
+        };
 
         _githubClientMock
-            .Setup(m => m.GetAsync(url, null))
-            .ReturnsAsync(response);
+            .Setup(m => m.GetAllAsync(url, It.IsAny<Func<JToken, JArray>>(), null))
+            .Returns(new[]
+            {
+                JToken.FromObject(group1),
+                JToken.FromObject(group2)
+            }.ToAsyncEnumerable());
 
         // Act
         var actualGroupId = await _githubApi.GetIdpGroupId(GITHUB_ORG, groupName);

@@ -487,8 +487,10 @@ steps:
 
         private async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
         {
+            var retryPolicy = new RetryPolicy(null);
+
             var url = $"{GithubApiBaseUrl}/repos/{org}/{repo}/commits";
-            var commits = await _githubClient.GetAllAsync(url).ToListAsync();
+            var commits = await retryPolicy.Retry(async () => await _githubClient.GetAllAsync(url).ToListAsync());
             return commits.Select(x => (string)x["sha"]).ToList();
         }
 
