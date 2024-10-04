@@ -71,9 +71,11 @@ public sealed class BbsToGithub : IDisposable
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
-        var githubTargetOrg = $"e2e-testing-bbs-{TestHelper.GetOsName()}";
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
         var repo2 = $"{bbsProjectKey}-repo-2";
+        var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
+        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
@@ -87,10 +89,10 @@ public sealed class BbsToGithub : IDisposable
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
             await sourceHelper.CreateBbsProject(bbsProjectKey);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-1");
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-1");
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, "repo-2");
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, "repo-2");
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
@@ -123,10 +125,10 @@ public sealed class BbsToGithub : IDisposable
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo1);
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, repo2);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo1);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, repo2);
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
         // TODO: Assert migration logs are downloaded
     }
