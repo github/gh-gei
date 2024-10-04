@@ -8,7 +8,6 @@ using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Models;
-using System.Diagnostics;
 
 namespace OctoshiftCLI.Services;
 
