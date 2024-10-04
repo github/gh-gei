@@ -68,13 +68,22 @@ public class GithubClient
         do
         {
             var (content, headers) = await GetWithRetry(nextUrl, customHeaders: customHeaders);
-            var jResponse = JObject.Parse(content)["groups"].Children();
+            // Parse the response and check if "groups" exists
+            var jObject = JObject.Parse(content);
+            var jResponse = jObject["groups"];
 
+            if (jResponse == null || !jResponse.HasValues)
+            {
+                yield break; // No groups found, exit the iterator
+            }
+
+            // Yield each group
             foreach (var jToken in jResponse)
             {
                 yield return jToken;
             }
 
+            // Check for the next page URL
             nextUrl = GetNextUrl(headers);
         } while (nextUrl != null);
     }
