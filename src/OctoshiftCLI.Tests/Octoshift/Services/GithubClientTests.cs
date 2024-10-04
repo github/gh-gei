@@ -1352,98 +1352,46 @@ public sealed class GithubClientTests
     }
 
     [Fact]
-    public async Task GetAllAsyncGroupId_Should_Get_All_Pages()
+    public async Task GetAllAsync_Should_Use_Result_Collection_Selector()
     {
         // Arrange
-        const string url = "https://api.github.com/orgs/my-org/external-groups";
+        const string url = "https://api.github.com/orgs/foo/external-groups";
 
-        const string firstGroup = "first-group";
-        const string secondGroup = "second-group";
-        const string thirdGroup = "third-group";
+        const string firstGroupId = "123";
+        const string firstGroupName = "Octocat readers";
+        const string secondGroupId = "456";
+        const string secondGroupName = "Octocat admins";
+        const string response = $@"
+            {{
+                ""groups"": [
+                    {{
+                       ""group_id"": ""{firstGroupId}"",
+                       ""group_name"": ""{firstGroupName}"",
+                       ""updated_at"": ""2021-01-24T11:31:04-06:00""
+                    }},
+                    {{
+                       ""group_id"": ""{secondGroupId}"",
+                       ""group_name"": ""{secondGroupName}"",
+                       ""updated_at"": ""2021-03-24T11:31:04-06:00""
+                    }},
+                ]
+            }}";
 
-        var handlerMock = new Mock<HttpMessageHandler>();
-
-        // first request
-        MockHttpHandler(
-            req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
-            CreateHttpResponseFactory(
-                content: $"{{ \"groups\": [{{ \"group_name\": \"{firstGroup}\" }}, {{ \"group_name\": \"{secondGroup}\" }}] }}",
-                headers: new[]
-                {
-                    ("Link", $"<{url}&page=2>; rel=\"next\", " +
-                            $"<{url}&page=2>; rel=\"last\"")
-                }),
-            handlerMock);
-
-        // second request
-        MockHttpHandler(
-            req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == $"{url}&page=2",
-            CreateHttpResponseFactory(
-                content: $"{{ \"groups\": [{{ \"group_name\": \"{thirdGroup}\" }}] }}"),
-            handlerMock);
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url, CreateHttpResponseFactory(content: response));
 
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
         // Act
-        var results = await githubClient.GetAllAsyncGroupId(url).ToListAsync();
+        var results = await githubClient.GetAllAsync(url, data => (JArray)data["groups"]).ToListAsync();
 
         // Assert
-        results.Should().HaveCount(3);
-        results[0]["group_name"].Value<string>().Should().Be(firstGroup);
-        results[1]["group_name"].Value<string>().Should().Be(secondGroup);
-        results[2]["group_name"].Value<string>().Should().Be(thirdGroup);
+        results.Should().HaveCount(2);
+        results[0]["group_id"].Value<string>().Should().Be(firstGroupId);
+        results[0]["group_name"].Value<string>().Should().Be(firstGroupName);
+        results[1]["group_id"].Value<string>().Should().Be(secondGroupId);
+        results[1]["group_name"].Value<string>().Should().Be(secondGroupName);
     }
-
-    [Fact]
-    public async Task GetAllAsyncGroupId_Should_Handle_Empty_Groups_Response()
-    {
-        // Arrange
-        const string url = "https://api.github.com/orgs/my-org/external-groups";
-
-        var handlerMock = new Mock<HttpMessageHandler>();
-
-        // first request
-        MockHttpHandler(
-            req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
-            CreateHttpResponseFactory(
-                content: "{ \"groups\": [] }"), // Empty groups array
-            handlerMock);
-
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-        // Act
-        var results = await githubClient.GetAllAsyncGroupId(url).ToListAsync();
-
-        // Assert
-        results.Should().BeEmpty(); // No groups should be returned
-    }
-
-    [Fact]
-    public async Task GetAllAsyncGroupId_Throws_HttpRequestException_On_Non_Success_Response()
-    {
-        // Arrange
-        const string url = "https://api.github.com/orgs/my-org/external-groups";
-
-        var handlerMock = new Mock<HttpMessageHandler>();
-
-        // first request
-        MockHttpHandler(
-            req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
-            CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError),
-            handlerMock);
-
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-        // Act, Assert
-        await FluentActions
-            .Invoking(async () => await githubClient.GetAllAsyncGroupId(url).ToListAsync())
-            .Should()
-            .ThrowExactlyAsync<HttpRequestException>();
-    }
-
 
     [Fact]
     public async Task PostGraphQLWithPaginationAsync_Should_Return_All_Pages()
