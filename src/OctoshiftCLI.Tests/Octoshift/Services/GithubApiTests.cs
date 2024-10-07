@@ -606,7 +606,6 @@ public class GithubApiTests
     {
         // Arrange
         const string databaseId = "DATABASE_ID";
-        const string orgId = "ORG_ID";
 
         var url = $"https://api.github.com/graphql";
         var payload =
