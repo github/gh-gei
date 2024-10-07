@@ -610,14 +610,12 @@ public class GithubApiTests
 
         var url = $"https://api.github.com/graphql";
         var payload =
-            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
-
+            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
         var response = JObject.Parse($@"
         {{
             ""data"": {{
                 ""organization"": {{
                     ""login"": ""{GITHUB_ORG}"",
-                    ""id"": ""{orgId}"",
                     ""name"": ""github"",
                     ""databaseId"": ""{databaseId}""
                 }}

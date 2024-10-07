@@ -231,15 +231,7 @@ public class GithubApi
 
         var payload = new
         {
-            query = @"
-            query($login: String!) {
-                organization(login: $login) {
-                    login
-                    id
-                    name
-                    databaseId
-                }
-            }",
+            query = "query($login: String!) {organization(login: $login) { login, databaseId, name } }",
             variables = new { login = org }
         };
 
@@ -249,9 +241,7 @@ public class GithubApi
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
-                var databaseId = (string)data["data"]["organization"]["databaseId"];
-
-                return databaseId;
+                return (string)data["data"]["organization"]["databaseId"];
             });
         }
         catch (Exception ex)
@@ -276,7 +266,8 @@ public class GithubApi
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
-                return (string)data["data"]["enterprise"]["id"];
+                var entireprise_id = (string)data["data"]["enterprise"]["id"];
+                return entireprise_id;
             });
         }
         catch (Exception ex)
