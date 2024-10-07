@@ -602,6 +602,74 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task GetOrganizationDatabaseId_Returns_The_Database_Id()
+    {
+        // Arrange
+        const string databaseId = "DATABASE_ID";
+
+        var url = $"https://api.github.com/graphql";
+        var payload =
+            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
+        var response = JObject.Parse($@"
+        {{
+            ""data"": {{
+                ""organization"": {{
+                    ""login"": ""{GITHUB_ORG}"",
+                    ""name"": ""github"",
+                    ""databaseId"": ""{databaseId}""
+                }}
+            }}
+        }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetOrganizationDatabaseId(GITHUB_ORG);
+
+        // Assert
+        result.Should().Be(databaseId);
+    }
+
+    [Fact]
+    public async Task GetOrganizationDatabaseId_Retries_On_GQL_Error()
+    {
+        // Arrange
+        const string databaseId = "DATABASE_ID";
+
+        var url = $"https://api.github.com/graphql";
+        var payload =
+            $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, databaseId, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
+
+        var response = JObject.Parse($@"
+           {{
+                ""data"": 
+                    {{
+                        ""organization"": 
+                            {{
+                                ""login"": ""{GITHUB_ORG}"",
+                                ""databaseId"": ""{databaseId}"",
+                                ""name"": ""github"" 
+                            }} 
+                    }} 
+            }}");
+
+        _githubClientMock
+            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .ReturnsAsync(GQL_ERROR_RESPONSE)
+            .ReturnsAsync(GQL_ERROR_RESPONSE)
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetOrganizationDatabaseId(GITHUB_ORG);
+
+        // Assert
+        result.Should().Be(databaseId);
+    }
+
+
+    [Fact]
     public async Task GetEnterpriseId_Returns_The_Enterprise_Id()
     {
         // Arrange

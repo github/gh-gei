@@ -225,6 +225,31 @@ public class GithubApi
         }
     }
 
+    public virtual async Task<string> GetOrganizationDatabaseId(string org)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query($login: String!) {organization(login: $login) { login, databaseId, name } }",
+            variables = new { login = org }
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["organization"]["databaseId"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the Organization database ID for organization '{org}'", ex);
+        }
+    }
+
     public virtual async Task<string> GetEnterpriseId(string enterpriseName)
     {
         var url = $"{_apiUrl}/graphql";
