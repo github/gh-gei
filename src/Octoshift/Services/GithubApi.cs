@@ -266,8 +266,7 @@ public class GithubApi
             {
                 var data = await _client.PostGraphQLAsync(url, payload);
 
-                var entireprise_id = (string)data["data"]["enterprise"]["id"];
-                return entireprise_id;
+                return (string)data["data"]["enterprise"]["id"];
             });
         }
         catch (Exception ex)
