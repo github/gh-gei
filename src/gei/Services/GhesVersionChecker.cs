@@ -50,3 +50,4 @@ public class GhesVersionChecker
         return blobCredentialsRequired;
     }
 }
+
