@@ -3467,7 +3467,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage()
     {
         //Arange 
-        const string org = "org";
+        const string org = "1234";
         const bool isMultipart = false;
         const string archiveName = "archiveName";
 
@@ -3479,6 +3479,36 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedArchiveId = "123456";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
 
+        _githubClientMock
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .ReturnsAsync(jsonResponse);
+
+        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
+
+        // Act
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+
+        // Assert
+        expectedStringResponse.Should().Be(actualStringResponse);
+
+    }
+
+
+    [Fact]
+    public async Task UploadArchiveToGithubStorageWithMultiPart()
+    {
+        //Arange 
+        const string org = "123455";
+        const bool isMultipart = true;
+        const string archiveName = "archiveName";
+
+        // Using a MemoryStream as a valid stream implementation
+        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+
+        var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive\\?name\\={archiveName}";
+
+        var expectedArchiveId = "123456";
+        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
         var payload = new
         {
             token = $"repoV2/{123}/{123}",
@@ -3515,58 +3545,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
     }
 
-
-
-    [Fact]
-    public async Task UploadArchiveToGithubStorageWithMultiPart()
-    {
-        //Arange 
-        const string org = "org";
-        const bool isMultipart = true;
-        const string archiveName = "archiveName";
-
-        // Using a MemoryStream as a valid stream implementation
-        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
-
-        var url = $"https://uploads.github.com/organizations/{org.EscapeDataString()}/gei/archive\\?name\\={archiveName}";
-
-        var expectedArchiveId = "123456";
-        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
-        var payload = new
-        {
-            token = $"repoV2/{123}/{123}",
-            merge = true,
-            accessControlEntries = new[]
-            {
-                new
-                {
-                    descriptor = "",
-                    allow = 0,
-                    deny = 56828,
-                    extendedInfo = new
-                    {
-                        effectiveAllow = 0,
-                        effectiveDeny = 56828,
-                        inheritedAllow = 0,
-                        inheritedDeny = 56828
-                    }
-                }
-            }
-        };
-
-        _githubClientMock
-            .Setup(m => m.PostAsync(url, It.Is<StreamContent>(x => x.ToJson() == payload.ToJson()), null))
-            .ReturnsAsync(jsonResponse);
-
-        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
-
-        // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
-
-        // Assert
-        expectedStringResponse.Should().Be(actualStringResponse);
-
-    }
     private string Compact(string source) =>
         source
             .Replace("\r", "")
