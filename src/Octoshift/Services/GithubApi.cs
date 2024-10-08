@@ -226,6 +226,31 @@ public class GithubApi
         }
     }
 
+    public virtual async Task<string> GetOrganizationDatabaseId(string org)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query($login: String!) {organization(login: $login) { login, databaseId, name } }",
+            variables = new { login = org }
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["organization"]["databaseId"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the Organization database ID for organization '{org}'", ex);
+        }
+    }
+
     public virtual async Task<string> GetEnterpriseId(string enterpriseName)
     {
         var url = $"{_apiUrl}/graphql";
@@ -575,11 +600,10 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
-        // TODO: Need to implement paging
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
+        var group = await _client.GetAllAsync(url, data => (JArray)data["groups"])
+            .SingleAsync(x => string.Equals((string)x["group_name"], groupName, StringComparison.OrdinalIgnoreCase));
 
-        return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
+        return (int)group["group_id"];
     }
 
     public virtual async Task<string> GetTeamSlug(string org, string teamName)
