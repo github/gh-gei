@@ -103,6 +103,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
         };
+        public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
+        {
+            IsHidden = true,
+            Description = "Enables multipart uploads to a GitHub owned storage for use during migration",
+        };
 
         // Pre-uploaded archive urls, hidden by default
         public Option<string> GitArchiveUrl { get; } = new("--git-archive-url")

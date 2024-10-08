@@ -62,7 +62,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 {
                     throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
                 }
-
                 if (UseGithubStorage)
                 {
                     throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
@@ -72,6 +71,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             if (AwsBucketName.HasValue() && UseGithubStorage)
             {
                 throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+            }
+
+            if (AzureStorageConnectionString.HasValue() && UseGithubStorage)
+            {
+                throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
             }
         }
 
