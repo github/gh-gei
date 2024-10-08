@@ -65,7 +65,7 @@ public sealed class GhesToGithub : IDisposable
     public async Task Basic()
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
-        var githubTargetOrg = $"e2e-testing-ghes-{TestHelper.GetOsName()}";
+        var githubTargetOrg = $"octoshift-e2e-ghes-{TestHelper.GetOsName()}";
         const string repo1 = "repo-1";
         const string repo2 = "repo-2";
 
