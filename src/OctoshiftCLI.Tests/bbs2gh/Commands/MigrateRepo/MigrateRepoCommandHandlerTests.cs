@@ -344,6 +344,58 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task Happy_Path_Uploads_To_Github_Storage()
+        {
+            // Arrange
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi.SetupSequence(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns("gei://archive/");
+
+            var archiveFilePath = "./git_archive";
+            File.WriteAllText(archiveFilePath, "I am an archive");
+            using var gitContentStream = File.Create(archiveFilePath);
+            _mockFileSystemProvider
+                .SetupSequence(m => m.OpenRead(archiveFilePath))
+                .Returns(gitContentStream);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                ArchivePath = archiveFilePath,
+                UseGithubStorage = true,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
+            };
+            await _handler.Handle(args);
+
+            File.Delete(archiveFilePath);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                GITHUB_PAT,
+                "gei://archive/",
+                null
+            ));
+        }
+
+        [Fact]
         public async Task Happy_Path_Deletes_Downloaded_Archive()
         {
             // Arrange
