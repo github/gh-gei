@@ -3408,6 +3408,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         var expectedArchiveId = "123456";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+
         var payload = new
         {
             token = $"repoV2/{123}/{123}",
@@ -3431,7 +3432,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         };
 
         _githubClientMock
-            .Setup(m => m.PostAsync(url, It.IsAny<HttpContent>()))
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
@@ -3443,6 +3444,8 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         expectedStringResponse.Should().Be(actualStringResponse);
 
     }
+
+
 
     [Fact]
     public async Task UploadArchiveToGithubStorageWithMultiPart()
@@ -3482,7 +3485,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         };
 
         _githubClientMock
-            .Setup(m => m.PostAsync(url, It.IsAny<HttpContent>()))
+            .Setup(m => m.PostAsync(url, It.Is<StreamContent>(x => x.ToJson() == payload.ToJson()), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
@@ -3494,4 +3497,13 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         expectedStringResponse.Should().Be(actualStringResponse);
 
     }
+    private string Compact(string source) =>
+        source
+            .Replace("\r", "")
+            .Replace("\n", "")
+            .Replace("\t", "")
+            .Replace("\\r", "")
+            .Replace("\\n", "")
+            .Replace("\\t", "")
+            .Replace(" ", "");
 }
