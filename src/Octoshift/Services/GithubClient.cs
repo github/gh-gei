@@ -164,12 +164,15 @@ public class GithubClient
         {
             _log.LogVerbose(body is MultipartFormDataContent or StreamContent ? "HTTP BODY: BLOB" : $"HTTP BODY: {body.ToJson()}");
 
-            request.Content = body switch
+            if (body is HttpContent httpContent)
             {
-                MultipartFormDataContent multipartFormDataContent => multipartFormDataContent,
-                StreamContent streamContent => streamContent,
-                _ => body.ToJson().ToStringContent()
-            };
+                _log.LogVerbose("HTTP BODY: BLOB");
+                request.Content = httpContent;
+            }
+            else
+            {
+                var jsonBody = body.ToJson(); _log.LogVerbose($"HTTP BODY: {jsonBody}"); request.Content = jsonBody.ToStringContent();
+            }
         }
 
         using var response = await _httpClient.SendAsync(request);
