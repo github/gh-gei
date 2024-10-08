@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -3462,6 +3463,62 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .WithMessage(expectedErrorMessage);
     }
 
+    [Fact]
+    public async Task UploadArchiveToGithubStorage()
+    {
+        //Arange 
+        const string org = "1234";
+        const bool isMultipart = false;
+        const string archiveName = "archiveName";
+
+        // Using a MemoryStream as a valid stream implementation
+        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+        var expectedArchiveId = "123456";
+        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+
+        _githubClientMock
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .ReturnsAsync(jsonResponse);
+
+        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
+
+        // Act
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+
+        // Assert
+        expectedStringResponse.Should().Be(actualStringResponse);
+
+    }
+
+
+    [Fact]
+    public async Task UploadArchiveToGithubStorageWithMultiPart()
+    {
+        //Arange 
+        const string org = "123455";
+        const bool isMultipart = true;
+        const string archiveName = "archiveName";
+
+        // Using a MemoryStream as a valid stream implementation
+        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+
+        var expectedArchiveId = "123456";
+        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+
+        _githubClientMock
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .ReturnsAsync(jsonResponse);
+
+        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
+
+        // Act
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+
+        // Assert
+        expectedStringResponse.Should().Be(actualStringResponse);
+
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
@@ -3471,5 +3528,4 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
-
 }
