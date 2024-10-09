@@ -20,7 +20,7 @@ public class GhesVersionChecker
     {
         var blobCredentialsRequired = false;
 
-        if (useGithubStorage == true)
+        if (useGithubStorage)
         {
             return true;
         }
