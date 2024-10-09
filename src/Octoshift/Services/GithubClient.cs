@@ -162,9 +162,19 @@ public class GithubClient
 
         if (body != null)
         {
-            _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
+            _log.LogVerbose(body is MultipartFormDataContent or StreamContent ? "HTTP BODY: BLOB" : $"HTTP BODY: {body.ToJson()}");
 
-            request.Content = body.ToJson().ToStringContent();
+            if (body is HttpContent httpContent)
+            {
+                _log.LogVerbose("HTTP BODY: BLOB");
+                request.Content = httpContent;
+            }
+            else
+            {
+                var jsonBody = body.ToJson();
+                _log.LogVerbose($"HTTP BODY: {jsonBody}");
+                request.Content = jsonBody.ToStringContent();
+            }
         }
 
         using var response = await _httpClient.SendAsync(request);

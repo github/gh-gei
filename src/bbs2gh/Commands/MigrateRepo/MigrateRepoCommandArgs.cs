@@ -51,6 +51,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string SmbDomain { get; set; }
 
     public bool KeepArchive { get; set; }
+    public bool UseGithubStorage { get; set; }
 
     public override void Validate(OctoLogger log)
     {
@@ -158,6 +159,14 @@ public class MigrateRepoCommandArgs : CommandArgs
         if (AwsBucketName.IsNullOrWhiteSpace() && new[] { AwsAccessKey, AwsSecretKey, AwsSessionToken, AwsRegion }.Any(x => x.HasValue()))
         {
             throw new OctoshiftCliException("The AWS S3 bucket name must be provided with --aws-bucket-name if other AWS S3 upload options are set.");
+        }
+        if (UseGithubStorage && AwsBucketName.HasValue())
+        {
+            throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+        }
+        if (AzureStorageConnectionString.HasValue() && UseGithubStorage)
+        {
+            throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
         }
     }
 
