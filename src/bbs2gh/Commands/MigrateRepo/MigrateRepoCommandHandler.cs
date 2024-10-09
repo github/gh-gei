@@ -20,7 +20,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
-    private const int STEAM_SIZE_LIMIT = 100 * 1024 * 1024;
+    private const int STREAM_SIZE_LIMIT = 100 * 1024 * 1024; // 100 MiB
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
