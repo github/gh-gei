@@ -203,7 +203,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<string> UploadArchiveToGithub(string org, string archivePath)
     {
-
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
         {
             var isMultipart = archiveData.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
