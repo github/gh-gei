@@ -171,7 +171,9 @@ public class GithubClient
             }
             else
             {
-                var jsonBody = body.ToJson(); _log.LogVerbose($"HTTP BODY: {jsonBody}"); request.Content = jsonBody.ToStringContent();
+                var jsonBody = body.ToJson();
+                _log.LogVerbose($"HTTP BODY: {jsonBody}");
+                request.Content = jsonBody.ToStringContent();
             }
         }
 
