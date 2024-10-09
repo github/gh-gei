@@ -242,11 +242,37 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
 #pragma warning restore IDE0063
             {
-                return useGithubStorage
-                    ? await UploadArchivesToGithub(githubTargetOrg, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : _awsApi.HasValue()
-                    ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent);
+                if (useGithubStorage)
+                {
+                    return await UploadArchivesToGithub(
+                        githubTargetOrg,
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
+#pragma warning disable IDE0046
+                else if (_awsApi.HasValue())
+#pragma warning restore IDE0046
+                {
+                    return await UploadArchivesToAws(
+                        awsBucketName,
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
+                else
+                {
+                    return await UploadArchivesToAzure(
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
             }
         }
         finally

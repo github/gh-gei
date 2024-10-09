@@ -93,11 +93,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             try
             {
-                args.ArchiveUrl = args.UseGithubStorage
-                    ? await UploadArchiveToGithub(args.GithubOrg, args.ArchivePath)
-                    : args.AwsBucketName.HasValue()
-                    ? await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath)
-                    : await UploadArchiveToAzure(args.ArchivePath);
+                if (args.UseGithubStorage)
+                {
+                    args.ArchiveUrl = await UploadArchiveToGithub(args.GithubOrg, args.ArchivePath);
+                }
+#pragma warning disable IDE0045
+                else if (args.AwsBucketName.HasValue())
+#pragma warning restore IDE0045
+                {
+                    args.ArchiveUrl = await UploadArchiveToAws(args.AwsBucketName, args.ArchivePath);
+                }
+                else
+                {
+                    args.ArchiveUrl = await UploadArchiveToAzure(args.ArchivePath);
+                }
+
             }
             finally
             {
@@ -203,7 +213,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<string> UploadArchiveToGithub(string org, string archivePath)
     {
+#pragma warning disable IDE0063
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
+#pragma warning restore IDE0063
         {
             var isMultipart = archiveData.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
