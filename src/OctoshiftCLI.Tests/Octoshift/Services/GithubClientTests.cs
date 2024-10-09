@@ -327,7 +327,6 @@ public sealed class GithubClientTests
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-        // Example of using StreamContent for the request body
         var stream = new MemoryStream(Encoding.UTF8.GetBytes("Request body content"));
         var streamContent = new StreamContent(stream);
         streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
@@ -361,10 +360,7 @@ public sealed class GithubClientTests
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-        // Example of using MultipartFormDataContent for the request body
         var multipartContent = new MultipartFormDataContent();
-
-        // Add string content
         multipartContent.Add(new StringContent("string content", Encoding.UTF8), "stringPart");
 
         // Add file content (using a memory stream as a file placeholder)
