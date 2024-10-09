@@ -328,37 +328,22 @@ public sealed class GithubClientTests
     public async Task PostAsync_With_MultipartFormDataContent_Returns_String_Response()
     {
         // Arrange
-        var expectedResponse = "Expected response content";
-        var handlerMock = new Mock<HttpMessageHandler>();
+        using var stream = new StreamContent(new MemoryStream(new byte[] { 1, 2, 3 }));
+        stream.Headers.ContentType = new("application/octet-stream");
+#pragma warning disable IDE0028
+        using var expectedMultipartContent = new MultipartFormDataContent();
+        expectedMultipartContent.Add(stream, "filePart", "example.txt");
+#pragma warning restore
 
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),   // Match any HttpRequestMessage
-                ItExpr.IsAny<CancellationToken>())    // Match any CancellationToken
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(expectedResponse, Encoding.UTF8, "application/json")
-            });
-
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedMultipartContent);
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-        var multipartContent = new MultipartFormDataContent();
-        multipartContent.Add(new StringContent("string content", Encoding.UTF8), "stringPart");
-
-        // Add file content (using a memory stream as a file placeholder)
-        var fileContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes("file content")));
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-        multipartContent.Add(fileContent, "filePart", "example.txt");
-
         // Act
-        var actualContent = await githubClient.PostAsync("http://example.com", multipartContent);
+        var actualContent = await githubClient.PostAsync("http://example.com", expectedMultipartContent);
 
         // Assert
-        actualContent.Should().Be(expectedResponse);
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
     }
 
     [Fact]
