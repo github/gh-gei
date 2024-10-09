@@ -309,33 +309,19 @@ public sealed class GithubClientTests
     public async Task PostAsync_With_StreamContent_Returns_String_Response()
     {
         // Arrange
-        var expectedResponse = "Expected response content";
-        var handlerMock = new Mock<HttpMessageHandler>();
+        var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        using var expectedStreamContent = new StreamContent(stream);
+        expectedStreamContent.Headers.ContentType = new("application/octet-stream");
 
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),   // Match any HttpRequestMessage
-                ItExpr.IsAny<CancellationToken>())    // Match any CancellationToken
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(expectedResponse, Encoding.UTF8, "application/json")
-            });
-
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedStreamContent);
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-        var stream = new MemoryStream(Encoding.UTF8.GetBytes("Request body content"));
-        var streamContent = new StreamContent(stream);
-        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-
         // Act
-        var actualContent = await githubClient.PostAsync("http://example.com", streamContent);
+        var actualContent = await githubClient.PostAsync("http://example.com", expectedStreamContent);
 
         // Assert
-        actualContent.Should().Be(expectedResponse);
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
     }
 
     [Fact]
