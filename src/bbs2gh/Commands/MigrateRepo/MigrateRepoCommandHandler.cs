@@ -179,7 +179,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Uploading Archive to Azure...");
 
+#pragma warning disable IDE0063
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
+#pragma warning restore IDE0063
         {
             var archiveName = GenerateArchiveName();
             var archiveBlobUrl = await _azureApi.UploadToBlob(archiveName, archiveData);
