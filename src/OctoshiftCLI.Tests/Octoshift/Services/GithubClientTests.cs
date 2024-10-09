@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -301,6 +303,80 @@ public sealed class GithubClientTests
 
         // Assert
         actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task PostAsync_With_StreamContent_Returns_String_Response()
+    {
+        // Arrange
+        var expectedResponse = "Expected response content";
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),   // Match any HttpRequestMessage
+                ItExpr.IsAny<CancellationToken>())    // Match any CancellationToken
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(expectedResponse, Encoding.UTF8, "application/json")
+            });
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Example of using StreamContent for the request body
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes("Request body content"));
+        var streamContent = new StreamContent(stream);
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+        // Act
+        var actualContent = await githubClient.PostAsync("http://example.com", streamContent);
+
+        // Assert
+        actualContent.Should().Be(expectedResponse);
+    }
+
+    [Fact]
+    public async Task PostAsync_With_MultipartFormDataContent_Returns_String_Response()
+    {
+        // Arrange
+        var expectedResponse = "Expected response content";
+        var handlerMock = new Mock<HttpMessageHandler>();
+
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),   // Match any HttpRequestMessage
+                ItExpr.IsAny<CancellationToken>())    // Match any CancellationToken
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(expectedResponse, Encoding.UTF8, "application/json")
+            });
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Example of using MultipartFormDataContent for the request body
+        var multipartContent = new MultipartFormDataContent();
+
+        // Add string content
+        multipartContent.Add(new StringContent("string content", Encoding.UTF8), "stringPart");
+
+        // Add file content (using a memory stream as a file placeholder)
+        var fileContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes("file content")));
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        multipartContent.Add(fileContent, "filePart", "example.txt");
+
+        // Act
+        var actualContent = await githubClient.PostAsync("http://example.com", multipartContent);
+
+        // Assert
+        actualContent.Should().Be(expectedResponse);
     }
 
     [Fact]
