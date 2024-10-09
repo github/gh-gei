@@ -1075,6 +1075,7 @@ public class GithubApi
     public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, bool isMultipart, string archiveName, Stream archiveContent)
     {
         using var streamContent = new StreamContent(archiveContent);
+        streamContent.Headers.ContentType = new("application/octet-stream");
         string response;
 
         if (isMultipart)
