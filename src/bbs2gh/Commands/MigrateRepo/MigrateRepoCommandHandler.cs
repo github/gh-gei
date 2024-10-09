@@ -206,7 +206,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
         {
-            var isMultipart = archiveData.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
+            var isMultipart = archiveData.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
             _log.LogInformation($"Uploading archive to GitHub Storage");
             var keyName = GenerateArchiveName();
