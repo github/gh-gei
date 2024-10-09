@@ -1082,8 +1082,10 @@ public class GithubApi
         {
             var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
+#pragma warning disable IDE0028
             using var multipartFormDataContent = new MultipartFormDataContent();
             multipartFormDataContent.Add(streamContent, "archive", archiveName);
+#pragma warning restore
 
             response = await _client.PostAsync(url, multipartFormDataContent);
         }
