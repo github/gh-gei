@@ -316,7 +316,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<(string, string)> UploadArchivesToGithub(string org, string gitArchiveUploadFileName, Stream gitArchiveContent, string metadataArchiveUploadFileName, Stream metadataArchiveContent)
     {
-        var isMultipart = gitArchiveContent.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
+        var isMultipart = gitArchiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
         var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
 
         _log.LogInformation($"Uploading git archive to GitHub Storage");
