@@ -3464,7 +3464,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task UploadArchiveToGithubStorage()
+    public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
     {
         //Arange 
         const string org = "1234";
@@ -3477,7 +3477,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
 
         _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
@@ -3492,7 +3492,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
 
     [Fact]
-    public async Task UploadArchiveToGithubStorageWithMultiPart()
+    public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
         //Arange 
         const string org = "123455";
@@ -3506,7 +3506,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
 
         _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;

@@ -1074,25 +1074,26 @@ public class GithubApi
 
     public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, bool isMultipart, string archiveName, Stream archiveContent)
     {
-        using var httpContent = new StreamContent(archiveContent);
+        using var streamContent = new StreamContent(archiveContent);
+        streamContent.Headers.ContentType = new("application/octet-stream");
         string response;
 
         if (isMultipart)
         {
             var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
-            using var content = new MultipartFormDataContent
-            {
-                { httpContent, "archive", archiveName }
-            };
+#pragma warning disable IDE0028
+            using var multipartFormDataContent = new MultipartFormDataContent();
+            multipartFormDataContent.Add(streamContent, "archive", archiveName);
+#pragma warning restore
 
-            response = await _client.PostAsync(url, content);
+            response = await _client.PostAsync(url, multipartFormDataContent);
         }
         else
         {
             var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
-            response = await _client.PostAsync(url, httpContent);
+            response = await _client.PostAsync(url, streamContent);
         }
 
         var data = JObject.Parse(response);
