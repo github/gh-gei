@@ -201,9 +201,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<string> UploadArchiveToGithub(string org, string archivePath)
     {
-#pragma warning disable IDE0063
+
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
-#pragma warning restore IDE0063
         {
             var isMultipart = archiveData.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
