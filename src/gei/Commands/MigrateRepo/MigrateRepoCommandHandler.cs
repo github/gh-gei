@@ -322,7 +322,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Uploading git archive to GitHub Storage");
         var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, isMultipart, gitArchiveUploadFileName, gitArchiveContent);
 
-        isMultipart = metadataArchiveContent.Length > STEAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
+        isMultipart = metadataArchiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
 
         _log.LogInformation($"Uploading metadata archive to GitHub Storage");
         var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, isMultipart, metadataArchiveUploadFileName, metadataArchiveContent);
