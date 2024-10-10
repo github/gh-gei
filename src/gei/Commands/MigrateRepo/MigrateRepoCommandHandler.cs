@@ -342,16 +342,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<(string, string)> UploadArchivesToGithub(string org, string gitArchiveUploadFileName, Stream gitArchiveContent, string metadataArchiveUploadFileName, Stream metadataArchiveContent)
     {
-        var isMultipart = gitArchiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
         var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
 
         _log.LogInformation($"Uploading git archive to GitHub Storage");
-        var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, isMultipart, gitArchiveUploadFileName, gitArchiveContent);
-
-        isMultipart = metadataArchiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
+        var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, gitArchiveUploadFileName, gitArchiveContent);
 
         _log.LogInformation($"Uploading metadata archive to GitHub Storage");
-        var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, isMultipart, metadataArchiveUploadFileName, metadataArchiveContent);
+        var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, metadataArchiveUploadFileName, metadataArchiveContent);
 
         return (uploadedGitArchiveUrl, uploadedMetadataArchiveUrl);
     }

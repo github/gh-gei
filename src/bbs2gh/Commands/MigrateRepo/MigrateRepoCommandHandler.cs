@@ -20,7 +20,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
-    private const int STREAM_SIZE_LIMIT = 100 * 1024 * 1024; // 100 MiB
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
@@ -217,11 +216,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
 #pragma warning restore IDE0063
         {
-            var isMultipart = archiveData.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
-
             _log.LogInformation($"Uploading archive to GitHub Storage");
             var keyName = GenerateArchiveName();
-            var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, keyName, archiveData);
+            var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, keyName, archiveData);
 
             return authenticatedGitArchiveUri.ToString();
         }

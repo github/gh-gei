@@ -382,7 +382,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
-            _mockTargetGithubApi.SetupSequence(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(uploadedGitArchiveUrl).Returns(uploadedMetadataArchiveUrl);
+            _mockTargetGithubApi.SetupSequence(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<FileStream>()).Result).Returns(uploadedGitArchiveUrl).Returns(uploadedMetadataArchiveUrl);
 
             _mockFileSystemProvider
                 .SetupSequence(m => m.GetTempFileName())
@@ -416,8 +416,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), false, It.IsAny<string>(), gitContentStream));
-            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), false, It.IsAny<string>(), metaContentStream));
+            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), gitContentStream));
+            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), metaContentStream));
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
 
