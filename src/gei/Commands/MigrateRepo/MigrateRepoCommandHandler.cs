@@ -28,6 +28,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
+    private const int STREAM_SIZE_LIMIT = 100 * 1024 * 1024; // 100 MiB
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
@@ -64,7 +65,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl, args.UseGithubStorage);
 
         if (args.GhesApiUrl.HasValue())
         {
@@ -106,12 +107,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
+              args.GithubTargetOrg,
               args.SourceRepo,
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo,
               blobCredentialsRequired,
-              args.KeepArchive
+              args.KeepArchive,
+              args.UseGithubStorage
             );
 
             if (blobCredentialsRequired)
@@ -204,12 +207,14 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
       string githubSourceOrg,
+      string githubTargetOrg,
       string sourceRepo,
       string awsBucketName,
       bool skipReleases,
       bool lockSourceRepo,
       bool blobCredentialsRequired,
-      bool keepArchive)
+      bool keepArchive,
+      bool useGithubStorage)
     {
         var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
             async () => await GenerateArchive(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
@@ -237,9 +242,37 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
 #pragma warning restore IDE0063
             {
-                return _awsApi.HasValue()
-                    ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent);
+                if (useGithubStorage)
+                {
+                    return await UploadArchivesToGithub(
+                        githubTargetOrg,
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
+#pragma warning disable IDE0046
+                else if (_awsApi.HasValue())
+#pragma warning restore IDE0046
+                {
+                    return await UploadArchivesToAws(
+                        awsBucketName,
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
+                else
+                {
+                    return await UploadArchivesToAzure(
+                        gitArchiveUploadFileName,
+                        gitArchiveContent,
+                        metadataArchiveUploadFileName,
+                        metadataArchiveContent
+                    );
+                }
             }
         }
         finally
@@ -307,6 +340,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
     }
 
+    private async Task<(string, string)> UploadArchivesToGithub(string org, string gitArchiveUploadFileName, Stream gitArchiveContent, string metadataArchiveUploadFileName, Stream metadataArchiveContent)
+    {
+        var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
+
+        _log.LogInformation($"Uploading git archive to GitHub Storage");
+        var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, gitArchiveUploadFileName, gitArchiveContent);
+
+        _log.LogInformation($"Uploading metadata archive to GitHub Storage");
+        var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, metadataArchiveUploadFileName, metadataArchiveContent);
+
+        return (uploadedGitArchiveUrl, uploadedMetadataArchiveUrl);
+    }
+
     private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
     {
         var timeout = DateTime.Now.AddHours(ARCHIVE_GENERATION_TIMEOUT_IN_HOURS);
@@ -346,6 +392,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
+            if (args.UseGithubStorage)
+            {
+                _log.LogWarning("Ignoring --use-github-storage flag because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+            }
+
             if (args.KeepArchive)
             {
                 _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
@@ -354,11 +405,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+        if (!shouldUseAzureStorage && !shouldUseAwsS3 && !args.UseGithubStorage)
         {
             throw new OctoshiftCliException(
                 "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
-                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) or " +
+                "GitHub Storage Option (--use-github-storage) " +
                 "must be provided.");
         }
 

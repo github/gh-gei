@@ -3468,7 +3468,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     {
         //Arange 
         const string org = "1234";
-        const bool isMultipart = false;
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
@@ -3483,7 +3482,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, archiveName, archiveContent);
 
         // Assert
         expectedStringResponse.Should().Be(actualStringResponse);
@@ -3496,7 +3495,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     {
         //Arange 
         const string org = "123455";
-        const bool isMultipart = true;
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
@@ -3512,7 +3510,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, archiveName, archiveContent);
 
         // Assert
         expectedStringResponse.Should().Be(actualStringResponse);
