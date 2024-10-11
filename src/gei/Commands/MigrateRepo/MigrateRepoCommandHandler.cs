@@ -174,8 +174,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
             _warningsCountLogger.LogWarningsCount(warningsCount);
             _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
-            Console.WriteLine($"Migration ID: {migrationId}, Org ID: {githubOrgId}, Source ID: {migrationSourceId}, failure:reason {failureReason}");
+            Console.WriteLine($"Migration ID: {migrationId}, Org ID: {githubOrgId}, Source ID: {migrationSourceId}");
 
+            Console.WriteLine($"Error during migration: {failureReason}");
             throw new OctoshiftCliException(failureReason);
         }
 
