@@ -28,10 +28,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
