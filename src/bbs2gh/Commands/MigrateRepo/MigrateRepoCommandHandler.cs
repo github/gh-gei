@@ -212,16 +212,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<string> UploadArchiveToGithub(string org, string archivePath)
     {
-#pragma warning disable IDE0063
-        await using (var archiveData = _fileSystemProvider.OpenRead(archivePath))
-#pragma warning restore IDE0063
-        {
-            _log.LogInformation($"Uploading archive to GitHub Storage");
-            var keyName = GenerateArchiveName();
-            var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, keyName, archiveData);
+        await using var archiveData = _fileSystemProvider.OpenRead(archivePath);
+        
+        _log.LogInformation("Uploading archive to GitHub Storage");
+        var keyName = GenerateArchiveName();
+        var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, keyName, archiveData);
 
-            return authenticatedGitArchiveUri.ToString();
-        }
+        return authenticatedGitArchiveUri;
     }
 
     private async Task<string> CreateMigrationSource(MigrateRepoCommandArgs args)
