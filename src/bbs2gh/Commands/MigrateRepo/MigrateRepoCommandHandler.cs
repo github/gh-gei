@@ -213,10 +213,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private async Task<string> UploadArchiveToGithub(string org, string archivePath)
     {
         await using var archiveData = _fileSystemProvider.OpenRead(archivePath);
-        
+        var githubOrgDatabaseId = await _githubApi.GetOrganizationDatabaseId(org);
+
         _log.LogInformation("Uploading archive to GitHub Storage");
         var keyName = GenerateArchiveName();
-        var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(org, keyName, archiveData);
+        var authenticatedGitArchiveUri = await _githubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, keyName, archiveData);
 
         return authenticatedGitArchiveUri;
     }
