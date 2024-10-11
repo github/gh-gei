@@ -359,7 +359,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             File.WriteAllText(archiveFilePath, "I am an archive");
             using var gitContentStream = File.Create(archiveFilePath);
             _mockFileSystemProvider
-                .SetupSequence(m => m.OpenRead(archiveFilePath))
+               .Setup(m => m.OpenRead(archiveFilePath))
                 .Returns(gitContentStream);
 
             // Act
