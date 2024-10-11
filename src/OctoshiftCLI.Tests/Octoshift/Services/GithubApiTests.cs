@@ -3493,7 +3493,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
-        //Arange 
+        // Arrange
         const string org = "123455";
         const string archiveName = "archiveName";
 
@@ -3501,10 +3501,11 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
 
         var expectedArchiveId = "123456";
-        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";  // Valid JSON response
 
+        // Mocking the PostAsync method to return the JSON response
         _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
@@ -3513,9 +3514,9 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, archiveName, archiveContent);
 
         // Assert
-        expectedStringResponse.Should().Be(actualStringResponse);
-
+        actualStringResponse.Should().Be(expectedStringResponse);
     }
+
 
     private string Compact(string source) =>
         source
