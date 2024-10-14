@@ -356,6 +356,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .SetupSequence(m => m.OpenRead(metadataArchiveFilePath))
                 .Returns(metaContentStream);
 
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, true)).ReturnsAsync(true);
+
+
             // Mock the target org check to return true
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
@@ -434,8 +437,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             File.Delete(gitArchiveFilePath);
             File.Delete(metadataArchiveFilePath);
         }
-
-
 
 
         [Fact]
