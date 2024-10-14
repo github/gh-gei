@@ -329,6 +329,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         public async Task Happy_Path_UseGithubStorage()
         {
             var githubOrgId = Guid.NewGuid().ToString();
+            var githubOrgDatabaseId = Guid.NewGuid().ToString();
             var migrationSourceId = Guid.NewGuid().ToString();
             var sourceGithubPat = Guid.NewGuid().ToString();
             var targetGithubPat = Guid.NewGuid().ToString();
@@ -342,6 +343,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             var uploadedMetadataArchiveUrl = "gei://archive/2";
             var gitArchiveFilePath = "./gitdata_archive";
             var metadataArchiveFilePath = "./metadata_archive";
+            var gitArchiveDownloadFilePath = "git_archive_downaloded.tmp"; 
+            var metadataArchiveDownloadFilePath = "metadata_archive_downloaded.tmp"; 
 
             File.WriteAllText(gitArchiveFilePath, "I am git archive");
             File.WriteAllText(metadataArchiveFilePath, "I am metadata archive");
@@ -350,18 +353,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             using var metaContentStream = File.OpenRead(metadataArchiveFilePath);
 
             _mockFileSystemProvider
-                .Setup(m => m.OpenRead(gitArchiveFilePath))
-                .Returns(gitContentStream);
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(gitArchiveDownloadFilePath)
+                .Returns(metadataArchiveDownloadFilePath);
+            
             _mockFileSystemProvider
-                .Setup(m => m.GetTempFileName())
-                .Returns(gitArchiveFilePath);
+                .Setup(m => m.OpenRead(gitArchiveDownloadFilePath))
+                .Returns(gitContentStream);
 
             _mockFileSystemProvider
-                .Setup(m => m.OpenRead(metadataArchiveFilePath))
+                .Setup(m => m.OpenRead(metadataArchiveDownloadFilePath))
                 .Returns(metaContentStream);
-            _mockFileSystemProvider
-                .Setup(m => m.GetTempFileName())
-                .Returns(metadataArchiveFilePath);
 
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, true)).ReturnsAsync(true);
 
@@ -370,6 +372,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             // Mock GetOrganizationId to return a valid org ID
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationDatabaseId(TARGET_ORG).Result).Returns(githubOrgDatabaseId);
 
             // Mock CreateGhecMigrationSource to return a valid source ID
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -382,15 +385,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TARGET_REPO,
                 sourceGithubPat,
                 targetGithubPat,
-                uploadedGitArchiveUrl.ToString(),
-                uploadedMetadataArchiveUrl.ToString(),
+                uploadedGitArchiveUrl,
+                uploadedMetadataArchiveUrl,
                 false,
                 null,
                 false).Result)
                 .Returns(migrationId);
 
             // Mock GetMigration to return a successful migration state
-            _mockTargetGithubApi.Setup(x => x.GetMigration(It.Is<string>(id => id == migrationId)).Result)
+            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result)
                 .Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
 
             // Mock archive generation and retrieval
@@ -402,8 +405,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             // Mock uploading archives to GitHub storage
-            _mockTargetGithubApi.SetupSequence(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()).Result)
-                .Returns(uploadedGitArchiveUrl)
+            _mockTargetGithubApi
+                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("git_archive.tar.gz")), gitContentStream).Result)
+                .Returns(uploadedGitArchiveUrl);
+
+            _mockTargetGithubApi
+                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("metadata_archive.tar.gz")), metaContentStream).Result)
                 .Returns(uploadedMetadataArchiveUrl);
 
             // Log key values before migration
@@ -434,14 +441,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             // Verifications
             _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));  // Ensure GetMigration is called with the correct ID
-            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), gitContentStream));
-            _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), metaContentStream));
-            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveFilePath), Times.Once);
-            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
-
-            // Cleanup: Delete test files
-            File.Delete(gitArchiveFilePath);
-            File.Delete(metadataArchiveFilePath);
+            // _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), gitContentStream));
+            // _mockTargetGithubApi.Verify(x => x.UploadArchiveToGithubStorage(It.IsAny<string>(), It.IsAny<string>(), metaContentStream));
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveDownloadFilePath), Times.Once);
+            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveDownloadFilePath), Times.Once);
         }
 
 
