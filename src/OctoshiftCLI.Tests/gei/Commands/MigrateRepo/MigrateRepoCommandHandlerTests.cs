@@ -350,14 +350,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             using var metaContentStream = File.OpenRead(metadataArchiveFilePath);
 
             _mockFileSystemProvider
-                .SetupSequence(m => m.OpenRead(gitArchiveFilePath))
+                .Setup(m => m.OpenRead(gitArchiveFilePath))
                 .Returns(gitContentStream);
             _mockFileSystemProvider
-                .SetupSequence(m => m.OpenRead(metadataArchiveFilePath))
+                .Setup(m => m.GetTempFileName())
+                .Returns(gitArchiveFilePath);
+
+            _mockFileSystemProvider
+                .Setup(m => m.OpenRead(metadataArchiveFilePath))
                 .Returns(metaContentStream);
+            _mockFileSystemProvider
+                .Setup(m => m.GetTempFileName())
+                .Returns(metadataArchiveFilePath);
 
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, true)).ReturnsAsync(true);
-
 
             // Mock the target org check to return true
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
