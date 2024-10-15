@@ -17,6 +17,7 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
+    internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
 
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
     {
@@ -1072,10 +1073,18 @@ public class GithubApi
         }
     }
 
-    public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, bool isMultipart, string archiveName, Stream archiveContent)
+    public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, string archiveName, Stream archiveContent)
     {
+        if (archiveContent is null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent));
+        }
+
         using var streamContent = new StreamContent(archiveContent);
         streamContent.Headers.ContentType = new("application/octet-stream");
+
+        var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
+
         string response;
 
         if (isMultipart)

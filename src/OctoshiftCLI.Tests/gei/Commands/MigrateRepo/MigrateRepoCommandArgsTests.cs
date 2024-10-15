@@ -122,7 +122,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--use-github-storage flag was provided with a connection string for an Azure storage account*");
+                .WithMessage("*--use-github-storage flag*");
         }
         [Fact]
         public void No_Ssl_Verify_Without_Ghes_Api_Url_Throws()

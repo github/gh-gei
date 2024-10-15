@@ -3467,8 +3467,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
     {
         //Arange 
-        const string org = "1234";
-        const bool isMultipart = false;
+        const string orgDatabaseId = "1234";
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
@@ -3483,27 +3482,27 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
         expectedStringResponse.Should().Be(actualStringResponse);
 
     }
 
-
     [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
-        //Arange 
-        const string org = "123455";
-        const bool isMultipart = true;
+        // Arrange
+        const string orgDatabaseId = "123455";
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
         using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
 
         var expectedArchiveId = "123456";
-        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";  // Valid JSON response
+
+        _githubApi._streamSizeLimit = 1;
 
         _githubClientMock
             .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
@@ -3512,11 +3511,19 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, isMultipart, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
-        expectedStringResponse.Should().Be(actualStringResponse);
+        actualStringResponse.Should().Be(expectedStringResponse);
+    }
 
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
+    {
+        await FluentActions
+            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("12345", "foo", null))
+            .Should()
+            .ThrowExactlyAsync<ArgumentNullException>();
     }
 
     private string Compact(string source) =>

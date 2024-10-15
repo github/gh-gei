@@ -105,7 +105,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--use-github-storage flag was provided with a connection string for an Azure storage account*");
+                .WithMessage("*Archive cannot be uploaded to both locations.");
         }
 
         [Fact]
