@@ -1082,8 +1082,7 @@ public class GithubApi
         {
             throw new ArgumentNullException(nameof(archiveContent));
         }
-
-        var isMultipart = archiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
+        var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
 
         string response;
 
