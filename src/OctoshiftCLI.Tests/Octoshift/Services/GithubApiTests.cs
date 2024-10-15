@@ -3506,7 +3506,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         _githubApi._streamSizeLimit = 1;
         
         _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
             .ReturnsAsync(jsonResponse);
 
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
