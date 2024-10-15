@@ -17,7 +17,7 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
-    private const int STREAM_SIZE_LIMIT = 100 * 1024 * 1024; // 100 MiB
+    internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
 
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
     {
