@@ -3467,7 +3467,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
     {
         //Arange 
-        const string org = "1234";
+        const string orgDatabaseId = "1234";
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
@@ -3482,7 +3482,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
         expectedStringResponse.Should().Be(actualStringResponse);
@@ -3493,7 +3493,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
         // Arrange
-        const string org = "123455";
+        const string orgDatabaseId = "123455";
         const string archiveName = "archiveName";
 
         // Using a MemoryStream as a valid stream implementation
@@ -3511,7 +3511,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedStringResponse = "gei://archive/" + expectedArchiveId;
 
         // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(org, archiveName, archiveContent);
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
         actualStringResponse.Should().Be(expectedStringResponse);
@@ -3521,7 +3521,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
     {
         await FluentActions
-            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("orgDatabaseId", "archive", null))
+            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("12345", "foo", null))
             .Should()
             .ThrowExactlyAsync<ArgumentNullException>();
     }
