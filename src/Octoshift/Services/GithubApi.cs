@@ -1075,13 +1075,14 @@ public class GithubApi
 
     public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, string archiveName, Stream archiveContent)
     {
-        using var streamContent = new StreamContent(archiveContent);
-        streamContent.Headers.ContentType = new("application/octet-stream");
-
         if (archiveContent is null)
         {
             throw new ArgumentNullException(nameof(archiveContent));
         }
+
+        using var streamContent = new StreamContent(archiveContent);
+        streamContent.Headers.ContentType = new("application/octet-stream");
+
         var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
 
         string response;

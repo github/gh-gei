@@ -3489,7 +3489,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
     }
 
-
     [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
@@ -3504,7 +3503,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";  // Valid JSON response
 
         _githubApi._streamSizeLimit = 1;
-        
+
         _githubClientMock
             .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
             .ReturnsAsync(jsonResponse);
@@ -3518,6 +3517,14 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         actualStringResponse.Should().Be(expectedStringResponse);
     }
 
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
+    {
+        await FluentActions
+            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("orgDatabaseId", "archive", null))
+            .Should()
+            .ThrowExactlyAsync<ArgumentNullException>();
+    }
 
     private string Compact(string source) =>
         source
