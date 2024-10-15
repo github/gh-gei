@@ -348,32 +348,20 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         {
             // Arrange
             var githubOrgDatabaseId = Guid.NewGuid().ToString();
-            var gitArchiveFilePath = "./gitdata_archive";
-            var gitArchiveDownloadFilePath = "git_archive_downaloded.tmp";
+            const string gitArchiveFilePath = "./gitdata_archive";
+            const string gitArchiveUrl = "gei://archive/1";
 
-            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
-            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
-            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
-            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(ARCHIVE_DATA);
+            await File.WriteAllTextAsync(gitArchiveFilePath, "I am git archive");
+            await using var gitContentStream = File.OpenRead(gitArchiveFilePath);
+
+            _mockFileSystemProvider.Setup(m => m.OpenRead(gitArchiveFilePath)).Returns(gitContentStream);
+
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockGithubApi.Setup(x => x.GetOrganizationDatabaseId(GITHUB_ORG).Result).Returns(githubOrgDatabaseId);
-
-            File.WriteAllText(gitArchiveFilePath, "I am git archive");
-            using var gitContentStream = File.OpenRead(gitArchiveFilePath);
-
-            _mockFileSystemProvider
-               .SetupSequence(m => m.GetTempFileName())
-               .Returns(gitArchiveDownloadFilePath);
-            _mockFileSystemProvider
-                .Setup(m => m.OpenRead(gitArchiveDownloadFilePath))
-                .Returns(gitContentStream);
             _mockGithubApi
-                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("git_archive.tar.gz")), gitContentStream).Result)
-                .Returns("gei://archive/");
-            _mockFileSystemProvider
-               .Setup(m => m.OpenRead(gitArchiveFilePath))
-                .Returns(gitContentStream);
+                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.IsAny<string>(), gitContentStream).Result)
+                .Returns(gitArchiveUrl);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -391,7 +379,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GithubRepo = GITHUB_REPO,
                 GithubPat = GITHUB_PAT,
                 QueueOnly = true,
-                ArchiveUrl = "gei://archive/"
             };
             await _handler.Handle(args);
 
@@ -402,7 +389,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 GITHUB_ORG_ID,
                 GITHUB_REPO,
                 GITHUB_PAT,
-                "gei://archive/",
+                gitArchiveUrl,
                 null
             ));
         }
