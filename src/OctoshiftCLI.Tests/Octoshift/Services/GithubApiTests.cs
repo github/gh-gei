@@ -3503,7 +3503,8 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedArchiveId = "123456";
         var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";  // Valid JSON response
 
-        // Mocking the PostAsync method to return the JSON response
+        _githubApi._streamSizeLimit = 1;
+        
         _githubClientMock
             .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
             .ReturnsAsync(jsonResponse);
