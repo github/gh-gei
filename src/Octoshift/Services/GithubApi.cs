@@ -1078,16 +1078,13 @@ public class GithubApi
         using var streamContent = new StreamContent(archiveContent);
         streamContent.Headers.ContentType = new("application/octet-stream");
 
-<<<<<<< Updated upstream
-        var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
-=======
         if (archiveContent is null)
         {
             throw new ArgumentNullException(nameof(archiveContent));
         }
 
         var isMultipart = archiveContent.Length > STREAM_SIZE_LIMIT; // Determines if stream size is greater than 100MB
->>>>>>> Stashed changes
+
         string response;
 
         if (isMultipart)
