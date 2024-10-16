@@ -1106,7 +1106,7 @@ public class GithubApi
         }
 
         var data = JObject.Parse(response);
-        return "gei://archive/" + (string)data["archiveId"];
+        return (string)data["uri"];
     }
 
     private static object GetMannequinsPayload(string orgId)

@@ -3472,20 +3472,18 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Using a MemoryStream as a valid stream implementation
         using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
-        var expectedArchiveId = "123456";
-        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";
+        var expectedUri = "gei://archive/123456";
+        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
 
         _githubClientMock
             .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
             .ReturnsAsync(jsonResponse);
 
-        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
-
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
-        expectedStringResponse.Should().Be(actualStringResponse);
+        expectedUri.Should().Be(actualStringResponse);
 
     }
 
@@ -3499,8 +3497,8 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Using a MemoryStream as a valid stream implementation
         using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
 
-        var expectedArchiveId = "123456";
-        var jsonResponse = $"{{ \"archiveId\": \"{expectedArchiveId}\" }}";  // Valid JSON response
+        var expectedUri = "gei://archive/123456";
+        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
 
         _githubApi._streamSizeLimit = 1;
 
@@ -3508,13 +3506,11 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
             .ReturnsAsync(jsonResponse);
 
-        var expectedStringResponse = "gei://archive/" + expectedArchiveId;
-
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
-        actualStringResponse.Should().Be(expectedStringResponse);
+        actualStringResponse.Should().Be(expectedUri);
     }
 
     [Fact]
