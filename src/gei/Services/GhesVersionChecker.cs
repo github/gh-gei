@@ -16,9 +16,14 @@ public class GhesVersionChecker
         _githubApi = githubApi;
     }
 
-    public virtual async Task<bool> AreBlobCredentialsRequired(string ghesApiUrl)
+    public virtual async Task<bool> AreBlobCredentialsRequired(string ghesApiUrl, bool useGithubStorage = false)
     {
         var blobCredentialsRequired = false;
+
+        if (useGithubStorage)
+        {
+            return true;
+        }
 
         if (ghesApiUrl.HasValue())
         {
