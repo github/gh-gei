@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -1069,6 +1070,24 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
         }
+    }
+
+    public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, string archiveName, Stream archiveContent)
+    {
+        if (archiveContent is null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent));
+        }
+
+        using var streamContent = new StreamContent(archiveContent);
+        streamContent.Headers.ContentType = new("application/octet-stream");
+
+        var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+
+        var response = await _client.PostAsync(url, streamContent);
+
+        var data = JObject.Parse(response);
+        return (string)data["uri"];
     }
 
     private static object GetMannequinsPayload(string orgId)

@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(23);
+            command.Options.Count.Should().Be(24);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
@@ -37,6 +37,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
+            TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
         }
     }
 }

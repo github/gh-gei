@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -298,6 +299,25 @@ public sealed class GithubClientTests
 
         // Act
         var actualContent = await githubClient.PostAsync("http://example.com", _rawRequestBody);
+
+        // Assert
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task PostAsync_With_StreamContent_Returns_String_Response()
+    {
+        // Arrange
+        var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        using var expectedStreamContent = new StreamContent(stream);
+        expectedStreamContent.Headers.ContentType = new("application/octet-stream");
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedStreamContent);
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var actualContent = await githubClient.PostAsync("http://example.com", expectedStreamContent);
 
         // Assert
         actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);

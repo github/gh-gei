@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -3462,6 +3463,39 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .WithMessage(expectedErrorMessage);
     }
 
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
+    {
+        //Arange 
+        const string orgDatabaseId = "1234";
+        const string archiveName = "archiveName";
+
+        // Using a MemoryStream as a valid stream implementation
+        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+        var expectedUri = "gei://archive/123456";
+        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
+
+        _githubClientMock
+            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
+            .ReturnsAsync(jsonResponse);
+
+        // Act
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
+
+        // Assert
+        expectedUri.Should().Be(actualStringResponse);
+
+    }
+
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
+    {
+        await FluentActions
+            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("12345", "foo", null))
+            .Should()
+            .ThrowExactlyAsync<ArgumentNullException>();
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
@@ -3471,5 +3505,4 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
-
 }

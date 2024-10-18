@@ -48,6 +48,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(KeepArchive);
         AddOption(NoSslVerify);
         AddOption(TargetApiUrl);
+        AddOption(UseGithubStorage);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -191,6 +192,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
                      "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+    public Option<bool> UseGithubStorage { get; } = new(
+        name: "--use-github-storage",
+        description: "Enables multipart uploads to a GitHub owned storage for use during migration")
+    { IsHidden = true };
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {
