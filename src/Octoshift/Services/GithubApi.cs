@@ -1084,7 +1084,7 @@ public class GithubApi
 
         var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
-        string response = await _client.PostAsync(url, streamContent);
+        var response = await _client.PostAsync(url, streamContent);
 
         var data = JObject.Parse(response);
         return (string)data["uri"];
