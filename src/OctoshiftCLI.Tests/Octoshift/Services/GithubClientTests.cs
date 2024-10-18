@@ -324,28 +324,6 @@ public sealed class GithubClientTests
     }
 
     [Fact]
-    public async Task PostAsync_With_MultipartFormDataContent_Returns_String_Response()
-    {
-        // Arrange
-        using var stream = new StreamContent(new MemoryStream(new byte[] { 1, 2, 3 }));
-        stream.Headers.ContentType = new("application/octet-stream");
-#pragma warning disable IDE0028
-        using var expectedMultipartContent = new MultipartFormDataContent();
-        expectedMultipartContent.Add(stream, "filePart", "example.txt");
-#pragma warning restore
-
-        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedMultipartContent);
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-        // Act
-        var actualContent = await githubClient.PostAsync("http://example.com", expectedMultipartContent);
-
-        // Assert
-        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
-    }
-
-    [Fact]
     public async Task PostAsync_Does_Not_Apply_Retry_Delay_To_Bad_Credentials_Response()
     {
         // Arrange

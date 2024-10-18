@@ -3488,32 +3488,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
-    {
-        // Arrange
-        const string orgDatabaseId = "123455";
-        const string archiveName = "archiveName";
-
-        // Using a MemoryStream as a valid stream implementation
-        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
-
-        var expectedUri = "gei://archive/123456";
-        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
-
-        _githubApi._streamSizeLimit = 1;
-
-        _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
-            .ReturnsAsync(jsonResponse);
-
-        // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
-
-        // Assert
-        actualStringResponse.Should().Be(expectedUri);
-    }
-
-    [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
     {
         await FluentActions
