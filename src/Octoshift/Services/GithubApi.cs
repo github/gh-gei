@@ -18,6 +18,7 @@ public class GithubApi
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    internal string _base_url = "https://uploads.github.com/organizations";
 
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
     {
@@ -1089,24 +1090,102 @@ public class GithubApi
 
         if (isMultipart)
         {
-            var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
-#pragma warning disable IDE0028
-            using var multipartFormDataContent = new MultipartFormDataContent();
-            multipartFormDataContent.Add(streamContent, "archive", archiveName);
-#pragma warning restore
-
-            response = await _client.PostAsync(url, multipartFormDataContent);
+            response = await UploadMultipart(archiveContent, archiveName, url);
+            return response;
         }
         else
         {
-            var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
             response = await _client.PostAsync(url, streamContent);
+            var data = JObject.Parse(response);
+            return (string)data["uri"];
+        }
+    }
+
+    private async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
+    {
+        var buffer = new byte[_streamSizeLimit];
+
+        // 1. Start the upload
+        var (startResponse, startHeaders) = await StartUploadAsync(uploadUrl, archiveName, archiveContent.Length);
+
+        var nextUrl = GetNextUrl(startHeaders);
+        var guid = System.Web.HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
+
+        // 2. Upload parts
+        int bytesRead;
+        while ((bytesRead = await archiveContent.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        {
+            nextUrl = await UploadPartAsync(buffer, bytesRead, nextUrl.ToString());
         }
 
-        var data = JObject.Parse(response);
-        return (string)data["uri"];
+        // 3. Complete the upload
+        await CompleteUploadAsync(nextUrl.ToString());
+
+        return $"gei://archive/{guid}";
+    }
+
+    private async Task<(string Response, KeyValuePair<string, IEnumerable<string>>[] Headers)> StartUploadAsync(string uploadUrl, string archiveName, long contentSize)
+    {
+        // Create the body for the request
+        var body = new JObject
+        {
+            ["content_type"] = "application/octet-stream",
+            ["name"] = archiveName,
+            ["size"] = contentSize
+        };
+
+        // Post the request and get both response content and headers as a tuple
+        var (response, headers) = await _client.PostTupleAsync(uploadUrl, body);
+
+        // Return the tuple with response and headers
+        return (response, headers);
+    }
+
+
+    private async Task<Uri> UploadPartAsync(byte[] body, int bytesRead, string nextUrl)
+    {
+        var content = new ByteArrayContent(body, 0, bytesRead);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        var (response, headers) = await _client.PatchTupleAsync(nextUrl, content);
+
+        return GetNextUrl(headers);
+    }
+
+    private async Task CompleteUploadAsync(string lastUrl)
+    {
+        // Create an empty HttpContent object
+        var content = new StringContent(string.Empty);
+
+        // Set the correct Content-Type header (adjust based on API requirements)
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+        await _client.PutAsync(lastUrl, content);
+    }
+
+    private Uri GetNextUrl(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+    {
+        // Find the Location header
+        var locationHeader = headers.FirstOrDefault(header => header.Key == "Location");
+
+        // Check if the Location header exists and has a value
+        if (locationHeader.Key != null)
+        {
+            var locationValue = locationHeader.Value.FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(locationValue))
+            {
+                // Combine the base URL with the location value
+                var nextUrl = new Uri(new Uri(_base_url), locationValue.ToString());
+                return nextUrl;
+            }
+        }
+
+        // Return null if the Location header is not found or is empty
+        return null;
     }
 
     private static object GetMannequinsPayload(string orgId)
