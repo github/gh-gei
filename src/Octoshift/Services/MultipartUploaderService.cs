@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using System.Web;
 
 namespace OctoshiftCLI.Services;
 
@@ -24,10 +24,10 @@ public class MultipartUploaderService
         var buffer = new byte[_streamSizeLimit];
 
         // 1. Start the upload
-        var startHeaders = await StartUploadAsync(uploadUrl, archiveName, archiveContent.Length);
+        var startHeaders = await StartUpload(uploadUrl, archiveName, archiveContent.Length);
 
-        var nextUrl = GetNextUrl(startHeaders);
-        var guid = System.Web.HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
+        var nextUrl = GetNextUrl(startHeaders) ?? throw new OctoshiftCliException("Failed to retrieve the next URL for the upload.");
+        var guid = HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
 
         // 2. Upload parts
         int bytesRead;
@@ -42,25 +42,25 @@ public class MultipartUploaderService
         return $"gei://archive/{guid}";
     }
 
-    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUploadAsync(string uploadUrl, string archiveName, long contentSize)
+    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUpload(string uploadUrl, string archiveName, long contentSize)
     {
-        var body = new JObject
+        var body = new
         {
-            ["content_type"] = "application/octet-stream",
-            ["name"] = archiveName,
-            ["size"] = contentSize
+            content_type = "application/octet-stream",
+            name = archiveName,
+            size = contentSize
         };
 
-        var response = await _client.PostTupleAsync(uploadUrl, body);
+        var response = await _client.PostWithFullResponseAsync(uploadUrl, body);
         var headers = response.ResponseHeaders.ToList();
         return headers;
     }
 
     private async Task<Uri> UploadPartAsync(byte[] body, int bytesRead, string nextUrl)
     {
-        var content = new ByteArrayContent(body, 0, bytesRead);
-        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-        var patchResponse = await _client.PatchTupleAsync(nextUrl, content);
+        var content = new ByteArrayContent(body);
+        content.Headers.ContentType = new("application/octet-stream");
+        var patchResponse = await _client.PatchWithFullResponseAsync(nextUrl, content);
         var headers = patchResponse.ResponseHeaders.ToList();
 
         return GetNextUrl(headers);
@@ -69,24 +69,24 @@ public class MultipartUploaderService
     private async Task CompleteUploadAsync(string lastUrl)
     {
         var content = new StringContent(string.Empty);
-        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Headers.ContentType = new("application/octet-stream");
         await _client.PutAsync(lastUrl, content);
     }
 
     private Uri GetNextUrl(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
-        var locationHeader = headers.FirstOrDefault(header => header.Key == "Location");
+        var locationHeader = headers.First(header => header.Key == "Location");
 
         if (locationHeader.Key != null)
         {
             var locationValue = locationHeader.Value.FirstOrDefault();
+
             if (!string.IsNullOrEmpty(locationValue))
             {
                 var nextUrl = new Uri(new Uri(_base_url), locationValue);
                 return nextUrl;
             }
         }
-
         return null;
     }
 }
