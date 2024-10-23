@@ -18,7 +18,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         private readonly Mock<GhesVersionCheckerFactory> _mockGhesVersionCheckerFactory = TestHelpers.CreateMock<GhesVersionCheckerFactory>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly GenerateScriptCommand _command = new();
+        private readonly GenerateScriptCommand _command = [];
 
         public GenerateScriptCommandTests()
         {

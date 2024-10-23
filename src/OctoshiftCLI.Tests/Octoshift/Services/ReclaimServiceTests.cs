@@ -605,13 +605,13 @@ public class ReclaimServiceTests
 
         var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
         {
-            Errors = new Collection<ErrorData>()
-            {
+            Errors =
+            [
                 new ErrorData()
                 {
                     Message = "is not an Enterprise Managed Users (EMU) organization"
                 }
-            }
+            ]
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
@@ -941,14 +941,14 @@ public class ReclaimServiceTests
             {
                 CreateAttributionInvitation = null
             },
-            Errors = new Collection<ErrorData>{new ErrorData
+            Errors = [new ErrorData
             {
                 Type = "UNPROCESSABLE",
                 Message = failureMessage,
-                Path = new Collection<string> { "createAttributionInvitation" },
-                Locations = new Collection<Location> { new Location() { Line = 2, Column = 14 } }
+                Path = ["createAttributionInvitation"],
+                Locations = [new Location() { Line = 2, Column = 14 }]
                 }
-            }
+            ]
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
@@ -982,14 +982,14 @@ public class ReclaimServiceTests
             {
                 CreateAttributionInvitation = null
             },
-            Errors = new Collection<ErrorData>{new ErrorData
+            Errors = [new ErrorData
             {
                 Type = "UNPROCESSABLE",
                 Message = failureMessage,
-                Path = new Collection<string> { "createAttributionInvitation" },
-                Locations = new Collection<Location> { new Location() { Line = 2, Column = 14 } }
+                Path = ["createAttributionInvitation"],
+                Locations = [new Location() { Line = 2, Column = 14 }]
                 }
-            }
+            ]
         };
 
         var reclaimMannequinResponse2 = new CreateAttributionInvitationResult()
@@ -1107,13 +1107,13 @@ public class ReclaimServiceTests
 
         var reclaimMannequinResponse = new ReattributeMannequinToUserResult()
         {
-            Errors = new Collection<ErrorData>()
-            {
+            Errors =
+            [
                 new ErrorData()
                 {
                     Message = "is not an Enterprise Managed Users (EMU) organization"
                 }
-            }
+            ]
         };
 
         _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
