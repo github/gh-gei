@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -947,7 +946,7 @@ public class ReclaimServiceTests
                 Message = failureMessage,
                 Path = ["createAttributionInvitation"],
                 Locations = [new Location() { Line = 2, Column = 14 }]
-                }
+            }
             ]
         };
 
@@ -988,7 +987,7 @@ public class ReclaimServiceTests
                 Message = failureMessage,
                 Path = ["createAttributionInvitation"],
                 Locations = [new Location() { Line = 2, Column = 14 }]
-                }
+            }
             ]
         };
 
