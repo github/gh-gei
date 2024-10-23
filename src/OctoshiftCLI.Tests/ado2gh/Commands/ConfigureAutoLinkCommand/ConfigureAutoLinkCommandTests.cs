@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.ConfigureAutoLink
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly ConfigureAutoLinkCommand _command = new();
+        private readonly ConfigureAutoLinkCommand _command = [];
 
         public ConfigureAutoLinkCommandTests()
         {

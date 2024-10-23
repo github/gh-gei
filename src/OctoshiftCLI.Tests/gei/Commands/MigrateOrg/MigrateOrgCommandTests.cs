@@ -16,7 +16,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
         private readonly Mock<WarningsCountLogger> _warningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly MigrateOrgCommand _command = new();
+        private readonly MigrateOrgCommand _command = [];
 
         public MigrateOrgCommandTests()
         {

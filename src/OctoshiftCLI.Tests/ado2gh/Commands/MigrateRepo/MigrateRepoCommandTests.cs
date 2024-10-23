@@ -16,7 +16,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         private readonly Mock<WarningsCountLogger> _warningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly MigrateRepoCommand _command = new();
+        private readonly MigrateRepoCommand _command = [];
 
         public MigrateRepoCommandTests()
         {

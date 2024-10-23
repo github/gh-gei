@@ -17,7 +17,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.InventoryReport
         private readonly Mock<ReposCsvGeneratorService> _mockReposCsvGeneratorService = TestHelpers.CreateMock<ReposCsvGeneratorService>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly InventoryReportCommand _command = new();
+        private readonly InventoryReportCommand _command = [];
 
         public InventoryReportCommandTests()
         {

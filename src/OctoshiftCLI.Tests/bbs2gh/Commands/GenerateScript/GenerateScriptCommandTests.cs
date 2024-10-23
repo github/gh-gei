@@ -20,7 +20,7 @@ public class GenerateScriptCommandTests
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
     private readonly Mock<IVersionProvider> _mockVersionProvider = new();
 
-    private readonly GenerateScriptCommand _command = new();
+    private readonly GenerateScriptCommand _command = [];
 
     public GenerateScriptCommandTests()
     {

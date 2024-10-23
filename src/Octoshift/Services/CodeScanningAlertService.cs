@@ -109,7 +109,7 @@ public class CodeScanningAlertService
 
         // no reason to call the target on a dry run - there will be no alerts 
         var targetAlerts = dryRun ?
-            new List<CodeScanningAlert>() :
+            [] :
             (await _targetGithubApi.GetCodeScanningAlertsForRepository(targetOrg, targetRepo, branch)).ToList();
 
         var successCount = 0;

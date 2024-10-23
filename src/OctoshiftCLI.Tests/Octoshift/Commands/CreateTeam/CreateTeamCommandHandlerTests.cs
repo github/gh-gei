@@ -18,7 +18,7 @@ public class CreateTeamCommandHandlerTests
     private const string GITHUB_ORG = "FooOrg";
     private const string TEAM_NAME = "foo-team";
     private const string IDP_GROUP = "foo-group";
-    private readonly List<string> TEAM_MEMBERS = new() { "dylan", "dave" };
+    private readonly List<string> TEAM_MEMBERS = ["dylan", "dave"];
     private const int IDP_GROUP_ID = 42;
     private const string TEAM_SLUG = "foo-slug";
 

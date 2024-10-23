@@ -15,7 +15,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly AddTeamToRepoCommand _command = new();
+        private readonly AddTeamToRepoCommand _command = [];
 
         public AddTeamToRepoCommandTests()
         {

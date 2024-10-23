@@ -18,7 +18,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
         private readonly Mock<IVersionProvider> _mockVersionProvider = new();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly GenerateScriptCommand _command = new();
+        private readonly GenerateScriptCommand _command = [];
 
         public GenerateScriptCommandTests()
         {

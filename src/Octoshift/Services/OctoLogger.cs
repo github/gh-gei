@@ -19,7 +19,7 @@ internal static class LogLevel
 public class OctoLogger
 {
     public virtual bool Verbose { get; set; }
-    private readonly HashSet<string> _secrets = new();
+    private readonly HashSet<string> _secrets = [];
     private readonly string _logFilePath;
     private readonly string _verboseFilePath;
     private readonly bool _debugMode;
@@ -31,11 +31,11 @@ public class OctoLogger
 
     private const string GENERIC_ERROR_MESSAGE = "An unexpected error happened. Please see the logs for details.";
 
-    private readonly List<string> _redactionPatterns = new()
-    {
+    private readonly List<string> _redactionPatterns =
+    [
         "\\b(?<=token=)(.+?)\\b",
         "\\b(?<=X-Amz-Credential=)(.+?)\\b",
-    };
+    ];
 
     public OctoLogger()
     {

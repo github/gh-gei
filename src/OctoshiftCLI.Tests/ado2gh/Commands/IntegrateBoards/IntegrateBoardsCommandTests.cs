@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards
         private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly IntegrateBoardsCommand _command = new();
+        private readonly IntegrateBoardsCommand _command = [];
 
         public IntegrateBoardsCommandTests()
         {

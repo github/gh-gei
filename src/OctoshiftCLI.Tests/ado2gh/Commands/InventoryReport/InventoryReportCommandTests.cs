@@ -19,7 +19,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.InventoryReport
         private readonly Mock<PipelinesCsvGeneratorService> _mockPipelinesCsvGeneratorService = TestHelpers.CreateMock<PipelinesCsvGeneratorService>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly InventoryReportCommand _command = new();
+        private readonly InventoryReportCommand _command = [];
 
         public InventoryReportCommandTests()
         {

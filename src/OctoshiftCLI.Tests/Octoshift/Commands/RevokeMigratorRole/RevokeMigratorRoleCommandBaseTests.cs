@@ -14,7 +14,7 @@ public class RevokeMigratorRoleCommandBaseTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly RevokeMigratorRoleCommandBase _command = new();
+    private readonly RevokeMigratorRoleCommandBase _command = [];
 
     public RevokeMigratorRoleCommandBaseTests()
     {

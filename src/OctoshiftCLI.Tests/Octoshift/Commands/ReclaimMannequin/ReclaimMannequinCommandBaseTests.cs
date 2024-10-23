@@ -13,7 +13,7 @@ public class ReclaimMannequinCommandBaseTests
     private readonly Mock<ConfirmationService> _mockConfirmationService = TestHelpers.CreateMock<ConfirmationService>();
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly ServiceProvider _serviceProvider;
-    private readonly ReclaimMannequinCommandBase _command = new();
+    private readonly ReclaimMannequinCommandBase _command = [];
 
     private const string GITHUB_ORG = "FooOrg";
 

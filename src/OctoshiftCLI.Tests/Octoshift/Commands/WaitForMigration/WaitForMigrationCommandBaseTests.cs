@@ -13,7 +13,7 @@ public class WaitForMigrationCommandBaseTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<WarningsCountLogger> _mockWarningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
     private readonly ServiceProvider _serviceProvider;
-    private readonly WaitForMigrationCommandBase _command = new();
+    private readonly WaitForMigrationCommandBase _command = [];
 
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
     public WaitForMigrationCommandBaseTests()
