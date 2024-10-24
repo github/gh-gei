@@ -98,10 +98,12 @@ public class MultipartUploaderService
 
     private async Task CompleteUpload(string lastUrl)
     {
+        var content = new StringContent(string.Empty);
+        content.Headers.ContentType = new("application/octet-stream");
 
         try
         {
-            await _client.PutAsync(lastUrl, null);
+            await _client.PutAsync(lastUrl, content);
         }
         catch (Exception ex)
         {
