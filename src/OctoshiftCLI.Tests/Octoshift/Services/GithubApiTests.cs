@@ -21,6 +21,7 @@ public class GithubApiTests
     private const string API_URL = "https://api.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
+    private readonly MultipartUploaderService _multipartUploader;
 
     private readonly GithubApi _githubApi;
 
@@ -46,7 +47,8 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        _multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _multipartUploader);
     }
 
     [Fact]
@@ -424,7 +426,8 @@ public class GithubApiTests
         _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
@@ -445,7 +448,8 @@ public class GithubApiTests
                          .ReturnsAsync(string.Empty);
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert

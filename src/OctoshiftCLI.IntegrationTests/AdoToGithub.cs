@@ -35,7 +35,8 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _githubHttpClient = new HttpClient();
             var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
-            var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger));
+            var multipartUploader = new MultipartUploaderService(githubClient);
+            var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger), multipartUploader);
 
             Tokens = new Dictionary<string, string>
             {

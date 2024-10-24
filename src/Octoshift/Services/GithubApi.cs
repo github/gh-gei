@@ -17,13 +17,16 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
+    private readonly MultipartUploaderService _multipartUploader;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    internal string _base_url = "https://uploads.github.com/organizations";
 
-    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
+    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, MultipartUploaderService multipartUploader)
     {
         _client = client;
         _apiUrl = apiUrl;
         _retryPolicy = retryPolicy;
+        _multipartUploader = multipartUploader;
     }
 
     public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -1089,24 +1092,19 @@ public class GithubApi
 
         if (isMultipart)
         {
-            var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
-#pragma warning disable IDE0028
-            using var multipartFormDataContent = new MultipartFormDataContent();
-            multipartFormDataContent.Add(streamContent, "archive", archiveName);
-#pragma warning restore
-
-            response = await _client.PostAsync(url, multipartFormDataContent);
+            response = await _multipartUploader.UploadMultipart(archiveContent, archiveName, url);
+            return response;
         }
         else
         {
-            var url = $"https://uploads.github.com/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
             response = await _client.PostAsync(url, streamContent);
+            var data = JObject.Parse(response);
+            return (string)data["uri"];
         }
-
-        var data = JObject.Parse(response);
-        return (string)data["uri"];
     }
 
     private static object GetMannequinsPayload(string orgId)

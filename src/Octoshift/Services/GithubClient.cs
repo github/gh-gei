@@ -76,6 +76,9 @@ public class GithubClient
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
 
+    public virtual async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PostWithFullResponseAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+        await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders);
+
     public virtual async Task<JToken> PostGraphQLAsync(
         string url,
         object body,
@@ -139,6 +142,9 @@ public class GithubClient
 
     public virtual async Task<string> PatchAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders)).Content;
+
+    public virtual async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PatchWithFullResponseAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+        await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders);
 
     public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
 
