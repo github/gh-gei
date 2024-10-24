@@ -26,7 +26,7 @@ public class MultipartUploaderService
         try
         {
             // 1. Start the upload
-            var startHeaders = await StartUploadAsync(uploadUrl, archiveName, archiveContent.Length);
+            var startHeaders = await StartUpload(uploadUrl, archiveName, archiveContent.Length);
 
             var nextUrl = GetNextUrl(startHeaders);
             if (nextUrl == null)
@@ -40,11 +40,11 @@ public class MultipartUploaderService
             int bytesRead;
             while ((bytesRead = await archiveContent.ReadAsync(buffer, 0, buffer.Length)) > 0)
             {
-                nextUrl = await UploadPartAsync(buffer, bytesRead, nextUrl.ToString());
+                nextUrl = await UploadPart(buffer, bytesRead, nextUrl.ToString());
             }
 
             // 3. Complete the upload
-            await CompleteUploadAsync(nextUrl.ToString());
+            await CompleteUpload(nextUrl.ToString());
 
             return $"gei://archive/{guid}";
         }
@@ -54,7 +54,7 @@ public class MultipartUploaderService
         }
     }
 
-    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUploadAsync(string uploadUrl, string archiveName, long contentSize)
+    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUpload(string uploadUrl, string archiveName, long contentSize)
     {
         var body = new
         {
@@ -75,7 +75,7 @@ public class MultipartUploaderService
         }
     }
 
-    private async Task<Uri> UploadPartAsync(byte[] body, int bytesRead, string nextUrl)
+    private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl)
     {
         var content = new ByteArrayContent(body, 0, bytesRead);
         content.Headers.ContentType = new("application/octet-stream");
@@ -95,7 +95,7 @@ public class MultipartUploaderService
         }
     }
 
-    private async Task CompleteUploadAsync(string lastUrl)
+    private async Task CompleteUpload(string lastUrl)
     {
         var content = new StringContent(string.Empty);
         content.Headers.ContentType = new("application/octet-stream");
