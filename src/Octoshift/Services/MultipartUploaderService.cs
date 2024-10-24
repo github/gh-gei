@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
@@ -97,12 +98,10 @@ public class MultipartUploaderService
 
     private async Task CompleteUpload(string lastUrl)
     {
-        var content = new StringContent(string.Empty);
-        content.Headers.ContentType = new("application/octet-stream");
 
         try
         {
-            await _client.PutAsync(lastUrl, content);
+            await _client.PutAsync(lastUrl, null);
         }
         catch (Exception ex)
         {
@@ -113,12 +112,12 @@ public class MultipartUploaderService
     private Uri GetNextUrl(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
         // Use FirstOrDefault to safely handle missing Location headers
-        var locationHeader = headers.FirstOrDefault(header => header.Key.Equals("Location", StringComparison.OrdinalIgnoreCase));
+        var locationHeader = headers.First(header => header.Key.Equals("Location", StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(locationHeader.Key))
         {
             var locationValue = locationHeader.Value.FirstOrDefault();
-            if (!string.IsNullOrEmpty(locationValue))
+            if (locationValue.HasValue())
             {
                 return new Uri(new Uri(_base_url), locationValue);
             }
