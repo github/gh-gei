@@ -23,26 +23,38 @@ public class MultipartUploaderService
     {
         var buffer = new byte[_streamSizeLimit];
 
-        // 1. Start the upload
-        var startHeaders = await StartUpload(uploadUrl, archiveName, archiveContent.Length);
-
-        var nextUrl = GetNextUrl(startHeaders) ?? throw new OctoshiftCliException("Failed to retrieve the next URL for the upload.");
-        var guid = HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
-
-        // 2. Upload parts
-        int bytesRead;
-        while ((bytesRead = await archiveContent.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        try
         {
-            nextUrl = await UploadPartAsync(buffer, bytesRead, nextUrl.ToString());
+            // 1. Start the upload
+            var startHeaders = await StartUploadAsync(uploadUrl, archiveName, archiveContent.Length);
+
+            var nextUrl = GetNextUrl(startHeaders);
+            if (nextUrl == null)
+            {
+                throw new OctoshiftCliException("Failed to retrieve the next URL for the upload.");
+            }
+
+            var guid = HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
+
+            // 2. Upload parts
+            int bytesRead;
+            while ((bytesRead = await archiveContent.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                nextUrl = await UploadPartAsync(buffer, bytesRead, nextUrl.ToString());
+            }
+
+            // 3. Complete the upload
+            await CompleteUploadAsync(nextUrl.ToString());
+
+            return $"gei://archive/{guid}";
         }
-
-        // 3. Complete the upload
-        await CompleteUploadAsync(nextUrl.ToString());
-
-        return $"gei://archive/{guid}";
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException("Failed during multipart upload.", ex);
+        }
     }
 
-    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUpload(string uploadUrl, string archiveName, long contentSize)
+    private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUploadAsync(string uploadUrl, string archiveName, long contentSize)
     {
         var body = new
         {
@@ -51,40 +63,64 @@ public class MultipartUploaderService
             size = contentSize
         };
 
-        var response = await _client.PostWithFullResponseAsync(uploadUrl, body);
-        var headers = response.ResponseHeaders.ToList();
-        return headers;
+        try
+        {
+            // Post with the expectation of receiving both response content and headers
+            var response = await _client.PostWithFullResponseAsync(uploadUrl, body);
+            return response.ResponseHeaders.ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException("Failed to start upload.", ex);
+        }
     }
 
     private async Task<Uri> UploadPartAsync(byte[] body, int bytesRead, string nextUrl)
     {
-        var content = new ByteArrayContent(body);
+        var content = new ByteArrayContent(body, 0, bytesRead);
         content.Headers.ContentType = new("application/octet-stream");
-        var patchResponse = await _client.PatchWithFullResponseAsync(nextUrl, content);
-        var headers = patchResponse.ResponseHeaders.ToList();
 
-        return GetNextUrl(headers);
+        try
+        {
+            // Make the PATCH request and retrieve headers
+            var patchResponse = await _client.PatchWithFullResponseAsync(nextUrl, content);
+            var headers = patchResponse.ResponseHeaders.ToList();
+
+            // Retrieve the next URL from the response headers
+            return GetNextUrl(headers) ?? throw new OctoshiftCliException("Failed to retrieve the next URL for the upload part.");
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException("Failed to upload part.", ex);
+        }
     }
 
     private async Task CompleteUploadAsync(string lastUrl)
     {
         var content = new StringContent(string.Empty);
         content.Headers.ContentType = new("application/octet-stream");
-        await _client.PutAsync(lastUrl, content);
+
+        try
+        {
+            await _client.PutAsync(lastUrl, content);
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException("Failed to complete upload.", ex);
+        }
     }
 
     private Uri GetNextUrl(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
-        var locationHeader = headers.First(header => header.Key == "Location");
+        // Use FirstOrDefault to safely handle missing Location headers
+        var locationHeader = headers.FirstOrDefault(header => header.Key.Equals("Location", StringComparison.OrdinalIgnoreCase));
 
-        if (locationHeader.Key != null)
+        if (!string.IsNullOrEmpty(locationHeader.Key))
         {
             var locationValue = locationHeader.Value.FirstOrDefault();
-
             if (!string.IsNullOrEmpty(locationValue))
             {
-                var nextUrl = new Uri(new Uri(_base_url), locationValue);
-                return nextUrl;
+                return new Uri(new Uri(_base_url), locationValue);
             }
         }
         return null;
