@@ -19,7 +19,7 @@ public class GithubApi
     private readonly RetryPolicy _retryPolicy;
     private readonly MultipartUploaderService _multipartUploader;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
-    internal string _base_url = "https://uploads.github.com/organizations";
+    private const string BASE_URL = "https://uploads.github.com/organizations";
 
     public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, MultipartUploaderService multipartUploader)
     {
