@@ -3495,20 +3495,36 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
     {
         // Arrange
-        const string orgDatabaseId = "123455";
+        const string orgDatabaseId = "123456";
         const string archiveName = "archiveName";
 
-        // Using a MemoryStream as a valid stream implementation
-        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+        // Create a MemoryStream larger than 100 MB (e.g., 101 MB)
+        var largeContent = new byte[101 * 1024 * 1024];
+        using var archiveContent = new MemoryStream(largeContent);
 
         var expectedUri = "gei://archive/123456";
-        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
+        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}"; // Valid JSON content
 
-        _githubApi._streamSizeLimit = 1;
-
+        // Mocking the initial POST request to initiate multipart upload
         _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
-            .ReturnsAsync(jsonResponse);
+            .Setup(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null))
+            .ReturnsAsync((jsonResponse, new[]
+            {
+            new KeyValuePair<string, IEnumerable<string>>("Location", new[] { "/organizations/93741352/gei/archive/blobs/uploads?part_number=1&guid=123456&upload_id=i63n.35ClspPC5tSNp1rPcjm3FfKsnhLEPud627KummDTa29LSoFjIRlNjfzwJdax5sekyqJB7YPHtBZUCDCVwFUznod.p8XY_xHKu9FxFOcobs6keWC_9Xx8HFMQHxL" })
+            }));
+
+        // Mocking PATCH requests for each part upload
+        _githubClientMock
+            .Setup(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .ReturnsAsync((jsonResponse, new[]
+            {
+            new KeyValuePair<string, IEnumerable<string>>("Location", new[] { "/organizations/93741352/gei/archive/blobs/uploads?part_number=1&guid=123456&upload_id=i63n.35ClspPC5tSNp1rPcjm3FfKsnhLEPud627KummDTa29LSoFjIRlNjfzwJdax5sekyqJB7YPHtBZUCDCVwFUznod.p8XY_xHKu9FxFOcobs6keWC_9Xx8HFMQHxx" })
+            }));
+
+        // Mocking the final PUT request to complete the multipart upload
+        _githubClientMock
+            .Setup(m => m.PutAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
+            .ReturnsAsync(string.Empty);  // Ensure a non-null response
 
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);

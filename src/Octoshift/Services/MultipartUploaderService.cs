@@ -124,6 +124,6 @@ public class MultipartUploaderService
                 return new Uri(new Uri(_base_url), locationValue);
             }
         }
-        return null;
+        throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");
     }
 }
