@@ -13,7 +13,7 @@ public class MultipartUploaderService
 {
     private readonly GithubClient _client;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
-    internal string _base_url = "https://uploads.github.com/organizations";
+    private const string BASE_URL = "https://uploads.github.com/organizations";
 
     public MultipartUploaderService(GithubClient client)
     {
