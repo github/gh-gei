@@ -27,7 +27,7 @@ public sealed class GhesToGithub : IDisposable
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
-    private readonly MultipartUploaderService _multipartUploader;
+    private readonly ArchiveUploader _multipartUploader;
 
     public GhesToGithub(ITestOutputHelper output)
     {
@@ -47,7 +47,7 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        _multipartUploader = new MultipartUploaderService(_targetGithubClient, logger);
+        _multipartUploader = new ArchiveUploader(_targetGithubClient, logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);

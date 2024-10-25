@@ -17,11 +17,9 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
-    private readonly MultipartUploaderService _multipartUploader;
-    internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
-    private const string BASE_URL = "https://uploads.github.com/organizations";
+    private readonly ArchiveUploader _multipartUploader;
 
-    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, MultipartUploaderService multipartUploader)
+    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, ArchiveUploader multipartUploader)
     {
         _client = client;
         _apiUrl = apiUrl;
@@ -1083,28 +1081,9 @@ public class GithubApi
             throw new ArgumentNullException(nameof(archiveContent));
         }
 
-        using var streamContent = new StreamContent(archiveContent);
-        streamContent.Headers.ContentType = new("application/octet-stream");
+        var uri = await _multipartUploader.Upload(archiveContent, archiveName, orgDatabaseId);
 
-        var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
-
-        string response;
-
-        if (isMultipart)
-        {
-            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
-
-            response = await _multipartUploader.UploadMultipart(archiveContent, archiveName, url);
-            return response;
-        }
-        else
-        {
-            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
-
-            response = await _client.PostAsync(url, streamContent);
-            var data = JObject.Parse(response);
-            return (string)data["uri"];
-        }
+        return uri;
     }
 
     private static object GetMannequinsPayload(string orgId)

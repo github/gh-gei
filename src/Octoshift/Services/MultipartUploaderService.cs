@@ -5,21 +5,48 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
-public class MultipartUploaderService
+public class ArchiveUploader
 {
     private readonly GithubClient _client;
     private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+
     private const string BASE_URL = "https://uploads.github.com/organizations";
 
-    public MultipartUploaderService(GithubClient client, OctoLogger log)
+    public ArchiveUploader(GithubClient client, OctoLogger log)
     {
         _client = client;
         _log = log;
+    }
+    public virtual async Task<string> Upload(Stream archiveContent, string archiveName, string orgDatabaseId)
+    {
+        using var streamContent = new StreamContent(archiveContent);
+        streamContent.Headers.ContentType = new("application/octet-stream");
+
+        var isMultipart = archiveContent.Length > _streamSizeLimit; // Determines if stream size is greater than 100MB
+
+        string response;
+
+        if (isMultipart)
+        {
+            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+
+            response = await UploadMultipart(archiveContent, archiveName, url);
+            return response;
+        }
+        else
+        {
+            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+
+            response = await _client.PostAsync(url, streamContent);
+            var data = JObject.Parse(response);
+            return (string)data["uri"];
+        }
     }
 
     public async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
