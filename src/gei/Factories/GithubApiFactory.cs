@@ -30,7 +30,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, _retryPolicy, _dateTimeProvider, sourcePersonalAccessToken);
-        var multipartUploader = new MultipartUploaderService(githubClient);
+        var multipartUploader = new MultipartUploaderService(githubClient, _octoLogger);
         return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 
@@ -39,7 +39,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), _versionProvider, _retryPolicy, _dateTimeProvider, sourcePersonalAccessToken);
-        var multipartUploader = new MultipartUploaderService(githubClient);
+        var multipartUploader = new MultipartUploaderService(githubClient, _octoLogger);
         return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 
@@ -48,7 +48,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, _retryPolicy, _dateTimeProvider, targetPersonalAccessToken);
-        var multipartUploader = new MultipartUploaderService(githubClient);
+        var multipartUploader = new MultipartUploaderService(githubClient, _octoLogger);
         return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 }

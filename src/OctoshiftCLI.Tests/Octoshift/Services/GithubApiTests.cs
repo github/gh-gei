@@ -47,7 +47,8 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        var logger = new OctoLogger(_ => { }, _ => { }, _ => { }, _ => { });
+        _multipartUploader = new MultipartUploaderService(_githubClientMock.Object, logger);
         _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _multipartUploader);
     }
 
@@ -426,7 +427,8 @@ public class GithubApiTests
         _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
         // Act
-        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        var logger = new OctoLogger(_ => { }, _ => { }, _ => { }, _ => { });
+        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object, logger);
         var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
@@ -448,7 +450,8 @@ public class GithubApiTests
                          .ReturnsAsync(string.Empty);
 
         // Act
-        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object);
+        var logger = TestHelpers.CreateMock<OctoLogger>().Object;
+        var multipartUploader = new MultipartUploaderService(_githubClientMock.Object, logger);
         var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 

@@ -47,7 +47,7 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        _multipartUploader = new MultipartUploaderService(_targetGithubClient);
+        _multipartUploader = new MultipartUploaderService(_targetGithubClient, logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);

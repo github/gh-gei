@@ -12,16 +12,23 @@ namespace OctoshiftCLI.Services;
 public class MultipartUploaderService
 {
     private readonly GithubClient _client;
+    private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
     private const string BASE_URL = "https://uploads.github.com/organizations";
 
-    public MultipartUploaderService(GithubClient client)
+    public MultipartUploaderService(GithubClient client, OctoLogger log)
     {
         _client = client;
+        _log = log;
     }
 
     public async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
     {
+        if (archiveContent == null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent), "Archive content stream cannot be null.");
+        }
+
         var buffer = new byte[_streamSizeLimit];
 
         try
@@ -39,9 +46,12 @@ public class MultipartUploaderService
 
             // 2. Upload parts
             int bytesRead;
-            while ((bytesRead = await archiveContent.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            var partsRead = 0;
+            var totalParts = (int)Math.Ceiling((double)archiveContent.Length / _streamSizeLimit);
+            while ((bytesRead = await archiveContent.ReadAsync(buffer.AsMemory(0, buffer.Length))) > 0)
             {
-                nextUrl = await UploadPart(buffer, bytesRead, nextUrl.ToString());
+                nextUrl = await UploadPart(buffer, bytesRead, nextUrl.ToString(), partsRead, totalParts);
+                partsRead++;
             }
 
             // 3. Complete the upload
@@ -57,6 +67,8 @@ public class MultipartUploaderService
 
     private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUpload(string uploadUrl, string archiveName, long contentSize)
     {
+        _log.LogInformation("Starting archive upload into GitHub owned storage...");
+
         var body = new
         {
             content_type = "application/octet-stream",
@@ -66,7 +78,6 @@ public class MultipartUploaderService
 
         try
         {
-            // Post with the expectation of receiving both response content and headers
             var response = await _client.PostWithFullResponseAsync(uploadUrl, body);
             return response.ResponseHeaders.ToList();
         }
@@ -76,9 +87,10 @@ public class MultipartUploaderService
         }
     }
 
-    private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl)
+    private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl, int partsRead, int totalParts)
     {
-        var content = new ByteArrayContent(body, 0, bytesRead);
+        _log.LogInformation($"Uploading part {partsRead + 1}/{totalParts}...");
+        using var content = new ByteArrayContent(body, 0, bytesRead);
         content.Headers.ContentType = new("application/octet-stream");
 
         try
@@ -88,7 +100,7 @@ public class MultipartUploaderService
             var headers = patchResponse.ResponseHeaders.ToList();
 
             // Retrieve the next URL from the response headers
-            return GetNextUrl(headers) ?? throw new OctoshiftCliException("Failed to retrieve the next URL for the upload part.");
+            return GetNextUrl(headers);
         }
         catch (Exception ex)
         {
@@ -98,12 +110,10 @@ public class MultipartUploaderService
 
     private async Task CompleteUpload(string lastUrl)
     {
-        var content = new StringContent(string.Empty);
-        content.Headers.ContentType = new("application/octet-stream");
-
         try
         {
-            await _client.PutAsync(lastUrl, content);
+            await _client.PutAsync(lastUrl, "");
+            _log.LogInformation("Finished uploading archive");
         }
         catch (Exception ex)
         {
@@ -121,7 +131,7 @@ public class MultipartUploaderService
             var locationValue = locationHeader.Value.FirstOrDefault();
             if (locationValue.HasValue())
             {
-                return new Uri(new Uri(_base_url), locationValue);
+                return new Uri(new Uri(BASE_URL), locationValue);
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");

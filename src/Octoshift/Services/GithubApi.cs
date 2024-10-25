@@ -1092,14 +1092,14 @@ public class GithubApi
 
         if (isMultipart)
         {
-            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
             response = await _multipartUploader.UploadMultipart(archiveContent, archiveName, url);
             return response;
         }
         else
         {
-            var url = $"{_base_url}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
             response = await _client.PostAsync(url, streamContent);
             var data = JObject.Parse(response);

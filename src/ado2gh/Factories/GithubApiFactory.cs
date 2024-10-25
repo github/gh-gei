@@ -30,7 +30,7 @@ public class GithubApiFactory : ITargetGithubApiFactory
         apiUrl ??= DEFAULT_API_URL;
         targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _client, _versionProvider, _retryPolicy, _dateTimeProvider, targetPersonalAccessToken);
-        var multipartUploader = new MultipartUploaderService(githubClient);
+        var multipartUploader = new MultipartUploaderService(githubClient, _octoLogger);
         return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 }
