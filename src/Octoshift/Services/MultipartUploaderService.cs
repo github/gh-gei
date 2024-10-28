@@ -74,7 +74,7 @@ public class ArchiveUploader
             // 2. Upload parts
             int bytesRead;
             var partsRead = 0;
-            var totalParts = (int)Math.Ceiling((double)archiveContent.Length / _streamSizeLimit);
+            var totalParts = (long)Math.Ceiling((double)archiveContent.Length / _streamSizeLimit);
             while ((bytesRead = await archiveContent.ReadAsync(buffer.AsMemory(0, buffer.Length))) > 0)
             {
                 nextUrl = await UploadPart(buffer, bytesRead, nextUrl.ToString(), partsRead, totalParts);
