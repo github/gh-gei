@@ -21,8 +21,6 @@ namespace OctoshiftCLI.IntegrationTests
         private bool disposedValue;
         private readonly Dictionary<string, string> _tokens;
         private readonly DateTime _startTime;
-        private readonly ArchiveUploader _multipartUploader;
-
         public GithubToGithub(ITestOutputHelper output)
         {
             _startTime = DateTime.Now;
@@ -36,8 +34,7 @@ namespace OctoshiftCLI.IntegrationTests
             _githubHttpClient = new HttpClient();
             _versionClient = new HttpClient();
             _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
-            _multipartUploader = new ArchiveUploader(_githubClient, logger);
-            _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger), _multipartUploader);
+            _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger), null);
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
         }
