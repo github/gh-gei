@@ -64,10 +64,6 @@ public class ArchiveUploader
             var startHeaders = await StartUpload(uploadUrl, archiveName, archiveContent.Length);
 
             var nextUrl = GetNextUrl(startHeaders);
-            if (nextUrl == null)
-            {
-                throw new OctoshiftCliException("Failed to retrieve the next URL for the upload.");
-            }
 
             var guid = HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
 
