@@ -25,6 +25,11 @@ public class ArchiveUploader
     }
     public virtual async Task<string> Upload(Stream archiveContent, string archiveName, string orgDatabaseId)
     {
+        if (archiveContent == null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent), "The archive content stream cannot be null.");
+        }
+
         using var streamContent = new StreamContent(archiveContent);
         streamContent.Headers.ContentType = new("application/octet-stream");
 
@@ -49,7 +54,7 @@ public class ArchiveUploader
         }
     }
 
-    public async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
+    private async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
     {
         if (archiveContent == null)
         {
@@ -110,7 +115,7 @@ public class ArchiveUploader
         }
     }
 
-    private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl, int partsRead, int totalParts)
+    private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl, int partsRead, long totalParts)
     {
         _log.LogInformation($"Uploading part {partsRead + 1}/{totalParts}...");
         using var content = new ByteArrayContent(body, 0, bytesRead);
