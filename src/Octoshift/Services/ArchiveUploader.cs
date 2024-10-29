@@ -76,7 +76,7 @@ public class ArchiveUploader
             int bytesRead;
             var partsRead = 0;
             var totalParts = (long)Math.Ceiling((double)archiveContent.Length / _streamSizeLimit);
-            while ((bytesRead = await archiveContent.ReadAsync(buffer.AsMemory(0, buffer.Length))) > 0)
+            while ((bytesRead = await archiveContent.ReadAsync(buffer)) > 0)
             {
                 nextUrl = await UploadPart(buffer, bytesRead, nextUrl.ToString(), partsRead, totalParts);
                 partsRead++;
@@ -95,7 +95,7 @@ public class ArchiveUploader
 
     private async Task<IEnumerable<KeyValuePair<string, IEnumerable<string>>>> StartUpload(string uploadUrl, string archiveName, long contentSize)
     {
-        _log.LogInformation("Starting archive upload into GitHub owned storage...");
+        _log.LogInformation($"Starting archive upload into GitHub owned storage: {archiveName}...");
 
         var body = new
         {
