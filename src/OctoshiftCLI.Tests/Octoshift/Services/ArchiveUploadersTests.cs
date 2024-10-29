@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using System.Net.Http;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Extensions;
-using Xunit;
 using OctoshiftCLI.Services;
 using OctoshiftCLI.Tests;
-
+using Xunit;
 
 public class ArchiveUploaderTests
 {
