@@ -21,7 +21,7 @@ public class GithubApiTests
     private const string API_URL = "https://api.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
-    private readonly ArchiveUploader _multipartUploader;
+    private readonly Mock<ArchiveUploader> _archiveUploader;
 
     private readonly GithubApi _githubApi;
 
@@ -47,9 +47,8 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        var logger = new OctoLogger(_ => { }, _ => { }, _ => { }, _ => { });
-        _multipartUploader = new ArchiveUploader(_githubClientMock.Object, logger);
-        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _multipartUploader);
+        _archiveUploader = TestHelpers.CreateMock<ArchiveUploader>();
+        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 
     [Fact]
@@ -3471,7 +3470,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
+    public async Task UploadArchiveToGithubStorage_Should_Upload_Singlepart_Content()
     {
         //Arange 
         const string orgDatabaseId = "1234";
@@ -3482,10 +3481,10 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedUri = "gei://archive/123456";
         var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
 
-        _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
-            .ReturnsAsync(jsonResponse);
-
+        // Mocking the Upload method on _archiveUploader to return the expected URI
+        _archiveUploader
+            .Setup(m => m.Upload(It.IsAny<Stream>(), archiveName, orgDatabaseId))
+            .ReturnsAsync(expectedUri);
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
@@ -3500,34 +3499,15 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Arrange
         const string orgDatabaseId = "123456";
         const string archiveName = "archiveName";
-
-        // Create a MemoryStream larger than 100 MB (e.g., 101 MB)
-        var largeContent = new byte[101 * 1024 * 1024];
+        var largeContent = new byte[101 * 1024 * 1024]; // Create a MemoryStream larger than 100 MB
         using var archiveContent = new MemoryStream(largeContent);
 
-        var expectedUri = "gei://archive/123456";
-        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}"; // Valid JSON content
+        var expectedUri = "gei://archive/123456"; // Expected URI to be returned by the Upload method
 
-        // Mocking the initial POST request to initiate multipart upload
-        _githubClientMock
-            .Setup(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null))
-            .ReturnsAsync((jsonResponse, new[]
-            {
-            new KeyValuePair<string, IEnumerable<string>>("Location", new[] { "/organizations/93741352/gei/archive/blobs/uploads?part_number=1&guid=123456&upload_id=i63n.35ClspPC5tSNp1rPcjm3FfKsnhLEPud627KummDTa29LSoFjIRlNjfzwJdax5sekyqJB7YPHtBZUCDCVwFUznod.p8XY_xHKu9FxFOcobs6keWC_9Xx8HFMQHxL" })
-            }));
-
-        // Mocking PATCH requests for each part upload
-        _githubClientMock
-            .Setup(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
-            .ReturnsAsync((jsonResponse, new[]
-            {
-            new KeyValuePair<string, IEnumerable<string>>("Location", new[] { "/organizations/93741352/gei/archive/blobs/uploads?part_number=1&guid=123456&upload_id=i63n.35ClspPC5tSNp1rPcjm3FfKsnhLEPud627KummDTa29LSoFjIRlNjfzwJdax5sekyqJB7YPHtBZUCDCVwFUznod.p8XY_xHKu9FxFOcobs6keWC_9Xx8HFMQHxx" })
-            }));
-
-        // Mocking the final PUT request to complete the multipart upload
-        _githubClientMock
-            .Setup(m => m.PutAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), null))
-            .ReturnsAsync(string.Empty);  // Ensure a non-null response
+        // Mocking the Upload method on _archiveUploader to return the expected URI
+        _archiveUploader
+            .Setup(m => m.Upload(It.IsAny<Stream>(), archiveName, orgDatabaseId))
+            .ReturnsAsync(expectedUri);
 
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
