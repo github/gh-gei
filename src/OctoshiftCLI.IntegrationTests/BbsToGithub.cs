@@ -65,10 +65,11 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false)]
-    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true, false)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true, false)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false, false)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", false, false, true)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload, bool useGithubStorage)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
@@ -121,7 +122,7 @@ public sealed class BbsToGithub : IDisposable
         }
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --use-github-storage {useGithubStorage} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
