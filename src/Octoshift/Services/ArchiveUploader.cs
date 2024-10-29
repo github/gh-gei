@@ -159,7 +159,7 @@ public class ArchiveUploader
             var locationValue = locationHeader.Value.FirstOrDefault();
             if (locationValue.HasValue())
             {
-                return new Uri(new Uri(BASE_URL), locationValue);
+                return new Uri($"{BASE_URL}/{locationValue}");
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");

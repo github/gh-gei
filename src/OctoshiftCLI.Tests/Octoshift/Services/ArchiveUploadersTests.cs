@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net.Http;
+using FluentAssertions;
 using Moq;
-using Moq.Protected;
+using OctoshiftCLI.Extensions;
 using Xunit;
 using OctoshiftCLI.Services;
 using OctoshiftCLI.Tests;
@@ -11,19 +13,19 @@ using OctoshiftCLI.Tests;
 
 public class ArchiveUploaderTests
 {
-    private readonly Mock<GithubClient> _clientMock;
+    private readonly Mock<GithubClient> _githubClientMock;
     private readonly Mock<OctoLogger> _logMock;
     private readonly ArchiveUploader _archiveUploader;
 
     public ArchiveUploaderTests()
     {
         _logMock = TestHelpers.CreateMock<OctoLogger>();
-        _clientMock = TestHelpers.CreateMock<GithubClient>();
-        _archiveUploader = new ArchiveUploader(_clientMock.Object, _logMock.Object);
+        _githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object);
     }
 
     [Fact]
-    public async Task Upload_ShouldThrowArgumentNullException_WhenArchiveContentIsNull()
+    public async Task Upload_Should_Throw_ArgumentNullException_When_Archive_Content_Is_Null()
     {
         // Arrange
         Stream nullStream = null;
@@ -35,56 +37,60 @@ public class ArchiveUploaderTests
     }
 
     [Fact]
-    public async Task Upload_ShouldCallPostAsync_WithSinglePartUpload_WhenStreamIsUnderLimit()
+    public async Task Upload_Should_Upload_All_Chunks_When_Stream_Exceeds_Limit()
     {
         // Arrange
-        using var smallStream = new MemoryStream(new byte[50 * 1024 * 1024]); // 50 MB, under limit
-        var archiveName = "test-archive.zip";
-        var orgDatabaseId = "12345";
-        var expectedUri = "gei://archive/singlepart";
-        var expectedResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
+        _archiveUploader._streamSizeLimit = 4;
 
-        _clientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
-            .ReturnsAsync(expectedResponse);
+        const int contentSize = 10;
+        var largeContent = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        using var archiveContent = new MemoryStream(largeContent);
+        const string orgDatabaseId = "1";
+        const string archiveName = "test-archive";
+        const string baseUrl = "https://uploads.github.com/organizations";
+        const string guid = "c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
 
-        // Act
-        var result = await _archiveUploader.Upload(smallStream, archiveName, orgDatabaseId);
+        var startUploadBody = new { content_type = "application/octet-stream", name = archiveName, size = contentSize };
 
-        // Assert
-        _clientMock.Verify(c => c.PostAsync(It.Is<string>(url => url.Contains(orgDatabaseId)), It.IsAny<StreamContent>(), null), Times.Once);
-        Assert.Equal(expectedUri, result);
-    }
+        const string initialUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads";
+        const string firstUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
+        const string secondUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
+        const string thirdUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=3&guid={guid}";
+        const string lastUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads/last";
 
-    [Fact]
-    public async Task Upload_ShouldCallUploadMultipart_WhenStreamExceedsLimit()
-    {
-        // Arrange
-        var largeStream = new MemoryStream(new byte[150 * 1024 * 1024]); // 150 MB, over the limit
-        var archiveName = "test-archive.zip";
-        var orgDatabaseId = "12345";
-        var expectedMultipartResponse = "gei://archive/multipart";
+        // Mocking the initial POST request to initiate multipart upload
+        _githubClientMock
+            .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}/{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { firstUploadUrl }) }));
 
-        // Mock the ArchiveUploader to allow indirect testing of the protected UploadMultipart method
-        var archiveUploaderMock = new Mock<ArchiveUploader>(_clientMock.Object, _logMock.Object) { CallBase = true };
+        // Mocking PATCH requests for each part upload
+        _githubClientMock // first PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{firstUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2, 3, 4 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
+        _githubClientMock // second PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 5, 6, 7, 8 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { thirdUploadUrl }) }));
+        _githubClientMock // third PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{thirdUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 9, 10 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
-        // Set up UploadMultipart to return the expected response when called
-        archiveUploaderMock
-            .Protected()
-            .Setup<Task<string>>("UploadMultipart", largeStream, archiveName, ItExpr.IsAny<string>())
-            .ReturnsAsync(expectedMultipartResponse);
+        // Mocking the final PUT request to complete the multipart upload
+        _githubClientMock
+            .Setup(m => m.PutAsync($"{baseUrl}/{lastUrl}", "", null))
+            .ReturnsAsync(string.Empty);
 
-        // Act
-        var result = await archiveUploaderMock.Object.Upload(largeStream, archiveName, orgDatabaseId);
+        // act
+        var result = await _archiveUploader.Upload(archiveContent, archiveName, orgDatabaseId);
 
-        // Assert
-        archiveUploaderMock.Protected().Verify<Task<string>>(
-            "UploadMultipart",
-            Times.Once(),
-            ItExpr.Is<Stream>(s => s == largeStream),
-            ItExpr.Is<string>(name => name == archiveName),
-            ItExpr.Is<string>(url => url.Contains(orgDatabaseId))
-        );
-        Assert.Equal(expectedMultipartResponse, result);
+        // assert
+        result.Should().Be($"gei://archive/{guid}");
+
+        _githubClientMock.Verify(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.Verify(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(3));
+        _githubClientMock.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.VerifyNoOtherCalls();
     }
 }
