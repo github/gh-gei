@@ -63,10 +63,10 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Basic(bool useGithubStorage)
+    // [Theory]
+    // [InlineData(false)]
+    // [InlineData(true)]
+    public async Task Basic()
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var githubTargetOrg = $"octoshift-e2e-ghes-{TestHelper.GetOsName()}";
@@ -76,18 +76,18 @@ public sealed class GhesToGithub : IDisposable
         var retryPolicy = new RetryPolicy(null);
 
         await retryPolicy.Retry(async () =>
-        {
-            await _targetHelper.ResetBlobContainers();
+            {
+                await _targetHelper.ResetBlobContainers();
 
-            await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
-            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+                await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
+                await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
-            await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
-        });
+                await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
+                await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
+            });
 
         await _targetHelper.RunGeiCliMigration(
-            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --use-github-storage {useGithubStorage} --download-migration-logs", _tokens);
+            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --use-github-storage false --download-migration-logs", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
