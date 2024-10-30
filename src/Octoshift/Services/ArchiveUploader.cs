@@ -101,8 +101,8 @@ public class ArchiveUploader
 
         try
         {
-            var response = await _client.PostWithFullResponseAsync(uploadUrl, body);
-            return response.ResponseHeaders.ToList();
+            var (responseContent, headers) = await _client.PostWithFullResponseAsync(uploadUrl, body);
+            return headers.ToList();
         }
         catch (Exception ex)
         {
@@ -119,11 +119,10 @@ public class ArchiveUploader
         try
         {
             // Make the PATCH request and retrieve headers
-            var patchResponse = await _client.PatchWithFullResponseAsync(nextUrl, content);
-            var headers = patchResponse.ResponseHeaders.ToList();
+            var (responseContent, headers) = await _client.PatchWithFullResponseAsync(nextUrl, content);
 
             // Retrieve the next URL from the response headers
-            return GetNextUrl(headers);
+            return GetNextUrl(headers.ToList());
         }
         catch (Exception ex)
         {
