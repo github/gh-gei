@@ -46,39 +46,39 @@ public class ArchiveUploaderTests
         using var archiveContent = new MemoryStream(largeContent);
         const string orgDatabaseId = "1";
         const string archiveName = "test-archive";
-        const string baseUrl = "https://uploads.github.com/organizations";
+        const string baseUrl = "https://uploads.github.com";
         const string guid = "c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
 
         var startUploadBody = new { content_type = "application/octet-stream", name = archiveName, size = contentSize };
 
-        const string initialUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads";
-        const string firstUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
-        const string secondUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
-        const string thirdUploadUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads?part_number=3&guid={guid}";
-        const string lastUrl = $"{orgDatabaseId}/gei/archive/blobs/uploads/last";
+        const string initialUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads";
+        const string firstUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
+        const string secondUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
+        const string thirdUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=3&guid={guid}";
+        const string lastUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads/last";
 
         // Mocking the initial POST request to initiate multipart upload
         _githubClientMock
-            .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}/{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
+            .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { firstUploadUrl }) }));
 
         // Mocking PATCH requests for each part upload
         _githubClientMock // first PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{firstUploadUrl}",
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2, 3, 4 }.ToJson()), null))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
         _githubClientMock // second PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{secondUploadUrl}",
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 5, 6, 7, 8 }.ToJson()), null))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { thirdUploadUrl }) }));
         _githubClientMock // third PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}/{thirdUploadUrl}",
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{thirdUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 9, 10 }.ToJson()), null))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
-            .Setup(m => m.PutAsync($"{baseUrl}/{lastUrl}", "", null))
+            .Setup(m => m.PutAsync($"{baseUrl}{lastUrl}", "", null))
             .ReturnsAsync(string.Empty);
 
         // act
