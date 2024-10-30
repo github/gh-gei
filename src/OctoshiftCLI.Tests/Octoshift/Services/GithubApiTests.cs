@@ -3483,7 +3483,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Mocking the Upload method on _archiveUploader to return the expected URI
         _archiveUploader
-            .Setup(m => m.Upload(It.IsAny<Stream>(), archiveName, orgDatabaseId))
+            .Setup(m => m.Upload(archiveContent, archiveName, orgDatabaseId))
             .ReturnsAsync(expectedUri);
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
