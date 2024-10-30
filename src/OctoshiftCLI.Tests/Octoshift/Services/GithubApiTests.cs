@@ -3470,7 +3470,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task UploadArchiveToGithubStorage_Should_Upload_Singlepart_Content()
+    public async Task UploadArchiveToGithubStorage_Should_Upload_The_Content()
     {
         //Arange 
         const string orgDatabaseId = "1234";
