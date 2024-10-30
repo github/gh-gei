@@ -21,6 +21,7 @@ public class GithubApiTests
     private const string API_URL = "https://api.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
+    private readonly Mock<ArchiveUploader> _archiveUploader;
 
     private readonly GithubApi _githubApi;
 
@@ -46,7 +47,8 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        _archiveUploader = TestHelpers.CreateMock<ArchiveUploader>();
+        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 
     [Fact]
@@ -424,7 +426,9 @@ public class GithubApiTests
         _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        var logger = new OctoLogger(_ => { }, _ => { }, _ => { }, _ => { });
+        var multipartUploader = new ArchiveUploader(_githubClientMock.Object, logger);
+        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
@@ -445,7 +449,9 @@ public class GithubApiTests
                          .ReturnsAsync(string.Empty);
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        var logger = TestHelpers.CreateMock<OctoLogger>().Object;
+        var multipartUploader = new ArchiveUploader(_githubClientMock.Object, logger);
+        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
         await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
@@ -3464,7 +3470,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task UploadArchiveToGithubStorage_Should_Upload_Stream_Content()
+    public async Task UploadArchiveToGithubStorage_Should_Upload_The_Content()
     {
         //Arange 
         const string orgDatabaseId = "1234";
@@ -3475,42 +3481,16 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedUri = "gei://archive/123456";
         var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
 
-        _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<StreamContent>(), null))
-            .ReturnsAsync(jsonResponse);
-
+        // Mocking the Upload method on _archiveUploader to return the expected URI
+        _archiveUploader
+            .Setup(m => m.Upload(archiveContent, archiveName, orgDatabaseId))
+            .ReturnsAsync(expectedUri);
         // Act
         var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
 
         // Assert
         expectedUri.Should().Be(actualStringResponse);
 
-    }
-
-    [Fact]
-    public async Task UploadArchiveToGithubStorage_Should_Upload_Multipart_Content()
-    {
-        // Arrange
-        const string orgDatabaseId = "123455";
-        const string archiveName = "archiveName";
-
-        // Using a MemoryStream as a valid stream implementation
-        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
-
-        var expectedUri = "gei://archive/123456";
-        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
-
-        _githubApi._streamSizeLimit = 1;
-
-        _githubClientMock
-            .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>(), null))
-            .ReturnsAsync(jsonResponse);
-
-        // Act
-        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
-
-        // Assert
-        actualStringResponse.Should().Be(expectedUri);
     }
 
     [Fact]
