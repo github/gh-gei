@@ -120,11 +120,11 @@ public sealed class BbsToGithub : IDisposable
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
             var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
-            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
+            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION} --use-github-storage {useGithubStorage}";
         }
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --use-github-storage {useGithubStorage} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
