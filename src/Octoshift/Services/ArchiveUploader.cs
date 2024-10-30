@@ -56,11 +56,6 @@ public class ArchiveUploader
 
     private async Task<string> UploadMultipart(Stream archiveContent, string archiveName, string uploadUrl)
     {
-        if (archiveContent == null)
-        {
-            throw new ArgumentNullException(nameof(archiveContent), "Archive content stream cannot be null.");
-        }
-
         var buffer = new byte[_streamSizeLimit];
 
         try
