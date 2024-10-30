@@ -27,7 +27,7 @@ public sealed class GhesToGithub : IDisposable
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
-    private readonly ArchiveUploader _archive_Uploader;
+    private readonly ArchiveUploader _archiveUploader;
 
     public GhesToGithub(ITestOutputHelper output)
     {
@@ -47,15 +47,15 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        _archive_Uploader = new ArchiveUploader(_targetGithubClient, logger);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
-        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archive_Uploader);
+        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archive_Uploader);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
 

@@ -16,7 +16,7 @@ public class ArchiveUploader
     private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
 
-    private const string BASE_URL = "https://uploads.github.com/organizations";
+    private const string BASE_URL = "https://uploads.github.com";
 
     public ArchiveUploader(GithubClient client, OctoLogger log)
     {
@@ -39,14 +39,14 @@ public class ArchiveUploader
 
         if (isMultipart)
         {
-            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"{BASE_URL}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
             response = await UploadMultipart(archiveContent, archiveName, url);
             return response;
         }
         else
         {
-            var url = $"{BASE_URL}/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var url = $"{BASE_URL}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
             response = await _client.PostAsync(url, streamContent);
             var data = JObject.Parse(response);
@@ -159,7 +159,8 @@ public class ArchiveUploader
             var locationValue = locationHeader.Value.FirstOrDefault();
             if (locationValue.HasValue())
             {
-                return new Uri($"{BASE_URL}/{locationValue}");
+                var fullUrl = $"{BASE_URL}{locationValue}";
+                return new Uri(fullUrl);
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");

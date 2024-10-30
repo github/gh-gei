@@ -28,7 +28,7 @@ public sealed class BbsToGithub : IDisposable
     private readonly HttpClient _sourceBbsHttpClient;
     private readonly BbsClient _sourceBbsClient;
     private readonly BlobServiceClient _blobServiceClient;
-    private readonly ArchiveUploader _archive_Uploader;
+    private readonly ArchiveUploader _archiveUploader;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
@@ -58,8 +58,8 @@ public sealed class BbsToGithub : IDisposable
 
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
-        _archive_Uploader = new ArchiveUploader(_targetGithubClient, _logger);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archive_Uploader);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, _logger);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 
