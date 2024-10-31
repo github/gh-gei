@@ -67,11 +67,10 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true, false)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true, false)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false, false)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", false, false, true)]
-    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload, bool useGithubStorage)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
@@ -120,7 +119,7 @@ public sealed class BbsToGithub : IDisposable
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
             var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
-            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION} --use-github-storage {useGithubStorage}";
+            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
         }
 
         await _targetHelper.RunBbsCliMigration(
