@@ -344,6 +344,57 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task Happy_Path_Uploads_To_Github_Storage()
+        {
+            // Arrange
+            var githubOrgDatabaseId = Guid.NewGuid().ToString();
+            const string gitArchiveFilePath = "./gitdata_archive";
+            const string gitArchiveUrl = "gei://archive/1";
+
+            await File.WriteAllTextAsync(gitArchiveFilePath, "I am git archive");
+            await using var gitContentStream = File.OpenRead(gitArchiveFilePath);
+
+            _mockFileSystemProvider.Setup(m => m.OpenRead(gitArchiveFilePath)).Returns(gitContentStream);
+
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.GetOrganizationDatabaseId(GITHUB_ORG).Result).Returns(githubOrgDatabaseId);
+            _mockGithubApi
+                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.IsAny<string>(), gitContentStream).Result)
+                .Returns(gitArchiveUrl);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+                ArchivePath = gitArchiveFilePath,
+                UseGithubStorage = true,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+                QueueOnly = true,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            _mockGithubApi.Verify(m => m.StartBbsMigration(
+                MIGRATION_SOURCE_ID,
+                BBS_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                GITHUB_PAT,
+                gitArchiveUrl,
+                null
+            ));
+        }
+
+        [Fact]
         public async Task Happy_Path_Deletes_Downloaded_Archive()
         {
             // Arrange

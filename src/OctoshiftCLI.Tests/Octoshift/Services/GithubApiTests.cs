@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -20,6 +21,7 @@ public class GithubApiTests
     private const string API_URL = "https://api.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
+    private readonly Mock<ArchiveUploader> _archiveUploader;
 
     private readonly GithubApi _githubApi;
 
@@ -45,7 +47,8 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
+        _archiveUploader = TestHelpers.CreateMock<ArchiveUploader>();
+        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 
     [Fact]
@@ -423,8 +426,7 @@ public class GithubApiTests
         _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
-        await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
+        await _githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null));
@@ -444,8 +446,7 @@ public class GithubApiTests
                          .ReturnsAsync(string.Empty);
 
         // Act
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy);
-        await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
+        await _githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null), Times.Exactly(2));
@@ -3462,6 +3463,37 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .WithMessage(expectedErrorMessage);
     }
 
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Upload_The_Content()
+    {
+        //Arange 
+        const string orgDatabaseId = "1234";
+        const string archiveName = "archiveName";
+
+        // Using a MemoryStream as a valid stream implementation
+        using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
+        var expectedUri = "gei://archive/123456";
+
+        // Mocking the Upload method on _archiveUploader to return the expected URI
+        _archiveUploader
+            .Setup(m => m.Upload(archiveContent, archiveName, orgDatabaseId))
+            .ReturnsAsync(expectedUri);
+        // Act
+        var actualStringResponse = await _githubApi.UploadArchiveToGithubStorage(orgDatabaseId, archiveName, archiveContent);
+
+        // Assert
+        expectedUri.Should().Be(actualStringResponse);
+    }
+
+    [Fact]
+    public async Task UploadArchiveToGithubStorage_Should_Throw_If_Archive_Content_Is_Null()
+    {
+        await FluentActions
+            .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("12345", "foo", null))
+            .Should()
+            .ThrowExactlyAsync<ArgumentNullException>();
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
@@ -3471,5 +3503,4 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Replace("\\n", "")
             .Replace("\\t", "")
             .Replace(" ", "");
-
 }

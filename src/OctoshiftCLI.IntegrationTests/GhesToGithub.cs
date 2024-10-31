@@ -27,6 +27,7 @@ public sealed class GhesToGithub : IDisposable
     private readonly BlobServiceClient _blobServiceClient;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
+    private readonly ArchiveUploader _archiveUploader;
 
     public GhesToGithub(ITestOutputHelper output)
     {
@@ -46,14 +47,15 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
-        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger));
+        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger));
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
 
@@ -61,7 +63,6 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    [Fact]
     public async Task Basic()
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
@@ -95,7 +96,6 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
     }
-
     public void Dispose()
     {
         _sourceGithubHttpClient?.Dispose();
