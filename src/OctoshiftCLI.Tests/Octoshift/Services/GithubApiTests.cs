@@ -426,10 +426,7 @@ public class GithubApiTests
         _githubClientMock.Setup(m => m.DeleteAsync(url, null));
 
         // Act
-        var logger = new OctoLogger(_ => { }, _ => { }, _ => { }, _ => { });
-        var multipartUploader = new ArchiveUploader(_githubClientMock.Object, logger);
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
-        await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
+        await _githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null));
@@ -449,10 +446,7 @@ public class GithubApiTests
                          .ReturnsAsync(string.Empty);
 
         // Act
-        var logger = TestHelpers.CreateMock<OctoLogger>().Object;
-        var multipartUploader = new ArchiveUploader(_githubClientMock.Object, logger);
-        var githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, multipartUploader);
-        await githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
+        await _githubApi.RemoveTeamMember(GITHUB_ORG, teamName, member);
 
         // Assert
         _githubClientMock.Verify(m => m.DeleteAsync(url, null), Times.Exactly(2));
@@ -3489,7 +3483,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Assert
         expectedUri.Should().Be(actualStringResponse);
-
     }
 
     [Fact]

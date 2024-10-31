@@ -119,7 +119,7 @@ public class ArchiveUploader
         try
         {
             // Make the PATCH request and retrieve headers
-            var (responseContent, headers) = await _client.PatchWithFullResponseAsync(nextUrl, content);
+            var (_, headers) = await _client.PatchWithFullResponseAsync(nextUrl, content);
 
             // Retrieve the next URL from the response headers
             return GetNextUrl(headers.ToList());
@@ -153,8 +153,7 @@ public class ArchiveUploader
             var locationValue = locationHeader.Value.FirstOrDefault();
             if (locationValue.HasValue())
             {
-                var fullUrl = $"{BASE_URL}{locationValue}";
-                return new Uri(fullUrl);
+                return new Uri(new Uri(BASE_URL), locationValue);
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");

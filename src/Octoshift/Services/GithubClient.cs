@@ -168,8 +168,6 @@ public class GithubClient
 
         if (body != null)
         {
-            _log.LogVerbose(body is MultipartFormDataContent or StreamContent ? "HTTP BODY: BLOB" : $"HTTP BODY: {body.ToJson()}");
-
             if (body is HttpContent httpContent)
             {
                 _log.LogVerbose("HTTP BODY: BLOB");
