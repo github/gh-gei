@@ -3479,7 +3479,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Using a MemoryStream as a valid stream implementation
         using var archiveContent = new MemoryStream(new byte[] { 1, 2, 3 });
         var expectedUri = "gei://archive/123456";
-        var jsonResponse = $"{{ \"uri\": \"{expectedUri}\" }}";
 
         // Mocking the Upload method on _archiveUploader to return the expected URI
         _archiveUploader
