@@ -20,6 +20,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<IVersionProvider> _mockVersionProvider = new();
         private readonly Mock<GhesVersionChecker> _mockGhesVersionCheckerService = TestHelpers.CreateMock<GhesVersionChecker>();
+        private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
         private readonly GenerateScriptCommandHandler _handler;
 
@@ -36,6 +37,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
                 _mockOctoLogger.Object,
                 _mockGithubApi.Object,
                 _mockVersionProvider.Object,
+                _mockFileSystemProvider.Object,
                 _mockGhesVersionCheckerService.Object
                 )
             {

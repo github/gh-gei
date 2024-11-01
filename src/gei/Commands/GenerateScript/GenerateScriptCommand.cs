@@ -123,6 +123,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             var ghesVersionCheckerFactory = sp.GetRequiredService<GhesVersionCheckerFactory>();
 
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
+            var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
 
             var sourceGithubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
                 sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) :
@@ -130,7 +131,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(sourceGithubApi);
 
-            return new GenerateScriptCommandHandler(log, sourceGithubApi, versionProvider, ghesVersionChecker);
+            return new GenerateScriptCommandHandler(log, sourceGithubApi, versionProvider, fileSystemProvider, ghesVersionChecker);
         }
     }
 }
