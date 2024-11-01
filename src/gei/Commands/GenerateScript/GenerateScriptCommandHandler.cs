@@ -22,16 +22,19 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly GithubApi _sourceGithubApi;
     private readonly IVersionProvider _versionProvider;
     private readonly GhesVersionChecker _ghesVersionChecker;
+    private readonly FileSystemProvider _fileSystemProvider;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         GithubApi sourceGithubApi,
         IVersionProvider versionProvider,
+        FileSystemProvider fileSystemProvider,
         GhesVersionChecker ghesVersionChecker)
     {
         _log = log;
         _sourceGithubApi = sourceGithubApi;
         _versionProvider = versionProvider;
+        _fileSystemProvider = fileSystemProvider;
         _ghesVersionChecker = ghesVersionChecker;
     }
 
@@ -40,6 +43,20 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         if (args is null)
         {
             throw new ArgumentNullException(nameof(args));
+        }
+
+        try
+        {
+            // Determine and execute the appropriate archive upload method
+            if (args.UseGithubStorage)
+            {
+                args.ArchiveUrl = await UploadArchiveToGithub(args.GithubSourceOrg, args.ArchivePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.LogError("An error occurred during github archive upload: " + ex.Message);
+            throw;
         }
 
         _log.LogInformation("Generating Script...");
@@ -225,6 +242,18 @@ if ($Failed -ne 0) {
     private string Wrap(string script, string outerCommand = "") =>
         script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
 
+    private async Task<string> UploadArchiveToGithub(string org, string archivePath)
+    {
+        await using var archiveData = _fileSystemProvider.OpenRead(archivePath);
+        var githubOrgDatabaseId = await _sourceGithubApi.GetOrganizationDatabaseId(org);
+
+        _log.LogInformation("Uploading archive to GitHub Storage...");
+        var keyName = GenerateArchiveName();
+        var authenticatedGitArchiveUri = await _sourceGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, keyName, archiveData);
+
+        return authenticatedGitArchiveUri;
+    }
+    private string GenerateArchiveName() => $"{Guid.NewGuid()}.tar";
     private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
     private const string PWSH_SHEBANG = "#!/usr/bin/env pwsh";
