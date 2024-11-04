@@ -71,23 +71,18 @@ public sealed class GhesToGithub : IDisposable
 
         var tokens = new Dictionary<string, string> { };
 
-        if (useGithubStorage)
-        {
-            tokens = new Dictionary<string, string>
+        tokens = useGithubStorage
+            ? new Dictionary<string, string>
             {
                 ["GH_SOURCE_PAT"] = _sourceGithubToken,
                 ["GH_PAT"] = _targetGithubToken,
-            };
-        }
-        else
-        {
-            tokens = new Dictionary<string, string>
+            }
+            : new Dictionary<string, string>
             {
                 ["GH_SOURCE_PAT"] = _sourceGithubToken,
                 ["GH_PAT"] = _targetGithubToken,
                 ["AZURE_STORAGE_CONNECTION_STRING"] = _azureStorageConnectionString
             };
-        }
 
         var retryPolicy = new RetryPolicy(null);
 
