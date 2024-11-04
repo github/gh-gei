@@ -25,10 +25,9 @@ public sealed class GhesToGithub : IDisposable
     private readonly GithubClient _sourceGithubClient;
     private readonly GithubApi _sourceGithubApi;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly ArchiveUploader _archiveUploader;
-    private readonly string _sourceGithubToken;
-    private readonly string _targetGithubToken;
     private readonly string _azureStorageConnectionString;
 
     public GhesToGithub(ITestOutputHelper output)
@@ -38,19 +37,24 @@ public sealed class GhesToGithub : IDisposable
 
         var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
-        _sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
-        _targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
+        var sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
+        var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
         _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpper()}");
+        _tokens = new Dictionary<string, string>
+        {
+            ["GH_SOURCE_PAT"] = sourceGithubToken,
+            ["GH_PAT"] = targetGithubToken,
+        };
 
         _versionClient = new HttpClient();
         _archiveUploader = new ArchiveUploader(_targetGithubClient, logger);
 
         _sourceGithubHttpClient = new HttpClient();
-        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), _sourceGithubToken);
+        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
         _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
-        _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), _targetGithubToken);
+        _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
@@ -69,22 +73,12 @@ public sealed class GhesToGithub : IDisposable
         const string repo1 = "repo-1";
         const string repo2 = "repo-2";
 
-        var tokens = new Dictionary<string, string> { };
-
-        tokens = useGithubStorage
-            ? new Dictionary<string, string>
-            {
-                ["GH_SOURCE_PAT"] = _sourceGithubToken,
-                ["GH_PAT"] = _targetGithubToken,
-            }
-            : new Dictionary<string, string>
-            {
-                ["GH_SOURCE_PAT"] = _sourceGithubToken,
-                ["GH_PAT"] = _targetGithubToken,
-                ["AZURE_STORAGE_CONNECTION_STRING"] = _azureStorageConnectionString
-            };
-
         var retryPolicy = new RetryPolicy(null);
+
+        if (!useGithubStorage)
+        {
+            _tokens["AZURE_STORAGE_CONNECTION_STRING"] = _azureStorageConnectionString;
+        }
 
         await retryPolicy.Retry(async () =>
         {
@@ -107,7 +101,7 @@ public sealed class GhesToGithub : IDisposable
             command += " --use-github-storage true";
         }
 
-        await _targetHelper.RunGeiCliMigration(command, tokens);
+        await _targetHelper.RunGeiCliMigration(command, _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
