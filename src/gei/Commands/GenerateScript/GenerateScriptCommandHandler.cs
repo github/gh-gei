@@ -201,15 +201,14 @@ if ($Failed -ne 0) {
 
     private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo, bool keepArchive, string repoVisibility, string targetApiUrl, bool useGithubStorage)
     {
-        var ghesRepoOptions = ghesApiUrl.HasValue() ? GetGhesRepoOptions(ghesApiUrl, awsBucketName, awsRegion, noSslVerify, keepArchive) : null;
-        var useGithubStorageOption = useGithubStorage ? " --use-github-storage true" : string.Empty;
+        var ghesRepoOptions = ghesApiUrl.HasValue() ? GetGhesRepoOptions(ghesApiUrl, awsBucketName, awsRegion, noSslVerify, keepArchive, useGithubStorage) : null;
 
-        return $"gh gei migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility}{useGithubStorageOption}";
+        return $"gh gei migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility}";
     }
 
-    private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool keepArchive)
+    private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool keepArchive, bool useGithubStorage)
     {
-        return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}";
+        return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}{useGithubStorage ? " --use-github-storage" : string.Empty}";
     }
 
     private string WaitForMigrationScript(string targetApiUrl, string repoMigrationKey = null) => $"gh gei wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
