@@ -98,7 +98,7 @@ public sealed class GhesToGithub : IDisposable
         var command = $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs";
         if (useGithubStorage)
         {
-            command += " --use-github-storage true";
+            command += " --use-github-storage";
         }
 
         await _targetHelper.RunGeiCliMigration(command, _tokens);

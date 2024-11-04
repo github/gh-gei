@@ -45,6 +45,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
             }
 
+            if (!GhesApiUrl.HasValue() && UseGithubStorage)
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
+            }
+
             if (GhesApiUrl.HasValue())
             {
                 var result = Uri.TryCreate(GhesApiUrl, UriKind.Absolute, out var uriResult)
@@ -53,11 +58,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 if (!result)
                 {
                     throw new OctoshiftCliException("--ghes-api-url is invalid. Please check URL before trying again.");
-                }
-
-                if (UseGithubStorage)
-                {
-                    throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
                 }
             }
         }
