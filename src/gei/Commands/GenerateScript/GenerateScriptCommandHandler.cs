@@ -10,6 +10,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Services;
+using Polly.NoOp;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript;
@@ -44,7 +45,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
-        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive, args.TargetApiUrl);
+        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive, args.TargetApiUrl, args.UseGithubStorage);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -52,7 +53,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
     }
 
-    private async Task<string> GenerateScript(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
+    private async Task<string> GenerateScript(string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool sequential, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl, bool useGithubStorage)
     {
         var repos = await GetGithubRepos(_sourceGithubApi, githubSourceOrg);
         if (!repos.Any())
@@ -62,8 +63,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         return sequential
-            ? await GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl)
-            : await GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl);
+            ? await GenerateSequentialGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl, useGithubStorage)
+            : await GenerateParallelGithubScript(repos, githubSourceOrg, githubTargetOrg, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, skipReleases, lockSourceRepo, downloadMigrationLogs, keepArchive, targetApiUrl, useGithubStorage);
     }
 
     private async Task<IEnumerable<(string Name, string Visibility)>> GetGithubRepos(GithubApi github, string githubOrg)
@@ -83,7 +84,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return repos;
     }
 
-    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
+    private async Task<string> GenerateSequentialGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl, bool useGithubStorage)
     {
         var content = new StringBuilder();
 
@@ -110,7 +111,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         foreach (var (name, visibility) in repos)
         {
-            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl)));
+            content.AppendLine(Exec(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, true, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl, useGithubStorage)));
 
             if (downloadMigrationLogs)
             {
@@ -121,7 +122,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         return content.ToString();
     }
 
-    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl)
+    private async Task<string> GenerateParallelGithubScript(IEnumerable<(string Name, string Visibility)> repos, string githubSourceOrg, string githubTargetOrg, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool skipReleases, bool lockSourceRepo, bool downloadMigrationLogs, bool keepArchive, string targetApiUrl, bool useGithubStorage)
     {
         var content = new StringBuilder();
 
@@ -158,7 +159,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         // Queuing migrations
         foreach (var (name, visibility) in repos)
         {
-            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl))}");
+            content.AppendLine($"$MigrationID = {ExecAndGetMigrationId(MigrateGithubRepoScript(githubSourceOrg, githubTargetOrg, name, ghesApiUrl, awsBucketName, awsRegion, noSslVerify, false, skipReleases, lockSourceRepo, keepArchive, visibility, targetApiUrl, useGithubStorage))}");
             content.AppendLine($"$RepoMigrations[\"{name}\"] = $MigrationID");
             content.AppendLine();
         }
@@ -199,11 +200,11 @@ if ($Failed -ne 0) {
         return content.ToString();
     }
 
-    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo, bool keepArchive, string repoVisibility, string targetApiUrl)
+    private string MigrateGithubRepoScript(string githubSourceOrg, string githubTargetOrg, string repo, string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool wait, bool skipReleases, bool lockSourceRepo, bool keepArchive, string repoVisibility, string targetApiUrl, bool useGithubStorage)
     {
         var ghesRepoOptions = ghesApiUrl.HasValue() ? GetGhesRepoOptions(ghesApiUrl, awsBucketName, awsRegion, noSslVerify, keepArchive) : null;
 
-        return $"gh gei migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility}";
+        return $"gh gei migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-source-org \"{githubSourceOrg}\" --source-repo \"{repo}\" --github-target-org \"{githubTargetOrg}\" --target-repo \"{repo}\"{(!string.IsNullOrEmpty(ghesRepoOptions) ? $" {ghesRepoOptions}" : string.Empty)}{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")}{(skipReleases ? " --skip-releases" : string.Empty)}{(lockSourceRepo ? " --lock-source-repo" : string.Empty)} --target-repo-visibility {repoVisibility} --use-github-storage ${useGithubStorage}";
     }
 
     private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool keepArchive)

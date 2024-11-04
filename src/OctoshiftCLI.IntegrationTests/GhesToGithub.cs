@@ -63,7 +63,10 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    public async Task Basic()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Basic(bool useGithubStorage)
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var githubTargetOrg = $"octoshift-e2e-ghes-{TestHelper.GetOsName()}";
@@ -84,7 +87,7 @@ public sealed class GhesToGithub : IDisposable
         });
 
         await _targetHelper.RunGeiCliMigration(
-            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs", _tokens);
+            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --use-github-storage {useGithubStorage} --download-migration-logs", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
