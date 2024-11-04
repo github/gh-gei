@@ -10,7 +10,6 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Services;
-using Polly.NoOp;
 
 [assembly: InternalsVisibleTo("OctoshiftCLI.Tests")]
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript;

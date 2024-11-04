@@ -86,8 +86,14 @@ public sealed class GhesToGithub : IDisposable
             await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
         });
 
-        await _targetHelper.RunGeiCliMigration(
-            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --use-github-storage {useGithubStorage} --download-migration-logs", _tokens);
+        // Build the command with conditional option
+        var command = $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs";
+        if (useGithubStorage)
+        {
+            command += " --use-github-storage true";
+        }
+
+        await _targetHelper.RunGeiCliMigration(command, _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
@@ -99,6 +105,7 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
     }
+
     public void Dispose()
     {
         _sourceGithubHttpClient?.Dispose();
