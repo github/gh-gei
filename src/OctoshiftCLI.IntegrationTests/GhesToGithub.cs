@@ -63,7 +63,10 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    public async Task Basic()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Basic(bool useGithubStorage)
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";
         var githubTargetOrg = $"octoshift-e2e-ghes-{TestHelper.GetOsName()}";
@@ -83,8 +86,14 @@ public sealed class GhesToGithub : IDisposable
             await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
         });
 
-        await _targetHelper.RunGeiCliMigration(
-            $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs", _tokens);
+        // Build the command with conditional option
+        var command = $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs";
+        if (useGithubStorage)
+        {
+            command += " --use-github-storage true";
+        }
+
+        await _targetHelper.RunGeiCliMigration(command, _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
@@ -96,6 +105,7 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo1);
         _targetHelper.AssertMigrationLogFileExists(githubTargetOrg, repo2);
     }
+
     public void Dispose()
     {
         _sourceGithubHttpClient?.Dispose();
