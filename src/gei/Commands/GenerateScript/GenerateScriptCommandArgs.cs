@@ -27,9 +27,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
         public override void Validate(OctoLogger log)
         {
-            if (AwsBucketName.HasValue() && GhesApiUrl.IsNullOrWhiteSpace())
+            if (AwsBucketName.HasValue())
             {
-                throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+                if (GhesApiUrl.IsNullOrWhiteSpace())
+                {
+                    throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+                }
+
+                if (UseGithubStorage)
+                {
+                    throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+                }
             }
 
             if (NoSslVerify && GhesApiUrl.IsNullOrWhiteSpace())
@@ -45,6 +53,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 if (!result)
                 {
                     throw new OctoshiftCliException("--ghes-api-url is invalid. Please check URL before trying again.");
+                }
+
+                if (UseGithubStorage)
+                {
+                    throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
                 }
             }
         }

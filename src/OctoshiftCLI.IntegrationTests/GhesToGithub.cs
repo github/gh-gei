@@ -25,9 +25,11 @@ public sealed class GhesToGithub : IDisposable
     private readonly GithubClient _sourceGithubClient;
     private readonly GithubApi _sourceGithubApi;
     private readonly BlobServiceClient _blobServiceClient;
-    private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly ArchiveUploader _archiveUploader;
+    private readonly string _sourceGithubToken;
+    private readonly string _targetGithubToken;
+    private readonly string _azureStorageConnectionString;
 
     public GhesToGithub(ITestOutputHelper output)
     {
@@ -36,15 +38,9 @@ public sealed class GhesToGithub : IDisposable
 
         var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
-        var sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
-        var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        var azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpper()}");
-        _tokens = new Dictionary<string, string>
-        {
-            ["GH_SOURCE_PAT"] = sourceGithubToken,
-            ["GH_PAT"] = targetGithubToken,
-            ["AZURE_STORAGE_CONNECTION_STRING"] = azureStorageConnectionString
-        };
+        _sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
+        _targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpper()}");
 
         _versionClient = new HttpClient();
         _archiveUploader = new ArchiveUploader(_targetGithubClient, logger);
@@ -57,7 +53,7 @@ public sealed class GhesToGithub : IDisposable
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
 
-        _blobServiceClient = new BlobServiceClient(azureStorageConnectionString);
+        _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 
         _sourceHelper = new TestHelper(_output, _sourceGithubApi, _sourceGithubClient) { GithubApiBaseUrl = GHES_API_URL };
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
@@ -73,11 +69,34 @@ public sealed class GhesToGithub : IDisposable
         const string repo1 = "repo-1";
         const string repo2 = "repo-2";
 
+        var tokens = new Dictionary<string, string> { };
+
+        if (useGithubStorage)
+        {
+            tokens = new Dictionary<string, string>
+            {
+                ["GH_SOURCE_PAT"] = _sourceGithubToken,
+                ["GH_PAT"] = _targetGithubToken,
+            };
+        }
+        else
+        {
+            tokens = new Dictionary<string, string>
+            {
+                ["GH_SOURCE_PAT"] = _sourceGithubToken,
+                ["GH_PAT"] = _targetGithubToken,
+                ["AZURE_STORAGE_CONNECTION_STRING"] = _azureStorageConnectionString
+            };
+        }
+
         var retryPolicy = new RetryPolicy(null);
 
         await retryPolicy.Retry(async () =>
         {
-            await _targetHelper.ResetBlobContainers();
+            if (!useGithubStorage)
+            {
+                await _targetHelper.ResetBlobContainers();
+            }
 
             await _sourceHelper.ResetGithubTestEnvironment(githubSourceOrg);
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
@@ -93,7 +112,7 @@ public sealed class GhesToGithub : IDisposable
             command += " --use-github-storage true";
         }
 
-        await _targetHelper.RunGeiCliMigration(command, _tokens);
+        await _targetHelper.RunGeiCliMigration(command, tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
