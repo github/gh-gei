@@ -45,7 +45,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
             }
 
-            if (!GhesApiUrl.HasValue() && UseGithubStorage)
+            if (GhesApiUrl.IsNullOrWhiteSpace() && UseGithubStorage)
             {
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
             }
