@@ -1106,11 +1106,13 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
         public async Task Sequential_Github_Single_Repo_With_UseGithubStorage()
         {
             // Arrange
+            var GHES_API_URL = "https://foo.com/api/v3";
+
             _mockGithubApi
                 .Setup(m => m.GetRepos(SOURCE_ORG))
                 .ReturnsAsync(new[] { (REPO, "private") });
 
-            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --target-repo-visibility private --use-github-storage true }}";
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{GHES_API_URL}\" --use-github-storage --target-repo-visibility private }}";
 
             // Act
             var args = new GenerateScriptCommandArgs
@@ -1119,7 +1121,8 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
                 Sequential = true,
-                UseGithubStorage = true
+                UseGithubStorage = true,
+                GhesApiUrl = GHES_API_URL,
             };
             await _handler.Handle(args);
 
@@ -1138,7 +1141,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
                 .ReturnsAsync(new[] { (REPO, "private") });
 
             var expected = new StringBuilder();
-            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --queue-only --target-repo-visibility private --use-github-storage true }}");
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"https://foo.com/api/v3\" --use-github-storage --queue-only --target-repo-visibility private }}");
             expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
             expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
 
@@ -1148,7 +1151,8 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 Output = new FileInfo("unit-test-output"),
-                UseGithubStorage = true
+                UseGithubStorage = true,
+                GhesApiUrl = "https://foo.com/api/v3",
             };
             await _handler.Handle(args);
 
@@ -1157,6 +1161,7 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
             // Assert
             _script.Should().Be(expected.ToString());
         }
+
 
 
         [Fact]
