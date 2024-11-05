@@ -701,6 +701,45 @@ function Exec {
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
     }
 
+    [Fact]
+    public async Task BBS_Single_Repo_With_UseGithubStorage()
+    {
+        // Arrange
+        var TARGET_API_URL = "https://foo.com/api/v3";
+        const string BBS_SERVER_URL = "http://bbs-server-url";
+        const string BBS_PROJECT_KEY = "BBS-PROJECT";
+        const string BBS_REPO_SLUG = "repo-slug";
+        const string GITHUB_ORG = "GITHUB-ORG";
+
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
+        {
+            (Id: 1, Key: BBS_PROJECT_KEY, Name: "BBS Project Name"),
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 1, Slug: BBS_REPO_SLUG, Name: "RepoName"),
+         });
+
+        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-project \"{BBS_PROJECT_KEY}\" --bbs-repo \"{BBS_REPO_SLUG}\" --github-org \"{GITHUB_ORG}\" --target-api-url \"{TARGET_API_URL}\" --github-repo \"{BBS_PROJECT_KEY}-{BBS_REPO_SLUG}\" --use-github-storage --target-repo-visibility private }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            UseGithubStorage = true,
+            TargetApiUrl = TARGET_API_URL,
+            BbsProject = BBS_PROJECT_KEY,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
+    }
+
+
+
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
     {
         var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
