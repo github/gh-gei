@@ -58,6 +58,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false, true);
     }
 
     [Fact]
@@ -125,4 +126,8 @@ public class GenerateScriptCommandTests
 
         _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, true));
     }
+
+    [Fact]
+
+
 }
