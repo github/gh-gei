@@ -36,7 +36,7 @@ public class GenerateScriptCommandArgs : CommandArgs
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
         }
 
-        if (!string.IsNullOrWhiteSpace(AwsBucketName) && UseGithubStorage)
+        if (AwsBucketName.HasValue() && UseGithubStorage)
         {
             throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
         }
