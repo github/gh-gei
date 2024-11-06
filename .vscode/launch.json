@@ -48,7 +48,25 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/src/bbs2gh/bin/Debug/net6.0/bbs2gh.dll",
-            "args": [],
+            "env": {
+                "BBS_PASSWORD": "8ecTR38ng6doP/g",
+                "BBS_USERNAME": "bbsadmin"
+            },
+            "args": [
+                "generate-script",
+                "--bbs-project",
+                "IM",
+                "--ssh-user",
+                "bbs",
+                "--ssh-private-key",
+                "/Users/begonaguereca/.ssh/id_rsa_bbs_octoshift",
+                "--use-github-storage",
+                "--bbs-server-url",
+                "https://test-bbs-o.githubapp.com",
+                "--github-org",
+                "octoshift-staging",
+                "--verbose"
+            ],
             "cwd": "${workspaceFolder}/src/bbs2gh",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
