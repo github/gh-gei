@@ -125,7 +125,7 @@ public sealed class BbsToGithub : IDisposable
         }
         else if (uploadOption == ArchiveUploadOption.GithubStorage)
         {
-            archiveUploadOptions = " --use-github-storage true";
+            archiveUploadOptions = " --use-github-storage";
         }
 
         await _targetHelper.RunBbsCliMigration(
