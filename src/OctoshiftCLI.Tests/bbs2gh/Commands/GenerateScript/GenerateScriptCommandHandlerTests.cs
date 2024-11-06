@@ -735,7 +735,13 @@ function Exec {
         await _handler.Handle(args);
 
         // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script =>
+            script.Contains("--bbs-server-url \"http://bbs-server-url\"") &&
+            script.Contains("--bbs-project \"BBS-PROJECT\"") &&
+            script.Contains("--github-org \"GITHUB-ORG\"") &&
+            script.Contains("--use-github-storage")
+)));
+
     }
 
 
