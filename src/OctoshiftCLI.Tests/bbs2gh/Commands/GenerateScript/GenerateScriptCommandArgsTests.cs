@@ -34,4 +34,19 @@ public class GenerateScriptCommandArgsTests
 
         _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(x => x.ToLower().Contains("--ssh-port is set to 7999"))));
     }
+
+    [Fact]
+    public void It_Throws_If_Both_AwsBucketName_And_UseGithubStorage_Are_Provided()
+    {
+        // Arrange
+        _args.AwsBucketName = "my-bucket";
+        _args.UseGithubStorage = true;
+
+        // Act & Assert
+        _args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+            .Should()
+            .ThrowExactly<OctoshiftCliException>()
+            .WithMessage("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+    }
+
 }
