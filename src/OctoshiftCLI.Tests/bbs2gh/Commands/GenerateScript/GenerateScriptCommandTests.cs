@@ -126,8 +126,4 @@ public class GenerateScriptCommandTests
 
         _mockBbsApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, true));
     }
-
-    [Fact]
-
-
 }
