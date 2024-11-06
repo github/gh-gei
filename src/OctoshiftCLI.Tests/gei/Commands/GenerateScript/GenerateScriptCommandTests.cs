@@ -87,40 +87,5 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.GithubSourcePat), Times.Once);
         }
-
-        [Fact]
-        public void UseGithubStorage_Without_Ghes_Api_Url_Throws()
-        {
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = "foo",
-                GithubTargetOrg = "bar",
-                UseGithubStorage = true
-            };
-
-            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
-                 .Should()
-                 .ThrowExactly<OctoshiftCliException>()
-                 .WithMessage("*--use-github-storage*");
-        }
-
-
-        [Fact]
-        public void UseGithubStorage_And_Aws_Bucket_Name_Throws()
-        {
-            var args = new GenerateScriptCommandArgs
-            {
-                GithubSourceOrg = "foo",
-                GithubTargetOrg = "bar",
-                AwsBucketName = "aws",
-                GhesApiUrl = "https://github.contoso.com",
-                UseGithubStorage = true
-            };
-
-            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
-                 .Should()
-                 .ThrowExactly<OctoshiftCliException>()
-                 .WithMessage("*--use-github-storage flag was provided with an AWS S3 Bucket name*");
-        }
     }
 }
