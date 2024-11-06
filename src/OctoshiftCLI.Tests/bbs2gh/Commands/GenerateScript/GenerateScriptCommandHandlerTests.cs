@@ -706,10 +706,8 @@ function Exec {
     {
         // Arrange
         var TARGET_API_URL = "https://foo.com/api/v3";
-        const string BBS_SERVER_URL = "http://bbs-server-url";
         const string BBS_PROJECT_KEY = "BBS-PROJECT";
         const string BBS_REPO_SLUG = "repo-slug";
-        const string GITHUB_ORG = "GITHUB-ORG";
 
         _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
         {
@@ -720,7 +718,6 @@ function Exec {
             (Id: 1, Slug: BBS_REPO_SLUG, Name: "RepoName"),
          });
 
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-project \"{BBS_PROJECT_KEY}\" --bbs-repo \"{BBS_REPO_SLUG}\" --github-org \"{GITHUB_ORG}\" --target-api-url \"{TARGET_API_URL}\" --github-repo \"{BBS_PROJECT_KEY}-{BBS_REPO_SLUG}\" --use-github-storage --target-repo-visibility private }}";
 
         // Act
         var args = new GenerateScriptCommandArgs
