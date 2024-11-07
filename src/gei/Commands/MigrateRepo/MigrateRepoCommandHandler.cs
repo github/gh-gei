@@ -64,7 +64,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var blobCredentialsRequired = false;
+
+        if (args.UseGithubStorage)
+        {
+            blobCredentialsRequired = true;
+        }
+        else
+        {
+            blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        };
 
         if (args.GhesApiUrl.HasValue())
         {
@@ -396,7 +405,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (args.UseGithubStorage)
             {
-                _log.LogWarning("Ignoring --use-github-storage flag because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                _log.LogWarning("Provding the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
             }
 
             if (args.KeepArchive)

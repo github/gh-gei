@@ -94,14 +94,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine(VALIDATE_GH_PAT);
 
-        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
+        if (!useGithubStorage && (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl)))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
                 content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
                 content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
             }
-            else if (!useGithubStorage)
+            else
             {
                 content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
             }
@@ -132,14 +132,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
+        if (!useGithubStorage && (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl)))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
                 content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
                 content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
             }
-            else if (!useGithubStorage)
+            else
             {
                 content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
             }
