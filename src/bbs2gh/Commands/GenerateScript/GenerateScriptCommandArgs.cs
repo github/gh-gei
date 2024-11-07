@@ -41,6 +41,11 @@ public class GenerateScriptCommandArgs : CommandArgs
             throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
         }
 
+        if (AwsRegion.HasValue() && UseGithubStorage)
+        {
+            throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 region. Archive cannot be uploaded to both locations.");
+        }
+
         if (SshPort == 7999)
         {
             log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
