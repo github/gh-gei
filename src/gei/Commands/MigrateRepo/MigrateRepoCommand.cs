@@ -21,7 +21,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
             AddOption(TargetApiUrl);
-
             AddOption(GhesApiUrl);
             AddOption(AzureStorageConnectionString);
             AddOption(AwsBucketName);
@@ -30,13 +29,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(AwsSessionToken);
             AddOption(AwsRegion);
             AddOption(NoSslVerify);
-
             AddOption(GitArchiveUrl);
             AddOption(MetadataArchiveUrl);
-
+            AddOption(GitArchiveFilePath);
+            AddOption(MetadataArchiveFilePath);
             AddOption(SkipReleases);
             AddOption(LockSourceRepo);
-
             AddOption(QueueOnly);
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
@@ -119,6 +117,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             IsHidden = true,
             Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
+        };
+        public Option<string> GitArchiveFilePath { get; } = new("--git-archive-file-path")
+        {
+            IsHidden = true,
+            Description = "Used to migrate an archive that is on disk, must be used with --metadata-archive-file-path"
+        };
+        public Option<string> MetadataArchiveFilePath { get; } = new("--metadata-archive-file-path")
+        {
+            IsHidden = true,
+            Description = "Used to migrate an archive that is on disk, must be used with --git-archive-file-path"
         };
         public Option<bool> SkipReleases { get; } = new("--skip-releases")
         {

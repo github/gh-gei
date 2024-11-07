@@ -25,6 +25,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
+        public string GitArchiveFilePath { get; set; }
+        public string MetadataArchiveFilePath { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
         public bool QueueOnly { get; set; }
@@ -41,9 +43,24 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
 
+            if (GitArchiveUrl.HasValue() && GitArchiveFilePath.HasValue())
+            {
+                throw new OctoshiftCliException("The options --git-archive-url and --git-archive-file-path may not be used together");
+            }
+
+            if (MetadataArchiveUrl.HasValue() && MetadataArchiveFilePath.HasValue())
+            {
+                throw new OctoshiftCliException("The options --metadata-archive-url and --metadata-archive-file-path may not be used together");
+            }
+
             if (string.IsNullOrWhiteSpace(GitArchiveUrl) != string.IsNullOrWhiteSpace(MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
+            }
+
+            if (string.IsNullOrWhiteSpace(GitArchiveFilePath) != string.IsNullOrWhiteSpace(MetadataArchiveFilePath))
+            {
+                throw new OctoshiftCliException("When using archive files, you must provide both --git-archive-file-path --metadata-archive-file-path");
             }
 
             if (GhesApiUrl.IsNullOrWhiteSpace())
