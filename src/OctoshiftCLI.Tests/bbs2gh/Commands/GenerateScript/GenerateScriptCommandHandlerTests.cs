@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Commands.GenerateScript;
 using OctoshiftCLI.Contracts;
@@ -259,6 +258,51 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
         // Assert
         _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+    }
+
+    [Fact]
+    public async Task Validates_Env_Vars_AZURE_STORAGE_CONNECTION_STRING_And_AWS_Not_Validated_When_UseGithubStorage()
+    {
+        // Arrange
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+
+        // Act
+        var args = new GenerateScriptCommandArgs()
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            SshUser = SSH_USER,
+            SshPrivateKey = SSH_PRIVATE_KEY,
+            Output = new FileInfo(OUTPUT),
+            UseGithubStorage = true
+        };
+        await _handler.Handle(args);
+
+        var expectedAws = @"
+if (-not $env:AWS_ACCESS_KEY_ID) {
+    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
+}
+if (-not $env:AWS_SECRET_ACCESS_KEY) {
+    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
+    exit 1
+} else {
+    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
+}";
+
+        var expectedAzure = @"
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
+    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
+    exit 1
+} else {
+    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
+}";
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expectedAws, 0, 0)))));
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expectedAzure, 0, 0)))));
     }
 
     [Fact]

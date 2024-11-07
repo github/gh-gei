@@ -71,7 +71,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
             content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
         }
-        else
+        else if (!args.UseGithubStorage)
         {
             content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
         }
