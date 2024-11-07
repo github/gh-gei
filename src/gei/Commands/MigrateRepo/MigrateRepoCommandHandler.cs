@@ -64,16 +64,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = false;
-
-        if (args.UseGithubStorage)
-        {
-            blobCredentialsRequired = true;
-        }
-        else
-        {
-            blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
-        };
+        var blobCredentialsRequired = args.UseGithubStorage || (await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl));
 
         if (args.GhesApiUrl.HasValue())
         {
