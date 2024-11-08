@@ -31,8 +31,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(command.Options, "git-archive-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-url", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "git-archive-file-path", false, true);
-            TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-file-path", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "git-archive-path", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-path", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "queue-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
