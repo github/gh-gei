@@ -409,7 +409,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        if (!shouldUseAzureStorage && !shouldUseAwsS3 && !args.UseGithubStorage)
+        if (!shouldUseAzureStorage && !shouldUseAwsS3 && !args.UseGithubStorage && !cloudCredentialsRequired)
         {
             throw new OctoshiftCliException(
                 "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
