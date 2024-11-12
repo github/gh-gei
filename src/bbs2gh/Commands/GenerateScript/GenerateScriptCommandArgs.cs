@@ -27,12 +27,23 @@ public class GenerateScriptCommandArgs : CommandArgs
     public bool KeepArchive { get; set; }
     public bool NoSslVerify { get; set; }
     public string TargetApiUrl { get; set; }
+    public bool UseGithubStorage { get; set; }
 
     public override void Validate(OctoLogger log)
     {
         if (NoSslVerify && BbsServerUrl.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
+        }
+
+        if (AwsBucketName.HasValue() && UseGithubStorage)
+        {
+            throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+        }
+
+        if (AwsRegion.HasValue() && UseGithubStorage)
+        {
+            throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 region. Archive cannot be uploaded to both locations.");
         }
 
         if (SshPort == 7999)
