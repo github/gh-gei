@@ -64,7 +64,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = args.UseGithubStorage || (await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl));
+        var are_blob_credentials_required_based_on_ghes_version = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var blobCredentialsRequired = !args.UseGithubStorage || are_blob_credentials_required_based_on_ghes_version;
+        var blobStorageUsed = args.UseGithubStorage || are_blob_credentials_required_based_on_ghes_version;
 
         if (args.GhesApiUrl.HasValue())
         {
@@ -111,12 +113,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo,
-              blobCredentialsRequired,
+              blobStorageUsed,
               args.KeepArchive,
               args.UseGithubStorage
             );
 
-            if (blobCredentialsRequired)
+            if (blobStorageUsed)
             {
                 _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
