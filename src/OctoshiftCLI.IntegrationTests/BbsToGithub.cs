@@ -14,7 +14,6 @@ namespace OctoshiftCLI.IntegrationTests;
 [Collection("Integration Tests")]
 public sealed class BbsToGithub : IDisposable
 {
-
     private const string SSH_KEY_FILE = "ssh_key.pem";
     private const string AWS_REGION = "us-east-1";
 
@@ -32,6 +31,8 @@ public sealed class BbsToGithub : IDisposable
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
+
+    public enum ArchiveUploadOption { AzureStorage, AwsS3, GithubStorage }
 
     public BbsToGithub(ITestOutputHelper output)
     {
@@ -67,10 +68,11 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false)]
-    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
@@ -110,16 +112,20 @@ public sealed class BbsToGithub : IDisposable
         }
 
         var archiveUploadOptions = "";
-        if (useAzureForArchiveUpload)
+        if (uploadOption == ArchiveUploadOption.AzureStorage)
         {
             _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
         }
-        else
+        else if (uploadOption == ArchiveUploadOption.AwsS3)
         {
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
             var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
             archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
+        }
+        else if (uploadOption == ArchiveUploadOption.GithubStorage)
+        {
+            archiveUploadOptions = " --use-github-storage";
         }
 
         await _targetHelper.RunBbsCliMigration(
