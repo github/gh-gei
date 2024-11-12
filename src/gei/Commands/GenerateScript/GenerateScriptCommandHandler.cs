@@ -94,7 +94,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         content.AppendLine(VALIDATE_GH_PAT);
 
-        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
+        if (!useGithubStorage && await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
@@ -132,7 +132,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_AND_GET_MIGRATION_ID_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
+        if (!useGithubStorage && await _ghesVersionChecker.AreBlobCredentialsRequired(ghesApiUrl))
         {
             if (awsBucketName.HasValue() || awsRegion.HasValue())
             {
