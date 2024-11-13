@@ -116,7 +116,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
               args.UseGithubStorage
             );
 
-            if (args.UseGithubStorage && blobCredentialsRequired)
+            if (args.UseGithubStorage || blobCredentialsRequired)
             {
                 _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
