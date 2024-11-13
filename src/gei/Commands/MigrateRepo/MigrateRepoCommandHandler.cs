@@ -396,7 +396,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
             if (args.UseGithubStorage)
             {
-                _log.LogWarning("Provding the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
+                _log.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
             }
 
             if (args.KeepArchive)
