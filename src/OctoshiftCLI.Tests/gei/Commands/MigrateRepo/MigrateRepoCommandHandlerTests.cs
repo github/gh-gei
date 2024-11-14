@@ -325,8 +325,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
         }
 
-        [Fact]
-        public async Task Happy_Path_UseGithubStorage()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Happy_Path_UseGithubStorage(bool useGhesBlobCredentials)
         {
             var githubOrgId = Guid.NewGuid().ToString();
             var githubOrgDatabaseId = Guid.NewGuid().ToString();
@@ -365,7 +367,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .Setup(m => m.OpenRead(metadataArchiveDownloadFilePath))
                 .Returns(metaContentStream);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(useGhesBlobCredentials);
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
@@ -1632,106 +1634,5 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 targetRepoVisibility,
                 It.IsAny<bool>()));
         }
-        [Fact]
-        public async Task GenerateAndUploadArchive_UsesGithubStorage_When_UseGithubStorageIsTrue_And_BlobCredentialsRequiredIsFalse()
-        {
-            var githubOrgId = Guid.NewGuid().ToString();
-            var githubOrgDatabaseId = Guid.NewGuid().ToString();
-            var migrationSourceId = Guid.NewGuid().ToString();
-            var sourceGithubPat = Guid.NewGuid().ToString();
-            var targetGithubPat = Guid.NewGuid().ToString();
-            var githubRepoUrl = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
-            var migrationId = "valid-migration-id";  // Ensure a valid migration ID is returned
-            var gitArchiveId = 1;
-            var metadataArchiveId = 2;
-            var gitArchiveUrl = $"https://example.com/{gitArchiveId}";
-            var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
-            var uploadedGitArchiveUrl = "gei://archive/1";
-            var uploadedMetadataArchiveUrl = "gei://archive/2";
-            var gitArchiveFilePath = "./gitdata_archive";
-            var metadataArchiveFilePath = "./metadata_archive";
-            var gitArchiveDownloadFilePath = "git_archive_downaloded.tmp";
-            var metadataArchiveDownloadFilePath = "metadata_archive_downloaded.tmp";
-
-            File.WriteAllText(gitArchiveFilePath, "I am git archive");
-            File.WriteAllText(metadataArchiveFilePath, "I am metadata archive");
-
-            using var gitContentStream = File.OpenRead(gitArchiveFilePath);
-            using var metaContentStream = File.OpenRead(metadataArchiveFilePath);
-
-            _mockFileSystemProvider
-                .SetupSequence(m => m.GetTempFileName())
-                .Returns(gitArchiveDownloadFilePath)
-                .Returns(metadataArchiveDownloadFilePath);
-
-            _mockFileSystemProvider
-                .Setup(m => m.OpenRead(gitArchiveDownloadFilePath))
-                .Returns(gitContentStream);
-
-            _mockFileSystemProvider
-                .Setup(m => m.OpenRead(metadataArchiveDownloadFilePath))
-                .Returns(metaContentStream);
-
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(false);
-
-            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
-
-            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
-            _mockTargetGithubApi.Setup(x => x.GetOrganizationDatabaseId(TARGET_ORG).Result).Returns(githubOrgDatabaseId);
-            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
-
-            _mockTargetGithubApi.Setup(x => x.StartMigration(
-                migrationSourceId,
-                githubRepoUrl,
-                githubOrgId,
-                TARGET_REPO,
-                sourceGithubPat,
-                targetGithubPat,
-                uploadedGitArchiveUrl,
-                uploadedMetadataArchiveUrl,
-                false,
-                null,
-                false).Result)
-                .Returns(migrationId);
-
-            _mockTargetGithubApi.Setup(x => x.GetMigration(migrationId).Result)
-                .Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
-
-            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(gitArchiveId);
-            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
-            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, metadataArchiveId).Result).Returns(ArchiveMigrationStatus.Exported);
-            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, gitArchiveId).Result).Returns(gitArchiveUrl);
-            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
-
-            _mockTargetGithubApi
-                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("git_archive.tar.gz")), gitContentStream).Result)
-                .Returns(uploadedGitArchiveUrl);
-
-            _mockTargetGithubApi
-                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("metadata_archive.tar.gz")), metaContentStream).Result)
-                .Returns(uploadedMetadataArchiveUrl);
-
-
-            var args = new MigrateRepoCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GithubSourcePat = sourceGithubPat,
-                GithubTargetPat = targetGithubPat,
-                TargetApiUrl = TARGET_API_URL,
-                GhesApiUrl = GHES_API_URL,
-                UseGithubStorage = true,
-            };
-
-            await _handler.Handle(args);
-
-            _mockTargetGithubApi.Verify(x => x.GetMigration(migrationId));
-            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(gitArchiveDownloadFilePath), Times.Once);
-            _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveDownloadFilePath), Times.Once);
-        }
-
     }
 }
