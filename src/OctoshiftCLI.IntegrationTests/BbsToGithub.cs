@@ -141,6 +141,31 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
+    [Fact]
+    public async Task MigrateRepo_MultipartUpload()
+    {
+        var archiveFilePath = "./Fixtures/bbs_arc";
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
+        var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
+        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
+        var targetRepo = $"{bbsProjectKey}-e2e-{Guid.NewGuid()}";
+
+        var retryPolicy = new RetryPolicy(null);
+        await retryPolicy.Retry(async () =>
+       {
+           await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+       });
+
+        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --archive-path \"{archiveFilePath}\" --use-github-storage";
+
+        await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
+
+        _targetHelper.AssertNoErrorInLogs(_startTime);
+
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
+    }
+
     private string GetSshKeyName(string bbsServer)
     {
         var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
