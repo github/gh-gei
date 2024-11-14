@@ -7,7 +7,7 @@ The [GitHub Enterprise Importer](https://docs.github.com/en/migrations/using-git
 
 > GEI is generally available for repository migrations originating from Azure DevOps or GitHub that target GitHub Enterprise Cloud. It is in public beta for repository migrations from BitBucket Server and Data Center to GitHub Enterprise Cloud.
 
-## Using the GEI CLI
+
 There are 3 separate CLIs that we ship as extensions for the official [GitHub CLI](https://github.com/cli/cli#installation):
 - `gh gei` - Run migrations between GitHub products
 - `gh ado2gh` - Run migrations from Azure DevOps to GitHub
