@@ -7,8 +7,9 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
-using OctoshiftCLI.Tests;
 using Xunit;
+
+namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public class ArchiveUploaderTests
 {
