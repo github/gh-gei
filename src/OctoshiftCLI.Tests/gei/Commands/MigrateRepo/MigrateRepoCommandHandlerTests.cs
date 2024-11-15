@@ -67,7 +67,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             // Arrange
             _mockTargetGithubApi.Setup(x => x.DoesRepoExist(TARGET_ORG, TARGET_REPO)).ReturnsAsync(true);
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -306,7 +306,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -325,8 +325,10 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(metadataArchiveFilePath), Times.Once);
         }
 
-        [Fact]
-        public async Task Happy_Path_UseGithubStorage()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Happy_Path_UseGithubStorage(bool useGhesBlobCredentials)
         {
             var githubOrgId = Guid.NewGuid().ToString();
             var githubOrgDatabaseId = Guid.NewGuid().ToString();
@@ -365,7 +367,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .Setup(m => m.OpenRead(metadataArchiveDownloadFilePath))
                 .Returns(metaContentStream);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, true)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(useGhesBlobCredentials);
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
@@ -482,7 +484,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -635,7 +637,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.AzureStorageConnectionString(It.IsAny<bool>())).Returns(azureConnectionStringEnv);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -699,7 +701,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -762,7 +764,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(false);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(false);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -789,7 +791,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(metadataArchiveId);
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, gitArchiveId).Result).Returns(ArchiveMigrationStatus.Failed);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await FluentActions
                 .Invoking(async () => await _handler.Handle(new MigrateRepoCommandArgs
@@ -881,7 +883,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
@@ -1065,7 +1067,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
 
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()).Result).Returns(new Uri("https://example.com/resource"));
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -1329,7 +1331,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             _mockAwsApi.Setup(m => m.UploadToBucket(awsBucketName, It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(archiveUrl);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var handler = new MigrateRepoCommandHandler(
                 _mockOctoLogger.Object,
@@ -1368,7 +1370,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_With_Both_Azure_Storage_Connection_String_And_Aws_Bucket_Name_Throws()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1387,7 +1389,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Id_Throws()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1407,7 +1409,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Key_Throws()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1427,7 +1429,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region_Throws()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1449,7 +1451,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1469,7 +1471,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Secret_Key_Provided()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1489,7 +1491,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Session_Token_Provided()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1509,7 +1511,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Ghes_When_Aws_Bucket_Name_Not_Provided_But_Aws_Region_Provided()
         {
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
             {
@@ -1581,7 +1583,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(sourceGithubPat);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(targetGithubPat);
 
-            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL, false)).ReturnsAsync(true);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
             var args = new MigrateRepoCommandArgs
             {
