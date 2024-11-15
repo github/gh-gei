@@ -144,7 +144,7 @@ public sealed class BbsToGithub : IDisposable
     [Fact]
     public async Task MigrateRepo_MultipartUpload()
     {
-        var archiveFilePath = "./Fixtures/bbs_arc";
+        var archiveFilePath = "./Fixtures/bbs_archive_100.tar";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
