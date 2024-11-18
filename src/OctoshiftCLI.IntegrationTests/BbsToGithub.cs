@@ -150,7 +150,7 @@ public sealed class BbsToGithub : IDisposable
         var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
         var targetName = $"E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
         var targetRepo = $"multi-part-{targetName}";
-        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port 22";
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
@@ -161,7 +161,7 @@ public sealed class BbsToGithub : IDisposable
            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
        });
 
-        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo}{archiveDownloadOptions} --use-github-storage";
+        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo}{archiveDownloadOptions} --use-github-storage";
 
         await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
 
