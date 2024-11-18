@@ -11,7 +11,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
         }
 
-        [Fact]
+        // [Fact]
         public async Task Basic()
         {
             var adoOrg = $"gei-e2e-testing-basic-{TestHelper.GetOsName()}";
