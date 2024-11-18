@@ -121,6 +121,27 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
         }
+        else if (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue())
+        {
+            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            var gitArchiveUploadFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
+            var metadataArchiveUploadFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
+
+            (args.GitArchiveUrl, args.MetadataArchiveUrl) = await UploadArchive(
+                args.GithubSourceOrg,
+                args.AwsBucketName,
+                args.UseGithubStorage,
+                args.GitArchivePath,
+                args.MetadataArchivePath,
+                gitArchiveUploadFileName,
+                metadataArchiveUploadFileName
+            );
+
+            if (args.UseGithubStorage || blobCredentialsRequired)
+            {
+                _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
+            }
+        }
 
         var sourceRepoUrl = GetSourceRepoUrl(args);
         var sourceToken = GetSourceToken(args);
@@ -192,8 +213,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {
         // We expect the GHES url template to be either http(s)://hostname/api/v3 or http(s)://api.hostname.com.
-        // We are either going to be able to extract and return the base url based on the above templates or 
-        // will fallback to ghesApiUrl and return it as the base url. 
+        // We are either going to be able to extract and return the base url based on the above templates or
+        // will fallback to ghesApiUrl and return it as the base url.
 
         ghesApiUrl = ghesApiUrl.Trim().TrimEnd('/');
 
@@ -239,43 +260,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
 
-#pragma warning disable IDE0063
-            await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveDownloadFilePath))
-            await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
-#pragma warning restore IDE0063
-            {
-                if (useGithubStorage)
-                {
-                    return await UploadArchivesToGithub(
-                        githubTargetOrg,
-                        gitArchiveUploadFileName,
-                        gitArchiveContent,
-                        metadataArchiveUploadFileName,
-                        metadataArchiveContent
-                    );
-                }
-#pragma warning disable IDE0046
-                else if (_awsApi.HasValue())
-#pragma warning restore IDE0046
-                {
-                    return await UploadArchivesToAws(
-                        awsBucketName,
-                        gitArchiveUploadFileName,
-                        gitArchiveContent,
-                        metadataArchiveUploadFileName,
-                        metadataArchiveContent
-                    );
-                }
-                else
-                {
-                    return await UploadArchivesToAzure(
-                        gitArchiveUploadFileName,
-                        gitArchiveContent,
-                        metadataArchiveUploadFileName,
-                        metadataArchiveContent
-                    );
-                }
-            }
+            return await UploadArchive(
+                githubTargetOrg,
+                awsBucketName,
+                useGithubStorage,
+                gitArchiveDownloadFilePath,
+                metadataArchiveDownloadFilePath,
+                gitArchiveUploadFileName,
+                metadataArchiveUploadFileName
+            );
         }
         finally
         {
@@ -283,6 +276,54 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 DeleteArchive(gitArchiveDownloadFilePath);
                 DeleteArchive(metadataArchiveDownloadFilePath);
+            }
+        }
+    }
+
+    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> UploadArchive(
+      string githubTargetOrg,
+      string awsBucketName,
+      bool useGithubStorage,
+      string gitArchiveDownloadFilePath,
+      string metadataArchiveDownloadFilePath,
+      string gitArchiveUploadFileName,
+      string metadataArchiveUploadFileName)
+    {
+#pragma warning disable IDE0063
+        await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveDownloadFilePath))
+        await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
+#pragma warning restore IDE0063
+        {
+            if (useGithubStorage)
+            {
+                return await UploadArchivesToGithub(
+                    githubTargetOrg,
+                    gitArchiveUploadFileName,
+                    gitArchiveContent,
+                    metadataArchiveUploadFileName,
+                    metadataArchiveContent
+                );
+            }
+#pragma warning disable IDE0046
+            else if (_awsApi.HasValue())
+#pragma warning restore IDE0046
+            {
+                return await UploadArchivesToAws(
+                    awsBucketName,
+                    gitArchiveUploadFileName,
+                    gitArchiveContent,
+                    metadataArchiveUploadFileName,
+                    metadataArchiveContent
+                );
+            }
+            else
+            {
+                return await UploadArchivesToAzure(
+                    gitArchiveUploadFileName,
+                    gitArchiveContent,
+                    metadataArchiveUploadFileName,
+                    metadataArchiveContent
+                );
             }
         }
     }

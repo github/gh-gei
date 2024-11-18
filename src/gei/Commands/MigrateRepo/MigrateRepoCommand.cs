@@ -179,7 +179,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AwsApi awsApi = null;
             HttpDownloadService httpDownloadService = null;
 
-            if (args.GhesApiUrl.HasValue())
+            if (args.GhesApiUrl.HasValue() || (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue()))
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
