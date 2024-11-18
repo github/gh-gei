@@ -142,14 +142,12 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Fact]
-    public async Task StartingFromScractch()
+    public async Task MigrateRepo_MultipartUpload()
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var bbsProjectKey = $"IN";
-        var bbsRepo = "100_cli";
         var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
-        var targetName = $"E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
-        var targetRepo = $"multi-part-{targetName}";
+        var targetRepo = $"IN-100_cli";
 
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
@@ -171,36 +169,6 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
     }
-
-    // [Fact]
-    // public async Task MigrateRepo_MultipartUpload()
-    // {
-    //     var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
-    //     var bbsProjectKey = $"IN";
-    //     var bbsRepo = "100_cli";
-    //     var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
-    //     var targetName = $"E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
-    //     var targetRepo = $"multi-part-{targetName}";
-
-    //     var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
-    //     await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-
-
-    //     var retryPolicy = new RetryPolicy(null);
-    //     await retryPolicy.Retry(async () =>
-    //    {
-    //        await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
-    //    });
-
-    //     var migrateRepoCommand = $"migrate-repo --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-org {githubTargetOrg} --github-repo{targetRepo} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage --verbose";
-
-    //     await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
-
-    //     _targetHelper.AssertNoErrorInLogs(_startTime);
-
-    //     await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
-    //     await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
-    // }
 
     private string GetSshKeyName(string bbsServer)
     {
