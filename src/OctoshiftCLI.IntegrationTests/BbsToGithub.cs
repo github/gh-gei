@@ -161,7 +161,7 @@ public sealed class BbsToGithub : IDisposable
            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
        });
 
-        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo}{archiveDownloadOptions} --use-github-storage";
+        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo}--github-pat{targetGithubToken}{archiveDownloadOptions} --use-github-storage";
 
         await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
 
