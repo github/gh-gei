@@ -162,14 +162,14 @@ public sealed class BbsToGithub : IDisposable
        });
 
         await _targetHelper.RunBbsCliMigration(
-     $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
+        _targetHelper.AssertNoErrorInLogs(_startTime);
+
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
     }
 
     // [Fact]
