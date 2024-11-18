@@ -67,79 +67,79 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    // [Theory]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
-    // [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
-    // public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
-    // {
-    //     var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
-    //     var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
-    //     var repo1 = $"{bbsProjectKey}-repo-1";
-    //     var repo2 = $"{bbsProjectKey}-repo-2";
-    //     var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
-    //     var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
+    [Theory]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
+    {
+        var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
+        var repo1 = $"{bbsProjectKey}-repo-1";
+        var repo2 = $"{bbsProjectKey}-repo-2";
+        var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
+        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
-    //     var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
-    //     var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
+        var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
+        var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
 
-    //     var retryPolicy = new RetryPolicy(null);
+        var retryPolicy = new RetryPolicy(null);
 
-    //     await retryPolicy.Retry(async () =>
-    //     {
-    //         await _targetHelper.ResetBlobContainers();
-    //         await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
-    //         await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+        await retryPolicy.Retry(async () =>
+        {
+            await _targetHelper.ResetBlobContainers();
+            await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
+            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-    //         await sourceHelper.CreateBbsProject(bbsProjectKey);
-    //         await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
-    //         await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
-    //         await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
-    //         await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
-    //     });
+            await sourceHelper.CreateBbsProject(bbsProjectKey);
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
+            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
+        });
 
-    //     var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
-    //     if (useSshForArchiveDownload)
-    //     {
-    //         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
-    //         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-    //     }
-    //     else
-    //     {
-    //         archiveDownloadOptions = " --smb-user octoshift";
-    //         _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
-    //     }
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        if (useSshForArchiveDownload)
+        {
+            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+            await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+        }
+        else
+        {
+            archiveDownloadOptions = " --smb-user octoshift";
+            _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
+        }
 
-    //     var archiveUploadOptions = "";
-    //     if (uploadOption == ArchiveUploadOption.AzureStorage)
-    //     {
-    //         _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
-    //     }
-    //     else if (uploadOption == ArchiveUploadOption.AwsS3)
-    //     {
-    //         _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
-    //         _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
-    //         var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
-    //         archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
-    //     }
-    //     else if (uploadOption == ArchiveUploadOption.GithubStorage)
-    //     {
-    //         archiveUploadOptions = " --use-github-storage";
-    //     }
+        var archiveUploadOptions = "";
+        if (uploadOption == ArchiveUploadOption.AzureStorage)
+        {
+            _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
+        }
+        else if (uploadOption == ArchiveUploadOption.AwsS3)
+        {
+            _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
+            _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
+            var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
+            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
+        }
+        else if (uploadOption == ArchiveUploadOption.GithubStorage)
+        {
+            archiveUploadOptions = " --use-github-storage";
+        }
 
-    //     await _targetHelper.RunBbsCliMigration(
-    //         $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+        await _targetHelper.RunBbsCliMigration(
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
-    //     _targetHelper.AssertNoErrorInLogs(_startTime);
+        _targetHelper.AssertNoErrorInLogs(_startTime);
 
-    //     await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
-    //     await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
-    //     await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
-    //     await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
-    //     // TODO: Assert migration logs are downloaded
-    // }
+        // TODO: Assert migration logs are downloaded
+    }
 
     [Fact]
     public async Task MigrateRepo_MultipartUpload()
@@ -148,7 +148,7 @@ public sealed class BbsToGithub : IDisposable
         var bbsProjectKey = $"IN";
         var bbsRepo = "100_cli";
         var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
-        var targetRepo = $"{bbsProjectKey}-e2e-{Guid.NewGuid()}";
+        var targetRepo = $"multi-part-{E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
