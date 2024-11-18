@@ -67,11 +67,11 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    // [Theory]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
-    // [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
-    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    [Theory]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
