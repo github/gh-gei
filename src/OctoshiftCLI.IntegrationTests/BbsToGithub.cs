@@ -151,7 +151,6 @@ public sealed class BbsToGithub : IDisposable
         var targetName = $"E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
         var targetRepo = $"multi-part-{targetName}";
 
-        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
@@ -162,7 +161,7 @@ public sealed class BbsToGithub : IDisposable
            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
        });
 
-        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo}{archiveDownloadOptions} --use-github-storage";
+        var migrateRepoCommand = $"migrate-repo --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-org {githubTargetOrg} --github-repo{targetRepo} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage --verbose";
 
         await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
 
