@@ -574,7 +574,7 @@ steps:
                 }
             }
 
-            // _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
+            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
 
             var p = Process.Start(startInfo);
             await p.WaitForExitAsync();
