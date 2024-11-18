@@ -547,9 +547,6 @@ steps:
         public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens) =>
             await RunShellCommand(command, cliName, GetOsDistPath(), tokens);
 
-        public async Task RunBbsMigrateRepoCommand(string migrateRepoCommand, IDictionary<string, string> tokens) =>
-            await RunCliCommand($"bbs2gh {migrateRepoCommand}", "gh", tokens);
-
         private async Task RunShellCommand(string command, string fileName, string workingDirectory = null, IDictionary<string, string> environmentVariables = null)
         {
             var startInfo = new ProcessStartInfo
