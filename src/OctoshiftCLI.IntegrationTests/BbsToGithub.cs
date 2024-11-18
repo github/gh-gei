@@ -148,7 +148,8 @@ public sealed class BbsToGithub : IDisposable
         var bbsProjectKey = $"IN";
         var bbsRepo = "100_cli";
         var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
-        var targetRepo = $"multi-part-{E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
+        var targetName = $"E2E -{TestHelper.GetOsName().ToUpper()}-e2e-{Guid.NewGuid()}";
+        var targetRepo = $"multi-part-{targetName}";
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
