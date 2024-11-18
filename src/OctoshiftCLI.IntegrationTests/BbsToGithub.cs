@@ -32,8 +32,6 @@ public sealed class BbsToGithub : IDisposable
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
 
-    private readonly string _targetGithubToken;
-
     public enum ArchiveUploadOption { AzureStorage, AwsS3, GithubStorage }
 
     public BbsToGithub(ITestOutputHelper output)
@@ -53,7 +51,6 @@ public sealed class BbsToGithub : IDisposable
             ["BBS_PASSWORD"] = sourceBbsPassword,
             ["GH_PAT"] = targetGithubToken
         };
-        _targetGithubToken = targetGithubToken;
 
         _versionClient = new HttpClient();
 
@@ -164,7 +161,7 @@ public sealed class BbsToGithub : IDisposable
            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
        });
 
-        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo} --github-pat{_targetGithubToken}{archiveDownloadOptions} --use-github-storage";
+        var migrateRepoCommand = $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-repo{targetRepo} --ssh-port 22{archiveDownloadOptions} --use-github-storage";
 
         await _targetHelper.RunBbsMigrateRepoCommand(migrateRepoCommand, _tokens);
 
