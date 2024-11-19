@@ -164,8 +164,6 @@ public sealed class BbsToGithub : IDisposable
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
-        _targetHelper.AssertNoErrorInLogs(_startTime);
-
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
     }
