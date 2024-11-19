@@ -155,9 +155,9 @@ public sealed class BbsToGithub : IDisposable
 
         var retryPolicy = new RetryPolicy(null);
         await retryPolicy.Retry(async () =>
-       {
-           await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
-       });
+        {
+            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+        });
 
         await _targetHelper.RunBbsCliMigration(
             $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
