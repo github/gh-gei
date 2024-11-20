@@ -127,13 +127,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             var gitArchiveUploadFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveUploadFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
 
-            (args.GitArchiveUrl, args.MetadataArchiveUrl) = await UploadArchive(
+            args.GitArchiveUrl = await UploadArchive(
                 args.GithubSourceOrg,
                 args.AwsBucketName,
                 args.UseGithubStorage,
                 args.GitArchivePath,
+                gitArchiveUploadFileName
+            );
+            args.MetadataArchiveUrl = await UploadArchive(
+                args.GithubSourceOrg,
+                args.AwsBucketName,
+                args.UseGithubStorage,
                 args.MetadataArchivePath,
-                gitArchiveUploadFileName,
                 metadataArchiveUploadFileName
             );
 
@@ -240,7 +245,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       bool useGithubStorage)
     {
         var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
-            async () => await GenerateArchive(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
+            async () => await GenerateArchives(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
 
         if (!useGithubStorage && !blobCredentialsRequired)
         {
@@ -260,14 +265,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
 
-            return await UploadArchive(
-                githubTargetOrg,
-                awsBucketName,
-                useGithubStorage,
-                gitArchiveDownloadFilePath,
-                metadataArchiveDownloadFilePath,
-                gitArchiveUploadFileName,
-                metadataArchiveUploadFileName
+            return (
+                await UploadArchive(
+                    githubTargetOrg,
+                    awsBucketName,
+                    useGithubStorage,
+                    gitArchiveDownloadFilePath,
+                    gitArchiveUploadFileName
+                ),
+                await UploadArchive(
+                    githubTargetOrg,
+                    awsBucketName,
+                    useGithubStorage,
+                    metadataArchiveDownloadFilePath,
+                    metadataArchiveUploadFileName
+                )
             );
         }
         finally
@@ -280,55 +292,34 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> UploadArchive(
+    private async Task<string> UploadArchive(
       string githubTargetOrg,
       string awsBucketName,
       bool useGithubStorage,
-      string gitArchiveDownloadFilePath,
-      string metadataArchiveDownloadFilePath,
-      string gitArchiveUploadFileName,
-      string metadataArchiveUploadFileName)
+      string archiveDownloadFilePath,
+      string archiveUploadFileName)
     {
 #pragma warning disable IDE0063
-        await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveDownloadFilePath))
-        await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
+        await using (var archiveContent = _fileSystemProvider.OpenRead(archiveDownloadFilePath))
 #pragma warning restore IDE0063
+
+        if (useGithubStorage)
         {
-            if (useGithubStorage)
-            {
-                return await UploadArchivesToGithub(
-                    githubTargetOrg,
-                    gitArchiveUploadFileName,
-                    gitArchiveContent,
-                    metadataArchiveUploadFileName,
-                    metadataArchiveContent
-                );
-            }
+            return await UploadArchiveToGithub(githubTargetOrg, archiveUploadFileName, archiveContent);
+        }
 #pragma warning disable IDE0046
-            else if (_awsApi.HasValue())
+        else if (_awsApi.HasValue())
 #pragma warning restore IDE0046
-            {
-                return await UploadArchivesToAws(
-                    awsBucketName,
-                    gitArchiveUploadFileName,
-                    gitArchiveContent,
-                    metadataArchiveUploadFileName,
-                    metadataArchiveContent
-                );
-            }
-            else
-            {
-                return await UploadArchivesToAzure(
-                    gitArchiveUploadFileName,
-                    gitArchiveContent,
-                    metadataArchiveUploadFileName,
-                    metadataArchiveContent
-                );
-            }
+        {
+            return await UploadArchiveToAws(awsBucketName, archiveUploadFileName, archiveContent);
+        }
+        else
+        {
+            return await UploadArchiveToAzure(archiveUploadFileName, archiveContent);
         }
     }
 
-    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchive(
+    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchives(
         string githubSourceOrg,
         string sourceRepo,
         bool skipReleases,
@@ -363,37 +354,30 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
+    private async Task<string> UploadArchiveToAzure(string archiveFileName, Stream archiveContent)
     {
-        _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-        var authenticatedGitArchiveUri = await _azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
-        _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-        var authenticatedMetadataArchiveUri = await _azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
+        _log.LogInformation($"Uploading archive {archiveFileName} to Azure Blob Storage");
+        var authenticatedArchiveUri = await _azureApi.UploadToBlob(archiveFileName, archiveContent);
 
-        return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+        return authenticatedArchiveUri.ToString();
     }
 
-    private async Task<(string, string)> UploadArchivesToAws(string bucketName, string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
+    private async Task<string> UploadArchiveToAws(string bucketName, string archiveFileName, Stream archiveContent)
     {
-        _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
-        var authenticatedGitArchiveUri = await _awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
-        _log.LogInformation($"Uploading archive {metadataArchiveFileName} to AWS S3");
-        var authenticatedMetadataArchiveUri = await _awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
+        _log.LogInformation($"Uploading archive {archiveFileName} to AWS S3");
+        var authenticatedArchiveUri = await _awsApi.UploadToBucket(bucketName, archiveContent, archiveFileName);
 
-        return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+        return authenticatedArchiveUri.ToString();
     }
 
-    private async Task<(string, string)> UploadArchivesToGithub(string org, string gitArchiveUploadFileName, Stream gitArchiveContent, string metadataArchiveUploadFileName, Stream metadataArchiveContent)
+    private async Task<string> UploadArchiveToGithub(string org, string archiveFileName, Stream archiveContent)
     {
         var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
 
         _log.LogInformation($"Uploading git archive to GitHub Storage");
-        var uploadedGitArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, gitArchiveUploadFileName, gitArchiveContent);
+        var uploadedArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, archiveFileName, archiveContent);
 
-        _log.LogInformation($"Uploading metadata archive to GitHub Storage");
-        var uploadedMetadataArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, metadataArchiveUploadFileName, metadataArchiveContent);
-
-        return (uploadedGitArchiveUrl, uploadedMetadataArchiveUrl);
+        return uploadedArchiveUrl;
     }
 
     private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
