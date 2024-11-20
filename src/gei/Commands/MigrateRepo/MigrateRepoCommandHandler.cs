@@ -299,24 +299,21 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       string archiveDownloadFilePath,
       string archiveUploadFileName)
     {
-#pragma warning disable IDE0063
-        await using (var archiveContent = _fileSystemProvider.OpenRead(archiveDownloadFilePath))
-#pragma warning restore IDE0063
+        await using var archiveContent = _fileSystemProvider.OpenRead(archiveDownloadFilePath);
 
         if (useGithubStorage)
         {
             return await UploadArchiveToGithub(githubTargetOrg, archiveUploadFileName, archiveContent);
         }
+
 #pragma warning disable IDE0046
-        else if (_awsApi.HasValue())
+        if (_awsApi.HasValue())
 #pragma warning restore IDE0046
         {
             return await UploadArchiveToAws(awsBucketName, archiveUploadFileName, archiveContent);
         }
-        else
-        {
-            return await UploadArchiveToAzure(archiveUploadFileName, archiveContent);
-        }
+
+        return await UploadArchiveToAzure(archiveUploadFileName, archiveContent);
     }
 
     private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchives(
