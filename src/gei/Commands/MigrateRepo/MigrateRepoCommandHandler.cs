@@ -27,6 +27,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
+    private const string DUPLICATE_ARCHIVE_FILE_NAME = "archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
     public MigrateRepoCommandHandler(
@@ -126,25 +127,40 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
             var gitArchiveUploadFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
             var metadataArchiveUploadFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
+            var duplicateArchiveUploadFileName = $"{timeNow}-{DUPLICATE_ARCHIVE_FILE_NAME}";
 
-            args.GitArchiveUrl = await UploadArchive(
-                args.GithubSourceOrg,
-                args.AwsBucketName,
-                args.UseGithubStorage,
-                args.GitArchivePath,
-                gitArchiveUploadFileName
-            );
-            args.MetadataArchiveUrl = await UploadArchive(
-                args.GithubSourceOrg,
-                args.AwsBucketName,
-                args.UseGithubStorage,
-                args.MetadataArchivePath,
-                metadataArchiveUploadFileName
-            );
+            if (args.GitArchivePath == args.MetadataArchivePath)
+            {
+                args.GitArchiveUrl = await UploadArchive(
+                    args.GithubSourceOrg,
+                    args.AwsBucketName,
+                    args.UseGithubStorage,
+                    args.GitArchivePath,
+                    duplicateArchiveUploadFileName
+                );
+                args.MetadataArchiveUrl = args.GitArchiveUrl;
+            }
+            else
+            {
+                args.GitArchiveUrl = await UploadArchive(
+                    args.GithubSourceOrg,
+                    args.AwsBucketName,
+                    args.UseGithubStorage,
+                    args.GitArchivePath,
+                    gitArchiveUploadFileName
+                );
+                args.MetadataArchiveUrl = await UploadArchive(
+                    args.GithubSourceOrg,
+                    args.AwsBucketName,
+                    args.UseGithubStorage,
+                    args.MetadataArchivePath,
+                    metadataArchiveUploadFileName
+                );
+            }
 
             if (args.UseGithubStorage || blobCredentialsRequired)
             {
-                _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
+                _log.LogInformation("Archive(s) uploaded to blob storage, now starting migration...");
             }
         }
 
