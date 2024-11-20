@@ -261,9 +261,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
+            _log.LogInformation("Download complete");
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
+            _log.LogInformation("Download complete");
 
             return (
                 await UploadArchive(
@@ -355,6 +357,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation($"Uploading archive {archiveFileName} to Azure Blob Storage");
         var authenticatedArchiveUri = await _azureApi.UploadToBlob(archiveFileName, archiveContent);
+        _log.LogInformation("Upload complete");
 
         return authenticatedArchiveUri.ToString();
     }
@@ -363,6 +366,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation($"Uploading archive {archiveFileName} to AWS S3");
         var authenticatedArchiveUri = await _awsApi.UploadToBucket(bucketName, archiveContent, archiveFileName);
+        _log.LogInformation("Upload complete");
 
         return authenticatedArchiveUri.ToString();
     }
@@ -371,8 +375,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
 
-        _log.LogInformation($"Uploading git archive to GitHub Storage");
+        _log.LogInformation($"Uploading archive {archiveFileName} to GitHub Storage");
         var uploadedArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, archiveFileName, archiveContent);
+        _log.LogInformation("Upload complete");
 
         return uploadedArchiveUrl;
     }
