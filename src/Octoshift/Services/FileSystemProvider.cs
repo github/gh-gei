@@ -15,7 +15,7 @@ public class FileSystemProvider
 
     public virtual FileStream Open(string path, FileMode mode) => File.Open(path, mode);
 
-    public virtual FileStream OpenRead(string path) => File.OpenRead(path);
+    public virtual Stream OpenRead(string path) => File.OpenRead(path);
 
     public virtual async Task WriteAllTextAsync(string path, string contents) => await File.WriteAllTextAsync(path, contents);
 
