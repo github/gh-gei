@@ -24,5 +24,7 @@ namespace OctoshiftCLI.Extensions
         public static string ToUnixPath(this string path) => path?.Replace("\\", "/");
 
         public static string EscapeDataString(this string value) => Uri.EscapeDataString(value);
+
+        public static byte[] ToBytes(this string s) => Encoding.UTF8.GetBytes(s);
     }
 }

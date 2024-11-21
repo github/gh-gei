@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo;
 using OctoshiftCLI.GithubEnterpriseImporter.Services;
 using OctoshiftCLI.Services;
@@ -345,16 +346,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             var metadataArchiveUrl = $"https://example.com/{metadataArchiveId}";
             var uploadedGitArchiveUrl = "gei://archive/1";
             var uploadedMetadataArchiveUrl = "gei://archive/2";
-            var gitArchiveFilePath = "./gitdata_archive";
-            var metadataArchiveFilePath = "./metadata_archive";
             var gitArchiveDownloadFilePath = "git_archive_downaloded.tmp";
             var metadataArchiveDownloadFilePath = "metadata_archive_downloaded.tmp";
+            var gitArchiveContents = "I am git archive";
+            var metadataArchiveContents = "I am metadata archive";
 
-            File.WriteAllText(gitArchiveFilePath, "I am git archive");
-            File.WriteAllText(metadataArchiveFilePath, "I am metadata archive");
-
-            using var gitContentStream = File.OpenRead(gitArchiveFilePath);
-            using var metaContentStream = File.OpenRead(metadataArchiveFilePath);
+            using var gitContentStream = new MemoryStream(gitArchiveContents.ToBytes());
+            using var metaContentStream = new MemoryStream(metadataArchiveContents.ToBytes());
 
             _mockFileSystemProvider
                 .SetupSequence(m => m.GetTempFileName())
@@ -372,7 +370,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(useGhesBlobCredentials);
 
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
-
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(githubOrgId);
             _mockTargetGithubApi.Setup(x => x.GetOrganizationDatabaseId(TARGET_ORG).Result).Returns(githubOrgDatabaseId);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(githubOrgId).Result).Returns(migrationSourceId);
@@ -402,11 +399,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             _mockTargetGithubApi
-                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("git_archive.tar.gz")), gitContentStream).Result)
+                .Setup(x => x.UploadArchiveToGithubStorage(
+                    githubOrgDatabaseId,
+                    It.Is<string>(a => a.EndsWith("git_archive.tar.gz")),
+                    It.Is<Stream>(s => (s as MemoryStream).ToArray().GetString() == gitArchiveContents)).Result)
                 .Returns(uploadedGitArchiveUrl);
 
             _mockTargetGithubApi
-                .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("metadata_archive.tar.gz")), metaContentStream).Result)
+                .Setup(x => x.UploadArchiveToGithubStorage(
+                    githubOrgDatabaseId,
+                    It.Is<string>(a => a.EndsWith("metadata_archive.tar.gz")),
+                    It.Is<Stream>(s => (s as MemoryStream).ToArray().GetString() == metadataArchiveContents)).Result)
                 .Returns(uploadedMetadataArchiveUrl);
 
             var args = new MigrateRepoCommandArgs
