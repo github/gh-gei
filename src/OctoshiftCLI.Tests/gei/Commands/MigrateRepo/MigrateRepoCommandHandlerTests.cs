@@ -409,8 +409,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .Setup(x => x.UploadArchiveToGithubStorage(githubOrgDatabaseId, It.Is<string>(a => a.EndsWith("metadata_archive.tar.gz")), metaContentStream).Result)
                 .Returns(uploadedMetadataArchiveUrl);
 
-            Console.WriteLine($"MigrationSourceId: {migrationSourceId}, MigrationId: {migrationId}");
-
             var args = new MigrateRepoCommandArgs
             {
                 GithubSourceOrg = SOURCE_ORG,
