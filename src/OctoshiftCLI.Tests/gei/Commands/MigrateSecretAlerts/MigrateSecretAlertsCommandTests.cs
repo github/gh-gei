@@ -15,7 +15,7 @@ public class MigrateSecretAlertsCommandTests
     private readonly Mock<SecretScanningAlertServiceFactory> _mockSecretScanningAlertServiceFactory = TestHelpers.CreateMock<SecretScanningAlertServiceFactory>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly MigrateSecretAlertsCommand _command = new();
+    private readonly MigrateSecretAlertsCommand _command = [];
 
     public MigrateSecretAlertsCommandTests()
     {
