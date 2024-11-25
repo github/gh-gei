@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -878,6 +879,17 @@ public class GithubApi
         catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToUser' doesn't exist on type 'Mutation'"))
         {
             throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Target must be a member"))
+        {
+            var result = new ReattributeMannequinToUserResult
+            {
+                Errors = new Collection<ErrorData>
+            {
+              new ErrorData { Message = ex.Message }
+            }
+            };
+            return result;
         }
     }
 
