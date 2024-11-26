@@ -18,116 +18,122 @@ public class SecretScanningAlertService
         _log = logger;
     }
 
+    // Iterate over all source alerts by looping through the dictionary with each key (SecretType, Secret) and 
+    // try to find a matching alert in the target repository based on the same key
+    // If potential match is found we compare the locations of the alerts and if they match a matching AlertWithLocations is returned
     public virtual async Task MigrateSecretScanningAlerts(string sourceOrg, string sourceRepo, string targetOrg,
         string targetRepo, bool dryRun)
     {
-        _log.LogInformation(
-            $"Migrating Secret Scanning Alerts from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
+        _log.LogInformation($"Migrating Secret Scanning Alerts from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
-        var sourceAlerts = await GetAlertsWithLocations(_sourceGithubApi, sourceOrg, sourceRepo);
-        var targetAlerts = await GetAlertsWithLocations(_targetGithubApi, targetOrg, targetRepo);
+        var sourceAlertsDict = await GetAlertsWithLocationsDict(_sourceGithubApi, sourceOrg, sourceRepo);
+        var targetAlertsDict = await GetAlertsWithLocationsDict(_targetGithubApi, targetOrg, targetRepo);
 
-        _log.LogInformation($"Source {sourceOrg}/{sourceRepo} secret alerts found: {sourceAlerts.Count}");
-        _log.LogInformation($"Target {targetOrg}/{targetRepo} secret alerts found: {targetAlerts.Count}");
+        _log.LogInformation($"Source {sourceOrg}/{sourceRepo} secret alerts found: {sourceAlertsDict.Count}");
+        _log.LogInformation($"Target {targetOrg}/{targetRepo} secret alerts found: {targetAlertsDict.Count}");
 
         _log.LogInformation("Matching secret resolutions from source to target repository");
-        foreach (var alert in sourceAlerts)
+        foreach (var sourceKey in sourceAlertsDict.Keys)
         {
-            _log.LogInformation($"Processing source secret {alert.Alert.Number}");
-
-            if (SecretScanningAlert.IsOpen(alert.Alert.State))
+            foreach (var sourceAlert in sourceAlertsDict[sourceKey])
             {
-                _log.LogInformation("  secret alert is still open, nothing to do");
-                continue;
-            }
+                _log.LogInformation($"Processing source secret {sourceAlert.Alert.Number}");
 
-            _log.LogInformation("  secret is resolved, looking for matching secret in target...");
-            var target = MatchTargetSecret(alert, targetAlerts);
-
-            if (target == null)
-            {
-                _log.LogWarning(
-                    $"  failed to locate a matching secret to source secret {alert.Alert.Number} in {targetOrg}/{targetRepo}");
-                continue;
-            }
-
-            _log.LogInformation(
-                $"  source secret alert matched alert to {target.Alert.Number} in {targetOrg}/{targetRepo}.");
-
-            if (alert.Alert.Resolution == target.Alert.Resolution && alert.Alert.State == target.Alert.State)
-            {
-                _log.LogInformation("  source and target alerts are already aligned.");
-                continue;
-            }
-
-            if (dryRun)
-            {
-                _log.LogInformation(
-                    $"  executing in dry run mode! Target alert {target.Alert.Number} would have been updated to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
-                continue;
-            }
-
-            _log.LogInformation(
-                $"  updating target alert:{target.Alert.Number} to state:{alert.Alert.State} and resolution:{alert.Alert.Resolution}");
-
-            await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, target.Alert.Number,
-            alert.Alert.State, alert.Alert.Resolution);
-            _log.LogSuccess(
-                $"  target alert successfully updated to {alert.Alert.Resolution}.");
-        }
-    }
-
-    private AlertWithLocations MatchTargetSecret(AlertWithLocations source, List<AlertWithLocations> targets)
-    {
-        AlertWithLocations matched = null;
-
-        foreach (var target in targets)
-        {
-            if (matched != null)
-            {
-                break;
-            }
-
-            if (source.Alert.SecretType == target.Alert.SecretType
-                && source.Alert.Secret == target.Alert.Secret)
-            {
-                _log.LogVerbose(
-                    $"Secret type and value match between source:{source.Alert.Number} and target:{source.Alert.Number}");
-                var locationMatch = true;
-                foreach (var sourceLocation in source.Locations)
+                if (SecretScanningAlert.IsOpen(sourceAlert.Alert.State))
                 {
-                    locationMatch = IsMatchedSecretAlertLocation(sourceLocation, target.Locations);
-                    if (!locationMatch)
+                    _log.LogInformation("  secret alert is still open, nothing to do");
+                    continue;
+                }
+
+                _log.LogInformation("  secret is resolved, looking for matching secret in target...");
+
+                if (targetAlertsDict.TryGetValue(sourceKey, out var potentialTargets))
+                {
+                    var targetAlert = potentialTargets.FirstOrDefault(target => DoAllLocationsMatch(sourceAlert.Locations, target.Locations));
+
+                    if (targetAlert != null)
                     {
-                        break;
+                        _log.LogInformation($"  source secret alert matched to {targetAlert.Alert.Number} in {targetOrg}/{targetRepo}.");
+
+                        if (sourceAlert.Alert.Resolution == targetAlert.Alert.Resolution && sourceAlert.Alert.State == targetAlert.Alert.State)
+                        {
+                            _log.LogInformation("  source and target alerts are already aligned.");
+                            continue;
+                        }
+
+                        if (dryRun)
+                        {
+                            _log.LogInformation($"  executing in dry run mode! Target alert {targetAlert.Alert.Number} would have been updated to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
+                            continue;
+                        }
+
+                        _log.LogInformation($"  updating target alert:{targetAlert.Alert.Number} to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
+
+                        await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State, sourceAlert.Alert.Resolution);
+                        _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Alert.Resolution}.");
+                    }
+                    else
+                    {
+                        _log.LogWarning($"  failed to locate a matching secret to source secret {sourceAlert.Alert.Number} in {targetOrg}/{targetRepo}");
                     }
                 }
-
-                if (locationMatch)
+                else
                 {
-                    matched = target;
+                    _log.LogWarning($"  Failed to locate a matching secret to source secret {sourceAlert.Alert.Number} in {targetOrg}/{targetRepo}");
                 }
             }
         }
-
-        return matched;
     }
 
-    private bool IsMatchedSecretAlertLocation(GithubSecretScanningAlertLocation sourceLocation,
-        GithubSecretScanningAlertLocation[] targetLocations)
+    private bool DoAllLocationsMatch(GithubSecretScanningAlertLocation[] sourceLocations, GithubSecretScanningAlertLocation[] targetLocations)
     {
-        // We cannot guarantee the ordering of things with the locations and the APIs, typically they would match, but cannot be sure
-        // so we need to iterate over all the targets to ensure a match
-        return targetLocations.Any(
-            target => sourceLocation.Path == target.Path
-                   && sourceLocation.StartLine == target.StartLine
-                   && sourceLocation.EndLine == target.EndLine
-                   && sourceLocation.StartColumn == target.StartColumn
-                   && sourceLocation.EndColumn == target.EndColumn
-                   && sourceLocation.BlobSha == target.BlobSha
-                   // Technically this wil hold, but only if there is not commit rewriting going on, so we need to make this last one optional for now
-                   // && sourceDetails.CommitSha == target.Details.CommitSha)       
-                   );
+        // Preflight check: Compare the number of locations; 
+        // If the number of locations don't match we can skip the detailed comparison as the alerts can't be considered equal
+        if (sourceLocations.Length != targetLocations.Length)
+        {
+            return false;
+        }
+
+        return sourceLocations.All(sourceLocation => IsLocationMatched(sourceLocation, targetLocations));
+    }
+
+    private bool IsLocationMatched(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation[] targetLocations)
+    {
+        return targetLocations.Any(targetLocation => AreLocationsEqual(sourceLocation, targetLocation));
+    }
+
+    // Check if the locations of the source and target alerts match exactly
+    // We compare the type of location and the corresponding fields based on the type
+    // Each type has different fields that need to be compared for equality so we use a switch statement
+    // Note: Discussions are commented out as we don't miggate them currently
+    private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
+    {
+        if (sourceLocation.LocationType != targetLocation.LocationType)
+        {
+            return false;
+        }
+
+        return sourceLocation.LocationType switch
+        {
+            "commit" or "wiki_commit" => sourceLocation.Path == targetLocation.Path &&
+                                        sourceLocation.StartLine == targetLocation.StartLine &&
+                                        sourceLocation.EndLine == targetLocation.EndLine &&
+                                        sourceLocation.StartColumn == targetLocation.StartColumn &&
+                                        sourceLocation.EndColumn == targetLocation.EndColumn &&
+                                        sourceLocation.BlobSha == targetLocation.BlobSha,
+            "issue_title" => sourceLocation.IssueTitleUrl == targetLocation.IssueTitleUrl,
+            "issue_body" => sourceLocation.IssueBodyUrl == targetLocation.IssueBodyUrl,
+            "issue_comment" => sourceLocation.IssueCommentUrl == targetLocation.IssueCommentUrl,
+            //"discussion_title" => sourceLocation.DiscussionTitleUrl == targetLocation.DiscussionTitleUrl,
+            //"discussion_body" => sourceLocation.DiscussionBodyUrl == targetLocation.DiscussionBodyUrl,
+            //"discussion_comment" => sourceLocation.DiscussionCommentUrl == targetLocation.DiscussionCommentUrl,
+            "pull_request_title" => sourceLocation.PullRequestTitleUrl == targetLocation.PullRequestTitleUrl,
+            "pull_request_body" => sourceLocation.PullRequestBodyUrl == targetLocation.PullRequestBodyUrl,
+            "pull_request_comment" => sourceLocation.PullRequestCommentUrl == targetLocation.PullRequestCommentUrl,
+            "pull_request_review" => sourceLocation.PullRequestReviewUrl == targetLocation.PullRequestReviewUrl,
+            "pull_request_review_comment" => sourceLocation.PullRequestReviewCommentUrl == targetLocation.PullRequestReviewCommentUrl,
+            _ => false
+        };
     }
 
     private async Task<List<AlertWithLocations>> GetAlertsWithLocations(GithubApi api, string org, string repo)
@@ -142,6 +148,27 @@ public class SecretScanningAlertService
         }
 
         return results;
+    }
+
+
+    // Getting alerts with locations from a repository and building a dictionary with a key (SecretType, Secret)
+    // and value List of AlertWithLocations
+    // This method is used to get alerts from both source and target repositories
+    private async Task<Dictionary<(string SecretType, string Secret), List<AlertWithLocations>>> 
+        GetAlertsWithLocationsDict(GithubApi api, string org, string repo)
+    {
+        var alerts = await api.GetSecretScanningAlertsForRepository(org, repo);
+        var alertsWithLocations = new List<AlertWithLocations>();
+        foreach (var alert in alerts)
+        {
+            var locations = await api.GetSecretScanningAlertsLocations(org, repo, alert.Number);
+            alertsWithLocations.Add(new AlertWithLocations { Alert = alert, Locations = locations.ToArray() });
+        }
+
+        // Build the dictionary keyed by SecretType and Secret
+        return alertsWithLocations
+            .GroupBy(alert => (alert.Alert.SecretType, alert.Alert.Secret))
+            .ToDictionary(group => group.Key, group => group.ToList());
     }
 }
 
