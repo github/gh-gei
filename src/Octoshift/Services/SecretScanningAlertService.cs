@@ -89,11 +89,9 @@ public class SecretScanningAlertService
     {
         // Preflight check: Compare the number of locations; 
         // If the number of locations don't match we can skip the detailed comparison as the alerts can't be considered equal
-        if (sourceLocations.Length != targetLocations.Length)
-        {
-            return false;
-        }
+        return sourceLocations.Length == targetLocations.Length
 
+        // Check if all locations in the source alert are matched in the target alert
         return sourceLocations.All(sourceLocation => IsLocationMatched(sourceLocation, targetLocations));
     }
 
@@ -108,10 +106,7 @@ public class SecretScanningAlertService
     // Note: Discussions are commented out as we don't miggate them currently
     private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
     {
-        if (sourceLocation.LocationType != targetLocation.LocationType)
-        {
-            return false;
-        }
+        return sourceLocation.LocationType == targetLocation.LocationType
 
         return sourceLocation.LocationType switch
         {
@@ -136,26 +131,11 @@ public class SecretScanningAlertService
         };
     }
 
-    private async Task<List<AlertWithLocations>> GetAlertsWithLocations(GithubApi api, string org, string repo)
-    {
-        var alerts = await api.GetSecretScanningAlertsForRepository(org, repo);
-        var results = new List<AlertWithLocations>();
-        foreach (var alert in alerts)
-        {
-            var locations =
-                await api.GetSecretScanningAlertsLocations(org, repo, alert.Number);
-            results.Add(new AlertWithLocations { Alert = alert, Locations = locations.ToArray() });
-        }
-
-        return results;
-    }
-
-
     // Getting alerts with locations from a repository and building a dictionary with a key (SecretType, Secret)
     // and value List of AlertWithLocations
     // This method is used to get alerts from both source and target repositories
-    private async Task<Dictionary<(string SecretType, string Secret), List<AlertWithLocations>>> 
-        GetAlertsWithLocationsDict(GithubApi api, string org, string repo)
+    private async Task<Dictionary<(string SecretType, string Secret), List<AlertWithLocations>>>
+       GetAlertsWithLocationsDict(GithubApi api, string org, string repo)
     {
         var alerts = await api.GetSecretScanningAlertsForRepository(org, repo);
         var alertsWithLocations = new List<AlertWithLocations>();
