@@ -2434,6 +2434,50 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
+    public async Task ReclaimMannequinSkipInvitation_Returns_Error_When_Target_Not_Member()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string mannequinId = "NDQ5VXNlcjc4NDc5MzU=";
+        const string targetUserId = "NDQ5VXNlcjc4NDc5MzU=";
+        const string url = "https://api.github.com/graphql";
+
+        var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { reattributeMannequinToUser(
+                    input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+                ) {
+                    source {
+                        ... on Mannequin {
+                            id
+                            login
+                        }
+                    }
+
+                    target {
+                        ... on User {
+                            id
+                            login
+                        }
+                    }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetUserId}\"}}}}";
+
+        const string errorMessage = "Target must be a member";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)), null))
+            .ThrowsAsync(new OctoshiftCliException(errorMessage));
+
+        // Act
+        var result = await _githubApi.ReclaimMannequinSkipInvitation(orgId, mannequinId, targetUserId);
+
+        // Assert
+        result.Data.Should().BeNull();
+        result.Errors.Should().NotBeNull();
+        result.Errors.Should().ContainSingle();
+        result.Errors.First().Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
     public async Task StartMetadataArchiveGeneration_Returns_The_Initiated_Migration_Id()
     {
         // Arrange
