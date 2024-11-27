@@ -69,7 +69,8 @@ public class SecretScanningAlertService
 
                         _log.LogInformation($"  updating target alert:{targetAlert.Alert.Number} to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
 
-                        await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State, sourceAlert.Alert.Resolution);
+                        await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State,
+                            sourceAlert.Alert.Resolution, sourceAlert.Alert.ResolutionComment);
                         _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Alert.Resolution}.");
                     }
                     else
@@ -89,10 +90,9 @@ public class SecretScanningAlertService
     {
         // Preflight check: Compare the number of locations; 
         // If the number of locations don't match we can skip the detailed comparison as the alerts can't be considered equal
-        return sourceLocations.Length == targetLocations.Length
-
-        // Check if all locations in the source alert are matched in the target alert
-        return sourceLocations.All(sourceLocation => IsLocationMatched(sourceLocation, targetLocations));
+        return sourceLocations.Length != targetLocations.Length
+            ? false
+            : sourceLocations.All(sourceLocation => IsLocationMatched(sourceLocation, targetLocations));
     }
 
     private bool IsLocationMatched(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation[] targetLocations)
@@ -106,29 +106,29 @@ public class SecretScanningAlertService
     // Note: Discussions are commented out as we don't miggate them currently
     private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
     {
-        return sourceLocation.LocationType == targetLocation.LocationType
-
-        return sourceLocation.LocationType switch
-        {
-            "commit" or "wiki_commit" => sourceLocation.Path == targetLocation.Path &&
-                                        sourceLocation.StartLine == targetLocation.StartLine &&
-                                        sourceLocation.EndLine == targetLocation.EndLine &&
-                                        sourceLocation.StartColumn == targetLocation.StartColumn &&
-                                        sourceLocation.EndColumn == targetLocation.EndColumn &&
-                                        sourceLocation.BlobSha == targetLocation.BlobSha,
-            "issue_title" => sourceLocation.IssueTitleUrl == targetLocation.IssueTitleUrl,
-            "issue_body" => sourceLocation.IssueBodyUrl == targetLocation.IssueBodyUrl,
-            "issue_comment" => sourceLocation.IssueCommentUrl == targetLocation.IssueCommentUrl,
-            //"discussion_title" => sourceLocation.DiscussionTitleUrl == targetLocation.DiscussionTitleUrl,
-            //"discussion_body" => sourceLocation.DiscussionBodyUrl == targetLocation.DiscussionBodyUrl,
-            //"discussion_comment" => sourceLocation.DiscussionCommentUrl == targetLocation.DiscussionCommentUrl,
-            "pull_request_title" => sourceLocation.PullRequestTitleUrl == targetLocation.PullRequestTitleUrl,
-            "pull_request_body" => sourceLocation.PullRequestBodyUrl == targetLocation.PullRequestBodyUrl,
-            "pull_request_comment" => sourceLocation.PullRequestCommentUrl == targetLocation.PullRequestCommentUrl,
-            "pull_request_review" => sourceLocation.PullRequestReviewUrl == targetLocation.PullRequestReviewUrl,
-            "pull_request_review_comment" => sourceLocation.PullRequestReviewCommentUrl == targetLocation.PullRequestReviewCommentUrl,
-            _ => false
-        };
+        return sourceLocation.LocationType != targetLocation.LocationType
+            ? false
+            : sourceLocation.LocationType switch
+            {
+                "commit" or "wiki_commit" => sourceLocation.Path == targetLocation.Path &&
+                                            sourceLocation.StartLine == targetLocation.StartLine &&
+                                            sourceLocation.EndLine == targetLocation.EndLine &&
+                                            sourceLocation.StartColumn == targetLocation.StartColumn &&
+                                            sourceLocation.EndColumn == targetLocation.EndColumn &&
+                                            sourceLocation.BlobSha == targetLocation.BlobSha,
+                "issue_title" => sourceLocation.IssueTitleUrl == targetLocation.IssueTitleUrl,
+                "issue_body" => sourceLocation.IssueBodyUrl == targetLocation.IssueBodyUrl,
+                "issue_comment" => sourceLocation.IssueCommentUrl == targetLocation.IssueCommentUrl,
+                //"discussion_title" => sourceLocation.DiscussionTitleUrl == targetLocation.DiscussionTitleUrl,
+                //"discussion_body" => sourceLocation.DiscussionBodyUrl == targetLocation.DiscussionBodyUrl,
+                //"discussion_comment" => sourceLocation.DiscussionCommentUrl == targetLocation.DiscussionCommentUrl,
+                "pull_request_title" => sourceLocation.PullRequestTitleUrl == targetLocation.PullRequestTitleUrl,
+                "pull_request_body" => sourceLocation.PullRequestBodyUrl == targetLocation.PullRequestBodyUrl,
+                "pull_request_comment" => sourceLocation.PullRequestCommentUrl == targetLocation.PullRequestCommentUrl,
+                "pull_request_review" => sourceLocation.PullRequestReviewUrl == targetLocation.PullRequestReviewUrl,
+                "pull_request_review_comment" => sourceLocation.PullRequestReviewCommentUrl == targetLocation.PullRequestReviewCommentUrl,
+                _ => false
+            };
     }
 
     // Getting alerts with locations from a repository and building a dictionary with a key (SecretType, Secret)

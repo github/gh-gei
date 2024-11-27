@@ -2821,16 +2821,18 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         const int alertNumber = 100;
         const string alertState = "resolved";
         const string alertResolution = "wont_fix";
+        const string alertResolutionComment = "This is a false positive";
 
         var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}";
         var payload = new
         {
             state = alertState,
-            resolution = alertResolution
+            resolution = alertResolution,
+            resolution_comment = alertResolutionComment
         };
 
         // Act
-        await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution);
+        await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution, alertResolutionComment);
 
         // Assert
         _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));

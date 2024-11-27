@@ -897,7 +897,7 @@ public class GithubApi
             .ToListAsync();
     }
 
-    public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null)
+    public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null, string resolutionComment = null)
     {
         if (!SecretScanningAlert.IsOpenOrResolved(state))
         {
@@ -911,7 +911,7 @@ public class GithubApi
 
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts/{alertNumber}";
 
-        object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
+        object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution, resolution_comment = resolutionComment };
         await _client.PatchAsync(url, payload);
     }
 
@@ -1168,6 +1168,7 @@ public class GithubApi
             Number = (int)secretAlert["number"],
             State = (string)secretAlert["state"],
             Resolution = (string)secretAlert["resolution"],
+            ResolutionComment = (string)secretAlert["resolution_comment"],
             SecretType = (string)secretAlert["secret_type"],
             Secret = (string)secretAlert["secret"],
         };
