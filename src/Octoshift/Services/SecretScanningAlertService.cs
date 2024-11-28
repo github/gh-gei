@@ -108,7 +108,7 @@ public class SecretScanningAlertService
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0075: Conditional expression can be simplified", Justification = "Want to keep guard for better performance.")]
     private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
     {
-        return sourceLocation.LocationType = targetLocation.LocationType
+        return sourceLocation.LocationType != targetLocation.LocationType
             ? false
             : sourceLocation.LocationType switch
             {
