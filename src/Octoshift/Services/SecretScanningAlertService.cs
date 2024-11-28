@@ -86,6 +86,7 @@ public class SecretScanningAlertService
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0075: Conditional expression can be simplified", Justification = "Want to keep guard for better performance.")]
     private bool DoAllLocationsMatch(GithubSecretScanningAlertLocation[] sourceLocations, GithubSecretScanningAlertLocation[] targetLocations)
     {
         // Preflight check: Compare the number of locations; 
@@ -104,9 +105,10 @@ public class SecretScanningAlertService
     // We compare the type of location and the corresponding fields based on the type
     // Each type has different fields that need to be compared for equality so we use a switch statement
     // Note: Discussions are commented out as we don't miggate them currently
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0075: Conditional expression can be simplified", Justification = "Want to keep guard for better performance.")]
     private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
     {
-        return sourceLocation.LocationType != targetLocation.LocationType
+        return sourceLocation.LocationType = targetLocation.LocationType
             ? false
             : sourceLocation.LocationType switch
             {
