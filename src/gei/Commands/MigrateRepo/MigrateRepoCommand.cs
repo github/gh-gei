@@ -21,7 +21,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(GithubTargetOrg);
             AddOption(TargetRepo);
             AddOption(TargetApiUrl);
-
             AddOption(GhesApiUrl);
             AddOption(AzureStorageConnectionString);
             AddOption(AwsBucketName);
@@ -30,19 +29,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(AwsSessionToken);
             AddOption(AwsRegion);
             AddOption(NoSslVerify);
-
             AddOption(GitArchiveUrl);
             AddOption(MetadataArchiveUrl);
-
+            AddOption(GitArchivePath);
+            AddOption(MetadataArchivePath);
             AddOption(SkipReleases);
             AddOption(LockSourceRepo);
-
             AddOption(QueueOnly);
             AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
             AddOption(Verbose);
             AddOption(KeepArchive);
+            AddOption(UseGithubStorage);
         }
 
         public Option<string> GithubSourceOrg { get; } = new("--github-source-org")
@@ -102,6 +101,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             Description = "Only effective if migrating from GHES. Disables SSL verification when communicating with your GHES instance. All other migration steps will continue to verify SSL. If your GHES instance has a self-signed SSL certificate then setting this flag will allow data to be extracted."
         };
+        public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
+        {
+            IsHidden = true,
+            Description = "Enables multipart uploads to a GitHub owned storage for use during migration",
+        };
 
         // Pre-uploaded archive urls, hidden by default
         public Option<string> GitArchiveUrl { get; } = new("--git-archive-url")
@@ -113,6 +117,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             IsHidden = true,
             Description = "An authenticated SAS URL to an Azure Blob Storage container with a pre-generated metadata archive. Only used when an archive has been generated and uploaded prior to running a migration (not common). Must be passed in when also using --git-archive-url"
+        };
+        public Option<string> GitArchivePath { get; } = new("--git-archive-path")
+        {
+            IsHidden = true,
+            Description = "Used to migrate an archive that is on disk, must be used with --metadata-archive-path"
+        };
+        public Option<string> MetadataArchivePath { get; } = new("--metadata-archive-path")
+        {
+            IsHidden = true,
+            Description = "Used to migrate an archive that is on disk, must be used with --git-archive-path"
         };
         public Option<bool> SkipReleases { get; } = new("--skip-releases")
         {
@@ -165,7 +179,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AwsApi awsApi = null;
             HttpDownloadService httpDownloadService = null;
 
-            if (args.GhesApiUrl.HasValue())
+            if (args.GhesApiUrl.HasValue() || (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue()))
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();

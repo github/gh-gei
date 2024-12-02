@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -16,12 +17,14 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
+    private readonly ArchiveUploader _multipartUploader;
 
-    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
+    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, ArchiveUploader multipartUploader)
     {
         _client = client;
         _apiUrl = apiUrl;
         _retryPolicy = retryPolicy;
+        _multipartUploader = multipartUploader;
     }
 
     public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -1069,6 +1072,18 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
         }
+    }
+
+    public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, string archiveName, Stream archiveContent)
+    {
+        if (archiveContent is null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent));
+        }
+
+        var uri = await _multipartUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        return uri;
     }
 
     private static object GetMannequinsPayload(string orgId)

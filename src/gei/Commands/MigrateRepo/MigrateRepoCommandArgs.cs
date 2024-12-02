@@ -25,6 +25,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public bool NoSslVerify { get; set; }
         public string GitArchiveUrl { get; set; }
         public string MetadataArchiveUrl { get; set; }
+        public string GitArchivePath { get; set; }
+        public string MetadataArchivePath { get; set; }
         public bool SkipReleases { get; set; }
         public bool LockSourceRepo { get; set; }
         public bool QueueOnly { get; set; }
@@ -34,15 +36,31 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         [Secret]
         public string GithubTargetPat { get; set; }
         public bool KeepArchive { get; set; }
+        public bool UseGithubStorage { get; set; }
 
         public override void Validate(OctoLogger log)
         {
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
 
+            if (GitArchiveUrl.HasValue() && GitArchivePath.HasValue())
+            {
+                throw new OctoshiftCliException("The options --git-archive-url and --git-archive-path may not be used together");
+            }
+
+            if (MetadataArchiveUrl.HasValue() && MetadataArchivePath.HasValue())
+            {
+                throw new OctoshiftCliException("The options --metadata-archive-url and --metadata-archive-path may not be used together");
+            }
+
             if (string.IsNullOrWhiteSpace(GitArchiveUrl) != string.IsNullOrWhiteSpace(MetadataArchiveUrl))
             {
                 throw new OctoshiftCliException("When using archive urls, you must provide both --git-archive-url --metadata-archive-url");
+            }
+
+            if (string.IsNullOrWhiteSpace(GitArchivePath) != string.IsNullOrWhiteSpace(MetadataArchivePath))
+            {
+                throw new OctoshiftCliException("When using archive files, you must provide both --git-archive-path --metadata-archive-path");
             }
 
             if (GhesApiUrl.IsNullOrWhiteSpace())
@@ -61,6 +79,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 {
                     throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
                 }
+                if (UseGithubStorage)
+                {
+                    throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
+                }
+            }
+
+            if (AwsBucketName.HasValue() && UseGithubStorage)
+            {
+                throw new OctoshiftCliException("The --use-github-storage flag was provided with an AWS S3 Bucket name. Archive cannot be uploaded to both locations.");
+            }
+
+            if (AzureStorageConnectionString.HasValue() && UseGithubStorage)
+            {
+                throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
             }
         }
 

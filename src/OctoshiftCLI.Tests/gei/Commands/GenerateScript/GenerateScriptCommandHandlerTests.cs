@@ -1103,6 +1103,68 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
         }
 
         [Fact]
+        public async Task Sequential_Github_Single_Repo_With_UseGithubStorage()
+        {
+            // Arrange
+            var GHES_API_URL = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { (REPO, "private") });
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{GHES_API_URL}\" --use-github-storage --target-repo-visibility private }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                UseGithubStorage = true,
+                GhesApiUrl = GHES_API_URL,
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
+        public async Task Parallel_Github_Single_Repo_With_UseGithubStorage()
+        {
+            // Arrange
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { (REPO, "private") });
+
+            var expected = new StringBuilder();
+            expected.AppendLine($"$MigrationID = ExecAndGetMigrationID {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"https://foo.com/api/v3\" --use-github-storage --queue-only --target-repo-visibility private }}");
+            expected.AppendLine($"$RepoMigrations[\"{REPO}\"] = $MigrationID");
+            expected.Append($"if ($RepoMigrations[\"{REPO}\"]) {{ gh gei wait-for-migration --migration-id $RepoMigrations[\"{REPO}\"] }}");
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                UseGithubStorage = true,
+                GhesApiUrl = "https://foo.com/api/v3",
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script, 19, 7);
+
+            // Assert
+            _script.Should().Be(expected.ToString());
+        }
+
+
+
+        [Fact]
         public async Task Validates_Env_Vars_Blob_Storage_Not_Validated_When_GHES_3_8()
         {
             // Arrange

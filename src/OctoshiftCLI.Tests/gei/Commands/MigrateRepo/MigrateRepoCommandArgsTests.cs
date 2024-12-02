@@ -15,6 +15,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         private const string TARGET_REPO = "foo-target-repo";
         private const string GITHUB_TARGET_PAT = "github-target-pat";
         private const string AWS_BUCKET_NAME = "aws-bucket-name";
+        private const string GHES_API_URL = "foo-ghes-api.com";
+        private const string GIT_ARCHIVE_URL = "http://host/git-archive.tar.gz";
+        private const string METADATA_ARCHIVE_URL = "http://host/metadata-archive.tar.gz";
+        private const string GIT_ARCHIVE_PATH = "./git-archive.tar.gz";
+        private const string METADATA_ARCHIVE_PATH = "./metadata-archive.tar.gz";
 
         [Fact]
         public void Defaults_TargetRepo_To_SourceRepo()
@@ -68,6 +73,63 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
+        public void UseGithubStorage_Without_Ghes_Api_Url_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                UseGithubStorage = true
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                 .Should()
+                 .ThrowExactly<OctoshiftCliException>()
+                 .WithMessage("*--use-github-storage*");
+        }
+
+        [Fact]
+        public void UseGithubStorage_And_Aws_Bucket_Name_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                AwsBucketName = AWS_BUCKET_NAME,
+                GhesApiUrl = GHES_API_URL,
+                UseGithubStorage = true
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                 .Should()
+                 .ThrowExactly<OctoshiftCliException>()
+                 .WithMessage("*--use-github-storage flag was provided with an AWS S3 Bucket name*");
+        }
+
+        [Fact]
+        public void It_Throws_When_Aws_Bucket_Name_Provided_With_AzureStorageConnectionString_Option()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                AwsBucketName = AWS_BUCKET_NAME,
+                GhesApiUrl = GHES_API_URL,
+                UseGithubStorage = true
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--use-github-storage flag*");
+        }
+
+        [Fact]
         public void No_Ssl_Verify_Without_Ghes_Api_Url_Throws()
         {
             var args = new MigrateRepoCommandArgs
@@ -101,6 +163,80 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--keep-archive*");
+        }
+
+        [Fact]
+        public void GitArchivePath_Without_MetadataArchivePath_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_PATH
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*you must provide both --git-archive-path --metadata-archive-path*");
+        }
+
+        [Fact]
+        public void MetadataArchivePath_Without_GitArchivePath_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*you must provide both --git-archive-path --metadata-archive-path*");
+        }
+
+        [Fact]
+        public void GitArchiveUrl_With_GitArchivePath_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchiveUrl = GIT_ARCHIVE_URL,
+                GitArchivePath = GIT_ARCHIVE_PATH
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--git-archive-url and --git-archive-path may not be used together*");
+        }
+
+        [Fact]
+        public void MetadataArchiveUrl_With_MetadataArchivePath_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--metadata-archive-url and --metadata-archive-path may not be used together*");
         }
     }
 }
