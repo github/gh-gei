@@ -2576,6 +2576,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                     ""resolution"": null,
                     ""resolved_by"": null,
                     ""resolved_at"": null,
+                    ""resolution_comment"": null,
                     ""push_protection_bypassed"": false,
                     ""push_protection_bypassed_by"": null,
                     ""push_protection_bypassed_at"": null
@@ -2609,6 +2610,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                         ""site_admin"": true
                     }},
                     ""resolved_at"": ""2022-04-05T20:57:03"",
+                    ""resolution_comment"": null,
                     ""push_protection_bypassed"": false,
                     ""push_protection_bypassed_by"": null,
                     ""push_protection_bypassed_at"": null
@@ -2630,6 +2632,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                     ""resolution"": null,
 		            ""resolved_by"": null,
 		            ""resolved_at"": null,
+                    ""resolution_comment"": null,
 		            ""push_protection_bypassed"": false,
 		            ""push_protection_bypassed_by"": null,
 		            ""push_protection_bypassed_at"": null
@@ -2670,6 +2673,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                         ""site_admin"": true
                     }},
                     ""resolved_at"": ""2022-08-15T13:53:42Z"",
+                    ""resolution_comment"": null,
                     ""push_protection_bypassed"": false,
 		            ""push_protection_bypassed_by"": null,
 		            ""push_protection_bypassed_at"": null
@@ -2809,6 +2813,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         actual.State.Should().Be((string)expectedData["state"]);
         actual.SecretType.Should().Be((string)expectedData["secret_type"]);
         actual.Resolution.Should().Be((string)expectedData["resolution"]);
+        actual.ResolutionComment.Should().Be((string)expectedData["resolution_comment"]);
         actual.Secret.Should().Be((string)expectedData["secret"]);
     }
 
@@ -2819,16 +2824,18 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         const int alertNumber = 100;
         const string alertState = "resolved";
         const string alertResolution = "wont_fix";
+        const string alertResolutionComment = "Risk has been accepted";
 
         var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}";
         var payload = new
         {
             state = alertState,
-            resolution = alertResolution
+            resolution = alertResolution,
+            resolution_comment = alertResolutionComment
         };
 
         // Act
-        await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution);
+        await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution, alertResolutionComment);
 
         // Assert
         _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
@@ -2846,6 +2853,30 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Act
         await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState);
+
+        // Assert
+        _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+    }
+
+
+    [Fact]
+    public async Task UpdateSecretScanningAlert_Replaces_Null_Resolution_Comment_With_Empty_String()
+    {
+        // Arrange
+        const int alertNumber = 100;
+        const string alertState = "resolved";
+        const string alertResolution = "wont_fix";
+
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}";
+        var payload = new
+        {
+            state = alertState,
+            resolution = alertResolution,
+            resolution_comment = string.Empty
+        };
+
+        // Act
+        await _githubApi.UpdateSecretScanningAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, alertState, alertResolution);
 
         // Assert
         _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
