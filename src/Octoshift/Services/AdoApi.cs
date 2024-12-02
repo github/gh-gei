@@ -214,6 +214,13 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
+#pragma warning disable IDE0046 // Convert to conditional expression
+        if (data["dataProviders"]["ms.vss-work-web.github-user-data-provider"] == null)
+        {
+            throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+        }
+#pragma warning restore IDE0046 // Convert to conditional expression
+
         return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
     }
 
