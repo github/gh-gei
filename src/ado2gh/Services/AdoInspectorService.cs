@@ -168,7 +168,7 @@ namespace OctoshiftCLI.AdoToGithub
         {
             if (!_teamProjects.TryGetValue(org, out var teamProjects))
             {
-                teamProjects = TeamProjectFilter.HasValue() ? new List<string>() { TeamProjectFilter } : (await _adoApi.GetTeamProjects(org)).ToList();
+                teamProjects = TeamProjectFilter.HasValue() ? [TeamProjectFilter] : (await _adoApi.GetTeamProjects(org)).ToList();
                 _teamProjects.Add(org, teamProjects);
             }
 

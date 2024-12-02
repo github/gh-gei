@@ -31,7 +31,7 @@ public class ConfigureAutoLinkCommandHandlerTests
     public async Task Happy_Path()
     {
         _mockGithubApi.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-                  .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>());
+                  .ReturnsAsync([]);
 
         var args = new ConfigureAutoLinkCommandArgs
         {
@@ -77,10 +77,10 @@ public class ConfigureAutoLinkCommandHandlerTests
     public async Task Idempotency_KeyPrefix_Exists()
     {
         _mockGithubApi.Setup(x => x.GetAutoLinks(It.IsAny<string>(), It.IsAny<string>()))
-                  .ReturnsAsync(new List<(int Id, string KeyPrefix, string UrlTemplate)>
-                  {
+                  .ReturnsAsync(
+                  [
                       (1, KEY_PREFIX, "SomethingElse"),
-                  });
+                  ]);
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));

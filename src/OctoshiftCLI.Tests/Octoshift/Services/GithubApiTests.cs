@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -1995,20 +1994,19 @@ public class GithubApiTests
             {
                 CreateAttributionInvitation = null
             },
-            Errors = new Collection<ErrorData>{new ErrorData
-            {
-                Type = "UNPROCESSABLE",
-                Message = "Target must be a member of the octocat organization",
-                Path = new Collection<string> { "createAttributionInvitation" },
-                Locations = new Collection<Location> {
-                            new Location()
-                            {
-                                Line = 2,
-                                Column = 14
-                            }
-                        }
+            Errors =
+            [
+                new ErrorData
+                {
+                    Type = "UNPROCESSABLE",
+                    Message = "Target must be a member of the octocat organization",
+                    Path = ["createAttributionInvitation"],
+                    Locations =
+                    [
+                        new Location() { Line = 2, Column = 14 }
+                    ]
                 }
-            }
+            ]
         };
 
         _githubClientMock
