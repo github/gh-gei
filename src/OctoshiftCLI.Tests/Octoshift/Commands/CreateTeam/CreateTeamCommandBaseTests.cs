@@ -14,7 +14,7 @@ public class CreateTeamCommandTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly CreateTeamCommandBase _command = new();
+    private readonly CreateTeamCommandBase _command = [];
 
     public CreateTeamCommandTests()
     {

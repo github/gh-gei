@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly RewirePipelineCommand _command = new();
+        private readonly RewirePipelineCommand _command = [];
 
         public RewirePipelineCommandTests()
         {

@@ -13,7 +13,7 @@ if ((Test-Path env:SKIP_WINDOWS) -And $env:SKIP_WINDOWS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping ado2gh Windows build because SKIP_WINDOWS is set"
 }
 else {
-    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -27,7 +27,7 @@ else {
 
     Copy-Item ./dist/win-x64/ado2gh.exe ./dist/win-x64/ado2gh-windows-amd64.exe
 
-    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -46,7 +46,7 @@ if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
     Write-Output "Skipping ado2gh Linux build because SKIP_LINUX is set"
 }
 else {
-    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -65,7 +65,7 @@ if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping ado2gh MacOS build because SKIP_MACOS is set"
 }
 else {
-    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -86,7 +86,7 @@ if ((Test-Path env:SKIP_WINDOWS) -And $env:SKIP_WINDOWS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping gei Windows build because SKIP_WINDOWS is set"
 }
 else {
-    dotnet publish src/gei/gei.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/gei/gei.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -98,7 +98,7 @@ else {
 
     Rename-Item ./dist/win-x64/gei.exe gei-windows-amd64.exe
 
-    dotnet publish src/gei/gei.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/gei/gei.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -115,7 +115,7 @@ if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
     Write-Output "Skipping gei Linux build because SKIP_LINUX is set"
 }
 else {
-    dotnet publish src/gei/gei.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/gei/gei.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -132,7 +132,7 @@ if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping gei MacOS build because SKIP_MACOS is set"
 }
 else {
-    dotnet publish src/gei/gei.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/gei/gei.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -150,7 +150,7 @@ if ((Test-Path env:SKIP_WINDOWS) -And $env:SKIP_WINDOWS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping bbs2gh Windows build because SKIP_WINDOWS is set"
 }
 else {
-    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/win-x64/ -r win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -162,7 +162,7 @@ else {
 
     Rename-Item ./dist/win-x64/bbs2gh.exe bbs2gh-windows-amd64.exe
 
-    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/win-x86/ -r win-x86 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -179,7 +179,7 @@ if ((Test-Path env:SKIP_LINUX) -And $env:SKIP_LINUX.ToUpper() -eq "TRUE") {
     Write-Output "Skipping bbs2gh Linux build because SKIP_LINUX is set"
 }
 else {
-    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/linux-x64/ -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -196,7 +196,7 @@ if ((Test-Path env:SKIP_MACOS) -And $env:SKIP_MACOS.ToUpper() -eq "TRUE") {
     Write-Output "Skipping bbs2gh MacOS build because SKIP_MACOS is set"
 }
 else {
-    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/osx-x64/ -r osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
