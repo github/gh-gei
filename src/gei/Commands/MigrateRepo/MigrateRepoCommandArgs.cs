@@ -79,10 +79,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 {
                     throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
                 }
-                if (UseGithubStorage)
-                {
-                    throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
-                }
+            }
+
+            if (UseGithubStorage && (GhesApiUrl.IsNullOrWhiteSpace() && GitArchivePath.IsNullOrWhiteSpace()))
+            {
+                throw new OctoshiftCliException("When using GitHub storage, you must provide --ghes-api-url, or --git-archive-path and --metadata-archive-path");
             }
 
             if (AwsBucketName.HasValue() && UseGithubStorage)
