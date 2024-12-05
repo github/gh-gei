@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -884,10 +883,10 @@ public class GithubApi
         {
             var result = new ReattributeMannequinToUserResult
             {
-                Errors = new Collection<ErrorData>
-            {
+                Errors =
+            [
               new ErrorData { Message = ex.Message }
-            }
+            ]
             };
             return result;
         }
