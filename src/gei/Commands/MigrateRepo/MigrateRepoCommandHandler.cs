@@ -131,7 +131,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             var shouldUploadOnce = args.GitArchivePath == args.MetadataArchivePath;
 
             args.GitArchiveUrl = await UploadArchive(
-                args.GithubSourceOrg,
+                args.GithubTargetOrg,
                 args.AwsBucketName,
                 args.UseGithubStorage,
                 args.GitArchivePath,
@@ -140,7 +140,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             args.MetadataArchiveUrl = shouldUploadOnce
                 ? args.GitArchiveUrl
                 : await UploadArchive(
-                    args.GithubSourceOrg,
+                    args.GithubTargetOrg,
                     args.AwsBucketName,
                     args.UseGithubStorage,
                     args.MetadataArchivePath,

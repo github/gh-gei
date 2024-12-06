@@ -97,7 +97,7 @@ Alternatively, you can use for gei
  dotnet watch build --project  src/gei/gei.csproj
 ```
 to run builds automatically.
-- If you're doing this, you can run the binaries with `./src/gei/bin/Debug/net6.0/gei`
+- If you're doing this, you can run the binaries with `./src/gei/bin/Debug/net8.0/gei`
 
 If you aren't using watch, run **after** building with:
 ```bash
