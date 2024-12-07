@@ -20,7 +20,7 @@ public class AzureApi
     private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
     private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
     private const int UPLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
-    private DateTime _nextProgressReport;
+    private DateTime _nextProgressReport = DateTime.Now;
 
     public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
     {
@@ -58,7 +58,6 @@ public class AzureApi
         var containerClient = await CreateBlobContainerAsync();
         var blobClient = containerClient.GetBlobClient(fileName);
 
-        _nextProgressReport = DateTime.Now;
         var progress = new Progress<long>();
         var archiveSize = content.Length;
         progress.ProgressChanged += (_, uploadedBytes) => LogProgress(uploadedBytes, archiveSize);
