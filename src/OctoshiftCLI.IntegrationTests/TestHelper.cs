@@ -553,7 +553,10 @@ steps:
             {
                 WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory(),
                 FileName = fileName,
-                Arguments = command
+                Arguments = command,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             if (environmentVariables != null)
@@ -573,7 +576,23 @@ steps:
 
             _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
 
-            var p = Process.Start(startInfo);
+            using var p = new Process();
+            p.StartInfo = startInfo;
+            p.OutputDataReceived += (_, args) =>
+            {
+                if (args.Data != null)
+                {
+                    _output.WriteLine(args.Data);
+                }
+            };
+            p.ErrorDataReceived += (_, args) =>
+            {
+                if (args.Data != null)
+                {
+                    _output.WriteLine(args.Data);
+                }
+            };
+            p.Start();
             await p.WaitForExitAsync();
 
             p.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0.");
