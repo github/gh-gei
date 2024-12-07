@@ -5,10 +5,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Factories;
 public class AwsApiFactory
 {
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    private readonly OctoLogger _octoLogger;
 
-    public AwsApiFactory(EnvironmentVariableProvider environmentVariableProvider)
+    public AwsApiFactory(EnvironmentVariableProvider environmentVariableProvider, OctoLogger octoLogger)
     {
         _environmentVariableProvider = environmentVariableProvider;
+        _octoLogger = octoLogger;
     }
 
     public virtual AwsApi Create(string awsRegion = null, string awsAccessKeyId = null, string awsSecretAccessKey = null, string awsSessionToken = null)
@@ -18,6 +20,6 @@ public class AwsApiFactory
         awsSessionToken ??= _environmentVariableProvider.AwsSessionToken(false);
         awsRegion ??= _environmentVariableProvider.AwsRegion();
 
-        return new AwsApi(awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken);
+        return new AwsApi(_octoLogger, awsAccessKeyId, awsSecretAccessKey, awsRegion, awsSessionToken);
     }
 }
