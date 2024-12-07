@@ -71,7 +71,7 @@ public class AzureApi
             },
             ProgressHandler = progress
         };
-        
+
         await blobClient.UploadAsync(content, options);
         return GetServiceSasUriForBlob(blobClient);
     }
