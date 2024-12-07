@@ -31,6 +31,7 @@ public sealed class BbsToGithub : IDisposable
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
+    private readonly object _mutex = new();
 
     public enum ArchiveUploadOption { AzureStorage, AwsS3, GithubStorage }
 
@@ -39,7 +40,17 @@ public sealed class BbsToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
-        _logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
+        _logger = new OctoLogger(
+            _ => { },
+            x =>
+            {
+                lock (_mutex)
+                {
+                    _output.WriteLine(x);
+                }
+            }, 
+            _ => { }, 
+            _ => { });
 
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
