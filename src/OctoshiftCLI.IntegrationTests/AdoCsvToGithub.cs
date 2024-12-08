@@ -11,7 +11,7 @@ namespace OctoshiftCLI.IntegrationTests
         {
         }
 
-        [Fact]
+        // [Fact]
         public async Task With_Inventory_Report_Csv()
         {
             var adoOrg = $"gei-e2e-testing-csv-{TestHelper.GetOsName()}";

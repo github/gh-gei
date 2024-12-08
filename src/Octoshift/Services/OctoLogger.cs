@@ -23,6 +23,7 @@ public class OctoLogger
     private readonly string _logFilePath;
     private readonly string _verboseFilePath;
     private readonly bool _debugMode;
+    private readonly object _mutex = new();
 
     private readonly Action<string> _writeToLog;
     private readonly Action<string> _writeToVerboseLog;
@@ -49,10 +50,34 @@ public class OctoLogger
             _debugMode = true;
         }
 
-        _writeToLog = msg => File.AppendAllText(_logFilePath, msg);
-        _writeToVerboseLog = msg => File.AppendAllText(_verboseFilePath, msg);
-        _writeToConsoleOut = msg => Console.Write(msg);
-        _writeToConsoleError = msg => Console.Error.Write(msg);
+        _writeToLog = msg =>
+        {
+            lock (_mutex)
+            {
+                File.AppendAllText(_logFilePath, msg);
+            }
+        };
+        _writeToVerboseLog = msg =>
+        {
+            lock (_mutex)
+            {
+                File.AppendAllText(_verboseFilePath, msg);
+            }
+        };
+        _writeToConsoleOut = msg =>
+        {
+            lock (_mutex)
+            {
+                Console.Write(msg);
+            }
+        };
+        _writeToConsoleError = msg =>
+        {
+            lock (_mutex)
+            {
+                Console.Error.Write(msg);
+            }
+        };
     }
 
     public OctoLogger(Action<string> writeToLog, Action<string> writeToVerboseLog, Action<string> writeToConsoleOut, Action<string> writeToConsoleError)

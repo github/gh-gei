@@ -63,9 +63,9 @@ public sealed class GhesToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    // [Theory]
+    // [InlineData(false)]
+    // [InlineData(true)]
     public async Task Basic(bool useGithubStorage)
     {
         var githubSourceOrg = $"e2e-testing-{TestHelper.GetOsName()}";

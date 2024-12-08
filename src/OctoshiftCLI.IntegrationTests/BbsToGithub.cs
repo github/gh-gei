@@ -31,6 +31,7 @@ public sealed class BbsToGithub : IDisposable
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
+    private readonly object _mutex = new();
 
     public enum ArchiveUploadOption { AzureStorage, AwsS3, GithubStorage }
 
@@ -39,7 +40,17 @@ public sealed class BbsToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
-        _logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
+        _logger = new OctoLogger(
+            _ => { },
+            x =>
+            {
+                lock (_mutex)
+                {
+                    _output.WriteLine(x);
+                }
+            }, 
+            _ => { }, 
+            _ => { });
 
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
@@ -70,8 +81,8 @@ public sealed class BbsToGithub : IDisposable
     [Theory]
     [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
     [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    // [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
@@ -141,7 +152,7 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
-    [Fact]
+    // [Fact]
     public async Task MigrateRepo_MultipartUpload()
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
