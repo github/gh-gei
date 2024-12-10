@@ -157,7 +157,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                  .Should()
                  .ThrowExactly<OctoshiftCliException>()
-                 .WithMessage("When using GitHub storage*");
+                 .WithMessage("*--use-github-storage*");
         }
 
         [Fact]

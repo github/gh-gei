@@ -72,7 +72,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 
                 if (UseGithubStorage && GitArchivePath.IsNullOrWhiteSpace())
                 {
-                    throw new OctoshiftCliException("When using GitHub storage, you must provide --ghes-api-url, or --git-archive-path and --metadata-archive-path");
+                    throw new OctoshiftCliException("When using --use-github-storage, you must provide --ghes-api-url, or --git-archive-path and --metadata-archive-path");
                 }
 
                 if (NoSslVerify)
