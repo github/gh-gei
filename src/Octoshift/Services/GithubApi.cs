@@ -908,7 +908,7 @@ public class GithubApi
             .ToListAsync();
     }
 
-    public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null)
+    public virtual async Task UpdateSecretScanningAlert(string org, string repo, int alertNumber, string state, string resolution = null, string resolutionComment = null)
     {
         if (!SecretScanningAlert.IsOpenOrResolved(state))
         {
@@ -922,7 +922,7 @@ public class GithubApi
 
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts/{alertNumber}";
 
-        object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution };
+        object payload = state == SecretScanningAlert.AlertStateOpen ? new { state } : new { state, resolution, resolution_comment = resolutionComment };
         await _client.PatchAsync(url, payload);
     }
 
@@ -1179,6 +1179,7 @@ public class GithubApi
             Number = (int)secretAlert["number"],
             State = (string)secretAlert["state"],
             Resolution = (string)secretAlert["resolution"],
+            ResolutionComment = (string)secretAlert["resolution_comment"],
             SecretType = (string)secretAlert["secret_type"],
             Secret = (string)secretAlert["secret"],
         };
@@ -1186,12 +1187,24 @@ public class GithubApi
     private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
         new()
         {
+            LocationType = (string)alertLocation["type"],
             Path = (string)alertLocation["details"]["path"],
             StartLine = (int)alertLocation["details"]["start_line"],
             EndLine = (int)alertLocation["details"]["end_line"],
             StartColumn = (int)alertLocation["details"]["start_column"],
             EndColumn = (int)alertLocation["details"]["end_column"],
             BlobSha = (string)alertLocation["details"]["blob_sha"],
+            IssueTitleUrl = (string)alertLocation["details"]["issue_title_url"],
+            IssueBodyUrl = (string)alertLocation["details"]["issue_body_url"],
+            IssueCommentUrl = (string)alertLocation["details"]["issue_comment_url"],
+            DiscussionTitleUrl = (string)alertLocation["details"]["discussion_title_url"],
+            DiscussionBodyUrl = (string)alertLocation["details"]["discussion_body_url"],
+            DiscussionCommentUrl = (string)alertLocation["details"]["discussion_comment_url"],
+            PullRequestTitleUrl = (string)alertLocation["details"]["pull_request_title_url"],
+            PullRequestBodyUrl = (string)alertLocation["details"]["pull_request_body_url"],
+            PullRequestCommentUrl = (string)alertLocation["details"]["pull_request_comment_url"],
+            PullRequestReviewUrl = (string)alertLocation["details"]["pull_request_review_url"],
+            PullRequestReviewCommentUrl = (string)alertLocation["details"]["pull_request_review_comment_url"],
         };
 
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
