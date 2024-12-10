@@ -12,7 +12,7 @@ public class AbortMigrationCommandBaseTests
     private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly ServiceProvider _serviceProvider;
-    private readonly AbortMigrationCommandBase _command = new();
+    private readonly AbortMigrationCommandBase _command = [];
 
     private const string REPO_MIGRATION_ID = "RM_MIGRATION_ID";
 

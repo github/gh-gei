@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/gei/bin/Debug/net6.0/gei.dll",
+            "program": "${workspaceFolder}/src/gei/bin/Debug/net8.0/gei.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/gei",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
@@ -26,7 +26,7 @@
             "request": "launch",
             "preLaunchTask": "build-ado2gh",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/ado2gh/bin/Debug/net6.0/ado2gh.dll",
+            "program": "${workspaceFolder}/src/ado2gh/bin/Debug/net8.0/ado2gh.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/ado2gh",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
@@ -47,7 +47,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/bbs2gh/bin/Debug/net6.0/bbs2gh.dll",
+            "program": "${workspaceFolder}/src/bbs2gh/bin/Debug/net8.0/bbs2gh.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/bbs2gh",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

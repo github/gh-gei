@@ -879,6 +879,17 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
         }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Target must be a member"))
+        {
+            var result = new ReattributeMannequinToUserResult
+            {
+                Errors =
+            [
+              new ErrorData { Message = ex.Message }
+            ]
+            };
+            return result;
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)

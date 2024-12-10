@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.LockRepo
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly LockRepoCommand _command = new();
+        private readonly LockRepoCommand _command = [];
 
         public LockRepoCommandTests()
         {

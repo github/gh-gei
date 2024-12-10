@@ -36,7 +36,7 @@ public class MigrateRepoCommandTests
     private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
     private readonly Mock<WarningsCountLogger> _warningsCountLogger = TestHelpers.CreateMock<WarningsCountLogger>();
 
-    private readonly MigrateRepoCommand _command = new();
+    private readonly MigrateRepoCommand _command = [];
 
     public MigrateRepoCommandTests()
     {
