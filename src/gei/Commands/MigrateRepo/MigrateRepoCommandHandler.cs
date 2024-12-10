@@ -69,7 +69,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.GhesApiUrl.HasValue())
         {
-            ValidateGHESOptions(args, blobCredentialsRequired);
+            ValidateGithubOptions(args, blobCredentialsRequired);
         }
 
         if (args.GhesApiUrl.HasValue())
@@ -402,7 +402,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
-    private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
+    private void ValidateGithubOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
         var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
         var shouldUseAwsS3 = args.AwsBucketName.HasValue();
