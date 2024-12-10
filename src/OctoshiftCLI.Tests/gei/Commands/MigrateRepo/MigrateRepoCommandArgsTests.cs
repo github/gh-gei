@@ -55,7 +55,77 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Aws_Bucket_Name_Without_Ghes_Api_Url_Throws()
+        public void AwsBucketName_Validates_With_GhesApiUrl()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                AwsBucketName = AWS_BUCKET_NAME,
+                GhesApiUrl = GHES_API_URL
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            args.TargetRepo.Should().Be(SOURCE_REPO);
+        }
+
+        [Fact]
+        public void AwsBucketName_Validates_With_ArchivePaths()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                AwsBucketName = AWS_BUCKET_NAME,
+                GitArchivePath = GIT_ARCHIVE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            args.TargetRepo.Should().Be(SOURCE_REPO);
+        }
+
+        [Fact]
+        public void UseGithubStorage_Validates_With_GhesApiUrl()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                GhesApiUrl = GHES_API_URL,
+                UseGithubStorage = true
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            args.TargetRepo.Should().Be(SOURCE_REPO);
+        }
+
+        [Fact]
+        public void UseGithubStorage_Validates_With_ArchivePaths()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                GitArchivePath = GIT_ARCHIVE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH,
+                UseGithubStorage = true
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            args.TargetRepo.Should().Be(SOURCE_REPO);
+        }
+
+        [Fact]
+        public void Aws_Bucket_Name_Without_GhesApiUrl_Or_ArchivePaths_Throws()
         {
             var args = new MigrateRepoCommandArgs
             {
@@ -73,7 +143,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
-        public void UseGithubStorage_Without_Ghes_Api_Url_Throws()
+        public void UseGithubStorage_Without_GhesApiUrl_Or_ArchivePaths_Throws()
         {
             var args = new MigrateRepoCommandArgs
             {
