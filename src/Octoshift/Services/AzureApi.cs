@@ -6,6 +6,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
@@ -14,9 +15,12 @@ public class AzureApi
     private readonly HttpClient _client;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly OctoLogger _log;
+    private readonly object _mutex = new();
     private const string CONTAINER_PREFIX = "migration-archives";
     private const int AUTHORIZATION_TIMEOUT_IN_HOURS = 48;
     private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
+    private const int UPLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
+    private DateTime _nextProgressReport = DateTime.Now;
 
     public AzureApi(HttpClient client, BlobServiceClient blobServiceClient, OctoLogger log)
     {
@@ -48,8 +52,15 @@ public class AzureApi
 
     public virtual async Task<Uri> UploadToBlob(string fileName, Stream content)
     {
+        ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
+        ArgumentNullException.ThrowIfNull(content);
+
         var containerClient = await CreateBlobContainerAsync();
         var blobClient = containerClient.GetBlobClient(fileName);
+
+        var progress = new Progress<long>();
+        var archiveSize = content.Length;
+        progress.ProgressChanged += (_, uploadedBytes) => LogProgress(uploadedBytes, archiveSize);
 
         var options = new BlobUploadOptions
         {
@@ -58,6 +69,7 @@ public class AzureApi
                 InitialTransferSize = DEFAULT_BLOCK_SIZE,
                 MaximumTransferSize = DEFAULT_BLOCK_SIZE
             },
+            ProgressHandler = progress
         };
 
         await blobClient.UploadAsync(content, options);
@@ -88,5 +100,25 @@ public class AzureApi
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
         return blobClient.GenerateSasUri(sasBuilder);
+    }
+
+    private void LogProgress(long uploadedBytes, long totalBytes)
+    {
+        lock (_mutex)
+        {
+            if (DateTime.Now < _nextProgressReport)
+            {
+                return;
+            }
+
+            _nextProgressReport = _nextProgressReport.AddSeconds(UPLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
+        }
+
+        var percentage = (int)(uploadedBytes * 100L / totalBytes);
+        var progressMessage = uploadedBytes > 0
+            ? $", {uploadedBytes.ToLogFriendlySize()} out of {totalBytes.ToLogFriendlySize()} ({percentage}%) completed"
+            : "";
+
+        _log.LogInformation($"Archive upload in progress{progressMessage}...");
     }
 }
