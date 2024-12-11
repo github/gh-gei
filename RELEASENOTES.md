@@ -1,2 +1,1 @@
-- catches exception when Target is not a member of the organization and the `--skip-invitation` flag is enabled
 - Add progress report to `gh [gei|bbs2gh] migrate-repo` command when uploading migration archives to Azure Blob or AWS S3
