@@ -1,1 +1,2 @@
-`gh gei migrate-repo` now allows using either `--ghes-api-url` or archive paths (`--git-archive-path` and `--metadata-archive-path`).
+- Add progress report to `gh [gei|bbs2gh] migrate-repo` command when uploading migration archives to Azure Blob or AWS S3
+- `gh gei migrate-repo` now allows using either `--ghes-api-url` or archive paths (`--git-archive-path` and `--metadata-archive-path`).

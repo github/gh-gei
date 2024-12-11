@@ -23,6 +23,7 @@ public class OctoLogger
     private readonly string _logFilePath;
     private readonly string _verboseFilePath;
     private readonly bool _debugMode;
+    private readonly object _mutex = new();
 
     private readonly Action<string> _writeToLog;
     private readonly Action<string> _writeToVerboseLog;
@@ -103,20 +104,32 @@ public class OctoLogger
         return result;
     }
 
-    public virtual void LogInformation(string msg) => Log(msg, LogLevel.INFO);
+    public virtual void LogInformation(string msg)
+    {
+        lock (_mutex)
+        {
+            Log(msg, LogLevel.INFO);
+        }
+    }
 
     public virtual void LogWarning(string msg)
     {
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Log(msg, LogLevel.WARNING);
-        Console.ResetColor();
+        lock (_mutex)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Log(msg, LogLevel.WARNING);
+            Console.ResetColor();
+        }
     }
 
     public virtual void LogError(string msg)
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Log(msg, LogLevel.ERROR);
-        Console.ResetColor();
+        lock (_mutex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Log(msg, LogLevel.ERROR);
+            Console.ResetColor();
+        }
     }
 
     public virtual void LogError(Exception ex)
@@ -126,30 +139,36 @@ public class OctoLogger
             throw new ArgumentNullException(nameof(ex));
         }
 
-        var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString();
-        var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
+        lock (_mutex)
+        {
+            var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString();
+            var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
 
-        var output = Redact(FormatMessage(logMessage, LogLevel.ERROR));
+            var output = Redact(FormatMessage(logMessage, LogLevel.ERROR));
 
-        Console.ForegroundColor = ConsoleColor.Red;
-        _writeToConsoleError(output);
-        Console.ResetColor();
+            Console.ForegroundColor = ConsoleColor.Red;
+            _writeToConsoleError(output);
+            Console.ResetColor();
 
-        _writeToLog(output);
-        _writeToVerboseLog(Redact(FormatMessage(verboseMessage, LogLevel.ERROR)));
+            _writeToLog(output);
+            _writeToVerboseLog(Redact(FormatMessage(verboseMessage, LogLevel.ERROR)));
+        }
     }
 
     public virtual void LogVerbose(string msg)
     {
-        if (Verbose)
+        lock (_mutex)
         {
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Log(msg, LogLevel.VERBOSE);
-            Console.ResetColor();
-        }
-        else
-        {
-            _writeToVerboseLog(Redact(FormatMessage(msg, LogLevel.VERBOSE)));
+            if (Verbose)
+            {
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Log(msg, LogLevel.VERBOSE);
+                Console.ResetColor();
+            }
+            else
+            {
+                _writeToVerboseLog(Redact(FormatMessage(msg, LogLevel.VERBOSE)));
+            }
         }
     }
 
@@ -163,9 +182,12 @@ public class OctoLogger
 
     public virtual void LogSuccess(string msg)
     {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Log(msg, LogLevel.SUCCESS);
-        Console.ResetColor();
+        lock (_mutex)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Log(msg, LogLevel.SUCCESS);
+            Console.ResetColor();
+        }
     }
 
     public virtual void RegisterSecret(string secret) => _secrets.Add(secret);
