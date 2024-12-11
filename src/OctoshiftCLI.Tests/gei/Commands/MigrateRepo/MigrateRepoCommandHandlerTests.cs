@@ -1511,6 +1511,175 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task GitArchivePath_With_Both_Azure_Storage_Connection_String_And_Aws_Bucket_Name_Throws()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsBucketName = AWS_BUCKET_NAME
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Access_Key_Id_Throws()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-access-key*");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Secret_Key_Throws()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY_ID
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*--aws-secret-key*");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Is_Provided_But_No_Aws_Region_Throws()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AwsBucketName = AWS_BUCKET_NAME,
+                AwsAccessKey = AWS_ACCESS_KEY_ID,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                AwsSessionToken = AWS_SESSION_TOKEN
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Not_Provided_But_Aws_Access_Key_Provided()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsAccessKey = AWS_ACCESS_KEY_ID
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Not_Provided_But_Aws_Secret_Key_Provided()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsSecretKey = AWS_SECRET_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Not_Provided_But_Aws_Session_Token_Provided()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsSessionToken = AWS_SECRET_ACCESS_KEY
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
+        public async Task GitArchivePath_When_Aws_Bucket_Name_Not_Provided_But_Aws_Region_Provided()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                AwsRegion = AWS_REGION
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage("*AWS S3*--aws-bucket-name*");
+        }
+
+        [Fact]
         public async Task Keep_Archive_Does_Not_Call_DeleteIfExists()
         {
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
