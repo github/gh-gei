@@ -14,7 +14,6 @@ namespace OctoshiftCLI.IntegrationTests;
 [Collection("Integration Tests")]
 public sealed class BbsToGithub : IDisposable
 {
-
     private const string SSH_KEY_FILE = "ssh_key.pem";
     private const string AWS_REGION = "us-east-1";
 
@@ -28,9 +27,12 @@ public sealed class BbsToGithub : IDisposable
     private readonly HttpClient _sourceBbsHttpClient;
     private readonly BbsClient _sourceBbsClient;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly ArchiveUploader _archiveUploader;
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
     private readonly string _azureStorageConnectionString;
+
+    public enum ArchiveUploadOption { AzureStorage, AwsS3, GithubStorage }
 
     public BbsToGithub(ITestOutputHelper output)
     {
@@ -57,7 +59,8 @@ public sealed class BbsToGithub : IDisposable
 
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger));
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, _logger);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 
@@ -65,10 +68,11 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, true)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, true)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, false)]
-    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, bool useAzureForArchiveUpload)
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
@@ -108,16 +112,20 @@ public sealed class BbsToGithub : IDisposable
         }
 
         var archiveUploadOptions = "";
-        if (useAzureForArchiveUpload)
+        if (uploadOption == ArchiveUploadOption.AzureStorage)
         {
             _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
         }
-        else
+        else if (uploadOption == ArchiveUploadOption.AwsS3)
         {
             _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
             _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
             var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
             archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
+        }
+        else if (uploadOption == ArchiveUploadOption.GithubStorage)
+        {
+            archiveUploadOptions = " --use-github-storage";
         }
 
         await _targetHelper.RunBbsCliMigration(
@@ -131,6 +139,33 @@ public sealed class BbsToGithub : IDisposable
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
         // TODO: Assert migration logs are downloaded
+    }
+
+    [Fact]
+    public async Task MigrateRepo_MultipartUpload()
+    {
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
+        var bbsProjectKey = $"IN";
+        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
+        var targetRepo = $"IN-100_cli";
+
+        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+        await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+
+
+        var retryPolicy = new RetryPolicy(null);
+        await retryPolicy.Retry(async () =>
+        {
+            await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
+        });
+
+        await _targetHelper.RunBbsCliMigration(
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
+
+        _targetHelper.AssertNoErrorInLogs(_startTime);
+
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
     }
 
     private string GetSshKeyName(string bbsServer)

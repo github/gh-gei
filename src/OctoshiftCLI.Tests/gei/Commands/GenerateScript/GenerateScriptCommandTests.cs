@@ -18,7 +18,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         private readonly Mock<GhesVersionCheckerFactory> _mockGhesVersionCheckerFactory = TestHelpers.CreateMock<GhesVersionCheckerFactory>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly GenerateScriptCommand _command = new();
+        private readonly GenerateScriptCommand _command = [];
 
         public GenerateScriptCommandTests()
         {
@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(15);
+            command.Options.Count.Should().Be(16);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
@@ -56,6 +56,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
         }
 
         [Fact]

@@ -35,6 +35,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(AwsRegion);
         AddOption(KeepArchive);
         AddOption(NoSslVerify);
+        AddOption(UseGithubStorage);
     }
 
     public Option<string> BbsServerUrl { get; } = new(
@@ -122,6 +123,12 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
     public Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+    };
+
+    public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
+    {
+        IsHidden = true,
+        Description = "Enables multipart uploads to a GitHub owned storage for use during migration",
     };
 
     public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)

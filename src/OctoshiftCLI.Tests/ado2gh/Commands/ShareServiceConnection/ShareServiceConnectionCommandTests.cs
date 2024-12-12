@@ -14,7 +14,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.ShareServiceConnection
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
-        private readonly ShareServiceConnectionCommand _command = new();
+        private readonly ShareServiceConnectionCommand _command = [];
 
         public ShareServiceConnectionCommandTests()
         {

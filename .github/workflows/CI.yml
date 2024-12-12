@@ -63,7 +63,7 @@ jobs:
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Unit Test Results
       if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Unit Test Results
         path: src/OctoshiftCLI.Tests/unit-tests.xml
@@ -71,11 +71,11 @@ jobs:
     # This is used by the subsequent publish-test-results.yml
     - name: Upload Code Coverage Report
       if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Code Coverage Report
         path: code-coverage-results.md
-    
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       if: matrix.runner-os == 'ubuntu-latest'
@@ -85,7 +85,7 @@ jobs:
     steps:
     # This is used by the subsequent publish-test-results.yaml
     - name: Upload Event File
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -130,7 +130,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -162,8 +162,9 @@ jobs:
       with:
         global-json-file: global.json
 
+
     - name: Download Binaries
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
@@ -213,14 +214,14 @@ jobs:
       working-directory: ./gh-gei
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Install gh-ado2gh extension
       run: gh extension install .
       shell: pwsh
       working-directory: ./gh-ado2gh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Install gh-bbs2gh extension
       run: gh extension install .
       shell: pwsh
@@ -229,7 +230,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Integration Test
-      env: 
+      env:
         ADO_PAT: ${{ secrets.ADO_PAT }}
         GHEC_PAT: ${{ secrets.GHEC_PAT }}
         GHES_PAT: ${{ secrets.GHES_PAT }}
@@ -248,8 +249,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-        LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net6.0/runtimes/ubuntu.18.04-x64/native'
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" /p:VersionPrefix=9.9
+        LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net8.0/runtimes/ubuntu.18.04-x64/native'
+      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -258,9 +259,9 @@ jobs:
         files: "**/*-tests.xml"
         check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
         comment_mode: off
-    
+
     - name: Upload test logs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
@@ -329,7 +330,7 @@ jobs:
           ./dist/win-x86/gei-windows-386.exe
           ./dist/linux-x64/gei-linux-amd64
           ./dist/osx-x64/gei-darwin-amd64
-    
+
     - name: Create gh-ado2gh Release
       uses: softprops/action-gh-release@v2
       with:
@@ -360,13 +361,13 @@ jobs:
         $TAG_NAME = "${{ github.ref }}".Substring(10)
         Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
         "" | Out-File ./RELEASENOTES.md
-        
+
     - name: Update LATEST-VERSION.TXT
       shell: pwsh
       run: |
         $TAG_NAME = "${{ github.ref }}".Substring(10)
         $TAG_NAME | Out-File ./LATEST-VERSION.txt
-        
+
     - name: Commit Release Notes and Version
       uses: stefanzweifel/git-auto-commit-action@v5
       with:

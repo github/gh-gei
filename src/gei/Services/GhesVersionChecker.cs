@@ -20,6 +20,7 @@ public class GhesVersionChecker
     {
         var blobCredentialsRequired = false;
 
+
         if (ghesApiUrl.HasValue())
         {
             blobCredentialsRequired = true;
