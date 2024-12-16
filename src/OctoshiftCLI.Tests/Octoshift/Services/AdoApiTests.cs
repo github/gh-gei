@@ -289,6 +289,42 @@ public class AdoApiTests
     }
 
     [Fact]
+    public async Task GetGithubHandle_Throws_On_Missing_Data_Provider()
+    {
+        var githubToken = Guid.NewGuid().ToString();
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var payload = new
+        {
+            contributionIds = new[]
+            {
+                "ms.vss-work-web.github-user-data-provider"
+            },
+            dataProviderContext = new
+            {
+                properties = new
+                {
+                    accessToken = githubToken,
+                    sourcePage = new
+                    {
+                        routeValues = new
+                        {
+                            project = ADO_TEAM_PROJECT
+                        }
+                    }
+                }
+            }
+        };
+
+        var json = $"{{ \"dataProviders\": {{ }} }}";
+
+        _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
+
+        var exception = await Assert.ThrowsAsync<OctoshiftCliException>(() => sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, githubToken));
+        exception.Message.Should().Be("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+    }
+
+    [Fact]
     public async Task GetBoardsGithubConnection_Should_Return_Connection_With_All_Repos()
     {
         var connectionId = "foo-id";
