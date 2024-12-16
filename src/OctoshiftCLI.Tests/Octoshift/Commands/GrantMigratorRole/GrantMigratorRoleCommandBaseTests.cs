@@ -14,7 +14,7 @@ public class GrantMigratorRoleCommandBaseTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly GrantMigratorRoleCommandBase _command = new();
+    private readonly GrantMigratorRoleCommandBase _command = [];
 
     public GrantMigratorRoleCommandBaseTests()
     {

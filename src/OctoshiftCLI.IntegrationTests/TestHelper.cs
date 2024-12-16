@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using CliWrap;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Services;
@@ -487,8 +487,10 @@ steps:
 
         private async Task<IEnumerable<string>> GetRepoCommitShas(string org, string repo)
         {
+            var retryPolicy = new RetryPolicy(null);
+
             var url = $"{GithubApiBaseUrl}/repos/{org}/{repo}/commits";
-            var commits = await _githubClient.GetAllAsync(url).ToListAsync();
+            var commits = await retryPolicy.Retry(async () => await _githubClient.GetAllAsync(url).ToListAsync());
             return commits.Select(x => (string)x["sha"]).ToList();
         }
 
@@ -524,7 +526,7 @@ steps:
                 : throw new InvalidOperationException("Could not determine OS");
         }
 
-        public async Task RunCliMigration(string generateScriptCommand, string cliName, IDictionary<string, string> tokens)
+        public async Task RunCliMigration(string generateScriptCommand, string cliName, IReadOnlyDictionary<string, string> tokens)
         {
             await RunCliCommand(generateScriptCommand, cliName, tokens);
             LogMigrationScript("migrate.ps1");
@@ -539,51 +541,34 @@ steps:
             _output.WriteLine(scriptContents);
         }
 
-        public async Task RunPowershellScript(string script, IDictionary<string, string> tokens) =>
+        public async Task RunPowershellScript(string script, IReadOnlyDictionary<string, string> tokens) =>
             await RunShellCommand($"-File {Path.Join(GetOsDistPath(), script)}", "pwsh", GetOsDistPath(), tokens);
 
-        public async Task RunCliCommand(string command, string cliName, IDictionary<string, string> tokens) =>
+        public async Task RunCliCommand(string command, string cliName, IReadOnlyDictionary<string, string> tokens) =>
             await RunShellCommand(command, cliName, GetOsDistPath(), tokens);
 
-        private async Task RunShellCommand(string command, string fileName, string workingDirectory = null, IDictionary<string, string> environmentVariables = null)
+        private async Task RunShellCommand(string command, string fileName, string workingDirectory = null, IReadOnlyDictionary<string, string> environmentVariables = null)
         {
-            var startInfo = new ProcessStartInfo
-            {
-                WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory(),
-                FileName = fileName,
-                Arguments = command
-            };
+            _output.WriteLine($"Running command: {fileName} {command}");
 
-            if (environmentVariables != null)
-            {
-                foreach (var token in environmentVariables)
-                {
-                    if (startInfo.EnvironmentVariables.ContainsKey(token.Key))
-                    {
-                        startInfo.EnvironmentVariables[token.Key] = token.Value;
-                    }
-                    else
-                    {
-                        startInfo.EnvironmentVariables.Add(token.Key, token.Value);
-                    }
-                }
-            }
+            var result = await Cli.Wrap(fileName)
+                .WithArguments(command)
+                .WithWorkingDirectory(workingDirectory ?? Directory.GetCurrentDirectory())
+                .WithEnvironmentVariables(environmentVariables ?? new Dictionary<string, string>())
+                .WithStandardOutputPipe(PipeTarget.ToDelegate(line => _output.WriteLine(line)))
+                .WithStandardErrorPipe(PipeTarget.ToDelegate(line => _output.WriteLine(line)))
+                .ExecuteAsync();
 
-            _output.WriteLine($"Running command: {startInfo.FileName} {startInfo.Arguments}");
-
-            var p = Process.Start(startInfo);
-            await p.WaitForExitAsync();
-
-            p.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0.");
+            result.ExitCode.Should().Be(0, $"{fileName} should return an exit code of 0.");
         }
 
-        public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
+        public async Task RunAdoToGithubCliMigration(string generateScriptCommand, IReadOnlyDictionary<string, string> tokens) =>
             await RunCliMigration($"ado2gh {generateScriptCommand}", "gh", tokens);
 
-        public async Task RunGeiCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
+        public async Task RunGeiCliMigration(string generateScriptCommand, IReadOnlyDictionary<string, string> tokens) =>
             await RunCliMigration($"gei {generateScriptCommand}", "gh", tokens);
 
-        public async Task RunBbsCliMigration(string generateScriptCommand, IDictionary<string, string> tokens) =>
+        public async Task RunBbsCliMigration(string generateScriptCommand, IReadOnlyDictionary<string, string> tokens) =>
             await RunCliMigration($"bbs2gh {generateScriptCommand}", "gh", tokens);
 
         public static string GetOsDistPath()

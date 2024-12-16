@@ -9,11 +9,12 @@ namespace OctoshiftCLI.Tests.bbs2gh.Factories;
 public class AwsApiFactoryTests
 {
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+    private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly AwsApiFactory _awsApiFactory;
 
     public AwsApiFactoryTests()
     {
-        _awsApiFactory = new AwsApiFactory(_mockEnvironmentVariableProvider.Object);
+        _awsApiFactory = new AwsApiFactory(_mockEnvironmentVariableProvider.Object, _mockOctoLogger.Object);
     }
 
     [Fact]

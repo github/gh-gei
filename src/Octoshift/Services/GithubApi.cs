@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -16,12 +17,14 @@ public class GithubApi
     private readonly GithubClient _client;
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
+    private readonly ArchiveUploader _multipartUploader;
 
-    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy)
+    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, ArchiveUploader multipartUploader)
     {
         _client = client;
         _apiUrl = apiUrl;
         _retryPolicy = retryPolicy;
+        _multipartUploader = multipartUploader;
     }
 
     public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -222,6 +225,31 @@ public class GithubApi
         catch (Exception ex)
         {
             throw new OctoshiftCliException($"Failed to lookup the Organization ID for organization '{org}'", ex);
+        }
+    }
+
+    public virtual async Task<string> GetOrganizationDatabaseId(string org)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var payload = new
+        {
+            query = "query($login: String!) {organization(login: $login) { login, databaseId, name } }",
+            variables = new { login = org }
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+
+                return (string)data["data"]["organization"]["databaseId"];
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new OctoshiftCliException($"Failed to lookup the Organization database ID for organization '{org}'", ex);
         }
     }
 
@@ -574,11 +602,10 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
-        // TODO: Need to implement paging
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
+        var group = await _client.GetAllAsync(url, data => (JArray)data["groups"])
+            .SingleAsync(x => string.Equals((string)x["group_name"], groupName, StringComparison.OrdinalIgnoreCase));
 
-        return (int)data["groups"].Children().Single(x => ((string)x["group_name"]).ToUpper() == groupName.ToUpper())["group_id"];
+        return (int)group["group_id"];
     }
 
     public virtual async Task<string> GetTeamSlug(string org, string teamName)
@@ -852,6 +879,17 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Reclaiming mannequins with the--skip - invitation flag is not enabled for your GitHub organization.For more details, contact GitHub Support.", ex);
         }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Target must be a member"))
+        {
+            var result = new ReattributeMannequinToUserResult
+            {
+                Errors =
+            [
+              new ErrorData { Message = ex.Message }
+            ]
+            };
+            return result;
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
@@ -1045,6 +1083,18 @@ public class GithubApi
         {
             throw new OctoshiftCliException($"Invalid migration id: {migrationId}", ex);
         }
+    }
+
+    public virtual async Task<string> UploadArchiveToGithubStorage(string orgDatabaseId, string archiveName, Stream archiveContent)
+    {
+        if (archiveContent is null)
+        {
+            throw new ArgumentNullException(nameof(archiveContent));
+        }
+
+        var uri = await _multipartUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        return uri;
     }
 
     private static object GetMannequinsPayload(string orgId)

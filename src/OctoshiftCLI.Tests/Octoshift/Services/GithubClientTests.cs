@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -298,6 +299,47 @@ public sealed class GithubClientTests
 
         // Act
         var actualContent = await githubClient.PostAsync("http://example.com", _rawRequestBody);
+
+        // Assert
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task PostAsync_With_StreamContent_Returns_String_Response()
+    {
+        // Arrange
+        var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        using var expectedStreamContent = new StreamContent(stream);
+        expectedStreamContent.Headers.ContentType = new("application/octet-stream");
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedStreamContent);
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var actualContent = await githubClient.PostAsync("http://example.com", expectedStreamContent);
+
+        // Assert
+        actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task PostAsync_With_MultipartFormDataContent_Returns_String_Response()
+    {
+        // Arrange
+        using var stream = new StreamContent(new MemoryStream(new byte[] { 1, 2, 3 }));
+        stream.Headers.ContentType = new("application/octet-stream");
+#pragma warning disable IDE0028
+        using var expectedMultipartContent = new MultipartFormDataContent();
+        expectedMultipartContent.Add(stream, "filePart", "example.txt");
+#pragma warning restore
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post && req.Content == expectedMultipartContent);
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var actualContent = await githubClient.PostAsync("http://example.com", expectedMultipartContent);
 
         // Assert
         actualContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
@@ -1349,6 +1391,48 @@ public sealed class GithubClientTests
         // Assert
         results.Should().HaveCount(2);
         results.Should().BeEquivalentTo(firstItem, secondItem);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Should_Use_Result_Collection_Selector()
+    {
+        // Arrange
+        const string url = "https://api.github.com/orgs/foo/external-groups";
+
+        const string firstGroupId = "123";
+        const string firstGroupName = "Octocat readers";
+        const string secondGroupId = "456";
+        const string secondGroupName = "Octocat admins";
+        const string response = $@"
+            {{
+                ""groups"": [
+                    {{
+                       ""group_id"": ""{firstGroupId}"",
+                       ""group_name"": ""{firstGroupName}"",
+                       ""updated_at"": ""2021-01-24T11:31:04-06:00""
+                    }},
+                    {{
+                       ""group_id"": ""{secondGroupId}"",
+                       ""group_name"": ""{secondGroupName}"",
+                       ""updated_at"": ""2021-03-24T11:31:04-06:00""
+                    }},
+                ]
+            }}";
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url, CreateHttpResponseFactory(content: response));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var results = await githubClient.GetAllAsync(url, data => (JArray)data["groups"]).ToListAsync();
+
+        // Assert
+        results.Should().HaveCount(2);
+        results[0]["group_id"].Value<string>().Should().Be(firstGroupId);
+        results[0]["group_name"].Value<string>().Should().Be(firstGroupName);
+        results[1]["group_id"].Value<string>().Should().Be(secondGroupId);
+        results[1]["group_name"].Value<string>().Should().Be(secondGroupName);
     }
 
     [Fact]

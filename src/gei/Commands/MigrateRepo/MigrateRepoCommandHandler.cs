@@ -27,6 +27,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
     private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
     private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
+    private const string DUPLICATE_ARCHIVE_FILE_NAME = "archive.tar.gz";
     private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
     public MigrateRepoCommandHandler(
@@ -64,11 +65,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var blobCredentialsRequired = args.GitArchivePath.HasValue() || await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
 
-        if (args.GhesApiUrl.HasValue())
+        if (args.GhesApiUrl.HasValue() || args.GitArchivePath.HasValue())
         {
-            ValidateGHESOptions(args, blobCredentialsRequired);
+            ValidateUploadOptions(args, blobCredentialsRequired);
         }
 
         if (args.GhesApiUrl.HasValue())
@@ -106,18 +107,46 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
+              args.GithubTargetOrg,
               args.SourceRepo,
               args.AwsBucketName,
               args.SkipReleases,
               args.LockSourceRepo,
               blobCredentialsRequired,
-              args.KeepArchive
+              args.KeepArchive,
+              args.UseGithubStorage
             );
 
-            if (blobCredentialsRequired)
+            if (args.UseGithubStorage || blobCredentialsRequired)
             {
                 _log.LogInformation("Archives uploaded to blob storage, now starting migration...");
             }
+        }
+        else if (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue())
+        {
+            var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            var gitArchiveUploadFileName = $"{timeNow}-{GIT_ARCHIVE_FILE_NAME}";
+            var metadataArchiveUploadFileName = $"{timeNow}-{METADATA_ARCHIVE_FILE_NAME}";
+            var duplicateArchiveUploadFileName = $"{timeNow}-{DUPLICATE_ARCHIVE_FILE_NAME}";
+            var shouldUploadOnce = args.GitArchivePath == args.MetadataArchivePath;
+
+            args.GitArchiveUrl = await UploadArchive(
+                args.GithubTargetOrg,
+                args.AwsBucketName,
+                args.UseGithubStorage,
+                args.GitArchivePath,
+                shouldUploadOnce ? duplicateArchiveUploadFileName : gitArchiveUploadFileName);
+
+            args.MetadataArchiveUrl = shouldUploadOnce
+                ? args.GitArchiveUrl
+                : await UploadArchive(
+                    args.GithubTargetOrg,
+                    args.AwsBucketName,
+                    args.UseGithubStorage,
+                    args.MetadataArchivePath,
+                    metadataArchiveUploadFileName);
+
+            _log.LogInformation("Archive(s) uploaded to blob storage, now starting migration...");
         }
 
         var sourceRepoUrl = GetSourceRepoUrl(args);
@@ -172,6 +201,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             _log.LogError($"Migration Failed. Migration ID: {migrationId}");
             _warningsCountLogger.LogWarningsCount(warningsCount);
             _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
+            Console.WriteLine($"Migration ID: {migrationId}, Org ID: {githubOrgId}, Source ID: {migrationSourceId}");
+
+            Console.WriteLine($"Error during migration: {failureReason}");
             throw new OctoshiftCliException(failureReason);
         }
 
@@ -187,8 +219,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {
         // We expect the GHES url template to be either http(s)://hostname/api/v3 or http(s)://api.hostname.com.
-        // We are either going to be able to extract and return the base url based on the above templates or 
-        // will fallback to ghesApiUrl and return it as the base url. 
+        // We are either going to be able to extract and return the base url based on the above templates or
+        // will fallback to ghesApiUrl and return it as the base url.
 
         ghesApiUrl = ghesApiUrl.Trim().TrimEnd('/');
 
@@ -204,17 +236,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
       string githubSourceOrg,
+      string githubTargetOrg,
       string sourceRepo,
       string awsBucketName,
       bool skipReleases,
       bool lockSourceRepo,
       bool blobCredentialsRequired,
-      bool keepArchive)
+      bool keepArchive,
+      bool useGithubStorage)
     {
         var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
-            async () => await GenerateArchive(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
+            async () => await GenerateArchives(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
 
-        if (!blobCredentialsRequired)
+        if (!useGithubStorage && !blobCredentialsRequired)
         {
             return (gitArchiveUrl, metadataArchiveUrl);
         }
@@ -228,19 +262,25 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
+            _log.LogInformation("Download complete");
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
+            _log.LogInformation("Download complete");
 
-#pragma warning disable IDE0063
-            await using (var gitArchiveContent = _fileSystemProvider.OpenRead(gitArchiveDownloadFilePath))
-            await using (var metadataArchiveContent = _fileSystemProvider.OpenRead(metadataArchiveDownloadFilePath))
-#pragma warning restore IDE0063
-            {
-                return _awsApi.HasValue()
-                    ? await UploadArchivesToAws(awsBucketName, gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent)
-                    : await UploadArchivesToAzure(gitArchiveUploadFileName, gitArchiveContent, metadataArchiveUploadFileName, metadataArchiveContent);
-            }
+            return (
+                await UploadArchive(
+                    githubTargetOrg,
+                    awsBucketName,
+                    useGithubStorage,
+                    gitArchiveDownloadFilePath,
+                    gitArchiveUploadFileName),
+                await UploadArchive(
+                    githubTargetOrg,
+                    awsBucketName,
+                    useGithubStorage,
+                    metadataArchiveDownloadFilePath,
+                    metadataArchiveUploadFileName));
         }
         finally
         {
@@ -252,7 +292,31 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchive(
+    private async Task<string> UploadArchive(
+      string githubTargetOrg,
+      string awsBucketName,
+      bool useGithubStorage,
+      string archiveDownloadFilePath,
+      string archiveUploadFileName)
+    {
+        await using var archiveContent = _fileSystemProvider.OpenRead(archiveDownloadFilePath);
+
+        if (useGithubStorage)
+        {
+            return await UploadArchiveToGithub(githubTargetOrg, archiveUploadFileName, archiveContent);
+        }
+
+#pragma warning disable IDE0046
+        if (_awsApi.HasValue())
+#pragma warning restore IDE0046
+        {
+            return await UploadArchiveToAws(awsBucketName, archiveUploadFileName, archiveContent);
+        }
+
+        return await UploadArchiveToAzure(archiveUploadFileName, archiveContent);
+    }
+
+    private async Task<(string GitArchiveUrl, string MetadataArchiveUrl, int GitArchiveId, int MetadataArchiveId)> GenerateArchives(
         string githubSourceOrg,
         string sourceRepo,
         bool skipReleases,
@@ -287,24 +351,33 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<(string, string)> UploadArchivesToAzure(string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
+    private async Task<string> UploadArchiveToAzure(string archiveFileName, Stream archiveContent)
     {
-        _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
-        var authenticatedGitArchiveUri = await _azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
-        _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
-        var authenticatedMetadataArchiveUri = await _azureApi.UploadToBlob(metadataArchiveFileName, metadataArchiveContent);
+        _log.LogInformation($"Uploading archive {archiveFileName} to Azure Blob Storage");
+        var authenticatedArchiveUri = await _azureApi.UploadToBlob(archiveFileName, archiveContent);
+        _log.LogInformation("Upload complete");
 
-        return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+        return authenticatedArchiveUri.ToString();
     }
 
-    private async Task<(string, string)> UploadArchivesToAws(string bucketName, string gitArchiveFileName, Stream gitArchiveContent, string metadataArchiveFileName, Stream metadataArchiveContent)
+    private async Task<string> UploadArchiveToAws(string bucketName, string archiveFileName, Stream archiveContent)
     {
-        _log.LogInformation($"Uploading archive {gitArchiveFileName} to AWS S3");
-        var authenticatedGitArchiveUri = await _awsApi.UploadToBucket(bucketName, gitArchiveContent, gitArchiveFileName);
-        _log.LogInformation($"Uploading archive {metadataArchiveFileName} to AWS S3");
-        var authenticatedMetadataArchiveUri = await _awsApi.UploadToBucket(bucketName, metadataArchiveContent, metadataArchiveFileName);
+        _log.LogInformation($"Uploading archive {archiveFileName} to AWS S3");
+        var authenticatedArchiveUri = await _awsApi.UploadToBucket(bucketName, archiveContent, archiveFileName);
+        _log.LogInformation("Upload complete");
 
-        return (authenticatedGitArchiveUri.ToString(), authenticatedMetadataArchiveUri.ToString());
+        return authenticatedArchiveUri.ToString();
+    }
+
+    private async Task<string> UploadArchiveToGithub(string org, string archiveFileName, Stream archiveContent)
+    {
+        var githubOrgDatabaseId = await _targetGithubApi.GetOrganizationDatabaseId(org);
+
+        _log.LogInformation($"Uploading archive {archiveFileName} to GitHub Storage");
+        var uploadedArchiveUrl = await _targetGithubApi.UploadArchiveToGithubStorage(githubOrgDatabaseId, archiveFileName, archiveContent);
+        _log.LogInformation("Upload complete");
+
+        return uploadedArchiveUrl;
     }
 
     private async Task<string> WaitForArchiveGeneration(GithubApi githubApi, string githubSourceOrg, int archiveId)
@@ -329,7 +402,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetGithubRepoUrl(string org, string repo, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}/{repo.EscapeDataString()}";
 
-    private void ValidateGHESOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
+    private void ValidateUploadOptions(MigrateRepoCommandArgs args, bool cloudCredentialsRequired)
     {
         var shouldUseAzureStorage = GetAzureStorageConnectionString(args).HasValue();
         var shouldUseAwsS3 = args.AwsBucketName.HasValue();
@@ -346,6 +419,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
+            if (args.UseGithubStorage)
+            {
+                _log.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
+            }
+
             if (args.KeepArchive)
             {
                 _log.LogWarning("Ignoring --keep-archive option because there is no downloaded archive to keep");
@@ -354,11 +432,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             return;
         }
 
-        if (!shouldUseAzureStorage && !shouldUseAwsS3)
+        if (!shouldUseAzureStorage && !shouldUseAwsS3 && !args.UseGithubStorage)
         {
             throw new OctoshiftCliException(
                 "Either Azure storage connection (--azure-storage-connection-string or AZURE_STORAGE_CONNECTION_STRING env. variable) or " +
-                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) " +
+                "AWS S3 connection (--aws-bucket-name, --aws-access-key (or AWS_ACCESS_KEY_ID env. variable), --aws-secret-key (or AWS_SECRET_ACCESS_KEY env.variable)) or " +
+                "GitHub Storage Option (--use-github-storage) " +
                 "must be provided.");
         }
 

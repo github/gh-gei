@@ -71,7 +71,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
             content.AppendLine(VALIDATE_AWS_SECRET_ACCESS_KEY);
         }
-        else
+        else if (!args.UseGithubStorage)
         {
             content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
         }
@@ -135,9 +135,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
         var targetRepoVisibility = " --target-repo-visibility private";
         var targetApiUrlOption = args.TargetApiUrl.HasValue() ? $" --target-api-url \"{args.TargetApiUrl}\"" : "";
+        var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
         return $"gh bbs2gh migrate-repo{targetApiUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
-               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}";
+               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");

@@ -15,7 +15,7 @@ public class MigrateCodeScanningAlertsCommandTests
     private readonly Mock<CodeScanningAlertServiceFactory> _mockCodeScanningAlertServiceFactory = TestHelpers.CreateMock<CodeScanningAlertServiceFactory>();
 
     private readonly ServiceProvider _serviceProvider;
-    private readonly MigrateCodeScanningAlertsCommand _command = new();
+    private readonly MigrateCodeScanningAlertsCommand _command = [];
 
     public MigrateCodeScanningAlertsCommandTests()
     {

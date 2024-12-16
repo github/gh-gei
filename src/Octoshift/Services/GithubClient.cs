@@ -47,13 +47,25 @@ public class GithubClient
 
     public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) => (await GetWithRetry(url, customHeaders)).Content;
 
-    public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null)
+    public virtual IAsyncEnumerable<JToken> GetAllAsync(string url, Dictionary<string, string> customHeaders = null) =>
+        GetAllAsync(url, jToken => (JArray)jToken, customHeaders);
+
+    public virtual async IAsyncEnumerable<JToken> GetAllAsync(
+        string url,
+        Func<JToken, JArray> resultCollectionSelector,
+        Dictionary<string, string> customHeaders = null)
     {
+        if (resultCollectionSelector is null)
+        {
+            throw new ArgumentNullException(nameof(resultCollectionSelector));
+        }
+
         var nextUrl = url;
         do
         {
             var (content, headers) = await GetWithRetry(nextUrl, customHeaders: customHeaders);
-            foreach (var jToken in JArray.Parse(content))
+            var jContent = JToken.Parse(content);
+            foreach (var jToken in resultCollectionSelector(jContent))
             {
                 yield return jToken;
             }
@@ -61,9 +73,11 @@ public class GithubClient
             nextUrl = GetNextUrl(headers);
         } while (nextUrl != null);
     }
-
     public virtual async Task<string> PostAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders)).Content;
+
+    public virtual async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PostWithFullResponseAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+        await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders);
 
     public virtual async Task<JToken> PostGraphQLAsync(
         string url,
@@ -129,6 +143,9 @@ public class GithubClient
     public virtual async Task<string> PatchAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
         (await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders)).Content;
 
+    public virtual async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PatchWithFullResponseAsync(string url, object body, Dictionary<string, string> customHeaders = null) =>
+        await SendAsync(HttpMethod.Patch, url, body, customHeaders: customHeaders);
+
     public virtual async Task<string> DeleteAsync(string url, Dictionary<string, string> customHeaders = null) => (await SendAsync(HttpMethod.Delete, url, customHeaders: customHeaders)).Content;
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> GetWithRetry(
@@ -151,9 +168,17 @@ public class GithubClient
 
         if (body != null)
         {
-            _log.LogVerbose($"HTTP BODY: {body.ToJson()}");
-
-            request.Content = body.ToJson().ToStringContent();
+            if (body is HttpContent httpContent)
+            {
+                _log.LogVerbose("HTTP BODY: BLOB");
+                request.Content = httpContent;
+            }
+            else
+            {
+                var jsonBody = body.ToJson();
+                _log.LogVerbose($"HTTP BODY: {jsonBody}");
+                request.Content = jsonBody.ToStringContent();
+            }
         }
 
         using var response = await _httpClient.SendAsync(request);

@@ -30,7 +30,8 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, _retryPolicy, _dateTimeProvider, sourcePersonalAccessToken);
-        return new GithubApi(githubClient, apiUrl, _retryPolicy);
+        var multipartUploader = new ArchiveUploader(githubClient, _octoLogger);
+        return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 
     GithubApi ISourceGithubApiFactory.CreateClientNoSsl(string apiUrl, string sourcePersonalAccessToken)
@@ -38,7 +39,8 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         sourcePersonalAccessToken ??= _environmentVariableProvider.SourceGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("NoSSL"), _versionProvider, _retryPolicy, _dateTimeProvider, sourcePersonalAccessToken);
-        return new GithubApi(githubClient, apiUrl, _retryPolicy);
+        var multipartUploader = new ArchiveUploader(githubClient, _octoLogger);
+        return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 
     GithubApi ITargetGithubApiFactory.Create(string apiUrl, string targetPersonalAccessToken)
@@ -46,6 +48,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         apiUrl ??= DEFAULT_API_URL;
         targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, _retryPolicy, _dateTimeProvider, targetPersonalAccessToken);
-        return new GithubApi(githubClient, apiUrl, _retryPolicy);
+        var multipartUploader = new ArchiveUploader(githubClient, _octoLogger);
+        return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }
 }

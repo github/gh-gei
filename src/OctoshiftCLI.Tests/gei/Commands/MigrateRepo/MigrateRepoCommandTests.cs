@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(23);
+            command.Options.Count.Should().Be(26);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
@@ -31,12 +31,15 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(command.Options, "git-archive-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "git-archive-path", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "metadata-archive-path", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "queue-only", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo-visibility", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-source-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
+            TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
         }
     }
 }
