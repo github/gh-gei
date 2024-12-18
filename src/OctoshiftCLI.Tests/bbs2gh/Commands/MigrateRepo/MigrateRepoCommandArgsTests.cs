@@ -225,11 +225,12 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Bbs_Password_Is_Provided()
+        public void Errors_If_Bbs_Password_Is_Provided_With_Archive_Path()
         {
             // Act
             var args = new MigrateRepoCommandArgs
             {
+                BbsServerUrl = BBS_SERVER_URL,
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
@@ -240,15 +241,36 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--bbs-username*--bbs-password*--bbs-server-url*");
+                .WithMessage("*--bbs-username*--bbs-password*--archive-path*");
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_No_Ssl_Verify_Is_Provided()
+        public void Errors_If_Bbs_Password_Is_Provided_With_Archive_Url()
         {
             // Act
             var args = new MigrateRepoCommandArgs
             {
+                BbsServerUrl = BBS_SERVER_URL,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                BbsPassword = BBS_USERNAME
+            };
+
+            // Assert
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--bbs-username*--bbs-password*--archive-url*");
+        }
+
+        [Fact]
+        public void Errors_If_No_Ssl_Verify_Is_Provided_With_Archive_Path()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
@@ -259,15 +281,36 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*--no-ssl-verify*--bbs-server-url*");
+                .WithMessage("*--no-ssl-verify*--archive-path*");
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Ssh_User_Is_Provided()
+        public void Errors_If_No_Ssl_Verify_Is_Provided_With_Archive_Url()
         {
             // Act
             var args = new MigrateRepoCommandArgs
             {
+                BbsServerUrl = BBS_SERVER_URL,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                NoSslVerify = true
+            };
+
+            // Assert
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--no-ssl-verify*--archive-url*");
+        }
+
+        [Fact]
+        public void Errors_If_Ssh_User_Is_Provided_With_Archive_Path()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
@@ -279,15 +322,37 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*SSH*SMB*--bbs-server-url*");
+                .WithMessage("*SSH*SMB*--archive-path*");
         }
 
         [Fact]
-        public void Errors_If_BbsServer_Url_Not_Provided_But_Smb_User_Is_Provided()
+        public void Errors_If_Ssh_User_Is_Provided_With_Archive_Url()
         {
             // Act
             var args = new MigrateRepoCommandArgs
             {
+                BbsServerUrl = BBS_SERVER_URL,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY,
+            };
+
+            // Assert
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*SSH*SMB*--archive-url*");
+        }
+
+        [Fact]
+        public void Errors_If_Smb_User_Is_Provided_With_Archive_Path()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
                 ArchivePath = ARCHIVE_PATH,
                 GithubOrg = GITHUB_ORG,
                 GithubRepo = GITHUB_REPO,
@@ -299,7 +364,28 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             args.Invoking(x => x.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*SSH*SMB*--bbs-server-url*");
+                .WithMessage("*SSH*SMB*--archive-path*");
+        }
+
+        [Fact]
+        public void Errors_If_Smb_User_Is_Provided_With_Archive_Url()
+        {
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                SmbUser = SMB_USER,
+                SmbPassword = SMB_PASSWORD,
+            };
+
+            // Assert
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*SSH*SMB*--archive-url*");
         }
 
         [Fact]

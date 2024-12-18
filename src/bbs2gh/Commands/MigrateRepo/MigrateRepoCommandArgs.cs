@@ -95,17 +95,17 @@ public class MigrateRepoCommandArgs : CommandArgs
     {
         if (BbsUsername.HasValue() || BbsPassword.HasValue())
         {
-            throw new OctoshiftCliException("--bbs-username and --bbs-password can only be provided with --bbs-server-url.");
+            throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --archive-path or --archive-url.");
         }
 
         if (NoSslVerify)
         {
-            throw new OctoshiftCliException("--no-ssl-verify can only be provided with --bbs-server-url.");
+            throw new OctoshiftCliException("--no-ssl-verify cannot be provided with --archive-path or --archive-url.");
         }
 
         if (new[] { SshUser, SshPrivateKey, ArchiveDownloadHost, SmbUser, SmbPassword, SmbDomain }.Any(obj => obj.HasValue()))
         {
-            throw new OctoshiftCliException("SSH or SMB download options can only be provided with --bbs-server-url.");
+            throw new OctoshiftCliException("SSH or SMB download options cannot be provided with --archive-path or --archive-url.");
         }
     }
 
