@@ -12,6 +12,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISftpClient _sftpClient;
+    private readonly PrivateKeyFile _privateKey;
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly object _mutex = new();
@@ -21,7 +22,8 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
-        _sftpClient = new SftpClient(host, sshPort, sshUser, new PrivateKeyFile(privateKeyFileFullPath));
+        _privateKey = new PrivateKeyFile(privateKeyFileFullPath);
+        _sftpClient = new SftpClient(host, sshPort, sshUser, _privateKey);
     }
 
     internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
@@ -120,5 +122,6 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     public void Dispose()
     {
         _sftpClient?.Dispose();
+        _privateKey?.Dispose();
     }
 }
