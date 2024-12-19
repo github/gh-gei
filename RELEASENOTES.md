@@ -1,1 +1,1 @@
-
+- Update validation error messages for `gh bbs2gh migrate-repo` command when generating an archive is not required.
