@@ -60,7 +60,7 @@ else {
 
     Copy-Item ./dist/linux-x64/ado2gh ./dist/linux-x64/ado2gh-linux-amd64
 
-    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/linux-arm64/ -r linux-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/linux-arm64/ -r linux-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
 
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
