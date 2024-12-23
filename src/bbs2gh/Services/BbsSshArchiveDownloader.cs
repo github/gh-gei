@@ -1,11 +1,9 @@
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 using Renci.SshNet;
-using Renci.SshNet.Security;
 
 namespace OctoshiftCLI.BbsToGithub.Services;
 
@@ -14,9 +12,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     private const int DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS = 10;
 
     private readonly ISftpClient _sftpClient;
-    private readonly RsaKey _rsaKey;
     private readonly PrivateKeyFile _privateKey;
-    private readonly PrivateKeyAuthenticationMethod _authenticationMethodRsa;
     private readonly OctoLogger _log;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly object _mutex = new();
@@ -26,43 +22,8 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
     {
         _log = log;
         _fileSystemProvider = fileSystemProvider;
-
         _privateKey = new PrivateKeyFile(privateKeyFileFullPath);
-
-        if (IsRsaKey(_privateKey))
-        {
-            _rsaKey = UpdatePrivateKeyFileToRsaSha256(_privateKey);
-            _authenticationMethodRsa = new PrivateKeyAuthenticationMethod(sshUser, _privateKey);
-            var connection = new ConnectionInfo(host, sshPort, sshUser, _authenticationMethodRsa);
-            connection.HostKeyAlgorithms["rsa-sha2-256"] = data => new KeyHostAlgorithm("rsa-sha2-256", _rsaKey, data);
-            _sftpClient = new SftpClient(connection);
-        }
-        else
-        {
-            _sftpClient = new SftpClient(host, sshPort, sshUser, _privateKey);
-        }
-    }
-
-    private bool IsRsaKey(PrivateKeyFile privateKeyFile) => privateKeyFile.HostKey is KeyHostAlgorithm keyHostAlgorithm && keyHostAlgorithm.Key is RsaKey;
-
-    private RsaWithSha256SignatureKey UpdatePrivateKeyFileToRsaSha256(PrivateKeyFile privateKeyFile)
-    {
-        if ((privateKeyFile.HostKey as KeyHostAlgorithm).Key is not RsaKey oldRsaKey)
-        {
-            throw new ArgumentException("The private key file is not an RSA key.", nameof(privateKeyFile));
-        }
-
-        var rsaKey = new RsaWithSha256SignatureKey(oldRsaKey.Modulus, oldRsaKey.Exponent, oldRsaKey.D, oldRsaKey.P, oldRsaKey.Q, oldRsaKey.InverseQ);
-
-        var keyHostAlgorithm = new KeyHostAlgorithm(rsaKey.ToString(), rsaKey);
-
-        var hostKeyProperty = typeof(PrivateKeyFile).GetProperty(nameof(PrivateKeyFile.HostKey));
-        hostKeyProperty.SetValue(privateKeyFile, keyHostAlgorithm);
-
-        var keyField = typeof(PrivateKeyFile).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance);
-        keyField.SetValue(privateKeyFile, rsaKey);
-
-        return rsaKey;
+        _sftpClient = new SftpClient(host, sshPort, sshUser, _privateKey);
     }
 
     internal BbsSshArchiveDownloader(OctoLogger log, FileSystemProvider fileSystemProvider, ISftpClient sftpClient)
@@ -125,7 +86,8 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
                 return;
             }
 
-            _log.LogInformation($"Archive download in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
+            _log.LogInformation(
+                $"Archive download in progress, {GetLogFriendlySize(downloadedBytes)} out of {GetLogFriendlySize(totalBytes)} ({GetPercentage(downloadedBytes, totalBytes)}) completed...");
 
             _nextProgressReport = _nextProgressReport.AddSeconds(DOWNLOAD_PROGRESS_REPORT_INTERVAL_IN_SECONDS);
         }
@@ -159,9 +121,7 @@ public sealed class BbsSshArchiveDownloader : IBbsArchiveDownloader, IDisposable
 
     public void Dispose()
     {
-        (_sftpClient as IDisposable)?.Dispose();
-        (_rsaKey as IDisposable)?.Dispose();
-        (_authenticationMethodRsa as IDisposable)?.Dispose();
-        (_privateKey as IDisposable)?.Dispose();
+        _sftpClient?.Dispose();
+        _privateKey?.Dispose();
     }
 }
