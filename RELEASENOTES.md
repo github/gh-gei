@@ -1,1 +1,1 @@
-- Updated Secret Scanning Alerts migration command to match on all location types. Now includes: issues, pull requests, issues.
+- Updated Secret Scanning Alerts migration (`gh gei migrate-secret-alerts`) command to match on all location types. Now includes: issues, pull requests, issues.
