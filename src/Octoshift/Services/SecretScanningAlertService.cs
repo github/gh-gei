@@ -22,20 +22,24 @@ public class SecretScanningAlertService
     // try to find a matching alert in the target repository based on the same key
     // If potential match is found we compare the locations of the alerts and if they match a matching AlertWithLocations is returned
     public virtual async Task MigrateSecretScanningAlerts(string sourceOrg, string sourceRepo, string targetOrg,
-        string targetRepo, bool dryRun)
+    string targetRepo, bool dryRun)
     {
         _log.LogInformation($"Migrating Secret Scanning Alerts from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
-        var sourceAlertsDict = await GetAlertsWithLocationsDict(_sourceGithubApi, sourceOrg, sourceRepo);
-        var targetAlertsDict = await GetAlertsWithLocationsDict(_targetGithubApi, targetOrg, targetRepo);
+        var sourceAlertsDict = await GetAlertsWithLocations(_sourceGithubApi, sourceOrg, sourceRepo);
+        var targetAlertsDict = await GetAlertsWithLocations(_targetGithubApi, targetOrg, targetRepo);
 
         _log.LogInformation($"Source {sourceOrg}/{sourceRepo} secret alerts found: {sourceAlertsDict.Count}");
         _log.LogInformation($"Target {targetOrg}/{targetRepo} secret alerts found: {targetAlertsDict.Count}");
 
         _log.LogInformation("Matching secret resolutions from source to target repository");
-        foreach (var sourceKey in sourceAlertsDict.Keys)
+
+        foreach (var kvp in sourceAlertsDict)
         {
-            foreach (var sourceAlert in sourceAlertsDict[sourceKey])
+            var sourceKey = kvp.Key;
+            var sourceAlerts = kvp.Value;
+
+            foreach (var sourceAlert in sourceAlerts)
             {
                 _log.LogInformation($"Processing source secret {sourceAlert.Alert.Number}");
 
@@ -134,7 +138,7 @@ public class SecretScanningAlertService
     // and value List of AlertWithLocations
     // This method is used to get alerts from both source and target repositories
     private async Task<Dictionary<(string SecretType, string Secret), List<AlertWithLocations>>>
-       GetAlertsWithLocationsDict(GithubApi api, string org, string repo)
+       GetAlertsWithLocations(GithubApi api, string org, string repo)
     {
         var alerts = await api.GetSecretScanningAlertsForRepository(org, repo);
         var alertsWithLocations = new List<AlertWithLocations>();
