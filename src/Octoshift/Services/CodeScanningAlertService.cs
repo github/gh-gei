@@ -59,15 +59,28 @@ public class CodeScanningAlertService
             return;
         }
 
-        var migratedCount = 0;
+        var analysisNumber = 0;
 
         foreach (var analysis in relevantAnalyses)
         {
-            var sarifReport = await _sourceGithubApi.GetSarifReport(sourceOrg, sourceRepo, analysis.Id);
-            _log.LogVerbose($"Downloaded SARIF report for analysis {analysis.Id}");
+            analysisNumber++;
+
+            string sarifReport;
             try
             {
-                _log.LogInformation($"Uploading SARIF for analysis {analysis.Id} in target repository ({migratedCount + 1} / {relevantAnalyses.Count})...");
+                sarifReport = await _sourceGithubApi.GetSarifReport(sourceOrg, sourceRepo, analysis.Id);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                _log.LogWarning($"Skipping analysis {analysis.Id} because no analysis was found for it ({analysisNumber} / {relevantAnalyses.Count})...");
+                continue;
+            }
+
+            _log.LogVerbose($"Downloaded SARIF report for analysis {analysis.Id}");
+
+            try
+            {
+                _log.LogInformation($"Uploading SARIF for analysis {analysis.Id} in target repository ({analysisNumber} / {relevantAnalyses.Count})...");
                 var id = await _targetGithubApi.UploadSarifReport(targetOrg, targetRepo, sarifReport, analysis.CommitSha, analysis.Ref);
                 // Wait for SARIF processing to finish before first querying it
                 await Task.Delay(500);
@@ -95,8 +108,6 @@ public class CodeScanningAlertService
             {
                 throw new OctoshiftCliException($"Received HTTP Status 403 for uploading analysis {analysis.Id}. Please make sure to activate GitHub Advanced Security on the target.", httpException);
             }
-
-            migratedCount++;
         }
 
         _log.LogInformation($"Successfully finished migrating {relevantAnalyses.Count} Code Scanning analyses! ");
