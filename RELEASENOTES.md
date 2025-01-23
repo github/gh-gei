@@ -1,1 +1,2 @@
 - Update validation error messages for `gh bbs2gh migrate-repo` command when generating an archive is not required.
+- `gh gei migrate-code-scanning-alerts` now skips a not found code scanning analysis and continues with the rest. 
