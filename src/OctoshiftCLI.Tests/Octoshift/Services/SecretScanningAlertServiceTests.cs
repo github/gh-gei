@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Moq;
 using Octoshift.Models;
@@ -45,6 +46,7 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 17,
             EndLine = 18,
@@ -68,6 +70,7 @@ public class SecretScanningAlertServiceTests
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 17,
             EndLine = 18,
@@ -91,15 +94,17 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             100,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionRevoked)
+            SecretScanningAlert.ResolutionRevoked,
+            null)
         );
     }
 
     [Fact]
-    public async Task No_Matching_Location()
+    public async Task Secret_Updated_With_Comment()
     {
         var secretType = "custom";
         var secret = "my-password";
+        var resolutionComment = "This secret was revoked and replaced";
 
         // Arrange
         var sourceSecret = new GithubSecretScanningAlert()
@@ -109,10 +114,12 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = resolutionComment
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 17,
             EndLine = 18,
@@ -136,6 +143,78 @@ public class SecretScanningAlertServiceTests
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetSecretLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            resolutionComment)
+        );
+    }
+
+    [Fact]
+    public async Task No_Matching_Location()
+    {
+        var secretType = "custom";
+        var secret = "my-password";
+
+        // Arrange
+        var sourceSecret = new GithubSecretScanningAlert()
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation()
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert()
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret
+        };
+
+        var targetSecretLocation = new GithubSecretScanningAlertLocation()
+        {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 99,
             EndLine = 103,
@@ -159,6 +238,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
 
@@ -180,6 +260,7 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 17,
             EndLine = 18,
@@ -215,6 +296,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
+            It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
@@ -273,6 +355,7 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
 
@@ -314,6 +397,7 @@ public class SecretScanningAlertServiceTests
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
         {
+            LocationType = "commit",
             Path = "my-file.txt",
             StartLine = 17,
             EndLine = 18,
@@ -358,7 +442,8 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             100,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionRevoked)
+            SecretScanningAlert.ResolutionRevoked,
+            null)
         );
 
         _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
@@ -366,7 +451,382 @@ public class SecretScanningAlertServiceTests
             TARGET_REPO,
             300,
             SecretScanningAlert.AlertStateResolved,
-            SecretScanningAlert.ResolutionFalsePositive)
+            SecretScanningAlert.ResolutionFalsePositive,
+            null)
         );
+    }
+
+    [Fact]
+    public async Task Matching_Alerts_With_Different_Location_Types_Are_Not_Matched()
+    {
+        // Arrange
+        var secretType = "custom";
+        var secret = "my-password";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 10,
+            EndLine = 10,
+            StartColumn = 5,
+            EndColumn = 15,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "issue_title",
+            IssueTitleUrl = "https://api.github.com/repos/target-org/target-repo/issues/1"
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Alerts_With_Different_Number_Of_Locations_Are_Not_Matched()
+    {
+        // Arrange
+        var secretType = "custom";
+        var secret = "multi-location-secret";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 2,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "commit",
+                Path = "file1.txt",
+                StartLine = 10,
+                EndLine = 10,
+                StartColumn = 5,
+                EndColumn = 15,
+                BlobSha = "abc123"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "issue_title",
+                IssueTitleUrl = "https://api.github.com/repos/source-org/source-repo/issues/1"
+            }
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 2))
+            .ReturnsAsync(sourceLocations);
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 200,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "commit",
+                Path = "file1.txt",
+                StartLine = 10,
+                EndLine = 10,
+                StartColumn = 5,
+                EndColumn = 15,
+                BlobSha = "abc123"
+            }
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 200))
+            .ReturnsAsync(targetLocations);
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task No_Alerts_In_Source_Repository()
+    {
+        // Arrange
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(Array.Empty<GithubSecretScanningAlert>());
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task No_Alerts_In_Target_Repository()
+    {
+        // Arrange
+        var sourceSecret = new GithubSecretScanningAlert()
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = "custom",
+            Secret = "my-password",
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation()
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(Array.Empty<GithubSecretScanningAlert>());
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Migrate_Matching_Alerts_With_Different_Resolutions()
+    {
+        // Arrange
+        var secretType = "custom";
+        var secret = "my-password";
+
+        var sourceSecret = new GithubSecretScanningAlert()
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation()
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert()
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionFalsePositive,
+        };
+
+        var targetSecretLocation = new GithubSecretScanningAlertLocation()
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 17,
+            EndLine = 18,
+            StartColumn = 22,
+            EndColumn = 29,
+            BlobSha = "abc123"
+        };
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetSecretLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            null)
+        );
+    }
+
+    [Fact]
+    public async Task Matching_Alerts_With_Different_Locations_Are_Not_Matched()
+    {
+        // Arrange
+        var secretType = "custom";
+        var secret = "my-password";
+
+        var sourceSecret = new GithubSecretScanningAlert()
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation()
+            {
+                LocationType = "commit",
+                Path = "my-file.txt",
+                StartLine = 17,
+                EndLine = 18,
+                StartColumn = 22,
+                EndColumn = 29,
+                BlobSha = "abc123"
+            },
+            new GithubSecretScanningAlertLocation()
+            {
+                LocationType = "issue_title",
+                IssueTitleUrl = "https://api.github.com/repos/source-org/source-repo/issues/1"
+            }
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(sourceLocations);
+
+        var targetSecret = new GithubSecretScanningAlert()
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var targetLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation()
+            {
+                LocationType = "commit",
+                Path = "my-file.txt",
+                StartLine = 17,
+                EndLine = 18,
+                StartColumn = 22,
+                EndColumn = 29,
+                BlobSha = "different-sha"
+            },
+            new GithubSecretScanningAlertLocation()
+            {
+                LocationType = "issue_title",
+                IssueTitleUrl = "https://api.github.com/repos/target-org/target-repo/issues/1"
+            }
+        };
+
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(targetLocations);
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
     }
 }
