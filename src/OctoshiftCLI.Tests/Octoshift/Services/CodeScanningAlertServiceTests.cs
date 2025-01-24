@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -870,6 +872,74 @@ public class CodeScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<string>()
         ), Times.Never);
+    }
+
+    [Fact]
+    public async Task MigrateAlerts_Skips_An_Analysis_When_SARIF_Report_Not_Found()
+    {
+        // Arrange
+        var Ref = "refs/heads/main";
+        var analysis1 = new CodeScanningAnalysis
+        {
+            Id = 1,
+            CreatedAt = "2022-03-30T00:00:00Z",
+            CommitSha = "SHA_1",
+            Ref = Ref
+        };
+        var analysis2 = new CodeScanningAnalysis
+        {
+            Id = 2,
+            CreatedAt = "2022-03-31T00:00:00Z",
+            CommitSha = "SHA_2",
+            Ref = Ref
+        };
+
+        const string sarifResponse2 = "SARIF_RESPONSE_2";
+        var processingStatus = new SarifProcessingStatus
+        {
+            Status = SarifProcessingStatus.Complete,
+            Errors = new Collection<string>()
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main")).ReturnsAsync(new[] { analysis1, analysis2 });
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysis1.Id))
+            .ThrowsAsync(new HttpRequestException("No analysis found for analysis ID 1", null, HttpStatusCode.NotFound));
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysis2.Id)).ReturnsAsync(sarifResponse2);
+        _mockTargetGithubApi.Setup(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("sarif-id");
+        _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, It.IsAny<string>()))
+            .ReturnsAsync(processingStatus);
+
+        // Act
+        await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(
+            x => x.UploadSarifReport(
+                TARGET_ORG,
+                TARGET_REPO,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()
+            ),
+            Times.Once);
+        _mockTargetGithubApi.Verify(
+            x => x.UploadSarifReport(
+                TARGET_ORG,
+                TARGET_REPO,
+                sarifResponse2,
+                analysis2.CommitSha,
+                Ref
+            ),
+            Times.Once);
+
+        _mockTargetGithubApi.Verify(
+            x => x.GetSarifProcessingStatus(
+                TARGET_ORG,
+                TARGET_REPO,
+                "sarif-id"),
+            Times.Once);
+
+        _mockOctoLogger.Verify(log => log.LogWarning($"Skipping analysis {analysis1.Id} because no analysis was found for it (1 / 2)..."));
     }
 
     // Avoid having referential equal instances to have real use case tests
