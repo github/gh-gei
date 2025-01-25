@@ -262,11 +262,11 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
             await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
-            _log.LogInformation("Download complete");
+            _log.LogInformation(keepArchive ? $"Git archive was successfully downloaded at \"{gitArchiveDownloadFilePath}\"" : "Download complete");
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
-            _log.LogInformation("Download complete");
+            _log.LogInformation(keepArchive ? $"Metadata archive was successfully downloaded at \"{metadataArchiveDownloadFilePath}\"" : "Download complete");
 
             return (
                 await UploadArchive(
