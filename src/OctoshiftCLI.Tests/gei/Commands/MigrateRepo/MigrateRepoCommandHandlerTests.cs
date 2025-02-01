@@ -1680,7 +1680,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
-        public async Task Keep_Archive_Does_Not_Call_DeleteIfExists()
+        public async Task Keep_Archive_Does_Not_Call_DeleteIfExists_And_Logs_Downloaded_Archive_Paths()
         {
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
@@ -1737,6 +1737,9 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(GIT_ARCHIVE_FILE_PATH), Times.Never);
             _mockFileSystemProvider.Verify(x => x.DeleteIfExists(METADATA_ARCHIVE_FILE_PATH), Times.Never);
+
+            _mockOctoLogger.Verify(x => x.LogInformation($"Git archive was successfully downloaded at \"{GIT_ARCHIVE_FILE_PATH}\""));
+            _mockOctoLogger.Verify(x => x.LogInformation($"Metadata archive was successfully downloaded at \"{METADATA_ARCHIVE_FILE_PATH}\""));
         }
 
         [Fact]
