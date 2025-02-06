@@ -21,7 +21,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
         global-json-file: global.json
 
@@ -86,7 +86,7 @@ jobs:
         echo "PR_SHA=$(echo $prsha)" >> $GITHUB_ENV
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
         global-json-file: global.json
 
