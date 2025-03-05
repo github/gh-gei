@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OctoshiftCLI.BbsToGithub.Services;
@@ -384,7 +383,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
             }
         }
-        
         // Validate BbsSharedHome
         if (!string.IsNullOrEmpty(args.BbsSharedHome))
         {
