@@ -52,8 +52,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         ValidateOptions(args);
-        ValidateBbsSharedHome(args);
-        ValidateArchivePath(args);
         var exportId = 0L;
         var migrationSourceId = "";
 
@@ -124,46 +122,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             await ImportArchive(args, migrationSourceId, args.ArchiveUrl);
         }
     }
-
-    private void ValidateBbsSharedHome(MigrateRepoCommandArgs args)
-    {
-        if (!string.IsNullOrEmpty(args.BbsSharedHome))
-        {
-            if (IsRunningOnBitbucketServer())
-            {
-                if (!Directory.Exists(args.BbsSharedHome))
-                {
-                    throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
-                }
-            }
-            else
-            {
-                if (!Directory.Exists(args.BbsSharedHome))
-                {
-                    throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
-                }
-            }
-        }
-    }
-
-    private void ValidateArchivePath(MigrateRepoCommandArgs args)
-    {
-        if (!string.IsNullOrEmpty(args.ArchivePath))
-        {
-            if (!File.Exists(args.ArchivePath))
-            {
-                throw new OctoshiftCliException($"Invalid --archive-path: '{args.ArchivePath}'. File does not exist.");
-            }
-            _log.LogInformation($"Archive path for upload: {args.ArchivePath}");
-        }
-    }
-
-
-    private bool IsRunningOnBitbucketServer()
-    {
-        return Environment.GetEnvironmentVariable("BITBUCKET_SERVER") != null;
-    }
-
 
     private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
     {
@@ -424,6 +382,27 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             if (GetAwsRegion(args).IsNullOrWhiteSpace())
             {
                 throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
+            }
+        }
+        
+        // Validate BbsSharedHome
+        if (!string.IsNullOrEmpty(args.BbsSharedHome))
+        {
+            if (args.ShouldUploadArchive() && args.ArchivePath.IsNullOrWhiteSpace())
+            {
+                if (args.BbsSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
+                {
+                    throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
+                }
+            }
+        }
+
+        // Validate ArchivePath
+        if (!string.IsNullOrEmpty(args.ArchivePath))
+        {
+            if (!_fileSystemProvider.FileExists(args.ArchivePath))
+            {
+                throw new OctoshiftCliException($"Invalid --archive-path: '{args.ArchivePath}'. File does not exist.");
             }
         }
     }
