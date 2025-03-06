@@ -995,7 +995,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         public async Task Does_Not_Throw_Exception_If_ArchivePath_Exists()
         {
             // Arrange
-            const string ARCHIVE_PATH = "valid/path/to/archive.tar";
             _mockFileSystemProvider.Setup(x => x.FileExists(ARCHIVE_PATH)).Returns(true);
 
             var args = new MigrateRepoCommandArgs
@@ -1013,7 +1012,6 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         {
             // Arrange
             const string BBS_SHARED_HOME = "valid/path";
-            const string ARCHIVE_PATH = "valid/path/to/archive.tar";
 
             _mockFileSystemProvider.Setup(x => x.DirectoryExists(BBS_SHARED_HOME)).Returns(true);
             _mockFileSystemProvider.Setup(x => x.FileExists(ARCHIVE_PATH)).Returns(true);

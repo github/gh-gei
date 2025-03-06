@@ -384,24 +384,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
         // Validate BbsSharedHome
-        if (!string.IsNullOrEmpty(args.BbsSharedHome))
+        if (!string.IsNullOrEmpty(args.BbsSharedHome) &&
+            args.ArchivePath.IsNullOrWhiteSpace() &&
+            args.BbsSharedHome.HasValue() &&
+            !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
         {
-            if (args.ArchivePath.IsNullOrWhiteSpace())  // Removed the ShouldUploadArchive Since we are checking it already
-            {
-                if (args.BbsSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
-                {
-                    throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
-                }
-            }
+            throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
         }
 
         // Validate ArchivePath
-        if (!string.IsNullOrEmpty(args.ArchivePath))
+        if (!string.IsNullOrEmpty(args.ArchivePath) && !_fileSystemProvider.FileExists(args.ArchivePath))
         {
-            if (!_fileSystemProvider.FileExists(args.ArchivePath))
-            {
-                throw new OctoshiftCliException($"Invalid --archive-path: '{args.ArchivePath}'. File does not exist.");
-            }
+            throw new OctoshiftCliException($"Invalid --archive-path: '{args.ArchivePath}'. File does not exist.");
         }
+
     }
 }
