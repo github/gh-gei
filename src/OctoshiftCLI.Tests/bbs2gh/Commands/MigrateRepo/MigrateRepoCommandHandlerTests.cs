@@ -251,12 +251,15 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             const string bbsSharedHome = "bbs-shared-home";
             var archivePath = $"{bbsSharedHome}/data/migration/export/Bitbucket_export_{BBS_EXPORT_ID}.tar";
 
-            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO).Result).Returns(false);
+            // Mock directory existence check
+            _mockFileSystemProvider.Setup(m => m.DirectoryExists(bbsSharedHome)).Returns(true);
+
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(false);
             _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
             _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -279,7 +282,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 _mockGithubApi.Object,
                 _mockBbsApi.Object,
                 _mockEnvironmentVariableProvider.Object,
-                null, // in case of running on Bitbucket server, the downloader will be null
+                null, // In case of running on Bitbucket server, the downloader will be null
                 _mockAzureApi.Object,
                 _mockAwsApi.Object,
                 _mockFileSystemProvider.Object,
@@ -355,17 +358,19 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
 
             await using var gitContentStream = new MemoryStream(gitArchiveContents.ToBytes());
 
+            // Mock file system to return a valid file
+            _mockFileSystemProvider.Setup(m => m.FileExists(gitArchiveFilePath)).Returns(true);
             _mockFileSystemProvider.Setup(m => m.OpenRead(gitArchiveFilePath)).Returns(gitContentStream);
 
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
-            _mockGithubApi.Setup(x => x.GetOrganizationDatabaseId(GITHUB_ORG).Result).Returns(githubOrgDatabaseId);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.GetOrganizationDatabaseId(GITHUB_ORG)).ReturnsAsync(githubOrgDatabaseId);
             _mockGithubApi
                 .Setup(x => x.UploadArchiveToGithubStorage(
                     githubOrgDatabaseId,
                     It.IsAny<string>(),
-                    It.Is<Stream>(s => (s as MemoryStream).ToArray().GetString() == gitArchiveContents)).Result)
-                .Returns(gitArchiveUrl);
+                    It.Is<Stream>(s => (s as MemoryStream).ToArray().GetString() == gitArchiveContents)))
+                .ReturnsAsync(gitArchiveUrl);
 
             // Act
             var args = new MigrateRepoCommandArgs
@@ -637,8 +642,10 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
 
             var archiveBytes = Encoding.ASCII.GetBytes("here are some bytes");
-            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
+            // Mock file existence check
+            _mockFileSystemProvider.Setup(x => x.FileExists(ARCHIVE_PATH)).Returns(true);
 
+            _mockFileSystemProvider.Setup(x => x.ReadAllBytesAsync(ARCHIVE_PATH)).ReturnsAsync(archiveBytes);
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
             _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
@@ -669,6 +676,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 null
             ));
         }
+
 
         [Fact]
         public async Task Invoke_With_Bbs_Server_Url_Throws_When_Smb_User_Is_Provided_And_Smb_Password_Is_Not_Provided()
@@ -715,6 +723,9 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Arrange
             _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
 
+            // Mock file existence check
+            _mockFileSystemProvider.Setup(m => m.FileExists(ARCHIVE_PATH)).Returns(true);
+
             // Act
             var args = new MigrateRepoCommandArgs
             {
@@ -756,11 +767,13 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Arrange
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
 
-            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
-            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
             _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
 
-            // Act
+            // Mock the file existence check
+            _mockFileSystemProvider.Setup(fs => fs.FileExists(ARCHIVE_PATH)).Returns(true);
+
             var args = new MigrateRepoCommandArgs
             {
                 GithubOrg = GITHUB_ORG,
@@ -959,6 +972,61 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 It.IsAny<string>(),
                 targetRepoVisibility
             ));
+        }
+        [Fact]
+        public async Task Does_Not_Throw_Exception_If_BbsSharedHome_Exists()
+        {
+            // Arrange
+            const string BBS_SHARED_HOME = "valid/path";
+            _mockFileSystemProvider.Setup(x => x.DirectoryExists(BBS_SHARED_HOME)).Returns(true);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsSharedHome = BBS_SHARED_HOME,
+                ArchivePath = string.Empty
+            };
+
+            // Act & Assert
+            await FluentActions.Invoking(() => _handler.Handle(args))
+                .Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task Does_Not_Throw_Exception_If_ArchivePath_Exists()
+        {
+            // Arrange
+            const string ARCHIVE_PATH = "valid/path/to/archive.tar";
+            _mockFileSystemProvider.Setup(x => x.FileExists(ARCHIVE_PATH)).Returns(true);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH
+            };
+
+            // Act & Assert
+            await FluentActions.Invoking(() => _handler.Handle(args))
+                .Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task Does_Not_Throw_Exception_If_BbsSharedHome_And_ArchivePath_Are_Both_Valid()
+        {
+            // Arrange
+            const string BBS_SHARED_HOME = "valid/path";
+            const string ARCHIVE_PATH = "valid/path/to/archive.tar";
+
+            _mockFileSystemProvider.Setup(x => x.DirectoryExists(BBS_SHARED_HOME)).Returns(true);
+            _mockFileSystemProvider.Setup(x => x.FileExists(ARCHIVE_PATH)).Returns(true);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsSharedHome = BBS_SHARED_HOME,
+                ArchivePath = ARCHIVE_PATH
+            };
+
+            // Act & Assert
+            await FluentActions.Invoking(() => _handler.Handle(args))
+                .Should().NotThrowAsync();
         }
     }
 }

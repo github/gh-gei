@@ -386,7 +386,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         // Validate BbsSharedHome
         if (!string.IsNullOrEmpty(args.BbsSharedHome))
         {
-            if (args.ShouldUploadArchive() && args.ArchivePath.IsNullOrWhiteSpace())
+            if (args.ArchivePath.IsNullOrWhiteSpace())  // Removed the ShouldUploadArchive Since we are checking it already
             {
                 if (args.BbsSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
                 {
