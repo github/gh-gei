@@ -1,2 +1,2 @@
 - Improved location matching logic for Secret Scanning alert locations in - `gh gei migrate-secret-alerts`.
-- Fixed a bug where alerts of non `commit` type were were not matched correctly due to differences in URL structure between source and target repositories.
+- Fixed a bug in `gh gei migrate-secret-alerts` where alerts with locations of non `commit` and `wiki_commit` type were not matched correctly.
