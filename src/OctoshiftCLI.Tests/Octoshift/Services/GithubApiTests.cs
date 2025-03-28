@@ -3558,12 +3558,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             }}
         ";
 
-        var response = $@"
-            [
-                {locationWithMissingFields}
-            ]
-        ";
-
         _githubClientMock
             .Setup(m => m.GetAllAsync(url, null))
             .Returns(new[] { JToken.Parse(locationWithMissingFields) }.ToAsyncEnumerable());
@@ -3601,12 +3595,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                     ""extra_field"": ""extra_value""
                 }}
             }}
-        ";
-
-        var response = $@"
-            [
-                {locationWithExtraFields}
-            ]
         ";
 
         _githubClientMock
