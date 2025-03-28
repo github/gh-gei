@@ -1,1 +1,2 @@
-- `gh gei migrate-repo` logs the git and metadata archive download paths when `--keep-archive` is used.
+- Improved location matching logic for Secret Scanning alert locations in - `gh gei migrate-secret-alerts`.
+- Fixed a bug where alerts of non `commit` type were were not matched correctly due to differences in URL structure between source and target repositories.

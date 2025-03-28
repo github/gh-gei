@@ -3538,6 +3538,94 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .ThrowExactlyAsync<ArgumentNullException>();
     }
 
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Missing_Fields_Gracefully()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var locationWithMissingFields = $@"
+            {{
+                ""type"": ""commit"",
+                ""details"": {{
+                    ""path"": ""src/index.js"",
+                    ""start_line"": 5,
+                    ""end_line"": 5,
+                    ""blob_sha"": ""2044bb6ccd535142b974776db108c32a19f89e80""
+                    // Missing start_column and end_column
+                }}
+            }}
+        ";
+
+        var response = $@"
+            [
+                {locationWithMissingFields}
+            ]
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(locationWithMissingFields) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.Path.Should().Be("src/index.js");
+        location.StartLine.Should().Be(5);
+        location.EndLine.Should().Be(5);
+        location.StartColumn.Should().Be(0);
+        location.EndColumn.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Extra_Fields_Gracefully()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var locationWithExtraFields = $@"
+            {{
+                ""type"": ""commit"",
+                ""details"": {{
+                    ""path"": ""src/index.js"",
+                    ""start_line"": 5,
+                    ""end_line"": 5,
+                    ""start_column"": 12,
+                    ""end_column"": 52,
+                    ""blob_sha"": ""2044bb6ccd535142b974776db108c32a19f89e80"",
+                    ""extra_field"": ""extra_value""
+                }}
+            }}
+        ";
+
+        var response = $@"
+            [
+                {locationWithExtraFields}
+            ]
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(locationWithExtraFields) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.Path.Should().Be("src/index.js");
+        location.StartLine.Should().Be(5);
+        location.EndLine.Should().Be(5);
+        location.StartColumn.Should().Be(12);
+        location.EndColumn.Should().Be(52);
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
