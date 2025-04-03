@@ -1187,26 +1187,26 @@ public class GithubApi
     private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation)
     {
         var details = alertLocation["details"];
-        return new()
+        return new GithubSecretScanningAlertLocation
         {
             LocationType = (string)alertLocation["type"],
-            Path = details?["path"] != null ? (string)details["path"] : null,
-            StartLine = details?["start_line"] != null ? (int)details["start_line"] : 0,
-            EndLine = details?["end_line"] != null ? (int)details["end_line"] : 0,
-            StartColumn = details?["start_column"] != null ? (int)details["start_column"] : 0,
-            EndColumn = details?["end_column"] != null ? (int)details["end_column"] : 0,
-            BlobSha = details?["blob_sha"] != null ? (string)details["blob_sha"] : null,
-            IssueTitleUrl = details?["issue_title_url"] != null ? (string)details["issue_title_url"] : null,
-            IssueBodyUrl = details?["issue_body_url"] != null ? (string)details["issue_body_url"] : null,
-            IssueCommentUrl = details?["issue_comment_url"] != null ? (string)details["issue_comment_url"] : null,
-            DiscussionTitleUrl = details?["discussion_title_url"] != null ? (string)details["discussion_title_url"] : null,
-            DiscussionBodyUrl = details?["discussion_body_url"] != null ? (string)details["discussion_body_url"] : null,
-            DiscussionCommentUrl = details?["discussion_comment_url"] != null ? (string)details["discussion_comment_url"] : null,
-            PullRequestTitleUrl = details?["pull_request_title_url"] != null ? (string)details["pull_request_title_url"] : null,
-            PullRequestBodyUrl = details?["pull_request_body_url"] != null ? (string)details["pull_request_body_url"] : null,
-            PullRequestCommentUrl = details?["pull_request_comment_url"] != null ? (string)details["pull_request_comment_url"] : null,
-            PullRequestReviewUrl = details?["pull_request_review_url"] != null ? (string)details["pull_request_review_url"] : null,
-            PullRequestReviewCommentUrl = details?["pull_request_review_comment_url"] != null ? (string)details["pull_request_review_comment_url"] : null,
+            Path = (string)details?["path"],
+            StartLine = (int?)(details?["start_line"]) ?? 0,
+            EndLine = (int?)(details?["end_line"]) ?? 0,
+            StartColumn = (int?)(details?["start_column"]) ?? 0,
+            EndColumn = (int?)(details?["end_column"]) ?? 0,
+            BlobSha = (string)details?["blob_sha"],
+            IssueTitleUrl = (string)details?["issue_title_url"],
+            IssueBodyUrl = (string)details?["issue_body_url"],
+            IssueCommentUrl = (string)details?["issue_comment_url"],
+            DiscussionTitleUrl = (string)details?["discussion_title_url"],
+            DiscussionBodyUrl = (string)details?["discussion_body_url"],
+            DiscussionCommentUrl = (string)details?["discussion_comment_url"],
+            PullRequestTitleUrl = (string)details?["pull_request_title_url"],
+            PullRequestBodyUrl = (string)details?["pull_request_body_url"],
+            PullRequestCommentUrl = (string)details?["pull_request_comment_url"],
+            PullRequestReviewUrl = (string)details?["pull_request_review_url"],
+            PullRequestReviewCommentUrl = (string)details?["pull_request_review_comment_url"],
         };
     }
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
