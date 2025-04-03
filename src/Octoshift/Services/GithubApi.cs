@@ -1184,29 +1184,31 @@ public class GithubApi
             Secret = (string)secretAlert["secret"],
         };
 
-    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
-        new()
+    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation)
+    {
+        var details = alertLocation["details"];
+        return new()
         {
             LocationType = (string)alertLocation["type"],
-            Path = alertLocation["details"]["path"]?.ToString(),
-            StartLine = alertLocation["details"]["start_line"]?.ToObject<int>() ?? 0,
-            EndLine = alertLocation["details"]["end_line"]?.ToObject<int>() ?? 0,
-            StartColumn = alertLocation["details"]["start_column"]?.ToObject<int>() ?? 0,
-            EndColumn = alertLocation["details"]["end_column"]?.ToObject<int>() ?? 0,
-            BlobSha = alertLocation["details"]["blob_sha"]?.ToString(),
-            IssueTitleUrl = alertLocation["details"]["issue_title_url"]?.ToString(),
-            IssueBodyUrl = alertLocation["details"]["issue_body_url"]?.ToString(),
-            IssueCommentUrl = alertLocation["details"]["issue_comment_url"]?.ToString(),
-            DiscussionTitleUrl = alertLocation["details"]["discussion_title_url"]?.ToString(),
-            DiscussionBodyUrl = alertLocation["details"]["discussion_body_url"]?.ToString(),
-            DiscussionCommentUrl = alertLocation["details"]["discussion_comment_url"]?.ToString(),
-            PullRequestTitleUrl = alertLocation["details"]["pull_request_title_url"]?.ToString(),
-            PullRequestBodyUrl = alertLocation["details"]["pull_request_body_url"]?.ToString(),
-            PullRequestCommentUrl = alertLocation["details"]["pull_request_comment_url"]?.ToString(),
-            PullRequestReviewUrl = alertLocation["details"]["pull_request_review_url"]?.ToString(),
-            PullRequestReviewCommentUrl = alertLocation["details"]["pull_request_review_comment_url"]?.ToString(),
+            Path = details?["path"] != null ? (string)details["path"] : null,
+            StartLine = details?["start_line"] != null ? (int)details["start_line"] : 0,
+            EndLine = details?["end_line"] != null ? (int)details["end_line"] : 0,
+            StartColumn = details?["start_column"] != null ? (int)details["start_column"] : 0,
+            EndColumn = details?["end_column"] != null ? (int)details["end_column"] : 0,
+            BlobSha = details?["blob_sha"] != null ? (string)details["blob_sha"] : null,
+            IssueTitleUrl = details?["issue_title_url"] != null ? (string)details["issue_title_url"] : null,
+            IssueBodyUrl = details?["issue_body_url"] != null ? (string)details["issue_body_url"] : null,
+            IssueCommentUrl = details?["issue_comment_url"] != null ? (string)details["issue_comment_url"] : null,
+            DiscussionTitleUrl = details?["discussion_title_url"] != null ? (string)details["discussion_title_url"] : null,
+            DiscussionBodyUrl = details?["discussion_body_url"] != null ? (string)details["discussion_body_url"] : null,
+            DiscussionCommentUrl = details?["discussion_comment_url"] != null ? (string)details["discussion_comment_url"] : null,
+            PullRequestTitleUrl = details?["pull_request_title_url"] != null ? (string)details["pull_request_title_url"] : null,
+            PullRequestBodyUrl = details?["pull_request_body_url"] != null ? (string)details["pull_request_body_url"] : null,
+            PullRequestCommentUrl = details?["pull_request_comment_url"] != null ? (string)details["pull_request_comment_url"] : null,
+            PullRequestReviewUrl = details?["pull_request_review_url"] != null ? (string)details["pull_request_review_url"] : null,
+            PullRequestReviewCommentUrl = details?["pull_request_review_comment_url"] != null ? (string)details["pull_request_review_comment_url"] : null,
         };
-
+    }
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
         new()
         {

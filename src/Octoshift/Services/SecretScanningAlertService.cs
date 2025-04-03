@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
@@ -151,7 +152,7 @@ public class SecretScanningAlertService
     // Compares the final segment of an URL which is relevant for the comparison
     private bool CompareUrlIds(string sourceUrl, string targetUrl)
     {
-        return !string.IsNullOrWhiteSpace(sourceUrl) && !string.IsNullOrWhiteSpace(targetUrl) && sourceUrl.TrimEnd('/').Split('/').Last()
+        return sourceUrl.HasValue() && targetUrl.HasValue() && sourceUrl.TrimEnd('/').Split('/').Last()
             == targetUrl.TrimEnd('/').Split('/').Last();
     }
 
