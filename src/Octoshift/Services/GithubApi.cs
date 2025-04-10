@@ -1190,7 +1190,7 @@ public class GithubApi
         return new GithubSecretScanningAlertLocation
         {
             LocationType = (string)alertLocation["type"],
-            Path = (string)details?["path"],
+            Path = (string)details["path"],
             StartLine = (int?)(details?["start_line"]) ?? 0,
             EndLine = (int?)(details?["end_line"]) ?? 0,
             StartColumn = (int?)(details?["start_column"]) ?? 0,
