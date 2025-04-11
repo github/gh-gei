@@ -110,6 +110,35 @@ public class OctoLoggerTests
         _consoleOutput.ToLower().Should().Contain("&x-amz-credential=***");
     }
 
+    [Theory]
+    [InlineData("https://t3a00c49dev02arg01sa01.blob.core.windows.net/migration-archives-a9fd67c9-e987-4b3e-9cf2-439a95b7f275/f4e871a0-3214-4f94-a82b-8937cece6234.tar?sv=2023-11-03&se=2025-04-10T22%3A32%3A24Z&sr=b&sp=r&sig=y1rXBOGONXMXup%2B0%3D")]
+    [InlineData("https://t3a00c49dev02arg01sa01.blob.core.windows.net/migration-archives-a9fd67c9-e987-4b3e-9cf2-439a95b7f275/f4e871a0-3214-4f94-a82b-8937cece6234.tar?sig=y1rXBOGONXMXup%2B0%3D&sv=2023-11-03&se=2025-04-10T22%3A32%3A24Z&sr=b&sp=r")]
+    public void Azure_SAS_URL_Sig_Parameter_Should_Be_Redacted_In_Logs_And_Console(string sasUrl)
+    {
+        const string sig = "y1rXBOGONXMXup%2B0%3D";
+        // Belt and suspenders
+        sasUrl.Should().Contain(sig);
+
+        _octoLogger.Verbose = false;
+        _octoLogger.LogInformation($"Archive (metadata) download url: {sasUrl}");
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {sasUrl}");
+        _octoLogger.LogWarning($"Archive (metadata) download url: {sasUrl}");
+        _octoLogger.LogSuccess($"Archive (metadata) download url: {sasUrl}");
+        _octoLogger.LogError($"Archive (metadata) download url: {sasUrl}");
+        _octoLogger.LogError(new OctoshiftCliException($"Archive (metadata) download url: {sasUrl}"));
+        _octoLogger.LogError(new InvalidOperationException($"Archive (metadata) download url: {sasUrl}"));
+
+        _octoLogger.Verbose = true;
+        _octoLogger.LogVerbose($"Archive (metadata) download url: {sasUrl}");
+
+        _consoleOutput.Should().NotContain(sasUrl);
+        _logOutput.Should().NotContain(sasUrl);
+        _verboseLogOutput.Should().NotContain(sasUrl);
+        _consoleError.Should().NotContain(sasUrl);
+
+        _consoleOutput.ToLower().Should().Contain("sig=***");
+    }
+
     [Fact]
     public void LogError_For_OctoshiftCliException_Should_Log_Exception_Message_In_Non_Verbose_Mode()
     {
