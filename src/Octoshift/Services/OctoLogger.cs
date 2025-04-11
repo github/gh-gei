@@ -35,9 +35,9 @@ public class OctoLogger
     private readonly List<string> _redactionPatterns =
     [
         // General purpose "Don't include the token"
-        "\\b(?<=token=)(.+?)\\b",
+        "\\b(?<=token=)([^&]+?)\\b",
         // AWS SIGv4 credential
-        "\\b(?<=X-Amz-Credential=)(.+?)\\b",
+        "\\b(?<=X-Amz-Credential=)([^&]+?)\\b",
         // Azure Blob Store SAS URL signature
         "\\b(?<=sig=)([^&]+?)\\b",
     ];
