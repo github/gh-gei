@@ -46,4 +46,6 @@ public class FileSystemProvider
             await source.CopyToAsync(target);
         }
     }
+
+    public virtual bool DirectoryExists(string path) => Directory.Exists(path);
 }
