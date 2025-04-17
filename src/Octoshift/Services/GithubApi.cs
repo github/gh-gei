@@ -1184,29 +1184,31 @@ public class GithubApi
             Secret = (string)secretAlert["secret"],
         };
 
-    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
-        new()
+    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation)
+    {
+        var details = alertLocation["details"];
+        return new GithubSecretScanningAlertLocation
         {
             LocationType = (string)alertLocation["type"],
-            Path = (string)alertLocation["details"]["path"],
-            StartLine = (int)alertLocation["details"]["start_line"],
-            EndLine = (int)alertLocation["details"]["end_line"],
-            StartColumn = (int)alertLocation["details"]["start_column"],
-            EndColumn = (int)alertLocation["details"]["end_column"],
-            BlobSha = (string)alertLocation["details"]["blob_sha"],
-            IssueTitleUrl = (string)alertLocation["details"]["issue_title_url"],
-            IssueBodyUrl = (string)alertLocation["details"]["issue_body_url"],
-            IssueCommentUrl = (string)alertLocation["details"]["issue_comment_url"],
-            DiscussionTitleUrl = (string)alertLocation["details"]["discussion_title_url"],
-            DiscussionBodyUrl = (string)alertLocation["details"]["discussion_body_url"],
-            DiscussionCommentUrl = (string)alertLocation["details"]["discussion_comment_url"],
-            PullRequestTitleUrl = (string)alertLocation["details"]["pull_request_title_url"],
-            PullRequestBodyUrl = (string)alertLocation["details"]["pull_request_body_url"],
-            PullRequestCommentUrl = (string)alertLocation["details"]["pull_request_comment_url"],
-            PullRequestReviewUrl = (string)alertLocation["details"]["pull_request_review_url"],
-            PullRequestReviewCommentUrl = (string)alertLocation["details"]["pull_request_review_comment_url"],
+            Path = (string)details["path"],
+            StartLine = (int?)details["start_line"] ?? 0,
+            EndLine = (int?)details["end_line"] ?? 0,
+            StartColumn = (int?)details["start_column"] ?? 0,
+            EndColumn = (int?)details["end_column"] ?? 0,
+            BlobSha = (string)details["blob_sha"],
+            IssueTitleUrl = (string)details["issue_title_url"],
+            IssueBodyUrl = (string)details["issue_body_url"],
+            IssueCommentUrl = (string)details["issue_comment_url"],
+            DiscussionTitleUrl = (string)details["discussion_title_url"],
+            DiscussionBodyUrl = (string)details["discussion_body_url"],
+            DiscussionCommentUrl = (string)details["discussion_comment_url"],
+            PullRequestTitleUrl = (string)details["pull_request_title_url"],
+            PullRequestBodyUrl = (string)details["pull_request_body_url"],
+            PullRequestCommentUrl = (string)details["pull_request_comment_url"],
+            PullRequestReviewUrl = (string)details["pull_request_review_url"],
+            PullRequestReviewCommentUrl = (string)details["pull_request_review_comment_url"],
         };
-
+    }
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
         new()
         {

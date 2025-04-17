@@ -829,4 +829,392 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
     }
+
+    [Fact]
+    public async Task Alerts_With_Extra_Fields_Are_Handled_Gracefully()
+    {
+        // Arrange
+        var secretType = "custom";
+        var secret = "my-password";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 10,
+            EndLine = 10,
+            StartColumn = 5,
+            EndColumn = 15,
+            BlobSha = "abc123"
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "commit",
+            Path = "my-file.txt",
+            StartLine = 10,
+            EndLine = 10,
+            StartColumn = 5,
+            EndColumn = 15,
+            BlobSha = "abc123",
+            IssueTitleUrl = "https://api.github.com/repos/target-org/target-repo/issues/1" // Extra field
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            null)
+        );
+    }
+
+    [Fact]
+    public async Task Pull_Request_Comment_Location_Is_Matched_And_Secret_Is_Updated()
+    {
+        // Arrange
+        var secretType = "github_personal_access_token";
+        var secret = "gho_abcdefghijklmnopqrstuvwxyz";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration"
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "pull_request_comment",
+            PullRequestCommentUrl = "https://api.github.com/repos/source-org/source-repo/issues/comments/123456789"
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "pull_request_comment",
+            PullRequestCommentUrl = "https://api.github.com/repos/target-org/target-repo/issues/comments/123456789"
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            "This token was revoked during migration")
+        );
+    }
+
+    [Fact]
+    public async Task Pull_Request_Comment_And_Commit_Locations_Are_Both_Matched()
+    {
+        // Arrange
+        var secretType = "github_personal_access_token";
+        var secret = "gho_abcdefghijklmnopqrstuvwxyz";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_comment",
+                PullRequestCommentUrl = "https://api.github.com/repos/source-org/source-repo/issues/comments/123456789"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "commit",
+                Path = "storage/src/main/resources/.env",
+                StartLine = 6,
+                EndLine = 6,
+                StartColumn = 17,
+                EndColumn = 49,
+                BlobSha = "40ecdbab769bc2cb0e4e2114fd6986ae1acc3df2"
+            }
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(sourceLocations);
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_comment",
+                PullRequestCommentUrl = "https://api.github.com/repos/target-org/target-repo/issues/comments/123456789"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "commit",
+                Path = "storage/src/main/resources/.env",
+                StartLine = 6,
+                EndLine = 6,
+                StartColumn = 17,
+                EndColumn = 49,
+                BlobSha = "40ecdbab769bc2cb0e4e2114fd6986ae1acc3df2"
+            }
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(targetLocations);
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionRevoked,
+            null)
+        );
+    }
+
+    [Fact]
+    public async Task Different_Pull_Request_Comment_Urls_Are_Not_Matched()
+    {
+        // Arrange
+        var secretType = "github_personal_access_token";
+        var secret = "gho_abcdefghijklmnopqrstuvwxyz";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+        };
+
+        var sourceLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "pull_request_comment",
+            PullRequestCommentUrl = "https://api.github.com/repos/source-org/source-repo/issues/comments/123456789"
+        };
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(new[] { sourceLocation });
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocation = new GithubSecretScanningAlertLocation
+        {
+            LocationType = "pull_request_comment",
+            PullRequestCommentUrl = "https://api.github.com/repos/target-org/target-repo/issues/comments/987654321"
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(new[] { targetLocation });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Multiple_Pull_Request_Related_Location_Types_Are_Matched()
+    {
+        // Arrange
+        var secretType = "github_personal_access_token";
+        var secret = "gho_abcdefghijklmnopqrstuvwxyz";
+
+        var sourceSecret = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = secretType,
+            Secret = secret,
+            Resolution = SecretScanningAlert.ResolutionFalsePositive,
+            ResolutionComment = "This is a test token"
+        };
+
+        var sourceLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_comment",
+                PullRequestCommentUrl = "https://api.github.com/repos/source-org/source-repo/issues/comments/123456789"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_body",
+                PullRequestBodyUrl = "https://api.github.com/repos/source-org/source-repo/pulls/42"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_review",
+                PullRequestReviewUrl = "https://api.github.com/repos/source-org/source-repo/pulls/42/reviews/123"
+            }
+        };
+
+        _mockOctoLogger
+            .Setup(x => x.LogInformation(It.IsAny<string>()))
+            .Callback<string>(message => Console.WriteLine(message));
+
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { sourceSecret });
+        _mockSourceGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1))
+            .ReturnsAsync(sourceLocations);
+
+        var targetSecret = new GithubSecretScanningAlert
+        {
+            Number = 100,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = secretType,
+            Secret = secret,
+        };
+
+        var targetLocations = new[]
+        {
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_comment",
+                PullRequestCommentUrl = "https://api.github.com/repos/target-org/target-repo/issues/comments/123456789"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_body",
+                PullRequestBodyUrl = "https://api.github.com/repos/target-org/target-repo/pulls/42"
+            },
+            new GithubSecretScanningAlertLocation
+            {
+                LocationType = "pull_request_review",
+                PullRequestReviewUrl = "https://api.github.com/repos/target-org/target-repo/pulls/42/reviews/123"
+            }
+        };
+
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { targetSecret });
+        _mockTargetGithubApi
+            .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 100))
+            .ReturnsAsync(targetLocations);
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+            TARGET_ORG,
+            TARGET_REPO,
+            100,
+            SecretScanningAlert.AlertStateResolved,
+            SecretScanningAlert.ResolutionFalsePositive,
+            "This is a test token")
+        );
+    }
 }
