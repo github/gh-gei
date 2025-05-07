@@ -51,7 +51,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
 
         ValidateOptions(args);
-
         var exportId = 0L;
         var migrationSourceId = "";
 
@@ -384,5 +383,20 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 throw new OctoshiftCliException("Either --aws-region or AWS_REGION environment variable must be set.");
             }
         }
+        // Validate BbsSharedHome
+        if (!string.IsNullOrEmpty(args.BbsSharedHome) &&
+            args.ArchivePath.IsNullOrWhiteSpace() &&
+            args.BbsSharedHome.HasValue() &&
+            !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
+        {
+            throw new OctoshiftCliException($"Invalid --bbs-shared-home path: '{args.BbsSharedHome}'. Directory does not exist.");
+        }
+
+        // Validate ArchivePath
+        if (!string.IsNullOrEmpty(args.ArchivePath) && !_fileSystemProvider.FileExists(args.ArchivePath))
+        {
+            throw new OctoshiftCliException($"Invalid --archive-path: '{args.ArchivePath}'. File does not exist.");
+        }
+
     }
 }
