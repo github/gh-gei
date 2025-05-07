@@ -21,7 +21,8 @@ public class ArchiveUploaderTests
     {
         _logMock = TestHelpers.CreateMock<OctoLogger>();
         _githubClientMock = TestHelpers.CreateMock<GithubClient>();
-        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object);
+        var retryPolicy = new RetryPolicy(_logMock.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
+        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object, retryPolicy);
     }
 
     [Fact]
@@ -91,6 +92,204 @@ public class ArchiveUploaderTests
         _githubClientMock.Verify(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
         _githubClientMock.Verify(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(3));
         _githubClientMock.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Upload_Should_Retry_Failed_Upload_Part_Patch_Requests()
+    {
+        // Arrange
+        _archiveUploader._streamSizeLimit = 2;
+
+        var largeContent = new byte[] { 1, 2, 3 };
+        using var archiveContent = new MemoryStream(largeContent);
+        const string orgDatabaseId = "1";
+        const string archiveName = "test-archive";
+        const string baseUrl = "https://uploads.github.com";
+        const string guid = "c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
+        const string expectedResult = $"gei://archive/{guid}";
+
+        var startUploadBody = new { content_type = "application/octet-stream", name = archiveName, size = largeContent.Length };
+
+        const string initialUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads";
+        const string firstUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
+        const string secondUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
+        const string lastUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads/last";
+
+        // Mocking the initial POST request to initiate multipart upload
+        _githubClientMock
+            .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+
+        // Mocking PATCH requests for each part upload
+        _githubClientMock // first PATCH request
+            .SetupSequence(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
+
+        _githubClientMock // second PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+
+        // Mocking the final PUT request to complete the multipart upload
+        _githubClientMock
+            .Setup(m => m.PutAsync($"{baseUrl}{lastUrl}", "", null))
+            .ReturnsAsync(string.Empty);
+
+        // act
+        var result = await _archiveUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+
+        _githubClientMock.Verify(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.Verify(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(4)); // 2 retries + 2 success
+        _githubClientMock.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Upload_Should_Retry_Failed_Start_Upload_Post_Request()
+    {
+        // Arrange
+        _archiveUploader._streamSizeLimit = 2;
+
+        var largeContent = new byte[] { 1, 2, 3 };
+        using var archiveContent = new MemoryStream(largeContent);
+        const string orgDatabaseId = "1";
+        const string archiveName = "test-archive";
+        const string baseUrl = "https://uploads.github.com";
+        const string guid = "c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
+        const string expectedResult = $"gei://archive/{guid}";
+
+        var startUploadBody = new { content_type = "application/octet-stream", name = archiveName, size = largeContent.Length };
+
+        const string initialUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads";
+        const string firstUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
+        const string secondUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
+        const string lastUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads/last";
+
+        // Mocking the initial POST request to initiate multipart upload
+        _githubClientMock
+            .SetupSequence(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+
+        // Mocking PATCH requests for each part upload
+        _githubClientMock // first PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
+
+        _githubClientMock // second PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+
+        // Mocking the final PUT request to complete the multipart upload
+        _githubClientMock
+            .Setup(m => m.PutAsync($"{baseUrl}{lastUrl}", "", null))
+            .ReturnsAsync(string.Empty);
+
+        // act
+        var result = await _archiveUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+
+        _githubClientMock.Verify(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(3)); // 2 retries + 1 success
+        _githubClientMock.Verify(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(2));
+        _githubClientMock.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Upload_Should_Retry_Failed_Complete_Upload_Put_Request()
+    {
+        // Arrange
+        _archiveUploader._streamSizeLimit = 2;
+
+        var largeContent = new byte[] { 1, 2, 3 };
+        using var archiveContent = new MemoryStream(largeContent);
+        const string orgDatabaseId = "1";
+        const string archiveName = "test-archive";
+        const string baseUrl = "https://uploads.github.com";
+        const string guid = "c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
+        const string expectedResult = $"gei://archive/{guid}";
+
+        var startUploadBody = new { content_type = "application/octet-stream", name = archiveName, size = largeContent.Length };
+
+        const string initialUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads";
+        const string firstUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=1&guid={guid}";
+        const string secondUploadUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads?part_number=2&guid={guid}";
+        const string lastUrl = $"/organizations/{orgDatabaseId}/gei/archive/blobs/uploads/last";
+
+        // Mocking the initial POST request to initiate multipart upload
+        _githubClientMock
+            .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+
+        // Mocking PATCH requests for each part upload
+        _githubClientMock // first PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
+
+        _githubClientMock // second PATCH request
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+
+        // Mocking the final PUT request to complete the multipart upload
+        _githubClientMock
+            .SetupSequence(m => m.PutAsync($"{baseUrl}{lastUrl}", "", null))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ReturnsAsync(string.Empty);
+
+        // act
+        var result = await _archiveUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+
+        _githubClientMock.Verify(m => m.PostWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.Verify(m => m.PatchWithFullResponseAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(2));
+        _githubClientMock.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(3)); // 2 retries + 1 success
+        _githubClientMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Upload_Should_Retry_Failed_Post_When_Not_Multipart()
+    {
+        // Arrange
+        _archiveUploader._streamSizeLimit = 3;
+
+        var largeContent = new byte[] { 1, 2, 3 };
+        using var archiveContent = new MemoryStream(largeContent);
+        const string orgDatabaseId = "1";
+        const string archiveName = "test-archive";
+        const string uploadUrl = $"https://uploads.github.com/organizations/{orgDatabaseId}/gei/archive?name={archiveName}";
+        const string expectedResult = "gei://archive/c9dbd27b-f190-4fe4-979f-d0b7c9b0fcb3";
+
+        _githubClientMock
+            .SetupSequence(m => m.PostAsync(uploadUrl,
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2, 3 }.ToJson()), null))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ThrowsAsync(new TimeoutException("The operation was canceled."))
+            .ReturnsAsync(new { uri = expectedResult }.ToJson());
+
+        // act
+        var result = await _archiveUploader.Upload(archiveContent, archiveName, orgDatabaseId);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+
+        _githubClientMock.Verify(m => m.PostAsync(It.IsAny<string>(), It.IsAny<object>(), null), Times.Exactly(3)); // 2 retries + 1 success
         _githubClientMock.VerifyNoOtherCalls();
     }
 }
