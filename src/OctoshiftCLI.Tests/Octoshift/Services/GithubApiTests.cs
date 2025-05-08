@@ -3879,7 +3879,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Assert
         array.Should().HaveCount(1);
         array[0].ResolutionComment.Should().Be("This is a test");
-        array[0].ResolverName     .Should().Be("actor");
+        array[0].ResolverName.Should().Be("actor");
     }
 
     private string Compact(string source) =>

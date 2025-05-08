@@ -118,7 +118,7 @@ public class SecretScanningAlertServiceTests
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
             ResolutionComment = resolutionComment,
-            ResolverName     = resolverName
+            ResolverName = resolverName
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -1238,29 +1238,30 @@ public class SecretScanningAlertServiceTests
     public async Task Update_When_No_ResolutionComment_Still_Includes_ResolverName_Prefix()
     {
         // Arrange
-        var source = new GithubSecretScanningAlert {
-        Number = 1,
-        State  = SecretScanningAlert.AlertStateResolved,
-        SecretType        = "foo",
-        Secret            = "bar",
-        Resolution        = SecretScanningAlert.ResolutionRevoked,
-        ResolverName      = "actor",
-        ResolutionComment = null
+        var source = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = "foo",
+            Secret = "bar",
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolverName = "actor",
+            ResolutionComment = null
         };
-        var srcLoc = new GithubSecretScanningAlertLocation { LocationType = "commit", Path="f", StartLine=1,EndLine=1,StartColumn=1,EndColumn=1,BlobSha="x" };
+        var srcLoc = new GithubSecretScanningAlertLocation { LocationType = "commit", Path = "f", StartLine = 1, EndLine = 1, StartColumn = 1, EndColumn = 1, BlobSha = "x" };
         _mockSourceGithubApi
-        .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG,SOURCE_REPO)).ReturnsAsync(new[]{source});
+        .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO)).ReturnsAsync(new[] { source });
         _mockSourceGithubApi
-        .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG,SOURCE_REPO,1)).ReturnsAsync(new[]{srcLoc});
+        .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1)).ReturnsAsync(new[] { srcLoc });
 
-        var tgt = new GithubSecretScanningAlert { Number=42, State=SecretScanningAlert.AlertStateOpen, SecretType="foo", Secret="bar" };
+        var tgt = new GithubSecretScanningAlert { Number = 42, State = SecretScanningAlert.AlertStateOpen, SecretType = "foo", Secret = "bar" };
         _mockTargetGithubApi
-        .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG,TARGET_REPO)).ReturnsAsync(new[]{tgt});
+        .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO)).ReturnsAsync(new[] { tgt });
         _mockTargetGithubApi
-        .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG,TARGET_REPO,42)).ReturnsAsync(new[]{srcLoc});
+        .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 42)).ReturnsAsync(new[] { srcLoc });
 
         // Act
-        await _service.MigrateSecretScanningAlerts(SOURCE_ORG,SOURCE_REPO,TARGET_ORG,TARGET_REPO,false);
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
 
         // Assert
         _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
