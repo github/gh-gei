@@ -15,13 +15,15 @@ public class ArchiveUploader
     private readonly GithubClient _client;
     private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    private readonly RetryPolicy _retryPolicy;
 
     private const string BASE_URL = "https://uploads.github.com";
 
-    public ArchiveUploader(GithubClient client, OctoLogger log)
+    public ArchiveUploader(GithubClient client, OctoLogger log, RetryPolicy retryPolicy)
     {
         _client = client;
         _log = log;
+        _retryPolicy = retryPolicy;
     }
     public virtual async Task<string> Upload(Stream archiveContent, string archiveName, string orgDatabaseId)
     {
@@ -48,7 +50,7 @@ public class ArchiveUploader
         {
             var url = $"{BASE_URL}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
-            response = await _client.PostAsync(url, streamContent);
+            response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, streamContent));
             var data = JObject.Parse(response);
             return (string)data["uri"];
         }
@@ -101,7 +103,7 @@ public class ArchiveUploader
 
         try
         {
-            var (responseContent, headers) = await _client.PostWithFullResponseAsync(uploadUrl, body);
+            var (_, headers) = await _retryPolicy.Retry(async () => await _client.PostWithFullResponseAsync(uploadUrl, body));
             return headers.ToList();
         }
         catch (Exception ex)
@@ -119,7 +121,7 @@ public class ArchiveUploader
         try
         {
             // Make the PATCH request and retrieve headers
-            var (_, headers) = await _client.PatchWithFullResponseAsync(nextUrl, content);
+            var (_, headers) = await _retryPolicy.Retry(async () => await _client.PatchWithFullResponseAsync(nextUrl, content));
 
             // Retrieve the next URL from the response headers
             return GetNextUrl(headers.ToList());
@@ -134,7 +136,7 @@ public class ArchiveUploader
     {
         try
         {
-            await _client.PutAsync(lastUrl, "");
+            await _retryPolicy.Retry(async () => await _client.PutAsync(lastUrl, ""));
             _log.LogInformation("Finished uploading archive");
         }
         catch (Exception ex)
