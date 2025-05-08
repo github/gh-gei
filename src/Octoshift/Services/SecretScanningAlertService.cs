@@ -74,7 +74,7 @@ public class SecretScanningAlertService
 
                         _log.LogInformation($"  updating target alert:{targetAlert.Alert.Number} to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
 
-                        string targetResolutionComment = $"[@{sourceAlert.Alert.ResolverName}] {sourceAlert.Alert.ResolutionComment}";
+                        var targetResolutionComment = $"[@{sourceAlert.Alert.ResolverName}] {sourceAlert.Alert.ResolutionComment}";
 
                         await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State,
                             sourceAlert.Alert.Resolution, targetResolutionComment);
