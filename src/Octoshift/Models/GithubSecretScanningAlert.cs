@@ -7,6 +7,7 @@ public class GithubSecretScanningAlert
     public string ResolutionComment { get; set; }
     public string SecretType { get; set; }
     public string Secret { get; set; }
+    public string ResolverName { get; set; }
 }
 
 public class GithubSecretScanningAlertLocation
