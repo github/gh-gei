@@ -1182,6 +1182,9 @@ public class GithubApi
             ResolutionComment = (string)secretAlert["resolution_comment"],
             SecretType = (string)secretAlert["secret_type"],
             Secret = (string)secretAlert["secret"],
+            ResolverName = secretAlert["resolved_by"]?.Type != JTokenType.Null
+                ? (string)secretAlert["resolved_by"]["login"]
+                : null
         };
 
     private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation)
