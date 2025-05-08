@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo;
@@ -94,8 +93,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 TargetRepo = TARGET_REPO,
                 GhesApiUrl = GHES_API_URL,
             };
-            await FluentActions
-                .Invoking(async () => await _handler.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            await Assert.ThrowsAsync<OctoshiftCliException>(async () => await _handler.Handle(args));
 
             // Assert
             _mockSourceGithubApi.Verify(x => x.StartGitArchiveGeneration(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -139,7 +137,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockTargetGithubApi.Verify(m => m.StartMigration(MIGRATION_SOURCE_ID, GITHUB_REPO_URL, GITHUB_ORG_ID, TARGET_REPO, GITHUB_SOURCE_PAT, GITHUB_TARGET_PAT, null, null, false, null, false));
 
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
-            actualLogOutput.Should().Equal(expectedLogOutput);
+            Assert.Equal(expectedLogOutput, actualLogOutput);
 
             _mockTargetGithubApi.VerifyNoOtherCalls();
         }
@@ -177,7 +175,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             // Assert
             _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Exactly(1));
-            actualLogOutput.Should().Contain(expectedLogOutput);
+            Assert.Contains(expectedLogOutput, actualLogOutput);
         }
 
         [Fact]
@@ -229,19 +227,24 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_SOURCE_PAT);
             _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_TARGET_PAT);
 
-            // Act
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                GithubSourceOrg = SOURCE_ORG,
-                SourceRepo = SOURCE_REPO,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                TargetApiUrl = TARGET_API_URL,
-                QueueOnly = true,
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{TARGET_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
+            // Act, Assert
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    GithubSourceOrg = SOURCE_ORG,
+                    SourceRepo = SOURCE_REPO,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    TargetApiUrl = TARGET_API_URL,
+                    QueueOnly = true,
+                }));
+            Assert.Equal(
+                $"monalisa does not have the correct permissions to execute `CreateMigrationSource`. " +
+                $"Please check that:\n  (a) you are a member of the `{TARGET_ORG}` organization,\n  " +
+                $"(b) you are an organization owner or you have been granted the migrator role and\n  " +
+                $"(c) your personal access token has the correct scopes.\n" +
+                $"For more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.",
+                ex.Message);
         }
 
         [Fact]
@@ -607,8 +610,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         [Fact]
         public async Task Github_Only_One_Archive_Url_Throws_Error()
         {
-            await FluentActions
-                .Invoking(async () => await _handler.Handle(new MigrateRepoCommandArgs
+            await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
                 {
                     GithubSourceOrg = SOURCE_ORG,
                     SourceRepo = SOURCE_REPO,
@@ -616,24 +619,21 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     TargetRepo = TARGET_REPO,
                     TargetApiUrl = TARGET_API_URL,
                     GitArchiveUrl = GIT_ARCHIVE_URL,
-                }))
-                .Should().ThrowAsync<OctoshiftCliException>();
+                }));
         }
 
         [Fact]
         public async Task Ghes_Without_AzureConnectionString_Or_Aws_Bucket_Name_Throws_Error()
         {
-            await FluentActions
-                .Invoking(async () => await _handler.Handle(new MigrateRepoCommandArgs
+            await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
                 {
                     GithubSourceOrg = SOURCE_ORG,
                     SourceRepo = SOURCE_REPO,
                     GithubTargetOrg = TARGET_ORG,
                     TargetRepo = TARGET_REPO,
                     GhesApiUrl = GHES_API_URL
-                }
-                ))
-                .Should().ThrowAsync<OctoshiftCliException>();
+                }));
         }
 
         [Fact]
@@ -804,8 +804,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await FluentActions
-                .Invoking(async () => await _handler.Handle(new MigrateRepoCommandArgs
+            await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
                 {
                     GithubSourceOrg = SOURCE_ORG,
                     SourceRepo = SOURCE_REPO,
@@ -814,9 +814,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                     TargetApiUrl = TARGET_API_URL,
                     GhesApiUrl = GHES_API_URL,
                     AzureStorageConnectionString = AZURE_CONNECTION_STRING
-                }
-                ))
-                .Should().ThrowAsync<OctoshiftCliException>();
+                }));
         }
 
         [Fact]
@@ -920,7 +918,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
+            Assert.DoesNotContain("Since github-target-pat is provided, github-source-pat will also use its value.", actualLogOutput);
 
             _mockEnvironmentVariableProvider.Verify(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
             _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
@@ -968,7 +966,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             // Assert
-            actualLogOutput.Should().NotContain("Since github-target-pat is provided, github-source-pat will also use its value.");
+            Assert.DoesNotContain("Since github-target-pat is provided, github-source-pat will also use its value.", actualLogOutput);
 
             _mockEnvironmentVariableProvider.Verify(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
             _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()));
@@ -1354,18 +1352,17 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsBucketName = AWS_BUCKET_NAME
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>();
+            await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsBucketName = AWS_BUCKET_NAME
+                }));
         }
 
         [Fact]
@@ -1373,19 +1370,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("--aws-access-key", ex.Message);
         }
 
         [Fact]
@@ -1393,19 +1389,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-secret-key*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID
+                }));
+            Assert.Contains("--aws-secret-key", ex.Message);
         }
 
         [Fact]
@@ -1413,21 +1408,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
-                AwsSessionToken = AWS_SESSION_TOKEN
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                    AwsSessionToken = AWS_SESSION_TOKEN
+                }));
+            Assert.Contains("Either --aws-region or AWS_REGION environment variable must be set.", ex.Message);
         }
 
         [Fact]
@@ -1435,19 +1429,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY_ID
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1455,19 +1449,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1475,19 +1469,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSessionToken = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsSessionToken = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1495,19 +1489,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GhesApiUrl = GHES_API_URL,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsRegion = AWS_REGION
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GhesApiUrl = GHES_API_URL,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsRegion = AWS_REGION
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1515,19 +1509,18 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsBucketName = AWS_BUCKET_NAME
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>();
+            await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsBucketName = AWS_BUCKET_NAME
+                }));
         }
 
         [Fact]
@@ -1535,20 +1528,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-access-key*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("--aws-access-key", ex.Message);
         }
 
         [Fact]
@@ -1556,20 +1548,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*--aws-secret-key*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID
+                }));
+            Assert.Contains("--aws-secret-key", ex.Message);
         }
 
         [Fact]
@@ -1577,22 +1568,21 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AwsBucketName = AWS_BUCKET_NAME,
-                AwsAccessKey = AWS_ACCESS_KEY_ID,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY,
-                AwsSessionToken = AWS_SESSION_TOKEN
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("Either --aws-region or AWS_REGION environment variable must be set.");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AwsBucketName = AWS_BUCKET_NAME,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY,
+                    AwsSessionToken = AWS_SESSION_TOKEN
+                }));
+            Assert.Contains("Either --aws-region or AWS_REGION environment variable must be set.", ex.Message);
         }
 
         [Fact]
@@ -1600,20 +1590,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsAccessKey = AWS_ACCESS_KEY_ID
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsAccessKey = AWS_ACCESS_KEY_ID
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1621,20 +1611,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSecretKey = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsSecretKey = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1642,20 +1632,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsSessionToken = AWS_SECRET_ACCESS_KEY
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsSessionToken = AWS_SECRET_ACCESS_KEY
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
@@ -1663,20 +1653,20 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
 
-            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
-            {
-                SourceRepo = SOURCE_REPO,
-                GithubSourceOrg = SOURCE_ORG,
-                GithubTargetOrg = TARGET_ORG,
-                TargetRepo = TARGET_REPO,
-                GitArchivePath = GIT_ARCHIVE_FILE_PATH,
-                MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
-                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
-                AwsRegion = AWS_REGION
-            }))
-                .Should()
-                .ThrowAsync<OctoshiftCliException>()
-                .WithMessage("*AWS S3*--aws-bucket-name*");
+            var ex = await Assert.ThrowsAsync<OctoshiftCliException>(
+                async () => await _handler.Handle(new MigrateRepoCommandArgs
+                {
+                    SourceRepo = SOURCE_REPO,
+                    GithubSourceOrg = SOURCE_ORG,
+                    GithubTargetOrg = TARGET_ORG,
+                    TargetRepo = TARGET_REPO,
+                    GitArchivePath = GIT_ARCHIVE_FILE_PATH,
+                    MetadataArchivePath = METADATA_ARCHIVE_FILE_PATH,
+                    AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+                    AwsRegion = AWS_REGION
+                }));
+            Assert.Contains("AWS S3", ex.Message);
+            Assert.Contains("--aws-bucket-name", ex.Message);
         }
 
         [Fact]
