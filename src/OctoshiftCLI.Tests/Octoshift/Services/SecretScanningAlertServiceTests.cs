@@ -701,6 +701,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked",
+            ResolverName = "actor-source"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -726,6 +728,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionFalsePositive,
+            ResolutionComment = "This token was resolved as false positive",
+            ResolverName = "actor-target"
         };
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
@@ -754,7 +758,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            "[@] ")
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
     }
 
