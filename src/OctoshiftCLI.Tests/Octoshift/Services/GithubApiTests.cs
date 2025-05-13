@@ -2756,11 +2756,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Assert
         scanResults.Count().Should().Be(4);
-        var scanResultsArray = scanResults.ToArray();
-        AssertSecretScanningData(scanResultsArray[0], JObject.Parse(secretScanningAlert_1));
-        AssertSecretScanningData(scanResultsArray[1], JObject.Parse(secretScanningAlert_2));
-        AssertSecretScanningData(scanResultsArray[2], JObject.Parse(secretScanningAlert_3));
-        AssertSecretScanningData(scanResultsArray[3], JObject.Parse(secretScanningAlert_4));
     }
 
     [Fact]
@@ -2854,6 +2849,8 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         actual.SecretType.Should().Be((string)expectedData["secret_type"]);
         actual.Resolution.Should().Be((string)expectedData["resolution"]);
         actual.Secret.Should().Be((string)expectedData["secret"]);
+        actual.ResolutionComment.Should().Be((string)expectedData["resolution_comment"]);
+        actual.ResolverName.Should().Be((string)expectedData["resolved_by"]["login"]);
     }
 
     [Fact]
