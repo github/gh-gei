@@ -16,7 +16,7 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
 
     public virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
 
-    public virtual Option<string> IdpGroup { get; } = new("--idp-group");
+    public virtual Option<string> IdpGroup { get; } = new("--idp-group")
     {
         Description = "The Identity Provider Group to link the team to. For Enterprise Managed Users only."
     };
