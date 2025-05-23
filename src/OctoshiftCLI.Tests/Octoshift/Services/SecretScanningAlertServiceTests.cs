@@ -42,6 +42,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -95,7 +97,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            null)
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
     }
 
@@ -105,6 +107,7 @@ public class SecretScanningAlertServiceTests
         var secretType = "custom";
         var secret = "my-password";
         var resolutionComment = "This secret was revoked and replaced";
+        var resolverName = "actor";
 
         // Arrange
         var sourceSecret = new GithubSecretScanningAlert()
@@ -114,7 +117,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
-            ResolutionComment = resolutionComment
+            ResolutionComment = resolutionComment,
+            ResolverName = resolverName
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -168,7 +172,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            resolutionComment)
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
     }
 
@@ -186,6 +190,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -256,6 +262,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -375,6 +383,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretOne,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceSecretTwo = new GithubSecretScanningAlert()
@@ -384,6 +394,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretTwo,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceSecretThree = new GithubSecretScanningAlert()
@@ -393,6 +405,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secretThree,
             Resolution = SecretScanningAlert.ResolutionFalsePositive,
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -443,7 +457,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            null)
+            $"[@{sourceSecretOne.ResolverName}] {sourceSecretOne.ResolutionComment}")
         );
 
         _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
@@ -452,7 +466,7 @@ public class SecretScanningAlertServiceTests
             300,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionFalsePositive,
-            null)
+            $"[@{sourceSecretThree.ResolverName}] {sourceSecretThree.ResolutionComment}")
         );
     }
 
@@ -687,6 +701,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolutionComment = "This token was revoked",
+            ResolverName = "actor-source"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation()
@@ -712,6 +728,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionFalsePositive,
+            ResolutionComment = "This token was resolved as false positive",
+            ResolverName = "actor-target"
         };
 
         var targetSecretLocation = new GithubSecretScanningAlertLocation()
@@ -740,7 +758,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            null)
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
     }
 
@@ -901,7 +919,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            null)
+            "[@] ")
         );
     }
 
@@ -919,7 +937,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionRevoked,
-            ResolutionComment = "This token was revoked during migration"
+            ResolutionComment = "This token was revoked during migration",
+            ResolverName = "actor"
         };
 
         var sourceLocation = new GithubSecretScanningAlertLocation
@@ -966,7 +985,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            "This token was revoked during migration")
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
     }
 
@@ -1056,7 +1075,7 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionRevoked,
-            null)
+            "[@] ")
         );
     }
 
@@ -1137,7 +1156,8 @@ public class SecretScanningAlertServiceTests
             SecretType = secretType,
             Secret = secret,
             Resolution = SecretScanningAlert.ResolutionFalsePositive,
-            ResolutionComment = "This is a test token"
+            ResolutionComment = "This is a test token",
+            ResolverName = "actor"
         };
 
         var sourceLocations = new[]
@@ -1214,7 +1234,47 @@ public class SecretScanningAlertServiceTests
             100,
             SecretScanningAlert.AlertStateResolved,
             SecretScanningAlert.ResolutionFalsePositive,
-            "This is a test token")
+            $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
+        );
+    }
+
+    [Fact]
+    public async Task Update_When_No_ResolutionComment_Still_Includes_ResolverName_Prefix()
+    {
+        // Arrange
+        var source = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = "foo",
+            Secret = "bar",
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolverName = "actor",
+            ResolutionComment = null
+        };
+        var srcLoc = new GithubSecretScanningAlertLocation { LocationType = "commit", Path = "f", StartLine = 1, EndLine = 1, StartColumn = 1, EndColumn = 1, BlobSha = "x" };
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO)).ReturnsAsync(new[] { source });
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1)).ReturnsAsync(new[] { srcLoc });
+
+        var tgt = new GithubSecretScanningAlert { Number = 42, State = SecretScanningAlert.AlertStateOpen, SecretType = "foo", Secret = "bar" };
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO)).ReturnsAsync(new[] { tgt });
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 42)).ReturnsAsync(new[] { srcLoc });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+        TARGET_ORG,
+        TARGET_REPO,
+        42,
+        SecretScanningAlert.AlertStateResolved,
+        SecretScanningAlert.ResolutionRevoked,
+        "[@actor] ")  // even though comment was null
         );
     }
 }

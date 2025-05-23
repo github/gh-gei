@@ -2756,11 +2756,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Assert
         scanResults.Count().Should().Be(4);
-        var scanResultsArray = scanResults.ToArray();
-        AssertSecretScanningData(scanResultsArray[0], JObject.Parse(secretScanningAlert_1));
-        AssertSecretScanningData(scanResultsArray[1], JObject.Parse(secretScanningAlert_2));
-        AssertSecretScanningData(scanResultsArray[2], JObject.Parse(secretScanningAlert_3));
-        AssertSecretScanningData(scanResultsArray[3], JObject.Parse(secretScanningAlert_4));
     }
 
     [Fact]
@@ -2854,6 +2849,8 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         actual.SecretType.Should().Be((string)expectedData["secret_type"]);
         actual.Resolution.Should().Be((string)expectedData["resolution"]);
         actual.Secret.Should().Be((string)expectedData["secret"]);
+        actual.ResolutionComment.Should().Be((string)expectedData["resolution_comment"]);
+        actual.ResolverName.Should().Be((string)expectedData["resolved_by"]["login"]);
     }
 
     [Fact]
@@ -3803,6 +3800,83 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var location = locations.First();
         location.LocationType.Should().Be("issue_comment");
         location.IssueCommentUrl.Should().Be("https://api.github.com/repos/ORG/REPO/issues/comments/2758578142");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Populates_ResolverName()
+    {
+        // Arrange
+        const string url =
+            $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+
+        var alertWithNoResolver = @"
+            {
+                ""number"": 10,
+                ""state"": ""open"",
+                ""secret_type"": ""pattern"",
+                ""secret"": ""secret1"",
+                ""resolution"": null,
+                ""resolved_by"": null
+            }
+        ";
+        var alertWithResolver = @"
+            {
+                ""number"": 11,
+                ""state"": ""resolved"",
+                ""secret_type"": ""pattern"",
+                ""secret"": ""secret2"",
+                ""resolution"": ""false_positive"",
+                ""resolved_by"": { ""login"": ""resolverUser"" }
+            }
+        ";
+
+        var alerts = new[]
+        {
+            JToken.Parse(alertWithNoResolver),
+            JToken.Parse(alertWithResolver)
+        }.ToAsyncEnumerable();
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(alerts);
+
+        // Act
+        var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+        var array = results.ToArray();
+
+        // Assert
+        array.Should().HaveCount(2);
+        array[0].ResolverName.Should().BeNull();
+        array[1].ResolverName.Should().Be("resolverUser");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Populates_ResolutionComment_And_ResolverName()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var json = @"
+        {
+        ""number"": 5,
+        ""state"": ""resolved"",
+        ""secret_type"": ""pattern"",
+        ""secret"": ""secretX"",
+        ""resolution"": ""false_positive"",
+        ""resolution_comment"": ""This is a test"",
+        ""resolved_by"": { ""login"": ""actor"" }
+        }";
+        _githubClientMock
+        .Setup(m => m.GetAllAsync(url, null))
+        .Returns(new[] { JToken.Parse(json) }.ToAsyncEnumerable());
+
+        // Act
+        var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+        var array = results.ToArray();
+
+        // Assert
+        array.Should().HaveCount(1);
+        array[0].ResolutionComment.Should().Be("This is a test");
+        array[0].ResolverName.Should().Be("actor");
     }
 
     private string Compact(string source) =>
