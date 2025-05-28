@@ -1,0 +1,21 @@
+name: Download and Test Exploit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4.1.4
+        with:
+          name: malicious-artifact
+          path: safe-folder
+
+      - name: List All Files
+        run: |
+          echo "Files in workspace:"
+          find . -type f
+          echo "Files in /home/runner:"
+          find /home/runner -type f -name "malicious.txt" || echo "Not found"
