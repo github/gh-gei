@@ -1,0 +1,27 @@
+name: Test Artifact for Zip Slip
+
+on:
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4.1.4
+        with:
+          name: Event File
+          path: safe
+
+      - name: List files in workspace
+        run: |
+          echo "==== Workspace Files ===="
+          find . -type f
+
+      - name: List files in /home/runner
+        run: |
+          echo "==== RCE Check: /home/runner ===="
+          find /home/runner -type f -name "malicious.txt" || echo "Not found"
