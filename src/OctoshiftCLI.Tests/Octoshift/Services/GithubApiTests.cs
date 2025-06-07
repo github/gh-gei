@@ -3879,6 +3879,168 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         array[0].ResolverName.Should().Be("actor");
     }
 
+    [Fact]
+    public async Task GetDependabotAlertsForRepository_Returns_Correct_Data()
+    {
+        // Arrange
+        const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts?per_page=100";
+
+        var dependabotAlert = $@"
+            {{
+                ""number"": 1,
+                ""state"": ""dismissed"",
+                ""dismissed_reason"": ""false_positive"",
+                ""dismissed_comment"": ""Not applicable"",
+                ""dismissed_at"": ""2023-05-15T10:30:00Z"",
+                ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts/1"",
+                ""html_url"": ""https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/dependabot/1"",
+                ""created_at"": ""2023-05-14T08:00:00Z"",
+                ""updated_at"": ""2023-05-15T10:30:00Z"",
+                ""dependency"": {{
+                    ""package"": {{
+                        ""name"": ""lodash""
+                    }},
+                    ""manifest_path"": ""package.json"",
+                    ""scope"": ""runtime""
+                }},
+                ""security_advisory"": {{
+                    ""ghsa_id"": ""GHSA-1234-5678-9abc"",
+                    ""cve_id"": ""CVE-2023-1234"",
+                    ""summary"": ""Prototype Pollution in lodash"",
+                    ""description"": ""lodash is vulnerable to prototype pollution"",
+                    ""severity"": ""high""
+                }},
+                ""security_vulnerability"": {{
+                    ""package"": {{
+                        ""name"": ""lodash""
+                    }},
+                    ""severity"": ""high"",
+                    ""vulnerable_version_range"": ""< 4.17.21"",
+                    ""first_patched_version"": {{
+                        ""identifier"": ""4.17.21""
+                    }}
+                }}
+            }}";
+
+        var alerts = new[] { JToken.Parse(dependabotAlert) };
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(alerts.ToAsyncEnumerable());
+
+        // Act
+        var results = await _githubApi.GetDependabotAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        results.Count().Should().Be(1);
+        var alert = results.First();
+        
+        alert.Number.Should().Be(1);
+        alert.State.Should().Be("dismissed");
+        alert.DismissedReason.Should().Be("false_positive");
+        alert.DismissedComment.Should().Be("Not applicable");
+        alert.DismissedAt.Should().NotBeNull();
+        alert.Url.Should().Be($"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts/1");
+        alert.HtmlUrl.Should().Be($"https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/dependabot/1");
+        alert.CreatedAt.Should().NotBeNull();
+        alert.UpdatedAt.Should().NotBeNull();
+        
+        alert.Dependency.Package.Should().Be("lodash");
+        alert.Dependency.Manifest.Should().Be("package.json");
+        alert.Dependency.Scope.Should().Be("runtime");
+        
+        alert.SecurityAdvisory.GhsaId.Should().Be("GHSA-1234-5678-9abc");
+        alert.SecurityAdvisory.CveId.Should().Be("CVE-2023-1234");
+        alert.SecurityAdvisory.Summary.Should().Be("Prototype Pollution in lodash");
+        alert.SecurityAdvisory.Severity.Should().Be("high");
+        
+        alert.SecurityVulnerability.Package.Should().Be("lodash");
+        alert.SecurityVulnerability.Severity.Should().Be("high");
+        alert.SecurityVulnerability.VulnerableVersionRange.Should().Be("< 4.17.21");
+        alert.SecurityVulnerability.FirstPatchedVersion.Should().Be("4.17.21");
+    }
+
+    [Fact]
+    public async Task UpdateDependabotAlert_Calls_The_Right_Endpoint_With_Payload_For_Open_State()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        const string state = "open";
+
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts/{alertNumber}";
+        var payload = new { state };
+
+        // Act
+        await _githubApi.UpdateDependabotAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state);
+
+        // Assert
+        _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+    }
+
+    [Fact]
+    public async Task UpdateDependabotAlert_Calls_The_Right_Endpoint_With_Payload_For_Dismissed_State()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        const string state = "dismissed";
+        const string dismissedReason = "false_positive";
+        const string dismissedComment = "Not applicable";
+
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts/{alertNumber}";
+        var payload = new { state, dismissed_reason = dismissedReason, dismissed_comment = dismissedComment };
+
+        // Act
+        await _githubApi.UpdateDependabotAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state, dismissedReason, dismissedComment);
+
+        // Assert
+        _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+    }
+
+    [Fact]
+    public async Task UpdateDependabotAlert_Replaces_Null_Dismissed_Comment_With_Empty_String()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        const string state = "dismissed";
+        const string dismissedReason = "not_used";
+
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/dependabot/alerts/{alertNumber}";
+        var payload = new { state, dismissed_reason = dismissedReason, dismissed_comment = string.Empty };
+
+        // Act
+        await _githubApi.UpdateDependabotAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state, dismissedReason);
+
+        // Assert
+        _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
+    }
+
+    [Fact]
+    public async Task UpdateDependabotAlert_Throws_ArgumentException_For_Invalid_State()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        const string invalidState = "invalid";
+
+        // Act & Assert
+        await _githubApi.Invoking(x => x.UpdateDependabotAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, invalidState))
+            .Should().ThrowAsync<ArgumentException>()
+            .WithMessage("Invalid value for state*");
+    }
+
+    [Fact]
+    public async Task UpdateDependabotAlert_Throws_ArgumentException_For_Invalid_Dismissed_Reason()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        const string state = "dismissed";
+        const string invalidReason = "invalid_reason";
+
+        // Act & Assert
+        await _githubApi.Invoking(x => x.UpdateDependabotAlert(GITHUB_ORG, GITHUB_REPO, alertNumber, state, invalidReason))
+            .Should().ThrowAsync<ArgumentException>()
+            .WithMessage("Invalid value for dismissedReason*");
+    }
+
     private string Compact(string source) =>
         source
             .Replace("\r", "")
