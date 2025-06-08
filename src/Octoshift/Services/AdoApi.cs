@@ -632,7 +632,9 @@ public class AdoApi
             throw new OctoshiftCliException($"Error getting GitHub repository information: {errorMessage}");
         }
 
+#pragma warning disable IDE0028 // Simplify collection initialization
         if (dataProvider == null || dataProvider["additionalProperties"] == null || dataProvider["additionalProperties"]["nodeId"] == null)
+#pragma warning restore IDE0028 // Simplify collection initialization
         {
             throw new OctoshiftCliException("Could not retrieve GitHub repository information. Please verify the repository exists and the GitHub token has the correct permissions.");
         }
