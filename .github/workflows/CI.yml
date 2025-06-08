@@ -49,7 +49,12 @@ jobs:
 
     - name: Copy Coverage To Predictable Location
       if: always() && matrix.runner-os == 'ubuntu-latest'
-      run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
+      run: |
+        if ls coverage/**/coverage.cobertura.xml 1> /dev/null 2>&1; then
+          cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
+        else
+          echo "No coverage file found, skipping copy"
+        fi
 
     - name: Code Coverage Summary Report
       uses: irongut/CodeCoverageSummary@v1.3.0

@@ -677,8 +677,8 @@ public class AdoApi
                 new
                 {
                     descriptor = identityDescriptor,
-                    allow = 0,
-                    deny = 56828,
+        allow = 0,
+        deny = 56828,
                     extendedInfo = new
                     {
                         effectiveAllow = 0,
