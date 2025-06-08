@@ -214,14 +214,22 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
+        // Check for error message in the response
+        var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-data-provider"];
+        var errorMessage = (string)dataProvider?["errorMessage"];
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            throw new OctoshiftCliException($"Error validating GitHub token: {errorMessage}");
+        }
+
 #pragma warning disable IDE0046 // Convert to conditional expression
-        if (data["dataProviders"]["ms.vss-work-web.github-user-data-provider"] == null)
+        if (dataProvider == null)
         {
             throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
         }
 #pragma warning restore IDE0046 // Convert to conditional expression
 
-        return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
+        return (string)dataProvider["login"];
     }
 
     public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string teamProject)
@@ -329,7 +337,21 @@ public class AdoApi
             }
         };
 
-        await _client.PostAsync(url, payload);
+        var response = await _client.PostAsync(url, payload);
+        
+        // Only check for errors if there's a response to parse
+        if (!string.IsNullOrEmpty(response))
+        {
+            var data = JObject.Parse(response);
+
+            // Check for error message in the response
+            var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
+            var errorMessage = (string)dataProvider?["errorMessage"];
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                throw new OctoshiftCliException($"Error adding repository to boards GitHub connection: {errorMessage}");
+            }
+        }
     }
 
     public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
@@ -602,7 +624,20 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
-        return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
+        // Check for error message in the response
+        var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"];
+        var errorMessage = (string)dataProvider?["errorMessage"];
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            throw new OctoshiftCliException($"Error getting GitHub repository information: {errorMessage}");
+        }
+
+        if (dataProvider == null || dataProvider["additionalProperties"] == null || dataProvider["additionalProperties"]["nodeId"] == null)
+        {
+            throw new OctoshiftCliException("Could not retrieve GitHub repository information. Please verify the repository exists and the GitHub token has the correct permissions.");
+        }
+
+        return (string)dataProvider["additionalProperties"]["nodeId"];
     }
 
     public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
@@ -641,7 +676,21 @@ public class AdoApi
             }
         };
 
-        await _client.PostAsync(url, payload);
+        var response = await _client.PostAsync(url, payload);
+        
+        // Only check for errors if there's a response to parse
+        if (!string.IsNullOrEmpty(response))
+        {
+            var data = JObject.Parse(response);
+
+            // Check for error message in the response
+            var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
+            var errorMessage = (string)dataProvider?["errorMessage"];
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                throw new OctoshiftCliException($"Error creating boards GitHub connection: {errorMessage}");
+            }
+        }
     }
 
     public virtual async Task DisableRepo(string org, string teamProject, string repoId)
