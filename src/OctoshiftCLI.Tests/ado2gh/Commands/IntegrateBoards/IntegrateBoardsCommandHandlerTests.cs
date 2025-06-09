@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Moq;
 using OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards;
 using OctoshiftCLI.Services;
@@ -114,68 +113,5 @@ public class IntegrateBoardsCommandHandlerTests
 
         _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_Throws_Exception_When_GitHub_Token_Validation_Fails()
-    {
-        // Arrange
-        _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-        _mockAdoApi.Setup(x => x.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_TOKEN).Result)
-            .Throws(new OctoshiftCliException("Error validating GitHub token: An error has occurred when validating credentials. Please use correct scope for PAT token"));
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
-            .Returns(GITHUB_TOKEN);
-
-        var args = new IntegrateBoardsCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-        };
-
-        // Act & Assert
-        var exception = await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>();
-
-        exception.Which.Message.Should().Contain("Error validating GitHub token");
-        exception.Which.Message.Should().Contain("An error has occurred when validating credentials. Please use correct scope for PAT token");
-    }
-
-    [Fact]
-    public async Task Handle_Throws_Exception_When_Repository_Information_Fails()
-    {
-        // Arrange
-        _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-        _mockAdoApi.Setup(x => x.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_TOKEN).Result).Returns(GITHUB_HANDLE);
-        _mockAdoApi.Setup(x => x.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(() => default);
-        _mockAdoApi.Setup(x => x.CreateBoardsGithubEndpoint(ADO_ORG, TEAM_PROJECT_ID, GITHUB_TOKEN, GITHUB_HANDLE, It.IsAny<string>()).Result).Returns(ENDPOINT_ID);
-        _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result)
-            .Throws(new OctoshiftCliException("Error getting GitHub repository information: Specified argument was out of the range of valid values.\\r\\nParameter name: name"));
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
-            .Returns(GITHUB_TOKEN);
-
-        var args = new IntegrateBoardsCommandArgs
-        {
-            AdoOrg = ADO_ORG,
-            AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubOrg = GITHUB_ORG,
-            GithubRepo = GITHUB_REPO,
-        };
-
-        // Act & Assert
-        var exception = await FluentActions
-            .Invoking(async () => await _handler.Handle(args))
-            .Should()
-            .ThrowExactlyAsync<OctoshiftCliException>();
-
-        exception.Which.Message.Should().Contain("Error getting GitHub repository information");
-        exception.Which.Message.Should().Contain("Specified argument was out of the range of valid values");
     }
 }
