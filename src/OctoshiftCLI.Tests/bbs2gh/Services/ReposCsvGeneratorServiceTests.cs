@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const bool ARCHIVED = false;
         private const ulong REPO_SIZE = 10000UL;
         private const ulong ATTACHMENTS_SIZE = 10000UL;
-        private readonly IEnumerable<BbsRepository> _bbsRepos = new List<BbsRepository> { new() { Name = BBS_REPO, Slug = BBS_REPO_SLUG } };
+        private readonly IEnumerable<BbsRepository> _bbsRepos = [new() { Name = BBS_REPO, Slug = BBS_REPO_SLUG }];
 
         private readonly ReposCsvGeneratorService _service;
 
