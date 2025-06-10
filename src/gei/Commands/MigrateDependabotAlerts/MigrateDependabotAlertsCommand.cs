@@ -43,7 +43,8 @@ public class MigrateDependabotAlertsCommand : CommandBase<MigrateDependabotAlert
     };
     public Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
     {
-        Description = "The URL of the GitHub Enterprise Server API. Defaults to the source-api-url if provided or https://api.github.com"
+        Description =
+            "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
     };
     public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify");
 
