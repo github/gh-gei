@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
             var result = await _service.GetProjects();
 
             // Assert
-            result.Should().BeEquivalentTo(new List<(string, string)>() { (BBS_FOO_PROJECT_KEY, project1), (BBS_BAR_PROJECT_KEY, project2) });
+            result.Should().BeEquivalentTo([(BBS_FOO_PROJECT_KEY, project1), (BBS_BAR_PROJECT_KEY, project2)]);
         }
 
         [Fact]

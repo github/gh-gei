@@ -455,7 +455,7 @@ public class AdoApiTests
             }
         };
 
-        await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, connectionId, connectionName, endpointId, new List<string>() { ADO_REPO, repo2 });
+        await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, connectionId, connectionName, endpointId, [ADO_REPO, repo2]);
 
         _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
     }

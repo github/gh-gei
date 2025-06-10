@@ -29,7 +29,7 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands
         private const string BBS_PASSWORD = "bbs-password";
         private const bool NO_SSL_VERIFY = true;
         private readonly (string, string) _bbsProject = (BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT);
-        private readonly IEnumerable<(string, string)> _bbsProjects = new List<(string, string)>() { (BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT), (BBS_BAR_PROJECT_KEY, BBS_BAR_PROJECT) };
+        private readonly IEnumerable<(string, string)> _bbsProjects = [(BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT), (BBS_BAR_PROJECT_KEY, BBS_BAR_PROJECT)];
 
         private readonly ProjectsCsvGeneratorService _service;
 
