@@ -25,11 +25,7 @@ public class DependabotAlertService
         _log.LogInformation($"Migrating Dependabot Alerts from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
         var sourceAlerts = (await _sourceGithubApi.GetDependabotAlertsForRepository(sourceOrg, sourceRepo)).ToList();
-
-        // no reason to call the target on a dry run - there will be no alerts 
-        var targetAlerts = dryRun ?
-            [] :
-            (await _targetGithubApi.GetDependabotAlertsForRepository(targetOrg, targetRepo)).ToList();
+        var targetAlerts = (await _targetGithubApi.GetDependabotAlertsForRepository(targetOrg, targetRepo)).ToList();
 
         var successCount = 0;
         var skippedCount = 0;
@@ -46,14 +42,6 @@ public class DependabotAlertService
                 continue;
             }
 
-            if (dryRun)
-            {
-                _log.LogInformation($"  running in dry-run mode. Would have tried to find target alert for {sourceAlert.Number} ({sourceAlert.Url}) and set state '{sourceAlert.State}'");
-                successCount++;
-                // No sense in continuing here, because we don't have the target alert as it is not migrated in dryRun mode
-                continue;
-            }
-
             var matchingTargetAlert = FindMatchingTargetAlert(targetAlerts, sourceAlert);
 
             if (matchingTargetAlert == null)
@@ -67,6 +55,13 @@ public class DependabotAlertService
             {
                 _log.LogInformation("  skipping alert because target alert already has the same state.");
                 skippedCount++;
+                continue;
+            }
+
+            if (dryRun)
+            {
+                _log.LogInformation($"  running in dry-run mode. Would update target alert {matchingTargetAlert.Number} ({matchingTargetAlert.Url}) from state '{matchingTargetAlert.State}' to '{sourceAlert.State}'");
+                successCount++;
                 continue;
             }
 
