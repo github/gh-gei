@@ -338,7 +338,7 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        
+
         // Only check for errors if there's a response to parse
         if (!string.IsNullOrEmpty(response))
         {
@@ -679,7 +679,7 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        
+
         // Only check for errors if there's a response to parse
         if (!string.IsNullOrEmpty(response))
         {
