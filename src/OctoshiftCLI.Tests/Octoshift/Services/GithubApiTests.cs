@@ -3923,7 +3923,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Assert
         results.Count().Should().Be(1);
         var alert = results.First();
-        
+
         alert.Number.Should().Be(1);
         alert.State.Should().Be("dismissed");
         alert.DismissedReason.Should().Be("false_positive");
@@ -3933,16 +3933,16 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         alert.HtmlUrl.Should().Be($"https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/security/dependabot/1");
         alert.CreatedAt.Should().NotBeNull();
         alert.UpdatedAt.Should().NotBeNull();
-        
+
         alert.Dependency.Package.Should().Be("lodash");
         alert.Dependency.Manifest.Should().Be("package.json");
         alert.Dependency.Scope.Should().Be("runtime");
-        
+
         alert.SecurityAdvisory.GhsaId.Should().Be("GHSA-1234-5678-9abc");
         alert.SecurityAdvisory.CveId.Should().Be("CVE-2023-1234");
         alert.SecurityAdvisory.Summary.Should().Be("Prototype Pollution in lodash");
         alert.SecurityAdvisory.Severity.Should().Be("high");
-        
+
         alert.SecurityVulnerability.Package.Should().Be("lodash");
         alert.SecurityVulnerability.Severity.Should().Be("high");
         alert.SecurityVulnerability.VulnerableVersionRange.Should().Be("< 4.17.21");

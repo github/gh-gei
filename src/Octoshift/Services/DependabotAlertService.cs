@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
-using OctoshiftCLI.Models;
 
 namespace OctoshiftCLI.Services;
 
