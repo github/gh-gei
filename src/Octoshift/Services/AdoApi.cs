@@ -217,7 +217,7 @@ public class AdoApi
         // Check for error message in the response
         var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-data-provider"];
         var errorMessage = (string)dataProvider?["errorMessage"];
-        if (!string.IsNullOrEmpty(errorMessage))
+        if (errorMessage.HasValue())
         {
             throw new OctoshiftCliException($"Error validating GitHub token: {errorMessage}");
         }
@@ -340,14 +340,14 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
 
         // Only check for errors if there's a response to parse
-        if (!string.IsNullOrEmpty(response))
+        if (response.HasValue())
         {
             var data = JObject.Parse(response);
 
             // Check for error message in the response
             var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
             var errorMessage = (string)dataProvider?["errorMessage"];
-            if (!string.IsNullOrEmpty(errorMessage))
+            if (errorMessage.HasValue())
             {
                 throw new OctoshiftCliException($"Error adding repository to boards GitHub connection: {errorMessage}");
             }
@@ -627,7 +627,7 @@ public class AdoApi
         // Check for error message in the response
         var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"];
         var errorMessage = (string)dataProvider?["errorMessage"];
-        if (!string.IsNullOrEmpty(errorMessage))
+        if (errorMessage.HasValue())
         {
             throw new OctoshiftCliException($"Error getting GitHub repository information: {errorMessage}");
         }
@@ -681,14 +681,14 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
 
         // Only check for errors if there's a response to parse
-        if (!string.IsNullOrEmpty(response))
+        if (response.HasValue())
         {
             var data = JObject.Parse(response);
 
             // Check for error message in the response
             var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
             var errorMessage = (string)dataProvider?["errorMessage"];
-            if (!string.IsNullOrEmpty(errorMessage))
+            if (errorMessage.HasValue())
             {
                 throw new OctoshiftCliException($"Error creating boards GitHub connection: {errorMessage}");
             }
