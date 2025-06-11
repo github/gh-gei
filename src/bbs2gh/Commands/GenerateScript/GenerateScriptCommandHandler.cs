@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,7 +80,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         var projects = args.BbsProject.HasValue()
-            ? new List<string>() { args.BbsProject }
+            ? [args.BbsProject]
             : (await _bbsApi.GetProjects()).Select(x => x.Key);
 
         foreach (var projectKey in projects)
