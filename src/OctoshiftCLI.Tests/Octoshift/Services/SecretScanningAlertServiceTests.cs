@@ -1277,4 +1277,89 @@ public class SecretScanningAlertServiceTests
         "[@actor] ")  // even though comment was null
         );
     }
+
+    [Fact]
+    public async Task Update_With_Long_Comment_Truncates_Comment_To_Preserve_Actor_Name()
+    {
+        // Arrange - Create a comment that when combined with [@resolverName] would exceed 270 characters
+        var longComment = new string('x', 262); // 262 chars, so [@actor] would make it 271 (prefix is 9 chars)
+        var source = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = "foo",
+            Secret = "bar",
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolverName = "actor",
+            ResolutionComment = longComment
+        };
+        var srcLoc = new GithubSecretScanningAlertLocation { LocationType = "commit", Path = "f", StartLine = 1, EndLine = 1, StartColumn = 1, EndColumn = 1, BlobSha = "x" };
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO)).ReturnsAsync(new[] { source });
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1)).ReturnsAsync(new[] { srcLoc });
+
+        var tgt = new GithubSecretScanningAlert { Number = 42, State = SecretScanningAlert.AlertStateOpen, SecretType = "foo", Secret = "bar" };
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO)).ReturnsAsync(new[] { tgt });
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 42)).ReturnsAsync(new[] { srcLoc });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Expected: [@actor] + truncated comment (261 chars) = 270 chars total
+        var expectedComment = "[@actor] " + new string('x', 261);
+
+        // Assert - Should truncate comment but preserve actor name
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+        TARGET_ORG,
+        TARGET_REPO,
+        42,
+        SecretScanningAlert.AlertStateResolved,
+        SecretScanningAlert.ResolutionRevoked,
+        expectedComment)  // Truncated comment that preserves actor name and fits 270 char limit
+        );
+    }
+
+    [Fact]
+    public async Task Update_With_Short_Comment_Uses_Prefixed_Comment()
+    {
+        // Arrange - Create a comment that when combined with [@resolverName] would be under 270 characters
+        var shortComment = "This is a short comment";
+        var source = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateResolved,
+            SecretType = "foo",
+            Secret = "bar",
+            Resolution = SecretScanningAlert.ResolutionRevoked,
+            ResolverName = "actor",
+            ResolutionComment = shortComment
+        };
+        var srcLoc = new GithubSecretScanningAlertLocation { LocationType = "commit", Path = "f", StartLine = 1, EndLine = 1, StartColumn = 1, EndColumn = 1, BlobSha = "x" };
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO)).ReturnsAsync(new[] { source });
+        _mockSourceGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(SOURCE_ORG, SOURCE_REPO, 1)).ReturnsAsync(new[] { srcLoc });
+
+        var tgt = new GithubSecretScanningAlert { Number = 42, State = SecretScanningAlert.AlertStateOpen, SecretType = "foo", Secret = "bar" };
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO)).ReturnsAsync(new[] { tgt });
+        _mockTargetGithubApi
+        .Setup(x => x.GetSecretScanningAlertsLocations(TARGET_ORG, TARGET_REPO, 42)).ReturnsAsync(new[] { srcLoc });
+
+        // Act
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        // Assert - Should use prefixed comment since length is ok
+        _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
+        TARGET_ORG,
+        TARGET_REPO,
+        42,
+        SecretScanningAlert.AlertStateResolved,
+        SecretScanningAlert.ResolutionRevoked,
+        $"[@actor] {shortComment}")  // Prefixed comment when combined length is ok
+        );
+    }
 }
