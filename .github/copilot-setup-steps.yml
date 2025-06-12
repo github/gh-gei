@@ -1,0 +1,25 @@
+name: Setup Development Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        global-json-file: global.json
+    
+    - name: Restore dependencies
+      run: dotnet restore src/OctoshiftCLI.sln
+    
+    - name: Format code
+      run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
+    
+    - name: Build
+      run: dotnet build src/OctoshiftCLI.sln --no-restore
