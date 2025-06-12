@@ -27,9 +27,3 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore src/OctoshiftCLI.sln
-
-      - name: Format code
-        run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
-
-      - name: Build
-        run: dotnet build src/OctoshiftCLI.sln --no-restore
