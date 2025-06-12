@@ -1279,7 +1279,7 @@ public class SecretScanningAlertServiceTests
     }
 
     [Fact]
-    public async Task Update_With_Long_Comment_Uses_Original_Comment_Only()
+    public async Task Update_With_Long_Comment_Truncates_Comment_To_Preserve_Actor_Name()
     {
         // Arrange - Create a comment that when combined with [@resolverName] would exceed 270 characters
         var longComment = new string('x', 262); // 262 chars, so [@actor] would make it 271 (prefix is 9 chars)
@@ -1308,14 +1308,17 @@ public class SecretScanningAlertServiceTests
         // Act
         await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
 
-        // Assert - Should use original comment only, not the prefixed version
+        // Expected: [@actor] + truncated comment (261 chars) = 270 chars total
+        var expectedComment = "[@actor] " + new string('x', 261);
+
+        // Assert - Should truncate comment but preserve actor name
         _mockTargetGithubApi.Verify(m => m.UpdateSecretScanningAlert(
         TARGET_ORG,
         TARGET_REPO,
         42,
         SecretScanningAlert.AlertStateResolved,
         SecretScanningAlert.ResolutionRevoked,
-        longComment)  // Original comment only when combined length would exceed 270 chars
+        expectedComment)  // Truncated comment that preserves actor name and fits 270 char limit
         );
     }
 
