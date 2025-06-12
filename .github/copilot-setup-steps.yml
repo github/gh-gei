@@ -9,8 +9,12 @@ on:
     paths:
       - .github/copilot-setup-steps.yml
 
+permissions:
+  contents: read
+
 jobs:
-  setup:
+  # The job name MUST be 'copilot-setup-steps' to be picked up by GitHub Copilot
+  copilot-setup-steps:
     runs-on: ubuntu-latest
 
     steps:
