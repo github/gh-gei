@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - .github/copilot-setup-steps.yml
+      - .github/workflows/copilot-setup-steps.yml
   pull_request:
     paths:
-      - .github/copilot-setup-steps.yml
+      - .github/workflows/copilot-setup-steps.yml
 
 permissions:
   contents: read
