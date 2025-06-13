@@ -38,9 +38,23 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
 
         if (boardsConnection == default)
         {
-            var endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
+            // First try to find an existing GitHub App service connection
+            var githubAppEndpointId = await _adoApi.GetTeamProjectGithubAppId(args.AdoOrg, args.GithubOrg, args.AdoTeamProject);
+            
+            string endpointId;
+            if (githubAppEndpointId != null)
+            {
+                _log.LogInformation("Using existing GitHub App service connection for Boards integration");
+                endpointId = githubAppEndpointId;
+            }
+            else
+            {
+                _log.LogInformation("No GitHub App service connection found, creating PAT-based endpoint for Boards integration");
+                endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
+            }
+            
             var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
-            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
+            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId, githubAppEndpointId != null);
             _log.LogSuccess("Successfully configured Boards<->GitHub integration");
         }
         else

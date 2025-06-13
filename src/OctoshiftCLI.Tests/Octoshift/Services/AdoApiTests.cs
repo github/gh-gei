@@ -1109,6 +1109,51 @@ public class AdoApiTests
     }
 
     [Fact]
+    public async Task CreateBoardsGithubConnection_Should_Send_Correct_Payload_With_GitHub_App()
+    {
+        var endpointId = Guid.NewGuid().ToString();
+        var repoId = Guid.NewGuid().ToString();
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+        var payload = new
+        {
+            contributionIds = new[]
+            {
+                "ms.vss-work-web.azure-boards-save-external-connection-data-provider"
+            },
+            dataProviderContext = new
+            {
+                properties = new
+                {
+                    externalConnection = new
+                    {
+                        serviceEndpointId = endpointId,
+                        operation = 0,
+                        externalRepositoryExternalIds = new[]
+                        {
+                            repoId
+                        },
+                        providerKey = "github.com",
+                        isGitHubApp = true
+                    },
+                    sourcePage = new
+                    {
+                        routeValues = new
+                        {
+                            project = ADO_TEAM_PROJECT
+                        }
+                    }
+                }
+            }
+        };
+
+        await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, endpointId, repoId, true);
+
+        _mockAdoClient.Verify(m => m.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result);
+    }
+
+    [Fact]
     public async Task GetOrgOwner_Returns_Owner()
     {
         var ownerName = "Dave";
