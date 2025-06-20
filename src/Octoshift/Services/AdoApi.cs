@@ -175,7 +175,7 @@ public class AdoApi
         return null;
     }
 
-    private async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
+    public virtual async Task<string> GetTeamProjectGithubAppId(string org, string githubOrg, string teamProject)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
         var response = await _client.GetWithPagingAsync(url);
@@ -605,7 +605,7 @@ public class AdoApi
         return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
     }
 
-    public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
+    public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId, bool isGitHubApp = false)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -628,7 +628,7 @@ public class AdoApi
                             repoId
                         },
                         providerKey = "github.com",
-                        isGitHubApp = false
+                        isGitHubApp = isGitHubApp
                     },
                     sourcePage = new
                     {
