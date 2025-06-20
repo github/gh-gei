@@ -532,10 +532,10 @@ public class AdoApi
 
         // Determine base URLs
         string apiUrl, webUrl, cloneUrl, branchesUrl, refsUrl, manageUrl;
-        if (!string.IsNullOrWhiteSpace(targetApiUrl))
+        if (targetApiUrl.HasValue())
         {
             var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
-            var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host.Substring(4) : apiUri.Host;
+            var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host[4..] : apiUri.Host;
             var webScheme = apiUri.Scheme;
             var webBase = $"{webScheme}://{webHost}";
             apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";

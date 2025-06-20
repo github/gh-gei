@@ -1022,6 +1022,88 @@ public class AdoApiTests
     }
 
     [Fact]
+    public async Task ChangePipelineRepo_Should_Send_Correct_Payload_With_TargetApiUrl()
+    {
+        var githubRepo = "foo-repo";
+        var serviceConnectionId = Guid.NewGuid().ToString();
+        var defaultBranch = "foo-branch";
+        var pipelineId = 123;
+        var clean = "true";
+        var checkoutSubmodules = "false";
+        var targetApiUrl = "https://custom.api.githubenterprise.com";
+
+        var oldJson = new
+        {
+            something = "foo",
+            somethingElse = new
+            {
+                blah = "foo",
+                repository = "blah"
+            },
+            repository = new
+            {
+                testing = true,
+                moreTesting = default(string)
+            },
+            oneLastThing = false
+        };
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+
+        var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
+        var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host[4..] : apiUri.Host;
+        var webScheme = apiUri.Scheme;
+        var webBase = $"{webScheme}://{webHost}";
+        var apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}";
+        var webUrl = $"{webBase}/{GITHUB_ORG}/{githubRepo}";
+        var cloneUrl = $"{webBase}/{GITHUB_ORG}/{githubRepo}.git";
+        var branchesUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}/branches";
+        var refsUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}/git/refs";
+        var manageUrl = webUrl;
+
+        var newJson = new
+        {
+            something = "foo",
+            somethingElse = new
+            {
+                blah = "foo",
+                repository = "blah"
+            },
+            repository = new
+            {
+                properties = new
+                {
+                    apiUrl,
+                    branchesUrl,
+                    cloneUrl,
+                    connectedServiceId = serviceConnectionId,
+                    defaultBranch,
+                    fullName = $"{GITHUB_ORG}/{githubRepo}",
+                    manageUrl,
+                    orgName = GITHUB_ORG,
+                    refsUrl,
+                    safeRepository = $"{GITHUB_ORG}/{githubRepo}",
+                    shortName = githubRepo,
+                    reportBuildStatus = true
+                },
+                id = $"{GITHUB_ORG}/{githubRepo}",
+                type = "GitHub",
+                name = $"{GITHUB_ORG}/{githubRepo}",
+                url = cloneUrl,
+                defaultBranch,
+                clean,
+                checkoutSubmodules
+            },
+            oneLastThing = false
+        };
+
+        _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
+        await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId, targetApiUrl);
+
+        _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
+    }
+
+    [Fact]
     public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
     {
         var endpointId = Guid.NewGuid().ToString();
