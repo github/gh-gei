@@ -55,7 +55,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         public Option<bool> Verbose { get; } = new("--verbose");
         public Option<string> TargetApiUrl { get; } = new("--target-api-url")
         {
-            Description = "The GitHub API URL to use (for GHEC Data Residency or GHES)."
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
 
         public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)
