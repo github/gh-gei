@@ -742,33 +742,15 @@ public class AdoApi
             return null;
         }
 
-        try
-        {
-            var data = JObject.Parse(response);
+        var data = JObject.Parse(response);
 #pragma warning disable IDE0046 // Convert to conditional expression
-            if (data["dataProviders"] is not JObject dataProviders)
-            {
-                return null;
-            }
+        if (data["dataProviders"] is not JObject dataProviders)
+        {
+            return null;
+        }
 #pragma warning restore IDE0046 // Convert to conditional expression
 
-            return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
-        }
-        catch (JsonException ex)
-        {
-            _log.LogWarning($"Failed to parse JSON response for data provider '{dataProviderKey}': {ex.Message}");
-            return null;
-        }
-        catch (ArgumentException ex)
-        {
-            _log.LogWarning($"Invalid argument while parsing response for data provider '{dataProviderKey}': {ex.Message}");
-            return null;
-        }
-        catch (InvalidOperationException ex)
-        {
-            _log.LogWarning($"Invalid operation while parsing response for data provider '{dataProviderKey}': {ex.Message}");
-            return null;
-        }
+        return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
     }
 
     private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)
