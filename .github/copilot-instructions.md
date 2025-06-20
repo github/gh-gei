@@ -3,8 +3,7 @@ This is a C# based repository that produces several CLIs that are used by custom
 ## Code Standards
 
 ### Required Before Each Commit
-- Run `dotnet format src/OctoshiftCLI.sln` before committing any changes to ensure proper code formatting
-- This will run dotnet format on all C# files to maintain consistent style
+- Run `dotnet format src/OctoshiftCLI.sln` before committing any changes to ensure proper code formatting. This will run dotnet format on all C# files to maintain consistent style
 
 ### Development Flow
 - Build: `dotnet build src/OctoshiftCLI.sln /p:TreatWarningsAsErrors=true`
