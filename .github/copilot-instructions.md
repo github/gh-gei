@@ -23,3 +23,5 @@ This is a C# based repository that produces several CLIs that are used by custom
 2. Maintain existing code structure and organization
 4. Write unit tests for new functionality.
 5. When making changes that would impact our users (e.g. new features or bug fixes), add a bullet point to `RELEASENOTES.md` with a user friendly brief description of the change
+6. Never silently swallow exceptions.
+7. If an exception is expected/understood and we can give a helpful user-friendly message, then throw an OctoshiftCliException with a user-friendly message. Otherwise let the exception bubble up and the top-level exception handler will log and handle it appropriately.
