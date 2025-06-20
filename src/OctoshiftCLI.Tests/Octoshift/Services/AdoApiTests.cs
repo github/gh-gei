@@ -1422,7 +1422,7 @@ public class AdoApiTests
     }
 
     [Fact]
-    public async Task GetGithubHandle_Should_Not_Throw_When_DataProviders_Missing()
+    public async Task GetGithubHandle_Should_Throw_When_DataProviders_Missing()
     {
         // Arrange
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
