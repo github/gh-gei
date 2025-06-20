@@ -1419,6 +1419,9 @@ public class AdoApiTests
             .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
             .Should()
             .ThrowExactlyAsync<JsonReaderException>();
+
+        // Verify warning is logged for malformed JSON during error extraction
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Failed to parse JSON response for data provider 'ms.vss-work-web.github-user-data-provider'"))), Times.Once);
     }
 
     [Fact]
@@ -1456,6 +1459,9 @@ public class AdoApiTests
             .Invoking(async () => await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, "endpoint", GITHUB_ORG, "repo"))
             .Should()
             .ThrowExactlyAsync<JsonReaderException>();
+
+        // Verify warning is logged for malformed JSON during error extraction
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Failed to parse JSON response for data provider 'ms.vss-work-web.github-user-repository-data-provider'"))), Times.Once);
     }
 
     [Fact]
@@ -1472,6 +1478,9 @@ public class AdoApiTests
             .Invoking(async () => await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "endpoint", "repo"))
             .Should()
             .NotThrowAsync();
+
+        // Verify warning is logged for malformed JSON
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Failed to parse JSON response for data provider 'ms.vss-work-web.azure-boards-save-external-connection-data-provider'"))), Times.Once);
     }
 
     [Fact]
@@ -1488,5 +1497,8 @@ public class AdoApiTests
             .Invoking(async () => await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "connection", "name", "endpoint", new[] { "repo" }))
             .Should()
             .NotThrowAsync();
+
+        // Verify warning is logged for malformed JSON
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Failed to parse JSON response for data provider 'ms.vss-work-web.azure-boards-save-external-connection-data-provider'"))), Times.Once);
     }
 }

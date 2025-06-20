@@ -746,26 +746,28 @@ public class AdoApi
         try
         {
             var data = JObject.Parse(response);
+#pragma warning disable IDE0046 // Convert to conditional expression
             if (data["dataProviders"] is not JObject dataProviders)
             {
                 return null;
             }
+#pragma warning restore IDE0046 // Convert to conditional expression
 
             return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            _log.LogWarning($"Failed to parse JSON response for data provider '{dataProviderKey}': {ex.Message}");
             return null;
         }
-        catch (ArgumentException)
+        catch (ArgumentException ex)
         {
-            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            _log.LogWarning($"Invalid argument while parsing response for data provider '{dataProviderKey}': {ex.Message}");
             return null;
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException ex)
         {
-            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            _log.LogWarning($"Invalid operation while parsing response for data provider '{dataProviderKey}': {ex.Message}");
             return null;
         }
     }
