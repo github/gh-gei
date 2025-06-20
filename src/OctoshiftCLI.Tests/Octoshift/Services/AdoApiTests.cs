@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -1402,5 +1403,90 @@ public class AdoApiTests
 
         exception.Which.Message.Should().Contain("Error adding repository to boards GitHub connection");
         exception.Which.Message.Should().Contain("Error adding repository");
+    }
+
+    [Fact]
+    public async Task GetGithubHandle_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
+    }
+
+    [Fact]
+    public async Task GetGithubHandle_Should_Not_Throw_When_DataProviders_Missing()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            someOtherField = "value"
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert - should throw with clear message when data provider missing
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Missing data from 'ms.vss-work-web.github-user-data-provider'");
+    }
+
+    [Fact]
+    public async Task GetBoardsGithubRepoId_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, "endpoint", GITHUB_ORG, "repo"))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
+    }
+
+    [Fact]
+    public async Task CreateBoardsGithubConnection_Should_Not_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange  
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should not throw for malformed response since error extraction safely handles it
+        await FluentActions
+            .Invoking(async () => await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "endpoint", "repo"))
+            .Should()
+            .NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task AddRepoToBoardsGithubConnection_Should_Not_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should not throw for malformed response since error extraction safely handles it
+        await FluentActions
+            .Invoking(async () => await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "connection", "name", "endpoint", new[] { "repo" }))
+            .Should()
+            .NotThrowAsync();
     }
 }

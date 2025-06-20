@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -212,21 +213,17 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
 
         // Check for error message in the response
-        var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-data-provider"];
-        var errorMessage = (string)dataProvider?["errorMessage"];
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.github-user-data-provider");
         if (errorMessage.HasValue())
         {
             throw new OctoshiftCliException($"Error validating GitHub token: {errorMessage}");
         }
 
-#pragma warning disable IDE0046 // Convert to conditional expression
-        if (dataProvider == null)
-        {
-            throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
-        }
+        var data = JObject.Parse(response);
+        var dataProviders = data["dataProviders"] ?? throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+        var dataProvider = dataProviders["ms.vss-work-web.github-user-data-provider"] ?? throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
 #pragma warning restore IDE0046 // Convert to conditional expression
 
         return (string)dataProvider["login"];
@@ -339,18 +336,11 @@ public class AdoApi
 
         var response = await _client.PostAsync(url, payload);
 
-        // Only check for errors if there's a response to parse
-        if (response.HasValue())
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.azure-boards-save-external-connection-data-provider");
+        if (errorMessage.HasValue())
         {
-            var data = JObject.Parse(response);
-
-            // Check for error message in the response
-            var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
-            var errorMessage = (string)dataProvider?["errorMessage"];
-            if (errorMessage.HasValue())
-            {
-                throw new OctoshiftCliException($"Error adding repository to boards GitHub connection: {errorMessage}");
-            }
+            throw new OctoshiftCliException($"Error adding repository to boards GitHub connection: {errorMessage}");
         }
     }
 
@@ -622,15 +612,17 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
 
         // Check for error message in the response
-        var dataProvider = data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"];
-        var errorMessage = (string)dataProvider?["errorMessage"];
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.github-user-repository-data-provider");
         if (errorMessage.HasValue())
         {
             throw new OctoshiftCliException($"Error getting GitHub repository information: {errorMessage}");
         }
+
+        var data = JObject.Parse(response);
+        var dataProviders = data["dataProviders"] ?? throw new OctoshiftCliException("Could not retrieve GitHub repository information. Please verify the repository exists and the GitHub token has the correct permissions.");
+        var dataProvider = dataProviders["ms.vss-work-web.github-user-repository-data-provider"];
 
 #pragma warning disable IDE0046 // Convert to conditional expression
         if (dataProvider == null || dataProvider["additionalProperties"] == null || dataProvider["additionalProperties"]["nodeId"] == null)
@@ -680,18 +672,11 @@ public class AdoApi
 
         var response = await _client.PostAsync(url, payload);
 
-        // Only check for errors if there's a response to parse
-        if (response.HasValue())
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.azure-boards-save-external-connection-data-provider");
+        if (errorMessage.HasValue())
         {
-            var data = JObject.Parse(response);
-
-            // Check for error message in the response
-            var dataProvider = data["dataProviders"]["ms.vss-work-web.azure-boards-save-external-connection-data-provider"];
-            var errorMessage = (string)dataProvider?["errorMessage"];
-            if (errorMessage.HasValue())
-            {
-                throw new OctoshiftCliException($"Error creating boards GitHub connection: {errorMessage}");
-            }
+            throw new OctoshiftCliException($"Error creating boards GitHub connection: {errorMessage}");
         }
     }
 
@@ -749,6 +734,40 @@ public class AdoApi
         const string collectionSecurityNamespaceId = "3e65f728-f8bc-4ecd-8764-7e378b19bfa7";
         const int genericWritePermissionBitMaskValue = 2;
         return await HasPermission(org, collectionSecurityNamespaceId, genericWritePermissionBitMaskValue);
+    }
+
+    private string ExtractErrorMessage(string response, string dataProviderKey)
+    {
+        if (!response.HasValue())
+        {
+            return null;
+        }
+
+        try
+        {
+            var data = JObject.Parse(response);
+            if (data["dataProviders"] is not JObject dataProviders)
+            {
+                return null;
+            }
+
+            return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
+        }
+        catch (JsonException)
+        {
+            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            // Return null for any JSON parsing errors to gracefully handle malformed responses
+            return null;
+        }
     }
 
     private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)
