@@ -523,26 +523,51 @@ public class AdoApi
         return (defaultBranch, clean, checkoutSubmodules);
     }
 
-    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
+    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId, string targetApiUrl = null)
     {
         var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
         var response = await _client.GetAsync(url);
         var data = JObject.Parse(response);
 
+        // Determine base URLs
+        string apiUrl, webUrl, cloneUrl, branchesUrl, refsUrl, manageUrl;
+        if (!string.IsNullOrWhiteSpace(targetApiUrl))
+        {
+            var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
+            var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host.Substring(4) : apiUri.Host;
+            var webScheme = apiUri.Scheme;
+            var webBase = $"{webScheme}://{webHost}";
+            apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            webUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            cloneUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
+            branchesUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
+            refsUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
+            manageUrl = webUrl;
+        }
+        else
+        {
+            apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            webUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
+            branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
+            refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
+            manageUrl = webUrl;
+        }
+
         var newRepo = new
         {
             properties = new
             {
-                apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
-                branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches",
-                cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
+                apiUrl,
+                branchesUrl,
+                cloneUrl,
                 connectedServiceId,
                 defaultBranch,
                 fullName = $"{githubOrg}/{githubRepo}",
-                manageUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
+                manageUrl,
                 orgName = githubOrg,
-                refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs",
+                refsUrl,
                 safeRepository = $"{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
                 shortName = githubRepo,
                 reportBuildStatus = true
@@ -550,7 +575,7 @@ public class AdoApi
             id = $"{githubOrg}/{githubRepo}",
             type = "GitHub",
             name = $"{githubOrg}/{githubRepo}",
-            url = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
+            url = cloneUrl,
             defaultBranch,
             clean,
             checkoutSubmodules

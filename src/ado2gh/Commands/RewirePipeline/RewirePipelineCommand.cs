@@ -23,6 +23,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             AddOption(ServiceConnectionId);
             AddOption(AdoPat);
             AddOption(Verbose);
+            AddOption(TargetApiUrl);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -52,6 +53,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         };
         public Option<string> AdoPat { get; } = new("--ado-pat");
         public Option<bool> Verbose { get; } = new("--verbose");
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The GitHub API URL to use (for GHEC Data Residency or GHES)."
+        };
 
         public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)
         {
