@@ -317,8 +317,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = "https://github.com/foo",
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
-                MetadataArchivePath = METADATA_ARCHIVE_PATH
             };
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
@@ -334,8 +332,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = "https://github.com/bar",
                 TargetRepo = TARGET_REPO,
-                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
-                MetadataArchivePath = METADATA_ARCHIVE_PATH
             };
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
@@ -351,8 +347,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = "https://github.com/foo",
                 GithubTargetOrg = "https://github.com/bar",
                 TargetRepo = TARGET_REPO,
-                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
-                MetadataArchivePath = METADATA_ARCHIVE_PATH
             };
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
@@ -368,8 +362,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = TARGET_REPO,
-                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
-                MetadataArchivePath = METADATA_ARCHIVE_PATH
             };
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
@@ -385,8 +377,6 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = "https://github.com/bar",
-                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
-                MetadataArchivePath = METADATA_ARCHIVE_PATH
             };  
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()

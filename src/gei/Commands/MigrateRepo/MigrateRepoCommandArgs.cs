@@ -45,25 +45,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
 
-            if (!string.IsNullOrWhiteSpace(GithubSourceOrg) && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
-            {
-                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(GithubTargetOrg) && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
-            {
-                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(SourceRepo) && Uri.IsWellFormedUriString(SourceRepo, UriKind.Absolute))
-            {
-                throw new OctoshiftCliException("SourceRepo should be a repo name, not a URL.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(TargetRepo) && Uri.IsWellFormedUriString(TargetRepo, UriKind.Absolute))
-            {
-                throw new OctoshiftCliException("TargetRepo should be a repo name, not a URL.");
-            }
             if (GitArchiveUrl.HasValue() && GitArchivePath.HasValue())
             {
                 throw new OctoshiftCliException("The options --git-archive-url and --git-archive-path may not be used together");
@@ -116,6 +97,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
             }
+            ValidateOrgAndRepoNames(); return; 
         }
 
         private void DefaultTargetRepo(OctoLogger log)
@@ -134,6 +116,20 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourcePat = GithubTargetPat;
                 log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
             }
+        }
+        private void ValidateOrgAndRepoNames()
+        {
+            if (!string.IsNullOrWhiteSpace(GithubSourceOrg) && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
+                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
+
+            if (!string.IsNullOrWhiteSpace(GithubTargetOrg) && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
+                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
+
+            if (!string.IsNullOrWhiteSpace(SourceRepo) && Uri.IsWellFormedUriString(SourceRepo, UriKind.Absolute))
+                throw new OctoshiftCliException("SourceRepo should be a repo name, not a URL.");
+
+            if (!string.IsNullOrWhiteSpace(TargetRepo) && Uri.IsWellFormedUriString(TargetRepo, UriKind.Absolute))
+                throw new OctoshiftCliException("TargetRepo should be a repo name, not a URL.");
         }
     }
 }
