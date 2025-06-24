@@ -351,7 +351,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
-                .WithMessage("*GithubSourceOrg should be an org name, not a URL*"); 
+                .WithMessage("*GithubSourceOrg should be an org name, not a URL*");
         }
         [Fact]
         public void It_Throws_Error_When_Url_Provided_In_SourceRepo()
@@ -377,7 +377,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 GithubSourceOrg = SOURCE_ORG,
                 GithubTargetOrg = TARGET_ORG,
                 TargetRepo = "https://github.com/bar",
-            };  
+            };
             FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
                 .Should()
                 .ThrowExactly<OctoshiftCliException>()
