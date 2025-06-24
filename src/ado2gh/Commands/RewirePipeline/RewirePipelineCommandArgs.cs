@@ -12,6 +12,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         public string ServiceConnectionId { get; set; }
         [Secret]
         public string AdoPat { get; set; }
-        public string TargetApiUrl { get; set; } // Added for GHEC Data Residency support
+        public string TargetApiUrl { get; set; }
     }
 }
