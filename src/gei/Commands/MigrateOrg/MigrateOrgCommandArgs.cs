@@ -1,4 +1,5 @@
-﻿using OctoshiftCLI.Commands;
+﻿using System;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
@@ -19,6 +20,19 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
 
         public override void Validate(OctoLogger log)
         {
+            if (GithubSourceOrg.HasValue() && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
+            }
+
+            if (GithubTargetOrg.HasValue() && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
+            }
+            if(GithubTargetEnterprise.HasValue() && Uri.IsWellFormedUriString(GithubTargetEnterprise, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubTargetEnterprise should be an enterprise name, not a URL.");
+            }
             if (GithubTargetPat.HasValue() && GithubSourcePat.IsNullOrWhiteSpace())
             {
                 GithubSourcePat = GithubTargetPat;

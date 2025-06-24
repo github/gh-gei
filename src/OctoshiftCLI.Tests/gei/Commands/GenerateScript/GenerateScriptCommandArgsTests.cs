@@ -107,5 +107,52 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
                  .ThrowExactly<OctoshiftCliException>()
                  .WithMessage("*--use-github-storage flag was provided with an AWS S3 Bucket name*");
         }
+        [Fact]
+        public void Throws_If_Url_Passed_In_GithubSourceOrg()
+        {
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = "bar",
+                GhesApiUrl = "https://github.contoso.com"
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubSourceOrg should be an org name, not a URL*");
+        }
+
+        [Fact]
+        public void Throws_If_Url_Passed_In_GithubTargetOrg()
+        {
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = "foo",
+                GithubTargetOrg = "https://github.com/bar",
+                GhesApiUrl = "https://github.contoso.com"
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubTargetOrg should be an org name, not a URL*");
+        }
+
+        [Fact]
+        public void Throws_If_Url_Passed_In_Both_Source_And_Target_Org()
+        {
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = "https://github.com/bar",
+                GhesApiUrl = "https://github.contoso.com"
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("GithubSourceOrg should be an org name, not a URL.");
+        }
     }
 }

@@ -308,5 +308,90 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--metadata-archive-url and --metadata-archive-path may not be used together*");
         }
+        [Fact]
+        public void It_Throws_Error_When_Url_Provided_In_GithubSourceOrg()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubSourceOrg should be an org name, not a URL*");
+        }
+        [Fact]
+        public void It_Throws_Error_When_Url_Provided_In_GithubTargetOrg()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = "https://github.com/bar",
+                TargetRepo = TARGET_REPO,
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubTargetOrg should be an org name, not a URL*");
+        }
+        [Fact]
+        public void It_Throws_Error_When_Url_Provided_In_Both_Source_And_Target_Org()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = "https://github.com/bar",
+                TargetRepo = TARGET_REPO,
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubSourceOrg should be an org name, not a URL*"); 
+        }
+        [Fact]
+        public void It_Throws_Error_When_Url_Provided_In_SourceRepo()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = "https://github.com/foo",
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*SourceRepo should be a repo name, not a URL*");
+        }
+        [Fact]
+        public void It_Throws_Error_When_Url_Provided_In_TargetRepo()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                SourceRepo = SOURCE_REPO,
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = "https://github.com/bar",
+                MetadataArchiveUrl = METADATA_ARCHIVE_URL,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };  
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*TargetRepo should be a repo name, not a URL*");
+        }
     }
 }

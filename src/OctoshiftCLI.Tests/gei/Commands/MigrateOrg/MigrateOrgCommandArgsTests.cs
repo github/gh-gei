@@ -30,5 +30,70 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
 
             args.GithubSourcePat.Should().Be(TARGET_PAT);
         }
+        [Fact]
+        public void Throws_If_Url_Passed_In_GithubSourceOrg()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = TARGET_ORG,
+                GithubTargetEnterprise = TARGET_ENTERPRISE,
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubSourceOrg should be an org name, not a URL*");
+        }
+
+        [Fact]
+        public void Throws_If_Url_Passed_In_GithubTargetOrg()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = "https://github.com/foo",
+                GithubTargetEnterprise = TARGET_ENTERPRISE,
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubTargetOrg should be an org name, not a URL*");
+        }
+
+        [Fact]
+        public void Throws_If_Url_Passed_In_Both_Source_And_Target_Org()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/foo",
+                GithubTargetOrg = "https://github.com/bar",
+                GithubTargetEnterprise = TARGET_ENTERPRISE,
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("GithubSourceOrg should be an org name, not a URL.");
+        }
+        [Fact]
+        public void Throws_If_Url_Passed_In_GithubTargetEnterprise()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                GithubTargetEnterprise = "https://github.com/foo",
+                GithubTargetPat = TARGET_PAT,
+            };
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*GithubTargetEnterprise should be an enterprise name, not a URL*");
+        }
     }
 }
