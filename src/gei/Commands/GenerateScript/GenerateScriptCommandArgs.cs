@@ -28,6 +28,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
         public override void Validate(OctoLogger log)
         {
+            if (GithubSourceOrg.HasValue() && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
+            }
+
+            if (GithubTargetOrg.HasValue() && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
+            }
             if (AwsBucketName.HasValue())
             {
                 if (GhesApiUrl.IsNullOrWhiteSpace())

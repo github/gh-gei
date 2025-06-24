@@ -1,4 +1,5 @@
-﻿using OctoshiftCLI.Commands;
+﻿using System;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
@@ -44,6 +45,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
 
+            if (!string.IsNullOrWhiteSpace(GithubSourceOrg) && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(GithubTargetOrg) && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(SourceRepo) && Uri.IsWellFormedUriString(SourceRepo, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("SourceRepo should be a repo name, not a URL.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(TargetRepo) && Uri.IsWellFormedUriString(TargetRepo, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("TargetRepo should be a repo name, not a URL.");
+            }
             if (GitArchiveUrl.HasValue() && GitArchivePath.HasValue())
             {
                 throw new OctoshiftCliException("The options --git-archive-url and --git-archive-path may not be used together");
