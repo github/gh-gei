@@ -29,7 +29,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
             {
                 throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
             }
-            if(GithubTargetEnterprise.HasValue() && Uri.IsWellFormedUriString(GithubTargetEnterprise, UriKind.Absolute))
+            if (GithubTargetEnterprise.HasValue() && Uri.IsWellFormedUriString(GithubTargetEnterprise, UriKind.Absolute))
             {
                 throw new OctoshiftCliException("GithubTargetEnterprise should be an enterprise name, not a URL.");
             }
