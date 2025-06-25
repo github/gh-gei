@@ -30,7 +30,8 @@ jobs:
 
     - name: Check SHA
       run: |
-        prsha=`git rev-parse origin/pull/${{ github.event.inputs.pr_number }}/head | awk '{ print $1 }'`
+        git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
+        prsha=`git rev-parse pr-head | awk '{ print $1 }'`
 
         Write-Output "PR SHA: $prsha"
         Write-Output "expected SHA: ${{ github.event.inputs.SHA }}"
