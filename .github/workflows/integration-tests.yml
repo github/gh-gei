@@ -33,13 +33,13 @@ jobs:
         git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
         prsha=`git rev-parse pr-head | awk '{ print $1 }'`
 
-        Write-Output "PR SHA: $prsha"
-        Write-Output "expected SHA: ${{ github.event.inputs.SHA }}"
+        echo "PR SHA: $prsha"
+        echo "expected SHA: ${{ github.event.inputs.SHA }}"
 
-        if ($prsha -ne ${{ github.event.inputs.SHA }}) {
-          Write-Error "SHA must match"
+        if [ "$prsha" != "${{ github.event.inputs.SHA }}" ]; then
+          echo "SHA must match" >&2
           exit 1
-        }
+        fi
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
