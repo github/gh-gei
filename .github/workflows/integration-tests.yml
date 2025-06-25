@@ -6,6 +6,14 @@ on:
       pr_number:
         type: number
         required: true
+      sha:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   build-for-e2e-test:
@@ -19,6 +27,18 @@ jobs:
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
+
+    - name: Check SHA
+      run: |
+        prsha=`git rev-parse origin/pull/${{ github.event.inputs.pr_number }}/head | awk '{ print $1 }'`
+
+        Write-Output "PR SHA: $prsha"
+        Write-Output "expected SHA: ${{ github.event.inputs.SHA }}"
+
+        if ($prsha -ne ${{ github.event.inputs.SHA }}) {
+          Write-Error "SHA must match"
+          exit 1
+        }
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
