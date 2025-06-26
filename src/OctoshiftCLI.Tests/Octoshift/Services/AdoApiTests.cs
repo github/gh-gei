@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -1290,5 +1291,202 @@ public class AdoApiTests
 
         // Assert
         result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetGithubHandle_Throws_When_Error_Message_In_Response()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            dataProviders = new Dictionary<string, object>
+            {
+                ["ms.vss-work-web.github-user-data-provider"] = new
+                {
+                    errorMessage = "An error has occurred when validating credentials. Please use correct scope for PAT token"
+                }
+            }
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Error validating GitHub token");
+        exception.Which.Message.Should().Contain("An error has occurred when validating credentials. Please use correct scope for PAT token");
+    }
+
+    [Fact]
+    public async Task GetBoardsGithubRepoId_Throws_When_Error_Message_In_Response()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            dataProviders = new Dictionary<string, object>
+            {
+                ["ms.vss-work-web.github-user-repository-data-provider"] = new
+                {
+                    errorMessage = "Specified argument was out of the range of valid values.\\r\\nParameter name: name"
+                }
+            }
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, "endpoint", GITHUB_ORG, "repo"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Error getting GitHub repository information");
+        exception.Which.Message.Should().Contain("Specified argument was out of the range of valid values");
+    }
+
+    [Fact]
+    public async Task CreateBoardsGithubConnection_Throws_When_Error_Message_In_Response()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            dataProviders = new Dictionary<string, object>
+            {
+                ["ms.vss-work-web.azure-boards-save-external-connection-data-provider"] = new
+                {
+                    errorMessage = "Error creating connection"
+                }
+            }
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert
+        var exception = await FluentActions
+            .Invoking(async () => await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "endpoint", "repo"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Error creating boards GitHub connection");
+        exception.Which.Message.Should().Contain("Error creating connection");
+    }
+
+    [Fact]
+    public async Task AddRepoToBoardsGithubConnection_Throws_When_Error_Message_In_Response()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            dataProviders = new Dictionary<string, object>
+            {
+                ["ms.vss-work-web.azure-boards-save-external-connection-data-provider"] = new
+                {
+                    errorMessage = "Error adding repository"
+                }
+            }
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert
+        var exception = await FluentActions
+            .Invoking(async () => await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "connection", "name", "endpoint", new[] { "repo" }))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Error adding repository to boards GitHub connection");
+        exception.Which.Message.Should().Contain("Error adding repository");
+    }
+
+    [Fact]
+    public async Task GetGithubHandle_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        await FluentActions
+            .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
+    }
+
+    [Fact]
+    public async Task GetGithubHandle_Should_Throw_When_DataProviders_Missing()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var responseJson = new
+        {
+            someOtherField = "value"
+        }.ToJson();
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(responseJson);
+
+        // Act & Assert - should throw with clear message when data provider missing
+        var exception = await FluentActions
+            .Invoking(async () => await sut.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, "token"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>();
+
+        exception.Which.Message.Should().Contain("Missing data from 'ms.vss-work-web.github-user-data-provider'");
+    }
+
+    [Fact]
+    public async Task GetBoardsGithubRepoId_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        await FluentActions
+            .Invoking(async () => await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, "endpoint", GITHUB_ORG, "repo"))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
+    }
+
+    [Fact]
+    public async Task CreateBoardsGithubConnection_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange  
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        await FluentActions
+            .Invoking(async () => await sut.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "endpoint", "repo"))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
+    }
+
+    [Fact]
+    public async Task AddRepoToBoardsGithubConnection_Should_Throw_When_Response_Is_Malformed()
+    {
+        // Arrange
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+        var malformedResponse = "{ invalid json";
+
+        _mockAdoClient.Setup(m => m.PostAsync(endpoint, It.IsAny<object>())).ReturnsAsync(malformedResponse);
+
+        // Act & Assert - should throw JsonReaderException when parsing malformed JSON
+        await FluentActions
+            .Invoking(async () => await sut.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, "connection", "name", "endpoint", new[] { "repo" }))
+            .Should()
+            .ThrowExactlyAsync<JsonReaderException>();
     }
 }
