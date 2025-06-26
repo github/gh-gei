@@ -78,10 +78,10 @@ public class SecretScanningAlertService
                         var prefix = $"[@{sourceAlert.Alert.ResolverName}] ";
                         var originalComment = sourceAlert.Alert.ResolutionComment ?? string.Empty;
                         var prefixedComment = prefix + originalComment;
-                        
-                        var targetResolutionComment = prefixedComment.Length <= 270 
-                            ? prefixedComment 
-                            : prefix + originalComment.Substring(0, Math.Max(0, 270 - prefix.Length));
+
+                        var targetResolutionComment = prefixedComment.Length <= 270
+                            ? prefixedComment
+                            : prefix + originalComment[..Math.Max(0, 270 - prefix.Length)];
 
                         await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State,
                             sourceAlert.Alert.Resolution, targetResolutionComment);
