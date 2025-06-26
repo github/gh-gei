@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 
@@ -64,10 +63,7 @@ public class ArchiveUploader
         {
             // 1. Start the upload
             var startHeaders = await StartUpload(uploadUrl, archiveName, archiveContent.Length);
-
             var nextUrl = GetNextUrl(startHeaders);
-
-            var guid = HttpUtility.ParseQueryString(nextUrl.Query)["guid"];
 
             // 2. Upload parts
             int bytesRead;
@@ -80,9 +76,9 @@ public class ArchiveUploader
             }
 
             // 3. Complete the upload
-            await CompleteUpload(nextUrl.ToString());
+            var geiUri = await CompleteUpload(nextUrl.ToString());
 
-            return $"gei://archive/{guid}";
+            return geiUri.ToString();
         }
         catch (Exception ex)
         {
@@ -132,12 +128,16 @@ public class ArchiveUploader
         }
     }
 
-    private async Task CompleteUpload(string lastUrl)
+    private async Task<Uri> CompleteUpload(string lastUrl)
     {
         try
         {
-            await _retryPolicy.Retry(async () => await _client.PutAsync(lastUrl, ""));
+            var response = await _retryPolicy.Retry(async () => await _client.PutAsync(lastUrl, ""));
+            var responseData = JObject.Parse(response);
+
             _log.LogInformation("Finished uploading archive");
+
+            return new Uri((string)responseData["uri"]);
         }
         catch (Exception ex)
         {
