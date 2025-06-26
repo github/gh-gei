@@ -2842,17 +2842,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         location.Path.Should().Be((string)expectedData["details"]["path"]);
     }
 
-    private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)
-    {
-        actual.Number.Should().Be((int)expectedData["number"]);
-        actual.State.Should().Be((string)expectedData["state"]);
-        actual.SecretType.Should().Be((string)expectedData["secret_type"]);
-        actual.Resolution.Should().Be((string)expectedData["resolution"]);
-        actual.Secret.Should().Be((string)expectedData["secret"]);
-        actual.ResolutionComment.Should().Be((string)expectedData["resolution_comment"]);
-        actual.ResolverName.Should().Be((string)expectedData["resolved_by"]["login"]);
-    }
-
     [Fact]
     public async Task UpdateSecretScanningAlert_Calls_The_Right_Endpoint_With_Payload_For_Resolved_State()
     {

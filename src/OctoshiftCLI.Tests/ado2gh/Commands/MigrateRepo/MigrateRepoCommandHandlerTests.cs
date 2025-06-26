@@ -251,7 +251,7 @@ public class MigrateRepoCommandHandlerTests
     [Fact]
     public async Task It_Falls_Back_To_Ado_And_Github_Pats_From_Environment_When_Not_Provided()
     {
-        _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns(new List<(string Name, string Visibility)>());
+        _mockGithubApi.Setup(x => x.GetRepos(GITHUB_ORG).Result).Returns([]);
         _mockGithubApi.Setup(x => x.GetMigration(It.IsAny<string>()).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, 0, null, null));
 
         _mockEnvironmentVariableProvider

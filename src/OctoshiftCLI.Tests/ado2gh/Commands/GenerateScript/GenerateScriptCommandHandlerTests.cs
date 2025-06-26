@@ -28,11 +28,11 @@ public class GenerateScriptCommandHandlerTests
     private const string GITHUB_ORG = "GITHUB_ORG";
     private const string ADO_SERVER_URL = "http://ado.contoso.com";
 
-    private readonly IEnumerable<string> ADO_ORGS = new List<string>() { ADO_ORG };
-    private readonly IEnumerable<string> ADO_TEAM_PROJECTS = new List<string>() { ADO_TEAM_PROJECT };
-    private IEnumerable<AdoRepository> ADO_REPOS = new List<AdoRepository> { new() { Name = FOO_REPO } };
-    private IEnumerable<string> ADO_PIPELINES = new List<string>() { FOO_PIPELINE };
-    private readonly IEnumerable<string> EMPTY_PIPELINES = new List<string>();
+    private readonly IEnumerable<string> ADO_ORGS = [ADO_ORG];
+    private readonly IEnumerable<string> ADO_TEAM_PROJECTS = [ADO_TEAM_PROJECT];
+    private IEnumerable<AdoRepository> ADO_REPOS = [new() { Name = FOO_REPO }];
+    private IEnumerable<string> ADO_PIPELINES = [FOO_PIPELINE];
+    private readonly IEnumerable<string> EMPTY_PIPELINES = [];
 
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
     private readonly Mock<AdoInspectorService> _mockAdoInspector = TestHelpers.CreateMock<AdoInspectorService>();
@@ -326,7 +326,7 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Single_Repo_Two_Pipelines_All_Options()
     {
         // Arrange
-        ADO_PIPELINES = new List<string> { FOO_PIPELINE, BAR_PIPELINE };
+        ADO_PIPELINES = [FOO_PIPELINE, BAR_PIPELINE];
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
         _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);
@@ -374,7 +374,7 @@ public class GenerateScriptCommandHandlerTests
     public async Task SequentialScript_Single_Repo_Two_Pipelines_No_Service_Connection_All_Options()
     {
         // Arrange
-        ADO_PIPELINES = new List<string> { FOO_PIPELINE, BAR_PIPELINE };
+        ADO_PIPELINES = [FOO_PIPELINE, BAR_PIPELINE];
 
         _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
         _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
@@ -874,7 +874,7 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Two_Repos_Two_Pipelines_All_Options()
     {
         // Arrange
-        ADO_REPOS = new List<AdoRepository> { new() { Name = FOO_REPO }, new() { Name = BAR_REPO } };
+        ADO_REPOS = [new() { Name = FOO_REPO }, new() { Name = BAR_REPO }];
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
         _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);
@@ -1031,7 +1031,7 @@ if ($Failed -ne 0) {
     public async Task ParallelScript_Single_Repo_No_Service_Connection_All_Options()
     {
         // Arrange
-        ADO_PIPELINES = new List<string> { FOO_PIPELINE, BAR_PIPELINE };
+        ADO_PIPELINES = [FOO_PIPELINE, BAR_PIPELINE];
 
         _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
 
