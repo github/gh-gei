@@ -6,6 +6,14 @@ on:
       pr_number:
         type: number
         required: true
+      sha:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   build-for-e2e-test:
@@ -19,6 +27,19 @@ jobs:
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
+
+    - name: Check SHA
+      run: |
+        git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
+        prsha=`git rev-parse pr-head | awk '{ print $1 }'`
+
+        echo "PR SHA: $prsha"
+        echo "expected SHA: ${{ github.event.inputs.SHA }}"
+
+        if [ "$prsha" != "${{ github.event.inputs.SHA }}" ]; then
+          echo "SHA must match" >&2
+          exit 1
+        fi
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
@@ -67,6 +88,7 @@ jobs:
   e2e-test:
     needs: [ build-for-e2e-test ]
     strategy:
+      fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
         source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
