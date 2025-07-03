@@ -185,6 +185,16 @@ public class AdoApi
         return endpoint != null ? (string)endpoint["id"] : null;
     }
 
+    public virtual async Task<string> GetBoardsGithubAppServiceConnection(string org, string teamProject, string githubOrg)
+    {
+        var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
+        var response = await _client.GetWithPagingAsync(url);
+
+        var endpoint = response.FirstOrDefault(x => ((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) && ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
+
+        return endpoint != null ? (string)endpoint["id"] : null;
+    }
+
     public virtual async Task<string> GetGithubHandle(string org, string teamProject, string githubToken)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
@@ -319,7 +329,7 @@ public class AdoApi
                         operation = 1,
                         externalRepositoryExternalIds = repoIds.ToArray(),
                         providerKey = "github.com",
-                        isGitHubApp = false
+                        isGitHubApp = true
                     },
                     sourcePage = new
                     {
@@ -655,7 +665,7 @@ public class AdoApi
                             repoId
                         },
                         providerKey = "github.com",
-                        isGitHubApp = false
+                        isGitHubApp = true
                     },
                     sourcePage = new
                     {

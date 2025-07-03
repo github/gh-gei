@@ -11,13 +11,11 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
 {
     private readonly OctoLogger _log;
     private readonly AdoApi _adoApi;
-    private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
-    public IntegrateBoardsCommandHandler(OctoLogger log, AdoApi adoApi, EnvironmentVariableProvider environmentVariableProvider)
+    public IntegrateBoardsCommandHandler(OctoLogger log, AdoApi adoApi)
     {
         _log = log;
         _adoApi = adoApi;
-        _environmentVariableProvider = environmentVariableProvider;
     }
 
     public async Task Handle(IntegrateBoardsCommandArgs args)
@@ -27,21 +25,31 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.LogInformation("Integrating Azure Boards...");
-
-        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        _log.LogInformation("Integrating Azure Boards with GitHub App...");
 
         var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-        var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
+
+        // Find or use provided service connection
+        var serviceConnectionId = args.ServiceConnectionId;
+        if (string.IsNullOrEmpty(serviceConnectionId))
+        {
+            _log.LogInformation($"No service connection ID provided, searching for GitHub App service connection for org '{args.GithubOrg}'...");
+            serviceConnectionId = await _adoApi.GetBoardsGithubAppServiceConnection(args.AdoOrg, args.AdoTeamProject, args.GithubOrg);
+            if (string.IsNullOrEmpty(serviceConnectionId))
+            {
+                throw new OctoshiftCliException($"No GitHub App service connection found for GitHub org '{args.GithubOrg}' in team project '{args.AdoTeamProject}'. " +
+                    "Please ensure a GitHub App service connection is configured with the name matching the GitHub org, or provide a specific service connection ID using --service-connection-id.");
+            }
+            _log.LogInformation($"Found GitHub App service connection: {serviceConnectionId}");
+        }
 
         var boardsConnection = await _adoApi.GetBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject);
 
         if (boardsConnection == default)
         {
-            var endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
-            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
-            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
-            _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, serviceConnectionId, args.GithubOrg, args.GithubRepo);
+            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, serviceConnectionId, repoId);
+            _log.LogSuccess("Successfully configured Boards<->GitHub integration using GitHub App");
         }
         else
         {
@@ -59,7 +67,7 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
                 };
 
                 await _adoApi.AddRepoToBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
-                _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+                _log.LogSuccess("Successfully configured Boards<->GitHub integration using GitHub App");
             }
         }
     }

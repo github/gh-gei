@@ -11,7 +11,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards
     {
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
         private readonly ServiceProvider _serviceProvider;
         private readonly IntegrateBoardsCommand _command = [];
@@ -21,8 +20,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
-                .AddSingleton(_mockAdoApiFactory.Object)
-                .AddSingleton(_mockEnvironmentVariableProvider.Object);
+                .AddSingleton(_mockAdoApiFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
@@ -38,13 +36,13 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         }
 
         [Fact]
-        public void It_Uses_The_Ado_And_Github_Pats_When_Provided()
+        public void It_Uses_The_Ado_Pat_When_Provided()
         {
             var adoPat = "ado-pat";
 
@@ -55,13 +53,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.IntegrateBoards
                 GithubOrg = "some-gh-org",
                 GithubRepo = "some-gh-repo",
                 AdoPat = adoPat,
-                GithubPat = "abc123",
+                ServiceConnectionId = "service-conn-123",
             };
 
             _command.BuildHandler(args, _serviceProvider);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
-            _mockEnvironmentVariableProvider.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
         }
     }
 }

@@ -13,7 +13,6 @@ public class IntegrateBoardsCommandHandlerTests
 {
     private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-    private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
 
     private readonly IntegrateBoardsCommandHandler _handler;
 
@@ -22,30 +21,44 @@ public class IntegrateBoardsCommandHandlerTests
     private const string GITHUB_ORG = "foo-gh-org";
     private const string GITHUB_REPO = "foo-repo";
     private readonly string TEAM_PROJECT_ID = Guid.NewGuid().ToString();
-    private const string GITHUB_HANDLE = "foo-handle";
     private readonly string CONNECTION_ID = Guid.NewGuid().ToString();
     private const string CONNECTION_NAME = "foo-connection";
     private readonly string ENDPOINT_ID = Guid.NewGuid().ToString();
     private readonly string NEW_REPO_ID = Guid.NewGuid().ToString();
-    private readonly string GITHUB_TOKEN = Guid.NewGuid().ToString();
+    private readonly string SERVICE_CONNECTION_ID = Guid.NewGuid().ToString();
 
     public IntegrateBoardsCommandHandlerTests()
     {
-        _handler = new IntegrateBoardsCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, _mockEnvironmentVariableProvider.Object);
+        _handler = new IntegrateBoardsCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object);
     }
 
     [Fact]
-    public async Task No_Existing_Connection()
+    public async Task No_Existing_Connection_With_Service_Connection_Id()
     {
         _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-        _mockAdoApi.Setup(x => x.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_TOKEN).Result).Returns(GITHUB_HANDLE);
         _mockAdoApi.Setup(x => x.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(() => default);
-        _mockAdoApi.Setup(x => x.CreateBoardsGithubEndpoint(ADO_ORG, TEAM_PROJECT_ID, GITHUB_TOKEN, GITHUB_HANDLE, It.IsAny<string>()).Result).Returns(ENDPOINT_ID);
-        _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
+        _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, SERVICE_CONNECTION_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
-            .Returns(GITHUB_TOKEN);
+        var args = new IntegrateBoardsCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+        };
+        await _handler.Handle(args);
+
+        _mockAdoApi.Verify(x => x.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, SERVICE_CONNECTION_ID, NEW_REPO_ID));
+    }
+
+    [Fact]
+    public async Task No_Existing_Connection_Auto_Find_Service_Connection()
+    {
+        _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
+        _mockAdoApi.Setup(x => x.GetBoardsGithubAppServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_ORG).Result).Returns(SERVICE_CONNECTION_ID);
+        _mockAdoApi.Setup(x => x.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(() => default);
+        _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, SERVICE_CONNECTION_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
         var args = new IntegrateBoardsCommandArgs
         {
@@ -56,7 +69,7 @@ public class IntegrateBoardsCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, ENDPOINT_ID, NEW_REPO_ID));
+        _mockAdoApi.Verify(x => x.CreateBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, SERVICE_CONNECTION_ID, NEW_REPO_ID));
     }
 
     [Fact]
@@ -65,13 +78,8 @@ public class IntegrateBoardsCommandHandlerTests
         var repoIds = new List<string>() { "12", "34" };
 
         _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-        _mockAdoApi.Setup(x => x.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_TOKEN).Result).Returns(GITHUB_HANDLE);
         _mockAdoApi.Setup(x => x.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns((CONNECTION_ID, ENDPOINT_ID, CONNECTION_NAME, repoIds));
         _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
-
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
-            .Returns(GITHUB_TOKEN);
 
         var args = new IntegrateBoardsCommandArgs
         {
@@ -79,10 +87,10 @@ public class IntegrateBoardsCommandHandlerTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
         };
         await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT, CONNECTION_ID, CONNECTION_NAME, ENDPOINT_ID, It.Is<IEnumerable<string>>(x => x.Contains(repoIds[0]) &&
                                                                                                                                                                           x.Contains(repoIds[1]) &&
                                                                                                                                                                           x.Contains(NEW_REPO_ID))));
@@ -94,13 +102,27 @@ public class IntegrateBoardsCommandHandlerTests
         var repoIds = new List<string>() { "12", NEW_REPO_ID, "34" };
 
         _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
-        _mockAdoApi.Setup(x => x.GetGithubHandle(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_TOKEN).Result).Returns(GITHUB_HANDLE);
         _mockAdoApi.Setup(x => x.GetBoardsGithubConnection(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns((CONNECTION_ID, ENDPOINT_ID, CONNECTION_NAME, repoIds));
         _mockAdoApi.Setup(x => x.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, TEAM_PROJECT_ID, ENDPOINT_ID, GITHUB_ORG, GITHUB_REPO).Result).Returns(NEW_REPO_ID);
 
-        _mockEnvironmentVariableProvider
-            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
-            .Returns(GITHUB_TOKEN);
+        var args = new IntegrateBoardsCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+        };
+        await _handler.Handle(args);
+
+        _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Throws_Exception_When_No_Service_Connection_Found()
+    {
+        _mockAdoApi.Setup(x => x.GetTeamProjectId(ADO_ORG, ADO_TEAM_PROJECT).Result).Returns(TEAM_PROJECT_ID);
+        _mockAdoApi.Setup(x => x.GetBoardsGithubAppServiceConnection(ADO_ORG, ADO_TEAM_PROJECT, GITHUB_ORG).Result).Returns((string)null);
 
         var args = new IntegrateBoardsCommandArgs
         {
@@ -109,9 +131,8 @@ public class IntegrateBoardsCommandHandlerTests
             GithubOrg = GITHUB_ORG,
             GithubRepo = GITHUB_REPO,
         };
-        await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.CreateBoardsGithubEndpoint(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _mockAdoApi.Verify(x => x.AddRepoToBoardsGithubConnection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
+        var exception = await Assert.ThrowsAsync<OctoshiftCliException>(() => _handler.Handle(args));
+        Assert.Contains("No GitHub App service connection found", exception.Message);
     }
 }

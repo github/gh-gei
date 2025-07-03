@@ -11,16 +11,19 @@ namespace OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards
     {
         public IntegrateBoardsCommand() : base(
             name: "integrate-boards",
-            description: "Configures the Azure Boards<->GitHub integration in Azure DevOps." +
+            description: "Configures the Azure Boards<->GitHub integration in Azure DevOps using a GitHub App service connection." +
                          Environment.NewLine +
-                         "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
+                         "Note: Expects ADO_PAT env variable or --ado-pat option to be set." +
+                         Environment.NewLine +
+                         "Requires a pre-configured GitHub App service connection. Use --service-connection-id to specify the service connection," +
+                         " or the command will attempt to find one that matches the GitHub org name.")
         {
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
             AddOption(GithubOrg);
             AddOption(GithubRepo);
+            AddOption(ServiceConnectionId);
             AddOption(AdoPat);
-            AddOption(GithubPat);
             AddOption(Verbose);
         }
 
@@ -40,8 +43,11 @@ namespace OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards
         {
             IsRequired = true
         };
+        public Option<string> ServiceConnectionId { get; } = new("--service-connection-id")
+        {
+            Description = "The ID of the GitHub App service connection to use. If not provided, will attempt to find one matching the GitHub org name."
+        };
         public Option<string> AdoPat { get; } = new("--ado-pat");
-        public Option<string> GithubPat { get; } = new("--github-pat");
         public Option<bool> Verbose { get; } = new("--verbose");
 
         public override IntegrateBoardsCommandHandler BuildHandler(IntegrateBoardsCommandArgs args, IServiceProvider sp)
@@ -57,11 +63,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards
             }
 
             var log = sp.GetRequiredService<OctoLogger>();
-            var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
             var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
             var adoApi = adoApiFactory.Create(args.AdoPat);
 
-            return new IntegrateBoardsCommandHandler(log, adoApi, environmentVariableProvider);
+            return new IntegrateBoardsCommandHandler(log, adoApi);
         }
     }
 }
