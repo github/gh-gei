@@ -443,7 +443,7 @@ public class AdoApiTests
                             repo2
                         },
                         providerKey = "github.com",
-                        isGitHubApp = false
+                        isGitHubApp = true
                     },
                     sourcePage = new
                     {
@@ -1091,7 +1091,7 @@ public class AdoApiTests
                             repoId
                         },
                         providerKey = "github.com",
-                        isGitHubApp = false
+                        isGitHubApp = true
                     },
                     sourcePage = new
                     {
