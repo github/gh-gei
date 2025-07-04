@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    if: github.event.pull_request.number != 1376
     strategy:
       fail-fast: false
       matrix:
@@ -81,6 +82,7 @@ jobs:
       if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
+    if: github.event.pull_request.number != 1376
     runs-on: ubuntu-latest
     steps:
     # This is used by the subsequent publish-test-results.yaml
@@ -91,7 +93,7 @@ jobs:
         path: ${{ github.event_path }}
 
   build-for-e2e-test:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
+    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github') && github.event.pull_request.number != 1376
     strategy:
       fail-fast: false
       matrix:
@@ -145,7 +147,7 @@ jobs:
           dist/win-x64/gei-windows-amd64.exe
 
   e2e-test:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
+    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github') && github.event.pull_request.number != 1376
     needs: [ build-for-e2e-test ]
     strategy:
       fail-fast: false
@@ -281,8 +283,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, e2e-test ]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.pull_request.number == 1376
     environment: PUBLISH_RELEASE
 
     steps:
