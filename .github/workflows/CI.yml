@@ -13,7 +13,6 @@ on:
 
 jobs:
   build:
-    if: github.event.pull_request.number != 1376
     strategy:
       fail-fast: false
       matrix:
@@ -284,7 +283,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: PUBLISH_RELEASE
-
+    needs: [build]
     steps:
     - uses: actions/checkout@v4
       with:
