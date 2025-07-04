@@ -283,7 +283,6 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event.pull_request.number == 1376
     environment: PUBLISH_RELEASE
 
     steps:
