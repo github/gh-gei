@@ -1,2 +1,3 @@
 - Fixed `ado2gh integrate-boards` command to properly report errors when GitHub PAT permissions are incorrect, instead of incorrectly reporting success.
 - Added `--target-api-url` option to `gh ado2gh rewire-pipeline` command to support customers migrating to [GitHub Enterprise Cloud with data residency](https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-github-enterprise-cloud-with-data-residency)
+- Updated CI workflow to enable publish step in pull request context for testing purposes, allowing validation of the publish process regardless of E2E test outcomes

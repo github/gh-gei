@@ -281,8 +281,8 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, e2e-test ]
+    if: github.event_name == 'pull_request'
+    needs: [ build ]
     environment: PUBLISH_RELEASE
 
     steps:
@@ -292,6 +292,7 @@ jobs:
         fetch-depth: 0
 
     - name: Validate tag on main
+      if: startsWith(github.ref, 'refs/tags/v')
       shell: pwsh
       run: |
         git checkout main
@@ -317,7 +318,19 @@ jobs:
       env:
         CLI_VERSION: ${{ github.ref }}
 
+    - name: Verify Artifacts (PR Context)
+      if: github.event_name == 'pull_request'
+      shell: pwsh
+      run: |
+        Write-Output "=== Publish step running in PR context ==="
+        Write-Output "Artifacts built successfully for testing purposes"
+        Write-Output "No actual releases will be created in PR context"
+        Write-Output ""
+        Write-Output "Built artifacts:"
+        Get-ChildItem -Path "./dist" -Recurse -File | Select-Object FullName, Length | Format-Table -AutoSize
+
     - name: Create gh-gei Release
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
@@ -332,6 +345,7 @@ jobs:
           ./dist/osx-x64/gei-darwin-amd64
 
     - name: Create gh-ado2gh Release
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
@@ -344,6 +358,7 @@ jobs:
           ./dist/osx-x64/ado2gh-darwin-amd64
 
     - name: Create gh-bbs2gh Release
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
         body_path: ./RELEASENOTES.md
@@ -356,6 +371,7 @@ jobs:
           ./dist/osx-x64/bbs2gh-darwin-amd64
 
     - name: Archive Release Notes
+      if: startsWith(github.ref, 'refs/tags/v')
       shell: pwsh
       run: |
         $TAG_NAME = "${{ github.ref }}".Substring(10)
@@ -363,12 +379,14 @@ jobs:
         "" | Out-File ./RELEASENOTES.md
 
     - name: Update LATEST-VERSION.TXT
+      if: startsWith(github.ref, 'refs/tags/v')
       shell: pwsh
       run: |
         $TAG_NAME = "${{ github.ref }}".Substring(10)
         $TAG_NAME | Out-File ./LATEST-VERSION.txt
 
     - name: Commit Release Notes and Version
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: Automated commit of archived release notes and version file [skip ci]
