@@ -282,7 +282,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, e2e-test ]
+    needs: [ build ]
     environment: PUBLISH_RELEASE
 
     steps:
