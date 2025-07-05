@@ -294,6 +294,36 @@ public class AdoApi
         return (string)data["id"];
     }
 
+    public virtual async Task CreateBoardsGithubAppConnection(string org, string teamProject, string githubOrg, string githubRepoId)
+    {
+        var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+
+        var payload = new
+        {
+            contributionIds = new[]
+            {
+                "ms.vss-work-web.github-unified-installation-experience-data-provider"
+            },
+            dataProviderContext = new
+            {
+                properties = new
+                {
+                    orgName = githubOrg,
+                    externalRepositoryExternalIds = new[] { githubRepoId },
+                    sourcePage = new
+                    {
+                        routeValues = new
+                        {
+                            project = teamProject
+                        }
+                    }
+                }
+            }
+        };
+
+        await _client.PostAsync(url, payload);
+    }
+
     public virtual async Task AddRepoToBoardsGithubConnection(string org, string teamProject, string connectionId, string connectionName, string endpointId, IEnumerable<string> repoIds)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
@@ -571,7 +601,7 @@ public class AdoApi
         await _client.PutAsync(url, payload.ToObject(typeof(object)));
     }
 
-    public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
+    public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string githubOrg, string githubRepo)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
@@ -579,15 +609,16 @@ public class AdoApi
         {
             contributionIds = new[]
             {
-                "ms.vss-work-web.github-user-repository-data-provider"
+                "ms.vss-work-web.github-repository-search-data-provider"
             },
             dataProviderContext = new
             {
                 properties = new
                 {
-                    projectId = teamProjectId,
-                    repoWithOwnerName = $"{githubOrg}/{githubRepo}",
-                    serviceEndpointId = endpointId,
+                    filter = "",
+                    orgOrUserName = githubOrg,
+                    isUserType = false,
+                    strongBoxKey = "useWellKnownStrongBoxLocation",
                     sourcePage = new
                     {
                         routeValues = new
@@ -602,7 +633,7 @@ public class AdoApi
         var response = await _client.PostAsync(url, payload);
         var data = JObject.Parse(response);
 
-        return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
+        return (string)data["dataProviders"]["ms.vss-work-web.github-repository-search-data-provider"]["data"].First(x => (string)x["name"] == githubRepo)["id"];
     }
 
     public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)

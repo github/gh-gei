@@ -29,38 +29,42 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
 
         _log.LogInformation("Integrating Azure Boards...");
 
-        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        // args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
 
-        var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
-        var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
+        // var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
+        // var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);
 
         var boardsConnection = await _adoApi.GetBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject);
+        // var githubRepoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
 
         if (boardsConnection == default)
         {
-            var endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
-            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
-            await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
+            // var endpointId = await _adoApi.CreateBoardsGithubEndpoint(args.AdoOrg, adoTeamProjectId, args.GithubPat, githubHandle, Guid.NewGuid().ToString());
+            // var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
+            // await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
+
+            var githubRepoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, args.GithubRepo);
+            await _adoApi.CreateBoardsGithubAppConnection(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, githubRepoId);
+
             _log.LogSuccess("Successfully configured Boards<->GitHub integration");
         }
-        else
-        {
-            var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, boardsConnection.endpointId, args.GithubOrg, args.GithubRepo);
+        // else
+        // {
+        //     if (boardsConnection.repoIds.Any(x => x == repoId))
+        //     {
+        //         _log.LogWarning($"This repo is already configured in the Boards integration (Repo ID: {repoId})");
+        //     }
+        //     else
+        //     {
+        //         var repos = new List<string>(boardsConnection.repoIds)
+        //         {
+        //             repoId
+        //         };
 
-            if (boardsConnection.repoIds.Any(x => x == repoId))
-            {
-                _log.LogWarning($"This repo is already configured in the Boards integration (Repo ID: {repoId})");
-            }
-            else
-            {
-                var repos = new List<string>(boardsConnection.repoIds)
-                {
-                    repoId
-                };
-
-                await _adoApi.AddRepoToBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
-                _log.LogSuccess("Successfully configured Boards<->GitHub integration");
-            }
-        }
+        //         // await _adoApi.AddRepoToBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, boardsConnection.connectionId, boardsConnection.connectionName, boardsConnection.endpointId, repos);
+        //         await _adoApi.AddRepoToBoardsGithubAppConnection(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, repos);
+        //         _log.LogSuccess("Successfully configured Boards<->GitHub integration");
+        //     }
+        // }
     }
 }

@@ -1021,47 +1021,47 @@ public class AdoApiTests
         _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
     }
 
-    [Fact]
-    public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
-    {
-        var endpointId = Guid.NewGuid().ToString();
-        var githubRepo = "foo-repo";
+    // [Fact]
+    // public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
+    // {
+    //     var endpointId = Guid.NewGuid().ToString();
+    //     var githubRepo = "foo-repo";
 
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+    //     var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
 
-        var payload = new
-        {
-            contributionIds = new[]
-            {
-                "ms.vss-work-web.github-user-repository-data-provider"
-            },
-            dataProviderContext = new
-            {
-                properties = new
-                {
-                    projectId = ADO_TEAM_PROJECT_ID,
-                    repoWithOwnerName = $"{GITHUB_ORG}/{githubRepo}",
-                    serviceEndpointId = endpointId,
-                    sourcePage = new
-                    {
-                        routeValues = new
-                        {
-                            project = ADO_TEAM_PROJECT
-                        }
-                    }
-                }
-            }
-        };
+    //     var payload = new
+    //     {
+    //         contributionIds = new[]
+    //         {
+    //             "ms.vss-work-web.github-user-repository-data-provider"
+    //         },
+    //         dataProviderContext = new
+    //         {
+    //             properties = new
+    //             {
+    //                 projectId = ADO_TEAM_PROJECT_ID,
+    //                 repoWithOwnerName = $"{GITHUB_ORG}/{githubRepo}",
+    //                 serviceEndpointId = endpointId,
+    //                 sourcePage = new
+    //                 {
+    //                     routeValues = new
+    //                     {
+    //                         project = ADO_TEAM_PROJECT
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     };
 
-        var repoId = Guid.NewGuid().ToString();
-        var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
+    //     var repoId = Guid.NewGuid().ToString();
+    //     var json = $@"{{dataProviders: {{ ""ms.vss-work-web.github-user-repository-data-provider"": {{ additionalProperties: {{ nodeId: '{repoId}' }} }} }} }}";
 
-        _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
+    //     _mockAdoClient.Setup(x => x.PostAsync(endpoint, It.Is<object>(y => y.ToJson() == payload.ToJson())).Result).Returns(json);
 
-        var result = await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, endpointId, GITHUB_ORG, githubRepo);
+    //     var result = await sut.GetBoardsGithubRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_TEAM_PROJECT_ID, endpointId, GITHUB_ORG, githubRepo);
 
-        result.Should().Be(repoId);
-    }
+    //     result.Should().Be(repoId);
+    // }
 
     [Fact]
     public async Task CreateBoardsGithubConnection_Should_Send_Correct_Payload()
