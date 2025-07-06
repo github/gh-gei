@@ -48,6 +48,33 @@ public class RewirePipelineCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID));
+        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, null));
+    }
+
+    [Fact]
+    public async Task Uses_TargetApiUrl_When_Provided()
+    {
+        var pipelineId = 1234;
+        var defaultBranch = "default-branch";
+        var clean = "true";
+        var checkoutSubmodules = "null";
+        var targetApiUrl = "https://api.ghec.example.com";
+
+        _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE).Result).Returns(pipelineId);
+        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
+
+        var args = new RewirePipelineCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoPipeline = ADO_PIPELINE,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+            TargetApiUrl = targetApiUrl
+        };
+        await _handler.Handle(args);
+
+        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, targetApiUrl));
     }
 }
