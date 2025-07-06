@@ -97,7 +97,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
             }
-            ValidateOrgAndRepoNames();
+            ValidateNamesAreNotUrls();
         }
 
         private void DefaultTargetRepo(OctoLogger log)
@@ -117,7 +117,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
             }
         }
-        private void ValidateOrgAndRepoNames()
+        private void ValidateNamesAreNotUrls()
         {
             if (GithubSourceOrg.HasValue() && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
             {
