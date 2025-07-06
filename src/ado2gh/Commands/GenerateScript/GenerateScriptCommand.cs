@@ -31,7 +31,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
             AddOption(LinkIdpGroups);
             AddOption(LockAdoRepos);
             AddOption(DisableAdoRepos);
-            AddOption(IntegrateBoards);
             AddOption(RewirePipelines);
             AddOption(All);
             AddOption(RepoList);
