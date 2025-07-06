@@ -621,9 +621,15 @@ public class AdoApi
                     strongBoxKey = "useWellKnownStrongBoxLocation",
                     sourcePage = new
                     {
+                        //url = "https://dev.azure.com/dylan-smith-emu/ado-test-03/_settings/boards-external-integration",
+                        //routeId = "ms.vss-admin-web.project-admin-hub-route",
                         routeValues = new
                         {
-                            project = teamProject
+                            project = teamProject,
+                            //adminPivot = "boards-external-integration",
+                            //controller = "ContributedPage",
+                            //action = "Execute",
+                            //serviceHost = "3d77d28e-dfde-4736-9cc9-be1bc4355e8d (dylan-smith-emu)",
                         }
                     }
                 }

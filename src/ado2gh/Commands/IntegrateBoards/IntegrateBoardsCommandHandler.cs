@@ -43,7 +43,8 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
             // var repoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, adoTeamProjectId, endpointId, args.GithubOrg, args.GithubRepo);
             // await _adoApi.CreateBoardsGithubConnection(args.AdoOrg, args.AdoTeamProject, endpointId, repoId);
 
-            var githubRepoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, args.GithubRepo);
+            //var githubRepoId = await _adoApi.GetBoardsGithubRepoId(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, args.GithubRepo);
+            var githubRepoId = "R_kgDOO602mg";
             await _adoApi.CreateBoardsGithubAppConnection(args.AdoOrg, args.AdoTeamProject, args.GithubOrg, githubRepoId);
 
             _log.LogSuccess("Successfully configured Boards<->GitHub integration");
