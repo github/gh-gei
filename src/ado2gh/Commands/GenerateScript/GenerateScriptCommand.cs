@@ -75,10 +75,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         {
             Description = "Includes disable-ado-repo scripts that disable repos after migrating them."
         };
-        public Option<bool> IntegrateBoards { get; } = new("--integrate-boards")
-        {
-            Description = "Includes configure-autolink and integrate-boards scripts that configure Azure Boards integrations."
-        };
+        
         public Option<bool> RewirePipelines { get; } = new("--rewire-pipelines")
         {
             Description = "Includes share-service-connection and rewire-pipeline scripts that rewire Azure Pipelines to point to GitHub repos."

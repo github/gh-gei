@@ -44,7 +44,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             LinkIdpGroups = args.All || args.LinkIdpGroups,
             LockAdoRepos = args.All || args.LockAdoRepos,
             DisableAdoRepos = args.All || args.DisableAdoRepos,
-            IntegrateBoards = args.All || args.IntegrateBoards,
+            IntegrateBoards = args.IntegrateBoards,
             RewirePipelines = args.All || args.RewirePipelines,
             DownloadMigrationLogs = args.All || args.DownloadMigrationLogs
         };
