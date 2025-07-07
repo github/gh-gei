@@ -1,4 +1,1 @@
 - Fixed `gh gei migrate-secret-alerts` command to handle long resolution comments by truncating them to fit within GitHub's 270 character limit while preserving the resolver name prefix.
-- Fixed `ado2gh integrate-boards` command to properly report errors when GitHub PAT permissions are incorrect, instead of incorrectly reporting success.
-- Added `--target-api-url` option to `gh ado2gh rewire-pipeline` command to support customers migrating to [GitHub Enterprise Cloud with data residency](https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-github-enterprise-cloud-with-data-residency)
-- Updated `ado2gh generate-script` to no longer include ADO Boards integration commands in the generated script. This is a temporary change to fix broken functionality until we can ship a longer term fix. More details can be found [here](https://github.com/github/gh-gei/issues/1357)
