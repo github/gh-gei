@@ -48,8 +48,6 @@ namespace OctoshiftCLI.IntegrationTests
             await Helper.AssertGithubRepoExists(githubOrg, $"{teamProject2}-{teamProject2}");
             await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject1}-{teamProject1}");
             await Helper.AssertGithubRepoInitialized(githubOrg, $"{teamProject2}-{teamProject2}");
-            await Helper.AssertAutolinkConfigured(githubOrg, $"{teamProject1}-{teamProject1}", $"https://dev.azure.com/{adoOrg}/{teamProject1}/_workitems/edit/<num>/");
-            await Helper.AssertAutolinkConfigured(githubOrg, $"{teamProject2}-{teamProject2}", $"https://dev.azure.com/{adoOrg}/{teamProject2}/_workitems/edit/<num>/");
             await Helper.AssertAdoRepoDisabled(adoOrg, teamProject1, adoRepo1);
             await Helper.AssertAdoRepoDisabled(adoOrg, teamProject2, adoRepo2);
             await Helper.AssertAdoRepoLocked(adoOrg, teamProject1, adoRepo1);
@@ -70,8 +68,6 @@ namespace OctoshiftCLI.IntegrationTests
             await Helper.AssertServiceConnectionWasShared(adoOrg, teamProject2);
             await Helper.AssertPipelineRewired(adoOrg, teamProject1, pipeline1, githubOrg, $"{teamProject1}-{teamProject1}");
             await Helper.AssertPipelineRewired(adoOrg, teamProject2, pipeline2, githubOrg, $"{teamProject2}-{teamProject2}");
-            await Helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject1);
-            await Helper.AssertBoardsIntegrationConfigured(adoOrg, teamProject2);
             Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject1}-{teamProject1}");
             Helper.AssertMigrationLogFileExists(githubOrg, $"{teamProject2}-{teamProject2}");
         }

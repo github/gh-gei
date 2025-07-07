@@ -31,7 +31,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
             AddOption(LinkIdpGroups);
             AddOption(LockAdoRepos);
             AddOption(DisableAdoRepos);
-            AddOption(IntegrateBoards);
             AddOption(RewirePipelines);
             AddOption(All);
             AddOption(RepoList);
@@ -75,10 +74,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public Option<bool> DisableAdoRepos { get; } = new("--disable-ado-repos")
         {
             Description = "Includes disable-ado-repo scripts that disable repos after migrating them."
-        };
-        public Option<bool> IntegrateBoards { get; } = new("--integrate-boards")
-        {
-            Description = "Includes configure-autolink and integrate-boards scripts that configure Azure Boards integrations."
         };
         public Option<bool> RewirePipelines { get; } = new("--rewire-pipelines")
         {
