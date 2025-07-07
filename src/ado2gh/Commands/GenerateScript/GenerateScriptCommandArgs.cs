@@ -18,7 +18,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.GenerateScript
         public bool LinkIdpGroups { get; set; }
         public bool LockAdoRepos { get; set; }
         public bool DisableAdoRepos { get; set; }
-        public bool IntegrateBoards { get; set; }
         public bool RewirePipelines { get; set; }
         public bool All { get; set; }
         public FileInfo RepoList { get; set; }

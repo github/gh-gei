@@ -38,7 +38,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(18);
+            command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ado-org", false);
@@ -53,7 +53,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.GenerateScript
             TestHelpers.VerifyCommandOption(command.Options, "link-idp-groups", false);
             TestHelpers.VerifyCommandOption(command.Options, "lock-ado-repos", false);
             TestHelpers.VerifyCommandOption(command.Options, "disable-ado-repos", false);
-            TestHelpers.VerifyCommandOption(command.Options, "integrate-boards", false);
             TestHelpers.VerifyCommandOption(command.Options, "rewire-pipelines", false);
             TestHelpers.VerifyCommandOption(command.Options, "all", false);
             TestHelpers.VerifyCommandOption(command.Options, "repo-list", false);
