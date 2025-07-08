@@ -1,1 +1,2 @@
+- If `create-team` fails with 5xx errors, it will now retry the API call. Before retrying, it checks if the team was successfully created and returns the existing team information instead of attempting to create it again.
 - Fixed `gh gei migrate-secret-alerts` command to handle long resolution comments by truncating them to fit within GitHub's 270 character limit while preserving the resolver name prefix.
