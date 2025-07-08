@@ -54,7 +54,7 @@ public class CreateTeamCommandHandlerTests
     {
         _mockGithubApi.Setup(x => x.GetTeamMembers(GITHUB_ORG, TEAM_SLUG).Result).Returns(TEAM_MEMBERS);
         _mockGithubApi.Setup(x => x.GetIdpGroupId(GITHUB_ORG, IDP_GROUP).Result).Returns(IDP_GROUP_ID);
-        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string, string)> { (TEAM_NAME, TEAM_SLUG, "1") });
+        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string, string)> { ("1", TEAM_NAME, TEAM_SLUG) });
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));

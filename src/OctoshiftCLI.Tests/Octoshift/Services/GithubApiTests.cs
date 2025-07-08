@@ -234,10 +234,10 @@ public class GithubApiTests
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
 
-        var team1 = (Name: "TEAM_1", Slug: "SLUG_1", Id: "1");
-        var team2 = (Name: "TEAM_2", Slug: "SLUG_2", Id: "2");
-        var team3 = (Name: "TEAM_3", Slug: "SLUG_3", Id: "3");
-        var team4 = (Name: "TEAM_4", Slug: "SLUG_4", Id: "4");
+        var team1 = (Id: "1", Name: "TEAM_1", Slug: "SLUG_1");
+        var team2 = (Id: "2", Name: "TEAM_2", Slug: "SLUG_2");
+        var team3 = (Id: "3", Name: "TEAM_3", Slug: "SLUG_3");
+        var team4 = (Id: "4", Name: "TEAM_4", Slug: "SLUG_4");
 
         var teamsResult = new[]
         {

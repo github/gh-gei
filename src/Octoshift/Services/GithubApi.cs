@@ -82,7 +82,7 @@ public class GithubApi
             {
                 // Before retrying, check if the team was actually created
                 var teams = await GetTeams(org);
-                var (Name, Slug, Id) = teams.FirstOrDefault(t => t.Name == teamName);
+                var (Id, Name, Slug) = teams.FirstOrDefault(t => t.Name == teamName);
                 if (Name != null)
                 {
                     // Team exists, return its details instead of retrying
@@ -94,12 +94,12 @@ public class GithubApi
         }, ex => ex.StatusCode >= HttpStatusCode.InternalServerError);
     }
 
-    public virtual async Task<IEnumerable<(string Name, string Slug, string Id)>> GetTeams(string org)
+    public virtual async Task<IEnumerable<(string Id, string Name, string Slug)>> GetTeams(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
 
         return await _client.GetAllAsync(url)
-            .Select(t => ((string)t["name"], (string)t["slug"], (string)t["id"]))
+            .Select(t => ((string)t["id"], (string)t["name"], (string)t["slug"]))
             .ToListAsync();
     }
 
