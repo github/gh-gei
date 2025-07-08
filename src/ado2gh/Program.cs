@@ -32,6 +32,22 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
                 .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
+                .AddSingleton<RetryPolicy>()
+                .AddSingleton<BasicHttpClient>()
+                .AddSingleton<GithubStatusApi>()
+                .AddSingleton<VersionChecker>()
+                .AddSingleton<HttpDownloadServiceFactory>()
+                .AddSingleton<OrgsCsvGeneratorService>()
+                .AddSingleton<TeamProjectsCsvGeneratorService>()
+                .AddSingleton<ReposCsvGeneratorService>()
+                .AddSingleton<PipelinesCsvGeneratorService>()
+                .AddSingleton<AdoInspectorService>()
+                .AddSingleton<AdoInspectorServiceFactory>()
+                .AddSingleton<DateTimeProvider>()
+                .AddSingleton<WarningsCountLogger>()
+                .AddSingleton<FileSystemProvider>()
+                .AddSingleton<ConfirmationService>()
+                .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
