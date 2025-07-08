@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+
 using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
@@ -30,7 +31,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
-                .AddSingleton<GithubApiFactory>()
+                .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<BasicHttpClient>()
                 .AddSingleton<GithubStatusApi>()
@@ -47,7 +48,6 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<FileSystemProvider>()
                 .AddSingleton<ConfirmationService>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddHttpClient();
 
             var serviceProvider = serviceCollection.BuildServiceProvider();

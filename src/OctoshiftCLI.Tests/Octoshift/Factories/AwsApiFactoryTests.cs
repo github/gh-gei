@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.BbsToGithub.Factories;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.bbs2gh.Factories;
+namespace OctoshiftCLI.Tests.Octoshift.Factories;
 
 public class AwsApiFactoryTests
 {

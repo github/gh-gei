@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
@@ -220,7 +222,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         if (args.GithubOrg.HasValue())
         {
-            var githubApiFactory = sp.GetRequiredService<GithubApiFactory>();
+            var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
             githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
         }
 

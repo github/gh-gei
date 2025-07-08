@@ -2,7 +2,7 @@ using System.Net.Http;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.GithubEnterpriseImporter.Factories;
+namespace OctoshiftCLI.Factories;
 
 public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApiFactory
 {

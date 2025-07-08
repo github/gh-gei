@@ -1,6 +1,6 @@
 using Azure.Storage.Blobs;
 
-namespace OctoshiftCLI.BbsToGithub.Factories;
+namespace OctoshiftCLI.Factories;
 
 public class BlobServiceClientFactory : IBlobServiceClientFactory
 {
