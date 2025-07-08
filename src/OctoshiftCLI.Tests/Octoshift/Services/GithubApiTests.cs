@@ -139,7 +139,6 @@ public class GithubApiTests
 
         var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
         var getTeamsUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
-        var getTeamUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams/{teamSlug}";
         var payload = new { name = teamName, privacy = "closed" };
 
         // Setup for the first call to fail with 500
