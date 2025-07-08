@@ -29,7 +29,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
-                .AddSingleton<IAzureApiFactory, AzureApiFactory>()
+                .AddSingleton<IAzureApiFactory, OctoshiftCLI.GithubEnterpriseImporter.Factories.AzureApiFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<BasicHttpClient>()

@@ -33,7 +33,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton<BbsApiFactory>()
                 .AddSingleton<GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
-                .AddSingleton<IAzureApiFactory, AzureApiFactory>()
+                .AddSingleton<IAzureApiFactory, OctoshiftCLI.BbsToGithub.Factories.AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<AwsApiFactory>()
                 .AddSingleton<BasicHttpClient>()

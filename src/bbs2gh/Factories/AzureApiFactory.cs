@@ -1,36 +1,26 @@
 using System.Net.Http;
 using OctoshiftCLI.Services;
+using OctoshiftCLI.Factories;
 
-namespace OctoshiftCLI.BbsToGithub.Factories;
-
-public sealed class AzureApiFactory : IAzureApiFactory
+namespace OctoshiftCLI.BbsToGithub.Factories
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IBlobServiceClientFactory _blobServiceClientFactory;
-    private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    private readonly OctoLogger _octoLogger;
-
-    public AzureApiFactory(IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, IBlobServiceClientFactory blobServiceClientFactory, OctoLogger octoLogger)
+    public sealed class AzureApiFactory : IAzureApiFactory
     {
-        _clientFactory = clientFactory;
-        _environmentVariableProvider = environmentVariableProvider;
-        _blobServiceClientFactory = blobServiceClientFactory;
-        _octoLogger = octoLogger;
-    }
+        private readonly OctoshiftCLI.Factories.AzureApiFactory _factory;
 
-    public AzureApi Create(string azureStorageConnectionString = null)
-    {
-        var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
+        public AzureApiFactory(
+            IHttpClientFactory clientFactory,
+            EnvironmentVariableProvider environmentVariableProvider,
+            IBlobServiceClientFactory blobServiceClientFactory,
+            OctoLogger octoLogger)
+        {
+            _factory = new OctoshiftCLI.Factories.AzureApiFactory(clientFactory, environmentVariableProvider, blobServiceClientFactory, octoLogger);
+        }
 
-        var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-        return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient, _octoLogger);
-    }
+        public AzureApi Create(string azureStorageConnectionString = null)
+            => _factory.Create(azureStorageConnectionString);
 
-    public AzureApi CreateClientNoSsl(string azureStorageConnectionString)
-    {
-        var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
-
-        var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-        return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient, _octoLogger);
+        public AzureApi CreateClientNoSsl(string azureStorageConnectionString)
+            => _factory.CreateClientNoSsl(azureStorageConnectionString);
     }
 }
