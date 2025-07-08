@@ -6,7 +6,7 @@ using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Factories;
+namespace OctoshiftCLI.Tests.Octoshift.Factories;
 
 public class AzureApiFactoryTests
 {
