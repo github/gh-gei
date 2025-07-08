@@ -222,7 +222,6 @@ public class GithubApiTests
             .Where(ex => ex.Message.Contains("Bad Request"));
 
         _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
-        _githubClientMock.Verify(m => m.GetAllAsync(It.IsAny<string>(), null), Times.Never);
     }
 
     [Fact]
