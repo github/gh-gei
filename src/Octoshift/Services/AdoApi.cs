@@ -212,16 +212,19 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
 
-#pragma warning disable IDE0046 // Convert to conditional expression
-        if (data["dataProviders"]["ms.vss-work-web.github-user-data-provider"] == null)
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.github-user-data-provider");
+        if (errorMessage.HasValue())
         {
-            throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+            throw new OctoshiftCliException($"Error validating GitHub token: {errorMessage}");
         }
-#pragma warning restore IDE0046 // Convert to conditional expression
 
-        return (string)data["dataProviders"]["ms.vss-work-web.github-user-data-provider"]["login"];
+        var data = JObject.Parse(response);
+        var dataProviders = data["dataProviders"] ?? throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+        var dataProvider = dataProviders["ms.vss-work-web.github-user-data-provider"] ?? throw new OctoshiftCliException("Missing data from 'ms.vss-work-web.github-user-data-provider'. Please ensure the Azure DevOps project has a configured GitHub connection.");
+
+        return (string)dataProvider["login"];
     }
 
     public virtual async Task<(string connectionId, string endpointId, string connectionName, IEnumerable<string> repoIds)> GetBoardsGithubConnection(string org, string teamProject)
@@ -329,7 +332,14 @@ public class AdoApi
             }
         };
 
-        await _client.PostAsync(url, payload);
+        var response = await _client.PostAsync(url, payload);
+
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.azure-boards-save-external-connection-data-provider");
+        if (errorMessage.HasValue())
+        {
+            throw new OctoshiftCliException($"Error adding repository to boards GitHub connection: {errorMessage}");
+        }
     }
 
     public virtual async Task<string> GetTeamProjectId(string org, string teamProject)
@@ -523,26 +533,51 @@ public class AdoApi
         return (defaultBranch, clean, checkoutSubmodules);
     }
 
-    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId)
+    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId, string targetApiUrl = null)
     {
         var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
         var response = await _client.GetAsync(url);
         var data = JObject.Parse(response);
 
+        // Determine base URLs
+        string apiUrl, webUrl, cloneUrl, branchesUrl, refsUrl, manageUrl;
+        if (targetApiUrl.HasValue())
+        {
+            var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
+            var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host[4..] : apiUri.Host;
+            var webScheme = apiUri.Scheme;
+            var webBase = $"{webScheme}://{webHost}";
+            apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            webUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            cloneUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
+            branchesUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
+            refsUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
+            manageUrl = webUrl;
+        }
+        else
+        {
+            apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            webUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
+            cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
+            branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
+            refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
+            manageUrl = webUrl;
+        }
+
         var newRepo = new
         {
             properties = new
             {
-                apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
-                branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches",
-                cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
+                apiUrl,
+                branchesUrl,
+                cloneUrl,
                 connectedServiceId,
                 defaultBranch,
                 fullName = $"{githubOrg}/{githubRepo}",
-                manageUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
+                manageUrl,
                 orgName = githubOrg,
-                refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs",
+                refsUrl,
                 safeRepository = $"{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
                 shortName = githubRepo,
                 reportBuildStatus = true
@@ -550,7 +585,7 @@ public class AdoApi
             id = $"{githubOrg}/{githubRepo}",
             type = "GitHub",
             name = $"{githubOrg}/{githubRepo}",
-            url = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git",
+            url = cloneUrl,
             defaultBranch,
             clean,
             checkoutSubmodules
@@ -600,9 +635,26 @@ public class AdoApi
         };
 
         var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
 
-        return (string)data["dataProviders"]["ms.vss-work-web.github-user-repository-data-provider"]["additionalProperties"]["nodeId"];
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.github-user-repository-data-provider");
+        if (errorMessage.HasValue())
+        {
+            throw new OctoshiftCliException($"Error getting GitHub repository information: {errorMessage}");
+        }
+
+        var data = JObject.Parse(response);
+        var dataProviders = data["dataProviders"] ?? throw new OctoshiftCliException("Could not retrieve GitHub repository information. Please verify the repository exists and the GitHub token has the correct permissions.");
+        var dataProvider = dataProviders["ms.vss-work-web.github-user-repository-data-provider"];
+
+#pragma warning disable IDE0046 // Convert to conditional expression
+        if (dataProvider == null || dataProvider["additionalProperties"] == null || dataProvider["additionalProperties"]["nodeId"] == null)
+#pragma warning restore IDE0046 // Convert to conditional expression
+        {
+            throw new OctoshiftCliException("Could not retrieve GitHub repository information. Please verify the repository exists and the GitHub token has the correct permissions.");
+        }
+
+        return (string)dataProvider["additionalProperties"]["nodeId"];
     }
 
     public virtual async Task CreateBoardsGithubConnection(string org, string teamProject, string endpointId, string repoId)
@@ -641,7 +693,14 @@ public class AdoApi
             }
         };
 
-        await _client.PostAsync(url, payload);
+        var response = await _client.PostAsync(url, payload);
+
+        // Check for error message in the response
+        var errorMessage = ExtractErrorMessage(response, "ms.vss-work-web.azure-boards-save-external-connection-data-provider");
+        if (errorMessage.HasValue())
+        {
+            throw new OctoshiftCliException($"Error creating boards GitHub connection: {errorMessage}");
+        }
     }
 
     public virtual async Task DisableRepo(string org, string teamProject, string repoId)
@@ -698,6 +757,24 @@ public class AdoApi
         const string collectionSecurityNamespaceId = "3e65f728-f8bc-4ecd-8764-7e378b19bfa7";
         const int genericWritePermissionBitMaskValue = 2;
         return await HasPermission(org, collectionSecurityNamespaceId, genericWritePermissionBitMaskValue);
+    }
+
+    private string ExtractErrorMessage(string response, string dataProviderKey)
+    {
+        if (!response.HasValue())
+        {
+            return null;
+        }
+
+        var data = JObject.Parse(response);
+#pragma warning disable IDE0046 // Convert to conditional expression
+        if (data["dataProviders"] is not JObject dataProviders)
+        {
+            return null;
+        }
+#pragma warning restore IDE0046 // Convert to conditional expression
+
+        return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
     }
 
     private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)

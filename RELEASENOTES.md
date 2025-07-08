@@ -1,1 +1,1 @@
-
+- Fixed `gh gei migrate-secret-alerts` command to handle long resolution comments by truncating them to fit within GitHub's 270 character limit while preserving the resolver name prefix.
