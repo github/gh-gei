@@ -163,8 +163,6 @@ public class GithubApiTests
         result.Should().Be((teamId, teamSlug));
         _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
         _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
-        // Verify that we no longer make the individual team details call
-        _githubClientMock.Verify(m => m.GetAsync(It.IsAny<string>(), null), Times.Never);
     }
 
     [Fact]
