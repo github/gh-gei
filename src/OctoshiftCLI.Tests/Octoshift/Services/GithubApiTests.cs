@@ -150,18 +150,12 @@ public class GithubApiTests
         // Setup for GetTeams call during retry logic
         var teamsResponse = new[]
         {
-            new { name = teamName, slug = teamSlug }
+            new { id = teamId, name = teamName, slug = teamSlug }
         }.ToAsyncJTokenEnumerable();
 
         _githubClientMock
             .Setup(m => m.GetAllAsync(getTeamsUrl, null))
             .Returns(teamsResponse);
-
-        // Setup for the individual team details call
-        var teamResponse = $"{{\"id\": \"{teamId}\", \"slug\": \"{teamSlug}\"}}";
-        _githubClientMock
-            .Setup(m => m.GetAsync(getTeamUrl, null))
-            .ReturnsAsync(teamResponse);
 
         // Act
         var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
@@ -170,7 +164,8 @@ public class GithubApiTests
         result.Should().Be((teamId, teamSlug));
         _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
         _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
-        _githubClientMock.Verify(m => m.GetAsync(getTeamUrl, null), Times.Once);
+        // Verify that we no longer make the individual team details call
+        _githubClientMock.Verify(m => m.GetAsync(It.IsAny<string>(), null), Times.Never);
     }
 
     [Fact]
@@ -239,10 +234,10 @@ public class GithubApiTests
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
 
-        var team1 = (Name: "TEAM_1", Slug: "SLUG_1");
-        var team2 = (Name: "TEAM_2", Slug: "SLUG_2");
-        var team3 = (Name: "TEAM_3", Slug: "SLUG_3");
-        var team4 = (Name: "TEAM_4", Slug: "SLUG_4");
+        var team1 = (Name: "TEAM_1", Slug: "SLUG_1", Id: "1");
+        var team2 = (Name: "TEAM_2", Slug: "SLUG_2", Id: "2");
+        var team3 = (Name: "TEAM_3", Slug: "SLUG_3", Id: "3");
+        var team4 = (Name: "TEAM_4", Slug: "SLUG_4", Id: "4");
 
         var teamsResult = new[]
         {
